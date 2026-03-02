@@ -17,6 +17,43 @@ export interface ElioMessage {
   createdAt: string
   dashboardType: DashboardType
   isError?: boolean
+  // Story 8.2: persistance en base
+  conversationId?: string
+}
+
+// --- Conversation Types (Story 8.2) ---
+
+export interface ElioConversation {
+  id: string
+  userId: string
+  dashboardType: DashboardType
+  title: string
+  createdAt: string
+  updatedAt: string
+  lastMessagePreview?: string
+}
+
+export interface ElioMessagePersisted {
+  id: string
+  conversationId: string
+  role: ElioMessageRole
+  content: string
+  metadata: {
+    feedback?: 'useful' | 'not_useful'
+    documentId?: string
+    profileObservation?: string
+    draftType?: 'email' | 'validation_hub' | 'chat'
+    evolutionBrief?: boolean
+  }
+  createdAt: string
+}
+
+export interface ConversationSummary {
+  id: string
+  title: string
+  lastMessage: string
+  lastMessageDate: string
+  isActive: boolean
 }
 
 // --- Error Types ---

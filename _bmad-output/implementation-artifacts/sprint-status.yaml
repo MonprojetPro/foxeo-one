@@ -123,7 +123,7 @@ development_status:
   # Epic 8: Agents IA Elio — Hub, Lab, One (11 stories)
   epic-8: in-progress
   8-1-consolidation-infrastructure-elio-module-unifie-composants-partages-gestion-des-erreurs: done
-  8-2-conversations-elio-liste-commutation-historique-persistant-complet: ready-for-dev
+  8-2-conversations-elio-liste-commutation-historique-persistant-complet: done
   8-3-feedback-reponses-elio-documents-dans-le-chat-historique-configs: ready-for-dev
   8-4-profil-de-communication-stockage-affinement-transmission-graduation: ready-for-dev
   8-5-elio-hub-interface-chat-mikl-aide-fonctionnalites-recherche-client: ready-for-dev
