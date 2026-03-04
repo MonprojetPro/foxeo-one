@@ -20,7 +20,15 @@ const WELCOME_MESSAGES: Record<DashboardType, { formal: string; casual: string }
   },
 }
 
-export function getWelcomeMessage(dashboardType: DashboardType, tutoiement: boolean): string {
+export function getWelcomeMessage(
+  dashboardType: DashboardType,
+  tutoiement: boolean,
+  customGreeting?: string
+): string {
+  // Task 2.1 — utiliser le greeting custom si fourni (Story 6.6 / Orpheus config)
+  if (customGreeting?.trim()) {
+    return customGreeting.trim()
+  }
   return tutoiement
     ? WELCOME_MESSAGES[dashboardType].casual
     : WELCOME_MESSAGES[dashboardType].formal
@@ -29,12 +37,14 @@ export function getWelcomeMessage(dashboardType: DashboardType, tutoiement: bool
 /**
  * Server Action — Génère et persiste le message d'accueil Élio pour une nouvelle conversation.
  * Adapte le ton selon le profil de communication (tutoiement/vouvoiement).
+ * Si customGreeting fourni, l'utilise à la place du message par défaut (AC1 Story 8.7).
  * Retourne toujours { data, error } — jamais throw.
  */
 export async function generateWelcomeMessage(
   conversationId: string,
   dashboardType: DashboardType,
-  tutoiement: boolean = false
+  tutoiement: boolean = false,
+  customGreeting?: string
 ): Promise<ActionResponse<ElioMessagePersisted>> {
   if (!conversationId) {
     return errorResponse('conversationId requis', 'VALIDATION_ERROR')
@@ -42,7 +52,7 @@ export async function generateWelcomeMessage(
 
   const supabase = await createServerSupabaseClient()
 
-  const content = getWelcomeMessage(dashboardType, tutoiement)
+  const content = getWelcomeMessage(dashboardType, tutoiement, customGreeting)
 
   const { data, error } = await supabase
     .from('elio_messages')

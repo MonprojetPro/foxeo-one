@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { PALETTE_CLASSES, PALETTE_FOCUS_RING, HEADER_LABELS, HUB_PLACEHOLDER_DEFAULT } from './elio-chat'
+import {
+  PALETTE_CLASSES,
+  PALETTE_FOCUS_RING,
+  HEADER_LABELS,
+  HUB_PLACEHOLDER_DEFAULT,
+  ONE_PLACEHOLDER_VOUVOIEMENT,
+  ONE_PLACEHOLDER_TUTOIEMENT,
+} from './elio-chat'
 
 describe('elio-chat — config Hub (Story 8.5)', () => {
   describe('PALETTE_CLASSES', () => {
@@ -34,6 +41,36 @@ describe('elio-chat — config Hub (Story 8.5)', () => {
   describe('HUB_PLACEHOLDER_DEFAULT', () => {
     it('Task 1.3 — retourne le placeholder Hub spécifique', () => {
       expect(HUB_PLACEHOLDER_DEFAULT).toBe("Demande-moi n'importe quoi sur Foxeo...")
+    })
+  })
+})
+
+describe('elio-chat — config One (Story 8.7)', () => {
+  describe('Placeholders One adaptés au profil (Task 1.3)', () => {
+    it('ONE_PLACEHOLDER_VOUVOIEMENT — utilise le vouvoiement', () => {
+      expect(ONE_PLACEHOLDER_VOUVOIEMENT).toContain('vous')
+      expect(ONE_PLACEHOLDER_VOUVOIEMENT).toBeTruthy()
+    })
+
+    it('ONE_PLACEHOLDER_TUTOIEMENT — utilise le tutoiement', () => {
+      expect(ONE_PLACEHOLDER_TUTOIEMENT).toContain('t\'')
+      expect(ONE_PLACEHOLDER_TUTOIEMENT).toBeTruthy()
+    })
+
+    it('les deux placeholders sont différents', () => {
+      expect(ONE_PLACEHOLDER_VOUVOIEMENT).not.toBe(ONE_PLACEHOLDER_TUTOIEMENT)
+    })
+  })
+
+  describe('HEADER_LABELS One (Task 1.2)', () => {
+    it('header One est "Élio — Votre assistant"', () => {
+      expect(HEADER_LABELS['one']).toBe('Élio — Votre assistant')
+    })
+  })
+
+  describe('PALETTE_CLASSES One (Task 1.1)', () => {
+    it('applique la classe elio-palette-one', () => {
+      expect(PALETTE_CLASSES['one']).toBe('elio-palette-one')
     })
   })
 })

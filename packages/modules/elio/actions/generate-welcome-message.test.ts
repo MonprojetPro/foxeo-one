@@ -46,6 +46,27 @@ describe('getWelcomeMessage', () => {
       expect(getWelcomeMessage(dt, true)).toBeTruthy()
     })
   })
+
+  describe('Story 8.7 — Task 2.1 : customGreeting', () => {
+    it('Task 2.1 — utilise le customGreeting si fourni', () => {
+      const custom = 'Bienvenue dans votre espace One, Alice !'
+      expect(getWelcomeMessage('one', false, custom)).toBe(custom)
+    })
+
+    it('Task 2.1 — ignore un customGreeting vide (espaces)', () => {
+      expect(getWelcomeMessage('one', false, '   ')).toContain('Bonjour')
+    })
+
+    it('Task 2.2 — utilise le message par défaut si pas de customGreeting', () => {
+      expect(getWelcomeMessage('one', false)).toContain('Bonjour')
+      expect(getWelcomeMessage('one', true)).toContain('Salut')
+    })
+
+    it('Task 2.1 — customGreeting prend priorité sur tutoiement', () => {
+      const custom = 'Salut champion, on y va !'
+      expect(getWelcomeMessage('one', false, custom)).toBe(custom)
+    })
+  })
 })
 
 describe('generateWelcomeMessage', () => {

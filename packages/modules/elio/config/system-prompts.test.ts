@@ -158,6 +158,56 @@ describe('buildSystemPrompt', () => {
     })
   })
 
+  describe('Story 8.7 — Élio One enrichi', () => {
+    it('Task 5 — inclut la cartographie navigation One dans le prompt', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
+      expect(prompt).toContain('Navigation dashboard One')
+      expect(prompt).toContain('/modules/documents')
+      expect(prompt).toContain('/modules/facturation')
+    })
+
+    it('Task 4.4 — inclut le message pour module non activé', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
+      expect(prompt).toContain('Cette fonctionnalité n\'est pas encore activée')
+      expect(prompt).toContain('MiKL de l\'activer')
+    })
+
+    it('Task 7 — inclut les briefs Lab si fournis', () => {
+      const prompt = buildSystemPrompt({
+        dashboardType: 'one',
+        communicationProfile: profileDefaut,
+        labBriefs: '- **Brief branding** : Identité visuelle orange et moderne...',
+      })
+      expect(prompt).toContain('Briefs Lab validés du client')
+      expect(prompt).toContain('Brief branding')
+    })
+
+    it('Task 7 — n\'inclut pas de section briefs Lab si non fournis', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
+      expect(prompt).not.toContain('Briefs Lab validés')
+    })
+
+    it('Task 8 — inclut le parcours_context si fourni', () => {
+      const prompt = buildSystemPrompt({
+        dashboardType: 'one',
+        communicationProfile: profileDefaut,
+        parcoursContext: 'MiKL a validé le brief branding le 01/03/2026.',
+      })
+      expect(prompt).toContain('Décisions MiKL pendant le Lab')
+      expect(prompt).toContain('MiKL a validé le brief branding')
+    })
+
+    it('Task 8 — n\'inclut pas de section parcours si non fourni', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
+      expect(prompt).not.toContain('Décisions MiKL pendant le Lab')
+    })
+
+    it('Task 4 — n\'inclut pas la nav One dans le prompt Lab', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })
+      expect(prompt).not.toContain('Navigation dashboard One')
+    })
+  })
+
   describe('Instructions d\'observation Lab (Story 8.4 — AC3)', () => {
     it('inclut les instructions d\'observation dans le prompt Lab', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })

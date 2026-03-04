@@ -9,7 +9,9 @@ import { correctAndAdaptText } from './correct-and-adapt-text'
 import { generateDraft } from './generate-draft'
 import { adjustDraft } from './adjust-draft'
 import { detectIntent } from '../utils/detect-intent'
-import type { DashboardType, ElioMessage } from '../types/elio.types'
+import { detectLowConfidence } from '../utils/detect-low-confidence'
+import type { DashboardType, ElioMessage, CommunicationProfileFR66 } from '../types/elio.types'
+import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
 
@@ -190,7 +192,73 @@ export async function sendToElio(
     }
   }
 
-  // 3. Cas général : construire le system prompt et appeler le LLM
+  // 3. Dashboard One : enrichir le system prompt avec le contexte Lab + modules
+  if (dashboardType === 'one' && clientId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: clientConfig } = await (supabase as any)
+      .from('client_configs')
+      .select('modules_documentation, elio_config')
+      .eq('client_id', clientId)
+      .maybeSingle() as { data: { modules_documentation: unknown; elio_config: unknown } | null }
+
+    const elioConfigJson = (clientConfig?.elio_config as Record<string, unknown>) ?? {}
+
+    // Profil de communication (stocké dans elio_config.communication_profile)
+    const communicationProfile =
+      (elioConfigJson.communication_profile as CommunicationProfileFR66 | undefined) ??
+      DEFAULT_COMMUNICATION_PROFILE_FR66
+
+    // Tier (stocké dans elio_config.tier)
+    const tier = (elioConfigJson.tier as 'one' | 'one_plus' | undefined) ?? 'one'
+
+    // Documentation modules actifs (colonne dédiée, injectée via Story 10.3)
+    const modulesDocumentation = clientConfig?.modules_documentation
+      ? JSON.stringify(clientConfig.modules_documentation, null, 2)
+      : null
+
+    // Contexte parcours Lab (décisions MiKL pendant le Lab)
+    const parcoursContext = (elioConfigJson.parcours_context as string | undefined) ?? null
+
+    // Briefs Lab validés — Task 7
+    let labBriefsText: string | null = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: labBriefs } = await (supabase as any)
+      .from('validation_requests')
+      .select('title, content')
+      .eq('client_id', clientId)
+      .eq('type', 'brief_lab')
+      .eq('status', 'approved') as { data: Array<{ title: string; content: string }> | null }
+
+    if (labBriefs && labBriefs.length > 0) {
+      labBriefsText = labBriefs
+        .map((b) => {
+          const contentStr = typeof b.content === 'string' ? b.content : JSON.stringify(b.content ?? '')
+          return `- **${b.title}** : ${contentStr.substring(0, 200)}...`
+        })
+        .join('\n')
+    }
+
+    const systemPrompt = buildSystemPrompt({
+      dashboardType,
+      communicationProfile,
+      tier,
+      activeModulesDocs: modulesDocumentation,
+      customInstructions: elioConfig?.customInstructions,
+      labBriefs: labBriefsText,
+      parcoursContext,
+    })
+
+    const response = await callLLM(supabase, systemPrompt, message, dashboardType, elioConfig)
+
+    // Task 10 — Détecter la faible confiance et signaler pour escalade MiKL
+    if (response.data && detectLowConfidence(response.data.content)) {
+      response.data.metadata = { ...response.data.metadata, needsEscalation: true }
+    }
+
+    return response
+  }
+
+  // 4. Cas général (Lab, Hub sans intent spécifique) : construire le system prompt et appeler le LLM
   const systemPrompt = buildSystemPrompt({
     dashboardType,
     customInstructions: elioConfig?.customInstructions,

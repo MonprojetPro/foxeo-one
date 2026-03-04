@@ -12,6 +12,8 @@ interface ConversationListProps {
   onNewConversation: () => void
   onRenameTitle?: (id: string, newTitle: string) => void
   isCreating?: boolean
+  // Story 8.7 — Task 6.3 : conversations Lab accessibles depuis One
+  labConversations?: ElioConversation[]
 }
 
 const ACCENT_CLASSES: Record<DashboardType, string> = {
@@ -28,6 +30,7 @@ export function ConversationList({
   onNewConversation,
   onRenameTitle,
   isCreating = false,
+  labConversations,
 }: ConversationListProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -87,6 +90,31 @@ export function ConversationList({
               onRenameTitle={onRenameTitle}
             />
           ))
+        )}
+
+        {/* Story 8.7 — Task 6.3 : Section "Historique Lab" pour clients diplômés */}
+        {labConversations && labConversations.length > 0 && (
+          <>
+            <div
+              className="px-3 pt-4 pb-1"
+              aria-label="Historique Lab"
+              role="separator"
+            >
+              <hr className="border-border mb-2" />
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Historique Lab
+              </p>
+            </div>
+            {labConversations.map((conv) => (
+              <ConversationItem
+                key={conv.id}
+                conversation={conv}
+                isActive={conv.id === activeConversationId}
+                dashboardType="lab"
+                onSelect={() => handleSelect(conv.id)}
+              />
+            ))}
+          </>
         )}
       </div>
     </div>

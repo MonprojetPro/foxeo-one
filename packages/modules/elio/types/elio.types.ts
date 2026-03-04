@@ -27,6 +27,16 @@ export interface ElioMessageMetadata {
   profileObservation?: string
   draftType?: 'email' | 'validation_hub' | 'chat'
   evolutionBrief?: boolean
+  // Story 8.7: escalade MiKL quand confiance basse
+  needsEscalation?: boolean
+}
+
+// Story 8.7 — Task 3.1 : Structure documentation module actif (injectée par MiKL, Story 10.3)
+export interface ModuleDocumentation {
+  description: string
+  parameters?: Record<string, string>
+  clientQuestions?: string[]
+  commonIssues?: string[]
 }
 
 export interface ElioMessage {

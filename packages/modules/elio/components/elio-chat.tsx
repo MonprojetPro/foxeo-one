@@ -17,6 +17,7 @@ import { generateConversationTitle } from '../actions/generate-conversation-titl
 import { saveElioMessage } from '../actions/save-elio-message'
 import { updateConversationTitle } from '../actions/update-conversation-title'
 import { sendToElio } from '../actions/send-to-elio'
+import { escalateToMiKL } from '../actions/escalate-to-mikl'
 import type { DashboardType, ElioMessage, ElioError } from '../types/elio.types'
 
 interface ElioChatProps {
@@ -25,6 +26,8 @@ interface ElioChatProps {
   userId?: string
   tutoiement?: boolean
   placeholder?: string
+  // Story 8.7: greeting custom depuis config Orpheus (Story 6.6)
+  customGreeting?: string
 }
 
 export const PALETTE_CLASSES: Record<DashboardType, string> = {
@@ -46,6 +49,9 @@ export const HEADER_LABELS: Record<DashboardType, string> = {
 }
 
 export const HUB_PLACEHOLDER_DEFAULT = "Demande-moi n'importe quoi sur Foxeo..."
+// Story 8.7 — Task 1.3 : placeholder adapté au profil (tutoiement/vouvoiement)
+export const ONE_PLACEHOLDER_VOUVOIEMENT = 'Comment puis-je vous aider aujourd\'hui ?'
+export const ONE_PLACEHOLDER_TUTOIEMENT = 'Comment je peux t\'aider aujourd\'hui ?'
 
 // ── Mode sans userId : chat éphémère (comportement 8.1) ──────────────────────
 
@@ -135,8 +141,9 @@ function ElioChatPersisted({
   userId,
   tutoiement = false,
   placeholder,
+  customGreeting,
 }: Required<Pick<ElioChatProps, 'dashboardType' | 'userId'>> &
-  Pick<ElioChatProps, 'clientId' | 'tutoiement' | 'placeholder'>) {
+  Pick<ElioChatProps, 'clientId' | 'tutoiement' | 'placeholder' | 'customGreeting'>) {
   const queryClient = useQueryClient()
 
   const [inputValue, setInputValue] = useState('')
@@ -146,6 +153,11 @@ function ElioChatPersisted({
   const [error, setError] = useState<ElioError | null>(null)
   const [localMessages, setLocalMessages] = useState<ElioMessage[]>([])
   const [userMessageCount, setUserMessageCount] = useState(0)
+  // Story 8.7 — Task 9/10 : escalade en attente de confirmation
+  const [pendingEscalation, setPendingEscalation] = useState<string | null>(null)
+  const [escalationConfirmed, setEscalationConfirmed] = useState(false)
+  // CR fix HIGH-1: capturer les messages au moment de la détection (avant setLocalMessages([]))
+  const [escalationMessages, setEscalationMessages] = useState<string[]>([])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -156,6 +168,13 @@ function ElioChatPersisted({
   const { conversations, isLoading: conversationsLoading } = useElioConversations({
     userId,
     dashboardType,
+  })
+
+  // Story 8.7 — Task 6.2 : conversations Lab accessibles depuis One
+  const { conversations: labConversations } = useElioConversations({
+    userId,
+    dashboardType: 'lab',
+    enabled: dashboardType === 'one',
   })
 
   const { messages: persistedMessages, hasNextPage, fetchNextPage, isFetchingNextPage } =
@@ -203,13 +222,13 @@ function ElioChatPersisted({
       return
     }
 
-    await generateWelcomeMessage(conv.id, dashboardType, tutoiement)
+    await generateWelcomeMessage(conv.id, dashboardType, tutoiement, customGreeting)
     await invalidateConversations()
     await invalidateMessages(conv.id)
 
     setActiveConversationId(conv.id)
     setIsCreatingConversation(false)
-  }, [dashboardType, tutoiement, isCreatingConversation, invalidateConversations, invalidateMessages])
+  }, [dashboardType, tutoiement, customGreeting, isCreatingConversation, invalidateConversations, invalidateMessages])
 
   const handleSelectConversation = useCallback((id: string) => {
     setActiveConversationId(id)
@@ -223,12 +242,31 @@ function ElioChatPersisted({
     [invalidateConversations]
   )
 
+  // Story 8.7 — Task 9 : escalade vers MiKL
+  // CR fix HIGH-1: utiliser escalationMessages (capturés avant clear) au lieu de localMessages
+  // CR fix HIGH-2: vérifier le résultat de escalateToMiKL
+  const handleEscalate = useCallback(
+    async (question: string) => {
+      if (!clientId || escalationConfirmed) return
+      const { error: escError } = await escalateToMiKL(clientId, question, escalationMessages)
+      if (escError) {
+        console.error('[ELIO:ESCALATE] Failed:', escError)
+        return
+      }
+      setEscalationConfirmed(true)
+      setPendingEscalation(null)
+    },
+    [clientId, escalationMessages, escalationConfirmed]
+  )
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const content = inputValue.trim()
     if (!content || isLoading) return
     setInputValue('')
     setError(null)
+    setPendingEscalation(null)
+    setEscalationConfirmed(false)
 
     // Auto-créer une conversation si besoin
     let convId = activeConversationId
@@ -272,6 +310,16 @@ function ElioChatPersisted({
         ...prev,
         { ...elioMsg, id: makeId() },
       ])
+
+      // Story 8.7 — Task 10 : proposer escalade si confiance basse
+      // CR fix HIGH-1: capturer les messages AVANT le clear pour l'escalade
+      if (elioMsg.metadata?.needsEscalation && dashboardType === 'one') {
+        const recentMsgs = [...localMessages, userMsg, { ...elioMsg, id: makeId() }]
+          .slice(-4)
+          .map((m) => `${m.role === 'user' ? 'Vous' : 'Élio'}: ${m.content}`)
+        setEscalationMessages(recentMsgs)
+        setPendingEscalation(content)
+      }
     }
 
     const newCount = userMessageCount + 1
@@ -350,6 +398,7 @@ function ElioChatPersisted({
             onNewConversation={handleNewConversation}
             onRenameTitle={handleRenameTitle}
             isCreating={isCreatingConversation}
+            labConversations={dashboardType === 'one' ? labConversations : undefined}
           />
         )}
 
@@ -412,6 +461,49 @@ function ElioChatPersisted({
             {error && !isLoading && <ElioErrorMessage error={error} onRetry={retrySend} />}
             <div ref={messagesEndRef} aria-hidden="true" />
           </div>
+
+          {/* Story 8.7 — Task 9/10 : banner escalade MiKL */}
+          {pendingEscalation && !escalationConfirmed && (
+            <div
+              className="mx-4 mb-2 p-3 rounded-lg border border-border bg-muted text-sm"
+              role="status"
+              aria-live="polite"
+            >
+              <p className="text-foreground mb-2">
+                Je ne suis pas certain de pouvoir vous aider là-dessus. Voulez-vous que je transmette votre question à MiKL ?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEscalate(pendingEscalation)}
+                  className={[
+                    'px-3 py-1 text-xs font-medium rounded-md',
+                    'bg-primary text-primary-foreground hover:bg-primary/90',
+                    'focus-visible:outline-none focus-visible:ring-2',
+                    focusRing,
+                  ].join(' ')}
+                  aria-label="Transmettre la question à MiKL"
+                >
+                  Oui, transmettre à MiKL
+                </button>
+                <button
+                  onClick={() => setPendingEscalation(null)}
+                  className="px-3 py-1 text-xs font-medium rounded-md border border-border hover:bg-muted transition-colors"
+                  aria-label="Annuler l'escalade"
+                >
+                  Non merci
+                </button>
+              </div>
+            </div>
+          )}
+          {escalationConfirmed && (
+            <p
+              className="mx-4 mb-2 text-sm text-muted-foreground"
+              role="status"
+              aria-live="polite"
+            >
+              ✓ Question transmise à MiKL
+            </p>
+          )}
 
           <ChatInput
             inputRef={inputRef}
@@ -503,9 +595,20 @@ export function ElioChat({
   userId,
   tutoiement = false,
   placeholder,
+  customGreeting,
 }: ElioChatProps) {
-  const resolvedPlaceholder =
-    placeholder ?? (dashboardType === 'hub' ? HUB_PLACEHOLDER_DEFAULT : 'Écrivez un message à Élio...')
+  // Task 1.3 — Placeholder adapté au profil pour One
+  const defaultPlaceholder =
+    dashboardType === 'hub'
+      ? HUB_PLACEHOLDER_DEFAULT
+      : dashboardType === 'one'
+        ? tutoiement
+          ? ONE_PLACEHOLDER_TUTOIEMENT
+          : ONE_PLACEHOLDER_VOUVOIEMENT
+        : 'Écrivez un message à Élio...'
+
+  const resolvedPlaceholder = placeholder ?? defaultPlaceholder
+
   if (userId) {
     return (
       <ElioChatPersisted
@@ -514,6 +617,7 @@ export function ElioChat({
         userId={userId}
         tutoiement={tutoiement}
         placeholder={resolvedPlaceholder}
+        customGreeting={customGreeting}
       />
     )
   }

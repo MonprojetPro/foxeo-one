@@ -2,6 +2,7 @@ import type { DashboardType, CommunicationProfileFR66, ElioTier } from '../types
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
 import { HUB_FEATURES_DOCUMENTATION } from './hub-features-documentation'
 import { HUB_DATABASE_SCHEMAS } from './hub-database-schemas'
+import { ONE_NAVIGATION_MAP } from './one-navigation-map'
 
 interface SystemPromptOptions {
   dashboardType: DashboardType
@@ -10,6 +11,9 @@ interface SystemPromptOptions {
   activeStepContext?: string
   activeModulesDocs?: string | null
   customInstructions?: string | null
+  // Story 8.7: contexte héritage Lab
+  labBriefs?: string | null
+  parcoursContext?: string | null
 }
 
 const TECHNICAL_LEVEL_INSTRUCTIONS: Record<string, string> = {
@@ -98,7 +102,13 @@ ${buildProfileInstructions(profile)}${LAB_OBSERVATION_INSTRUCTIONS}`
   return prompt
 }
 
-function buildOnePrompt(profile: CommunicationProfileFR66, tier: ElioTier, modulesDocs?: string | null): string {
+function buildOnePrompt(
+  profile: CommunicationProfileFR66,
+  tier: ElioTier,
+  modulesDocs?: string | null,
+  labBriefs?: string | null,
+  parcoursContext?: string | null,
+): string {
   let prompt = `${BASE_PROMPT}
 
 **Contexte : Dashboard One (Outil Business)**
@@ -110,6 +120,18 @@ ${buildProfileInstructions(profile)}`
 
   if (modulesDocs) {
     prompt += `\n\n**Documentation des modules actifs :**\n${modulesDocs}`
+  }
+
+  prompt += `\n\n**Navigation dashboard One :**\n${ONE_NAVIGATION_MAP}`
+
+  prompt += `\n\n**Règle modules non activés :** Si le client pose une question sur un module qui n'est pas dans sa navigation, répondez : "Cette fonctionnalité n'est pas encore activée pour vous. Vous pouvez demander à MiKL de l'activer."`
+
+  if (labBriefs) {
+    prompt += `\n\n**Briefs Lab validés du client :**\n${labBriefs}\n\n**Important :** Vous pouvez référencer ces briefs dans vos réponses pour montrer que vous connaissez le contexte du client. Ne reposez jamais les mêmes questions que pendant le Lab.`
+  }
+
+  if (parcoursContext) {
+    prompt += `\n\n**Décisions MiKL pendant le Lab :**\n${parcoursContext}`
   }
 
   if (tier === 'one_plus') {
@@ -149,6 +171,8 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
     activeStepContext,
     activeModulesDocs,
     customInstructions,
+    labBriefs,
+    parcoursContext,
   } = options
 
   let prompt: string
@@ -158,7 +182,7 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
       prompt = buildLabPrompt(communicationProfile, activeStepContext)
       break
     case 'one':
-      prompt = buildOnePrompt(communicationProfile, tier, activeModulesDocs)
+      prompt = buildOnePrompt(communicationProfile, tier, activeModulesDocs, labBriefs, parcoursContext)
       break
     case 'hub':
       prompt = buildHubPrompt()
