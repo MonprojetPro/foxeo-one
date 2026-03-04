@@ -68,3 +68,120 @@ describe('detectIntent (Story 8.5 — Task 6)', () => {
     })
   })
 })
+
+describe('detectIntent (Story 8.6 — Task 1)', () => {
+  describe('action: correct_text (AC1)', () => {
+    it('Task 1.2 — détecte "Corrige ça pour Thomas : ..."', () => {
+      const intent = detectIntent('Corrige ça pour Thomas : salu thomas, je tenvoi le devis')
+      expect(intent.action).toBe('correct_text')
+      expect(intent.clientName?.toLowerCase()).toContain('thomas')
+    })
+
+    it('Task 1.2 — détecte "Corrige ce texte pour Marie : ..."', () => {
+      const intent = detectIntent('Corrige ce texte pour Marie : Bonjour je reviens vers toi')
+      expect(intent.action).toBe('correct_text')
+      expect(intent.clientName?.toLowerCase()).toContain('marie')
+    })
+
+    it('Task 1.2 — détecte "Adapte ce texte pour Sandrine : ..."', () => {
+      const intent = detectIntent('Adapte ce texte pour Sandrine : Voici le devis demandé.')
+      expect(intent.action).toBe('correct_text')
+      expect(intent.clientName?.toLowerCase()).toContain('sandrine')
+    })
+
+    it('Task 1.4 — extrait correctement le originalText après ":"', () => {
+      const intent = detectIntent('Corrige ça pour Thomas : salu thomas, je tenvoi le devis cmme convenu')
+      expect(intent.action).toBe('correct_text')
+      expect(intent.originalText).toBeTruthy()
+      expect(intent.originalText?.toLowerCase()).toContain('salu')
+    })
+
+    it('Task 1.4 — extrait clientName sans le texte après ":"', () => {
+      const intent = detectIntent('Corrige ça pour Thomas : texte ici')
+      expect(intent.clientName).toBe('Thomas')
+    })
+
+    it('Task 1.2 — détecte "Corrige pour Alice : ..."', () => {
+      const intent = detectIntent('Corrige pour Alice : Ce texte a des erreurs')
+      expect(intent.action).toBe('correct_text')
+      expect(intent.clientName?.toLowerCase()).toContain('alice')
+    })
+  })
+
+  describe('action: generate_draft (AC2)', () => {
+    it('Task 1.3 — détecte "Génère un email pour Sandrine"', () => {
+      const intent = detectIntent('Génère un email pour Sandrine pour lui dire que son devis est prêt')
+      expect(intent.action).toBe('generate_draft')
+      expect(intent.clientName?.toLowerCase()).toContain('sandrine')
+      expect(intent.draftType).toBe('email')
+    })
+
+    it('Task 1.3 — détecte "Génère une réponse Validation Hub pour Thomas"', () => {
+      const intent = detectIntent('Écris une réponse Validation Hub pour Thomas')
+      expect(intent.action).toBe('generate_draft')
+      expect(intent.clientName?.toLowerCase()).toContain('thomas')
+      expect(intent.draftType).toBe('validation_hub')
+    })
+
+    it('Task 1.3 — détecte "Génère un message pour Marie"', () => {
+      const intent = detectIntent('Génère un message pour Marie')
+      expect(intent.action).toBe('generate_draft')
+      expect(intent.clientName?.toLowerCase()).toContain('marie')
+    })
+
+    it('Task 1.3 — détecte "Écris un brouillon pour Alice"', () => {
+      const intent = detectIntent('Écris un brouillon pour Alice')
+      expect(intent.action).toBe('generate_draft')
+      expect(intent.clientName?.toLowerCase()).toContain('alice')
+    })
+
+    it('Task 1.4 — extrait draftType email', () => {
+      const intent = detectIntent('Génère un email pour Sandrine')
+      expect(intent.draftType).toBe('email')
+    })
+
+    it('Task 1.4 — draftType par défaut = chat si non spécifié', () => {
+      const intent = detectIntent('Écris une réponse pour Thomas')
+      expect(intent.action).toBe('generate_draft')
+      expect(intent.draftType).toBe('chat')
+    })
+
+    it('Task 1.4 — extrait draftSubject du message', () => {
+      const intent = detectIntent('Génère un email pour Sandrine pour lui dire que son devis est prêt')
+      expect(intent.action).toBe('generate_draft')
+      expect(intent.draftSubject).toBeTruthy()
+    })
+  })
+
+  describe('action: adjust_draft (AC3)', () => {
+    it('Task 6.1 — détecte "Plus court"', () => {
+      const intent = detectIntent('Plus court')
+      expect(intent.action).toBe('adjust_draft')
+    })
+
+    it('Task 6.1 — détecte "Plus long"', () => {
+      const intent = detectIntent('Plus long')
+      expect(intent.action).toBe('adjust_draft')
+    })
+
+    it('Task 6.1 — détecte "Ajoute la date de livraison"', () => {
+      const intent = detectIntent('Ajoute la date de livraison')
+      expect(intent.action).toBe('adjust_draft')
+    })
+
+    it('Task 6.1 — détecte "Passe au tutoiement"', () => {
+      const intent = detectIntent('Passe au tutoiement')
+      expect(intent.action).toBe('adjust_draft')
+    })
+
+    it('Task 6.1 — détecte "Rends-le plus formel"', () => {
+      const intent = detectIntent('Rends-le plus formel')
+      expect(intent.action).toBe('adjust_draft')
+    })
+
+    it('Task 6.1 — détecte "Enlève la signature"', () => {
+      const intent = detectIntent('Enlève la signature')
+      expect(intent.action).toBe('adjust_draft')
+    })
+  })
+})

@@ -5,10 +5,20 @@ import { successResponse, errorResponse, type ActionResponse } from '@foxeo/type
 import { buildSystemPrompt } from '../config/system-prompts'
 import { getElioConfig } from './get-elio-config'
 import { searchClientInfo } from './search-client-info'
+import { correctAndAdaptText } from './correct-and-adapt-text'
+import { generateDraft } from './generate-draft'
+import { adjustDraft } from './adjust-draft'
 import { detectIntent } from '../utils/detect-intent'
 import type { DashboardType, ElioMessage } from '../types/elio.types'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
+
+export interface DraftContext {
+  previousDraft: string
+  clientName: string
+  draftType: 'email' | 'validation_hub' | 'chat'
+  currentVersion?: number
+}
 
 function makeMessageId(): string {
   return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
@@ -65,12 +75,14 @@ function handleElioError(err: unknown): { message: string; code: string; details
 /**
  * Server Action — Envoie un message à Élio via Supabase Edge Function.
  * Gère le timeout à 60s (NFR-I2), les erreurs réseau, LLM et inattendues.
+ * Pour le Hub, supporte aussi : correction texte, génération brouillon, ajustement brouillon.
  * Retourne toujours { data, error } — jamais throw.
  */
 export async function sendToElio(
   dashboardType: DashboardType,
   message: string,
-  clientId?: string
+  clientId?: string,
+  draftContext?: DraftContext,
 ): Promise<ActionResponse<ElioMessage>> {
   if (!message.trim()) {
     return errorResponse('Le message ne peut pas être vide', 'VALIDATION_ERROR')
@@ -87,18 +99,77 @@ export async function sendToElio(
     return errorResponse('Erreur de configuration Élio', 'CONFIG_ERROR', configError)
   }
 
-  // 2. Construire le system prompt selon le dashboardType
-  // Note: communicationProfile et tier seront injectés quand getElioConfig
-  // sera enrichi en Story 8.2+ (profil stocké séparément dans communication_profiles)
-  let systemPrompt = buildSystemPrompt({
-    dashboardType,
-    customInstructions: elioConfig?.customInstructions,
-  })
-
-  // 2b. Hub uniquement : détecter intention search_client et enrichir le contexte LLM (AC3, AC4)
+  // 2. Hub uniquement : détecter l'intention et router vers la Server Action appropriée
   if (dashboardType === 'hub') {
     const intent = detectIntent(message)
 
+    // 2a. Correction de texte
+    if (intent.action === 'correct_text' && intent.clientName && intent.originalText) {
+      const { data: correctedText, error: correctionError } = await correctAndAdaptText(
+        intent.clientName,
+        intent.originalText,
+      )
+
+      if (correctionError) {
+        return errorResponse(correctionError.message, correctionError.code, correctionError.details)
+      }
+
+      return successResponse<ElioMessage>({
+        id: makeMessageId(),
+        role: 'assistant',
+        content: correctedText ?? '',
+        createdAt: new Date().toISOString(),
+        dashboardType,
+      })
+    }
+
+    // 2b. Génération de brouillon
+    if (intent.action === 'generate_draft' && intent.clientName) {
+      const { data: draft, error: draftError } = await generateDraft({
+        clientName: intent.clientName,
+        draftType: intent.draftType ?? 'chat',
+        subject: intent.draftSubject ?? message,
+      })
+
+      if (draftError) {
+        return errorResponse(draftError.message, draftError.code, draftError.details)
+      }
+
+      return successResponse<ElioMessage>({
+        id: makeMessageId(),
+        role: 'assistant',
+        content: draft?.content ?? '',
+        createdAt: new Date().toISOString(),
+        dashboardType,
+        metadata: { draftType: draft?.draftType },
+      })
+    }
+
+    // 2c. Ajustement de brouillon (nécessite draftContext)
+    if (intent.action === 'adjust_draft' && draftContext) {
+      const { data: adjusted, error: adjustError } = await adjustDraft({
+        previousDraft: draftContext.previousDraft,
+        instruction: message,
+        clientName: draftContext.clientName,
+        draftType: draftContext.draftType,
+        currentVersion: draftContext.currentVersion,
+      })
+
+      if (adjustError) {
+        return errorResponse(adjustError.message, adjustError.code, adjustError.details)
+      }
+
+      return successResponse<ElioMessage>({
+        id: makeMessageId(),
+        role: 'assistant',
+        content: adjusted?.content ?? '',
+        createdAt: new Date().toISOString(),
+        dashboardType,
+        metadata: { draftType: adjusted?.draftType },
+      })
+    }
+
+    // 2d. Recherche client
     if (intent.action === 'search_client' && intent.query) {
       const { data: clientInfo, error: searchError } = await searchClientInfo(intent.query)
 
@@ -111,11 +182,33 @@ export async function sendToElio(
       }
 
       // Réinjecter les résultats dans le contexte LLM
-      systemPrompt += `\n\n# Résultats de recherche client\n${JSON.stringify(clientInfo, null, 2)}\n\nFormule une réponse claire avec ces informations.`
+      const systemPrompt =
+        buildSystemPrompt({ dashboardType, customInstructions: elioConfig?.customInstructions }) +
+        `\n\n# Résultats de recherche client\n${JSON.stringify(clientInfo, null, 2)}\n\nFormule une réponse claire avec ces informations.`
+
+      return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig)
     }
   }
 
-  // 3. Appeler Supabase Edge Function avec timeout
+  // 3. Cas général : construire le system prompt et appeler le LLM
+  const systemPrompt = buildSystemPrompt({
+    dashboardType,
+    customInstructions: elioConfig?.customInstructions,
+  })
+
+  return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig)
+}
+
+/**
+ * Appelle la Supabase Edge Function avec timeout et gestion d'erreurs.
+ */
+async function callLLM(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  systemPrompt: string,
+  message: string,
+  dashboardType: DashboardType,
+  elioConfig: { model?: string; maxTokens?: number; temperature?: number } | null,
+): Promise<ActionResponse<ElioMessage>> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
 

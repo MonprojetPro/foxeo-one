@@ -47,6 +47,43 @@ vi.mock('./search-client-info', () => ({
   }),
 }))
 
+vi.mock('./correct-and-adapt-text', () => ({
+  correctAndAdaptText: vi.fn(async (clientName: string, _originalText: string) => {
+    if (clientName.toLowerCase().includes('inconnu')) {
+      return { data: null, error: { message: 'Client non trouvé', code: 'CLIENT_NOT_FOUND' } }
+    }
+    return { data: '---\nTexte corrigé.\n---\nOrtho OK.', error: null }
+  }),
+}))
+
+vi.mock('./generate-draft', () => ({
+  generateDraft: vi.fn(async (input: { clientName: string; draftType: string; subject: string }) => {
+    if (input.clientName.toLowerCase().includes('inconnu')) {
+      return { data: null, error: { message: 'Client non trouvé', code: 'CLIENT_NOT_FOUND' } }
+    }
+    return {
+      data: {
+        content: `---\nBrouillon ${input.draftType}.\n---\nProfil appliqué.`,
+        draftType: input.draftType,
+        clientName: input.clientName,
+      },
+      error: null,
+    }
+  }),
+}))
+
+vi.mock('./adjust-draft', () => ({
+  adjustDraft: vi.fn(async (_input: unknown) => ({
+    data: {
+      content: '---\nVersion ajustée.\n---\nModif appliquée.',
+      draftType: 'email',
+      clientName: 'Thomas',
+      version: 2,
+    },
+    error: null,
+  })),
+}))
+
 describe('sendToElio', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -156,5 +193,48 @@ describe('sendToElio', () => {
     const result = await sendToElio('lab', 'Question test', 'client-1')
     expect(result.data).toBeNull()
     expect(result.error).toBeDefined()
+  })
+
+  // Story 8.6 — Task 7
+  it('Task 7.1-7.2 — Hub correct_text : appelle correctAndAdaptText et retourne le texte corrigé', async () => {
+    const result = await sendToElio('hub', 'Corrige ça pour Thomas : salu thomas je tenvoi le devis')
+    expect(result.error).toBeNull()
+    expect(result.data?.content).toBeTruthy()
+  })
+
+  it('Task 7.1-7.2 — Hub generate_draft email : appelle generateDraft et retourne le brouillon', async () => {
+    const result = await sendToElio('hub', 'Génère un email pour Sandrine pour lui dire que son devis est prêt')
+    expect(result.error).toBeNull()
+    expect(result.data?.content).toBeTruthy()
+    expect(result.data?.metadata?.draftType).toBe('email')
+  })
+
+  it('Task 7.1-7.2 — Hub generate_draft chat : draftType=chat dans metadata', async () => {
+    const result = await sendToElio('hub', 'Écris une réponse pour Marie')
+    expect(result.error).toBeNull()
+    expect(result.data?.metadata?.draftType).toBe('chat')
+  })
+
+  it('Task 7.3 — Hub adjust_draft avec draftContext : appelle adjustDraft', async () => {
+    const result = await sendToElio('hub', 'Plus court', undefined, {
+      previousDraft: 'Bonjour Thomas, voici le devis...',
+      clientName: 'Thomas',
+      draftType: 'email',
+      currentVersion: 1,
+    })
+    expect(result.error).toBeNull()
+    expect(result.data?.content).toBeTruthy()
+    expect(result.data?.metadata?.draftType).toBe('email')
+  })
+
+  it('Task 7.3 — Hub adjust_draft sans draftContext : traité comme message général', async () => {
+    mockInvoke.mockResolvedValueOnce({
+      data: { content: 'Réponse générale.' },
+      error: null,
+    })
+
+    const result = await sendToElio('hub', 'Plus court')
+    expect(result.error).toBeNull()
+    expect(result.data?.content).toBeTruthy()
   })
 })

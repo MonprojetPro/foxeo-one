@@ -55,6 +55,19 @@ export { compileLabLearnings } from './actions/compile-lab-learnings'
 export { searchClientInfo } from './actions/search-client-info'
 export type { ClientInfo } from './actions/search-client-info'
 
+// Actions — Story 8.6
+export { correctAndAdaptText } from './actions/correct-and-adapt-text'
+export { generateDraft } from './actions/generate-draft'
+export type { GenerateDraftInput, DraftResult } from './actions/generate-draft'
+export { adjustDraft } from './actions/adjust-draft'
+export type { AdjustDraftInput, AdjustedDraftResult } from './actions/adjust-draft'
+
+// Components — Story 8.6
+export { DraftDisplay } from './components/draft-display'
+
+// Types — Story 8.6
+export type { DraftContext } from './actions/send-to-elio'
+
 // Actions — Stories 6.x
 export { createCommunicationProfile } from './actions/create-communication-profile'
 export { updateCommunicationProfile } from './actions/update-communication-profile'
@@ -75,6 +88,9 @@ export { HUB_DATABASE_SCHEMAS } from './config/hub-database-schemas'
 // Utils — Story 8.5
 export { detectIntent } from './utils/detect-intent'
 export type { Intent } from './utils/detect-intent'
+
+// Utils — Story 8.6
+export { getProfileLabels } from './utils/profile-labels'
 
 // Components config — Story 8.5
 export { HEADER_LABELS, HUB_PLACEHOLDER_DEFAULT } from './components/elio-chat'
