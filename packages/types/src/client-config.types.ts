@@ -23,6 +23,7 @@ export type ClientConfig = {
   themeVariant: 'lab' | 'one'
   customBranding?: CustomBranding
   elioConfig?: ElioConfig
+  elioTier?: 'one' | 'one_plus'
   density: 'compact' | 'comfortable' | 'spacious'
   createdAt: string
   updatedAt: string

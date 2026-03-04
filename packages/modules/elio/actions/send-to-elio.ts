@@ -2,7 +2,7 @@
 
 import { createServerSupabaseClient } from '@foxeo/supabase'
 import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
-import { buildSystemPrompt } from '../config/system-prompts'
+import { buildSystemPrompt, UPSELL_ONE_PLUS_MESSAGE } from '../config/system-prompts'
 import { getElioConfig } from './get-elio-config'
 import { searchClientInfo } from './search-client-info'
 import { correctAndAdaptText } from './correct-and-adapt-text'
@@ -11,6 +11,7 @@ import { adjustDraft } from './adjust-draft'
 import { detectIntent } from '../utils/detect-intent'
 import { detectLowConfidence } from '../utils/detect-low-confidence'
 import { checkIfFeatureExists } from '../utils/detect-existing-feature'
+import { checkModuleActive, buildModuleNotActiveMessage } from '../utils/check-module-active'
 import type { DashboardType, ElioMessage, CommunicationProfileFR66 } from '../types/elio.types'
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
 
@@ -198,9 +199,16 @@ export async function sendToElio(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: clientConfig } = await (supabase as any)
       .from('client_configs')
-      .select('modules_documentation, elio_config')
+      .select('modules_documentation, elio_config, elio_tier, active_modules')
       .eq('client_id', clientId)
-      .maybeSingle() as { data: { modules_documentation: unknown; elio_config: unknown } | null }
+      .maybeSingle() as {
+        data: {
+          modules_documentation: unknown
+          elio_config: unknown
+          elio_tier: 'one' | 'one_plus' | null
+          active_modules: string[] | null
+        } | null
+      }
 
     const elioConfigJson = (clientConfig?.elio_config as Record<string, unknown>) ?? {}
 
@@ -209,8 +217,15 @@ export async function sendToElio(
       (elioConfigJson.communication_profile as CommunicationProfileFR66 | undefined) ??
       DEFAULT_COMMUNICATION_PROFILE_FR66
 
-    // Tier (stocké dans elio_config.tier)
-    const tier = (elioConfigJson.tier as 'one' | 'one_plus' | undefined) ?? 'one'
+    // Tier — colonne dédiée client_configs.elio_tier (Task 2.1, AC1)
+    // Fallback sur elio_config.tier pour compatibilité ascendante
+    const tier: 'one' | 'one_plus' =
+      clientConfig?.elio_tier ??
+      (elioConfigJson.tier as 'one' | 'one_plus' | undefined) ??
+      'one'
+
+    // Modules actifs du client
+    const activeModules: string[] = clientConfig?.active_modules ?? []
 
     // Documentation modules actifs (colonne dédiée, injectée via Story 10.3)
     const modulesDocumentation = clientConfig?.modules_documentation
@@ -239,8 +254,65 @@ export async function sendToElio(
         .join('\n')
     }
 
-    // Story 8.8 — Task 7 : détecter intention évolution avant appel LLM
+    // Détecter l'intention avant l'appel LLM (Tasks 2, 3, 7, 8)
     const oneIntent = detectIntent(message)
+
+    // Story 8.9a — Task 2.3/2.4 : bloquer les actions One+ si tier = 'one'
+    if (oneIntent.action === 'module_action') {
+      if (tier !== 'one_plus') {
+        // Client One tente une action One+ → message upsell (AC1, Task 2.4)
+        return successResponse<ElioMessage>({
+          id: makeMessageId(),
+          role: 'assistant',
+          content: UPSELL_ONE_PLUS_MESSAGE,
+          createdAt: new Date().toISOString(),
+          dashboardType,
+        })
+      }
+
+      // Client One+ : vérifier que le module est actif (AC3, Task 7)
+      const moduleTarget = oneIntent.moduleTarget ?? 'unknown'
+      if (moduleTarget !== 'unknown' && !checkModuleActive(activeModules, moduleTarget)) {
+        return successResponse<ElioMessage>({
+          id: makeMessageId(),
+          role: 'assistant',
+          content: buildModuleNotActiveMessage(moduleTarget),
+          createdAt: new Date().toISOString(),
+          dashboardType,
+        })
+      }
+
+      // Module actif → appel LLM avec contexte action, retourner avec pendingAction (AC2, Task 4)
+      const actionSystemPrompt = buildSystemPrompt({
+        dashboardType,
+        communicationProfile,
+        tier,
+        activeModulesDocs: modulesDocumentation,
+        customInstructions: elioConfig?.customInstructions,
+        labBriefs: labBriefsText,
+        parcoursContext,
+      })
+
+      const actionResponse = await callLLM(supabase, actionSystemPrompt, message, dashboardType, elioConfig)
+
+      if (actionResponse.data) {
+        actionResponse.data.metadata = {
+          ...actionResponse.data.metadata,
+          requiresConfirmation: true,
+          pendingAction: {
+            module: moduleTarget,
+            verb: oneIntent.moduleActionVerb ?? 'send',
+            target: String(oneIntent.moduleActionParams?.target ?? ''),
+            params: oneIntent.moduleActionParams,
+            requiresDoubleConfirm: oneIntent.moduleActionVerb === 'delete',
+          },
+        }
+      }
+
+      return actionResponse
+    }
+
+    // Story 8.8 — Task 7 : détecter intention évolution avant appel LLM
     if (oneIntent.action === 'request_evolution' && oneIntent.initialRequest) {
       // Task 6 : vérifier si la fonctionnalité existe déjà dans les modules actifs
       const featureCheck = checkIfFeatureExists(oneIntent.initialRequest, modulesDocumentation ?? '')

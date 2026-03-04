@@ -1,5 +1,7 @@
+export type ModuleActionVerb = 'send' | 'create' | 'update' | 'delete'
+
 export interface Intent {
-  action: 'search_client' | 'help_feature' | 'general' | 'correct_text' | 'generate_draft' | 'adjust_draft' | 'request_evolution'
+  action: 'search_client' | 'help_feature' | 'general' | 'correct_text' | 'generate_draft' | 'adjust_draft' | 'request_evolution' | 'module_action'
   query?: string          // search_client
   feature?: string        // help_feature
   clientName?: string     // correct_text | generate_draft
@@ -7,6 +9,10 @@ export interface Intent {
   draftType?: 'email' | 'validation_hub' | 'chat'  // generate_draft
   draftSubject?: string   // generate_draft
   initialRequest?: string // request_evolution — besoin exprimé par le client
+  // module_action (Story 8.9a — FR48)
+  moduleTarget?: string       // module cible : 'adhesions', 'agenda', 'sms', 'facturation', 'unknown'
+  moduleActionVerb?: ModuleActionVerb  // verbe d'action
+  moduleActionParams?: Record<string, unknown>  // paramètres extraits
 }
 
 const CLIENT_PATTERNS: Array<{ pattern: RegExp; groupIndex: number }> = [
@@ -35,6 +41,27 @@ const DRAFT_PATTERNS: RegExp[] = [
   /écris\s+(?:un|une)\s+(email|message|brouillon|réponse\s+validation\s+hub|réponse)\s+pour\s+(\w[\w\s-]*?)(?:\s+(?:pour|afin de|pour lui dire)\s+(.+))?$/is,
   /rédige\s+(?:un|une)\s+(email|message|brouillon|réponse)\s+pour\s+(\w[\w\s-]*?)(?:\s+(.+))?$/is,
 ]
+
+// Story 8.9a — Module action patterns (AC2, FR48)
+// Imperative commands targeting a module (One+ only)
+const MODULE_SEND_PATTERN = /^envoie(?:r)?\s+(?:un\s+|une\s+)?(.+?)\s+(?:à|aux|a)\s+(.+)/i
+const MODULE_CREATE_PATTERN = /^crée(?:r)?\s+(?:un\s+|une\s+)?(.+?)\s+(?:pour|le|la|les)\s+(.+)/i
+const MODULE_DELETE_PATTERN = /^supprime(?:r)?\s+(?:le|la|les)\s+(.+)/i
+const MODULE_UPDATE_PATTERN = /^modifie(?:r)?\s+(?:le|la|les)\s+(.+)/i
+
+function inferModuleFromText(text: string): string {
+  const lower = text.toLowerCase()
+  // Checked in priority order — sms before membre to avoid false match on "membres"
+  if (lower.includes('sms')) return 'sms'
+  if (lower.includes('facture') || lower.includes('devis') || lower.includes('paiement')) return 'facturation'
+  if (lower.includes('\u00e9v\u00e9nement') || lower.includes('evenement') ||
+      lower.includes('r\u00e9servation') || lower.includes('reservation') ||
+      lower.includes('rendez')) return 'agenda'
+  if (lower.includes('rappel') || lower.includes('cotisation') ||
+      lower.includes('adh\u00e9sion') || lower.includes('adhesion') ||
+      lower.includes('membre')) return 'adhesions'
+  return 'unknown'
+}
 
 // Story 8.8 — Evolution request patterns (AC1, FR47)
 const EVOLUTION_PATTERNS: Array<{ pattern: RegExp; groupIndex: number }> = [
@@ -102,14 +129,74 @@ export function detectIntent(userMessage: string): Intent {
     }
   }
 
-  // 3. Ajustement de brouillon
+  // 3. Action module (Story 8.9a — FR48) — impératif + mot-clé module connu
+  // Détecté AVANT adjust_draft car "Supprime les membres..." est un module_action, pas un ajustement
+  const sendMatch = msg.match(MODULE_SEND_PATTERN)
+  if (sendMatch) {
+    const subject = sendMatch[1]?.trim() ?? ''
+    const target = sendMatch[2]?.trim() ?? ''
+    const moduleTarget = inferModuleFromText(subject + ' ' + target)
+    if (moduleTarget !== 'unknown') {
+      return {
+        action: 'module_action',
+        moduleActionVerb: 'send',
+        moduleTarget,
+        moduleActionParams: { subject, target },
+      }
+    }
+  }
+
+  const createMatch = msg.match(MODULE_CREATE_PATTERN)
+  if (createMatch) {
+    const subject = createMatch[1]?.trim() ?? ''
+    const target = createMatch[2]?.trim() ?? ''
+    const moduleTarget = inferModuleFromText(subject + ' ' + target)
+    if (moduleTarget !== 'unknown') {
+      return {
+        action: 'module_action',
+        moduleActionVerb: 'create',
+        moduleTarget,
+        moduleActionParams: { subject, target },
+      }
+    }
+  }
+
+  const deleteMatch = msg.match(MODULE_DELETE_PATTERN)
+  if (deleteMatch) {
+    const subject = deleteMatch[1]?.trim() ?? ''
+    const moduleTarget = inferModuleFromText(subject)
+    if (moduleTarget !== 'unknown') {
+      return {
+        action: 'module_action',
+        moduleActionVerb: 'delete',
+        moduleTarget,
+        moduleActionParams: { subject },
+      }
+    }
+  }
+
+  const updateMatch = msg.match(MODULE_UPDATE_PATTERN)
+  if (updateMatch) {
+    const subject = updateMatch[1]?.trim() ?? ''
+    const moduleTarget = inferModuleFromText(subject)
+    if (moduleTarget !== 'unknown') {
+      return {
+        action: 'module_action',
+        moduleActionVerb: 'update',
+        moduleTarget,
+        moduleActionParams: { subject },
+      }
+    }
+  }
+
+  // 4. Ajustement de brouillon (Hub — après module_action pour éviter les conflits)
   for (const pattern of ADJUSTMENT_PATTERNS) {
     if (pattern.test(msg)) {
       return { action: 'adjust_draft' }
     }
   }
 
-  // 4. Demande d'évolution (Story 8.8)
+  // 5. Demande d'évolution (Story 8.8)
   for (const { pattern, groupIndex } of EVOLUTION_PATTERNS) {
     const match = msg.match(pattern)
     if (match) {
@@ -118,7 +205,7 @@ export function detectIntent(userMessage: string): Intent {
     }
   }
 
-  // 5. Recherche client
+  // 6. Recherche client
   for (const { pattern, groupIndex } of CLIENT_PATTERNS) {
     const match = msg.match(pattern)
     if (match) {
@@ -127,7 +214,7 @@ export function detectIntent(userMessage: string): Intent {
     }
   }
 
-  // 6. Aide fonctionnalités
+  // 7. Aide fonctionnalités
   for (const { pattern, groupIndex } of HELP_PATTERNS) {
     const match = msg.match(pattern)
     if (match) {

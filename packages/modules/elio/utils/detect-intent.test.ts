@@ -186,6 +186,78 @@ describe('detectIntent (Story 8.6 — Task 1)', () => {
   })
 })
 
+describe('detectIntent (Story 8.9a — Task 3)', () => {
+  describe('action: module_action (AC2, FR48)', () => {
+    it('Task 3.2 — détecte "Envoie un rappel de cotisation aux membres en retard"', () => {
+      const intent = detectIntent('Envoie un rappel de cotisation aux membres en retard')
+      expect(intent.action).toBe('module_action')
+      expect(intent.moduleActionVerb).toBe('send')
+      expect(intent.moduleTarget).toBe('adhesions')
+    })
+
+    it('Task 3.2 — détecte "Crée un événement pour samedi prochain"', () => {
+      const intent = detectIntent('Crée un événement pour samedi prochain')
+      expect(intent.action).toBe('module_action')
+      expect(intent.moduleActionVerb).toBe('create')
+      expect(intent.moduleTarget).toBe('agenda')
+    })
+
+    it('Task 3.2 — détecte "Supprime les membres inactifs"', () => {
+      const intent = detectIntent('Supprime les membres inactifs')
+      expect(intent.action).toBe('module_action')
+      expect(intent.moduleActionVerb).toBe('delete')
+    })
+
+    it('Task 3.3 — extrait le module cible pour "cotisation" → adhesions', () => {
+      const intent = detectIntent('Envoie un rappel de cotisation aux membres')
+      expect(intent.action).toBe('module_action')
+      expect(intent.moduleTarget).toBe('adhesions')
+    })
+
+    it('Task 3.3 — extrait le module cible pour "événement" → agenda', () => {
+      const intent = detectIntent('Crée un événement pour lundi')
+      expect(intent.action).toBe('module_action')
+      expect(intent.moduleTarget).toBe('agenda')
+    })
+
+    it('Task 3.3 — extrait le module cible pour "rappel" → adhesions', () => {
+      const intent = detectIntent('Envoie un rappel aux membres en retard')
+      expect(intent.action).toBe('module_action')
+      expect(intent.moduleTarget).toBe('adhesions')
+    })
+
+    it('Task 3.2 — détecte "Envoie un SMS à tous les membres"', () => {
+      const intent = detectIntent('Envoie un SMS à tous les membres')
+      expect(intent.action).toBe('module_action')
+      expect(intent.moduleActionVerb).toBe('send')
+      expect(intent.moduleTarget).toBe('sms')
+    })
+
+    it('Task 3.3 — extrait le target pour envoi', () => {
+      const intent = detectIntent('Envoie un rappel aux membres en retard')
+      expect(intent.action).toBe('module_action')
+      expect(intent.moduleTarget).toBeTruthy()
+    })
+
+    it('ne détecte pas une question comme module_action', () => {
+      const intent = detectIntent('Comment je crée un événement ?')
+      expect(intent.action).not.toBe('module_action')
+    })
+
+    it('ne détecte pas une demande d\'évolution comme module_action', () => {
+      const intent = detectIntent('Je voudrais pouvoir envoyer des rappels')
+      expect(intent.action).not.toBe('module_action')
+    })
+
+    it('CR — détecte "Modifie les cotisations des membres"', () => {
+      const intent = detectIntent('Modifie les cotisations des membres')
+      expect(intent.action).toBe('module_action')
+      expect(intent.moduleActionVerb).toBe('update')
+      expect(intent.moduleTarget).toBe('adhesions')
+    })
+  })
+})
+
 describe('detectIntent (Story 8.8 — Task 1)', () => {
   describe('action: request_evolution (AC1, FR47)', () => {
     it('Task 1.2 — détecte "Je voudrais pouvoir envoyer des SMS"', () => {

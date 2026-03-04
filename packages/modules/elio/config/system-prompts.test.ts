@@ -208,6 +208,33 @@ describe('buildSystemPrompt', () => {
     })
   })
 
+  describe('Story 8.9a — Système de tiers Élio One vs One+ (AC1)', () => {
+    it('Task 2.2 — prompt One contient la liste des capacités One (FAQ, guidance, évolutions)', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one' })
+      expect(prompt).toContain('Élio One')
+      expect(prompt).toContain('FAQ')
+      expect(prompt).toContain("demandes d'évolutions")
+    })
+
+    it('Task 2.2 — prompt One tier=one contient "CE QUE TU NE PEUX PAS FAIRE"', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one' })
+      expect(prompt).toContain('NE PEUX PAS')
+    })
+
+    it('Task 2.2 — prompt One+ contient les actions modules', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one_plus' })
+      expect(prompt).toContain('One+')
+      expect(prompt).toContain('actions')
+      expect(prompt).toContain('confirmation')
+    })
+
+    it('Task 2.4 — prompt One contient message upsell One+', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one' })
+      expect(prompt).toContain('One+')
+      expect(prompt).toContain('MiKL')
+    })
+  })
+
   describe('Instructions d\'observation Lab (Story 8.4 — AC3)', () => {
     it('inclut les instructions d\'observation dans le prompt Lab', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })

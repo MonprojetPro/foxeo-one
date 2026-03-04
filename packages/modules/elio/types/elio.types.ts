@@ -4,6 +4,11 @@ import type { ActionError } from '@foxeo/types'
 
 export type DashboardType = 'hub' | 'lab' | 'one'
 
+/**
+ * Tier Élio pour le dashboard One uniquement ('one' | 'one_plus').
+ * Note : distinct de ElioTier dans @foxeo/types qui inclut aussi 'lab' et les anciens noms avec tirets.
+ * Les valeurs ici correspondent aux valeurs DB (colonne client_configs.elio_tier).
+ */
 export type ElioTier = 'one' | 'one_plus'
 
 // --- Message Types ---
@@ -34,6 +39,15 @@ export interface ElioMessageMetadata {
   evolutionInitialRequest?: string
   // Story 8.8: fonctionnalité existante détectée
   existingFeatureInstructions?: string
+  // Story 8.9a: action module One+ en attente de confirmation
+  pendingAction?: {
+    module: string
+    verb: 'send' | 'create' | 'update' | 'delete'
+    target: string
+    params?: Record<string, unknown>
+    requiresDoubleConfirm?: boolean
+  }
+  requiresConfirmation?: boolean
 }
 
 // Story 8.7 — Task 3.1 : Structure documentation module actif (injectée par MiKL, Story 10.3)

@@ -4,6 +4,10 @@ import { HUB_FEATURES_DOCUMENTATION } from './hub-features-documentation'
 import { HUB_DATABASE_SCHEMAS } from './hub-database-schemas'
 import { ONE_NAVIGATION_MAP } from './one-navigation-map'
 
+/** Message upsell Élio One → One+ (AC1 — Story 8.9a) */
+export const UPSELL_ONE_PLUS_MESSAGE =
+  "Cette fonctionnalité fait partie de l'offre Élio One+. Contactez MiKL pour en savoir plus !"
+
 interface SystemPromptOptions {
   dashboardType: DashboardType
   communicationProfile?: CommunicationProfileFR66
@@ -135,9 +139,30 @@ ${buildProfileInstructions(profile)}`
   }
 
   if (tier === 'one_plus') {
-    prompt += `\n\n**Capacités One+ disponibles :** actions sur les modules, génération de documents, alertes proactives.`
+    prompt += `\n\n**Tes capacités (Élio One+) :**
+- Répondre aux questions (FAQ)
+- Guider dans le dashboard
+- Collecter des demandes d'évolutions
+- **Exécuter des actions** sur les modules actifs (envoyer rappels, créer événements, etc.)
+- **Générer des documents** (génération de documents)
+- **Envoyer des alertes proactives**
+
+**Important pour les actions :**
+- Toujours demander confirmation avant d'exécuter
+- Afficher les détails (liste des entités concernées)
+- Double confirmation pour les actions destructives (suppression)`
   } else {
-    prompt += `\n\n**Capacités disponibles :** FAQ, guidance dashboard, questions sur les fonctionnalités.`
+    prompt += `\n\n**Tes capacités (Élio One) :**
+- Répondre aux questions (FAQ)
+- Guider dans le dashboard
+- Collecter des demandes d'évolutions
+
+**Ce que tu NE PEUX PAS faire :**
+- Exécuter des actions sur les modules
+- Générer des documents
+- Envoyer des alertes proactives
+
+Si on te demande une action non disponible, réponds : "${UPSELL_ONE_PLUS_MESSAGE}"`
   }
 
   return prompt
