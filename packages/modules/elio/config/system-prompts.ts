@@ -1,5 +1,7 @@
 import type { DashboardType, CommunicationProfileFR66, ElioTier } from '../types/elio.types'
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
+import { HUB_FEATURES_DOCUMENTATION } from './hub-features-documentation'
+import { HUB_DATABASE_SCHEMAS } from './hub-database-schemas'
 
 interface SystemPromptOptions {
   dashboardType: DashboardType
@@ -62,6 +64,21 @@ const BASE_PROMPT = `Vous êtes Élio, l'assistant IA de la plateforme Foxeo.
 Votre mission est d'accompagner les entrepreneurs avec bienveillance, expertise et efficacité.
 Répondez toujours en français sauf si le client écrit dans une autre langue.`
 
+const LAB_OBSERVATION_INSTRUCTIONS = `
+## Observation des préférences de communication
+
+Pendant la conversation, observe le client et détecte ses préférences implicites :
+- Préfère-t-il des messages courts ou détaillés ?
+- Est-il plus réceptif à un ton formel ou décontracté ?
+- Répond-il mieux aux questions ouvertes ou fermées ?
+- A-t-il des frustrations récurrentes (questions répétitives, jargon technique) ?
+- Y a-t-il des moments de la journée où il est plus réactif ?
+
+**Si tu détectes une préférence claire**, note-la dans le champ metadata du message avec la clé "profile_observation".
+Exemple : "Client préfère les listes à puces", "Client frustré par les questions ouvertes", "Client répond mieux le matin".
+
+Ces observations aideront à affiner son profil de communication.`
+
 function buildLabPrompt(profile: CommunicationProfileFR66, stepContext?: string): string {
   let prompt = `${BASE_PROMPT}
 
@@ -70,7 +87,7 @@ Vous accompagnez un entrepreneur dans son parcours d'incubation Foxeo Lab.
 Votre rôle est de guider, questionner et aider à structurer les briefs d'étapes.
 
 **Profil de communication du client :**
-${buildProfileInstructions(profile)}`
+${buildProfileInstructions(profile)}${LAB_OBSERVATION_INSTRUCTIONS}`
 
   if (stepContext) {
     prompt += `\n\n**Étape active :**\n${stepContext}`
@@ -111,7 +128,13 @@ function buildHubPrompt(): string {
 Vous assistez l'opérateur dans la gestion de la plateforme Foxeo.
 Vous avez accès au contexte de tous les clients et pouvez aider sur les fonctionnalités Hub.
 
-Capacités disponibles : recherche clients, analyse des données, rédaction/correction de contenus, aide fonctionnalités Hub.`
+Capacités disponibles : recherche clients, analyse des données, rédaction/correction de contenus, aide fonctionnalités Hub.
+
+${HUB_FEATURES_DOCUMENTATION}
+
+${HUB_DATABASE_SCHEMAS}
+
+Si MiKL pose une question hors du périmètre Hub : "Ça sort un peu de mon périmètre, mais je peux essayer de t'aider quand même !"`
 }
 
 /**

@@ -4,6 +4,8 @@ import { createServerSupabaseClient } from '@foxeo/supabase'
 import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
 import { buildSystemPrompt } from '../config/system-prompts'
 import { getElioConfig } from './get-elio-config'
+import { searchClientInfo } from './search-client-info'
+import { detectIntent } from '../utils/detect-intent'
 import type { DashboardType, ElioMessage } from '../types/elio.types'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
@@ -88,10 +90,30 @@ export async function sendToElio(
   // 2. Construire le system prompt selon le dashboardType
   // Note: communicationProfile et tier seront injectés quand getElioConfig
   // sera enrichi en Story 8.2+ (profil stocké séparément dans communication_profiles)
-  const systemPrompt = buildSystemPrompt({
+  let systemPrompt = buildSystemPrompt({
     dashboardType,
     customInstructions: elioConfig?.customInstructions,
   })
+
+  // 2b. Hub uniquement : détecter intention search_client et enrichir le contexte LLM (AC3, AC4)
+  if (dashboardType === 'hub') {
+    const intent = detectIntent(message)
+
+    if (intent.action === 'search_client' && intent.query) {
+      const { data: clientInfo, error: searchError } = await searchClientInfo(intent.query)
+
+      if (searchError) {
+        return errorResponse(
+          `Je n'ai trouvé aucun client correspondant à "${intent.query}". Tu veux vérifier l'orthographe ?`,
+          'NOT_FOUND',
+          searchError
+        )
+      }
+
+      // Réinjecter les résultats dans le contexte LLM
+      systemPrompt += `\n\n# Résultats de recherche client\n${JSON.stringify(clientInfo, null, 2)}\n\nFormule une réponse claire avec ces informations.`
+    }
+  }
 
   // 3. Appeler Supabase Edge Function avec timeout
   const controller = new AbortController()

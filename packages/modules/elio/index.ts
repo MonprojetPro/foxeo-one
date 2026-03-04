@@ -48,6 +48,13 @@ export { submitFeedback } from './actions/submit-feedback'
 export { getElioConfigHistory } from './actions/get-elio-config-history'
 export { restoreElioConfig } from './actions/restore-elio-config'
 
+// Actions — Story 8.4
+export { compileLabLearnings } from './actions/compile-lab-learnings'
+
+// Actions — Story 8.5
+export { searchClientInfo } from './actions/search-client-info'
+export type { ClientInfo } from './actions/search-client-info'
+
 // Actions — Stories 6.x
 export { createCommunicationProfile } from './actions/create-communication-profile'
 export { updateCommunicationProfile } from './actions/update-communication-profile'
@@ -60,6 +67,17 @@ export { resetElioConfig } from './actions/reset-elio-config'
 
 // Config — Story 8.1
 export { buildSystemPrompt } from './config/system-prompts'
+
+// Config — Story 8.5
+export { HUB_FEATURES_DOCUMENTATION } from './config/hub-features-documentation'
+export { HUB_DATABASE_SCHEMAS } from './config/hub-database-schemas'
+
+// Utils — Story 8.5
+export { detectIntent } from './utils/detect-intent'
+export type { Intent } from './utils/detect-intent'
+
+// Components config — Story 8.5
+export { HEADER_LABELS, HUB_PLACEHOLDER_DEFAULT } from './components/elio-chat'
 
 // Utils — Stories 6.x
 export { buildElioSystemPrompt } from './utils/build-system-prompt'

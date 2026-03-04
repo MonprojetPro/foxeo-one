@@ -26,6 +26,19 @@ describe('getWelcomeMessage', () => {
     expect(getWelcomeMessage('one', true)).toContain('Salut')
   })
 
+  it('Task 2.2 — message Hub casual contient les capacités spécifiques (AC1)', () => {
+    const msg = getWelcomeMessage('hub', true)
+    expect(msg).toContain('naviguer dans le Hub')
+    expect(msg).toContain('chercher des infos clients')
+    expect(msg).toContain("Qu'est-ce que tu veux faire")
+  })
+
+  it('Task 2.2 — message Hub formel contient les capacités spécifiques (AC1)', () => {
+    const msg = getWelcomeMessage('hub', false)
+    expect(msg).toContain('naviguer dans le Hub')
+    expect(msg).toContain('chercher des infos clients')
+  })
+
   it('couvre tous les dashboardTypes', () => {
     const dashboards = ['hub', 'lab', 'one'] as const
     dashboards.forEach((dt) => {

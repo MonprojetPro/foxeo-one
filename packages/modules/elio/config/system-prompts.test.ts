@@ -94,6 +94,25 @@ describe('buildSystemPrompt', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'hub' })
       expect(prompt).toContain('recherche clients')
     })
+
+    it('Task 4.2 — inclut la documentation des fonctionnalités Hub (AC2, FR22)', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'hub' })
+      expect(prompt).toContain('Fonctionnalités Hub disponibles')
+      expect(prompt).toContain('Validation Hub')
+      expect(prompt).toContain('/modules/crm')
+    })
+
+    it('Task 4.3 — inclut la phrase hors périmètre (AC2)', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'hub' })
+      expect(prompt).toContain('périmètre')
+    })
+
+    it('Task 8.3 — inclut les schémas de base de données (AC4)', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'hub' })
+      expect(prompt).toContain('Schémas de base de données disponibles')
+      expect(prompt).toContain('Table clients')
+      expect(prompt).toContain('validation_requests')
+    })
   })
 
   describe('Instructions personnalisées', () => {
@@ -136,6 +155,28 @@ describe('buildSystemPrompt', () => {
       const profile: CommunicationProfileFR66 = { ...profileDefaut, privilege: ['listes à puces'] }
       const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profile })
       expect(prompt).toContain('listes à puces')
+    })
+  })
+
+  describe('Instructions d\'observation Lab (Story 8.4 — AC3)', () => {
+    it('inclut les instructions d\'observation dans le prompt Lab', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })
+      expect(prompt).toContain('Observation des préférences de communication')
+    })
+
+    it('inclut la clé profile_observation dans les instructions Lab', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })
+      expect(prompt).toContain('profile_observation')
+    })
+
+    it('n\'inclut pas les instructions d\'observation dans le prompt One', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
+      expect(prompt).not.toContain('profile_observation')
+    })
+
+    it('n\'inclut pas les instructions d\'observation dans le prompt Hub', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'hub' })
+      expect(prompt).not.toContain('profile_observation')
     })
   })
 })

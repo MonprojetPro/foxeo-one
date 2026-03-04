@@ -15,6 +15,9 @@ vi.mock('@foxeo/supabase', () => ({
           single: vi.fn(async () => ({ data: { id: 'client-1' }, error: null })),
           maybeSingle: vi.fn(async () => ({ data: null, error: null })),
         })),
+        or: vi.fn(() => ({
+          limit: vi.fn(async () => ({ data: [], error: null })),
+        })),
       })),
     })),
     functions: {
@@ -25,6 +28,23 @@ vi.mock('@foxeo/supabase', () => ({
 
 vi.mock('./get-elio-config', () => ({
   getElioConfig: vi.fn(async () => ({ data: DEFAULT_ELIO_CONFIG, error: null })),
+}))
+
+vi.mock('./search-client-info', () => ({
+  searchClientInfo: vi.fn(async (query: string) => {
+    if (query === 'InconnuXYZ') {
+      return { data: null, error: { message: 'Aucun client trouvé', code: 'NOT_FOUND' } }
+    }
+    return {
+      data: {
+        client: { name: 'Sandrine Martin', email: 'sandrine@test.com', client_type: 'lab', status: 'active' },
+        parcours: { current_step: 3, total_steps: 6 },
+        validationRequests: [],
+        recentMessages: [],
+      },
+      error: null,
+    }
+  }),
 }))
 
 describe('sendToElio', () => {
@@ -97,6 +117,34 @@ describe('sendToElio', () => {
     const result = await sendToElio('hub', 'Montre-moi les clients actifs')
     expect(result.error).toBeNull()
     expect(result.data?.dashboardType).toBe('hub')
+  })
+
+  it('Task 7.1-7.3 — Hub avec intention search_client : recherche et réinjecte dans LLM (AC3, AC4)', async () => {
+    mockInvoke.mockResolvedValueOnce({
+      data: { content: 'Sandrine Martin est en étape 3/6 de son parcours Lab.' },
+      error: null,
+    })
+
+    const result = await sendToElio('hub', 'Où en est Sandrine ?')
+    expect(result.error).toBeNull()
+    expect(result.data?.content).toContain('Sandrine')
+  })
+
+  it('Task 7.1-7.2 — Hub client non trouvé : retourne NOT_FOUND (AC3)', async () => {
+    const result = await sendToElio('hub', 'Où en est InconnuXYZ ?')
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('NOT_FOUND')
+  })
+
+  it('Task 7.4 — Hub message général (non search_client) : appelle le LLM normalement', async () => {
+    mockInvoke.mockResolvedValueOnce({
+      data: { content: 'Pour créer un client, va dans Clients → Nouveau client.' },
+      error: null,
+    })
+
+    const result = await sendToElio('hub', 'Comment je crée un client ?')
+    expect(result.error).toBeNull()
+    expect(result.data?.content).toBeTruthy()
   })
 
   it('retourne une erreur si l\'Edge Function retourne une erreur', async () => {

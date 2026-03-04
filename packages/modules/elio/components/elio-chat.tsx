@@ -27,17 +27,25 @@ interface ElioChatProps {
   placeholder?: string
 }
 
-const PALETTE_CLASSES: Record<DashboardType, string> = {
+export const PALETTE_CLASSES: Record<DashboardType, string> = {
   hub: 'elio-palette-hub',
   lab: 'elio-palette-lab',
   one: 'elio-palette-one',
 }
 
-const PALETTE_FOCUS_RING: Record<DashboardType, string> = {
+export const PALETTE_FOCUS_RING: Record<DashboardType, string> = {
   hub: 'focus-visible:ring-[oklch(0.7_0.15_190)]',
   lab: 'focus-visible:ring-[oklch(0.6_0.2_280)]',
   one: 'focus-visible:ring-[oklch(0.7_0.2_50)]',
 }
+
+export const HEADER_LABELS: Record<DashboardType, string> = {
+  hub: 'Élio Hub — Votre assistant',
+  lab: 'Élio Lab — Votre accompagnateur',
+  one: 'Élio — Votre assistant',
+}
+
+export const HUB_PLACEHOLDER_DEFAULT = "Demande-moi n'importe quoi sur Foxeo..."
 
 // ── Mode sans userId : chat éphémère (comportement 8.1) ──────────────────────
 
@@ -78,11 +86,16 @@ function ElioChatSimple({
     if (e.key === 'Escape') inputRef.current?.blur()
   }
 
+  const headerLabel = HEADER_LABELS[dashboardType]
+
   return (
     <div
       className={`flex flex-col h-full bg-background text-foreground ${paletteClass}`}
       data-dashboard-type={dashboardType}
     >
+      <header className="border-b border-border px-4 py-3 shrink-0">
+        <h2 className="text-sm font-semibold text-foreground">{headerLabel}</h2>
+      </header>
       <div
         className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
         role="log"
@@ -316,94 +329,101 @@ function ElioChatPersisted({
     ...localMessages,
   ]
 
+  const headerLabel = HEADER_LABELS[dashboardType]
+
   return (
     <div
-      className={`flex h-full bg-background text-foreground ${paletteClass}`}
+      className={`flex flex-col h-full bg-background text-foreground ${paletteClass}`}
       data-dashboard-type={dashboardType}
     >
-      {/* Panneau conversations (AC2) */}
-      {!conversationsLoading && (
-        <ConversationList
-          conversations={conversations}
-          activeConversationId={activeConversationId}
-          dashboardType={dashboardType}
-          onSelectConversation={handleSelectConversation}
-          onNewConversation={handleNewConversation}
-          onRenameTitle={handleRenameTitle}
-          isCreating={isCreatingConversation}
-        />
-      )}
+      <header className="border-b border-border px-4 py-3 shrink-0">
+        <h2 className="text-sm font-semibold text-foreground">{headerLabel}</h2>
+      </header>
+      <div className="flex flex-1 min-h-0">
+        {/* Panneau conversations (AC2) */}
+        {!conversationsLoading && (
+          <ConversationList
+            conversations={conversations}
+            activeConversationId={activeConversationId}
+            dashboardType={dashboardType}
+            onSelectConversation={handleSelectConversation}
+            onNewConversation={handleNewConversation}
+            onRenameTitle={handleRenameTitle}
+            isCreating={isCreatingConversation}
+          />
+        )}
 
-      {/* Zone chat — transition CSS < 500ms (NFR-P2 / AC4) */}
-      <div
-        className="flex-1 min-w-0 flex flex-col transition-opacity duration-300"
-        key={activeConversationId ?? 'no-conv'}
-      >
+        {/* Zone chat — transition CSS < 500ms (NFR-P2 / AC4) */}
         <div
-          className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
-          role="log"
-          aria-live="polite"
-          aria-label="Conversation avec Élio"
+          className="flex-1 min-w-0 flex flex-col transition-opacity duration-300"
+          key={activeConversationId ?? 'no-conv'}
         >
-          {/* Charger les messages précédents (AC4) */}
-          {hasNextPage && (
-            <div className="flex justify-center py-2">
-              <button
-                onClick={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-              >
-                {isFetchingNextPage ? 'Chargement…' : 'Charger les messages précédents'}
-              </button>
-            </div>
-          )}
+          <div
+            className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+            role="log"
+            aria-live="polite"
+            aria-label="Conversation avec Élio"
+          >
+            {/* Charger les messages précédents (AC4) */}
+            {hasNextPage && (
+              <div className="flex justify-center py-2">
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                >
+                  {isFetchingNextPage ? 'Chargement…' : 'Charger les messages précédents'}
+                </button>
+              </div>
+            )}
 
-          {displayMessages.map((msg) => {
-            const feedbackSlot =
-              msg.role === 'assistant' && msg.id && !msg.id.startsWith('local-') ? (
-                <ElioFeedback
-                  messageId={msg.id}
-                  currentFeedback={msg.metadata?.feedback?.rating}
-                />
-              ) : undefined
+            {displayMessages.map((msg) => {
+              const feedbackSlot =
+                msg.role === 'assistant' && msg.id && !msg.id.startsWith('local-') ? (
+                  <ElioFeedback
+                    messageId={msg.id}
+                    currentFeedback={msg.metadata?.feedback?.rating}
+                  />
+                ) : undefined
 
-            const documentSlot =
-              msg.metadata?.documentId ? (
-                <ElioDocument
-                  documentId={msg.metadata.documentId}
-                  documentName={msg.metadata.documentName ?? 'Document'}
-                  documentType={msg.metadata.documentType ?? 'pdf'}
-                  isElioGenerated={msg.metadata.isElioGenerated}
-                  preview={msg.metadata.documentPreview}
+              const documentSlot =
+                msg.metadata?.documentId ? (
+                  <ElioDocument
+                    documentId={msg.metadata.documentId}
+                    documentName={msg.metadata.documentName ?? 'Document'}
+                    documentType={msg.metadata.documentType ?? 'pdf'}
+                    isElioGenerated={msg.metadata.isElioGenerated}
+                    preview={msg.metadata.documentPreview}
+                    dashboardType={dashboardType}
+                  />
+                ) : undefined
+
+              return (
+                <ElioMessageItem
+                  key={msg.id}
+                  message={msg}
                   dashboardType={dashboardType}
+                  feedbackSlot={feedbackSlot}
+                  documentSlot={documentSlot}
                 />
-              ) : undefined
+              )
+            })}
+            {isLoading && <ElioThinking dashboardType={dashboardType} />}
+            {error && !isLoading && <ElioErrorMessage error={error} onRetry={retrySend} />}
+            <div ref={messagesEndRef} aria-hidden="true" />
+          </div>
 
-            return (
-              <ElioMessageItem
-                key={msg.id}
-                message={msg}
-                dashboardType={dashboardType}
-                feedbackSlot={feedbackSlot}
-                documentSlot={documentSlot}
-              />
-            )
-          })}
-          {isLoading && <ElioThinking dashboardType={dashboardType} />}
-          {error && !isLoading && <ElioErrorMessage error={error} onRetry={retrySend} />}
-          <div ref={messagesEndRef} aria-hidden="true" />
+          <ChatInput
+            inputRef={inputRef}
+            value={inputValue}
+            onChange={setInputValue}
+            onSubmit={handleSubmit}
+            onKeyDown={handleKeyDown}
+            isLoading={isLoading}
+            focusRing={focusRing}
+            placeholder={placeholder}
+          />
         </div>
-
-        <ChatInput
-          inputRef={inputRef}
-          value={inputValue}
-          onChange={setInputValue}
-          onSubmit={handleSubmit}
-          onKeyDown={handleKeyDown}
-          isLoading={isLoading}
-          focusRing={focusRing}
-          placeholder={placeholder}
-        />
       </div>
     </div>
   )
@@ -482,8 +502,10 @@ export function ElioChat({
   clientId,
   userId,
   tutoiement = false,
-  placeholder = 'Écrivez un message à Élio...',
+  placeholder,
 }: ElioChatProps) {
+  const resolvedPlaceholder =
+    placeholder ?? (dashboardType === 'hub' ? HUB_PLACEHOLDER_DEFAULT : 'Écrivez un message à Élio...')
   if (userId) {
     return (
       <ElioChatPersisted
@@ -491,7 +513,7 @@ export function ElioChat({
         clientId={clientId}
         userId={userId}
         tutoiement={tutoiement}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
       />
     )
   }
@@ -500,7 +522,7 @@ export function ElioChat({
     <ElioChatSimple
       dashboardType={dashboardType}
       clientId={clientId}
-      placeholder={placeholder}
+      placeholder={resolvedPlaceholder}
     />
   )
 }

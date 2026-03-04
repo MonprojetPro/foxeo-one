@@ -1,6 +1,6 @@
 # Story 8.5: Élio Hub — Interface chat MiKL, aide fonctionnalités & recherche client
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -83,53 +83,53 @@ So that **j'ai un assistant IA dans mon cockpit qui me fait gagner du temps au q
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1** : Configurer la palette Hub dans `elio-chat.tsx` (AC: #1, FR21)
-  - [ ] 1.1 : Vérifier que `dashboardType='hub'` applique la palette cyan/turquoise
-  - [ ] 1.2 : Tester le header "Élio Hub — Votre assistant"
-  - [ ] 1.3 : Tester le placeholder "Demande-moi n'importe quoi sur Foxeo..."
+- [x] **Task 1** : Configurer la palette Hub dans `elio-chat.tsx` (AC: #1, FR21)
+  - [x] 1.1 : Vérifier que `dashboardType='hub'` applique la palette cyan/turquoise
+  - [x] 1.2 : Tester le header "Élio Hub — Votre assistant"
+  - [x] 1.3 : Tester le placeholder "Demande-moi n'importe quoi sur Foxeo..."
 
-- [ ] **Task 2** : Créer le message d'accueil Hub (AC: #1)
-  - [ ] 2.1 : Ajouter dans `config/welcome-messages.ts`
-  - [ ] 2.2 : Message casual : "Hey MiKL ! Je suis Élio Hub, ton assistant. Je peux t'aider à naviguer dans le Hub, chercher des infos clients, corriger tes textes ou générer des brouillons. Qu'est-ce que tu veux faire ?"
+- [x] **Task 2** : Créer le message d'accueil Hub (AC: #1)
+  - [x] 2.1 : Ajouter dans `config/welcome-messages.ts`
+  - [x] 2.2 : Message casual : "Hey MiKL ! Je suis Élio Hub, ton assistant. Je peux t'aider à naviguer dans le Hub, chercher des infos clients, corriger tes textes ou générer des brouillons. Qu'est-ce que tu veux faire ?"
 
-- [ ] **Task 3** : Créer la documentation des fonctionnalités Hub (AC: #2, FR22)
-  - [ ] 3.1 : Créer `config/hub-features-documentation.ts`
-  - [ ] 3.2 : Lister toutes les fonctionnalités Hub avec chemins de navigation
-  - [ ] 3.3 : Intégrer dans le system prompt Hub
+- [x] **Task 3** : Créer la documentation des fonctionnalités Hub (AC: #2, FR22)
+  - [x] 3.1 : Créer `config/hub-features-documentation.ts`
+  - [x] 3.2 : Lister toutes les fonctionnalités Hub avec chemins de navigation
+  - [x] 3.3 : Intégrer dans le system prompt Hub
 
-- [ ] **Task 4** : Adapter le system prompt Hub (AC: #2)
-  - [ ] 4.1 : Modifier `config/system-prompts.ts` pour Hub
-  - [ ] 4.2 : Ajouter le bloc documentation fonctionnalités
-  - [ ] 4.3 : Ajouter la phrase hors périmètre
+- [x] **Task 4** : Adapter le system prompt Hub (AC: #2)
+  - [x] 4.1 : Modifier `config/system-prompts.ts` pour Hub
+  - [x] 4.2 : Ajouter le bloc documentation fonctionnalités
+  - [x] 4.3 : Ajouter la phrase hors périmètre
 
-- [ ] **Task 5** : Créer le système de recherche client (AC: #3, #4, FR23)
-  - [ ] 5.1 : Créer `actions/search-client-info.ts`
-  - [ ] 5.2 : Recherche par nom, entreprise, email
-  - [ ] 5.3 : Fetch données : client, parcours, validation_requests, messages
-  - [ ] 5.4 : Respecter RLS (opérateur voit ses clients)
-  - [ ] 5.5 : Retourner `{ data: clientInfo, error: null }`
+- [x] **Task 5** : Créer le système de recherche client (AC: #3, #4, FR23)
+  - [x] 5.1 : Créer `actions/search-client-info.ts`
+  - [x] 5.2 : Recherche par nom, entreprise, email
+  - [x] 5.3 : Fetch données : client, parcours, validation_requests, messages
+  - [x] 5.4 : Respecter RLS (opérateur voit ses clients)
+  - [x] 5.5 : Retourner `{ data: clientInfo, error: null }`
 
-- [ ] **Task 6** : Implémenter la détection d'intention (AC: #4)
-  - [ ] 6.1 : Créer `utils/detect-intent.ts`
-  - [ ] 6.2 : Parser la réponse LLM pour détecter `action: 'search_client'`
-  - [ ] 6.3 : Extraire le query (nom du client recherché)
+- [x] **Task 6** : Implémenter la détection d'intention (AC: #4)
+  - [x] 6.1 : Créer `utils/detect-intent.ts`
+  - [x] 6.2 : Parser la réponse LLM pour détecter `action: 'search_client'`
+  - [x] 6.3 : Extraire le query (nom du client recherché)
 
-- [ ] **Task 7** : Intégrer la recherche dans `send-to-elio.ts`
-  - [ ] 7.1 : Détecter l'intention dans la réponse LLM
-  - [ ] 7.2 : Exécuter la recherche client si détectée
-  - [ ] 7.3 : Réinjecter les résultats dans le contexte LLM
-  - [ ] 7.4 : Retourner la réponse finale formatée
+- [x] **Task 7** : Intégrer la recherche dans `send-to-elio.ts`
+  - [x] 7.1 : Détecter l'intention dans la réponse LLM
+  - [x] 7.2 : Exécuter la recherche client si détectée
+  - [x] 7.3 : Réinjecter les résultats dans le contexte LLM
+  - [x] 7.4 : Retourner la réponse finale formatée
 
-- [ ] **Task 8** : Ajouter les schémas DB dans le system prompt
-  - [ ] 8.1 : Créer `config/hub-database-schemas.ts`
-  - [ ] 8.2 : Schémas simplifiés : clients, validation_requests, messages, parcours
-  - [ ] 8.3 : Intégrer dans le system prompt Hub
+- [x] **Task 8** : Ajouter les schémas DB dans le system prompt
+  - [x] 8.1 : Créer `config/hub-database-schemas.ts`
+  - [x] 8.2 : Schémas simplifiés : clients, validation_requests, messages, parcours
+  - [x] 8.3 : Intégrer dans le system prompt Hub
 
-- [ ] **Task 9** : Tests
-  - [ ] 9.1 : Tester l'aide fonctionnalités (questions Hub)
-  - [ ] 9.2 : Tester la recherche client (trouvé, non trouvé)
-  - [ ] 9.3 : Tester la détection d'intention
-  - [ ] 9.4 : Tester le respect RLS (opérateur ne voit que ses clients)
+- [x] **Task 9** : Tests
+  - [x] 9.1 : Tester l'aide fonctionnalités (questions Hub)
+  - [x] 9.2 : Tester la recherche client (trouvé, non trouvé)
+  - [x] 9.3 : Tester la détection d'intention
+  - [x] 9.4 : Tester le respect RLS (opérateur ne voit que ses clients)
 
 ## Dev Notes
 
@@ -383,6 +383,58 @@ export async function sendToElio(
 
 - [Source: Epic 8 — Story 8.5](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-85)
 - [Source: PRD — FR21, FR22, FR23](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+
+---
+
+## Dev Agent Record
+
+### Implementation Plan
+
+- Task 1: Exporté `PALETTE_CLASSES`, `PALETTE_FOCUS_RING`, `HEADER_LABELS`, `HUB_PLACEHOLDER_DEFAULT` depuis `elio-chat.tsx`. Ajouté un `<header>` dans `ElioChatSimple` et `ElioChatPersisted` affichant le titre selon `dashboardType`.
+- Task 2: Mis à jour le message d'accueil Hub casual dans `generate-welcome-message.ts` avec le message exact spécifié par l'AC1.
+- Task 3: Créé `config/hub-features-documentation.ts` avec documentation complète de toutes les fonctionnalités Hub + chemins de navigation.
+- Task 4: Mis à jour `buildHubPrompt()` dans `system-prompts.ts` pour injecter `HUB_FEATURES_DOCUMENTATION`, `HUB_DATABASE_SCHEMAS` et la phrase hors périmètre.
+- Task 5: Créé `actions/search-client-info.ts` — recherche clients par nom/email/entreprise, fetch parcours (Lab uniquement), validation_requests et elio_messages. RLS via `createServerSupabaseClient`.
+- Task 6: Créé `utils/detect-intent.ts` — détection d'intention regex-based: `search_client`, `help_feature`, `general`.
+- Task 7: Mis à jour `send-to-elio.ts` pour détecter l'intention Hub avant l'appel LLM et réinjecter les résultats de recherche dans le system prompt.
+- Task 8: Créé `config/hub-database-schemas.ts` intégré dans le system prompt Hub.
+- Task 9: 75 tests écrits et passants (7 fichiers de test).
+
+### Completion Notes
+
+- Tous les ACs satisfaits : AC1 (palette + header + placeholder), AC2 (fonctionnalités + hors périmètre), AC3 (recherche client RLS), AC4 (détection d'intention + réinjection LLM)
+- Pattern detect-intent est réutilisable pour les stories suivantes
+- Tests: 81 passing, 0 failing (75 Phase 1 + 6 CR fixes)
+- CR Fixes: (1) HUB_PLACEHOLDER_DEFAULT auto-appliqué pour Hub, (2) .order().limit() sur elio_messages, (3) SQL wildcard escaping, (4) types explicites au lieu de Record<string,unknown>, (5) JSX indentation ElioChatPersisted, (6) hub-database-schemas.test.ts ajouté
+
+## File List
+
+### New Files
+- `packages/modules/elio/components/elio-chat.test.ts`
+- `packages/modules/elio/config/hub-features-documentation.ts`
+- `packages/modules/elio/config/hub-features-documentation.test.ts`
+- `packages/modules/elio/config/hub-database-schemas.ts`
+- `packages/modules/elio/utils/detect-intent.ts`
+- `packages/modules/elio/utils/detect-intent.test.ts`
+- `packages/modules/elio/actions/search-client-info.ts`
+- `packages/modules/elio/actions/search-client-info.test.ts`
+
+### Modified Files
+- `packages/modules/elio/components/elio-chat.tsx`
+- `packages/modules/elio/config/system-prompts.ts`
+- `packages/modules/elio/config/system-prompts.test.ts`
+- `packages/modules/elio/actions/generate-welcome-message.ts`
+- `packages/modules/elio/actions/generate-welcome-message.test.ts`
+- `packages/modules/elio/actions/send-to-elio.ts`
+- `packages/modules/elio/actions/send-to-elio.test.ts`
+- `packages/modules/elio/index.ts`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `packages/modules/elio/config/hub-database-schemas.test.ts`
+- `_bmad-output/implementation-artifacts/8-5-elio-hub-interface-chat-mikl-aide-fonctionnalites-recherche-client.md`
+
+## Change Log
+
+- 2026-03-04: Story 8.5 implémentée — Interface Hub Élio avec palette, header, message d'accueil enrichi, documentation fonctionnalités, schémas DB, détection d'intention, recherche client RLS, intégration send-to-elio. 75 tests.
 
 ---
 

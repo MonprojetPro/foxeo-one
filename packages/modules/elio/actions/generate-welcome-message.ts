@@ -7,8 +7,8 @@ import type { DashboardType, ElioMessagePersisted } from '../types/elio.types'
 
 const WELCOME_MESSAGES: Record<DashboardType, { formal: string; casual: string }> = {
   hub: {
-    formal: "Bonjour MiKL ! Je suis Élio Hub, votre assistant. Comment puis-je vous aider aujourd'hui ?",
-    casual: "Hey MiKL ! Qu'est-ce que je peux faire pour toi ?",
+    formal: "Bonjour MiKL ! Je suis Élio Hub, votre assistant. Je peux vous aider à naviguer dans le Hub, chercher des infos clients, corriger vos textes ou générer des brouillons. Comment puis-je vous aider ?",
+    casual: "Hey MiKL ! Je suis Élio Hub, ton assistant. Je peux t'aider à naviguer dans le Hub, chercher des infos clients, corriger tes textes ou générer des brouillons. Qu'est-ce que tu veux faire ?",
   },
   lab: {
     formal: 'Bonjour ! Bienvenue sur Élio Lab. Comment puis-je vous accompagner dans votre parcours ?',
