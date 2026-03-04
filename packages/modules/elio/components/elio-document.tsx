@@ -1,6 +1,6 @@
 'use client'
 
-import { FileText, Download, ExternalLink, Image, File } from 'lucide-react'
+import { FileText, Download, ExternalLink, Image, File, Save, Mail } from 'lucide-react'
 import { Button } from '@foxeo/ui'
 import { useRouter } from 'next/navigation'
 
@@ -14,6 +14,13 @@ interface ElioDocumentProps {
   preview?: string
   /** @deprecated Reserved for future per-dashboard document paths */
   dashboardType?: 'hub' | 'lab' | 'one'
+  // Story 8.9b — Actions sur documents générés par Élio One+
+  /** URL signée pour téléchargement PDF du document généré */
+  pdfUrl?: string
+  /** Callback déclenché quand l'utilisateur clique "Enregistrer dans vos documents" */
+  onSave?: () => void
+  /** Callback déclenché quand l'utilisateur clique "Envoyer par email" */
+  onEmail?: () => void
 }
 
 const TYPE_ICONS: Record<DocumentType, React.ReactNode> = {
@@ -29,8 +36,13 @@ export function ElioDocument({
   documentType,
   isElioGenerated,
   preview,
+  pdfUrl,
+  onSave,
+  onEmail,
 }: ElioDocumentProps) {
   const router = useRouter()
+
+  const hasGeneratedActions = isElioGenerated && (pdfUrl || onSave || onEmail)
 
   return (
     <div
@@ -48,7 +60,7 @@ export function ElioDocument({
                 className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0"
                 data-testid="elio-generated-badge"
               >
-                Brief généré par Élio
+                Généré par Élio
               </span>
             )}
           </div>
@@ -60,24 +72,68 @@ export function ElioDocument({
           )}
 
           <div className="flex gap-2 mt-3 flex-wrap">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => router.push(`/modules/documents/${documentId}`)}
-              data-testid="view-document-btn"
-            >
-              <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-              Voir le document complet
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => window.open(`/api/documents/${documentId}/download`, '_blank')}
-              data-testid="download-document-btn"
-            >
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              Télécharger
-            </Button>
+            {/* Boutons standard — voir + télécharger */}
+            {!hasGeneratedActions && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => router.push(`/modules/documents/${documentId}`)}
+                  data-testid="view-document-btn"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                  Voir le document complet
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => window.open(`/api/documents/${documentId}/download`, '_blank')}
+                  data-testid="download-document-btn"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  Télécharger
+                </Button>
+              </>
+            )}
+
+            {/* Boutons actions documents générés par Élio One+ (Story 8.9b — Task 7) */}
+            {hasGeneratedActions && (
+              <>
+                {pdfUrl && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(pdfUrl, '_blank')}
+                    data-testid="download-pdf-btn"
+                  >
+                    <Download className="w-3.5 h-3.5 mr-1.5" />
+                    Télécharger en PDF
+                  </Button>
+                )}
+                {onSave && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onSave}
+                    data-testid="save-document-btn"
+                  >
+                    <Save className="w-3.5 h-3.5 mr-1.5" />
+                    Enregistrer dans vos documents
+                  </Button>
+                )}
+                {onEmail && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={onEmail}
+                    data-testid="email-document-btn"
+                  >
+                    <Mail className="w-3.5 h-3.5 mr-1.5" />
+                    Envoyer par email
+                  </Button>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

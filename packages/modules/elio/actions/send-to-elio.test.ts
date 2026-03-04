@@ -4,6 +4,22 @@ import { DEFAULT_ELIO_CONFIG } from '../types/elio-config.types'
 
 const mockInvoke = vi.fn()
 
+// Chaîne eq récursive pour supporter .eq().eq().eq() (validation_requests, etc.)
+function makeEqChain(): {
+  eq: ReturnType<typeof vi.fn>
+  single: ReturnType<typeof vi.fn>
+  maybeSingle: ReturnType<typeof vi.fn>
+  data?: unknown
+  error?: unknown
+} {
+  const chain: ReturnType<typeof makeEqChain> = {
+    eq: vi.fn(() => makeEqChain()),
+    single: vi.fn(async () => ({ data: { id: 'client-1' }, error: null })),
+    maybeSingle: vi.fn(async () => ({ data: null, error: null })),
+  }
+  return chain
+}
+
 vi.mock('@foxeo/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
@@ -11,10 +27,7 @@ vi.mock('@foxeo/supabase', () => ({
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(async () => ({ data: { id: 'client-1' }, error: null })),
-          maybeSingle: vi.fn(async () => ({ data: null, error: null })),
-        })),
+        ...makeEqChain(),
         or: vi.fn(() => ({
           limit: vi.fn(async () => ({ data: [], error: null })),
         })),
@@ -80,6 +93,13 @@ vi.mock('./adjust-draft', () => ({
       clientName: 'Thomas',
       version: 2,
     },
+    error: null,
+  })),
+}))
+
+vi.mock('./generate-document', () => ({
+  generateDocument: vi.fn(async () => ({
+    data: 'ATTESTATION DE PRÉSENCE\n\nJe soussigné certifie...',
     error: null,
   })),
 }))
@@ -235,6 +255,37 @@ describe('sendToElio', () => {
 
     const result = await sendToElio('hub', 'Plus court')
     expect(result.error).toBeNull()
+    expect(result.data?.content).toBeTruthy()
+  })
+})
+
+describe('sendToElio — Story 8.9b — generate_document (One+)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('Task 9.1 — client One (non One+) qui demande une attestation reçoit le message upsell', async () => {
+    // Default mock: maybeSingle returns { data: null } → tier = 'one'
+    const result = await sendToElio('one', 'Génère une attestation de présence pour Marie', 'client-1')
+    expect(result.error).toBeNull()
+    expect(result.data?.content).toContain('One+')
+  })
+
+  it('Task 9.2 — message non reconnu comme generate_document sur One passe au LLM normal', async () => {
+    mockInvoke.mockResolvedValueOnce({
+      data: { content: 'Bien sûr, voici les informations demandées.' },
+      error: null,
+    })
+
+    const result = await sendToElio('one', 'Bonjour Élio, comment ça va ?', 'client-1')
+    expect(result.error).toBeNull()
+    expect(result.data?.content).toBeTruthy()
+  })
+
+  it('Task 9.3 — détecte bien l\'intention generate_document et bloque tier One', async () => {
+    const result = await sendToElio('one', 'Génère un récapitulatif mensuel', 'client-1')
+    expect(result.error).toBeNull()
+    // Tier='one' → upsell, pas de génération réelle
     expect(result.data?.content).toBeTruthy()
   })
 })

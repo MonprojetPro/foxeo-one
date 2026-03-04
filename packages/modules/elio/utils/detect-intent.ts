@@ -1,7 +1,9 @@
 export type ModuleActionVerb = 'send' | 'create' | 'update' | 'delete'
 
+export type DocumentType = 'attestation_presence' | 'attestation_paiement' | 'recap_mensuel' | 'export_data'
+
 export interface Intent {
-  action: 'search_client' | 'help_feature' | 'general' | 'correct_text' | 'generate_draft' | 'adjust_draft' | 'request_evolution' | 'module_action'
+  action: 'search_client' | 'help_feature' | 'general' | 'correct_text' | 'generate_draft' | 'adjust_draft' | 'request_evolution' | 'module_action' | 'generate_document'
   query?: string          // search_client
   feature?: string        // help_feature
   clientName?: string     // correct_text | generate_draft
@@ -13,6 +15,10 @@ export interface Intent {
   moduleTarget?: string       // module cible : 'adhesions', 'agenda', 'sms', 'facturation', 'unknown'
   moduleActionVerb?: ModuleActionVerb  // verbe d'action
   moduleActionParams?: Record<string, unknown>  // paramètres extraits
+  // generate_document (Story 8.9b — FR49)
+  documentType?: DocumentType     // type de document à générer
+  documentBeneficiary?: string    // bénéficiaire extrait du message
+  documentPeriod?: string         // période extraite du message
 }
 
 const CLIENT_PATTERNS: Array<{ pattern: RegExp; groupIndex: number }> = [
@@ -61,6 +67,37 @@ function inferModuleFromText(text: string): string {
       lower.includes('adh\u00e9sion') || lower.includes('adhesion') ||
       lower.includes('membre')) return 'adhesions'
   return 'unknown'
+}
+
+// Story 8.9b — Document generation patterns (AC1, FR49)
+// Note: "Crée" pattern must NOT match "Crée un email/message/brouillon" (generate_draft)
+// and NOT match evolution requests ("Je voudrais")
+const DOCUMENT_KEYWORDS: Array<{ keywords: string[]; type: DocumentType }> = [
+  { keywords: ['attestation de paiement'], type: 'attestation_paiement' },
+  { keywords: ['attestation de présence', 'attestation de presence'], type: 'attestation_presence' },
+  { keywords: ['attestation'], type: 'attestation_presence' },
+  { keywords: ['récapitulatif', 'recapitulatif', 'rapport d\'activité', "rapport d'activite"], type: 'recap_mensuel' },
+  { keywords: ['export membres', 'export des membres', 'export factures', 'export données', 'export donnees', 'export événements', 'export evenements'], type: 'export_data' },
+]
+
+const DOCUMENT_TRIGGER_PATTERN = /^(?:génère|genere|crée|cree)\s+(?:une?\s+)?(?:attestation|récapitulatif|recapitulatif|rapport|export)/i
+
+function inferDocumentType(text: string): DocumentType | null {
+  const lower = text.toLowerCase()
+  for (const { keywords, type } of DOCUMENT_KEYWORDS) {
+    if (keywords.some((kw) => lower.includes(kw))) return type
+  }
+  return null
+}
+
+function extractBeneficiary(text: string): string | undefined {
+  const match = text.match(/pour\s+([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)*)/u)
+  return match?.[1]?.trim()
+}
+
+function extractPeriod(text: string): string | undefined {
+  const match = text.match(/(?:pour|du mois de?|mois\s+de?|en)\s+((?:janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre)(?:\s+\d{4})?|\d{4}|dernier\s+(?:trimestre|mois)|ce\s+mois)/i)
+  return match?.[1]?.trim()
 }
 
 // Story 8.8 — Evolution request patterns (AC1, FR47)
@@ -129,7 +166,20 @@ export function detectIntent(userMessage: string): Intent {
     }
   }
 
-  // 3. Action module (Story 8.9a — FR48) — impératif + mot-clé module connu
+  // 3. Génération de document (Story 8.9b — FR49) — AVANT module_action pour éviter faux positifs "Crée..."
+  if (DOCUMENT_TRIGGER_PATTERN.test(msg)) {
+    const docType = inferDocumentType(msg)
+    if (docType) {
+      return {
+        action: 'generate_document',
+        documentType: docType,
+        documentBeneficiary: extractBeneficiary(msg),
+        documentPeriod: extractPeriod(msg),
+      }
+    }
+  }
+
+  // 4. Action module (Story 8.9a — FR48) — impératif + mot-clé module connu
   // Détecté AVANT adjust_draft car "Supprime les membres..." est un module_action, pas un ajustement
   const sendMatch = msg.match(MODULE_SEND_PATTERN)
   if (sendMatch) {
@@ -189,14 +239,14 @@ export function detectIntent(userMessage: string): Intent {
     }
   }
 
-  // 4. Ajustement de brouillon (Hub — après module_action pour éviter les conflits)
+  // 5. Ajustement de brouillon (Hub — après module_action pour éviter les conflits)
   for (const pattern of ADJUSTMENT_PATTERNS) {
     if (pattern.test(msg)) {
       return { action: 'adjust_draft' }
     }
   }
 
-  // 5. Demande d'évolution (Story 8.8)
+  // 6. Demande d'évolution (Story 8.8)
   for (const { pattern, groupIndex } of EVOLUTION_PATTERNS) {
     const match = msg.match(pattern)
     if (match) {
@@ -205,7 +255,7 @@ export function detectIntent(userMessage: string): Intent {
     }
   }
 
-  // 6. Recherche client
+  // 7. Recherche client
   for (const { pattern, groupIndex } of CLIENT_PATTERNS) {
     const match = msg.match(pattern)
     if (match) {
@@ -214,7 +264,7 @@ export function detectIntent(userMessage: string): Intent {
     }
   }
 
-  // 7. Aide fonctionnalités
+  // 8. Aide fonctionnalités
   for (const { pattern, groupIndex } of HELP_PATTERNS) {
     const match = msg.match(pattern)
     if (match) {

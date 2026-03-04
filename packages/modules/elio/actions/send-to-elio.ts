@@ -12,6 +12,8 @@ import { detectIntent } from '../utils/detect-intent'
 import { detectLowConfidence } from '../utils/detect-low-confidence'
 import { checkIfFeatureExists } from '../utils/detect-existing-feature'
 import { checkModuleActive, buildModuleNotActiveMessage } from '../utils/check-module-active'
+import { getCollectionStatus } from '../utils/document-collection'
+import { generateDocument } from './generate-document'
 import type { DashboardType, ElioMessage, CommunicationProfileFR66 } from '../types/elio.types'
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
 
@@ -256,6 +258,73 @@ export async function sendToElio(
 
     // Détecter l'intention avant l'appel LLM (Tasks 2, 3, 7, 8)
     const oneIntent = detectIntent(message)
+
+    // Story 8.9b — Task 4 : génération de documents (One+ uniquement)
+    if (oneIntent.action === 'generate_document' && oneIntent.documentType) {
+      if (tier !== 'one_plus') {
+        return successResponse<ElioMessage>({
+          id: makeMessageId(),
+          role: 'assistant',
+          content: UPSELL_ONE_PLUS_MESSAGE,
+          createdAt: new Date().toISOString(),
+          dashboardType,
+        })
+      }
+
+      // Vérifier si des informations sont manquantes (collecte)
+      const collectionStatus = getCollectionStatus(
+        oneIntent.documentType,
+        {
+          type: oneIntent.documentType,
+          beneficiary: oneIntent.documentBeneficiary,
+          period: oneIntent.documentPeriod,
+        },
+        communicationProfile
+      )
+
+      if (collectionStatus.state === 'collecting' && collectionStatus.nextQuestion) {
+        // Poser la prochaine question pour collecter les infos manquantes
+        return successResponse<ElioMessage>({
+          id: makeMessageId(),
+          role: 'assistant',
+          content: collectionStatus.nextQuestion,
+          createdAt: new Date().toISOString(),
+          dashboardType,
+          metadata: {
+            documentCollecting: true,
+            documentType: oneIntent.documentType,
+            missingFields: collectionStatus.missingFields,
+          },
+        })
+      }
+
+      // Toutes les infos sont disponibles → générer le document
+      const { data: generatedContent, error: genError } = await generateDocument(
+        clientId,
+        oneIntent.documentType,
+        {
+          beneficiary: oneIntent.documentBeneficiary,
+          period: oneIntent.documentPeriod,
+        }
+      )
+
+      if (genError) {
+        return errorResponse(genError.message, genError.code, genError.details)
+      }
+
+      return successResponse<ElioMessage>({
+        id: makeMessageId(),
+        role: 'assistant',
+        content: generatedContent ?? '',
+        createdAt: new Date().toISOString(),
+        dashboardType,
+        metadata: {
+          generatedDocument: true,
+          documentType: oneIntent.documentType,
+          documentName: `${oneIntent.documentType.replace('_', ' ')} — ${oneIntent.documentPeriod ?? new Date().toLocaleDateString('fr-FR')}`,
+        },
+      })
+    }
 
     // Story 8.9a — Task 2.3/2.4 : bloquer les actions One+ si tier = 'one'
     if (oneIntent.action === 'module_action') {

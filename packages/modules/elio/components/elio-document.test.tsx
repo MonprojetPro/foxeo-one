@@ -105,3 +105,105 @@ describe('ElioDocument', () => {
     })
   })
 })
+
+describe('ElioDocument — Story 8.9b — Actions documents générés', () => {
+  it('Task 7.2 — affiche le bouton "Télécharger en PDF" si pdfUrl et isElioGenerated', () => {
+    render(
+      <ElioDocument
+        documentId="doc-1"
+        documentName="Attestation"
+        documentType="markdown"
+        isElioGenerated
+        pdfUrl="https://storage.example.com/signed-url"
+      />
+    )
+    expect(screen.getByTestId('download-pdf-btn')).toBeDefined()
+  })
+
+  it('Task 7.2 — affiche le bouton "Enregistrer" si onSave et isElioGenerated', () => {
+    const onSave = vi.fn()
+    render(
+      <ElioDocument
+        documentId="doc-1"
+        documentName="Attestation"
+        documentType="markdown"
+        isElioGenerated
+        onSave={onSave}
+      />
+    )
+    expect(screen.getByTestId('save-document-btn')).toBeDefined()
+  })
+
+  it('Task 7.2 — affiche le bouton "Envoyer par email" si onEmail et isElioGenerated', () => {
+    const onEmail = vi.fn()
+    render(
+      <ElioDocument
+        documentId="doc-1"
+        documentName="Attestation"
+        documentType="markdown"
+        isElioGenerated
+        onEmail={onEmail}
+      />
+    )
+    expect(screen.getByTestId('email-document-btn')).toBeDefined()
+  })
+
+  it('Task 7.3 — déclenche onSave au clic', () => {
+    const onSave = vi.fn()
+    render(
+      <ElioDocument
+        documentId="doc-1"
+        documentName="Attestation"
+        documentType="markdown"
+        isElioGenerated
+        onSave={onSave}
+      />
+    )
+    fireEvent.click(screen.getByTestId('save-document-btn'))
+    expect(onSave).toHaveBeenCalledOnce()
+  })
+
+  it('Task 7.3 — déclenche onEmail au clic', () => {
+    const onEmail = vi.fn()
+    render(
+      <ElioDocument
+        documentId="doc-1"
+        documentName="Attestation"
+        documentType="markdown"
+        isElioGenerated
+        onEmail={onEmail}
+      />
+    )
+    fireEvent.click(screen.getByTestId('email-document-btn'))
+    expect(onEmail).toHaveBeenCalledOnce()
+  })
+
+  it('Task 7.3 — ouvre pdfUrl dans un nouvel onglet au clic "Télécharger en PDF"', () => {
+    render(
+      <ElioDocument
+        documentId="doc-1"
+        documentName="Attestation"
+        documentType="markdown"
+        isElioGenerated
+        pdfUrl="https://storage.example.com/signed-url"
+      />
+    )
+    fireEvent.click(screen.getByTestId('download-pdf-btn'))
+    expect(mockOpen).toHaveBeenCalledWith('https://storage.example.com/signed-url', '_blank')
+  })
+
+  it('n\'affiche PAS les boutons actions si isElioGenerated=false même avec pdfUrl', () => {
+    render(
+      <ElioDocument
+        documentId="doc-1"
+        documentName="Document normal"
+        documentType="pdf"
+        isElioGenerated={false}
+        pdfUrl="https://storage.example.com/signed-url"
+      />
+    )
+    expect(screen.queryByTestId('download-pdf-btn')).toBeNull()
+    // Affiche les boutons standards à la place
+    expect(screen.getByTestId('view-document-btn')).toBeDefined()
+  })
+})

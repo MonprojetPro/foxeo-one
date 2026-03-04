@@ -51,6 +51,14 @@ export { restoreElioConfig } from './actions/restore-elio-config'
 // Actions — Story 8.4
 export { compileLabLearnings } from './actions/compile-lab-learnings'
 
+// Actions — Story 8.9b
+export { generateDocument } from './actions/generate-document'
+export { saveGeneratedDocument } from './actions/save-generated-document'
+export type { SavedDocument } from './actions/save-generated-document'
+export { convertToPdf } from './actions/convert-to-pdf'
+export { sendDocumentEmail } from './actions/send-document-email'
+export type { DocumentEmailDraft } from './actions/send-document-email'
+
 // Actions — Story 8.5
 export { searchClientInfo } from './actions/search-client-info'
 export type { ClientInfo } from './actions/search-client-info'
@@ -85,9 +93,17 @@ export { buildSystemPrompt } from './config/system-prompts'
 export { HUB_FEATURES_DOCUMENTATION } from './config/hub-features-documentation'
 export { HUB_DATABASE_SCHEMAS } from './config/hub-database-schemas'
 
+// Config — Story 8.9b
+export { DOCUMENT_TEMPLATES, buildDocumentPrompt } from './config/document-templates'
+export type { DocumentTemplateKey, DocumentTemplate } from './config/document-templates'
+
 // Utils — Story 8.5
 export { detectIntent } from './utils/detect-intent'
-export type { Intent } from './utils/detect-intent'
+export type { Intent, DocumentType as IntentDocumentType } from './utils/detect-intent'
+
+// Utils — Story 8.9b
+export { getDocumentQuestions, getCollectionStatus } from './utils/document-collection'
+export type { DocumentCollectionData, DocumentCollectionState, DocumentCollectionStatus } from './utils/document-collection'
 
 // Utils — Story 8.6
 export { getProfileLabels } from './utils/profile-labels'

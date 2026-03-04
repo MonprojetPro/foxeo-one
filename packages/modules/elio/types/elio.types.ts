@@ -25,8 +25,10 @@ export interface ElioMessageMetadata {
     createdAt: string
   }
   documentId?: string
+  /** Nom du document — Story 8.3: document attaché, Story 8.9b: document généré */
   documentName?: string
-  documentType?: 'pdf' | 'doc' | 'image' | 'markdown'
+  /** Type de document — Story 8.3: format fichier, Story 8.9b: type template (attestation_presence, etc.) */
+  documentType?: 'pdf' | 'doc' | 'image' | 'markdown' | string
   isElioGenerated?: boolean
   documentPreview?: string
   profileObservation?: string
@@ -48,6 +50,10 @@ export interface ElioMessageMetadata {
     requiresDoubleConfirm?: boolean
   }
   requiresConfirmation?: boolean
+  // Story 8.9b: génération de documents One+
+  documentCollecting?: boolean       // en cours de collecte d'infos pour un document
+  missingFields?: string[]           // champs manquants à collecter
+  generatedDocument?: boolean        // document généré par Élio dans ce message
 }
 
 // Story 8.7 — Task 3.1 : Structure documentation module actif (injectée par MiKL, Story 10.3)

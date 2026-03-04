@@ -258,6 +258,61 @@ describe('detectIntent (Story 8.9a — Task 3)', () => {
   })
 })
 
+describe('detectIntent (Story 8.9b — Task 1)', () => {
+  describe('action: generate_document (AC1, FR49)', () => {
+    it('Task 1.2 — détecte "Génère une attestation de présence pour Marie Dupont"', () => {
+      const intent = detectIntent('Génère une attestation de présence pour Marie Dupont')
+      expect(intent.action).toBe('generate_document')
+      expect(intent.documentType).toBe('attestation_presence')
+    })
+
+    it('Task 1.2 — détecte "Crée un récapitulatif des événements du mois"', () => {
+      const intent = detectIntent('Crée un récapitulatif des événements du mois')
+      expect(intent.action).toBe('generate_document')
+      expect(intent.documentType).toBe('recap_mensuel')
+    })
+
+    it('Task 1.2 — détecte "Génère une attestation de paiement"', () => {
+      const intent = detectIntent('Génère une attestation de paiement')
+      expect(intent.action).toBe('generate_document')
+      expect(intent.documentType).toBe('attestation_paiement')
+    })
+
+    it('Task 1.2 — détecte "Crée un export des membres"', () => {
+      const intent = detectIntent('Crée un export des membres')
+      expect(intent.action).toBe('generate_document')
+      expect(intent.documentType).toBe('export_data')
+    })
+
+    it('Task 1.3 — extrait le bénéficiaire du message', () => {
+      const intent = detectIntent('Génère une attestation de présence pour Marie Dupont')
+      expect(intent.action).toBe('generate_document')
+      expect(intent.documentBeneficiary?.toLowerCase()).toContain('marie')
+    })
+
+    it('Task 1.3 — extrait la période quand mentionnée', () => {
+      const intent = detectIntent('Génère un récapitulatif mensuel pour janvier 2026')
+      expect(intent.action).toBe('generate_document')
+      expect(intent.documentPeriod).toBeTruthy()
+    })
+
+    it('CR-5 — extrait la période avec l\'année (janvier 2026 et pas seulement janvier)', () => {
+      const intent = detectIntent('Génère un récapitulatif en mars 2026')
+      expect(intent.documentPeriod).toBe('mars 2026')
+    })
+
+    it('ne confond pas une demande d\'évolution avec une génération de document', () => {
+      const intent = detectIntent('Je voudrais un export Excel')
+      expect(intent.action).not.toBe('generate_document')
+    })
+
+    it('ne confond pas "Génère un email pour Sandrine" avec une génération de document', () => {
+      const intent = detectIntent('Génère un email pour Sandrine')
+      expect(intent.action).not.toBe('generate_document')
+    })
+  })
+})
+
 describe('detectIntent (Story 8.8 — Task 1)', () => {
   describe('action: request_evolution (AC1, FR47)', () => {
     it('Task 1.2 — détecte "Je voudrais pouvoir envoyer des SMS"', () => {
