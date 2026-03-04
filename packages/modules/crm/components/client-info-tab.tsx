@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, Badge, Separator, Button, Skeleton } from '@foxeo/ui'
 import { useClient } from '../hooks/use-client'
 import { useClientParcours } from '../hooks/use-client-parcours'
+import { useClientPendingValidations } from '../hooks/use-client-pending-validations'
 import { AssignParcoursDialog } from './assign-parcours-dialog'
 import { AccessToggles } from './access-toggles'
 import { ParcoursStatusBadge } from './parcours-status-badge'
 import { ClientNotesSection } from './client-notes-section'
+import { GraduationDialog } from './graduation-dialog'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -32,7 +34,25 @@ const statusLabels: Record<string, string> = {
 export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
   const { data: client, isPending, error } = useClient(clientId)
   const { data: parcours } = useClientParcours(clientId)
+  const { data: pendingValidations } = useClientPendingValidations(clientId)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+  const [graduationDialogOpen, setGraduationDialogOpen] = useState(false)
+
+  // Graduation conditions
+  const isLabClient = client?.config?.dashboardType === 'lab'
+  const parcoursCompleted = parcours?.status === 'termine'
+  const noPendingValidations = (pendingValidations?.count ?? 0) === 0
+  const canGraduate = isLabClient && parcoursCompleted && noPendingValidations
+
+  const graduationTooltip = !isLabClient
+    ? null
+    : !parcoursCompleted
+      ? `Parcours non terminé — ${
+          parcours?.activeStages.filter((s) => s.active && s.status !== 'completed').length ?? '?'
+        } étape(s) restante(s)`
+      : !noPendingValidations
+        ? `Demandes de validation en attente — traitez-les d'abord`
+        : null
 
   if (isPending) {
     return (
@@ -200,6 +220,44 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
         </CardContent>
       </Card>
 
+      {/* Graduation vers One — visible uniquement pour les clients Lab */}
+      {isLabClient && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Graduation vers Foxeo One</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Déclenchez la graduation du client vers son espace professionnel One.
+              </p>
+              {graduationTooltip ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    title={graduationTooltip}
+                    aria-disabled="true"
+                  >
+                    Graduer vers Foxeo One
+                  </Button>
+                  <span className="text-xs text-muted-foreground">{graduationTooltip}</span>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => setGraduationDialogOpen(true)}
+                  data-testid="graduation-button"
+                >
+                  Graduer vers Foxeo One
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Accès toggles */}
       {client.config && (
         <AccessToggles
@@ -215,6 +273,18 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
         open={assignDialogOpen}
         onOpenChange={setAssignDialogOpen}
       />
+
+      {/* Dialog graduation */}
+      {isLabClient && parcours && (
+        <GraduationDialog
+          clientId={clientId}
+          clientName={client.name}
+          clientCompany={client.company}
+          parcours={parcours}
+          open={graduationDialogOpen}
+          onOpenChange={setGraduationDialogOpen}
+        />
+      )}
 
       {/* Modules One */}
       {client.config && client.config.activeModules.length > 0 && (

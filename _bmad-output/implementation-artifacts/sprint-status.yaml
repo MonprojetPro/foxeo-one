@@ -137,7 +137,7 @@ development_status:
 
   # Epic 9: Graduation Lab vers One & Cycle de Vie Client (7 stories)
   epic-9: in-progress
-  9-1-graduation-lab-vers-one-declenchement-migration-automatique-du-contexte: ready-for-dev
+  9-1-graduation-lab-vers-one-declenchement-migration-automatique-du-contexte: done
   9-2-graduation-lab-vers-one-notification-client-activation-acces-one: ready-for-dev
   9-3-demande-abandon-de-parcours-lab-par-le-client: ready-for-dev
   9-4-changement-de-tier-abonnement-client-one: ready-for-dev
