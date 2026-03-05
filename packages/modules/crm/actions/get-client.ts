@@ -63,7 +63,9 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
           active_modules,
           dashboard_type,
           theme_variant,
-          parcours_config
+          parcours_config,
+          subscription_tier,
+          tier_changed_at
         )
       `
       )
@@ -117,6 +119,8 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
             dashboardType: configRaw.dashboard_type as string,
             themeVariant: configRaw.theme_variant as string | null,
             parcoursConfig: configRaw.parcours_config as Record<string, unknown> | undefined,
+            subscriptionTier: (configRaw.subscription_tier as 'base' | 'essentiel' | 'agentique' | null) ?? null,
+            tierChangedAt: (configRaw.tier_changed_at as string | null) ?? null,
           }
         : undefined,
     })

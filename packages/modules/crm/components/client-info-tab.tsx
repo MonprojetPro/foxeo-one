@@ -11,6 +11,9 @@ import { ParcoursStatusBadge } from './parcours-status-badge'
 import { ClientNotesSection } from './client-notes-section'
 import { GraduationDialog } from './graduation-dialog'
 import { ReactivateParcoursDialog } from './reactivate-parcours-dialog'
+import { ChangeTierDialog } from './change-tier-dialog'
+import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
+import type { SubscriptionTier } from '../types/subscription.types'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -39,12 +42,14 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [graduationDialogOpen, setGraduationDialogOpen] = useState(false)
   const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false)
+  const [changeTierDialogOpen, setChangeTierDialogOpen] = useState(false)
 
   // Story 9.3 — Parcours abandonné
   const parcoursAbandoned = parcours?.status === 'abandoned'
 
   // Graduation conditions
   const isLabClient = client?.config?.dashboardType === 'lab'
+  const isOneClient = client?.config?.dashboardType === 'one'
   const parcoursCompleted = parcours?.status === 'termine'
   const noPendingValidations = (pendingValidations?.count ?? 0) === 0
   const canGraduate = isLabClient && parcoursCompleted && noPendingValidations
@@ -287,6 +292,67 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
         </Card>
       )}
 
+      {/* Abonnement — visible uniquement pour les clients One (Story 9.4) */}
+      {isOneClient && client.config && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Abonnement</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setChangeTierDialogOpen(true)}
+              data-testid="change-tier-button"
+            >
+              Modifier le tier
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const currentTier: SubscriptionTier = (client.config?.subscriptionTier as SubscriptionTier) ?? 'base'
+              const tierInfo = TIER_INFO[currentTier]
+              const tierBadgeClass = TIER_BADGE_CLASSES[currentTier]
+
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Tier actuel</span>
+                    <span
+                      className={[
+                        'text-xs px-2 py-1 rounded-full font-medium',
+                        tierBadgeClass,
+                      ].join(' ')}
+                    >
+                      {tierInfo.name}
+                    </span>
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Coût mensuel</span>
+                    <span className="text-sm">{tierInfo.price}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">Élio</span>
+                    <span className="text-sm">{tierInfo.elio}</span>
+                  </div>
+                  {client.config?.tierChangedAt && (
+                    <>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Tier depuis</span>
+                        <span className="text-sm">
+                          {format(new Date(client.config.tierChangedAt), 'd MMMM yyyy', { locale: fr })}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )
+            })()}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Accès toggles */}
       {client.config && (
         <AccessToggles
@@ -339,6 +405,17 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Dialog changement tier (Story 9.4) */}
+      {isOneClient && client.config && (
+        <ChangeTierDialog
+          clientId={clientId}
+          clientName={client.name}
+          currentTier={(client.config.subscriptionTier as SubscriptionTier) ?? 'base'}
+          open={changeTierDialogOpen}
+          onOpenChange={setChangeTierDialogOpen}
+        />
       )}
 
       {/* Notes privées (Story 2.6) */}

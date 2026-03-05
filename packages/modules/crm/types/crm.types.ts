@@ -11,6 +11,9 @@ export const ClientConfig = z.object({
   dashboardType: z.enum(['one', 'lab']),
   themeVariant: z.string().nullable().optional(),
   parcoursConfig: z.record(z.unknown()).optional(),
+  // Story 9.4 — Subscription tier
+  subscriptionTier: z.enum(['base', 'essentiel', 'agentique']).nullable().optional(),
+  tierChangedAt: z.string().datetime().nullable().optional(),
 })
 
 export type ClientConfig = z.infer<typeof ClientConfig>

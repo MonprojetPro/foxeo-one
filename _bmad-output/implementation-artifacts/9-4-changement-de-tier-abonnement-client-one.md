@@ -1,6 +1,6 @@
 # Story 9.4: Changement de tier abonnement client One
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -56,86 +56,86 @@ so that **je peux adapter l'offre à l'évolution des besoins du client**.
 
 ## Tasks / Subtasks
 
-- [ ] Créer section "Abonnement" dans fiche client (AC: #1)
-  - [ ] Modifier `packages/modules/crm/components/client-info-tab.tsx`
-  - [ ] Ajouter section "Abonnement" (visible uniquement si `client_type = 'one'`)
-  - [ ] Afficher tier actuel avec badge coloré :
+- [x] Créer section "Abonnement" dans fiche client (AC: #1)
+  - [x] Modifier `packages/modules/crm/components/client-info-tab.tsx`
+  - [x] Ajouter section "Abonnement" (visible uniquement si `client_type = 'one'`)
+  - [x] Afficher tier actuel avec badge coloré :
     - Base : badge gris (neutral)
     - Essentiel : badge vert (success)
     - Agentique : badge violet (premium)
-  - [ ] Afficher date début tier : `client_configs.tier_changed_at` ou `clients.graduated_at`
-  - [ ] Afficher coût mensuel : lookup table (Base: Ponctuel, Essentiel: 49€/mois, Agentique: 99€/mois)
-  - [ ] Bouton "Modifier le tier"
+  - [x] Afficher date début tier : `client_configs.tier_changed_at` ou `clients.graduated_at`
+  - [x] Afficher coût mensuel : lookup table (Base: Ponctuel, Essentiel: 49€/mois, Agentique: 99€/mois)
+  - [x] Bouton "Modifier le tier"
 
-- [ ] Créer modale de changement de tier (AC: #2)
-  - [ ] Créer `packages/modules/crm/components/change-tier-dialog.tsx`
-  - [ ] Utiliser Dialog component de @foxeo/ui (Radix UI)
-  - [ ] RadioGroup avec 3 options : Base, Essentiel, Agentique
-  - [ ] Chaque option affiche : nom tier, prix, capacité Elio, description
-  - [ ] Tier actuel surligné + badge "(actuel)"
-  - [ ] Si downgrade One+ → Essentiel ou Base : afficher Alert warning
-  - [ ] Alert : "Attention : le passage de Agentique à {newTier} désactivera les fonctionnalités Elio One+ (actions, génération de documents, alertes proactives)."
-  - [ ] Boutons "Confirmer le changement" (primary) / "Annuler"
+- [x] Créer modale de changement de tier (AC: #2)
+  - [x] Créer `packages/modules/crm/components/change-tier-dialog.tsx`
+  - [x] Utiliser Dialog component de @foxeo/ui (Radix UI)
+  - [x] RadioGroup avec 3 options : Base, Essentiel, Agentique (toggle buttons custom)
+  - [x] Chaque option affiche : nom tier, prix, capacité Elio, description
+  - [x] Tier actuel surligné + badge "(actuel)"
+  - [x] Si downgrade One+ → Essentiel ou Base : afficher Alert warning
+  - [x] Alert : "Attention : le passage de Agentique à {newTier} désactivera les fonctionnalités Elio One+ (actions, génération de documents, alertes proactives)."
+  - [x] Boutons "Confirmer le changement" (primary) / "Annuler"
 
-- [ ] Créer Server Action `changeClientTier` (AC: #3, #4)
-  - [ ] Créer `packages/modules/crm/actions/change-tier.ts`
-  - [ ] Signature: `changeClientTier(clientId: string, newTier: SubscriptionTier): Promise<ActionResponse<void>>`
-  - [ ] Validation Zod : clientId UUID, newTier enum ('base' | 'essentiel' | 'agentique')
-  - [ ] Fetch client actuel avec `client_configs`
-  - [ ] Si même tier : retourner error 'TIER_UNCHANGED'
-  - [ ] Déterminer ancien tier pour logging
-  - [ ] UPDATE `client_configs` :
+- [x] Créer Server Action `changeClientTier` (AC: #3, #4)
+  - [x] Créer `packages/modules/crm/actions/change-tier.ts`
+  - [x] Signature: `changeClientTier(clientId: string, newTier: SubscriptionTier): Promise<ActionResponse<void>>`
+  - [x] Validation Zod : clientId UUID, newTier enum ('base' | 'essentiel' | 'agentique')
+  - [x] Fetch client actuel avec `client_configs`
+  - [x] Si même tier : retourner error 'TIER_UNCHANGED'
+  - [x] Déterminer ancien tier pour logging
+  - [x] UPDATE `client_configs` :
     - `subscription_tier = {newTier}`
     - `elio_tier = {mapTierToElio(newTier)}` (Base→null, Essentiel→'one', Agentique→'one_plus')
     - `tier_changed_at = NOW()`
     - `pending_billing_update = true` (pour Epic 11)
-  - [ ] Si upgrade vers One+ : activer alertes proactives par défaut
-  - [ ] Si downgrade depuis One+ : désactiver alertes proactives, préserver actions
-  - [ ] INSERT `activity_logs` : type 'tier_changed', metadata { oldTier, newTier, changedBy: operatorId }
-  - [ ] Retourner format `{ data: null, error }` standard
+  - [x] Si upgrade vers One+ : activer alertes proactives par défaut
+  - [x] Si downgrade depuis One+ : désactiver alertes proactives, préserver actions
+  - [x] INSERT `activity_logs` : type 'tier_changed', metadata { oldTier, newTier, changedBy: operatorId }
+  - [x] Retourner format `{ data: null, error }` standard
 
-- [ ] Créer helper `mapTierToElio` (AC: #3)
-  - [ ] Créer `packages/modules/crm/utils/tier-helpers.ts`
-  - [ ] `mapTierToElio(tier: SubscriptionTier): ElioTier | null`
-  - [ ] Mapping : 'base' → null, 'essentiel' → 'one', 'agentique' → 'one_plus'
+- [x] Créer helper `mapTierToElio` (AC: #3)
+  - [x] Créer `packages/modules/crm/utils/tier-helpers.ts`
+  - [x] `mapTierToElio(tier: SubscriptionTier): ElioTier | null`
+  - [x] Mapping : 'base' → null, 'essentiel' → 'one', 'agentique' → 'one_plus'
 
-- [ ] Implémenter gestion alertes proactives (AC: #3)
-  - [ ] Si upgrade vers One+ : `client_configs.elio_proactive_alerts = true`
-  - [ ] Si downgrade depuis One+ : `client_configs.elio_proactive_alerts = false`
-  - [ ] Actions Elio One+ en cours préservées (pas de suppression)
+- [x] Implémenter gestion alertes proactives (AC: #3)
+  - [x] Si upgrade vers One+ : `client_configs.elio_proactive_alerts = true`
+  - [x] Si downgrade depuis One+ : `client_configs.elio_proactive_alerts = false`
+  - [x] Actions Elio One+ en cours préservées (pas de suppression)
 
-- [ ] Implémenter invalidation cache et notifications (AC: #3)
-  - [ ] Invalider TanStack Query : `queryClient.invalidateQueries(['client', clientId])`
-  - [ ] Invalider TanStack Query : `queryClient.invalidateQueries(['client-config', clientId])`
-  - [ ] Toast success : "Tier modifié — {nom} est maintenant en {tier}"
-  - [ ] Notification client optionnelle : "Votre abonnement a été mis à jour par MiKL"
+- [x] Implémenter invalidation cache et notifications (AC: #3)
+  - [x] Invalider TanStack Query : `queryClient.invalidateQueries(['client', clientId])`
+  - [x] Invalider TanStack Query : `queryClient.invalidateQueries(['client-config', clientId])`
+  - [x] Toast success : "Tier modifié — {nom} est maintenant en {tier}"
+  - [x] Notification client optionnelle : non implémentée (MVP — facturation manuelle)
 
-- [ ] Implémenter check tier dans Elio One+ (AC: #5)
-  - [ ] Modifier `packages/modules/elio/actions/execute-action.ts`
-  - [ ] Avant exécution action One+ : vérifier `client_configs.elio_tier`
-  - [ ] Si `elio_tier != 'one_plus'` : retourner error message
-  - [ ] Message : "Cette fonctionnalité fait partie de l'offre Elio One+. Contactez MiKL pour en savoir plus !"
-  - [ ] Ne pas consommer tokens LLM si check échoue
+- [x] Implémenter check tier dans Elio One+ (AC: #5)
+  - [x] Créer `packages/modules/elio/actions/execute-action.ts` (helper `checkElioTierAccess`)
+  - [x] Avant exécution action One+ : vérifier `client_configs.elio_tier`
+  - [x] Si `elio_tier != 'one_plus'` : retourner error message (TIER_INSUFFICIENT)
+  - [x] Message : "Cette fonctionnalité fait partie de l'offre Élio One+. Contactez MiKL pour en savoir plus !"
+  - [x] Ne pas consommer tokens LLM si check échoue (déjà implémenté dans send-to-elio.ts)
 
-- [ ] Créer types TypeScript (AC: all)
-  - [ ] Créer `packages/modules/crm/types/subscription.types.ts`
-  - [ ] Type `SubscriptionTier = 'base' | 'essentiel' | 'agentique'`
-  - [ ] Type `ElioTier = 'one' | 'one_plus' | null`
-  - [ ] Type `TierInfo = { name: string; price: string; elio: string; description: string }`
-  - [ ] Const `TIER_INFO: Record<SubscriptionTier, TierInfo>`
+- [x] Créer types TypeScript (AC: all)
+  - [x] Créer `packages/modules/crm/types/subscription.types.ts`
+  - [x] Type `SubscriptionTier = 'base' | 'essentiel' | 'agentique'`
+  - [x] Type `ElioTierForSubscription = 'one' | 'one_plus' | null`
+  - [x] Type `TierInfo = { name: string; price: string; elio: string; description: string }`
+  - [x] Const `TIER_INFO: Record<SubscriptionTier, TierInfo>`
 
-- [ ] Créer tests unitaires (TDD)
-  - [ ] Test `changeClientTier`: tier modifié + elio_tier mis à jour
-  - [ ] Test `changeClientTier`: upgrade vers One+ → alertes activées
-  - [ ] Test `changeClientTier`: downgrade depuis One+ → alertes désactivées
-  - [ ] Test `changeClientTier`: même tier → error 'TIER_UNCHANGED'
-  - [ ] Test `changeClientTier`: activity_log créé avec ancien et nouveau tier
-  - [ ] Test `mapTierToElio`: mapping correct pour chaque tier
-  - [ ] Test check Elio One+ : elio_tier != 'one_plus' → error message
+- [x] Créer tests unitaires (TDD)
+  - [x] Test `changeClientTier`: tier modifié + elio_tier mis à jour
+  - [x] Test `changeClientTier`: upgrade vers One+ → alertes activées
+  - [x] Test `changeClientTier`: downgrade depuis One+ → alertes désactivées
+  - [x] Test `changeClientTier`: même tier → error 'TIER_UNCHANGED'
+  - [x] Test `changeClientTier`: activity_log créé avec ancien et nouveau tier
+  - [x] Test `mapTierToElio`: mapping correct pour chaque tier
+  - [x] Test check Elio One+ : elio_tier != 'one_plus' → error message (execute-action.test.ts)
 
-- [ ] Créer test RLS
-  - [ ] Test : opérateur A ne peut pas changer tier de client de opérateur B
-  - [ ] Test : client ne peut pas changer son propre tier (fonction Hub only)
+- [x] Créer test RLS
+  - [x] Test : opérateur A ne peut pas changer tier de client de opérateur B
+  - [x] Test : client ne peut pas changer son propre tier (fonction Hub only)
 
 ## Dev Notes
 
@@ -296,13 +296,41 @@ export const TIER_INFO: Record<SubscriptionTier, TierInfo> = {
 ## Dev Agent Record
 
 ### Agent Model Used
-(À remplir par le dev agent)
+claude-sonnet-4-6
 
 ### Debug Log References
-(À remplir par le dev agent)
+- Tests `change-tier.test.ts` : clientId 'client-1' rejetté par Zod UUID → fix UUIDs réels dans les tests
+- Tests `change-tier.test.ts` : `revalidatePath` lance exception en env test → mock `next/cache` ajouté
+- `elio_tier` CHECK constraint PostgreSQL : NULL est valide même avec CHECK (NULL IN (...) = NULL, pas FALSE)
+- `execute-action.ts` : fichier créé (non existant avant) — le tier check existe déjà dans `send-to-elio.ts` mais `execute-action.ts` expose `checkElioTierAccess` comme helper réutilisable et testable
 
 ### Completion Notes List
-(À remplir par le dev agent)
+- Migration 00054 : ajout `subscription_tier`, `tier_changed_at`, `pending_billing_update`, `elio_proactive_alerts` à `client_configs`
+- Types `subscription.types.ts` : `SubscriptionTier`, `ElioTierForSubscription`, `TierInfo`, `ChangeTierInput`
+- `tier-helpers.ts` : `mapTierToElio()`, `isDowngradeFromOnePlus()`, `isUpgradeToOnePlus()`, `TIER_INFO` constant
+- `change-tier.ts` : Server Action complète avec Zod validation, auth, operator check, client check, UPDATE client_configs, activity_log, revalidatePath
+- `change-tier-dialog.tsx` : Dialog avec toggle buttons pour les 3 tiers, badge "(actuel)", warning downgrade, confirmations
+- `client-info-tab.tsx` : section Abonnement conditionnelle (isOneClient), badges colorés par tier, date tier_changed_at, bouton "Modifier le tier"
+- `execute-action.ts` : helper `checkElioTierAccess(clientId)` — vérifie elio_tier AVANT tout appel LLM
+- `get-client.ts` : ajout fetch `subscription_tier` + `tier_changed_at` depuis client_configs
+- `crm.types.ts` : ajout `subscriptionTier` + `tierChangedAt` dans `ClientConfig`
+- Tests : 40 tests passing — 20 tier-helpers, 7 change-tier, 6 execute-action, 7 change-tier-dialog
+- RLS test : `tests/rls/tier-rls.test.ts` (skipIf Supabase unavailable — nécessite instance locale)
+- CR Fixes : (1) suppression type dead code `ChangeTierInput`, (2) extraction `TIER_BADGE_CLASSES` dans tier-helpers (DRY), (3) suppression `as any` + eslint-disable dans execute-action.ts, (4) reset selectedTier via useEffect au reopen dialog
 
 ### File List
-(À remplir par le dev agent)
+- `supabase/migrations/00054_subscription_tier.sql` (créé)
+- `packages/modules/crm/types/subscription.types.ts` (créé)
+- `packages/modules/crm/utils/tier-helpers.ts` (créé)
+- `packages/modules/crm/utils/tier-helpers.test.ts` (créé)
+- `packages/modules/crm/actions/change-tier.ts` (créé)
+- `packages/modules/crm/actions/change-tier.test.ts` (créé)
+- `packages/modules/crm/components/change-tier-dialog.tsx` (créé)
+- `packages/modules/crm/components/change-tier-dialog.test.tsx` (créé)
+- `packages/modules/elio/actions/execute-action.ts` (créé)
+- `packages/modules/elio/actions/execute-action.test.ts` (créé)
+- `packages/modules/crm/components/client-info-tab.tsx` (modifié)
+- `packages/modules/crm/actions/get-client.ts` (modifié)
+- `packages/modules/crm/types/crm.types.ts` (modifié)
+- `tests/rls/tier-rls.test.ts` (créé)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (modifié)
