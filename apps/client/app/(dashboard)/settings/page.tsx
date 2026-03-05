@@ -1,8 +1,23 @@
 import Link from 'next/link'
+import { createServerSupabaseClient } from '@foxeo/supabase'
 import { RestartTourButton } from '../../components/onboarding/restart-tour-button'
 import { ParcoursSettingsSection } from './parcours-settings-section'
+import { DataExportSection } from './data-export-section'
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const supabase = await createServerSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  let clientId: string | null = null
+  if (user) {
+    const { data: client } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle()
+    clientId = client?.id ?? null
+  }
+
   return (
     <div className="space-y-4">
       <Link
@@ -43,7 +58,10 @@ export default function SettingsPage() {
       </div>
 
       {/* Story 9.3 — Section Mon parcours Lab */}
-      <ParcoursSettingsSection />
+      <ParcoursSettingsSection clientId={clientId ?? undefined} />
+
+      {/* Story 9.5a — Section Mes données RGPD */}
+      {clientId && <DataExportSection clientId={clientId} />}
     </div>
   )
 }

@@ -16,6 +16,7 @@ export const NotificationTypeEnum = z.enum([
   'payment',
   'inactivity_alert',
   'csv_import_complete',
+  'export_ready',
 ])
 export type NotificationType = z.infer<typeof NotificationTypeEnum>
 
@@ -95,4 +96,5 @@ export const NOTIFICATION_ICONS: Record<NotificationType, string> = {
   payment: 'credit-card',
   inactivity_alert: 'clock',
   csv_import_complete: 'file-check',
+  export_ready: 'download',
 }

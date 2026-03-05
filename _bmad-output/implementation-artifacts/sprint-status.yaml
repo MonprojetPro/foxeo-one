@@ -141,7 +141,7 @@ development_status:
   9-2-graduation-lab-vers-one-notification-client-activation-acces-one: done
   9-3-demande-abandon-de-parcours-lab-par-le-client: done
   9-4-changement-de-tier-abonnement-client-one: done
-  9-5a-export-rgpd-des-donnees-client: ready-for-dev
+  9-5a-export-rgpd-des-donnees-client: done
   9-5b-transfert-instance-one-au-client-sortant: ready-for-dev
   9-5c-anonymisation-retention-des-donnees-apres-resiliation: ready-for-dev
   epic-9-retrospective: optional

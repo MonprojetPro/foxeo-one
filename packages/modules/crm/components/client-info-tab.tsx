@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, Badge, Separator, Button, Skeleton } from '@foxeo/ui'
+import { useState, useTransition } from 'react'
+import { Card, CardContent, CardHeader, CardTitle, Badge, Separator, Button, Skeleton, showSuccess, showError } from '@foxeo/ui'
+import { exportClientData } from '@foxeo/module-admin'
 import { useClient } from '../hooks/use-client'
 import { useClientParcours } from '../hooks/use-client-parcours'
 import { useClientPendingValidations } from '../hooks/use-client-pending-validations'
@@ -43,6 +44,8 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
   const [graduationDialogOpen, setGraduationDialogOpen] = useState(false)
   const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false)
   const [changeTierDialogOpen, setChangeTierDialogOpen] = useState(false)
+  const [exportConfirmOpen, setExportConfirmOpen] = useState(false)
+  const [isExporting, startExportTransition] = useTransition()
 
   // Story 9.3 — Parcours abandonné
   const parcoursAbandoned = parcours?.status === 'abandoned'
@@ -417,6 +420,64 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
           onOpenChange={setChangeTierDialogOpen}
         />
       )}
+
+      {/* Administration — Story 9.5a */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Administration</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Exportez les données personnelles du client (RGPD — droit d&apos;accès).
+            </p>
+            {exportConfirmOpen ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Confirmer l&apos;export ?</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={isExporting}
+                  data-testid="confirm-export-button"
+                  onClick={() => {
+                    setExportConfirmOpen(false)
+                    startExportTransition(async () => {
+                      const result = await exportClientData({
+                        clientId,
+                        requestedBy: 'operator',
+                      })
+                      if (result.error) {
+                        showError(result.error.message)
+                      } else {
+                        showSuccess('Export en cours — le client recevra une notification quand il sera prêt')
+                      }
+                    })
+                  }}
+                >
+                  {isExporting ? 'Export en cours…' : 'Confirmer'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setExportConfirmOpen(false)}
+                >
+                  Annuler
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isExporting}
+                data-testid="export-client-data-button"
+                onClick={() => setExportConfirmOpen(true)}
+              >
+                Exporter les données client
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Notes privées (Story 2.6) */}
       <ClientNotesSection clientId={clientId} />
