@@ -24,6 +24,15 @@ vi.mock('next/link', () => ({
     createElement('a', { href }, children),
 }))
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}))
+
+vi.mock('./lab-teasing-card', () => ({
+  LabTeasingCard: ({ show }: { show: boolean }) =>
+    show ? createElement('div', { 'data-testid': 'lab-teasing-card' }) : null,
+}))
+
 const makeConfig = (overrides: Partial<ClientConfig> = {}): ClientConfig => ({
   id: 'cfg-1',
   clientId: 'client-1',

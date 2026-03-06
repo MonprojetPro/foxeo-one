@@ -12,6 +12,7 @@ import { FolderTree } from './folder-tree'
 import { FolderTreeSkeleton } from './folder-tree-skeleton'
 import { DocumentSearch } from './document-search'
 import type { Document } from '../types/document.types'
+import { filterByOrigin, groupDocuments, type OriginFilter } from '../utils/origin-filter'
 
 interface DocumentsPageClientProps {
   clientId: string
@@ -22,6 +23,10 @@ interface DocumentsPageClientProps {
   showBatchActions?: boolean
   viewerBaseHref?: string
   isOperator?: boolean
+  /** Date ISO de graduation Lab → One. Si présente, active le filtre Origine. */
+  graduatedAt?: string
+  /** True si le client a un historique Lab (graduation_source='lab'). */
+  hasLabBackground?: boolean
 }
 
 export function DocumentsPageClient({
@@ -33,6 +38,8 @@ export function DocumentsPageClient({
   showBatchActions = false,
   viewerBaseHref,
   isOperator = false,
+  graduatedAt,
+  hasLabBackground = false,
 }: DocumentsPageClientProps) {
   const {
     documents,
@@ -60,6 +67,7 @@ export function DocumentsPageClient({
 
   const [activeFolderId, setActiveFolderId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [originFilter, setOriginFilter] = useState<OriginFilter>('all')
 
   const displayDocuments = isPending ? initialDocuments : documents
 
@@ -73,8 +81,17 @@ export function DocumentsPageClient({
       docs = docs.filter((d) => d.folderId === activeFolderId)
     }
 
+    // Filtre par origine (utilise la fonction extraite)
+    docs = filterByOrigin(docs, originFilter, graduatedAt)
+
     return docs
-  }, [displayDocuments, activeFolderId])
+  }, [displayDocuments, activeFolderId, originFilter, graduatedAt])
+
+  // Sections groupées pour la vue "Tous" avec historique Lab
+  const { labBriefs, livrables, autresDocuments } = useMemo(() => {
+    if (originFilter !== 'all') return { labBriefs: [], livrables: [], autresDocuments: [] }
+    return groupDocuments(filteredDocuments)
+  }, [filteredDocuments, originFilter])
 
   const handleUpload = (file: File) => {
     const formData = new FormData()
@@ -90,6 +107,13 @@ export function DocumentsPageClient({
     return <DocumentSkeleton />
   }
 
+  const showOriginFilter = hasLabBackground || !!graduatedAt
+  const ORIGIN_LABELS: Record<OriginFilter, string> = {
+    all: 'Tous',
+    lab: 'Lab',
+    one: 'One',
+  }
+
   return (
     <div className="flex flex-col gap-6 p-4" data-testid="documents-page">
       <div className="flex items-center justify-between">
@@ -100,6 +124,28 @@ export function DocumentsPageClient({
         onUpload={handleUpload}
         isUploading={isUploading}
       />
+
+      {/* Filtre Origine — visible uniquement pour les clients avec historique Lab */}
+      {showOriginFilter && (
+        <div className="flex gap-2" data-testid="origin-filter">
+          {(['all', 'lab', 'one'] as OriginFilter[]).map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              onClick={() => setOriginFilter(filter)}
+              className={[
+                'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                originFilter === filter
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80',
+              ].join(' ')}
+              aria-pressed={originFilter === filter}
+            >
+              {ORIGIN_LABELS[filter]}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="flex gap-4">
         {/* Arborescence dossiers — colonne gauche */}
@@ -124,17 +170,78 @@ export function DocumentsPageClient({
             value={searchQuery}
             onChange={setSearchQuery}
           />
-          <DocumentList
-            documents={filteredDocuments}
-            clientId={clientId}
-            onDelete={handleUndoableDelete}
-            isDeleting={isDeleting}
-            showVisibility={showVisibility}
-            showBatchActions={showBatchActions}
-            viewerBaseHref={viewerBaseHref}
-            searchQuery={searchQuery}
-            isOperator={isOperator}
-          />
+
+          {/* Vue groupée par sections (filter = all + hasLabBackground) */}
+          {originFilter === 'all' && hasLabBackground ? (
+            <div className="flex flex-col gap-6">
+              {labBriefs.length > 0 && (
+                <section data-testid="section-briefs-lab">
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Briefs Lab
+                  </h2>
+                  <DocumentList
+                    documents={labBriefs}
+                    clientId={clientId}
+                    onDelete={handleUndoableDelete}
+                    isDeleting={isDeleting}
+                    showVisibility={showVisibility}
+                    showBatchActions={showBatchActions}
+                    viewerBaseHref={viewerBaseHref}
+                    searchQuery={searchQuery}
+                    isOperator={isOperator}
+                  />
+                </section>
+              )}
+              {livrables.length > 0 && (
+                <section data-testid="section-livrables">
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Livrables
+                  </h2>
+                  <DocumentList
+                    documents={livrables}
+                    clientId={clientId}
+                    onDelete={handleUndoableDelete}
+                    isDeleting={isDeleting}
+                    showVisibility={showVisibility}
+                    showBatchActions={showBatchActions}
+                    viewerBaseHref={viewerBaseHref}
+                    searchQuery={searchQuery}
+                    isOperator={isOperator}
+                  />
+                </section>
+              )}
+              {autresDocuments.length > 0 && (
+                <section data-testid="section-autres">
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    Autres documents
+                  </h2>
+                  <DocumentList
+                    documents={autresDocuments}
+                    clientId={clientId}
+                    onDelete={handleUndoableDelete}
+                    isDeleting={isDeleting}
+                    showVisibility={showVisibility}
+                    showBatchActions={showBatchActions}
+                    viewerBaseHref={viewerBaseHref}
+                    searchQuery={searchQuery}
+                    isOperator={isOperator}
+                  />
+                </section>
+              )}
+            </div>
+          ) : (
+            <DocumentList
+              documents={filteredDocuments}
+              clientId={clientId}
+              onDelete={handleUndoableDelete}
+              isDeleting={isDeleting}
+              showVisibility={showVisibility}
+              showBatchActions={showBatchActions}
+              viewerBaseHref={viewerBaseHref}
+              searchQuery={searchQuery}
+              isOperator={isOperator}
+            />
+          )}
         </div>
       </div>
     </div>

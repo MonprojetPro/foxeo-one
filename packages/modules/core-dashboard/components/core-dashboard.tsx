@@ -1,12 +1,15 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, Skeleton } from '@foxeo/ui'
 import type { ClientConfig } from '@foxeo/types'
+import { LabTeasingCard } from './lab-teasing-card'
 
 interface CoreDashboardProps {
   clientConfig: ClientConfig
   clientName: string
+  showTeasing?: boolean
 }
 
 function formatDateFR(): string {
@@ -17,7 +20,8 @@ function formatDateFR(): string {
  * CoreDashboard — Page d'accueil personnalisée pour le dashboard One (et Lab).
  * Affiche le message d'accueil, les actions rapides et l'activité récente.
  */
-export function CoreDashboard({ clientConfig, clientName }: CoreDashboardProps) {
+export function CoreDashboard({ clientConfig, clientName, showTeasing = false }: CoreDashboardProps) {
+  const router = useRouter()
   const { activeModules, customBranding } = clientConfig
   // Les 4 premiers modules actifs (hors core-dashboard) pour les "Actions rapides"
   const quickAccessModules = activeModules
@@ -63,6 +67,17 @@ export function CoreDashboard({ clientConfig, clientName }: CoreDashboardProps) 
           </p>
         )}
       </section>
+
+      {/* Teasing Lab — nouveau parcours */}
+      <LabTeasingCard
+        show={showTeasing}
+        onCTAClick={() =>
+          router.push(
+            '/modules/chat?message=' +
+              encodeURIComponent('Je souhaite lancer un nouveau parcours Lab')
+          )
+        }
+      />
 
       {/* Accès rapide Élio */}
       {activeModules.includes('elio') && (

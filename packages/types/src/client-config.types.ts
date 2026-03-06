@@ -25,6 +25,7 @@ export type ClientConfig = {
   elioConfig?: ElioConfig
   elioTier?: 'one' | 'one_plus'
   density: 'compact' | 'comfortable' | 'spacious'
+  showLabTeasing?: boolean
   createdAt: string
   updatedAt: string
 }

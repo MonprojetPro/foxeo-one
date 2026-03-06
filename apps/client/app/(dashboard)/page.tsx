@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@foxeo/supabase'
-import { CoreDashboard } from '@foxeo/module-core-dashboard'
+import { CoreDashboard, getTeasingEligibility } from '@foxeo/module-core-dashboard'
 import type { ClientConfig } from '@foxeo/types'
 
 export default async function ClientHomePage() {
@@ -13,7 +13,7 @@ export default async function ClientHomePage() {
   // Single query: client + config joined
   const { data: clientRecord } = await supabase
     .from('clients')
-    .select('id, first_name, name, client_configs(id, client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, density, created_at, updated_at)')
+    .select('id, first_name, name, client_configs(id, client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, density, show_lab_teasing, created_at, updated_at)')
     .eq('auth_user_id', user.id)
     .maybeSingle()
 
@@ -35,6 +35,7 @@ export default async function ClientHomePage() {
         elioConfig: (configData.elio_config as ClientConfig['elioConfig']) ?? undefined,
         elioTier: (configData.elio_tier as ClientConfig['elioTier']) ?? undefined,
         density: (configData.density ?? 'comfortable') as ClientConfig['density'],
+        showLabTeasing: (configData.show_lab_teasing as boolean) ?? true,
         createdAt: configData.created_at,
         updatedAt: configData.updated_at,
       }
@@ -49,5 +50,9 @@ export default async function ClientHomePage() {
         updatedAt: new Date().toISOString(),
       }
 
-  return <CoreDashboard clientConfig={clientConfig} clientName={clientName} />
+  // Fetch teasing eligibility server-side (avoids flash UI côté client)
+  const teasingResult = clientId ? await getTeasingEligibility(clientId) : null
+  const showTeasing = teasingResult?.data?.showTeasing ?? false
+
+  return <CoreDashboard clientConfig={clientConfig} clientName={clientName} showTeasing={showTeasing} />
 }
