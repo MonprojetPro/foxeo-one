@@ -159,7 +159,7 @@ development_status:
   11-1-module-facturation-structure-integration-pennylane-types: done
   11-2-edge-function-billing-sync-polling-intelligent-pennylane: done
   11-3-creation-envoi-de-devis-par-mikl-pennylane: done
-  11-4-abonnements-recurrents-pennylane-gestion-des-echecs-de-paiement: ready-for-dev
+  11-4-abonnements-recurrents-pennylane-gestion-des-echecs-de-paiement: done
   11-5-historique-facturation-client-avoirs-vue-financiere-hub: ready-for-dev
   11-6-facturation-lab-199-paiement-forfait-deduction-setup-one: ready-for-dev
   epic-11-retrospective: optional

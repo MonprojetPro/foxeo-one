@@ -1,4 +1,5 @@
 // Story 11.2 — Edge Function : billing-sync
+// Story 11.4 — Detection overdue + alertes paiement
 // Cron toutes les 5 minutes via pg_cron.
 // Polling incrémental des changelogs Pennylane → UPSERT billing_sync → Realtime.
 // Runtime : Deno (pas de require, pas d'imports workspace)
@@ -9,6 +10,7 @@ import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supa
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const MAX_CONSECUTIVE_ERRORS = 3
+const CONSECUTIVE_UNPAID_THRESHOLD = 3 // Story 11.4 — alerte critique
 const BATCH_SIZE = 100
 const PENNYLANE_BASE_URL = 'https://app.pennylane.com/api/external/v2'
 const API_2026_HEADER = { 'X-Use-2026-API-Changes': 'true' }
@@ -192,33 +194,262 @@ async function batchFetchCustomers(
   return results
 }
 
-// ── UPSERT billing_sync ───────────────────────────────────────────────────────
+// ── Pure helpers overdue (Story 11.4) ────────────────────────────────────────
+// Dupliqués ici depuis packages/modules/facturation/utils/billing-sync-overdue-logic.ts
+// (Deno ne peut pas importer les packages workspace)
+
+function isInvoiceOverdue(status: string, deadline: string | null | undefined, today: string): boolean {
+  return status === 'unpaid' && !!deadline && deadline < today
+}
+
+function getConsecutiveUnpaidCount(data: Record<string, unknown>): number {
+  const count = data.consecutive_unpaid_count
+  return typeof count === 'number' ? count : 0
+}
+
+function shouldSendCriticalAlert(count: number): boolean {
+  return count >= CONSECUTIVE_UNPAID_THRESHOLD
+}
+
+// ── UPSERT billing_sync avec détection overdue ────────────────────────────────
+
+interface ExistingInvoiceState {
+  pennylane_id: string
+  status: string
+  data: Record<string, unknown>
+}
+
+interface OverdueHandlingResult {
+  upserted: number
+  newlyOverdue: Array<{ inv: PennylaneInvoice; consecutiveCount: number }>
+  paidFromOverdue: Array<{ inv: PennylaneInvoice }>
+}
 
 async function upsertInvoices(
   supabase: SupabaseClient,
   invoices: PennylaneInvoice[]
-): Promise<number> {
-  if (invoices.length === 0) return 0
+): Promise<OverdueHandlingResult> {
+  if (invoices.length === 0) return { upserted: 0, newlyOverdue: [], paidFromOverdue: [] }
 
-  const rows = invoices.map((inv) => ({
-    entity_type: 'invoice' as EntityType,
-    pennylane_id: inv.id,
-    status: inv.status,
-    data: inv as unknown as Record<string, unknown>,
-    amount: Math.round(inv.amount * 100), // stocker en centimes
-    last_synced_at: new Date().toISOString(),
-  }))
+  const now = new Date()
+  const today = now.toISOString().split('T')[0]
 
+  // 1. Pré-UPSERT: lire l'état actuel de ces factures dans billing_sync
+  const { data: existingRows } = await supabase
+    .from('billing_sync')
+    .select('pennylane_id, status, data')
+    .eq('entity_type', 'invoice')
+    .in('pennylane_id', invoices.map((i) => i.id))
+
+  const existingMap = new Map<string, ExistingInvoiceState>(
+    (existingRows ?? []).map((r) => [
+      r.pennylane_id,
+      { pennylane_id: r.pennylane_id, status: r.status, data: r.data as Record<string, unknown> },
+    ])
+  )
+
+  const newlyOverdue: Array<{ inv: PennylaneInvoice; consecutiveCount: number }> = []
+  const paidFromOverdue: Array<{ inv: PennylaneInvoice }> = []
+
+  // 2. Construire les lignes avec détection overdue
+  const rows = invoices.map((inv) => {
+    const currentEntry = existingMap.get(inv.id)
+    const currentData = currentEntry?.data ?? {}
+    const currentStatus = currentEntry?.status
+
+    const overdue = isInvoiceOverdue(inv.status, inv.deadline, today)
+    const wasAlreadyOverdue = currentStatus === 'overdue'
+    const isPaidNow = inv.status === 'paid'
+    const wasPreviouslyOverdueOrUnpaid =
+      currentStatus === 'overdue' || currentStatus === 'unpaid'
+
+    let finalStatus = inv.status
+    let mergedData: Record<string, unknown> = inv as unknown as Record<string, unknown>
+
+    if (overdue) {
+      const newCount = getConsecutiveUnpaidCount(currentData) + 1
+      finalStatus = 'overdue'
+      mergedData = { ...inv as unknown as Record<string, unknown>, consecutive_unpaid_count: newCount }
+      if (!wasAlreadyOverdue) {
+        newlyOverdue.push({ inv, consecutiveCount: newCount })
+      }
+    } else if (isPaidNow && wasPreviouslyOverdueOrUnpaid) {
+      // Transition vers payé depuis un état d'impayé — reset compteur
+      mergedData = { ...inv as unknown as Record<string, unknown>, consecutive_unpaid_count: 0 }
+      paidFromOverdue.push({ inv })
+    }
+
+    return {
+      entity_type: 'invoice' as EntityType,
+      pennylane_id: inv.id,
+      status: finalStatus,
+      data: mergedData,
+      amount: Math.round(inv.amount * 100),
+      last_synced_at: now.toISOString(),
+    }
+  })
+
+  // 3. UPSERT
   const { error } = await supabase
     .from('billing_sync')
     .upsert(rows, { onConflict: 'entity_type,pennylane_id' })
 
   if (error) {
     console.error('[BILLING:SYNC] upsertInvoices error', error)
-    return 0
+    return { upserted: 0, newlyOverdue: [], paidFromOverdue: [] }
   }
 
-  return rows.length
+  return { upserted: rows.length, newlyOverdue, paidFromOverdue }
+}
+
+// ── Notifications et logs pour les factures overdue ───────────────────────────
+
+async function handleOverdueNotifications(
+  supabase: SupabaseClient,
+  newlyOverdue: Array<{ inv: PennylaneInvoice; consecutiveCount: number }>
+): Promise<void> {
+  if (newlyOverdue.length === 0) return
+
+  // Récupérer l'opérateur pour les notifications MiKL
+  const { data: operators } = await supabase
+    .from('operators')
+    .select('auth_user_id')
+    .limit(1)
+
+  const operatorUserId = operators?.[0]?.auth_user_id ?? null
+
+  // Batch-resolve clients from pennylane_customer_ids (avoid N+1)
+  const customerIds = [...new Set(newlyOverdue.map((o) => o.inv.customer_id))]
+  const { data: clients } = await supabase
+    .from('clients')
+    .select('auth_user_id, name, pennylane_customer_id')
+    .in('pennylane_customer_id', customerIds)
+
+  const clientMap = new Map(
+    (clients ?? []).map((c) => [c.pennylane_customer_id, c])
+  )
+
+  for (const { inv, consecutiveCount } of newlyOverdue) {
+    const amountFormatted = `${(inv.amount ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${inv.currency ?? 'EUR'}`
+
+    const client = clientMap.get(inv.customer_id) ?? null
+
+    // Notification MiKL
+    if (operatorUserId) {
+      const title = shouldSendCriticalAlert(consecutiveCount)
+        ? `Alerte critique — ${client?.name ?? inv.customer_id} : ${consecutiveCount} impayés consécutifs`
+        : `Échec paiement — ${client?.name ?? inv.customer_id}, facture ${inv.invoice_number}, ${amountFormatted}`
+
+      await supabase.from('notifications').insert({
+        recipient_type: 'operator',
+        recipient_id: operatorUserId,
+        type: 'billing_payment_failed',
+        title,
+        body: `Facture ${inv.invoice_number} — Montant : ${amountFormatted}. Deadline : ${inv.deadline ?? '—'}.`,
+        link: '/hub/facturation',
+      })
+    }
+
+    // Notification client
+    if (client?.auth_user_id) {
+      await supabase.from('notifications').insert({
+        recipient_type: 'client',
+        recipient_id: client.auth_user_id,
+        type: 'billing_payment_failed',
+        title: 'Votre paiement est en attente',
+        body: `Votre paiement de ${amountFormatted} est en attente. Merci de régulariser votre situation.`,
+        link: '/modules/facturation',
+      })
+
+      // Email via send-email Edge Function (si disponible)
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            template: 'payment-failed',
+            data: {
+              recipientName: client.name ?? 'Client',
+              amount: amountFormatted,
+              currency: inv.currency ?? 'EUR',
+              platformUrl: Deno.env.get('APP_URL') ?? 'https://foxeo.io',
+              recipientType: 'client',
+            },
+          },
+        })
+      } catch {
+        console.warn('[BILLING:SYNC] send-email Edge Function not available')
+      }
+    }
+
+    // Activity log
+    await supabase.from('activity_logs').insert({
+      actor_type: 'system',
+      action: 'payment_failed',
+      entity_type: 'invoice',
+      metadata: {
+        pennylane_invoice_id: inv.id,
+        invoice_number: inv.invoice_number,
+        customer_id: inv.customer_id,
+        amount: inv.amount,
+        deadline: inv.deadline,
+        consecutive_unpaid_count: consecutiveCount,
+        critical_alert: shouldSendCriticalAlert(consecutiveCount),
+      },
+    })
+
+    console.info(
+      `[BILLING:SYNC] Overdue invoice detected: ${inv.invoice_number}, consecutive: ${consecutiveCount}`
+    )
+  }
+}
+
+// ── Notifications paiement reçu ───────────────────────────────────────────────
+
+async function handlePaidTransitionNotifications(
+  supabase: SupabaseClient,
+  paidFromOverdue: Array<{ inv: PennylaneInvoice }>
+): Promise<void> {
+  if (paidFromOverdue.length === 0) return
+
+  // Batch-resolve clients from pennylane_customer_ids (avoid N+1)
+  const customerIds = [...new Set(paidFromOverdue.map((o) => o.inv.customer_id))]
+  const { data: clients } = await supabase
+    .from('clients')
+    .select('auth_user_id, name, pennylane_customer_id')
+    .in('pennylane_customer_id', customerIds)
+
+  const clientMap = new Map(
+    (clients ?? []).map((c) => [c.pennylane_customer_id, c])
+  )
+
+  for (const { inv } of paidFromOverdue) {
+    const amountFormatted = `${(inv.amount ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${inv.currency ?? 'EUR'}`
+
+    const client = clientMap.get(inv.customer_id) ?? null
+
+    if (client?.auth_user_id) {
+      await supabase.from('notifications').insert({
+        recipient_type: 'client',
+        recipient_id: client.auth_user_id,
+        type: 'billing_payment_received',
+        title: 'Paiement reçu — merci !',
+        body: `Votre paiement de ${amountFormatted} a bien été reçu.`,
+        link: '/modules/facturation',
+      })
+
+      await supabase.from('activity_logs').insert({
+        actor_type: 'system',
+        action: 'payment_received',
+        entity_type: 'invoice',
+        metadata: {
+          pennylane_invoice_id: inv.id,
+          invoice_number: inv.invoice_number,
+          amount: inv.amount,
+        },
+      })
+
+      console.info(`[BILLING:SYNC] Payment received for invoice: ${inv.invoice_number}`)
+    }
+  }
 }
 
 async function upsertCustomers(
@@ -299,10 +530,11 @@ async function notifyOperatorIfNeeded(
   const operatorUserId = operators[0].auth_user_id
 
   await supabase.from('notifications').insert({
-    user_id: operatorUserId,
+    recipient_type: 'operator',
+    recipient_id: operatorUserId,
     type: 'billing_sync_alert',
     title: 'Alerte — synchronisation facturation en erreur',
-    content: `La synchronisation Pennylane échoue depuis ${MAX_CONSECUTIVE_ERRORS} cycles consécutifs.`,
+    body: `La synchronisation Pennylane échoue depuis ${MAX_CONSECUTIVE_ERRORS} cycles consécutifs.`,
     link: '/hub/facturation',
   })
 }
@@ -343,7 +575,12 @@ async function syncEntityType(
     const filtered = targetClientId
       ? (entities as PennylaneInvoice[]).filter((inv) => inv.customer_id === targetClientId)
       : entities as PennylaneInvoice[]
-    upserted = await upsertInvoices(supabase, filtered)
+    // Story 11.4 — upsertInvoices retourne maintenant les listes overdue/paid
+    const invoiceResult = await upsertInvoices(supabase, filtered)
+    upserted = invoiceResult.upserted
+    // Traiter les notifications overdue et paiements reçus
+    await handleOverdueNotifications(supabase, invoiceResult.newlyOverdue)
+    await handlePaidTransitionNotifications(supabase, invoiceResult.paidFromOverdue)
   } else if (entityType === 'customer') {
     entities = await batchFetchCustomers(ids, apiToken)
     // Filtrer par customer ID si targetClientId est fourni (AC #5)
