@@ -1,6 +1,6 @@
 'use client'
 
-import { ClientDetailContent, type ExtraTab } from '@foxeo/modules/crm'
+import { ClientDetailContent, type ExtraTab, ClientBrandingTab } from '@foxeo/modules/crm'
 import { ClientSupportTab } from '@foxeo/modules-support'
 import { SubmissionsList } from '@foxeo/module-parcours'
 import { ElioConfigSection } from '@foxeo/modules/elio'
@@ -29,8 +29,13 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         label: 'Configuration Élio',
         content: <ElioConfigSection clientId={client.id} />,
       },
+      {
+        value: 'branding',
+        label: 'Branding',
+        content: <ClientBrandingTab clientId={client.id} clientCompanyName={client.company} />,
+      },
     ],
-    [client.id]
+    [client.id, client.company]
   )
 
   return <ClientDetailContent client={client} extraTabs={extraTabs} />

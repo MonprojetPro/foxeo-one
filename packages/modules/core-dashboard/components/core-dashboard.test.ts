@@ -74,16 +74,16 @@ describe('CoreDashboard', () => {
       expect(quickAccess).toHaveLength(0)
     })
 
-    it('uses custom branding companyName when present', () => {
+    it('uses custom branding displayName when present', () => {
       const config = makeConfig({
-        customBranding: { logoUrl: 'https://example.com/logo.png', companyName: 'ACME' },
+        customBranding: { logoUrl: 'https://example.com/logo.png', displayName: 'ACME', accentColor: null, updatedAt: '2026-01-01T00:00:00Z' },
       })
-      expect(config.customBranding?.companyName).toBe('ACME')
+      expect(config.customBranding?.displayName).toBe('ACME')
     })
 
     it('falls back to Foxeo One when no custom branding', () => {
       const config = makeConfig({ customBranding: undefined })
-      const displayName = config.customBranding?.companyName ?? 'Foxeo One'
+      const displayName = config.customBranding?.displayName ?? 'Foxeo One'
       expect(displayName).toBe('Foxeo One')
     })
 

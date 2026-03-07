@@ -147,11 +147,11 @@ development_status:
   epic-9-retrospective: optional
 
   # Epic 10: Dashboard One & Modules Commerciaux (4 stories)
-  epic-10: in-progress
+  epic-10: done
   10-1-dashboard-one-accueil-personnalise-navigation-modules-actives: done
   10-2-documents-herites-du-lab-livrables-teasing-lab: done
   10-3-configuration-modules-actifs-par-mikl-injection-documentation-elio-one: done
-  10-4-personnalisation-branding-dashboard-one-par-client: ready-for-dev
+  10-4-personnalisation-branding-dashboard-one-par-client: done
   epic-10-retrospective: optional
 
   # Epic 11: Facturation & Abonnements — Pennylane (6 stories)

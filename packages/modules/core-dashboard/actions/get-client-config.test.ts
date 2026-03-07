@@ -100,7 +100,7 @@ describe('getClientConfig', () => {
         dashboard_type: 'one',
         active_modules: ['core-dashboard'],
         theme_variant: 'one',
-        custom_branding: { logoUrl: 'https://logo.png', companyName: 'ACME' },
+        custom_branding: { logoUrl: 'https://logo.png', displayName: 'ACME', accentColor: null, updatedAt: '2026-01-01T00:00:00Z' },
         elio_config: null,
         elio_tier: null,
         density: 'comfortable',
@@ -112,6 +112,6 @@ describe('getClientConfig', () => {
     const { getClientConfig } = await import('./get-client-config')
     const result = await getClientConfig('client-3')
     expect(result.data?.customBranding?.logoUrl).toBe('https://logo.png')
-    expect(result.data?.customBranding?.companyName).toBe('ACME')
+    expect(result.data?.customBranding?.displayName).toBe('ACME')
   })
 })

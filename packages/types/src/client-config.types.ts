@@ -18,9 +18,10 @@ export type ElioConfig = {
 }
 
 export type CustomBranding = {
-  logoUrl?: string
-  primaryColor?: string
-  companyName?: string
+  logoUrl: string | null
+  displayName: string | null
+  accentColor: string | null
+  updatedAt: string
 }
 
 export type ClientConfig = {

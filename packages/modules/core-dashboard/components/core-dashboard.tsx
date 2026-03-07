@@ -29,7 +29,7 @@ export function CoreDashboard({ clientConfig, clientName, showTeasing = false }:
     .slice(0, 4)
 
   const logoUrl = customBranding?.logoUrl
-  const displayName = customBranding?.companyName ?? 'Foxeo One'
+  const displayName = customBranding?.displayName ?? 'Foxeo One'
   const greeting = clientName ? `Bonjour ${clientName}` : 'Bonjour'
 
   return (

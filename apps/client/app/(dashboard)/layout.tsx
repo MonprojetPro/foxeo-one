@@ -5,14 +5,16 @@ import { createServerSupabaseClient } from '@foxeo/supabase'
 import { NotificationBadge } from '@foxeo/modules-notifications'
 import { PresenceProvider } from '@foxeo/modules-chat'
 import { LogoutButton } from './logout-button'
-import type { ModuleTarget } from '@foxeo/types'
+import type { ModuleTarget, CustomBranding } from '@foxeo/types'
 
 async function ClientSidebar({
   dashboardType,
   activeModules,
+  logoUrl,
 }: {
   dashboardType: string
   activeModules: string[]
+  logoUrl?: string | null
 }) {
   await discoverModules()
   const target: ModuleTarget =
@@ -30,13 +32,33 @@ async function ClientSidebar({
     )
   }
 
-  return <ModuleSidebar target={target} modules={modules} />
+  return (
+    <div>
+      {logoUrl && (
+        <div className="px-4 py-3">
+          <img src={logoUrl} alt="Logo" className="h-8 w-auto" />
+        </div>
+      )}
+      <ModuleSidebar target={target} modules={modules} />
+    </div>
+  )
 }
 
-function ClientHeader({ authUserId }: { authUserId: string }) {
+function ClientHeader({
+  authUserId,
+  displayName,
+  logoUrl,
+}: {
+  authUserId: string
+  displayName?: string | null
+  logoUrl?: string | null
+}) {
   return (
     <div className="flex w-full items-center justify-between">
-      <span className="text-sm font-medium">Mon espace</span>
+      <div className="flex items-center gap-2">
+        {logoUrl && <img src={logoUrl} alt="Logo" className="h-6 w-auto" />}
+        <span className="text-sm font-medium">{displayName || 'Mon espace'}</span>
+      </div>
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/help">Aide</Link>
@@ -60,11 +82,11 @@ export default async function DashboardLayout({
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Single query: fetch client record with joined client_configs
+  // Single query: fetch client record with joined client_configs (including custom_branding)
   const { data: clientRecord } = user
     ? await supabase
         .from('clients')
-        .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, density)')
+        .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, density, custom_branding)')
         .eq('auth_user_id', user.id)
         .maybeSingle()
     : { data: null }
@@ -80,17 +102,30 @@ export default async function DashboardLayout({
   const activeModules: string[] = clientConfig?.active_modules ?? ['core-dashboard']
   const density = dashboardType === 'one' ? 'comfortable' : 'spacious'
 
+  // Custom branding (from Hub operator configuration)
+  const customBranding = (clientConfig?.custom_branding ?? null) as CustomBranding | null
+  const accentColor = customBranding?.accentColor ?? null
+  const logoUrl = customBranding?.logoUrl ?? null
+  const displayName = customBranding?.displayName ?? null
+
+  // Build accent color CSS override style
+  const accentStyle: React.CSSProperties = accentColor
+    ? ({ '--accent': accentColor } as React.CSSProperties)
+    : {}
+
   return (
-    <DashboardShell
-      density={density}
-      sidebar={
-        <ClientSidebar dashboardType={dashboardType} activeModules={activeModules} />
-      }
-      header={<ClientHeader authUserId={user?.id ?? ''} />}
-    >
-      <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
-        {children}
-      </PresenceProvider>
-    </DashboardShell>
+    <div style={accentStyle}>
+      <DashboardShell
+        density={density}
+        sidebar={
+          <ClientSidebar dashboardType={dashboardType} activeModules={activeModules} logoUrl={logoUrl} />
+        }
+        header={<ClientHeader authUserId={user?.id ?? ''} displayName={displayName} logoUrl={logoUrl} />}
+      >
+        <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
+          {children}
+        </PresenceProvider>
+      </DashboardShell>
+    </div>
   )
 }

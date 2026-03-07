@@ -50,6 +50,8 @@ export { CsvTemplateDownload } from './components/csv-template-download'
 export { NotificationItem } from './components/notification-item'
 export { CommunicationProfileForm } from './components/communication-profile-form'
 export { ElioObservations } from './components/elio-observations'
+export { ClientBrandingForm } from './components/client-branding-form'
+export { ClientBrandingTab } from './components/client-branding-tab'
 
 // Hooks
 export { useClients } from './hooks/use-clients'
@@ -102,6 +104,9 @@ export { markNotificationRead } from './actions/mark-notification-read'
 export { updateCommunicationProfile as updateElioCommunicationProfile } from './actions/update-communication-profile'
 export { integrateObservation, type ObservationTarget } from './actions/integrate-observation'
 export { getElioObservations, type ElioObservation } from './actions/get-elio-observations'
+export { updateClientBranding } from './actions/update-client-branding'
+export { uploadClientLogo } from './actions/upload-client-logo'
+export { getClientBranding } from './actions/get-client-branding'
 
 // Utils
 export {
