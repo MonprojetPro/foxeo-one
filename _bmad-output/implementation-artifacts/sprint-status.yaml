@@ -155,24 +155,24 @@ development_status:
   epic-10-retrospective: optional
 
   # Epic 11: Facturation & Abonnements — Pennylane (6 stories)
-  epic-11: backlog
-  11-1-module-facturation-structure-integration-pennylane-types: backlog
-  11-2-edge-function-billing-sync-polling-intelligent-pennylane: backlog
-  11-3-creation-envoi-de-devis-par-mikl-pennylane: backlog
-  11-4-abonnements-recurrents-pennylane-gestion-des-echecs-de-paiement: backlog
-  11-5-historique-facturation-client-avoirs-vue-financiere-hub: backlog
-  11-6-facturation-lab-199-paiement-forfait-deduction-setup-one: backlog
+  epic-11: in-progress
+  11-1-module-facturation-structure-integration-pennylane-types: done
+  11-2-edge-function-billing-sync-polling-intelligent-pennylane: ready-for-dev
+  11-3-creation-envoi-de-devis-par-mikl-pennylane: ready-for-dev
+  11-4-abonnements-recurrents-pennylane-gestion-des-echecs-de-paiement: ready-for-dev
+  11-5-historique-facturation-client-avoirs-vue-financiere-hub: ready-for-dev
+  11-6-facturation-lab-199-paiement-forfait-deduction-setup-one: ready-for-dev
   epic-11-retrospective: optional
 
   # Epic 12: Administration, Analytics & Templates (9 stories)
-  epic-12: backlog
-  12-1-module-admin-logs-activite-par-client-mode-maintenance: backlog
-  12-2-export-complet-donnees-client-backups-automatiques: backlog
-  12-3-templates-reutilisables-parcours-lab-emails-automatiques: backlog
-  12-4-analytics-metriques-usage: backlog
-  12-5a-monitoring-sante-systeme-alertes-dysfonctionnement: backlog
-  12-5b-preparation-integrations-p2-webhooks-api: backlog
-  12-6-provisioning-instance-one-depuis-le-hub: backlog
-  12-7-monitoring-instances-one-usage-seuils-alertes: backlog
-  12-8-documentation-obligatoire-par-module-verification: backlog
+  epic-12: in-progress
+  12-1-module-admin-logs-activite-par-client-mode-maintenance: ready-for-dev
+  12-2-export-complet-donnees-client-backups-automatiques: ready-for-dev
+  12-3-templates-reutilisables-parcours-lab-emails-automatiques: ready-for-dev
+  12-4-analytics-metriques-usage: ready-for-dev
+  12-5a-monitoring-sante-systeme-alertes-dysfonctionnement: ready-for-dev
+  12-5b-preparation-integrations-p2-webhooks-api: ready-for-dev
+  12-6-provisioning-instance-one-depuis-le-hub: ready-for-dev
+  12-7-monitoring-instances-one-usage-seuils-alertes: ready-for-dev
+  12-8-documentation-obligatoire-par-module-verification: ready-for-dev
   epic-12-retrospective: optional
