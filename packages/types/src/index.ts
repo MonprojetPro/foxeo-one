@@ -17,6 +17,7 @@ export type { UserRole, DashboardType, DeviceType, UserSession, SessionInfo } fr
 export type {
   ElioTier,
   ElioConfig,
+  ElioModuleDoc,
   CustomBranding,
   ClientConfig,
 } from './client-config.types'

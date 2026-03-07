@@ -6,6 +6,9 @@ import { ClientInfoTab } from './client-info-tab'
 import { ClientTimeline } from './client-timeline'
 import { ClientDocumentsTab } from './client-documents-tab'
 import { ClientExchangesTab } from './client-exchanges-tab'
+import { ModuleToggleList } from './module-toggle-list'
+import { ElioDocForm } from './elio-doc-form'
+import type { ModuleManifest } from '@foxeo/types'
 
 export interface ExtraTab {
   value: string
@@ -17,9 +20,11 @@ interface ClientTabsProps {
   clientId: string
   onEdit?: () => void
   extraTabs?: ExtraTab[]
+  activeModules?: string[]
+  allModules?: ModuleManifest[]
 }
 
-export function ClientTabs({ clientId, onEdit, extraTabs = [] }: ClientTabsProps) {
+export function ClientTabs({ clientId, onEdit, extraTabs = [], activeModules = [], allModules = [] }: ClientTabsProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -39,6 +44,7 @@ export function ClientTabs({ clientId, onEdit, extraTabs = [] }: ClientTabsProps
         <TabsTrigger value="historique">Historique</TabsTrigger>
         <TabsTrigger value="documents">Documents</TabsTrigger>
         <TabsTrigger value="echanges">Échanges</TabsTrigger>
+        <TabsTrigger value="modules">Modules</TabsTrigger>
         {extraTabs.map((tab) => (
           <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
         ))}
@@ -58,6 +64,23 @@ export function ClientTabs({ clientId, onEdit, extraTabs = [] }: ClientTabsProps
 
       <TabsContent value="echanges">
         <ClientExchangesTab clientId={clientId} />
+      </TabsContent>
+
+      <TabsContent value="modules">
+        <div className="space-y-8">
+          <section>
+            <h3 className="text-lg font-semibold mb-4">Modules actifs</h3>
+            <ModuleToggleList
+              clientId={clientId}
+              activeModules={activeModules}
+              allModules={allModules}
+            />
+          </section>
+          <section>
+            <h3 className="text-lg font-semibold mb-4">Documentation Élio</h3>
+            <ElioDocForm clientId={clientId} activeModules={activeModules} />
+          </section>
+        </div>
       </TabsContent>
 
       {extraTabs.map((tab) => (

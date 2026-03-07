@@ -16,8 +16,42 @@ import { getCollectionStatus } from '../utils/document-collection'
 import { generateDocument } from './generate-document'
 import type { DashboardType, ElioMessage, CommunicationProfileFR66 } from '../types/elio.types'
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
+import type { ElioModuleDoc } from '@foxeo/types'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
+
+/**
+ * Formate les docs de modules Élio injectées par MiKL en texte compact pour le system prompt.
+ * Format : ## moduleId\ndescription\n### FAQ\n- Q: ...\n  R: ...\n### Problèmes courants\n- P: ...\n  D: ...
+ */
+function buildElioModuleDocsPrompt(elioModuleDocs: unknown): string | null {
+  if (!elioModuleDocs || !Array.isArray(elioModuleDocs) || elioModuleDocs.length === 0) {
+    return null
+  }
+
+  const docs = elioModuleDocs as ElioModuleDoc[]
+  const sections = docs.map((doc) => {
+    let section = `## ${doc.moduleId}\n${doc.description}`
+
+    if (doc.faq && doc.faq.length > 0) {
+      section += '\n### FAQ'
+      for (const item of doc.faq) {
+        section += `\n- Q: ${item.question}\n  R: ${item.answer}`
+      }
+    }
+
+    if (doc.commonIssues && doc.commonIssues.length > 0) {
+      section += '\n### Problèmes courants'
+      for (const issue of doc.commonIssues) {
+        section += `\n- P: ${issue.problem}\n  D: ${issue.diagnostic}\n  E: ${issue.escalation}`
+      }
+    }
+
+    return section
+  })
+
+  return sections.join('\n\n')
+}
 
 export interface DraftContext {
   previousDraft: string
@@ -201,11 +235,11 @@ export async function sendToElio(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: clientConfig } = await (supabase as any)
       .from('client_configs')
-      .select('modules_documentation, elio_config, elio_tier, active_modules')
+      .select('elio_module_docs, elio_config, elio_tier, active_modules')
       .eq('client_id', clientId)
       .maybeSingle() as {
         data: {
-          modules_documentation: unknown
+          elio_module_docs: unknown
           elio_config: unknown
           elio_tier: 'one' | 'one_plus' | null
           active_modules: string[] | null
@@ -229,10 +263,9 @@ export async function sendToElio(
     // Modules actifs du client
     const activeModules: string[] = clientConfig?.active_modules ?? []
 
-    // Documentation modules actifs (colonne dédiée, injectée via Story 10.3)
-    const modulesDocumentation = clientConfig?.modules_documentation
-      ? JSON.stringify(clientConfig.modules_documentation, null, 2)
-      : null
+    // Documentation modules actifs — injectée par MiKL via Story 10.3
+    // Format compact pour minimiser les tokens : ## moduleId\ndesc\n### FAQ\n- Q: ...\n  R: ...
+    const modulesDocumentation = buildElioModuleDocsPrompt(clientConfig?.elio_module_docs)
 
     // Contexte parcours Lab (décisions MiKL pendant le Lab)
     const parcoursContext = (elioConfigJson.parcours_context as string | undefined) ?? null
