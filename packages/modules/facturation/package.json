@@ -1,0 +1,41 @@
+{
+  "name": "@foxeo/modules-facturation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    }
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@foxeo/types": "*",
+    "@foxeo/ui": "*",
+    "@foxeo/utils": "*",
+    "@foxeo/supabase": "*",
+    "@tanstack/react-query": "^5.90.0",
+    "react-hook-form": "^7.71.0",
+    "@hookform/resolvers": "^3.9.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@foxeo/tsconfig": "*",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "happy-dom": "^20.6.1",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  }
+}

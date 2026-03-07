@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { Quote, Invoice, BillingSubscription, BillingSummary } from '../types/billing.types'
+import type { Quote, Invoice, BillingSubscription, BillingSummary, BillingSyncRow } from '../types/billing.types'
 
 // Données lues depuis billing_sync (table miroir Story 11.2), pas appels directs Pennylane.
 // Note: Les casts `as unknown as T` sont temporaires — la table billing_sync n'existe pas encore.
@@ -90,6 +90,31 @@ export function useBillingSubscriptions(clientId?: string) {
       const { data, error } = await query
       if (error) throw error
       return (data ?? []) as unknown as BillingSubscription[]
+    },
+    staleTime: STALE_TIME,
+  })
+}
+
+// Lecture des lignes brutes billing_sync pour affichage dans les listes (Story 11.3)
+export function useBillingSyncRows(entityType: 'quote' | 'invoice' | 'subscription', clientId?: string) {
+  return useQuery<BillingSyncRow[]>({
+    queryKey: ['billing', 'sync-rows', entityType, clientId],
+    queryFn: async () => {
+      const { createBrowserSupabaseClient } = await import('@foxeo/supabase')
+      const supabase = createBrowserSupabaseClient()
+      let query = supabase
+        .from('billing_sync')
+        .select('id, entity_type, pennylane_id, client_id, status, amount, data, last_synced_at, created_at, updated_at')
+        .eq('entity_type', entityType)
+        .order('created_at', { ascending: false })
+
+      if (clientId) {
+        query = query.eq('client_id', clientId)
+      }
+
+      const { data, error } = await query
+      if (error) throw error
+      return (data ?? []) as BillingSyncRow[]
     },
     staleTime: STALE_TIME,
   })

@@ -160,3 +160,34 @@ export type ListSubscriptionsFilters = {
   pennylaneCustomerId?: string
   status?: PennylaneBillingSubscription['status']
 }
+
+// ============================================================
+// Types Story 11.3 — Création de devis
+// ============================================================
+
+export type CreateQuoteOptions = {
+  sendNow?: boolean
+  publicNotes?: string | null
+  privateNotes?: string | null
+}
+
+export type ClientWithPennylane = {
+  id: string
+  name: string
+  company: string | null
+  email: string
+  pennylaneCustomerId: string
+}
+
+export type BillingSyncRow = {
+  id: string
+  entity_type: 'quote' | 'invoice' | 'subscription' | 'customer'
+  pennylane_id: string
+  client_id: string | null
+  status: string
+  amount: number | null
+  data: Record<string, unknown>
+  last_synced_at: string
+  created_at: string
+  updated_at: string
+}
