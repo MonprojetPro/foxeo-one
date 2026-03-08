@@ -15,6 +15,14 @@ const STATUS_LABELS: Record<string, string> = {
   unpaid: 'Impayée',
 }
 
+const LAB_INVOICE_TAG = '[FOXEO_LAB]'
+
+function isLabInvoiceRow(row: BillingSyncRow): boolean {
+  const data = row.data as { pdf_invoice_free_text?: string; is_lab_invoice?: boolean }
+  return data.is_lab_invoice === true ||
+    (typeof data.pdf_invoice_free_text === 'string' && data.pdf_invoice_free_text.includes(LAB_INVOICE_TAG))
+}
+
 const STATUS_CLASSES: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
   pending: 'bg-blue-500/10 text-blue-500',
@@ -109,14 +117,26 @@ function InvoiceRow({ row }: { row: BillingSyncRow }) {
     date?: string
     file_url?: string
     payment_url?: string
+    lab_deduction_applied?: boolean
   }
+  const isLab = isLabInvoiceRow(row)
 
   return (
     <div className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-accent/30 transition-colors">
       <div className="flex items-center gap-4">
         <div className="flex flex-col">
-          <span className="text-sm font-medium">{invoiceData.invoice_number ?? row.pennylane_id}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">{invoiceData.invoice_number ?? row.pennylane_id}</span>
+            {isLab && (
+              <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-400">
+                Lab
+              </span>
+            )}
+          </div>
           <span className="text-xs text-muted-foreground">{formatDate(invoiceData.date)}</span>
+          {isLab && row.status === 'paid' && invoiceData.lab_deduction_applied && (
+            <span className="text-[10px] text-muted-foreground">Déduit du setup One</span>
+          )}
         </div>
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[row.status] ?? STATUS_CLASSES.draft}`}

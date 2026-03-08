@@ -15,6 +15,10 @@ import {
   MAX_CONSECUTIVE_ERRORS,
   BATCH_SIZE,
   PENNYLANE_BASE_URL,
+  isLabInvoice,
+  shouldActivateLabAccess,
+  LAB_INVOICE_TAG,
+  LAB_AMOUNT_CENTS,
 } from './billing-sync-logic'
 import type { ChangelogPage, BillingSyncState } from './billing-sync-logic'
 
@@ -222,5 +226,53 @@ describe('buildCustomerRow', () => {
     expect(row.status).toBe('active')
     expect(row.data).toEqual(customer)
     expect(row.last_synced_at).toBe(syncedAt)
+  })
+})
+
+// ── Tests Lab invoice detection (Story 11.6) ──────────────────────────────────
+
+describe('isLabInvoice', () => {
+  it('retourne false pour null', () => {
+    expect(isLabInvoice(null)).toBe(false)
+  })
+
+  it('retourne false pour undefined', () => {
+    expect(isLabInvoice(undefined)).toBe(false)
+  })
+
+  it('retourne true quand pdf_invoice_free_text contient le tag lab', () => {
+    expect(isLabInvoice(LAB_INVOICE_TAG)).toBe(true)
+  })
+
+  it('retourne true quand le tag est présent dans du texte plus long', () => {
+    expect(isLabInvoice(`Facture Lab ${LAB_INVOICE_TAG} — données internes`)).toBe(true)
+  })
+
+  it('retourne false pour un texte sans le tag', () => {
+    expect(isLabInvoice('Facture ordinaire sans tag')).toBe(false)
+  })
+})
+
+describe('shouldActivateLabAccess', () => {
+  it('retourne true quand status=paid et tag lab présent', () => {
+    expect(shouldActivateLabAccess({ status: 'paid', pdf_invoice_free_text: LAB_INVOICE_TAG })).toBe(true)
+  })
+
+  it('retourne false quand status=unpaid même avec tag lab', () => {
+    expect(shouldActivateLabAccess({ status: 'unpaid', pdf_invoice_free_text: LAB_INVOICE_TAG })).toBe(false)
+  })
+
+  it('retourne false quand pdf_invoice_free_text est null même si status=paid', () => {
+    expect(shouldActivateLabAccess({ status: 'paid', pdf_invoice_free_text: null })).toBe(false)
+  })
+
+  it('retourne false quand pdf_invoice_free_text sans tag et status=paid', () => {
+    expect(shouldActivateLabAccess({ status: 'paid', pdf_invoice_free_text: 'Facture ordinaire' })).toBe(false)
+  })
+})
+
+describe('LAB_AMOUNT_CENTS', () => {
+  it('vaut 19900 centimes (199€)', () => {
+    expect(LAB_AMOUNT_CENTS).toBe(19900)
   })
 })

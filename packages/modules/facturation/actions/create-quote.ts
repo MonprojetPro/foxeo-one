@@ -22,7 +22,7 @@ export async function createAndSendQuote(
   // Récupérer le client pour obtenir pennylane_customer_id et auth_user_id
   const { data: client, error: clientError } = await supabase
     .from('clients')
-    .select('id, name, auth_user_id, pennylane_customer_id')
+    .select('id, name, auth_user_id, pennylane_customer_id, lab_paid')
     .eq('id', clientId)
     .single()
 
@@ -49,8 +49,31 @@ export async function createAndSendQuote(
   deadline.setDate(deadline.getDate() + 30)
   const deadlineStr = deadline.toISOString().split('T')[0]
 
+  // Story 11.6 — Déduction forfait Lab si applicable
+  const clientLabPaid = client.lab_paid as boolean | null
+  const applyLabDeduction = options.labDeduction === true && clientLabPaid === true
+
+  // Calcul déduction plafonnée (AC#3: si setup < 199€, net = 0€, pas de remboursement)
+  const setupTotalHt = lineItems.reduce((sum, li) => sum + li.quantity * li.unitPrice, 0)
+  const cappedDeduction = Math.min(199, setupTotalHt)
+
+  const allLineItems = applyLabDeduction && cappedDeduction > 0
+    ? [
+        ...lineItems,
+        {
+          label: 'Déduction forfait Lab Foxeo',
+          description: 'Le forfait Lab (199€) est déduit du setup One, comme convenu.',
+          quantity: 1,
+          unitPrice: -cappedDeduction,
+          vatRate: 'FR_200',
+          unit: 'piece',
+          total: -cappedDeduction,
+        },
+      ]
+    : lineItems
+
   // Mapping LineItems → PennylaneLineItems
-  const pennylaneLineItems = lineItems.map(toPennylaneLineItem)
+  const pennylaneLineItems = allLineItems.map(toPennylaneLineItem)
 
   // POST /quotes
   const quoteResult = await pennylaneClient.post<{ quote: PennylaneQuote }>('/quotes', {
@@ -58,7 +81,9 @@ export async function createAndSendQuote(
       customer_id: pennylaneCustomerId,
       deadline: deadlineStr,
       line_items: pennylaneLineItems,
-      pdf_invoice_free_text: options.publicNotes ?? null,
+      pdf_invoice_free_text: applyLabDeduction
+        ? `${options.publicNotes ?? ''} [LAB_DEDUCTION:19900]`.trim()
+        : (options.publicNotes ?? null),
     },
   })
 

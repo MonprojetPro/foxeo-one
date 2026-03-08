@@ -226,3 +226,72 @@ describe('createAndSendQuote', () => {
     expect(activityCall).toBeDefined()
   })
 })
+
+// ── Tests déduction Lab (Story 11.6) ──────────────────────────────────────────
+
+describe('createAndSendQuote — Lab deduction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockTriggerBillingSync.mockResolvedValue({ data: { synced: 1 }, error: null })
+  })
+
+  it('ne ajoute pas de ligne déduction quand labDeduction=false', async () => {
+    const supabase = makeSupabaseMock({
+      clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: true },
+    })
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    mockPennylane.post.mockResolvedValue({ data: { quote: mockPennylaneQuote }, error: null })
+
+    await createAndSendQuote('client-1', mockLineItems, { labDeduction: false })
+
+    const postCall = mockPennylane.post.mock.calls[0]
+    const lineItems = postCall[1].quote.line_items as Array<{ currency_amount: number }>
+    const hasDeduction = lineItems.some((li) => li.currency_amount === -199)
+    expect(hasDeduction).toBe(false)
+  })
+
+  it('ne ajoute pas de ligne déduction quand client.lab_paid=false même avec labDeduction=true', async () => {
+    const supabase = makeSupabaseMock({
+      clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: false },
+    })
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    mockPennylane.post.mockResolvedValue({ data: { quote: mockPennylaneQuote }, error: null })
+
+    await createAndSendQuote('client-1', mockLineItems, { labDeduction: true })
+
+    const postCall = mockPennylane.post.mock.calls[0]
+    const lineItems = postCall[1].quote.line_items as Array<{ currency_amount: number }>
+    const hasDeduction = lineItems.some((li) => li.currency_amount === -199)
+    expect(hasDeduction).toBe(false)
+  })
+
+  it('ajoute une ligne déduction -199€ quand labDeduction=true et client.lab_paid=true', async () => {
+    const supabase = makeSupabaseMock({
+      clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: true },
+    })
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    mockPennylane.post.mockResolvedValue({ data: { quote: mockPennylaneQuote }, error: null })
+
+    await createAndSendQuote('client-1', mockLineItems, { labDeduction: true })
+
+    const postCall = mockPennylane.post.mock.calls[0]
+    const lineItems = postCall[1].quote.line_items as Array<{ label: string; currency_amount: number }>
+    const deductionLine = lineItems.find((li) => li.currency_amount === -199)
+    expect(deductionLine).toBeDefined()
+    expect(deductionLine?.label).toBe('Déduction forfait Lab Foxeo')
+  })
+
+  it('stocke [LAB_DEDUCTION:19900] dans pdf_invoice_free_text quand déduction appliquée', async () => {
+    const supabase = makeSupabaseMock({
+      clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: true },
+    })
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    mockPennylane.post.mockResolvedValue({ data: { quote: mockPennylaneQuote }, error: null })
+
+    await createAndSendQuote('client-1', mockLineItems, { labDeduction: true })
+
+    const postCall = mockPennylane.post.mock.calls[0]
+    const freeText = postCall[1].quote.pdf_invoice_free_text as string
+    expect(freeText).toContain('[LAB_DEDUCTION:19900]')
+  })
+})

@@ -155,13 +155,13 @@ development_status:
   epic-10-retrospective: optional
 
   # Epic 11: Facturation & Abonnements — Pennylane (6 stories)
-  epic-11: in-progress
+  epic-11: done
   11-1-module-facturation-structure-integration-pennylane-types: done
   11-2-edge-function-billing-sync-polling-intelligent-pennylane: done
   11-3-creation-envoi-de-devis-par-mikl-pennylane: done
   11-4-abonnements-recurrents-pennylane-gestion-des-echecs-de-paiement: done
   11-5-historique-facturation-client-avoirs-vue-financiere-hub: done
-  11-6-facturation-lab-199-paiement-forfait-deduction-setup-one: ready-for-dev
+  11-6-facturation-lab-199-paiement-forfait-deduction-setup-one: done
   epic-11-retrospective: optional
 
   # Epic 12: Administration, Analytics & Templates (9 stories)

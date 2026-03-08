@@ -148,6 +148,28 @@ export function extractRetryAfter(headers: Headers): number {
   return parseInt(headers.get('retry-after') ?? '60', 10)
 }
 
+// ── Lab Invoice detection (Story 11.6) ───────────────────────────────────────
+
+export const LAB_INVOICE_TAG = '[FOXEO_LAB]'
+export const LAB_AMOUNT_CENTS = 19900
+
+/**
+ * Retourne true si la facture est identifiée comme une facture Lab Foxeo.
+ */
+export function isLabInvoice(pdfFreeText: string | null | undefined): boolean {
+  return typeof pdfFreeText === 'string' && pdfFreeText.includes(LAB_INVOICE_TAG)
+}
+
+/**
+ * Retourne true si la facture Lab vient d'être payée (doit activer l'accès Lab).
+ */
+export function shouldActivateLabAccess(invoice: {
+  status: string
+  pdf_invoice_free_text: string | null | undefined
+}): boolean {
+  return invoice.status === 'paid' && isLabInvoice(invoice.pdf_invoice_free_text)
+}
+
 // ── UPSERT row builders ───────────────────────────────────────────────────────
 
 export interface InvoiceRow {

@@ -10,6 +10,9 @@ export { QuotesList } from './components/quotes-list'
 export { InvoicesList } from './components/invoices-list'
 export { BillingSummary } from './components/billing-summary'
 
+// Components (Story 11.6)
+export { LabBillingTab } from './components/lab-billing-tab'
+
 // Hooks
 export { useBillingQuotes, useBillingInvoices, useBillingSubscriptions, useBillingSummary, useBillingSyncRows, useBillingMetrics, billingKeys } from './hooks/use-billing'
 
@@ -20,6 +23,9 @@ export { convertQuoteToInvoice } from './actions/convert-quote-to-invoice'
 export { getClientsWithPennylane } from './actions/get-clients'
 export { createCreditNote } from './actions/create-credit-note'
 export { triggerClientBillingSync } from './actions/trigger-client-billing-sync'
+export { sendLabInvoice } from './actions/send-lab-invoice'
+export { getClientLabStatus } from './actions/get-client-lab-status'
+export type { ClientLabStatus } from './actions/get-client-lab-status'
 
 // Utils
 export {

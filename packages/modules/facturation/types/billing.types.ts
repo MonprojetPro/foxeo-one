@@ -169,6 +169,8 @@ export type CreateQuoteOptions = {
   sendNow?: boolean
   publicNotes?: string | null
   privateNotes?: string | null
+  /** Story 11.6 — Si true et client.lab_paid=true, ajoute automatiquement la déduction 199€ */
+  labDeduction?: boolean
 }
 
 export type ClientWithPennylane = {
@@ -177,6 +179,9 @@ export type ClientWithPennylane = {
   company: string | null
   email: string
   pennylaneCustomerId: string
+  /** Story 11.6 — Statut paiement forfait Lab */
+  labPaid?: boolean
+  labPaidAt?: string | null
 }
 
 export type BillingSyncRow = {

@@ -194,6 +194,21 @@ async function batchFetchCustomers(
   return results
 }
 
+// ── Pure helpers Lab invoice (Story 11.6) ────────────────────────────────────
+// Dupliqués ici depuis packages/modules/facturation/utils/billing-sync-logic.ts
+// (Deno ne peut pas importer les packages workspace)
+
+const LAB_INVOICE_TAG = '[FOXEO_LAB]'
+const LAB_AMOUNT_CENTS = 19900
+
+function isLabInvoice(pdfFreeText: string | null | undefined): boolean {
+  return typeof pdfFreeText === 'string' && pdfFreeText.includes(LAB_INVOICE_TAG)
+}
+
+function shouldActivateLabAccess(inv: PennylaneInvoice): boolean {
+  return inv.status === 'paid' && isLabInvoice(inv.pdf_invoice_free_text)
+}
+
 // ── Pure helpers overdue (Story 11.4) ────────────────────────────────────────
 // Dupliqués ici depuis packages/modules/facturation/utils/billing-sync-overdue-logic.ts
 // (Deno ne peut pas importer les packages workspace)
@@ -223,13 +238,14 @@ interface OverdueHandlingResult {
   upserted: number
   newlyOverdue: Array<{ inv: PennylaneInvoice; consecutiveCount: number }>
   paidFromOverdue: Array<{ inv: PennylaneInvoice }>
+  labInvoicesPaid: Array<{ inv: PennylaneInvoice }>
 }
 
 async function upsertInvoices(
   supabase: SupabaseClient,
   invoices: PennylaneInvoice[]
 ): Promise<OverdueHandlingResult> {
-  if (invoices.length === 0) return { upserted: 0, newlyOverdue: [], paidFromOverdue: [] }
+  if (invoices.length === 0) return { upserted: 0, newlyOverdue: [], paidFromOverdue: [], labInvoicesPaid: [] }
 
   const now = new Date()
   const today = now.toISOString().split('T')[0]
@@ -250,6 +266,7 @@ async function upsertInvoices(
 
   const newlyOverdue: Array<{ inv: PennylaneInvoice; consecutiveCount: number }> = []
   const paidFromOverdue: Array<{ inv: PennylaneInvoice }> = []
+  const labInvoicesPaid: Array<{ inv: PennylaneInvoice }> = []
 
   // 2. Construire les lignes avec détection overdue
   const rows = invoices.map((inv) => {
@@ -279,6 +296,11 @@ async function upsertInvoices(
       paidFromOverdue.push({ inv })
     }
 
+    // Détection paiement Lab (Story 11.6)
+    if (shouldActivateLabAccess(inv) && currentStatus !== 'paid') {
+      labInvoicesPaid.push({ inv })
+    }
+
     return {
       entity_type: 'invoice' as EntityType,
       pennylane_id: inv.id,
@@ -296,10 +318,10 @@ async function upsertInvoices(
 
   if (error) {
     console.error('[BILLING:SYNC] upsertInvoices error', error)
-    return { upserted: 0, newlyOverdue: [], paidFromOverdue: [] }
+    return { upserted: 0, newlyOverdue: [], paidFromOverdue: [], labInvoicesPaid: [] }
   }
 
-  return { upserted: rows.length, newlyOverdue, paidFromOverdue }
+  return { upserted: rows.length, newlyOverdue, paidFromOverdue, labInvoicesPaid }
 }
 
 // ── Notifications et logs pour les factures overdue ───────────────────────────
@@ -452,6 +474,85 @@ async function handlePaidTransitionNotifications(
   }
 }
 
+// ── Activation accès Lab après paiement (Story 11.6) ─────────────────────────
+
+async function handleLabPaymentActivations(
+  supabase: SupabaseClient,
+  labInvoicesPaid: Array<{ inv: PennylaneInvoice }>
+): Promise<void> {
+  if (labInvoicesPaid.length === 0) return
+
+  // Récupérer l'opérateur pour notification
+  const { data: operators } = await supabase
+    .from('operators')
+    .select('auth_user_id')
+    .limit(1)
+  const operatorUserId = operators?.[0]?.auth_user_id ?? null
+
+  // Batch-resolve clients from pennylane_customer_ids
+  const customerIds = [...new Set(labInvoicesPaid.map((o) => o.inv.customer_id))]
+  const { data: clients } = await supabase
+    .from('clients')
+    .select('id, auth_user_id, name, pennylane_customer_id')
+    .in('pennylane_customer_id', customerIds)
+
+  const clientMap = new Map(
+    (clients ?? []).map((c) => [c.pennylane_customer_id, c])
+  )
+
+  const now = new Date().toISOString()
+
+  for (const { inv } of labInvoicesPaid) {
+    const client = clientMap.get(inv.customer_id) ?? null
+    if (!client) continue
+
+    // Activer lab_paid sur le client
+    await supabase
+      .from('clients')
+      .update({ lab_paid: true, lab_paid_at: now, lab_amount: LAB_AMOUNT_CENTS })
+      .eq('id', client.id)
+
+    // Notification MiKL
+    if (operatorUserId) {
+      await supabase.from('notifications').insert({
+        recipient_type: 'operator',
+        recipient_id: operatorUserId,
+        type: 'lab_payment_received',
+        title: `Paiement Lab reçu — ${client.name}`,
+        body: `Le forfait Lab (199€) a été payé par ${client.name}. Accès Lab activé.`,
+        link: '/hub/facturation',
+      })
+    }
+
+    // Notification client
+    if (client.auth_user_id) {
+      await supabase.from('notifications').insert({
+        recipient_type: 'client',
+        recipient_id: client.auth_user_id,
+        type: 'lab_payment_received',
+        title: 'Accès Lab activé !',
+        body: 'Votre paiement du forfait Lab (199€) a été reçu. Votre accès Lab est maintenant actif.',
+        link: '/dashboard',
+      })
+    }
+
+    // Activity log
+    await supabase.from('activity_logs').insert({
+      actor_type: 'system',
+      action: 'lab_payment_received',
+      entity_type: 'invoice',
+      metadata: {
+        pennylane_invoice_id: inv.id,
+        invoice_number: inv.invoice_number,
+        client_id: client.id,
+        amount: LAB_AMOUNT_CENTS,
+      },
+    })
+
+    console.info(`[BILLING:SYNC] Lab payment received for client: ${client.name}`)
+  }
+}
+
 async function upsertCustomers(
   supabase: SupabaseClient,
   customers: PennylaneCustomer[]
@@ -581,6 +682,8 @@ async function syncEntityType(
     // Traiter les notifications overdue et paiements reçus
     await handleOverdueNotifications(supabase, invoiceResult.newlyOverdue)
     await handlePaidTransitionNotifications(supabase, invoiceResult.paidFromOverdue)
+    // Activer accès Lab si paiement Lab détecté (Story 11.6)
+    await handleLabPaymentActivations(supabase, invoiceResult.labInvoicesPaid)
   } else if (entityType === 'customer') {
     entities = await batchFetchCustomers(ids, apiToken)
     // Filtrer par customer ID si targetClientId est fourni (AC #5)

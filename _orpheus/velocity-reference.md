@@ -140,23 +140,37 @@
 | 72 | 10.1 — Dashboard One accueil personnalise navigation | 06/03 16:50 | 17h40* | 18 | +1,116 | -69 | +1,047 | 40† |
 | 73 | 10.2 — Documents herites Lab livrables teasing | 06/03 17:22 | 0h32 | 17 | +1,020 | -17 | +1,003 | 44† |
 | 74 | 10.3 — Config modules actifs injection doc Elio | 07/03 11:31 | 18h09* | 15 | +1,866 | -8 | +1,858 | 43† |
+| 75 | 10.4 — Personnalisation branding dashboard One | 07/03 11:53 | 0h22 | 20 | +1,611 | -31 | +1,580 | 70† |
 
 > `*` = inclut une nuit — temps reel de dev significativement inferieur au delta.
 > `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumules ~3,600+.
+
+### Epic 11 — Facturation & Abonnements Pennylane
+
+| # | Story | Date commit | Delta vs precedent | Fichiers | Insertions | Suppressions | Net | Tests |
+|---|-------|-------------|-------------------|----------|------------|-------------|-----|-------|
+| 76 | 11.1 — Module Facturation structure types Pennylane | 07/03 | — | 18 | +2,128 | -17 | +2,111 | 50† |
+| 77 | 11.2 — Edge Function billing-sync polling Pennylane | 07/03 | — | 9 | +1,359 | -1 | +1,358 | 21† |
+| 78 | 11.3 — Création envoi devis MiKL Pennylane | 07/03 | — | 21 | +2,014 | -11 | +2,003 | 33† |
+| 79 | 11.4 — Abonnements récurrents gestion échecs paiement | 07/03 | — | 11 | +2,125 | -18 | +2,107 | 59† |
+| 80 | 11.5 — Historique facturation avoirs vue financière Hub | 08/03 | — | 17 | +1,552 | -13 | +1,539 | 40† |
+| 81 | 11.6 — Facturation Lab 199€ paiement forfait déduction setup One | 08/03 | 0h22 | 19 | +988 | -21 | +967 | 47† |
+
+> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumules ~3,919+.
 
 ## Totaux du projet
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **74** (72 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **81** (79 commits, dont 2 doubles et 1 triple) |
 | Commits de correction post-story | **1** (code review retroactif + bug systemic) |
-| Fichiers totaux modifies | **2,052** |
-| Lignes inserees | **+150,877** |
-| Lignes supprimees | **-15,126** |
-| Lignes nettes ajoutees | **+135,751** |
-| Tests finaux | **~3,600+** |
-| Duree calendaire | **28 jours** (8 fev — 7 mars) |
-| Jours effectifs de dev | **~20 jours** |
+| Fichiers totaux modifies | **2,167** |
+| Lignes inserees | **+162,654** |
+| Lignes supprimees | **-15,238** |
+| Lignes nettes ajoutees | **+147,416** |
+| Tests finaux | **~3,919+** |
+| Duree calendaire | **29 jours** (8 fev — 8 mars) |
+| Jours effectifs de dev | **~21 jours** |
 
 ### Totaux par epic
 
@@ -171,7 +185,8 @@
 | **7** (Validation Hub) | 6 | 126 | +12,174 | -604 | +11,570 | +292 |
 | **8** (Agents IA Elio) | 11 | 217 | +16,324 | -1,373 | +14,951 | ~761 |
 | **9** (Cycle de vie) | 7 | 139 | +11,912 | -1,040 | +10,872 | ~441 |
-| **10** (Dashboard One) | 3/4 | 50 | +4,002 | -94 | +3,908 | ~127 |
+| **10** (Dashboard One) | 4/4 | 70 | +5,613 | -125 | +5,488 | ~197 |
+| **11** (Facturation Pennylane) | 6/6 | 95 | +10,166 | -81 | +10,085 | 250 |
 
 ## Classification des stories par type
 
@@ -348,7 +363,7 @@ Ou:
 
 ## Notes pour calibration future
 
-1. **Ce referentiel couvre 74 stories sur 10 epics**. Il sera complete avec les epics 10-12.
+1. **Ce referentiel couvre 80 stories sur 11 epics**. Il sera complete avec les epics 11-12.
 2. **Les temps delta qui incluent des nuits ne sont PAS des temps de dev**. Utiliser uniquement les deltas courts (meme journee) comme reference fiable.
 3. **La velocite augmente au fil du projet** : confirmee par les donnees (+25% entre phase 1 et phase 3). Les patterns etablis, le pipeline rode et la base de code mature accelerent chaque story.
 4. **L'effet Claude Code est significatif** : un dev solo humain sans AI pair-programming serait probablement 3-5x plus lent sur ces memes stories.

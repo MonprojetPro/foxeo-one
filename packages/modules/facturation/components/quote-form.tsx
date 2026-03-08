@@ -72,6 +72,11 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
 
   const { fields, append, remove } = useFieldArray({ control, name: 'lineItems' })
   const watchedItems = useWatch({ control, name: 'lineItems' })
+  const watchedClientId = useWatch({ control, name: 'clientId' })
+
+  // Story 11.6 — Déduction Lab indicator
+  const selectedClient = clients.find((c) => c.id === watchedClientId)
+  const clientHasLabPaid = selectedClient?.labPaid === true
 
   // Calculs en temps réel
   const totalHt = (watchedItems ?? []).reduce((sum, item) => {
@@ -144,6 +149,14 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
           <span className="text-xs text-muted-foreground">
             Aucun client avec un compte Pennylane. Créez d'abord le client dans Pennylane.
           </span>
+        )}
+        {clientHasLabPaid && (
+          <div className="flex items-center gap-2 rounded-md border border-green-500/30 bg-green-500/10 px-3 py-2">
+            <span className="text-green-400 text-xs">✓</span>
+            <span className="text-xs text-green-400">
+              Ce client a payé le Lab (199€) — déduction auto appliquée sur les devis setup One
+            </span>
+          </div>
         )}
       </div>
 
