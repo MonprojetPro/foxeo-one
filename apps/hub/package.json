@@ -19,6 +19,7 @@
     "@foxeo/modules-validation-hub": "*",
     "@foxeo/modules-facturation": "*",
     "@foxeo/module-admin": "*",
+    "@foxeo/module-analytics": "*",
     "@foxeo/module-templates": "*",
     "next": "^15.1.0",
     "react": "^19.0.0",
