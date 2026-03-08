@@ -158,17 +158,28 @@
 
 > `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumules ~3,919+.
 
+### Epic 12 — Administration, Analytics & Templates
+
+| # | Story | Date commit | Delta vs precedent | Fichiers | Insertions | Suppressions | Net | Tests |
+|---|-------|-------------|-------------------|----------|------------|-------------|-----|-------|
+| 82 | 12.1 — Module Admin logs activite mode maintenance | 08/03 16:47 | 0h18 | 21 | +1,529 | -7 | +1,522 | 99† |
+| 83 | 12.2 — Export complet donnees client backups automatiques | 08/03 17:02 | 0h15 | 12 | +1,094 | -1 | +1,093 | 17† |
+| 84 | 12.3 — Templates reutilisables parcours Lab emails auto | 08/03 17:27 | 0h25 | 22 | +2,390 | -3 | +2,387 | 30† |
+| 85 | 12.4 — Analytics metriques usage dashboard Hub | 08/03 17:52 | 0h25 | 19 | +1,426 | -1 | +1,425 | 20† |
+
+> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumules ~4,085+.
+
 ## Totaux du projet
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **81** (79 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **85** (83 commits, dont 2 doubles et 1 triple) |
 | Commits de correction post-story | **1** (code review retroactif + bug systemic) |
-| Fichiers totaux modifies | **2,167** |
-| Lignes inserees | **+162,654** |
-| Lignes supprimees | **-15,238** |
-| Lignes nettes ajoutees | **+147,416** |
-| Tests finaux | **~3,919+** |
+| Fichiers totaux modifies | **2,241** |
+| Lignes inserees | **+169,093** |
+| Lignes supprimees | **-15,250** |
+| Lignes nettes ajoutees | **+153,843** |
+| Tests finaux | **~4,085+** |
 | Duree calendaire | **29 jours** (8 fev — 8 mars) |
 | Jours effectifs de dev | **~21 jours** |
 
@@ -187,6 +198,7 @@
 | **9** (Cycle de vie) | 7 | 139 | +11,912 | -1,040 | +10,872 | ~441 |
 | **10** (Dashboard One) | 4/4 | 70 | +5,613 | -125 | +5,488 | ~197 |
 | **11** (Facturation Pennylane) | 6/6 | 95 | +10,166 | -81 | +10,085 | 250 |
+| **12** (Admin Analytics Templates) | 4/9 | 74 | +6,439 | -12 | +6,427 | 166 |
 
 ## Classification des stories par type
 
