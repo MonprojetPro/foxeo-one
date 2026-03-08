@@ -168,7 +168,7 @@ development_status:
   epic-12: in-progress
   12-1-module-admin-logs-activite-par-client-mode-maintenance: done
   12-2-export-complet-donnees-client-backups-automatiques: done
-  12-3-templates-reutilisables-parcours-lab-emails-automatiques: ready-for-dev
+  12-3-templates-reutilisables-parcours-lab-emails-automatiques: done
   12-4-analytics-metriques-usage: ready-for-dev
   12-5a-monitoring-sante-systeme-alertes-dysfonctionnement: ready-for-dev
   12-5b-preparation-integrations-p2-webhooks-api: ready-for-dev

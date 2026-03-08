@@ -10,6 +10,7 @@ import { graduationEmailTemplate } from '../_shared/email-templates/graduation.t
 import { paymentFailedEmailTemplate } from '../_shared/email-templates/payment-failed.ts'
 import { welcomeLabEmailTemplate } from '../_shared/email-templates/welcome-lab.ts'
 import { prospectResourcesEmailTemplate } from '../_shared/email-templates/prospect-resources.ts'
+import { escapeHtml } from '../_shared/email-templates/base.ts'
 
 export interface SendEmailInput {
   notificationId: string
@@ -92,6 +93,7 @@ interface NotificationRow {
 interface RecipientRow {
   email: string
   name: string
+  company?: string
   email_notifications_enabled: boolean
 }
 
@@ -100,6 +102,75 @@ function buildPlatformUrl(notification: NotificationRow): string {
     ? 'https://hub.foxeo.io'
     : 'https://lab.foxeo.io'
   return notification.link ? `${base}${notification.link}` : base
+}
+
+// ============================================================
+// DB template lookup + variable substitution (Story 12.3)
+// ============================================================
+
+/** Map notification type + optional outcome to email_templates.template_key */
+function resolveTemplateKey(notification: NotificationRow): string | null {
+  switch (notification.type) {
+    case 'validation':
+      return notification.body?.includes('refusé') ? 'brief_refuse' : 'brief_valide'
+    case 'graduation':
+      return 'graduation'
+    case 'payment':
+      return 'echec_paiement'
+    case 'inactivity_alert':
+    case 'alert':
+      return 'rappel_parcours'
+    default:
+      return null
+  }
+}
+
+/** Substitute {variable} placeholders with safe HTML-escaped values.
+ *  All literal text (non-variable parts) is also escaped for safe HTML embedding. */
+function substituteTemplateVars(
+  template: string,
+  vars: Record<string, string>
+): string {
+  // Split by {variable} pattern, process each segment
+  const parts = template.split(/(\{\w+\})/)
+  return parts
+    .map((part) => {
+      const match = part.match(/^\{(\w+)\}$/)
+      if (match) {
+        const value = vars[match[1]]
+        return value !== undefined ? escapeHtml(value) : escapeHtml(part)
+      }
+      return escapeHtml(part)
+    })
+    .join('')
+}
+
+/** Wrap pre-escaped body in basic HTML (text is already HTML-safe from substituteTemplateVars) */
+function plainTextToHtml(text: string, subject: string): string {
+  const lines = text
+    .split('\n')
+    .map((line) => (line.trim() === '' ? '<br />' : `<p style="margin:0 0 8px;">${line}</p>`))
+    .join('\n')
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8" /><title>${escapeHtml(subject)}</title></head><body style="font-family:Arial,sans-serif;padding:20px;max-width:600px;margin:0 auto;">${lines}</body></html>`
+}
+
+/** Try to fetch a customized template from email_templates table.
+ *  Returns null if not found or on error (caller falls back to hardcoded). */
+async function fetchDbEmailTemplate(
+  supabase: ReturnType<typeof createClient>,
+  templateKey: string
+): Promise<{ subject: string; body: string } | null> {
+  try {
+    const { data, error } = await supabase
+      .from('email_templates')
+      .select('subject, body')
+      .eq('template_key', templateKey)
+      .single()
+    if (error || !data) return null
+    return { subject: data.subject as string, body: data.body as string }
+  } catch {
+    return null
+  }
 }
 
 function renderTemplate(notification: NotificationRow, recipient: RecipientRow): { subject: string; html: string } {
@@ -256,7 +327,7 @@ export async function handleSendEmail(
   const recipientTable = notif.recipient_type === 'client' ? 'clients' : 'operators'
   const { data: recipient, error: recipientError } = await supabase
     .from(recipientTable)
-    .select('email, name, email_notifications_enabled')
+    .select('email, name, company, email_notifications_enabled')
     .eq('auth_user_id', notif.recipient_id)
     .single()
 
@@ -275,8 +346,36 @@ export async function handleSendEmail(
   }
 
   // 4. Build and send email
+  // 4a. Check for customized DB template first (Story 12.3)
   try {
-    const { subject, html } = renderTemplate(notif, recip)
+    let subject: string
+    let html: string
+
+    const templateKey = resolveTemplateKey(notif)
+    const dbTemplate = templateKey ? await fetchDbEmailTemplate(supabase, templateKey) : null
+
+    if (dbTemplate) {
+      const platformUrl = buildPlatformUrl(notif)
+      const amountMatch = notif.body?.match(/([\d.,]+)\s*(EUR|€)/)
+      const briefTitleMatch = notif.title.match(/^[^—]+—\s*(.+)$/)
+      const vars: Record<string, string> = {
+        prenom: recip.name,
+        entreprise: recip.company ?? '',
+        titre_brief: briefTitleMatch?.[1] ?? notif.title,
+        commentaire: notif.body ?? '',
+        lien: platformUrl,
+        montant: amountMatch ? `${amountMatch[1]} ${amountMatch[2]}` : '',
+      }
+      subject = substituteTemplateVars(dbTemplate.subject, vars)
+      const htmlBody = substituteTemplateVars(dbTemplate.body, vars)
+      html = plainTextToHtml(htmlBody, subject)
+    } else {
+      // Fallback to hardcoded templates
+      const rendered = renderTemplate(notif, recip)
+      subject = rendered.subject
+      html = rendered.html
+    }
+
     await emailClient.sendWithRetry({ to: recip.email, subject, html })
 
     // 5. Log success
