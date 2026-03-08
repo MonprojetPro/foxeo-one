@@ -18,6 +18,7 @@
     "@foxeo/modules-notifications": "*",
     "@foxeo/modules-validation-hub": "*",
     "@foxeo/modules-facturation": "*",
+    "@foxeo/module-admin": "*",
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

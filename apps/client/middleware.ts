@@ -3,10 +3,11 @@ import { createMiddlewareSupabaseClient } from '@foxeo/supabase'
 import { checkConsentVersion } from './middleware-consent'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
 
-export const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback']
-export const CONSENT_EXCLUDED_PATHS = ['/consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived']
-export const ONBOARDING_EXCLUDED_PATHS = ['/onboarding', '/login', '/signup', '/auth/callback', '/consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived']
-export const GRADUATION_EXCLUDED_PATHS = ['/graduation', '/login', '/signup', '/auth/callback', '/consent-update', '/legal', '/api', '/suspended', '/transferred', '/onboarding', '/archived']
+export const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback', '/maintenance']
+export const CONSENT_EXCLUDED_PATHS = ['/consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
+export const ONBOARDING_EXCLUDED_PATHS = ['/onboarding', '/login', '/signup', '/auth/callback', '/consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
+export const GRADUATION_EXCLUDED_PATHS = ['/graduation', '/login', '/signup', '/auth/callback', '/consent-update', '/legal', '/api', '/suspended', '/transferred', '/onboarding', '/archived', '/maintenance']
+export const MAINTENANCE_EXCLUDED_PATHS = ['/maintenance', '/login', '/signup', '/auth/callback', '/api']
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
@@ -40,6 +41,12 @@ export function isGraduationExcluded(pathname: string): boolean {
   )
 }
 
+export function isMaintenanceExcluded(pathname: string): boolean {
+  return MAINTENANCE_EXCLUDED_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  )
+}
+
 export async function middleware(request: NextRequest) {
   // Skip static assets and webhook routes
   if (isStaticOrApi(request.nextUrl.pathname)) {
@@ -53,6 +60,43 @@ export async function middleware(request: NextRequest) {
 
   // Set locale cookie on response
   setLocaleCookie(response, locale)
+
+  // 2. Check maintenance mode (direct Supabase read — no cache)
+  if (!isMaintenanceExcluded(request.nextUrl.pathname)) {
+    const { data: maintenanceConfig } = await supabase
+      .from('system_config')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .maybeSingle()
+
+    const isMaintenanceActive = maintenanceConfig?.value === true
+
+    if (isMaintenanceActive) {
+      // Operators (MiKL) are not redirected — they see a banner in the UI instead
+      if (user) {
+        const { data: operator } = await supabase
+          .from('operators')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .maybeSingle()
+
+        if (!operator) {
+          // Non-operator client → redirect to maintenance page
+          const maintenanceUrl = new URL('/maintenance', request.url)
+          const maintenanceResponse = NextResponse.redirect(maintenanceUrl)
+          setLocaleCookie(maintenanceResponse, locale)
+          return maintenanceResponse
+        }
+        // Operator → continue normally (banner shown in UI)
+      } else {
+        // Unauthenticated visitor → redirect to maintenance page
+        const maintenanceUrl = new URL('/maintenance', request.url)
+        const maintenanceResponse = NextResponse.redirect(maintenanceUrl)
+        setLocaleCookie(maintenanceResponse, locale)
+        return maintenanceResponse
+      }
+    }
+  }
 
   const isPublic = isPublicPath(request.nextUrl.pathname)
 

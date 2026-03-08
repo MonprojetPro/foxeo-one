@@ -17,6 +17,6 @@ export const manifest: ModuleManifest = {
       component: 'AdminDashboard',
     },
   ],
-  requiredTables: ['client_instances', 'activity_logs'],
+  requiredTables: ['client_instances', 'activity_logs', 'system_config'],
   dependencies: [],
 }

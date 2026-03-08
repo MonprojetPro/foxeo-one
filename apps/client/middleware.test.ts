@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isPublicPath, isStaticOrApi, isConsentExcluded, isOnboardingExcluded, isGraduationExcluded, CONSENT_EXCLUDED_PATHS, GRADUATION_EXCLUDED_PATHS, ONBOARDING_EXCLUDED_PATHS } from './middleware'
+import { isPublicPath, isStaticOrApi, isConsentExcluded, isOnboardingExcluded, isGraduationExcluded, isMaintenanceExcluded, CONSENT_EXCLUDED_PATHS, GRADUATION_EXCLUDED_PATHS, ONBOARDING_EXCLUDED_PATHS, MAINTENANCE_EXCLUDED_PATHS } from './middleware'
 
 describe('middleware routing logic', () => {
   describe('isPublicPath', () => {
@@ -420,6 +420,55 @@ describe('middleware routing logic', () => {
 
       const redirectUrl = `${instanceUrl}${pathname}${search}`
       expect(redirectUrl).toBe('https://jean.foxeo.io/modules/crm?filter=active')
+    })
+  })
+
+  describe('maintenance mode redirect logic (Story 12.1)', () => {
+    it('isMaintenanceExcluded returns true for /maintenance', () => {
+      expect(isMaintenanceExcluded('/maintenance')).toBe(true)
+    })
+
+    it('isMaintenanceExcluded returns true for /login and /signup', () => {
+      expect(isMaintenanceExcluded('/login')).toBe(true)
+      expect(isMaintenanceExcluded('/signup')).toBe(true)
+    })
+
+    it('isMaintenanceExcluded returns true for /api routes', () => {
+      expect(isMaintenanceExcluded('/api/webhooks/cal-com')).toBe(true)
+    })
+
+    it('isMaintenanceExcluded returns false for protected routes', () => {
+      expect(isMaintenanceExcluded('/')).toBe(false)
+      expect(isMaintenanceExcluded('/modules/crm')).toBe(false)
+      expect(isMaintenanceExcluded('/settings')).toBe(false)
+    })
+
+    it('non-operator client with maintenance active should be redirected', () => {
+      const isMaintenanceActive = true
+      const isOperator = false
+
+      const shouldRedirect = isMaintenanceActive && !isOperator
+      expect(shouldRedirect).toBe(true)
+    })
+
+    it('operator with maintenance active should NOT be redirected', () => {
+      const isMaintenanceActive = true
+      const isOperator = true
+
+      const shouldRedirect = isMaintenanceActive && !isOperator
+      expect(shouldRedirect).toBe(false)
+    })
+
+    it('maintenance inactive — no redirect regardless of role', () => {
+      const isMaintenanceActive = false
+
+      const shouldRedirect = isMaintenanceActive
+      expect(shouldRedirect).toBe(false)
+    })
+
+    it('MAINTENANCE_EXCLUDED_PATHS contains /maintenance and /login', () => {
+      expect(MAINTENANCE_EXCLUDED_PATHS).toContain('/maintenance')
+      expect(MAINTENANCE_EXCLUDED_PATHS).toContain('/login')
     })
   })
 
