@@ -5,6 +5,7 @@ import { ClientSupportTab } from '@foxeo/modules-support'
 import { SubmissionsList } from '@foxeo/module-parcours'
 import { ElioConfigSection } from '@foxeo/modules/elio'
 import { LabBillingTab } from '@foxeo/modules/facturation'
+import { ClientExportButton } from '@foxeo/module-admin'
 import type { Client } from '@foxeo/modules/crm'
 import { useMemo } from 'react'
 
@@ -39,6 +40,11 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         value: 'lab-billing',
         label: 'Facturation Lab',
         content: <LabBillingTab clientId={client.id} clientName={client.name} />,
+      },
+      {
+        value: 'administration',
+        label: 'Administration',
+        content: <ClientExportButton clientId={client.id} />,
       },
     ],
     [client.id, client.company, client.name]
