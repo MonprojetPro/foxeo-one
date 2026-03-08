@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getClientsWithPennylane } from '../actions/get-clients'
+import { useBillingMetrics } from '../hooks/use-billing'
 import { QuoteForm } from './quote-form'
 import { QuotesList } from './quotes-list'
+import { InvoicesList } from './invoices-list'
+import { SubscriptionsList } from './subscriptions-list'
 import type { ClientWithPennylane } from '../types/billing.types'
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -17,6 +20,62 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'factures', label: 'Factures' },
   { id: 'abonnements', label: 'Abonnements' },
 ]
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatCurrency(cents: number): string {
+  return (cents / 100).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })
+}
+
+// ── Metrics Section (AC #4) ───────────────────────────────────────────────────
+
+function BillingMetricsSection() {
+  const { data: metrics, isPending } = useBillingMetrics()
+
+  const cards: { label: string; testId: string; value: string; sub?: string }[] = [
+    {
+      label: 'CA mensuel',
+      testId: 'metric-monthly-revenue',
+      value: isPending ? '…' : formatCurrency(metrics?.monthlyRevenue ?? 0),
+      sub: 'mois en cours',
+    },
+    {
+      label: 'En attente',
+      testId: 'metric-pending-amount',
+      value: isPending ? '…' : formatCurrency(metrics?.pendingAmount ?? 0),
+      sub: 'factures impayées',
+    },
+    {
+      label: 'Devis en cours',
+      testId: 'metric-pending-quotes',
+      value: isPending ? '…' : String(metrics?.pendingQuotesCount ?? 0),
+      sub: 'devis en attente',
+    },
+    {
+      label: 'MRR',
+      testId: 'metric-mrr',
+      value: isPending ? '…' : formatCurrency(metrics?.mrr ?? 0),
+      sub: 'abonnements actifs',
+    },
+  ]
+
+  return (
+    <div className="grid grid-cols-4 gap-4" data-testid="billing-metrics">
+      {cards.map((card) => (
+        <div key={card.label} className="rounded-lg border border-border p-4 flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">{card.label}</span>
+          <span
+            className="text-xl font-semibold tabular-nums"
+            data-testid={card.testId}
+          >
+            {card.value}
+          </span>
+          {card.sub && <span className="text-xs text-muted-foreground">{card.sub}</span>}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -42,6 +101,9 @@ export function BillingDashboard() {
           Gestion des devis, factures et abonnements via Pennylane
         </p>
       </div>
+
+      {/* Métriques financières (AC #4) */}
+      <BillingMetricsSection />
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-border">
@@ -72,17 +134,9 @@ export function BillingDashboard() {
           />
         )}
 
-        {activeTab === 'factures' && (
-          <div className="rounded-lg border border-border p-8 text-center text-sm text-muted-foreground">
-            Gestion des factures — Story 11.5
-          </div>
-        )}
+        {activeTab === 'factures' && <InvoicesList />}
 
-        {activeTab === 'abonnements' && (
-          <div className="rounded-lg border border-border p-8 text-center text-sm text-muted-foreground">
-            Gestion des abonnements — Story 11.4
-          </div>
-        )}
+        {activeTab === 'abonnements' && <SubscriptionsList />}
       </div>
     </div>
   )

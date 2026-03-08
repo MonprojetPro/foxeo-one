@@ -15,6 +15,7 @@
     "@foxeo/ui": "*",
     "@foxeo/utils": "*",
     "@foxeo/modules-chat": "*",
+    "@foxeo/modules-facturation": "*",
     "@hookform/resolvers": "^5.2.2",
     "next": "^15.1.0",
     "react": "^19.0.0",

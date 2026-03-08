@@ -6,14 +6,20 @@ export { BillingDashboard } from './components/billing-dashboard'
 export { QuoteForm } from './components/quote-form'
 export { QuotesList } from './components/quotes-list'
 
+// Components (Story 11.5)
+export { InvoicesList } from './components/invoices-list'
+export { BillingSummary } from './components/billing-summary'
+
 // Hooks
-export { useBillingQuotes, useBillingInvoices, useBillingSubscriptions, useBillingSummary, useBillingSyncRows, billingKeys } from './hooks/use-billing'
+export { useBillingQuotes, useBillingInvoices, useBillingSubscriptions, useBillingSummary, useBillingSyncRows, useBillingMetrics, billingKeys } from './hooks/use-billing'
 
 // Actions
 export { createPennylaneCustomer, getPennylaneCustomer, listQuotes, listInvoices, listSubscriptions } from './actions/billing-proxy'
 export { createAndSendQuote } from './actions/create-quote'
 export { convertQuoteToInvoice } from './actions/convert-quote-to-invoice'
 export { getClientsWithPennylane } from './actions/get-clients'
+export { createCreditNote } from './actions/create-credit-note'
+export { triggerClientBillingSync } from './actions/trigger-client-billing-sync'
 
 // Utils
 export {
