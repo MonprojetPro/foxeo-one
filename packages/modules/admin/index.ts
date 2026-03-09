@@ -18,5 +18,7 @@ export type { ActivityLog, ActivityLogsFilters } from './hooks/use-activity-logs
 export { useMaintenanceConfig } from './hooks/use-maintenance'
 export type { MaintenanceConfig } from './hooks/use-maintenance'
 export { SystemHealth } from './components/system-health'
+export { WebhooksPlaceholder } from './components/webhooks-placeholder'
+export { ApiPlaceholder } from './components/api-placeholder'
 export { useSystemHealth } from './hooks/use-system-health'
 export type { HealthCheckData, ServiceCheck, GlobalStatus, ServiceStatus } from './hooks/use-system-health'

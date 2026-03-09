@@ -1,15 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { ActivityLogs, MaintenanceMode, SystemHealth } from '@foxeo/module-admin'
+import { ActivityLogs, MaintenanceMode, SystemHealth, WebhooksPlaceholder, ApiPlaceholder } from '@foxeo/module-admin'
 
-type AdminTab = 'logs' | 'maintenance' | 'backups' | 'webhooks' | 'monitoring'
+type AdminTab = 'logs' | 'maintenance' | 'backups' | 'webhooks' | 'api' | 'monitoring'
 
 const TABS: { id: AdminTab; label: string }[] = [
   { id: 'logs', label: "Logs d'activité" },
   { id: 'maintenance', label: 'Maintenance' },
   { id: 'backups', label: 'Backups' },
   { id: 'webhooks', label: 'Webhooks' },
+  { id: 'api', label: 'API' },
   { id: 'monitoring', label: 'Monitoring' },
 ]
 
@@ -50,11 +51,8 @@ export default function AdminPage() {
             Module Backups — disponible Story 12.2
           </div>
         )}
-        {activeTab === 'webhooks' && (
-          <div className="rounded bg-white/5 border border-white/10 px-6 py-8 text-center text-sm text-gray-500">
-            Module Webhooks — disponible Story 12.5b
-          </div>
-        )}
+        {activeTab === 'webhooks' && <WebhooksPlaceholder />}
+        {activeTab === 'api' && <ApiPlaceholder />}
         {activeTab === 'monitoring' && <SystemHealth />}
       </div>
     </div>

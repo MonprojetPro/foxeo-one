@@ -482,3 +482,46 @@ describe('Migration 00018: client_notes table and pinning/deferring', () => {
     expect(policyMatches).toHaveLength(4)
   })
 })
+
+// Story 12.5b — Migration 00068: P2 integration tables
+describe('Migration 00068: P2 integration tables', () => {
+  const sql = readFileSync(join(MIGRATIONS_DIR, '00068_create_p2_integration_tables.sql'), 'utf-8')
+
+  it('creates outgoing_webhooks table with correct columns and updated_at', () => {
+    expect(sql).toContain('CREATE TABLE outgoing_webhooks')
+    expect(sql).toContain('url TEXT NOT NULL')
+    expect(sql).toContain('events TEXT[] NOT NULL DEFAULT \'{}\'')
+    expect(sql).toContain('secret TEXT NOT NULL')
+    expect(sql).toContain('active BOOLEAN DEFAULT true')
+    expect(sql).toContain('updated_at TIMESTAMPTZ DEFAULT NOW()')
+    expect(sql).toContain('trg_outgoing_webhooks_updated_at')
+  })
+
+  it('creates api_keys table with correct columns, ON DELETE CASCADE, and updated_at', () => {
+    expect(sql).toContain('CREATE TABLE api_keys')
+    expect(sql).toContain('client_id UUID REFERENCES clients(id) ON DELETE CASCADE')
+    expect(sql).toContain('key_hash TEXT NOT NULL UNIQUE')
+    expect(sql).toContain('permissions TEXT[] NOT NULL DEFAULT \'{}\'')
+    expect(sql).toContain('revoked_at TIMESTAMPTZ')
+    expect(sql).toContain('trg_api_keys_updated_at')
+  })
+
+  it('enables RLS on outgoing_webhooks with per-operation operator policies', () => {
+    expect(sql).toContain('ALTER TABLE outgoing_webhooks ENABLE ROW LEVEL SECURITY')
+    expect(sql).toContain('outgoing_webhooks_select_operator')
+    expect(sql).toContain('outgoing_webhooks_insert_operator')
+    expect(sql).toContain('outgoing_webhooks_update_operator')
+    expect(sql).toContain('outgoing_webhooks_delete_operator')
+    expect(sql).toContain('FOR INSERT WITH CHECK (is_operator())')
+  })
+
+  it('enables RLS on api_keys with per-operation operator policies and owner SELECT', () => {
+    expect(sql).toContain('ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY')
+    expect(sql).toContain('api_keys_select_operator')
+    expect(sql).toContain('api_keys_insert_operator')
+    expect(sql).toContain('api_keys_delete_operator')
+    expect(sql).toContain('api_keys_select_owner')
+    expect(sql).toContain('auth_user_id = auth.uid()')
+  })
+})
+
