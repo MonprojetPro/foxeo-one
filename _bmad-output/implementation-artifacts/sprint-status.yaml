@@ -170,7 +170,7 @@ development_status:
   12-2-export-complet-donnees-client-backups-automatiques: done
   12-3-templates-reutilisables-parcours-lab-emails-automatiques: done
   12-4-analytics-metriques-usage: done
-  12-5a-monitoring-sante-systeme-alertes-dysfonctionnement: ready-for-dev
+  12-5a-monitoring-sante-systeme-alertes-dysfonctionnement: done
   12-5b-preparation-integrations-p2-webhooks-api: ready-for-dev
   12-6-provisioning-instance-one-depuis-le-hub: ready-for-dev
   12-7-monitoring-instances-one-usage-seuils-alertes: ready-for-dev

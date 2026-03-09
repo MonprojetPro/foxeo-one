@@ -1,16 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { ActivityLogs } from '@foxeo/module-admin'
-import { MaintenanceMode } from '@foxeo/module-admin'
+import { ActivityLogs, MaintenanceMode, SystemHealth } from '@foxeo/module-admin'
 
-type AdminTab = 'logs' | 'maintenance' | 'backups' | 'webhooks'
+type AdminTab = 'logs' | 'maintenance' | 'backups' | 'webhooks' | 'monitoring'
 
 const TABS: { id: AdminTab; label: string }[] = [
   { id: 'logs', label: "Logs d'activité" },
   { id: 'maintenance', label: 'Maintenance' },
   { id: 'backups', label: 'Backups' },
   { id: 'webhooks', label: 'Webhooks' },
+  { id: 'monitoring', label: 'Monitoring' },
 ]
 
 export default function AdminPage() {
@@ -55,6 +55,7 @@ export default function AdminPage() {
             Module Webhooks — disponible Story 12.5b
           </div>
         )}
+        {activeTab === 'monitoring' && <SystemHealth />}
       </div>
     </div>
   )
