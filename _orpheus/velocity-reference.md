@@ -167,6 +167,7 @@
 | 84 | 12.3 — Templates reutilisables parcours Lab emails auto | 08/03 17:27 | 0h25 | 22 | +2,390 | -3 | +2,387 | 30† |
 | 85 | 12.4 — Analytics metriques usage dashboard Hub | 08/03 17:52 | 0h25 | 19 | +1,426 | -1 | +1,425 | 20† |
 | 86 | 12.5a — Monitoring sante systeme alertes dysfonctionnement | 09/03 15:15 | ~0h25 | 10 | +1,057 | -4 | +1,053 | 30† |
+| 87 | 12.5b — Preparation integrations P2 webhooks API | 09/03 15:38 | ~0h23 | 10 | +354 | -8 | +346 | 12† |
 
 > `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumules ~4,115+.
 
@@ -174,13 +175,13 @@
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **86** (84 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **87** (85 commits, dont 2 doubles et 1 triple) |
 | Commits de correction post-story | **1** (code review retroactif + bug systemic) |
-| Fichiers totaux modifies | **2,251** |
-| Lignes inserees | **+170,150** |
-| Lignes supprimees | **-15,254** |
-| Lignes nettes ajoutees | **+154,896** |
-| Tests finaux | **~4,115+** |
+| Fichiers totaux modifies | **2,261** |
+| Lignes inserees | **+170,504** |
+| Lignes supprimees | **-15,262** |
+| Lignes nettes ajoutees | **+155,242** |
+| Tests finaux | **~4,127+** |
 | Duree calendaire | **30 jours** (8 fev — 9 mars) |
 | Jours effectifs de dev | **~22 jours** |
 
@@ -199,7 +200,7 @@
 | **9** (Cycle de vie) | 7 | 139 | +11,912 | -1,040 | +10,872 | ~441 |
 | **10** (Dashboard One) | 4/4 | 70 | +5,613 | -125 | +5,488 | ~197 |
 | **11** (Facturation Pennylane) | 6/6 | 95 | +10,166 | -81 | +10,085 | 250 |
-| **12** (Admin Analytics Templates) | 5/9 | 84 | +7,496 | -16 | +7,480 | 196 |
+| **12** (Admin Analytics Templates) | 6/9 | 94 | +7,850 | -24 | +7,826 | 208 |
 
 ## Classification des stories par type
 
