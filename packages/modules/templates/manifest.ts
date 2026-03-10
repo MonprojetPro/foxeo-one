@@ -19,4 +19,5 @@ export const manifest: ModuleManifest = {
   ],
   requiredTables: ['parcours_templates', 'email_templates'],
   dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

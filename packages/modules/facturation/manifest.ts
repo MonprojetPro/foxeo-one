@@ -18,5 +18,6 @@ export const manifest: ModuleManifest = {
     }
   ],
   requiredTables: ['billing_sync'],
-  dependencies: []
+  dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

@@ -14,4 +14,5 @@ export const manifest: ModuleManifest = {
   routes: [],
   requiredTables: ['notifications', 'notification_preferences'],
   dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

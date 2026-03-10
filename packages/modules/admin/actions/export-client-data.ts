@@ -1,5 +1,7 @@
 'use server'
 
+import * as fs from 'fs'
+import * as path from 'path'
 import { createServerSupabaseClient } from '@foxeo/supabase'
 import {
   type ActionResponse,
@@ -7,6 +9,49 @@ import {
   errorResponse,
 } from '@foxeo/types'
 import { ExportClientDataInput, type ExportResult } from '../types/export.types'
+
+const MODULES_DIR = path.resolve(process.cwd(), 'packages/modules')
+
+/** Lit les docs d'un module pour inclusion dans l'export RGPD */
+function readModuleDocsForExport(
+  moduleId: string
+): { guide: string; faq: string; flows: string } {
+  const read = (fileName: string): string => {
+    try {
+      return fs.readFileSync(path.join(MODULES_DIR, moduleId, 'docs', fileName), 'utf-8')
+    } catch {
+      return ''
+    }
+  }
+  return { guide: read('guide.md'), faq: read('faq.md'), flows: read('flows.md') }
+}
+
+/** Construit le dossier documentation pour le ZIP d'export */
+function buildDocumentationPayload(
+  activeModules: string[]
+): Record<string, string> {
+  const files: Record<string, string> = {}
+  const documented: string[] = []
+
+  for (const moduleId of activeModules) {
+    const docs = readModuleDocsForExport(moduleId)
+    const hasContent = docs.guide || docs.faq || docs.flows
+
+    if (!hasContent) continue
+
+    documented.push(moduleId)
+    if (docs.guide) files[`documentation/${moduleId}/guide.md`] = docs.guide
+    if (docs.faq) files[`documentation/${moduleId}/faq.md`] = docs.faq
+    if (docs.flows) files[`documentation/${moduleId}/flows.md`] = docs.flows
+  }
+
+  if (documented.length > 0) {
+    files['documentation/README.md'] =
+      `# Documentation Foxeo\n\nCe dossier contient la documentation des modules actifs lors de votre utilisation de Foxeo.\n\n## Modules documentés\n\n${documented.map((id) => `- ${id}`).join('\n')}\n`
+  }
+
+  return files
+}
 
 export async function exportClientData(
   input: ExportClientDataInput
@@ -131,11 +176,21 @@ export async function exportClientData(
       console.error('[ADMIN:EXPORT_CLIENT_DATA] Activity log error:', logError)
     }
 
+    // Fetch active modules to include documentation in the export
+    const { data: clientConfig } = await supabase
+      .from('client_configs')
+      .select('active_modules')
+      .eq('client_id', clientId)
+      .maybeSingle()
+
+    const activeModules: string[] = clientConfig?.active_modules ?? []
+    const documentationFiles = buildDocumentationPayload(activeModules)
+
     // Trigger Edge Function asynchronously (fire & forget)
     const { error: fnError } = await supabase.functions.invoke(
       'generate-client-export',
       {
-        body: { exportId: exportRecord.id, clientId, requestedBy },
+        body: { exportId: exportRecord.id, clientId, requestedBy, documentationFiles },
       }
     )
 

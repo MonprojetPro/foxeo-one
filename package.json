@@ -13,7 +13,8 @@
     "lint": "turbo lint",
     "test": "turbo test",
     "clean": "turbo clean",
-    "gen:types": "supabase gen types typescript --local > packages/types/src/database.types.ts"
+    "gen:types": "supabase gen types typescript --local > packages/types/src/database.types.ts",
+    "check:docs": "ts-node scripts/check-module-docs.ts"
   },
   "devDependencies": {
     "happy-dom": "^20.6.1",

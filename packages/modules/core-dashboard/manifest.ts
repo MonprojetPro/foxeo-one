@@ -19,4 +19,5 @@ export const coreDashboardManifest: ModuleManifest = {
   requiredTables: [],
   targets: ['hub', 'client-lab', 'client-one'],
   dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

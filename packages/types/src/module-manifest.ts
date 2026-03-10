@@ -11,6 +11,12 @@ export type ModuleNavigation = {
   position: number
 }
 
+export type ModuleDocumentation = {
+  hasGuide: boolean
+  hasFaq: boolean
+  hasFlows: boolean
+}
+
 export type ModuleManifest = {
   id: string
   name: string
@@ -25,4 +31,5 @@ export type ModuleManifest = {
   requiredTables: string[]
   targets: ModuleTarget[]
   dependencies: string[]
+  documentation: ModuleDocumentation
 }

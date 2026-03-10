@@ -21,4 +21,5 @@ export const manifest: ModuleManifest = {
   ],
   requiredTables: ['meetings', 'meeting_recordings', 'meeting_requests'],
   dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

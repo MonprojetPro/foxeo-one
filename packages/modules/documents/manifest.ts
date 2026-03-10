@@ -17,4 +17,5 @@ export const manifest: ModuleManifest = {
   ],
   requiredTables: ['documents'],
   dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

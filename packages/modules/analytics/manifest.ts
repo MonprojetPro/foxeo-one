@@ -19,4 +19,5 @@ export const manifest: ModuleManifest = {
   ],
   requiredTables: ['activity_logs', 'client_configs', 'billing_sync'],
   dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

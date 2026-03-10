@@ -23,4 +23,5 @@ export const manifest: ModuleManifest = {
   ],
   requiredTables: ['validation_requests', 'clients'],
   dependencies: ['crm', 'notifications'],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

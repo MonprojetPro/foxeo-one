@@ -9,6 +9,7 @@ export type {
   ModuleTarget,
   ModuleRoute,
   ModuleNavigation,
+  ModuleDocumentation,
   ModuleManifest,
 } from './module-manifest'
 

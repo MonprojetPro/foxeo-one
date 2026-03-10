@@ -30,5 +30,6 @@ export const manifest: ModuleManifest = {
     }
   ],
   requiredTables: ['clients', 'client_configs', 'parcours', 'parcours_templates', 'client_notes', 'reminders', 'activity_logs', 'notifications'],
-  dependencies: []
+  dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

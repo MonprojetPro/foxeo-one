@@ -1,4 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import * as fs from 'fs'
+
+vi.mock('fs')
+vi.mock('path', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('path')>()
+  return { ...actual, resolve: (...args: string[]) => args.join('/'), join: (...args: string[]) => args.join('/') }
+})
+
+vi.mocked(fs.existsSync).mockReturnValue(false)
+vi.mocked(fs.readFileSync).mockReturnValue('')
 
 const validClientUuid = '550e8400-e29b-41d4-a716-446655440001'
 const validOperatorUuid = '550e8400-e29b-41d4-a716-446655440002'
@@ -52,6 +62,15 @@ const mockFrom = vi.fn((table: string) => {
   }
   if (table === 'activity_logs') {
     return { insert: mockInsertActivity }
+  }
+  if (table === 'client_configs') {
+    return {
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn().mockResolvedValue({ data: { active_modules: ['chat', 'documents'] }, error: null }),
+        })),
+      })),
+    }
   }
   return {}
 })
@@ -203,6 +222,80 @@ describe('exportClientData Server Action', () => {
           status: 'pending',
         })
       )
+    })
+  })
+
+  describe('documentation in export', () => {
+    it('passes documentationFiles to edge function when active modules exist', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: validAuthUuid } }, error: null })
+      mockClientTerminal.mockResolvedValue({ data: { id: validClientUuid }, error: null })
+      mockExportSelectSingle.mockResolvedValue({ data: { id: validExportUuid }, error: null })
+      vi.mocked(fs.readFileSync).mockReturnValue('## Section 1\n\nContenu doc.')
+
+      const { exportClientData } = await import('./export-client-data')
+      await exportClientData({ clientId: validClientUuid, requestedBy: 'client' })
+
+      expect(mockFunctionsInvoke).toHaveBeenCalledWith(
+        'generate-client-export',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            documentationFiles: expect.any(Object),
+          }),
+        })
+      )
+    })
+
+    it('includes documentation/README.md in documentationFiles', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: validAuthUuid } }, error: null })
+      mockClientTerminal.mockResolvedValue({ data: { id: validClientUuid }, error: null })
+      mockExportSelectSingle.mockResolvedValue({ data: { id: validExportUuid }, error: null })
+      vi.mocked(fs.readFileSync).mockReturnValue('## Guide\n\nContenu.')
+
+      const { exportClientData } = await import('./export-client-data')
+      await exportClientData({ clientId: validClientUuid, requestedBy: 'client' })
+
+      const callArgs = mockFunctionsInvoke.mock.calls[0][1]
+      const docFiles = callArgs?.body?.documentationFiles as Record<string, string>
+      expect(docFiles).toBeDefined()
+      expect(docFiles['documentation/README.md']).toContain('Documentation Foxeo')
+    })
+
+    it('sends empty documentationFiles when active_modules is empty', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: validAuthUuid } }, error: null })
+      mockClientTerminal.mockResolvedValue({ data: { id: validClientUuid }, error: null })
+      mockExportSelectSingle.mockResolvedValue({ data: { id: validExportUuid }, error: null })
+      vi.mocked(fs.readFileSync).mockReturnValue('')
+
+      // Override client_configs to return empty active_modules
+      mockFrom.mockImplementationOnce((table: string) => {
+        if (table === 'clients') return { select: vi.fn(() => makeEqChain(mockClientTerminal)) }
+        return {}
+      })
+
+      const { exportClientData } = await import('./export-client-data')
+      await exportClientData({ clientId: validClientUuid, requestedBy: 'client' })
+
+      const callArgs = mockFunctionsInvoke.mock.calls[0]?.[1]
+      const docFiles = callArgs?.body?.documentationFiles
+      // If active_modules is [], documentationFiles should be empty object
+      expect(docFiles).toBeDefined()
+    })
+
+    it('includes module-specific doc files for each active module', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: validAuthUuid } }, error: null })
+      mockClientTerminal.mockResolvedValue({ data: { id: validClientUuid }, error: null })
+      mockExportSelectSingle.mockResolvedValue({ data: { id: validExportUuid }, error: null })
+      vi.mocked(fs.readFileSync).mockReturnValue('## Guide contenu\n\nContenu du module.')
+
+      const { exportClientData } = await import('./export-client-data')
+      await exportClientData({ clientId: validClientUuid, requestedBy: 'client' })
+
+      const callArgs = mockFunctionsInvoke.mock.calls[0][1]
+      const docFiles = callArgs?.body?.documentationFiles as Record<string, string>
+      // Should have guide.md for 'chat' and 'documents' modules
+      const keys = Object.keys(docFiles)
+      const hasModuleFiles = keys.some((k) => k.startsWith('documentation/') && k.endsWith('.md'))
+      expect(hasModuleFiles).toBe(true)
     })
   })
 

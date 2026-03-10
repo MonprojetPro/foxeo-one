@@ -21,6 +21,8 @@ interface ExportInput {
   exportId: string
   clientId: string
   requestedBy: 'client' | 'operator'
+  /** Fichiers documentation pré-lus côté Next.js (fs non accessible en Deno Edge) */
+  documentationFiles?: Record<string, string>
 }
 
 interface ClientRow {
@@ -64,7 +66,7 @@ Deno.serve(async (req) => {
     )
   }
 
-  const { exportId, clientId } = body
+  const { exportId, clientId, documentationFiles } = body
 
   if (!exportId || !clientId) {
     return new Response(
@@ -238,14 +240,23 @@ Deno.serve(async (req) => {
     // Generate simple PDF-like text document (pdfmake MVP equivalent)
     const pdfText = generateReadableText(exportData)
 
+    // Construire la liste des fichiers du ZIP (données + documentation)
+    const zipFiles: Array<{ name: string; content: string }> = [
+      { name: 'data-export.json', content: jsonContent },
+      { name: 'data-export.txt', content: pdfText },
+    ]
+
+    // Ajouter les fichiers de documentation si fournis par le Server Action
+    if (documentationFiles && typeof documentationFiles === 'object') {
+      for (const [filePath, fileContent] of Object.entries(documentationFiles)) {
+        if (typeof fileContent === 'string' && fileContent.trim()) {
+          zipFiles.push({ name: filePath, content: fileContent })
+        }
+      }
+    }
+
     // Create a simple ZIP using manual binary construction
-    // For MVP: store JSON + TXT in a single ZIP
-    const zipBuffer = await createSimpleZip(
-      [
-        { name: 'data-export.json', content: jsonContent },
-        { name: 'data-export.txt', content: pdfText },
-      ]
-    )
+    const zipBuffer = await createSimpleZip(zipFiles)
 
     const filePath = `${clientId}/${exportId}.zip`
 

@@ -17,4 +17,5 @@ export const manifest: ModuleManifest = {
   ],
   requiredTables: ['parcours', 'parcours_templates', 'parcours_steps'],
   dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }

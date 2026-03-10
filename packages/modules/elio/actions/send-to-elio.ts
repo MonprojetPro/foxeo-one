@@ -17,6 +17,7 @@ import { generateDocument } from './generate-document'
 import type { DashboardType, ElioMessage, CommunicationProfileFR66 } from '../types/elio.types'
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
 import type { ElioModuleDoc } from '@foxeo/types'
+import { loadModuleDocumentation } from './load-module-documentation'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
 
@@ -385,6 +386,8 @@ export async function sendToElio(
       }
 
       // Module actif → appel LLM avec contexte action, retourner avec pendingAction (AC2, Task 4)
+      // Inclure la documentation markdown des modules actifs (Story 12.8)
+      const actionMarkdownDocs = loadModuleDocumentation(activeModules, message)
       const actionSystemPrompt = buildSystemPrompt({
         dashboardType,
         communicationProfile,
@@ -393,7 +396,7 @@ export async function sendToElio(
         customInstructions: elioConfig?.customInstructions,
         labBriefs: labBriefsText,
         parcoursContext,
-      })
+      }) + (actionMarkdownDocs ? `\n\n${actionMarkdownDocs}` : '')
 
       const actionResponse = await callLLM(supabase, actionSystemPrompt, message, dashboardType, elioConfig)
 
@@ -443,6 +446,9 @@ export async function sendToElio(
       })
     }
 
+    // Documentation markdown des modules actifs (guide + FAQ) injectée sélectivement
+    const markdownDocs = loadModuleDocumentation(activeModules, message)
+
     const systemPrompt = buildSystemPrompt({
       dashboardType,
       communicationProfile,
@@ -451,7 +457,7 @@ export async function sendToElio(
       customInstructions: elioConfig?.customInstructions,
       labBriefs: labBriefsText,
       parcoursContext,
-    })
+    }) + (markdownDocs ? `\n\n${markdownDocs}` : '')
 
     const response = await callLLM(supabase, systemPrompt, message, dashboardType, elioConfig)
 

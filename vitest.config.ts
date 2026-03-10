@@ -21,6 +21,7 @@ export default defineConfig({
       'tests/**/*.test.ts',
       'apps/**/*.test.ts',
       'apps/**/*.test.tsx',
+      'scripts/**/*.test.ts',
     ],
   },
 })

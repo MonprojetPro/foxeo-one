@@ -17,4 +17,5 @@ export const manifest: ModuleManifest = {
   ],
   requiredTables: ['support_tickets'],
   dependencies: [],
+  documentation: { hasGuide: true, hasFaq: true, hasFlows: true },
 }
