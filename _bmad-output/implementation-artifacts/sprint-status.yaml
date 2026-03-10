@@ -172,7 +172,7 @@ development_status:
   12-4-analytics-metriques-usage: done
   12-5a-monitoring-sante-systeme-alertes-dysfonctionnement: done
   12-5b-preparation-integrations-p2-webhooks-api: done
-  12-6-provisioning-instance-one-depuis-le-hub: ready-for-dev
+  12-6-provisioning-instance-one-depuis-le-hub: done
   12-7-monitoring-instances-one-usage-seuils-alertes: ready-for-dev
   12-8-documentation-obligatoire-par-module-verification: ready-for-dev
   epic-12-retrospective: optional

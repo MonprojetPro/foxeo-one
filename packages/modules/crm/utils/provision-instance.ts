@@ -11,11 +11,11 @@ export type ProvisionInstanceInput = {
 }
 
 /**
- * MVP Stub: Provisions a One instance for a graduated client.
+ * MVP Stub: Provisions a One instance for a graduated client (graduation flow).
  *
- * NOTE: Full implementation (Supabase project creation, DB migrations,
- * Vercel deployment, health check) is Story 12.6.
- * For MVP, creates client_instances entry with status='active' immediately.
+ * @deprecated For Hub UI provisioning, use `provisionOneInstanceFromHub` from
+ * `@foxeo/module-admin` (Story 12.6). This stub is kept for the graduation
+ * flow (`graduateClient`) which sets status='active' immediately (MVP behaviour).
  */
 export async function provisionOneInstance(
   supabase: SupabaseClient,

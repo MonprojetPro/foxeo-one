@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { ActivityLogs, MaintenanceMode, SystemHealth, WebhooksPlaceholder, ApiPlaceholder } from '@foxeo/module-admin'
+import { ActivityLogs, MaintenanceMode, SystemHealth, WebhooksPlaceholder, ApiPlaceholder, InstancesList } from '@foxeo/module-admin'
 
-type AdminTab = 'logs' | 'maintenance' | 'backups' | 'webhooks' | 'api' | 'monitoring'
+type AdminTab = 'logs' | 'maintenance' | 'backups' | 'webhooks' | 'api' | 'monitoring' | 'instances'
 
 const TABS: { id: AdminTab; label: string }[] = [
   { id: 'logs', label: "Logs d'activité" },
@@ -12,6 +12,7 @@ const TABS: { id: AdminTab; label: string }[] = [
   { id: 'webhooks', label: 'Webhooks' },
   { id: 'api', label: 'API' },
   { id: 'monitoring', label: 'Monitoring' },
+  { id: 'instances', label: 'Instances One' },
 ]
 
 export default function AdminPage() {
@@ -54,6 +55,7 @@ export default function AdminPage() {
         {activeTab === 'webhooks' && <WebhooksPlaceholder />}
         {activeTab === 'api' && <ApiPlaceholder />}
         {activeTab === 'monitoring' && <SystemHealth />}
+        {activeTab === 'instances' && <InstancesList />}
       </div>
     </div>
   )
