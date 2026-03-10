@@ -170,20 +170,21 @@
 | 87 | 12.5b — Preparation integrations P2 webhooks API | 09/03 15:38 | ~0h23 | 10 | +354 | -8 | +346 | 12† |
 | 88 | 12.6 — Provisioning instance One depuis le Hub | 10/03 09:27 | ~18h | 14 | +1,846 | -7 | +1,839 | 33† |
 | 89 | 12.7 — Monitoring instances One usage seuils alertes | 10/03 10:00 | ~0h33 | 13 | +1,613 | -1 | +1,612 | 25† |
+| 90 | 12.8 — Documentation obligatoire par module verification | 10/03 | — | 35 | +1,334 | -23 | +1,311 | 37† |
 
-> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumules ~4,115+.
+> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumules ~4,222+.
 
 ## Totaux du projet
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **89** (87 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **90** (88 commits, dont 2 doubles et 1 triple) |
 | Commits de correction post-story | **1** (code review retroactif + bug systemic) |
-| Fichiers totaux modifies | **2,288** |
-| Lignes inserees | **+173,963** |
-| Lignes supprimees | **-15,270** |
-| Lignes nettes ajoutees | **+158,693** |
-| Tests finaux | **~4,185+** |
+| Fichiers totaux modifies | **2,323** |
+| Lignes inserees | **+175,297** |
+| Lignes supprimees | **-15,293** |
+| Lignes nettes ajoutees | **+160,004** |
+| Tests finaux | **~4,222+** |
 | Duree calendaire | **31 jours** (8 fev — 10 mars) |
 | Jours effectifs de dev | **~23 jours** |
 
@@ -202,7 +203,7 @@
 | **9** (Cycle de vie) | 7 | 139 | +11,912 | -1,040 | +10,872 | ~441 |
 | **10** (Dashboard One) | 4/4 | 70 | +5,613 | -125 | +5,488 | ~197 |
 | **11** (Facturation Pennylane) | 6/6 | 95 | +10,166 | -81 | +10,085 | 250 |
-| **12** (Admin Analytics Templates) | 8/9 | 121 | +11,309 | -32 | +11,277 | 266 |
+| **12** (Admin Analytics Templates) | 9/9 | 156 | +12,643 | -55 | +12,588 | 303 |
 
 ## Classification des stories par type
 
@@ -379,7 +380,7 @@ Ou:
 
 ## Notes pour calibration future
 
-1. **Ce referentiel couvre 80 stories sur 11 epics**. Il sera complete avec les epics 11-12.
+1. **Ce referentiel couvre 90 stories sur 12 epics**. Toutes les stories sont livrees.
 2. **Les temps delta qui incluent des nuits ne sont PAS des temps de dev**. Utiliser uniquement les deltas courts (meme journee) comme reference fiable.
 3. **La velocite augmente au fil du projet** : confirmee par les donnees (+25% entre phase 1 et phase 3). Les patterns etablis, le pipeline rode et la base de code mature accelerent chaque story.
 4. **L'effet Claude Code est significatif** : un dev solo humain sans AI pair-programming serait probablement 3-5x plus lent sur ces memes stories.
