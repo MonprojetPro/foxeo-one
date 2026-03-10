@@ -169,6 +169,7 @@
 | 86 | 12.5a — Monitoring sante systeme alertes dysfonctionnement | 09/03 15:15 | ~0h25 | 10 | +1,057 | -4 | +1,053 | 30† |
 | 87 | 12.5b — Preparation integrations P2 webhooks API | 09/03 15:38 | ~0h23 | 10 | +354 | -8 | +346 | 12† |
 | 88 | 12.6 — Provisioning instance One depuis le Hub | 10/03 09:27 | ~18h | 14 | +1,846 | -7 | +1,839 | 33† |
+| 89 | 12.7 — Monitoring instances One usage seuils alertes | 10/03 10:00 | ~0h33 | 13 | +1,613 | -1 | +1,612 | 25† |
 
 > `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumules ~4,115+.
 
@@ -176,13 +177,13 @@
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **88** (86 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **89** (87 commits, dont 2 doubles et 1 triple) |
 | Commits de correction post-story | **1** (code review retroactif + bug systemic) |
-| Fichiers totaux modifies | **2,275** |
-| Lignes inserees | **+172,350** |
-| Lignes supprimees | **-15,269** |
-| Lignes nettes ajoutees | **+157,081** |
-| Tests finaux | **~4,160+** |
+| Fichiers totaux modifies | **2,288** |
+| Lignes inserees | **+173,963** |
+| Lignes supprimees | **-15,270** |
+| Lignes nettes ajoutees | **+158,693** |
+| Tests finaux | **~4,185+** |
 | Duree calendaire | **31 jours** (8 fev — 10 mars) |
 | Jours effectifs de dev | **~23 jours** |
 
@@ -201,7 +202,7 @@
 | **9** (Cycle de vie) | 7 | 139 | +11,912 | -1,040 | +10,872 | ~441 |
 | **10** (Dashboard One) | 4/4 | 70 | +5,613 | -125 | +5,488 | ~197 |
 | **11** (Facturation Pennylane) | 6/6 | 95 | +10,166 | -81 | +10,085 | 250 |
-| **12** (Admin Analytics Templates) | 7/9 | 108 | +9,696 | -31 | +9,665 | 241 |
+| **12** (Admin Analytics Templates) | 8/9 | 121 | +11,309 | -32 | +11,277 | 266 |
 
 ## Classification des stories par type
 
