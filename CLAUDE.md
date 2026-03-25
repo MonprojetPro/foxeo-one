@@ -234,6 +234,51 @@ A la reception de **"cr"** (tout s'enchaine automatiquement sans pause, sur Opus
 - Le commit message suit le pattern des commits existants (voir `git log --oneline -5`)
 - La Phase 1 est autonome sur Sonnet. La Phase 2 s'execute entierement sur Opus, sans aucune pause ni interaction — du CR au push
 
+## Lovable Integration Pipeline — Mini-cycle par page (MUST follow)
+
+Quand MiKL fournit un repo GitHub Lovable pour une page du Hub, executer ce pipeline AUTOMATIQUEMENT et INTEGRALEMENT, sans aucune pause ni demande de confirmation entre les etapes :
+
+### Etape 1 — Integration (SPARK)
+- Lire le repo Lovable via `gh api` (pas de clone)
+- Adapter au monorepo : imports `@foxeo/ui`, hooks TanStack existants, Server Actions existantes, types existants
+- NE PAS creer de composants en doublon — reutiliser ceux du module
+
+### Etape 2 — Tests (TESS)
+- Lancer `npx vitest run [fichiers concernes]` (JAMAIS le full suite)
+- 0 echec obligatoire avant de continuer
+
+### Etape 3 — Code Review (SCAN)
+- Review adversarial du code integre
+- Verifier : imports corrects, pas de mock data residuel, patterns architecture respectes, accessibilite, responsive
+- Trouver les problemes (JAMAIS "looks good")
+
+### Etape 4 — Fix + Re-test
+- Corriger tous les HIGH et MEDIUM trouves par SCAN
+- Relancer les tests pour confirmer 0 regression
+
+### Etape 5 — Clean (CLEAN)
+- Verifier : pas de code mort, pas de commentaires inutiles, pas de console.log
+- Si refacto necessaire → re-test non-regression
+
+### Etape 6 — UX Check (PIXEL)
+- Verifier : responsive (mobile cards vs desktop table), accessibilite (aria, semantique HTML), coherence design system Hub (OKLCH, spacing p-6, skeleton loaders)
+- Signaler les ecarts vs le design Lovable original
+
+### Etape 7 — Commit + Push
+- `git add` fichiers modifies
+- `git commit` avec message format : `ui: [page] — description (Lovable integration)`
+- `git push origin master`
+
+### Etape 8 — ATLAS
+- Si problemes rencontres pendant le cycle → enregistrer dans `docs/08-lessons-learned.md`
+- Si aucun probleme significatif → ne rien noter (pas de bruit)
+
+**Regles :**
+- Tout s'enchaine automatiquement sans pause — de l'etape 1 a l'etape 8
+- Pas de story file, pas de sprint-status pour les integrations Lovable
+- Le cycle s'applique a CHAQUE page (Accueil, Clients, Validation, Visio, Chat, Documents, Facturation)
+- Si MiKL n'a pas encore fourni le repo Lovable, preparer le prompt Lovable et ATTENDRE
+
 ## Model Routing — BMAD Agents & Workflows (MUST follow)
 
 When a BMAD agent (`/bmad:bmm:agents:*`) or workflow (`/bmad:bmm:workflows:*`) is invoked, **check the recommended model below BEFORE proceeding**. If your current model doesn't match, warn the user in French:
