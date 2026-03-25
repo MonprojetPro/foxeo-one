@@ -7,6 +7,8 @@ import {
   ClientSearch,
   ClientFiltersPanel,
   EmptyClientList,
+  CreateClientDialog,
+  ImportCsvDialog,
   useClients,
   type ClientFilters,
   type ClientListItem,
@@ -24,11 +26,10 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<ClientFilters>({})
 
-  const { data: clients = [], isLoading, error } = useClients(initialClients)
+  const { data: clients = [], isLoading, error } = useClients(filters, initialClients)
 
   // Client-side filtering (< 500 clients)
   const filteredClients = clients.filter((client) => {
-    // Search filter (nom, entreprise, email, secteur)
     if (search) {
       const searchLower = search.toLowerCase()
       const matchesSearch =
@@ -40,12 +41,10 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
       if (!matchesSearch) return false
     }
 
-    // Type filter
     if (filters.clientType && filters.clientType.length > 0) {
       if (!filters.clientType.includes(client.clientType)) return false
     }
 
-    // Status filter
     if (filters.status && filters.status.length > 0) {
       if (!filters.status.includes(client.status)) return false
     }
@@ -57,23 +56,28 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
     router.push(`/modules/crm/clients/${client.id}`)
   }
 
-  const handleCreateClient = () => {
-    router.push('/modules/crm/clients/new')
-  }
-
   if (isLoading && initialClients.length === 0) {
-    return <div className="p-8">Chargement...</div>
+    return (
+      <div className="p-6 space-y-6">
+        <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+        <div className="h-10 w-full max-w-md bg-muted rounded animate-pulse" />
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-16 bg-card border border-border rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
   }
 
   if (error) {
     return (
-      <div className="p-8 text-destructive">
+      <div className="p-6 text-destructive">
         Erreur: {error.message}
       </div>
     )
   }
 
-  // Fix: check actual filter array contents, not just key presence
   const hasFilters =
     search !== '' ||
     (filters.clientType !== undefined && filters.clientType.length > 0) ||
@@ -83,23 +87,32 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
   const showEmptyState = filteredClients.length === 0
 
   return (
-    <div className="flex flex-col gap-6 p-8">
-      <div>
-        <h1 className="text-3xl font-bold">CRM</h1>
-        <p className="text-muted-foreground">
-          Gérez vos clients et suivez vos relations
-        </p>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Clients</h1>
+          <p className="text-sm text-muted-foreground">
+            Gérez vos clients et suivez vos relations
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ImportCsvDialog />
+          <CreateClientDialog />
+        </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      {/* Search + Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <ClientSearch onSearchChange={setSearch} />
         <ClientFiltersPanel filters={filters} onFiltersChange={setFilters} />
       </div>
 
+      {/* Table / Empty states */}
       {showEmptyState ? (
         <EmptyClientList
           hasFilters={hasFilters}
-          onCreateClient={handleCreateClient}
+          onCreateClient={() => {}}
         />
       ) : (
         <ClientList clients={filteredClients} onRowClick={handleRowClick} onlineUserIds={onlineUserIds} />
