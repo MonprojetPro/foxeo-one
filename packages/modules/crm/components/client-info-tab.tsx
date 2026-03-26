@@ -33,10 +33,9 @@ const clientTypeLabels: Record<string, string> = {
 }
 
 const statusLabels: Record<string, string> = {
-  'lab-actif': 'Lab actif',
-  'one-actif': 'One actif',
-  'inactif': 'Inactif',
-  'suspendu': 'Suspendu',
+  'active': 'Actif',
+  'suspended': 'Suspendu',
+  'archived': 'Archivé',
 }
 
 export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {

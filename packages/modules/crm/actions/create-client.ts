@@ -79,7 +79,7 @@ export async function createClient(
         phone: phone ?? null,
         sector: sector ?? null,
         client_type: clientType,
-        status: 'lab-actif',
+        status: 'active',
       })
       .select()
       .single()
