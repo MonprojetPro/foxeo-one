@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Card, CardContent, Badge, Button } from '@foxeo/ui'
 import { useClientExchanges } from '../hooks/use-client-exchanges'
 import { format } from 'date-fns'
@@ -38,12 +39,9 @@ export function ClientExchangesTab({ clientId }: ClientExchangesTabProps) {
         <CardContent className="p-8 text-center">
           <div className="space-y-4">
             <p className="text-muted-foreground">Aucun échange pour le moment</p>
-            <Button variant="outline" disabled>
-              Ouvrir le chat complet
+            <Button asChild variant="outline">
+              <Link href={`/modules/chat/${clientId}`}>Ouvrir le chat →</Link>
             </Button>
-            <p className="text-xs text-muted-foreground">
-              Le module Chat sera disponible prochainement (Epic 3)
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -53,8 +51,8 @@ export function ClientExchangesTab({ clientId }: ClientExchangesTabProps) {
   return (
     <div className="space-y-4 mt-6">
       <div className="flex justify-end">
-        <Button variant="outline">
-          Ouvrir le chat complet →
+        <Button asChild variant="outline">
+          <Link href={`/modules/chat/${clientId}`}>Ouvrir le chat complet →</Link>
         </Button>
       </div>
 

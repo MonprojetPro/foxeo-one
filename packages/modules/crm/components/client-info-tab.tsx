@@ -219,12 +219,30 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
                 <ParcoursStatusBadge status={parcours.status} />
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Étapes actives</span>
-                <span className="text-sm">
-                  {parcours.activeStages.filter((s) => s.active).length} / {parcours.activeStages.length}
-                </span>
-              </div>
+              {/* Barre de progression visuelle */}
+              {(() => {
+                const activeStages = parcours.activeStages.filter((s) => s.active)
+                const completedStages = activeStages.filter((s) => s.status === 'completed')
+                const progressPct = activeStages.length > 0
+                  ? Math.round((completedStages.length / activeStages.length) * 100)
+                  : 0
+                return (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Progression</span>
+                      <span className="text-sm font-medium">
+                        {completedStages.length} / {activeStages.length} étapes ({progressPct}%)
+                      </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })()}
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">Démarré le</span>

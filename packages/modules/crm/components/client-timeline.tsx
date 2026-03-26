@@ -83,30 +83,39 @@ export function ClientTimeline({ clientId }: ClientTimelineProps) {
   }
 
   return (
-    <div className="space-y-4 mt-6">
-      {logs.map((log) => {
+    <div className="mt-6 space-y-0">
+      {logs.map((log, index) => {
         const timeAgo = formatDistanceToNow(new Date(log.createdAt), {
           addSuffix: true,
           locale: fr,
         })
+        const isLast = index === logs.length - 1
 
         return (
-          <Card key={log.id}>
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">{eventTypeIcons[log.eventType] || '📌'}</span>
-                <div className="flex-1">
-                  <div className="flex items-baseline justify-between">
-                    <h4 className="font-medium">
-                      {eventTypeLabels[log.eventType] || log.eventType}
-                    </h4>
-                    <span className="text-xs text-muted-foreground">{timeAgo}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">{log.description}</p>
-                </div>
+          <div key={log.id} className="flex gap-4">
+            {/* Ligne verticale + icône */}
+            <div className="flex flex-col items-center">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-card text-base">
+                {eventTypeIcons[log.eventType] || '📌'}
               </div>
-            </CardContent>
-          </Card>
+              {!isLast && (
+                <div className="w-px flex-1 bg-border" style={{ minHeight: '1.5rem' }} />
+              )}
+            </div>
+
+            {/* Contenu */}
+            <div className={`flex-1 pb-6 ${isLast ? 'pb-0' : ''}`}>
+              <div className="flex items-baseline justify-between">
+                <h4 className="font-medium">
+                  {eventTypeLabels[log.eventType] || log.eventType}
+                </h4>
+                <span className="text-xs text-muted-foreground">{timeAgo}</span>
+              </div>
+              {log.description && (
+                <p className="mt-1 text-sm text-muted-foreground">{log.description}</p>
+              )}
+            </div>
+          </div>
         )
       })}
 
