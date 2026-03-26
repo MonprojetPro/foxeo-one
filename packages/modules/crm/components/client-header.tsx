@@ -13,6 +13,7 @@ import { ClientLifecycleActions } from './client-lifecycle-actions'
 interface ClientHeaderProps {
   client: Client
   onEdit?: () => void
+  hideLifecycleActions?: boolean
 }
 
 const clientTypeLabels: Record<string, string> = {
@@ -30,7 +31,7 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function ClientHeader({ client, onEdit }: ClientHeaderProps) {
+export function ClientHeader({ client, onEdit, hideLifecycleActions }: ClientHeaderProps) {
   const creationDate = format(new Date(client.createdAt), 'd MMMM yyyy', { locale: fr })
   const initials = getInitials(client.name)
 
@@ -73,7 +74,7 @@ export function ClientHeader({ client, onEdit }: ClientHeaderProps) {
             clientName={client.name}
             companyName={client.company || undefined}
           />
-          <ClientLifecycleActions client={client} />
+          {!hideLifecycleActions && <ClientLifecycleActions client={client} />}
           {onEdit && (
             <Button onClick={onEdit} variant="outline" size="sm">
               Modifier
