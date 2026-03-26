@@ -57,6 +57,8 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
         phone,
         website,
         notes,
+        suspended_at,
+        archived_at,
         created_at,
         updated_at,
         client_configs (
@@ -111,6 +113,8 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
       phone: data.phone ?? undefined,
       website: data.website ?? undefined,
       notes: data.notes ?? undefined,
+      suspendedAt: data.suspended_at ?? null,
+      archivedAt: data.archived_at ?? null,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       config: configRaw
