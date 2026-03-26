@@ -13,7 +13,7 @@ export const ClientConfig = z.object({
   parcoursConfig: z.record(z.unknown()).optional(),
   // Story 9.4 — Subscription tier
   subscriptionTier: z.enum(['base', 'essentiel', 'agentique']).nullable().optional(),
-  tierChangedAt: z.string().datetime().nullable().optional(),
+  tierChangedAt: z.string().datetime({ offset: true }).nullable().optional(),
 })
 
 export type ClientConfig = z.infer<typeof ClientConfig>
@@ -31,12 +31,12 @@ export const Client = z.object({
   phone: z.string().optional(),
   website: z.string().url().optional().or(z.literal('')),
   notes: z.string().optional(),
-  suspendedAt: z.string().datetime().nullable().optional(),
-  archivedAt: z.string().datetime().nullable().optional(),
-  retentionUntil: z.string().datetime().nullable().optional(),
+  suspendedAt: z.string().datetime({ offset: true }).nullable().optional(),
+  archivedAt: z.string().datetime({ offset: true }).nullable().optional(),
+  retentionUntil: z.string().datetime({ offset: true }).nullable().optional(),
   previousStatus: z.string().nullable().optional(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
   config: ClientConfig.optional(),
 })
 
@@ -53,11 +53,11 @@ export const ClientListItem = z.object({
   sector: z.string().optional(),
   clientType: ClientTypeEnum,
   status: ClientStatusEnum,
-  createdAt: z.string().datetime(),
+  createdAt: z.string().datetime({ offset: true }),
   isPinned: z.boolean().optional(),
-  deferredUntil: z.string().datetime().nullable().optional(),
-  archivedAt: z.string().datetime().nullable().optional(),
-  retentionUntil: z.string().datetime().nullable().optional(),
+  deferredUntil: z.string().datetime({ offset: true }).nullable().optional(),
+  archivedAt: z.string().datetime({ offset: true }).nullable().optional(),
+  retentionUntil: z.string().datetime({ offset: true }).nullable().optional(),
 })
 
 export type ClientListItem = z.infer<typeof ClientListItem>
@@ -119,7 +119,7 @@ export const ActivityLog = z.object({
   eventType: ActivityLogTypeEnum,
   eventData: z.record(z.unknown()).optional(),
   description: z.string(),
-  createdAt: z.string().datetime()
+  createdAt: z.string().datetime({ offset: true })
 })
 
 export type ActivityLog = z.infer<typeof ActivityLog>
@@ -133,8 +133,8 @@ export const ClientDocument = z.object({
   type: z.enum(['brief', 'livrable', 'rapport', 'autre']),
   url: z.string().url().optional(),
   visibleToClient: z.boolean(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime()
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true })
 })
 
 export type ClientDocument = z.infer<typeof ClientDocument>
@@ -145,7 +145,7 @@ export const ClientExchange = z.object({
   clientId: z.string().uuid(),
   type: z.enum(['message', 'notification', 'elio_summary']),
   content: z.string(),
-  createdAt: z.string().datetime()
+  createdAt: z.string().datetime({ offset: true })
 })
 
 export type ClientExchange = z.infer<typeof ClientExchange>
@@ -191,8 +191,8 @@ export const ParcoursTemplate = z.object({
   parcoursType: ParcoursTypeEnum,
   stages: z.array(ParcoursStage),
   isActive: z.boolean(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
 })
 
 export type ParcoursTemplate = z.infer<typeof ParcoursTemplate>
@@ -205,12 +205,12 @@ export const Parcours = z.object({
   operatorId: z.string().uuid(),
   activeStages: z.array(ActiveStage),
   status: ParcoursStatusEnum,
-  startedAt: z.string().datetime(),
-  suspendedAt: z.string().datetime().nullable(),
-  completedAt: z.string().datetime().nullable(),
+  startedAt: z.string().datetime({ offset: true }),
+  suspendedAt: z.string().datetime({ offset: true }).nullable(),
+  completedAt: z.string().datetime({ offset: true }).nullable(),
   abandonmentReason: z.string().nullable().optional(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
 })
 
 export type Parcours = z.infer<typeof Parcours>
@@ -273,8 +273,8 @@ export const ClientNote = z.object({
   clientId: z.string().uuid(),
   operatorId: z.string().uuid(),
   content: z.string().min(1, 'Le contenu de la note est requis'),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
 })
 
 export type ClientNote = z.infer<typeof ClientNote>
@@ -296,7 +296,7 @@ export type UpdateClientNoteInput = z.infer<typeof UpdateClientNoteInput>
 
 export const DeferClientInput = z.object({
   clientId: z.string().uuid(),
-  deferredUntil: z.string().datetime().nullable(), // null clears the defer
+  deferredUntil: z.string().datetime({ offset: true }).nullable(), // null clears the defer
 })
 
 export type DeferClientInput = z.infer<typeof DeferClientInput>
@@ -326,10 +326,10 @@ export const Reminder = z.object({
   clientId: z.string().uuid().nullable(),
   title: z.string().min(1, 'Le titre est requis'),
   description: z.string().nullable(),
-  dueDate: z.string().datetime(),
+  dueDate: z.string().datetime({ offset: true }),
   completed: z.boolean(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
 })
 
 export type Reminder = z.infer<typeof Reminder>
@@ -339,7 +339,7 @@ export const CreateReminderInput = z.object({
   clientId: z.string().uuid().nullable().optional(),
   title: z.string().min(1, 'Le titre est requis').max(200, 'Le titre ne peut pas dépasser 200 caractères'),
   description: z.string().max(1000, 'La description ne peut pas dépasser 1000 caractères').nullable().optional(),
-  dueDate: z.string().datetime(),
+  dueDate: z.string().datetime({ offset: true }),
 })
 
 export type CreateReminderInput = z.infer<typeof CreateReminderInput>
@@ -348,7 +348,7 @@ export const UpdateReminderInput = z.object({
   reminderId: z.string().uuid(),
   title: z.string().min(1, 'Le titre est requis').max(200, 'Le titre ne peut pas dépasser 200 caractères').optional(),
   description: z.string().max(1000, 'La description ne peut pas dépasser 1000 caractères').nullable().optional(),
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime({ offset: true }).optional(),
 })
 
 export type UpdateReminderInput = z.infer<typeof UpdateReminderInput>
@@ -433,7 +433,7 @@ export const ClientTimeEstimate = z.object({
   validationCount: z.number().int().nonnegative(),
   visioSeconds: z.number().int().nonnegative(),
   totalEstimatedSeconds: z.number().int().nonnegative(),
-  lastActivity: z.string().datetime().nullable(),
+  lastActivity: z.string().datetime({ offset: true }).nullable(),
 })
 
 export type ClientTimeEstimate = z.infer<typeof ClientTimeEstimate>
@@ -526,8 +526,8 @@ export const Notification = z.object({
   title: z.string(),
   body: z.string().nullable(),
   link: z.string().nullable(),
-  readAt: z.string().datetime().nullable(),
-  createdAt: z.string().datetime(),
+  readAt: z.string().datetime({ offset: true }).nullable(),
+  createdAt: z.string().datetime({ offset: true }),
 })
 
 export type Notification = z.infer<typeof Notification>
