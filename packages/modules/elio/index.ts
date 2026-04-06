@@ -41,6 +41,7 @@ export { newConversation } from './actions/new-conversation'
 export { generateWelcomeMessage, getWelcomeMessage } from './actions/generate-welcome-message'
 export { generateConversationTitle } from './actions/generate-conversation-title'
 export { updateConversationTitle } from './actions/update-conversation-title'
+export { deleteConversation } from './actions/delete-conversation'
 export { saveElioMessage } from './actions/save-elio-message'
 
 // Actions — Story 8.3
@@ -54,10 +55,8 @@ export { compileLabLearnings } from './actions/compile-lab-learnings'
 // Actions — Story 8.9b
 export { generateDocument } from './actions/generate-document'
 export { saveGeneratedDocument } from './actions/save-generated-document'
-export type { SavedDocument } from './actions/save-generated-document'
 export { convertToPdf } from './actions/convert-to-pdf'
 export { sendDocumentEmail } from './actions/send-document-email'
-export type { DocumentEmailDraft } from './actions/send-document-email'
 
 // Actions — Story 8.5
 export { searchClientInfo } from './actions/search-client-info'
@@ -66,15 +65,18 @@ export type { ClientInfo } from './actions/search-client-info'
 // Actions — Story 8.6
 export { correctAndAdaptText } from './actions/correct-and-adapt-text'
 export { generateDraft } from './actions/generate-draft'
-export type { GenerateDraftInput, DraftResult } from './actions/generate-draft'
 export { adjustDraft } from './actions/adjust-draft'
-export type { AdjustDraftInput, AdjustedDraftResult } from './actions/adjust-draft'
+
+// Actions — Story 3.8
+export { transformMessageForClient } from './actions/transform-message-for-client'
+export { TransformMessageInput } from './types/elio.types'
+export type { TransformMessageResult } from './types/elio.types'
 
 // Components — Story 8.6
 export { DraftDisplay } from './components/draft-display'
 
 // Types — Story 8.6
-export type { DraftContext } from './actions/send-to-elio'
+export type { DraftContext } from './types/elio.types'
 
 // Actions — Stories 6.x
 export { createCommunicationProfile } from './actions/create-communication-profile'
@@ -148,7 +150,18 @@ export type {
   ElioMessageMetadata,
 } from './types/elio.types'
 
-export type { ElioConfigHistoryEntry } from './actions/get-elio-config-history'
+// Types — Stories 8.6, 8.9b, 8.3 (moved from 'use server' action files)
+export type {
+  DraftContext,
+  AdjustDraftInput,
+  AdjustedDraftResult,
+  DraftResult,
+  GenerateDraftInput,
+  SavedDocument,
+  DocumentEmailDraft,
+  ElioConfigHistoryEntry,
+} from './types/elio.types'
+
 export type { DocumentType } from './components/elio-document'
 
 // Types — Stories 6.x

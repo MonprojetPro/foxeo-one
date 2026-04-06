@@ -22,13 +22,13 @@ describe('ChatInput', () => {
     expect(screen.getByRole('button', { name: /envoyer/i })).toBeEnabled()
   })
 
-  it('calls onSend with content when button is clicked', async () => {
+  it('calls onSend with payload when button is clicked', async () => {
     const user = userEvent.setup()
     const onSend = vi.fn()
     render(<ChatInput onSend={onSend} />)
     await user.type(screen.getByRole('textbox', { name: /message/i }), 'Hello MiKL')
     await user.click(screen.getByRole('button', { name: /envoyer/i }))
-    expect(onSend).toHaveBeenCalledWith('Hello MiKL')
+    expect(onSend).toHaveBeenCalledWith({ content: 'Hello MiKL', file: undefined })
     expect(onSend).toHaveBeenCalledTimes(1)
   })
 
@@ -48,7 +48,7 @@ describe('ChatInput', () => {
     const textarea = screen.getByRole('textbox', { name: /message/i })
     await user.type(textarea, 'Test message')
     await user.keyboard('{Enter}')
-    expect(onSend).toHaveBeenCalledWith('Test message')
+    expect(onSend).toHaveBeenCalledWith({ content: 'Test message', file: undefined })
   })
 
   it('does NOT send on Shift+Enter', async () => {

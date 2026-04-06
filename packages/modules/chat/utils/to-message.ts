@@ -9,5 +9,8 @@ export function toMessage(row: MessageDB): Message {
     content: row.content,
     readAt: row.read_at,
     createdAt: row.created_at,
+    attachmentUrl: row.attachment_url ?? null,
+    attachmentName: row.attachment_name ?? null,
+    attachmentType: row.attachment_type ?? null,
   }
 }

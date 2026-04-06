@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback } from '@foxeo/ui'
 import { cn } from '@foxeo/utils'
+import { Paperclip } from 'lucide-react'
 import type { Message } from '../types/chat.types'
 
 interface ChatMessageProps {
@@ -41,7 +42,34 @@ export function ChatMessage({ message, currentUserType }: ChatMessageProps) {
             : 'rounded-bl-none bg-muted text-foreground'
         )}
       >
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        {message.content && (
+          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        )}
+
+        {/* Pièce jointe */}
+        {message.attachmentUrl && (
+          <div className="mt-2">
+            {message.attachmentType?.startsWith('image/') ? (
+              <img
+                src={message.attachmentUrl}
+                alt={message.attachmentName ?? 'Image jointe'}
+                className="max-w-[280px] rounded-lg object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <a
+                href={message.attachmentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs underline underline-offset-2 hover:opacity-80"
+                aria-label={`Télécharger ${message.attachmentName ?? 'le fichier'}`}
+              >
+                <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate max-w-[200px]">{message.attachmentName ?? 'Fichier joint'}</span>
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Time + read indicator */}
         <div

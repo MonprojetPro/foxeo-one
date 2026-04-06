@@ -7,6 +7,10 @@
     ".": {
       "types": "./index.ts",
       "default": "./index.ts"
+    },
+    "./manifest": {
+      "types": "./manifest.ts",
+      "default": "./manifest.ts"
     }
   },
   "scripts": {
@@ -22,7 +26,9 @@
     "@foxeo/ui": "*",
     "@foxeo/utils": "*",
     "@foxeo/supabase": "*",
+    "@foxeo/module-elio": "*",
     "@tanstack/react-query": "^5.90.0",
+    "lucide-react": "^0.562.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

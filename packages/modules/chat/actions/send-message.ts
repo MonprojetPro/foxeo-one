@@ -51,6 +51,8 @@ export async function sendMessage(
       }
     }
 
+    const { attachmentUrl, attachmentName, attachmentType } = parsed.data
+
     const { data, error } = await supabase
       .from('messages')
       .insert({
@@ -58,6 +60,7 @@ export async function sendMessage(
         operator_id: operatorId,
         sender_type: senderType,
         content,
+        ...(attachmentUrl ? { attachment_url: attachmentUrl, attachment_name: attachmentName, attachment_type: attachmentType } : {}),
       })
       .select()
       .single()

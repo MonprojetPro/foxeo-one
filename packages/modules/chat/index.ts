@@ -9,7 +9,8 @@ export { ChatList } from './components/chat-list'
 export { ChatSkeleton } from './components/chat-skeleton'
 export { UnreadBadge } from './components/unread-badge'
 export { PresenceIndicator } from './components/presence-indicator'
-export { PresenceProvider, PresenceContext } from './components/presence-provider'
+export { PresenceProvider, PresenceContext, usePresenceContext } from './components/presence-provider'
+export { ElioTransformPanel } from './components/elio-transform-panel'
 
 // Hooks
 export { useChatMessages } from './hooks/use-chat-messages'
@@ -24,6 +25,7 @@ export { sendMessage } from './actions/send-message'
 export { getMessages } from './actions/get-messages'
 export { getConversations } from './actions/get-conversations'
 export { markMessagesRead } from './actions/mark-messages-read'
+export { uploadMessageAttachment } from './actions/upload-message-attachment'
 
 // Types
 export type {
@@ -37,3 +39,7 @@ export type {
 } from './types/chat.types'
 
 export type { PresenceEntry, PresenceStateMap } from './types/presence.types'
+
+// Types — Story 3.8
+export type { ChatSendPayload, TransformMode } from './components/chat-input'
+export type { AttachmentUploadResult } from './actions/upload-message-attachment'

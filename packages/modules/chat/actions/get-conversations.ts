@@ -31,7 +31,7 @@ export async function getConversations(): Promise<ActionResponse<Conversation[]>
     // Get all clients for this operator with their last message and unread count
     const { data: clients, error: clientsError } = await supabase
       .from('clients')
-      .select('id, name, email')
+      .select('id, name, email, client_configs(dashboard_type)')
       .eq('operator_id', operator.id)
       .order('name', { ascending: true })
 
@@ -94,6 +94,11 @@ export async function getConversations(): Promise<ActionResponse<Conversation[]>
 
     const conversations: Conversation[] = clients.map((client) => {
       const lastMsg = lastMessageMap.get(client.id)
+      const configs = (client as unknown as { client_configs: { dashboard_type: string }[] | { dashboard_type: string } | null }).client_configs
+      const configObj = Array.isArray(configs) ? configs[0] : configs
+      const dashboardType = (configObj?.dashboard_type === 'lab' || configObj?.dashboard_type === 'one')
+        ? configObj.dashboard_type as 'lab' | 'one'
+        : undefined
       return {
         clientId: client.id,
         clientName: client.name,
@@ -101,6 +106,7 @@ export async function getConversations(): Promise<ActionResponse<Conversation[]>
         lastMessage: lastMsg?.content ?? null,
         lastMessageAt: lastMsg?.createdAt ?? null,
         unreadCount: unreadCountMap.get(client.id) ?? 0,
+        dashboardType,
       }
     })
 

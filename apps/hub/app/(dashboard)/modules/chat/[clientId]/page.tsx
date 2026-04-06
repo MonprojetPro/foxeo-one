@@ -29,6 +29,8 @@ export default async function ChatConversationPage({ params }: ChatConversationP
 
   if (!operator) notFound()
 
+  const op = operator as { id: string }
+
   // Load initial messages & mark existing as read in parallel
   const [messagesResult] = await Promise.all([
     getMessages({ clientId }),
@@ -42,7 +44,7 @@ export default async function ChatConversationPage({ params }: ChatConversationP
   return (
     <ChatConversationClient
       clientId={clientId}
-      operatorId={operator.id}
+      operatorId={op.id}
       initialMessages={messagesResult.data ?? []}
     />
   )

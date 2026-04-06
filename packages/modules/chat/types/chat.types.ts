@@ -14,6 +14,9 @@ export interface Message {
   content: string
   readAt: string | null
   createdAt: string
+  attachmentUrl?: string | null
+  attachmentName?: string | null
+  attachmentType?: string | null
 }
 
 export interface Conversation {
@@ -23,6 +26,7 @@ export interface Conversation {
   lastMessage: string | null
   lastMessageAt: string | null
   unreadCount: number
+  dashboardType?: 'lab' | 'one'
 }
 
 // ============================================================
@@ -37,6 +41,9 @@ export interface MessageDB {
   content: string
   read_at: string | null
   created_at: string
+  attachment_url?: string | null
+  attachment_name?: string | null
+  attachment_type?: string | null
 }
 
 // ============================================================
@@ -48,6 +55,9 @@ export const SendMessageInput = z.object({
   operatorId: z.string().uuid(),
   senderType: z.enum(['client', 'operator']),
   content: z.string().min(1, 'Le message ne peut pas être vide').max(4000, 'Message trop long'),
+  attachmentUrl: z.string().url().optional().nullable(),
+  attachmentName: z.string().max(255).optional().nullable(),
+  attachmentType: z.string().max(100).optional().nullable(),
 })
 export type SendMessageInput = z.infer<typeof SendMessageInput>
 

@@ -5,12 +5,90 @@ import type { ActionError } from '@foxeo/types'
 
 export type DashboardType = 'hub' | 'lab' | 'one'
 
+// --- Action interfaces (moved from 'use server' files — non-async exports forbidden) ---
+
+export interface DraftContext {
+  previousDraft: string
+  clientName: string
+  draftType: 'email' | 'validation_hub' | 'chat'
+  currentVersion?: number
+}
+
+export interface AdjustDraftInput {
+  previousDraft: string
+  instruction: string
+  clientName: string
+  draftType: 'email' | 'validation_hub' | 'chat'
+  currentVersion?: number
+}
+
+export interface AdjustedDraftResult {
+  content: string
+  draftType: 'email' | 'validation_hub' | 'chat'
+  clientName: string
+  version: number
+}
+
+export interface DraftResult {
+  content: string
+  draftType: 'email' | 'validation_hub' | 'chat'
+  clientName: string
+}
+
+export interface GenerateDraftInput {
+  clientName: string
+  draftType: 'email' | 'validation_hub' | 'chat'
+  subject: string
+  recentContext?: string[]
+}
+
+export interface SavedDocument {
+  id: string
+  clientId: string
+  title: string
+  content: string
+  source: string
+  createdAt: string
+}
+
+export interface DocumentEmailDraft {
+  mailtoUrl: string
+  subject: string
+}
+
+export interface ElioConfigHistoryEntry {
+  id: string
+  clientId: string
+  fieldChanged: string
+  oldValue: Record<string, unknown> | null
+  newValue: Record<string, unknown> | null
+  changedAt: string
+  changedBy: string | null
+}
+
 /**
  * Tier Élio pour le dashboard One uniquement ('one' | 'one_plus').
  * Note : distinct de ElioTier dans @foxeo/types qui inclut aussi 'lab' et les anciens noms avec tirets.
  * Les valeurs ici correspondent aux valeurs DB (colonne client_configs.elio_tier).
  */
 export type ElioTier = 'one' | 'one_plus'
+
+// --- Transform Message Types (Story 3.8) ---
+
+export const TransformMessageInput = z.object({
+  clientId: z.string().uuid('clientId doit être un UUID valide'),
+  rawMessage: z.string().min(1, 'Le message ne peut pas être vide').max(4000),
+})
+export type TransformMessageInput = z.infer<typeof TransformMessageInput>
+
+export interface TransformMessageResult {
+  transformedText: string
+  profileUsed: {
+    tone: string
+    length: string
+    style: string
+  } | null
+}
 
 // --- Message Types ---
 
