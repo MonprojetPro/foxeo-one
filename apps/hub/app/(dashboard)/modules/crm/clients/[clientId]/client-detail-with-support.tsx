@@ -1,12 +1,14 @@
 'use client'
 
-import { ClientDetailContent, type ExtraTab, ClientBrandingTab } from '@foxeo/modules/crm'
-import { ClientSupportTab } from '@foxeo/modules-support'
-import { SubmissionsList } from '@foxeo/module-parcours'
-import { ElioConfigSection } from '@foxeo/modules/elio'
-import { LabBillingTab } from '@foxeo/modules/facturation'
-import { ClientExportButton } from '@foxeo/module-admin'
-import type { Client } from '@foxeo/modules/crm'
+import { ClientDetailContent, type ExtraTab, ClientBrandingTab } from '@monprojetpro/modules-crm'
+import { ClientSupportTab } from '@monprojetpro/modules-support'
+import { SubmissionsList } from '@monprojetpro/module-parcours'
+import { ElioConfigSection } from '@monprojetpro/module-elio'
+import { LabBillingTab } from '@monprojetpro/modules-facturation'
+import { ClientExportButton } from '@monprojetpro/module-admin'
+import { ClientEmailTab } from '@monprojetpro/modules-email'
+import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
+import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
 
 interface ClientDetailWithSupportProps {
@@ -16,6 +18,17 @@ interface ClientDetailWithSupportProps {
 export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps) {
   const extraTabs: ExtraTab[] = useMemo(
     () => [
+      {
+        value: 'emails',
+        label: 'Emails',
+        content: (
+          <ClientEmailTab
+            clientId={client.id}
+            clientEmail={client.email}
+            returnTo={`/modules/crm/clients/${client.id}`}
+          />
+        ),
+      },
       {
         value: 'support',
         label: 'Support',
@@ -44,7 +57,12 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
       {
         value: 'administration',
         label: 'Administration',
-        content: <ClientExportButton clientId={client.id} />,
+        content: (
+          <div className="space-y-6">
+            <ClientExportButton clientId={client.id} />
+            <OperatorOverrideSection clientId={client.id} />
+          </div>
+        ),
       },
     ],
     [client.id, client.company, client.name]
