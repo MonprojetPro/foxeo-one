@@ -163,4 +163,13 @@
   p, li, td, th, blockquote, figcaption, dd {
     font-family: var(--font-body);
   }
+  /* Curseur pointer sur tous les éléments interactifs */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  label[for],
+  select,
+  summary {
+    cursor: pointer;
+  }
 }
