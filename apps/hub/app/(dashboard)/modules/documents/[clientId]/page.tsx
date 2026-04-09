@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getDocuments, DocumentsPageClient } from '@monprojetpro/module-documents'
 import { SyncToZipButton } from '@monprojetpro/module-documents'
-import { ChevronLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -51,14 +51,13 @@ export default async function ClientDocumentsPage({ params }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Breadcrumb retour vers la fiche client */}
       <div className="flex items-center justify-between px-4 pt-4">
         <Link
           href={`/modules/crm/clients/${clientId}?tab=documents`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ChevronLeft className="h-4 w-4" />
-          Retour à {cl.name}
+          <ArrowLeft className="h-4 w-4" />
+          {cl.name}
         </Link>
         <SyncToZipButton clientId={clientId} documentCount={sharedDocumentCount} />
       </div>

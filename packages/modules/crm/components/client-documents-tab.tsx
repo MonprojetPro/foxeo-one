@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getDocuments, useShareDocument } from '@monprojetpro/module-documents'
+import { getDocuments, useShareDocument, DocumentsPageClient, getOperatorId } from '@monprojetpro/module-documents'
 import { showSuccess, showError } from '@monprojetpro/ui'
-import { ExternalLink, FileText, Lock, Eye } from 'lucide-react'
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@monprojetpro/ui'
+import { FileText, Lock, Eye, FolderOpen } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 
 interface ClientDocumentsTabProps {
@@ -13,6 +15,66 @@ interface ClientDocumentsTabProps {
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
+
+// ---- Dialog Gestion des documents ----
+
+function DocumentsManagementDialog({ clientId }: { clientId: string }) {
+  const [open, setOpen] = useState(false)
+  const [operatorId, setOperatorId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleOpen = async () => {
+    setOpen(true)
+    if (!operatorId) {
+      setIsLoading(true)
+      const result = await getOperatorId()
+      if (result.data) setOperatorId(result.data)
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        className="gap-1.5"
+        onClick={handleOpen}
+        data-testid="open-documents-management"
+      >
+        <FolderOpen className="h-3.5 w-3.5" />
+        Gestion des documents
+      </Button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-[92vw] w-[92vw] h-[90vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-6 py-4 border-b shrink-0">
+            <DialogTitle>Gestion des documents</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto min-h-0">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : operatorId ? (
+              <DocumentsPageClient
+                clientId={clientId}
+                operatorId={operatorId}
+                uploadedBy="operator"
+                initialDocuments={[]}
+                showVisibility
+                showBatchActions
+                isOperator
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+// ---- Composant principal ----
 
 export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
   const { share, unshare, isSharing, isUnsharing } = useShareDocument(clientId)
@@ -29,17 +91,9 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
 
   return (
     <div className="mt-4 space-y-3">
-      {/* Lien vers le module complet */}
+      {/* Bouton Gestion des documents */}
       <div className="flex justify-end">
-        <a
-          href={`/modules/documents/${clientId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-        >
-          <ExternalLink className="h-3 w-3" />
-          Ouvrir dans le module Documents
-        </a>
+        <DocumentsManagementDialog clientId={clientId} />
       </div>
 
       {isPending ? (
@@ -53,17 +107,18 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
         </div>
       ) : error ? (
         <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
-          Impossible de charger les documents.{' '}
-          <a href={`/modules/documents/${clientId}`} className="underline">
-            Ouvrir dans le module Documents
-          </a>
+          Impossible de charger les documents.
         </div>
       ) : !documents || documents.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground text-sm">
           Aucun document pour ce client.{' '}
-          <a href={`/modules/documents/${clientId}`} className="text-primary hover:underline">
+          <button
+            type="button"
+            className="text-primary hover:underline"
+            onClick={() => document.querySelector<HTMLButtonElement>('[data-testid="open-documents-management"]')?.click()}
+          >
             Importer un document →
-          </a>
+          </button>
         </div>
       ) : (
         <div className="divide-y rounded-lg border overflow-hidden">

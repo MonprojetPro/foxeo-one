@@ -49,12 +49,14 @@ vi.mock('@monprojetpro/module-documents', () => ({
     ],
     error: null,
   }),
+  getOperatorId: vi.fn().mockResolvedValue({ data: 'op-1', error: null }),
   useShareDocument: vi.fn().mockReturnValue({
     share: vi.fn(),
     unshare: vi.fn(),
     isSharing: false,
     isUnsharing: false,
   }),
+  DocumentsPageClient: vi.fn(() => null),
 }))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
@@ -76,6 +78,12 @@ function renderWithQueryClient(ui: React.ReactElement) {
 }
 
 describe('ClientDocumentsTab', () => {
+  it('affiche le bouton Gestion des documents', () => {
+    renderWithQueryClient(<ClientDocumentsTab clientId="client-1" />)
+
+    expect(screen.getByText('Gestion des documents')).toBeInTheDocument()
+  })
+
   it('affiche la liste des documents', async () => {
     renderWithQueryClient(<ClientDocumentsTab clientId="client-1" />)
 
@@ -93,12 +101,6 @@ describe('ClientDocumentsTab', () => {
     renderWithQueryClient(<ClientDocumentsTab clientId="client-1" />)
 
     expect(await screen.findByText('Partagé')).toBeInTheDocument()
-  })
-
-  it('affiche le lien vers le module Documents', async () => {
-    renderWithQueryClient(<ClientDocumentsTab clientId="client-1" />)
-
-    expect(await screen.findByText('Ouvrir dans le module Documents')).toBeInTheDocument()
   })
 
   it('affiche l\'état vide quand aucun document', async () => {
