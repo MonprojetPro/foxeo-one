@@ -47,7 +47,7 @@ function DocumentsManagementDialog({ clientId }: { clientId: string }) {
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-[92vw] w-[92vw] h-[90vh] flex flex-col p-0 gap-0">
+        <DialogContent className="left-[16rem] top-0 right-0 bottom-0 h-screen w-auto max-w-none translate-x-0 translate-y-0 rounded-none p-0 gap-0 flex flex-col border-l border-t-0 border-r-0 border-b-0">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle>Gestion des documents</DialogTitle>
           </DialogHeader>
