@@ -189,6 +189,7 @@ export function DocumentsPageClient({
                     viewerBaseHref={viewerBaseHref}
                     searchQuery={searchQuery}
                     isOperator={isOperator}
+                    folders={folders}
                   />
                 </section>
               )}
@@ -207,6 +208,7 @@ export function DocumentsPageClient({
                     viewerBaseHref={viewerBaseHref}
                     searchQuery={searchQuery}
                     isOperator={isOperator}
+                    folders={folders}
                   />
                 </section>
               )}
@@ -225,6 +227,7 @@ export function DocumentsPageClient({
                     viewerBaseHref={viewerBaseHref}
                     searchQuery={searchQuery}
                     isOperator={isOperator}
+                    folders={folders}
                   />
                 </section>
               )}
@@ -240,6 +243,7 @@ export function DocumentsPageClient({
               viewerBaseHref={viewerBaseHref}
               searchQuery={searchQuery}
               isOperator={isOperator}
+              folders={folders}
             />
           )}
         </div>
