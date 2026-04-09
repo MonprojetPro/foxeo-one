@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Input, Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@monprojetpro/ui'
 import { showSuccess, showError } from '@monprojetpro/ui'
-import { Search, Eye, EyeOff, Share2, Download, Upload, FileIcon } from 'lucide-react'
+import { Search, Eye, EyeOff, Share2, Download, Upload, FileIcon, Folder, ChevronDown } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import { getAllDocuments } from '../actions/get-all-documents'
 import { getDocumentUrl } from '../actions/get-document-url'
@@ -400,6 +400,7 @@ export function DocumentsHubPage({ initialDocuments, initialClients, operatorId 
   const [visibilityFilter, setVisibilityFilter] = useState('')
   const [previewDoc, setPreviewDoc] = useState<DocumentWithClient | null>(null)
   const [importOpen, setImportOpen] = useState(false)
+  const [collapsedClients, setCollapsedClients] = useState<Set<string>>(new Set())
 
   const { data: documents = initialDocuments, refetch } = useQuery({
     queryKey: ['all-documents'],
@@ -423,6 +424,25 @@ export function DocumentsHubPage({ initialDocuments, initialClients, operatorId 
       return true
     })
   }, [documents, search, clientFilter, typeFilter, visibilityFilter])
+
+  const groupedByClient = useMemo(() => {
+    const map = new Map<string, { clientId: string; clientName: string; docs: DocumentWithClient[] }>()
+    for (const doc of filtered) {
+      if (!map.has(doc.clientId)) {
+        map.set(doc.clientId, { clientId: doc.clientId, clientName: doc.clientName, docs: [] })
+      }
+      map.get(doc.clientId)!.docs.push(doc)
+    }
+    return [...map.values()].sort((a, b) => a.clientName.localeCompare(b.clientName))
+  }, [filtered])
+
+  const toggleClient = (clientId: string) => {
+    setCollapsedClients((prev) => {
+      const next = new Set(prev)
+      next.has(clientId) ? next.delete(clientId) : next.add(clientId)
+      return next
+    })
+  }
 
   function handleDownload(doc: DocumentWithClient) {
     triggerDownload(`/api/documents/download/${doc.id}`)
@@ -497,7 +517,7 @@ export function DocumentsHubPage({ initialDocuments, initialClients, operatorId 
           )}
         </div>
 
-        {/* Table */}
+        {/* Vue groupée par client */}
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
             <p className="text-sm">Aucun document trouvé</p>
@@ -506,81 +526,101 @@ export function DocumentsHubPage({ initialDocuments, initialClients, operatorId 
             )}
           </div>
         ) : (
-          <div className="rounded-lg border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/40">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nom</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Client</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Visibilité</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {filtered.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <FileTypeBadge fileType={doc.fileType} />
-                        <span className="font-medium truncate max-w-[220px]" title={doc.name}>
-                          {doc.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-muted-foreground">{doc.clientName}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {doc.tags.length > 0
-                        ? <TypeBadge tag={doc.tags[0]} />
-                        : <span className="text-muted-foreground/50 text-xs">—</span>
-                      }
-                    </td>
-                    <td className="px-4 py-3">
-                      <VisibilityBadge visibility={doc.visibility} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-muted-foreground text-xs">{formatDate(doc.createdAt)}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <VisibilityToggleButton doc={doc} />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                          title="Prévisualiser"
-                          onClick={() => setPreviewDoc(doc)}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                          title="Télécharger"
-                          onClick={() => handleDownload(doc)}
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-muted-foreground hover:text-foreground px-2"
-                          asChild
-                        >
-                          <a href={`/modules/documents/${doc.clientId}`}>
-                            Ouvrir
-                          </a>
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex flex-col gap-3">
+            {groupedByClient.map(({ clientId, clientName, docs }) => {
+              const isCollapsed = collapsedClients.has(clientId)
+              return (
+                <div key={clientId} className="rounded-lg border overflow-hidden">
+                  {/* En-tête dossier client */}
+                  <button
+                    type="button"
+                    onClick={() => toggleClient(clientId)}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                  >
+                    <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform duration-150', isCollapsed && '-rotate-90')} />
+                    <Folder className="h-4 w-4 text-primary shrink-0" />
+                    <span className="font-medium">{clientName}</span>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {docs.length} document{docs.length > 1 ? 's' : ''}
+                    </span>
+                  </button>
+
+                  {/* Liste des documents */}
+                  {!isCollapsed && (
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/20">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nom</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Visibilité</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {docs.map((doc) => (
+                          <tr key={doc.id} className="hover:bg-muted/20 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <FileTypeBadge fileType={doc.fileType} />
+                                <span className="font-medium truncate max-w-[260px]" title={doc.name}>
+                                  {doc.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              {doc.tags.length > 0
+                                ? <TypeBadge tag={doc.tags[0]} />
+                                : <span className="text-muted-foreground/50 text-xs">—</span>
+                              }
+                            </td>
+                            <td className="px-4 py-3">
+                              <VisibilityBadge visibility={doc.visibility} />
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-muted-foreground text-xs">{formatDate(doc.createdAt)}</span>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-end gap-1">
+                                <VisibilityToggleButton doc={doc} />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  title="Prévisualiser"
+                                  onClick={() => setPreviewDoc(doc)}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  title="Télécharger"
+                                  onClick={() => handleDownload(doc)}
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-muted-foreground hover:text-foreground px-2"
+                                  asChild
+                                >
+                                  <a href={`/modules/documents/${doc.clientId}`}>
+                                    Ouvrir
+                                  </a>
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
