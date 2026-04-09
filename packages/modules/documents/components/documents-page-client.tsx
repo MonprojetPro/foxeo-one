@@ -27,6 +27,8 @@ interface DocumentsPageClientProps {
   graduatedAt?: string
   /** True si le client a un historique Lab (graduation_source='lab'). */
   hasLabBackground?: boolean
+  /** Nom du client — affiche "Documents — [nom]" dans le titre si fourni */
+  clientName?: string
 }
 
 export function DocumentsPageClient({
@@ -40,6 +42,7 @@ export function DocumentsPageClient({
   isOperator = false,
   graduatedAt,
   hasLabBackground = false,
+  clientName,
 }: DocumentsPageClientProps) {
   const {
     documents,
@@ -117,7 +120,9 @@ export function DocumentsPageClient({
   return (
     <div className="flex flex-col gap-6 p-4" data-testid="documents-page">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Documents</h1>
+        <h1 className="text-2xl font-semibold">
+          {clientName ? `Documents — ${clientName}` : 'Documents'}
+        </h1>
       </div>
 
       <DocumentUpload

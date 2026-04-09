@@ -33,6 +33,8 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
       <div className="flex justify-end">
         <a
           href={`/modules/documents/${clientId}`}
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
         >
           <ExternalLink className="h-3 w-3" />

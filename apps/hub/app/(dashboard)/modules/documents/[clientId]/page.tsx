@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getDocuments, DocumentsPageClient } from '@foxeo/module-documents'
-import { SyncToZipButton } from '@foxeo/module-documents'
+import Link from 'next/link'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getDocuments, DocumentsPageClient } from '@monprojetpro/module-documents'
+import { SyncToZipButton } from '@monprojetpro/module-documents'
+import { ChevronLeft } from 'lucide-react'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -28,15 +30,19 @@ export default async function ClientDocumentsPage({ params }: Props) {
 
   if (!operator) notFound()
 
+  const op = operator as { id: string }
+
   // Verify client belongs to this operator
   const { data: client } = await supabase
     .from('clients')
-    .select('id')
+    .select('id, name')
     .eq('id', clientId)
-    .eq('operator_id', operator.id)
+    .eq('operator_id', op.id)
     .single()
 
   if (!client) notFound()
+
+  const cl = client as { id: string; name: string }
 
   // Load documents
   const { data: documents } = await getDocuments({ clientId })
@@ -45,18 +51,27 @@ export default async function ClientDocumentsPage({ params }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end px-4 pt-4">
+      {/* Breadcrumb retour vers la fiche client */}
+      <div className="flex items-center justify-between px-4 pt-4">
+        <Link
+          href={`/modules/crm/clients/${clientId}?tab=documents`}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Retour à {cl.name}
+        </Link>
         <SyncToZipButton clientId={clientId} documentCount={sharedDocumentCount} />
       </div>
       <DocumentsPageClient
         clientId={clientId}
-        operatorId={operator.id}
+        operatorId={op.id}
         uploadedBy="operator"
         initialDocuments={documents ?? []}
         showVisibility
         showBatchActions
         viewerBaseHref={`/modules/documents/${clientId}`}
         isOperator={true}
+        clientName={cl.name}
       />
     </div>
   )
