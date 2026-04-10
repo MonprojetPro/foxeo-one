@@ -47,6 +47,7 @@ function TabPill({
   isActive,
   disabled,
   onClick,
+  alwaysFilled,
 }: {
   label: string
   Icon: LucideIcon
@@ -54,9 +55,10 @@ function TabPill({
   isActive?: boolean
   disabled?: boolean
   onClick: () => void
+  alwaysFilled?: boolean
 }) {
   const [hovered, setHovered] = useState(false)
-  const filled = isActive || (hovered && !disabled)
+  const filled = alwaysFilled || isActive || (hovered && !disabled)
 
   return (
     <div className="relative flex flex-col items-center flex-1" style={{ paddingBottom: 34 }}>
@@ -154,67 +156,48 @@ export function ClientTabs({
   const isActive = client.status === 'active'
   const isSuspended = client.status === 'suspended'
 
-  // ── All 16 icons ────────────────────────────────────────────────────────────
+  // ── Ordered icon bar (fixed position + palette arc-en-ciel sans doublons adjacents) ──
 
   type IconItem =
-    | { type: 'tab'; value: string; label: string; Icon: LucideIcon; color: string }
-    | { type: 'action'; value: string; label: string; Icon: LucideIcon; color: string; onClick: () => void; disabled?: boolean }
+    | { type: 'tab';    value: string; label: string; Icon: LucideIcon; color: string; alwaysFilled?: boolean }
+    | { type: 'action'; value: string; label: string; Icon: LucideIcon; color: string; onClick: () => void; disabled?: boolean; alwaysFilled?: boolean }
 
-  const actionItems: IconItem[] = [
-    {
-      type: 'action', value: 'chat', label: 'Chat',
-      Icon: MessageCircle, color: '#38bdf8',
-      onClick: () => router.push(`/modules/chat/${client.id}`),
-    },
-    {
-      type: 'action', value: 'cursor', label: 'Cursor',
-      Icon: Code2, color: '#818cf8',
-      onClick: handleOpenCursor,
-    },
-    {
-      type: 'action', value: 'suspendre', label: 'Suspendre',
-      Icon: Pause, color: '#fb923c',
-      onClick: () => setSuspendOpen(true),
-      disabled: !isActive,
-    },
-    {
-      type: 'action', value: 'cloturer', label: 'Clôturer',
-      Icon: Lock, color: '#f87171',
-      onClick: () => setCloseOpen(true),
-      disabled: !isActive && !isSuspended,
-    },
+  const extraTabValues = new Set(extraTabs.map((t) => t.value))
+
+  const allItems: IconItem[] = [
+    // 1 — Infos         teal
+    { type: 'tab',    value: 'informations',  label: 'Infos',       Icon: User,          color: '#3ecfa0' },
+    // 2 — Cursor        violet
+    { type: 'action', value: 'cursor',        label: 'Cursor',      Icon: Code2,         color: '#818cf8', onClick: handleOpenCursor },
+    // 3 — Chat          sky
+    { type: 'action', value: 'chat',          label: 'Chat',        Icon: MessageCircle, color: '#38bdf8', onClick: () => router.push(`/modules/chat/${client.id}`) },
+    // 4 — Emails        amber
+    ...(extraTabValues.has('emails')         ? [{ type: 'tab' as const, value: 'emails',        label: 'Emails',      Icon: Mail,          color: '#f59e0b' }] : []),
+    // 5 — Échanges      lavender
+    { type: 'tab',    value: 'echanges',      label: 'Échanges',    Icon: MessageSquare, color: '#a78bfa' },
+    // 6 — Documents     emerald
+    { type: 'tab',    value: 'documents',     label: 'Documents',   Icon: FolderOpen,    color: '#34d399' },
+    // 7 — Lab           cyan
+    ...(extraTabValues.has('lab-billing')    ? [{ type: 'tab' as const, value: 'lab-billing',   label: 'Lab',         Icon: FlaskConical,  color: '#22d3ee' }] : []),
+    // 8 — Soumissions   orange
+    ...(extraTabValues.has('submissions')    ? [{ type: 'tab' as const, value: 'submissions',   label: 'Soumissions', Icon: ClipboardList, color: '#fb923c' }] : []),
+    // 9 — One           blue
+    { type: 'tab',    value: 'modules',       label: 'One',         Icon: Zap,           color: '#60a5fa' },
+    // 10 — Historique   pink
+    { type: 'tab',    value: 'historique',    label: 'Historique',  Icon: Clock,         color: '#ec4899' },
+    // 11 — Branding     amber (≠ pink avant, ≠ teal après)
+    ...(extraTabValues.has('branding')       ? [{ type: 'tab' as const, value: 'branding',      label: 'Branding',    Icon: Palette,       color: '#f59e0b' }] : []),
+    // 12 — Support      teal (≠ amber avant, ≠ violet après)
+    ...(extraTabValues.has('support')        ? [{ type: 'tab' as const, value: 'support',        label: 'Support',     Icon: Headphones,    color: '#3ecfa0' }] : []),
+    // 13 — Élio         violet (≠ teal avant, ≠ slate après)
+    ...(extraTabValues.has('elio-config')    ? [{ type: 'tab' as const, value: 'elio-config',    label: 'Élio',        Icon: Bot,           color: '#818cf8' }] : []),
+    // 14 — Paramètres   slate  — toujours coloré
+    ...(extraTabValues.has('administration') ? [{ type: 'tab' as const, value: 'administration', label: 'Paramètres',  Icon: Settings,      color: '#94a3b8', alwaysFilled: true }] : []),
+    // 15 — Suspendre    orange — toujours coloré
+    { type: 'action', value: 'suspendre',    label: 'Suspendre',   Icon: Pause,         color: '#fb923c', onClick: () => setSuspendOpen(true),  disabled: !isActive,                  alwaysFilled: true },
+    // 16 — Clôturer     red    — toujours coloré
+    { type: 'action', value: 'cloturer',     label: 'Clôturer',    Icon: Lock,          color: '#f87171', onClick: () => setCloseOpen(true),    disabled: !isActive && !isSuspended,  alwaysFilled: true },
   ]
-
-  const defaultTabItems: IconItem[] = [
-    { type: 'tab', value: 'informations', label: 'Infos',      Icon: User,          color: '#3ecfa0' },
-    { type: 'tab', value: 'historique',   label: 'Historique', Icon: Clock,         color: '#3ecfa0' },
-    { type: 'tab', value: 'documents',    label: 'Documents',  Icon: FolderOpen,    color: '#3ecfa0' },
-    { type: 'tab', value: 'echanges',     label: 'Échanges',   Icon: MessageSquare, color: '#3ecfa0' },
-    { type: 'tab', value: 'modules',      label: 'One',        Icon: Zap,           color: '#3ecfa0' },
-  ]
-
-  const fallbackIcons: Record<string, { Icon: LucideIcon; color: string }> = {
-    'emails':         { Icon: Mail,          color: '#60a5fa' },
-    'support':        { Icon: Headphones,    color: '#a78bfa' },
-    'submissions':    { Icon: ClipboardList, color: '#34d399' },
-    'elio-config':    { Icon: Bot,           color: '#f59e0b' },
-    'branding':       { Icon: Palette,       color: '#ec4899' },
-    'lab-billing':    { Icon: FlaskConical,  color: '#22d3ee' },
-    'administration': { Icon: Settings,      color: '#94a3b8' },
-  }
-
-  const extraTabItems: IconItem[] = extraTabs.map((tab) => {
-    const fb = fallbackIcons[tab.value]
-    return {
-      type: 'tab' as const,
-      value: tab.value,
-      label: tab.label,
-      Icon: tab.icon ?? fb?.Icon ?? Settings,
-      color: tab.color ?? fb?.color ?? '#94a3b8',
-    }
-  })
-
-  const allItems: IconItem[] = [...actionItems, ...defaultTabItems, ...extraTabItems]
 
   return (
     <div className="flex flex-col gap-4">
@@ -229,6 +212,7 @@ export function ClientTabs({
               color={item.color}
               isActive={item.type === 'tab' && activeTab === item.value}
               disabled={item.type === 'action' ? item.disabled : false}
+              alwaysFilled={item.alwaysFilled}
               onClick={
                 item.type === 'tab'
                   ? () => handleTabChange(item.value)
