@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import * as fs from 'fs'
 import * as path from 'path'
 import type { ModuleDoc } from './documentation-accordion'
@@ -17,7 +17,7 @@ const MODULE_NAMES: Record<string, string> = {
   elio: 'Élio — Assistant IA',
   notifications: 'Notifications',
   support: 'Support',
-  facturation: 'Facturation',
+  facturation: 'Comptabilité',
   'validation-hub': 'Validation Hub',
   crm: 'CRM',
   admin: 'Administration',

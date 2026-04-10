@@ -96,7 +96,7 @@ export function BillingDashboard() {
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold">Facturation</h1>
+        <h1 className="text-2xl font-semibold">Comptabilité</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Gestion des devis, factures et abonnements via Pennylane
         </p>

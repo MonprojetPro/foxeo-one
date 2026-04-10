@@ -2,67 +2,62 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Badge } from '@foxeo/ui'
-import { cn } from '@foxeo/utils'
-import type { ModuleManifest } from '@foxeo/types'
-import * as LucideIcons from 'lucide-react'
-import { useValidationBadge } from '@foxeo/modules-validation-hub'
+import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator } from 'lucide-react'
+import { Badge } from '@monprojetpro/ui'
+import { cn } from '@monprojetpro/utils'
+import { useValidationBadge } from '@monprojetpro/modules-validation-hub'
+import { ElioQueryBox } from './elio-query-box'
 
-type HubSidebarClientProps = {
-  modules: ModuleManifest[]
-  operatorId: string
-}
+const navItems = [
+  { icon: Home,          label: 'Accueil',       href: '/' },
+  { icon: Users,         label: 'Clients',        href: '/modules/crm' },
+  { icon: CheckCircle,   label: 'Validation Hub', href: '/modules/validation-hub' },
+  { icon: Calendar,      label: 'Agenda',         href: '/modules/agenda' },
+  { icon: MessageSquare, label: 'Chat',            href: '/modules/chat' },
+  { icon: FolderOpen,    label: 'Documents',      href: '/modules/documents' },
+  { icon: Calculator,    label: 'Comptabilité',   href: '/modules/facturation' },
+]
 
-export function HubSidebarClient({ modules, operatorId }: HubSidebarClientProps) {
+export function HubSidebarClient({ operatorId, userId }: { operatorId: string; userId: string }) {
   const pathname = usePathname()
   const { pendingCount } = useValidationBadge(operatorId)
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-sidebar-border">
-        <h2 className="text-lg font-semibold text-sidebar-foreground">Foxeo Hub</h2>
-      </div>
+    <aside className="w-64 shrink-0 border-r border-sidebar-border bg-sidebar flex flex-col">
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        {navItems.map((item) => {
+          const isActive = item.href === '/'
+            ? pathname === '/'
+            : pathname?.startsWith(item.href)
+          const badge = item.href === '/modules/validation-hub' ? pendingCount : undefined
 
-      <nav className="flex-1 p-2 overflow-y-auto">
-        <ul className="space-y-1">
-          {modules.map((module) => {
-            const isActive = pathname?.startsWith(`/modules/${module.id}`)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const IconComponent = (LucideIcons as any)[module.navigation.icon] || LucideIcons.Box
-            const isValidationHub = module.id === 'validation-hub'
-
-            return (
-              <li key={module.id}>
-                <Link
-                  href={`/modules/${module.id}`}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                    'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                    isActive
-                      ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                      : 'text-sidebar-foreground'
-                  )}
-                >
-                  <IconComponent className="h-5 w-5 shrink-0" />
-                  <span className="flex-1">{module.navigation.label}</span>
-                  {/* AC4: Badge rouge pour validation-hub */}
-                  {isValidationHub && pendingCount > 0 && (
-                    <Badge variant="destructive" className="ml-auto text-xs px-1.5 py-0.5">
-                      {pendingCount}
-                    </Badge>
-                  )}
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors font-medium',
+                isActive
+                  ? 'bg-primary/15 text-primary'
+                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+              )}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              <span className="flex-1">{item.label}</span>
+              {badge !== undefined && badge > 0 && (
+                <Badge className="text-[0.6rem] px-1.5 py-0 h-4 min-w-[1.25rem] flex items-center justify-center">
+                  {badge}
+                </Badge>
+              )}
+            </Link>
+          )
+        })}
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-muted-foreground">
-          {modules.length} module{modules.length > 1 ? 's' : ''} actif{modules.length > 1 ? 's' : ''}
-        </p>
+      {/* Élio Hub — widget bas de sidebar */}
+      <div className="border-t border-sidebar-border">
+        <ElioQueryBox userId={userId} />
       </div>
-    </div>
+    </aside>
   )
 }

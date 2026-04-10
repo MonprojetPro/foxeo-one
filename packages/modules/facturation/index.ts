@@ -1,4 +1,4 @@
-// Facturation Module — Gestion devis, factures, abonnements via Pennylane
+// Module Comptabilité (facturation) — Gestion devis, factures, abonnements via Pennylane
 export { manifest } from './manifest'
 
 // Components (Story 11.3)

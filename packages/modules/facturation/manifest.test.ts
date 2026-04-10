@@ -20,4 +20,17 @@ describe('facturation manifest — contract test', () => {
     expect(manifest.targets).toContain('client-one')
     expect(manifest.targets).not.toContain('client-lab')
   })
+
+  // Story 13.1 — Renommage "Factures" → "Comptabilité"
+  it('name is "Comptabilité" (Story 13.1)', () => {
+    expect(manifest.name).toBe('Comptabilité')
+  })
+
+  it('navigation.label is "Comptabilité" (Story 13.1)', () => {
+    expect(manifest.navigation.label).toBe('Comptabilité')
+  })
+
+  it('route stays /modules/facturation (unchanged by renaming)', () => {
+    expect(manifest.routes[0].path).toBe('/modules/facturation')
+  })
 })

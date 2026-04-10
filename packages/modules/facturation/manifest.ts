@@ -1,14 +1,14 @@
-import type { ModuleManifest } from '@foxeo/types'
+import type { ModuleManifest } from '@monprojetpro/types'
 
 export const manifest: ModuleManifest = {
   id: 'facturation',
-  name: 'Facturation',
+  name: 'Comptabilité',
   description: 'Gestion des devis, factures, abonnements et paiements via Pennylane',
   version: '1.0.0',
   targets: ['hub', 'client-one'],
   navigation: {
-    label: 'Facturation',
-    icon: 'receipt',
+    label: 'Comptabilité',
+    icon: 'calculator',
     position: 60
   },
   routes: [

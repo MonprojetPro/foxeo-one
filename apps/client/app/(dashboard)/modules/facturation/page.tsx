@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { InvoicesList, BillingSummary } from '@foxeo/modules-facturation'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { InvoicesList, BillingSummary } from '@monprojetpro/modules-facturation'
 
-// ── Page "Mes factures" — Vue client One (lecture seule via RLS)
-// RLS policy billing_sync_select_owner garantit que le client ne voit que ses factures
+// ── Page "Comptabilité" — Vue client One (lecture seule via RLS)
+// RLS policy billing_sync_select_owner garantit que le client ne voit que ses données
 
 export default async function ClientFacturationPage() {
   const supabase = await createServerSupabaseClient()
@@ -23,9 +23,9 @@ export default async function ClientFacturationPage() {
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold">Mes factures</h1>
+        <h1 className="text-2xl font-semibold">Comptabilité</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Consultez vos factures et l&apos;état de vos paiements
+          Consultez vos devis, factures et l&apos;état de vos paiements
         </p>
       </div>
 

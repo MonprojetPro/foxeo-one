@@ -1,5 +1,5 @@
 # generated: 2026-02-11
-# project: foxeo-dash
+# project: monprojetpro-dash
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
 
@@ -33,7 +33,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-02-11
-project: foxeo-dash
+project: monprojetpro-dash
 tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 
@@ -104,7 +104,7 @@ development_status:
   # Epic 6: Parcours Lab — Accompagnement Creation (6 stories)
   epic-6: done
   6-1-module-parcours-lab-migration-structure-vue-parcours-progression: done
-  6-2-consultation-des-briefs-par-etape-teasing-foxeo-one: done
+  6-2-consultation-des-briefs-par-etape-teasing-monprojetpro-one: done
   6-3-soumission-de-brief-pour-validation-notifications: done
   6-4-elio-lab-conversation-guidee-adaptation-au-profil-communication: done
   6-5-elio-lab-generation-de-briefs-soumission-automatique-au-validation-hub: done
@@ -177,3 +177,12 @@ development_status:
   12-7-monitoring-instances-one-usage-seuils-alertes: done
   12-8-documentation-obligatoire-par-module-verification: done
   epic-12-retrospective: optional
+
+  # Epic 13: Onglet "Comptabilité" — Google Drive, Relances Élio, Notifications Comptable (5 stories)
+  epic-13: in-progress
+  13-1-renommage-factures-vers-comptabilite-hub-lab-one: done
+  13-2-vue-comptabilite-client-lab-one-devis-factures-abonnement: ready-for-dev
+  13-3-justificatifs-google-drive-upload-depuis-hub: ready-for-dev
+  13-4-relances-impayes-intelligentes-elio-mikl-valide-multicanal: ready-for-dev
+  13-5-shell-notifications-comptable-infrastructure-gmail: ready-for-dev
+  epic-13-retrospective: optional

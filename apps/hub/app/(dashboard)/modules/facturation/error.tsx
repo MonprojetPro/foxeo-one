@@ -1,6 +1,6 @@
 'use client'
 
-import { ErrorDisplay } from '@foxeo/ui'
+import { ErrorDisplay } from '@monprojetpro/ui'
 
 export default function FacturationError({
   error,
@@ -11,7 +11,7 @@ export default function FacturationError({
 }) {
   return (
     <ErrorDisplay
-      title="Erreur du module Facturation"
+      title="Erreur du module Comptabilité"
       message={error.message}
       onRetry={reset}
     />
