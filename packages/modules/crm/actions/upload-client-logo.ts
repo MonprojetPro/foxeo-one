@@ -1,11 +1,11 @@
 'use server'
 
 import { z } from 'zod'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse, type ActionResponse } from '@monprojetpro/types'
 
 const ALLOWED_TYPES = ['image/png', 'image/svg+xml'] as const
-const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2 Mo
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 Mo
 
 const UploadLogoSchema = z.object({
   clientId: z.string().uuid('ID client invalide'),
@@ -31,7 +31,7 @@ export async function uploadClientLogo(
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    return errorResponse('Le fichier dépasse la taille maximale de 2 Mo', 'FILE_TOO_LARGE')
+    return errorResponse('Le fichier dépasse la taille maximale de 10 Mo', 'FILE_TOO_LARGE')
   }
 
   try {

@@ -24,7 +24,7 @@ const mockFrom = vi.fn((table: string) => {
   return { select: vi.fn() }
 })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
     from: mockFrom,
@@ -78,9 +78,9 @@ describe('uploadClientLogo', () => {
     expect(result.error?.code).toBe('INVALID_FILE_TYPE')
   })
 
-  it('returns FILE_TOO_LARGE when file exceeds 2 Mo', async () => {
+  it('returns FILE_TOO_LARGE when file exceeds 10 Mo', async () => {
     const { uploadClientLogo } = await import('./upload-client-logo')
-    const bigFile = makePngFile(3 * 1024 * 1024)
+    const bigFile = makePngFile(11 * 1024 * 1024)
     const result = await uploadClientLogo('a0000000-0000-0000-0000-000000000001', makeFormData(bigFile))
     expect(result.error?.code).toBe('FILE_TOO_LARGE')
   })
