@@ -1,6 +1,6 @@
 'use client'
 
-import { ClientDetailContent, type ExtraTab, ClientBrandingTab, CommunicationProfileForm, useClientCommunicationProfile } from '@monprojetpro/modules-crm'
+import { ClientDetailContent, type ExtraTab, ClientBrandingTab, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions } from '@monprojetpro/modules-crm'
 import { ClientSupportTab } from '@monprojetpro/modules-support'
 import { SubmissionsList } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
@@ -88,7 +88,13 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         value: 'administration',
         label: 'Administration',
         content: (
-          <div className="space-y-6">
+          <div className="space-y-6 p-4">
+            <div className="flex flex-col gap-2">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Cycle de vie</h3>
+              <div className="flex flex-wrap gap-2">
+                <ClientLifecycleActions client={client} />
+              </div>
+            </div>
             <ClientExportButton clientId={client.id} />
             <OperatorOverrideSection clientId={client.id} />
           </div>
