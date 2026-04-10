@@ -12,9 +12,10 @@ import type { ExtraTab } from './client-tabs'
 interface ClientDetailContentProps {
   client: Client
   extraTabs?: ExtraTab[]
+  labActive?: boolean
 }
 
-export function ClientDetailContent({ client: initialClient, extraTabs }: ClientDetailContentProps) {
+export function ClientDetailContent({ client: initialClient, extraTabs, labActive }: ClientDetailContentProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   // Use TanStack Query with initialData from Server Component
@@ -39,6 +40,7 @@ export function ClientDetailContent({ client: initialClient, extraTabs }: Client
           client={displayClient}
           onEdit={isArchived ? undefined : () => setIsEditDialogOpen(true)}
           hideLifecycleActions={isArchived}
+          labActive={labActive}
         />
         <ClientTabs
           clientId={displayClient.id}

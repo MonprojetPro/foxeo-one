@@ -4,7 +4,7 @@ import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
 import { LAB_INVOICE_TAG } from '../utils/billing-sync-logic'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 
 // ============================================================
 // sendLabInvoice — crée la facture Lab 199€ pour un client
@@ -83,7 +83,7 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
         deadline: deadlineStr,
         line_items: [
           {
-            label: 'Forfait Lab Foxeo',
+            label: 'Forfait Lab MonprojetPro',
             quantity: 1,
             currency_amount: LAB_FORFAIT_AMOUNT,
             vat_rate: 'FR_200',
@@ -109,7 +109,7 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
         pennylane_id: createdInvoice.id,
         status: 'pending',
         amount: LAB_FORFAIT_AMOUNT * 100,
-        data: { is_lab_invoice: true, label: 'Forfait Lab Foxeo', client_id: clientId },
+        data: { is_lab_invoice: true, label: 'Forfait Lab MonprojetPro', client_id: clientId },
         last_synced_at: new Date().toISOString(),
       },
       { onConflict: 'entity_type,pennylane_id' }
@@ -128,6 +128,12 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
       amount: LAB_FORFAIT_AMOUNT,
     },
   })
+
+  // Persister la date d'envoi de la facture Lab
+  await supabase
+    .from('clients')
+    .update({ lab_invoice_sent_at: new Date().toISOString() })
+    .eq('id', clientId)
 
   // Sync immédiat Pennylane
   await triggerBillingSync(clientId)

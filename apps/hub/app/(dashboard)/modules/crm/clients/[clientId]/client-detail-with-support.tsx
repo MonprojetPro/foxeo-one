@@ -1,21 +1,44 @@
 'use client'
 
-import { ClientDetailContent, type ExtraTab, ClientBrandingTab } from '@monprojetpro/modules-crm'
+import { ClientDetailContent, type ExtraTab, ClientBrandingTab, CommunicationProfileForm, useClientCommunicationProfile } from '@monprojetpro/modules-crm'
 import { ClientSupportTab } from '@monprojetpro/modules-support'
 import { SubmissionsList } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
-import { LabBillingTab } from '@monprojetpro/modules-facturation'
+import { LabBillingTab, getClientLabStatus } from '@monprojetpro/modules-facturation'
 import { ClientExportButton } from '@monprojetpro/module-admin'
 import { ClientEmailTab } from '@monprojetpro/modules-email'
 import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
 import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
 interface ClientDetailWithSupportProps {
   client: Client
 }
 
+function CommunicationProfileTabContent({ clientId }: { clientId: string }) {
+  const { data: profile, isLoading } = useClientCommunicationProfile(clientId)
+
+  if (isLoading) {
+    return <div className="h-40 rounded-xl bg-muted animate-pulse" />
+  }
+
+  return <CommunicationProfileForm clientId={clientId} initialProfile={profile} />
+}
+
 export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps) {
+  const { data: labStatus } = useQuery({
+    queryKey: ['billing', 'lab-status', client.id],
+    queryFn: async () => {
+      const result = await getClientLabStatus(client.id)
+      if (result.error) return null
+      return result.data
+    },
+    staleTime: 5 * 60 * 1_000,
+  })
+
+  const labActive = labStatus?.dashboardActivated ?? false
+
   const extraTabs: ExtraTab[] = useMemo(
     () => [
       {
@@ -42,7 +65,14 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
       {
         value: 'elio-config',
         label: 'Configuration Élio',
-        content: <ElioConfigSection clientId={client.id} />,
+        content: (
+          <ElioConfigSection
+            clientId={client.id}
+            communicationProfileSlot={
+              <CommunicationProfileTabContent clientId={client.id} />
+            }
+          />
+        ),
       },
       {
         value: 'branding',
@@ -51,7 +81,7 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
       },
       {
         value: 'lab-billing',
-        label: 'Facturation Lab',
+        label: 'Lab',
         content: <LabBillingTab clientId={client.id} clientName={client.name} />,
       },
       {
@@ -65,8 +95,8 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         ),
       },
     ],
-    [client.id, client.company, client.name]
+    [client.id, client.company, client.name, client.email]
   )
 
-  return <ClientDetailContent client={client} extraTabs={extraTabs} />
+  return <ClientDetailContent client={client} extraTabs={extraTabs} labActive={labActive} />
 }

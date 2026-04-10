@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Badge, Button } from '@foxeo/ui'
-import { MessageSquare } from 'lucide-react'
+import { Badge, Button } from '@monprojetpro/ui'
+import { MessageSquare, Code2, CalendarDays } from 'lucide-react'
 import type { Client } from '../types/crm.types'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -14,6 +14,7 @@ interface ClientHeaderProps {
   client: Client
   onEdit?: () => void
   hideLifecycleActions?: boolean
+  labActive?: boolean
 }
 
 const clientTypeLabels: Record<string, string> = {
@@ -31,56 +32,74 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function ClientHeader({ client, onEdit, hideLifecycleActions }: ClientHeaderProps) {
+export function ClientHeader({ client, onEdit, hideLifecycleActions, labActive }: ClientHeaderProps) {
+  const fullName = client.firstName ? `${client.firstName} ${client.name}` : client.name
   const creationDate = format(new Date(client.createdAt), 'd MMMM yyyy', { locale: fr })
-  const initials = getInitials(client.name)
+  const initials = getInitials(fullName)
 
   return (
-    <div className="border-b pb-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          {/* Avatar initiales */}
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/20 text-lg font-bold text-primary">
-            {initials}
-          </div>
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      {/* Barre accent cyan */}
+      <div className="h-[3px] bg-gradient-to-r from-primary via-primary/40 to-transparent" />
 
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">{client.name}</h1>
-            <p className="text-lg text-muted-foreground">{client.company}</p>
-            <div className="flex gap-2">
-              <Badge variant="outline">
-                {clientTypeLabels[client.clientType] || client.clientType}
-              </Badge>
-              <ClientStatusBadge
-                status={client.status}
-                suspendedAt={client.suspendedAt}
-                archivedAt={client.archivedAt}
-              />
-            </div>
-            <p className="text-sm text-muted-foreground">
+      {/* Identité */}
+      <div className="flex items-start gap-5 px-6 pt-5 pb-4">
+        {/* Avatar */}
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 border border-primary/30 text-xl font-bold text-primary shadow-[0_0_20px_hsl(var(--primary)/0.15)]">
+          {initials}
+        </div>
+
+        {/* Infos */}
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight leading-tight">{fullName}</h1>
+          <p className="text-sm font-mono text-primary/70 mt-0.5">{client.company}</p>
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <Badge variant="outline">{clientTypeLabels[client.clientType] ?? client.clientType}</Badge>
+            <ClientStatusBadge
+              status={client.status}
+              suspendedAt={client.suspendedAt}
+              archivedAt={client.archivedAt}
+            />
+            {labActive && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-0.5 text-xs font-medium text-green-400 border border-green-500/30">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                Lab actif
+              </span>
+            )}
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground ml-1">
+              <CalendarDays className="h-3 w-3" />
               Client depuis le {creationDate}
-            </p>
+            </span>
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/modules/chat/${client.id}`}>
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Envoyer Message
-            </Link>
+        {/* Modifier */}
+        {onEdit && (
+          <Button onClick={onEdit} variant="outline" size="sm" className="shrink-0 mt-1">
+            Modifier
           </Button>
-          <CursorButton
-            clientName={client.name}
-            companyName={client.company || undefined}
-          />
-          {!hideLifecycleActions && <ClientLifecycleActions client={client} />}
-          {onEdit && (
-            <Button onClick={onEdit} variant="outline" size="sm">
-              Modifier
-            </Button>
-          )}
-        </div>
+        )}
+      </div>
+
+      {/* Barre d'actions */}
+      <div className="flex items-center gap-2 px-6 py-3 border-t border-border bg-muted/20 flex-wrap">
+        {/* Communication */}
+        <Button asChild variant="ghost" size="sm">
+          <Link href={`/modules/chat/${client.id}`}>
+            <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
+            Chat
+          </Link>
+        </Button>
+        <CursorButton
+          clientName={client.name}
+          companyName={client.company || undefined}
+        />
+
+        {/* Séparateur */}
+        <div className="w-px self-stretch bg-border mx-1" />
+
+        {/* Cycle de vie */}
+        {!hideLifecycleActions && <ClientLifecycleActions client={client} size="sm" variant="ghost" />}
       </div>
     </div>
   )

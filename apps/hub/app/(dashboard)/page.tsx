@@ -1,9 +1,11 @@
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { MetricCard } from '../../components/dashboard/metric-card'
+import { InteractiveMetricCard } from '../../components/dashboard/interactive-metric-card'
 import { AgendaItem } from '../../components/dashboard/agenda-item'
 import { MessageItem } from '../../components/dashboard/message-item'
 import { AlertItem } from '../../components/dashboard/alert-item'
 import { DashboardCard } from '../../components/dashboard/dashboard-card'
+import { getClientsBreakdown } from '../../actions/get-clients-breakdown'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -174,8 +176,13 @@ export default async function HubHomePage() {
     .maybeSingle()
 
   const operatorId = (operator as { id: string } | null)?.id ?? ''
-  const { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, mrr, unpaidAmount } =
-    await getHubStats(operatorId)
+  const [
+    { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, mrr, unpaidAmount },
+    breakdown,
+  ] = await Promise.all([
+    getHubStats(operatorId),
+    getClientsBreakdown(operatorId),
+  ])
 
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -209,19 +216,65 @@ export default async function HubHomePage() {
           subtitle={`${labCount} Lab · ${oneCount} One`}
           accentColor="primary"
         />
-        <MetricCard title="Clients Lab" value={String(labCount)} subtitle="En incubation" />
-        <MetricCard title="Clients One" value={String(oneCount)} subtitle="En activité" />
+        <InteractiveMetricCard
+          title="Clients Lab"
+          value={String(labCount)}
+          subtitle={`${breakdown.lab.pendingPayment.length} en attente · ${breakdown.lab.active.length} actifs`}
+          sections={[
+            {
+              label: 'En attente de paiement',
+              count: breakdown.lab.pendingPayment.length,
+              items: breakdown.lab.pendingPayment,
+              emptyText: 'Aucun client en attente',
+              accentColor: 'yellow',
+            },
+            {
+              label: 'Lab actifs',
+              count: breakdown.lab.active.length,
+              items: breakdown.lab.active,
+              emptyText: 'Aucun client Lab actif',
+              accentColor: 'green',
+            },
+          ]}
+        />
+        <InteractiveMetricCard
+          title="Clients One"
+          value={String(oneCount)}
+          subtitle={`${breakdown.one.active.length} actifs`}
+          sections={[
+            {
+              label: 'Clients One actifs',
+              count: breakdown.one.active.length,
+              items: breakdown.one.active,
+              emptyText: 'Aucun client One',
+              accentColor: 'green',
+            },
+          ]}
+        />
         <MetricCard
           title="MRR"
           value={mrrDisplay}
           subtitle="Abonnements actifs"
           accentColor={mrr > 0 ? 'primary' : 'muted'}
         />
-        <MetricCard
+        <InteractiveMetricCard
           title="Impayés"
           value={unpaidDisplay}
-          subtitle="Factures en retard"
+          subtitle={`${breakdown.unpaidInvoices.length} facture${breakdown.unpaidInvoices.length > 1 ? 's' : ''} en retard`}
           accentColor={unpaidAmount > 0 ? 'destructive' : 'muted'}
+          sections={[
+            {
+              label: 'Factures impayées',
+              count: breakdown.unpaidInvoices.length,
+              items: breakdown.unpaidInvoices.map((inv) => ({
+                id: inv.clientId,
+                name: inv.clientName,
+                company: `${inv.amount.toLocaleString('fr-FR')} €`,
+              })),
+              emptyText: 'Aucune facture impayée',
+              accentColor: breakdown.unpaidInvoices.length > 0 ? 'red' : 'default',
+            },
+          ]}
         />
       </div>
 

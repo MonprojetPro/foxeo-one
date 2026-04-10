@@ -1,15 +1,18 @@
 'use server'
 
 import { assertOperator } from './assert-operator'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 
 export type ClientLabStatus = {
   labPaid: boolean
   labPaidAt: string | null
   labAmount: number
+  invoiceSent: boolean
+  invoiceSentAt: string | null
+  dashboardActivated: boolean
 }
 
-// Retourne le statut paiement Lab pour un client donné (Story 11.6)
+// Retourne le statut paiement Lab + process pour un client donné
 export async function getClientLabStatus(
   clientId: string
 ): Promise<ActionResponse<ClientLabStatus>> {
@@ -18,7 +21,7 @@ export async function getClientLabStatus(
 
   const { data, error: dbError } = await supabase
     .from('clients')
-    .select('lab_paid, lab_paid_at, lab_amount')
+    .select('lab_paid, lab_paid_at, lab_amount, lab_invoice_sent_at, client_configs(dashboard_type)')
     .eq('id', clientId)
     .single()
 
@@ -29,11 +32,18 @@ export async function getClientLabStatus(
     }
   }
 
+  const cfg = Array.isArray(data.client_configs) ? data.client_configs[0] : data.client_configs
+  const dashboardType = (cfg as { dashboard_type?: string } | null)?.dashboard_type ?? null
+  const dashboardActivated = dashboardType === 'lab' || dashboardType === 'one'
+
   return {
     data: {
       labPaid: (data.lab_paid as boolean | null) ?? false,
       labPaidAt: (data.lab_paid_at as string | null) ?? null,
       labAmount: (data.lab_amount as number | null) ?? 0,
+      invoiceSent: !!(data.lab_invoice_sent_at as string | null),
+      invoiceSentAt: (data.lab_invoice_sent_at as string | null) ?? null,
+      dashboardActivated,
     },
     error: null,
   }
