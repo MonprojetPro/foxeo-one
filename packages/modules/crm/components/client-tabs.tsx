@@ -212,7 +212,7 @@ export function ClientTabs({
               color={item.color}
               isActive={item.type === 'tab' && activeTab === item.value}
               disabled={item.type === 'action' ? item.disabled : false}
-              alwaysFilled={item.alwaysFilled}
+              alwaysFilled={item.alwaysFilled ?? ['administration', 'suspendre', 'cloturer'].includes(item.value)}
               onClick={
                 item.type === 'tab'
                   ? () => handleTabChange(item.value)
