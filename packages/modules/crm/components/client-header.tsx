@@ -1,19 +1,15 @@
 'use client'
 
-import Link from 'next/link'
 import { Badge, Button } from '@monprojetpro/ui'
-import { MessageSquare, Code2, CalendarDays } from 'lucide-react'
+import { CalendarDays } from 'lucide-react'
 import type { Client } from '../types/crm.types'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { CursorButton } from './cursor-button'
 import { ClientStatusBadge } from './client-status-badge'
-import { ClientLifecycleActions } from './client-lifecycle-actions'
 
 interface ClientHeaderProps {
   client: Client
   onEdit?: () => void
-  hideLifecycleActions?: boolean
   labActive?: boolean
 }
 
@@ -32,7 +28,7 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function ClientHeader({ client, onEdit, hideLifecycleActions, labActive }: ClientHeaderProps) {
+export function ClientHeader({ client, onEdit, labActive }: ClientHeaderProps) {
   const fullName = client.firstName ? `${client.firstName} ${client.name}` : client.name
   const creationDate = format(new Date(client.createdAt), 'd MMMM yyyy', { locale: fr })
   const initials = getInitials(fullName)
@@ -81,26 +77,6 @@ export function ClientHeader({ client, onEdit, hideLifecycleActions, labActive }
         )}
       </div>
 
-      {/* Barre d'actions */}
-      <div className="flex items-center gap-2 px-6 py-3 border-t border-border bg-muted/20 flex-wrap">
-        {/* Communication */}
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/modules/chat/${client.id}`}>
-            <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
-            Chat
-          </Link>
-        </Button>
-        <CursorButton
-          clientName={client.name}
-          companyName={client.company || undefined}
-        />
-
-        {/* Séparateur */}
-        <div className="w-px self-stretch bg-border mx-1" />
-
-        {/* Cycle de vie */}
-        {!hideLifecycleActions && <ClientLifecycleActions client={client} size="sm" variant="ghost" />}
-      </div>
     </div>
   )
 }

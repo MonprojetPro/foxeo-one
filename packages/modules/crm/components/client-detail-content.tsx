@@ -39,11 +39,10 @@ export function ClientDetailContent({ client: initialClient, extraTabs, labActiv
         <ClientHeader
           client={displayClient}
           onEdit={isArchived ? undefined : () => setIsEditDialogOpen(true)}
-          hideLifecycleActions={isArchived}
           labActive={labActive}
         />
         <ClientTabs
-          clientId={displayClient.id}
+          client={displayClient}
           onEdit={isArchived ? undefined : () => setIsEditDialogOpen(true)}
           extraTabs={extraTabs}
         />
