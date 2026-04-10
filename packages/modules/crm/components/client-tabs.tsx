@@ -1,6 +1,6 @@
 'use client'
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@foxeo/ui'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@monprojetpro/ui'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { ClientInfoTab } from './client-info-tab'
 import { ClientTimeline } from './client-timeline'
@@ -8,7 +8,7 @@ import { ClientDocumentsTab } from './client-documents-tab'
 import { ClientExchangesTab } from './client-exchanges-tab'
 import { ModuleToggleList } from './module-toggle-list'
 import { ElioDocForm } from './elio-doc-form'
-import type { ModuleManifest } from '@foxeo/types'
+import type { ModuleManifest } from '@monprojetpro/types'
 
 export interface ExtraTab {
   value: string
@@ -44,7 +44,7 @@ export function ClientTabs({ clientId, onEdit, extraTabs = [], activeModules = [
         <TabsTrigger value="historique">Historique</TabsTrigger>
         <TabsTrigger value="documents">Documents</TabsTrigger>
         <TabsTrigger value="echanges">Échanges</TabsTrigger>
-        <TabsTrigger value="modules">Modules</TabsTrigger>
+        <TabsTrigger value="modules">One</TabsTrigger>
         {extraTabs.map((tab) => (
           <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
         ))}
