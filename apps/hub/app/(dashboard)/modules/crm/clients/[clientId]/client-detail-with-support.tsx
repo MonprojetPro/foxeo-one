@@ -11,6 +11,7 @@ import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
 import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings } from 'lucide-react'
 
 interface ClientDetailWithSupportProps {
   client: Client
@@ -44,6 +45,7 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
       {
         value: 'emails',
         label: 'Emails',
+        icon: Mail, color: '#60a5fa',
         content: (
           <ClientEmailTab
             clientId={client.id}
@@ -55,16 +57,19 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
       {
         value: 'support',
         label: 'Support',
+        icon: Headphones, color: '#a78bfa',
         content: <ClientSupportTab clientId={client.id} />,
       },
       {
         value: 'submissions',
         label: 'Soumissions',
+        icon: ClipboardList, color: '#34d399',
         content: <SubmissionsList clientId={client.id} />,
       },
       {
         value: 'elio-config',
-        label: 'Configuration Élio',
+        label: 'Élio',
+        icon: Bot, color: '#f59e0b',
         content: (
           <ElioConfigSection
             clientId={client.id}
@@ -77,16 +82,19 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
       {
         value: 'branding',
         label: 'Branding',
+        icon: Palette, color: '#ec4899',
         content: <ClientBrandingTab clientId={client.id} clientCompanyName={client.company} />,
       },
       {
         value: 'lab-billing',
         label: 'Lab',
+        icon: FlaskConical, color: '#22d3ee',
         content: <LabBillingTab clientId={client.id} clientName={client.name} />,
       },
       {
         value: 'administration',
-        label: 'Administration',
+        label: 'Admin',
+        icon: Settings, color: '#94a3b8',
         content: (
           <div className="space-y-6 p-4">
             <div className="flex flex-col gap-2">
