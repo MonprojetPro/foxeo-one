@@ -173,6 +173,13 @@ Deno.serve(async (req) => {
       .eq('recipient_type', 'client')
       .order('created_at', { ascending: true })
 
+    // Fetch billing data (Epic 11)
+    const { data: billingSync } = await supabase
+      .from('billing_sync')
+      .select('entity_type, pennylane_id, status, amount, data, last_synced_at')
+      .contains('data', { client_id: clientId })
+      .order('last_synced_at', { ascending: true })
+
     // Fetch consents
     const { data: consents } = await supabase
       .from('consents')
@@ -232,7 +239,14 @@ Deno.serve(async (req) => {
         last_active_at: s.last_active_at,
         created_at: s.created_at,
       })),
-      billing: [], // Epic 11 — not yet implemented
+      billing: (billingSync ?? []).map((b: { entity_type: string; pennylane_id: string; status: string; amount: number | null; data: Record<string, unknown> | null; last_synced_at: string }) => ({
+        type: b.entity_type,
+        pennylane_id: b.pennylane_id,
+        status: b.status,
+        amount_eur: b.amount != null ? Math.round(b.amount) / 100 : null,
+        label: (b.data?.label as string | null) ?? null,
+        last_synced_at: b.last_synced_at,
+      })),
     }
 
     const jsonContent = JSON.stringify(exportData, null, 2)
@@ -368,9 +382,9 @@ interface ExportData {
 
 function generateReadableText(data: ExportData): string {
   const lines: string[] = [
-    '===================================',
-    'EXPORT DE DONNÉES PERSONNELLES FOXEO',
-    '===================================',
+    '=========================================',
+    'EXPORT DE DONNÉES PERSONNELLES MONPROJETPRO',
+    '=========================================',
     '',
     `Généré le : ${new Date(data.export_metadata.generated_at).toLocaleString('fr-FR')}`,
     `Expire le : ${new Date(data.export_metadata.expires_at).toLocaleString('fr-FR')}`,
@@ -409,9 +423,9 @@ function generateReadableText(data: ExportData): string {
       `- ${s.device_name ?? 'Appareil inconnu'} [${s.device_type ?? '?'}] — IP: ${s.ip_address ?? 'N/A'} (${new Date(s.created_at).toLocaleDateString('fr-FR')})`
     ),
     '',
-    '===================================',
-    'Foxeo — Conformité RGPD Art. 15',
-    '===================================',
+    '=========================================',
+    'MonprojetPro — Conformité RGPD Art. 15',
+    '=========================================',
   ]
 
   return lines.join('\n')
