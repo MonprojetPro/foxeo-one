@@ -4,7 +4,7 @@ import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { LineItem, PennylaneQuote, CreateQuoteOptions } from '../types/billing.types'
 
 // ============================================================
@@ -61,7 +61,7 @@ export async function createAndSendQuote(
     ? [
         ...lineItems,
         {
-          label: 'Déduction forfait Lab Foxeo',
+          label: 'Déduction forfait Lab MonprojetPro',
           description: 'Le forfait Lab (199€) est déduit du setup One, comme convenu.',
           quantity: 1,
           unitPrice: -cappedDeduction,
@@ -75,33 +75,25 @@ export async function createAndSendQuote(
   // Mapping LineItems → PennylaneLineItems
   const pennylaneLineItems = allLineItems.map(toPennylaneLineItem)
 
-  // POST /quotes
-  const quoteResult = await pennylaneClient.post<{ quote: PennylaneQuote }>('/quotes', {
-    quote: {
-      customer_id: pennylaneCustomerId,
-      deadline: deadlineStr,
-      line_items: pennylaneLineItems,
-      pdf_invoice_free_text: applyLabDeduction
-        ? `${options.publicNotes ?? ''} [LAB_DEDUCTION:19900]`.trim()
-        : (options.publicNotes ?? null),
-    },
+  const today = new Date().toISOString().split('T')[0]
+
+  // V2 API : pas de wrapper, invoice_lines au lieu de line_items, date obligatoire
+  // Les devis sont créés en status "pending" par défaut — pas besoin de finalize
+  const quoteResult = await pennylaneClient.post<PennylaneQuote>('/quotes', {
+    customer_id: parseInt(pennylaneCustomerId, 10),
+    date: today,
+    deadline: deadlineStr,
+    invoice_lines: pennylaneLineItems,
+    pdf_invoice_free_text: applyLabDeduction
+      ? `${options.publicNotes ?? ''} [LAB_DEDUCTION:19900]`.trim()
+      : (options.publicNotes ?? null),
   })
 
   if (quoteResult.error) return { data: null, error: quoteResult.error }
   if (!quoteResult.data) return { data: null, error: { message: 'No data returned', code: 'EMPTY_RESPONSE' } }
 
-  const createdQuote = quoteResult.data.quote
-
-  // Si sendNow: finaliser le devis (status → 'pending', Pennylane envoie l'email PDF)
-  if (options.sendNow) {
-    const finalizeResult = await pennylaneClient.post<{ quote: PennylaneQuote }>(
-      `/quotes/${createdQuote.id}/finalize`,
-      {}
-    )
-    if (finalizeResult.error) {
-      console.warn(`[FACTURATION:CREATE_QUOTE] Finalize failed for quote ${createdQuote.id}:`, finalizeResult.error)
-    }
-  }
+  // V2 : réponse directe (pas de { quote: ... } wrapper)
+  const createdQuote = quoteResult.data
 
   // Notification in-app pour le client
   const clientAuthUserId = client.auth_user_id as string | null

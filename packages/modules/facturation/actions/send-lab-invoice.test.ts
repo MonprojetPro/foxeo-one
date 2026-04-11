@@ -53,6 +53,10 @@ function makeSupabaseMock(opts: {
               single: vi.fn().mockResolvedValue({ data: clientData, error: clientError }),
             }),
           }),
+          // V2 : send-lab-invoice met à jour lab_invoice_sent_at après la création
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          }),
         }
       }
       // billing_sync or activity_logs
@@ -70,11 +74,10 @@ function makeSupabaseMock(opts: {
   }
 }
 
+// V2 : réponse directe (pas de wrapper { customer_invoice: ... }), id est un number
 const mockInvoiceResponse = {
-  customer_invoice: {
-    id: 'pl-inv-lab-1',
-    invoice_number: 'FAC-LAB-001',
-  },
+  id: 4807770487,
+  invoice_number: 'FAC-LAB-001',
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -132,23 +135,23 @@ describe('sendLabInvoice', () => {
     const result = await sendLabInvoice('client-1')
 
     expect(result.error).toBeNull()
-    expect(result.data).toBe('pl-inv-lab-1')
+    // String(4807770487)
+    expect(result.data).toBe('4807770487')
+    // V2 : pas de wrapper, invoice_lines, raw_currency_unit_price (string)
     expect(mockPennylane.post).toHaveBeenCalledWith(
       '/customer_invoices',
       expect.objectContaining({
-        customer_invoice: expect.objectContaining({
-          customer_id: 'pl-cust-1',
-          line_items: expect.arrayContaining([
-            expect.objectContaining({
-              label: 'Forfait Lab Foxeo',
-              quantity: 1,
-              currency_amount: 199,
-              vat_rate: 'FR_200',
-              unit: 'piece',
-            }),
-          ]),
-          pdf_invoice_free_text: '[FOXEO_LAB]',
-        }),
+        customer_id: 'pl-cust-1',
+        invoice_lines: expect.arrayContaining([
+          expect.objectContaining({
+            label: 'Forfait Lab MonprojetPro',
+            quantity: 1,
+            raw_currency_unit_price: '199.00',
+            vat_rate: 'FR_200',
+            unit: 'piece',
+          }),
+        ]),
+        pdf_invoice_free_text: '[FOXEO_LAB]',
       })
     )
   })
@@ -166,6 +169,9 @@ describe('sendLabInvoice', () => {
                 error: null,
               }),
             }),
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
           }),
         }
       }

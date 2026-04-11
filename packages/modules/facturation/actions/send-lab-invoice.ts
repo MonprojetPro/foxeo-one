@@ -73,32 +73,31 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
   deadline.setDate(deadline.getDate() + 30)
   const deadlineStr = deadline.toISOString().split('T')[0]
 
-  // POST /customer_invoices Pennylane
-  const invoiceResult = await pennylaneClient.post<{ customer_invoice: { id: string; invoice_number: string } }>(
+  // POST /customer_invoices Pennylane — V2 : pas de wrapper, invoice_lines, raw_currency_unit_price string
+  const invoiceResult = await pennylaneClient.post<{ id: number; invoice_number: string }>(
     '/customer_invoices',
     {
-      customer_invoice: {
-        customer_id: pennylaneCustomerId,
-        date,
-        deadline: deadlineStr,
-        line_items: [
-          {
-            label: 'Forfait Lab MonprojetPro',
-            quantity: 1,
-            currency_amount: LAB_FORFAIT_AMOUNT,
-            vat_rate: 'FR_200',
-            unit: 'piece',
-          },
-        ],
-        pdf_invoice_free_text: LAB_INVOICE_TAG,
-      },
+      customer_id: pennylaneCustomerId,
+      date,
+      deadline: deadlineStr,
+      invoice_lines: [
+        {
+          label: 'Forfait Lab MonprojetPro',
+          quantity: 1,
+          raw_currency_unit_price: LAB_FORFAIT_AMOUNT.toFixed(2),
+          vat_rate: 'FR_200',
+          unit: 'piece',
+        },
+      ],
+      pdf_invoice_free_text: LAB_INVOICE_TAG,
     }
   )
 
   if (invoiceResult.error) return { data: null, error: invoiceResult.error }
   if (!invoiceResult.data) return { data: null, error: { message: 'No data returned', code: 'EMPTY_RESPONSE' } }
 
-  const createdInvoice = invoiceResult.data.customer_invoice
+  // V2 : réponse directe (pas de wrapper { customer_invoice: ... }), id est un number
+  const createdInvoice = invoiceResult.data
 
   // Stocker dans billing_sync pour tracking
   await supabase
@@ -106,7 +105,7 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
     .upsert(
       {
         entity_type: 'invoice',
-        pennylane_id: createdInvoice.id,
+        pennylane_id: String(createdInvoice.id),
         status: 'pending',
         amount: LAB_FORFAIT_AMOUNT * 100,
         data: { is_lab_invoice: true, label: 'Forfait Lab MonprojetPro', client_id: clientId },
@@ -122,7 +121,7 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
     action: 'lab_invoice_sent',
     entity_type: 'invoice',
     metadata: {
-      pennylane_invoice_id: createdInvoice.id,
+      pennylane_invoice_id: String(createdInvoice.id),
       invoice_number: createdInvoice.invoice_number,
       client_id: clientId,
       amount: LAB_FORFAIT_AMOUNT,
@@ -138,5 +137,5 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
   // Sync immédiat Pennylane
   await triggerBillingSync(clientId)
 
-  return { data: createdInvoice.id, error: null }
+  return { data: String(createdInvoice.id), error: null }
 }

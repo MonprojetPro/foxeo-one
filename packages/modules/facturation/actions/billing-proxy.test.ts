@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // Mocks
 // ============================================================
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
@@ -17,7 +17,7 @@ vi.mock('../config/pennylane', () => ({
   },
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
 import {
   createPennylaneCustomer,
@@ -47,6 +47,59 @@ function makeSupabaseMock(isOperator = true) {
   }
 }
 
+// ── V2 mock data ───────────────────────────────────────────────────────────────
+
+const mockV2Quote = {
+  id: 4807770486,
+  customer: { id: 275890907, url: 'https://app.pennylane.com/api/external/v2/customers/275890907' },
+  quote_number: 'DEV-001',
+  status: 'pending' as const,
+  date: '2026-03-01',
+  deadline: '2026-03-31',
+  invoice_lines: { url: 'https://app.pennylane.com/api/external/v2/quotes/4807770486/invoice_lines' },
+  currency: 'EUR',
+  amount: '480.0',
+  currency_amount_before_tax: '400.0',
+  currency_tax: '80.0',
+  pdf_invoice_free_text: null,
+  public_file_url: null,
+  created_at: '2026-03-01T00:00:00Z',
+  updated_at: '2026-03-01T00:00:00Z',
+}
+
+const mockV2Invoice = {
+  id: 'inv-1',
+  customer_id: 'cust-1',
+  invoice_number: 'FA-001',
+  status: 'paid' as const,
+  date: '2026-03-01',
+  deadline: '2026-03-15',
+  line_items: [],
+  currency: 'EUR',
+  amount: 480,
+  currency_amount_before_tax: 400,
+  currency_tax: 80,
+  remaining_amount: 0,
+  pdf_invoice_free_text: null,
+  file_url: null,
+  created_at: '2026-03-01T00:00:00Z',
+  updated_at: '2026-03-15T00:00:00Z',
+}
+
+const mockV2Subscription = {
+  id: 'sub-1',
+  customer_id: 'cust-1',
+  status: 'active' as const,
+  start_date: '2026-03-01',
+  recurring_period: 'monthly' as const,
+  line_items: [],
+  amount: 480,
+  created_at: '2026-03-01T00:00:00Z',
+  updated_at: '2026-03-01T00:00:00Z',
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
 describe('billing-proxy', () => {
   beforeEach(() => {
     vi.resetAllMocks()
@@ -75,16 +128,20 @@ describe('billing-proxy', () => {
     it('creates customer and stores pennylane_customer_id in DB', async () => {
       const supabase = makeSupabaseMock()
       mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+      // V2 : réponse directe (pas de wrapper { customer: ... }), id est un number
       mockPennylane.post.mockResolvedValue({
-        data: { customer: { id: 'pl-cust-999', name: 'ACME Corp', emails: [], billing_address: null, created_at: '', updated_at: '' } },
+        data: { id: 275890907, name: 'ACME Corp', emails: ['acme@example.com'], billing_address: null, created_at: '', updated_at: '' },
         error: null,
       })
 
       const result = await createPennylaneCustomer('client-1', 'ACME Corp', 'acme@example.com')
-      expect(result.data).toBe('pl-cust-999')
+      // String(275890907)
+      expect(result.data).toBe('275890907')
       expect(result.error).toBeNull()
-      expect(mockPennylane.post).toHaveBeenCalledWith('/customers', expect.objectContaining({
-        customer: expect.objectContaining({ name: 'ACME Corp' }),
+      // V2 : endpoint /company_customers, body direct (pas de wrapper)
+      expect(mockPennylane.post).toHaveBeenCalledWith('/company_customers', expect.objectContaining({
+        name: 'ACME Corp',
+        emails: expect.arrayContaining(['acme@example.com']),
       }))
     })
 
@@ -106,8 +163,9 @@ describe('billing-proxy', () => {
     it('fetches customer by pennylane id', async () => {
       const supabase = makeSupabaseMock()
       mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+      // V2 : réponse directe (pas de wrapper { customer: ... })
       const customerData = { id: 'pl-cust-1', name: 'ACME', emails: [], billing_address: null, created_at: '', updated_at: '' }
-      mockPennylane.get.mockResolvedValue({ data: { customer: customerData }, error: null })
+      mockPennylane.get.mockResolvedValue({ data: customerData, error: null })
 
       const result = await getPennylaneCustomer('pl-cust-1')
       expect(result.data?.id).toBe('pl-cust-1')
@@ -119,29 +177,22 @@ describe('billing-proxy', () => {
     it('returns mapped quotes list', async () => {
       const supabase = makeSupabaseMock()
       mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+      // V2 : { items: [...] }
       mockPennylane.get.mockResolvedValue({
-        data: {
-          quotes: [
-            {
-              id: 'q-1', customer_id: 'cust-1', quote_number: 'DEV-001', status: 'pending',
-              date: '2026-03-01', deadline: '2026-03-31', line_items: [], currency: 'EUR',
-              amount: 480, currency_amount_before_tax: 400, currency_tax: 80,
-              pdf_invoice_free_text: null, created_at: '2026-03-01T00:00:00Z', updated_at: '2026-03-01T00:00:00Z',
-            },
-          ],
-        },
+        data: { items: [mockV2Quote] },
         error: null,
       })
 
       const result = await listQuotes()
       expect(result.data).toHaveLength(1)
-      expect(result.data![0].id).toBe('q-1')
+      // fromPennylaneQuote fait String(quote.id)
+      expect(result.data![0].id).toBe('4807770486')
     })
 
     it('passes customer filter in URL', async () => {
       const supabase = makeSupabaseMock()
       mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
-      mockPennylane.get.mockResolvedValue({ data: { quotes: [] }, error: null })
+      mockPennylane.get.mockResolvedValue({ data: { items: [] }, error: null })
 
       await listQuotes({ pennylaneCustomerId: 'cust-abc' })
       expect(mockPennylane.get).toHaveBeenCalledWith(expect.stringContaining('filter%5Bcustomer_id%5D=cust-abc'))
@@ -152,18 +203,9 @@ describe('billing-proxy', () => {
     it('returns mapped invoices list', async () => {
       const supabase = makeSupabaseMock()
       mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+      // V2 : { items: [...] }
       mockPennylane.get.mockResolvedValue({
-        data: {
-          customer_invoices: [
-            {
-              id: 'inv-1', customer_id: 'cust-1', invoice_number: 'FA-001', status: 'paid',
-              date: '2026-03-01', deadline: '2026-03-15', line_items: [], currency: 'EUR',
-              amount: 480, currency_amount_before_tax: 400, currency_tax: 80,
-              remaining_amount: 0, pdf_invoice_free_text: null, file_url: null,
-              created_at: '2026-03-01T00:00:00Z', updated_at: '2026-03-15T00:00:00Z',
-            },
-          ],
-        },
+        data: { items: [mockV2Invoice] },
         error: null,
       })
 
@@ -186,17 +228,9 @@ describe('billing-proxy', () => {
     it('returns mapped subscriptions list', async () => {
       const supabase = makeSupabaseMock()
       mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+      // V2 : { items: [...] }
       mockPennylane.get.mockResolvedValue({
-        data: {
-          billing_subscriptions: [
-            {
-              id: 'sub-1', customer_id: 'cust-1', status: 'active',
-              start_date: '2026-03-01', recurring_period: 'monthly',
-              line_items: [], amount: 480,
-              created_at: '2026-03-01T00:00:00Z', updated_at: '2026-03-01T00:00:00Z',
-            },
-          ],
-        },
+        data: { items: [mockV2Subscription] },
         error: null,
       })
 

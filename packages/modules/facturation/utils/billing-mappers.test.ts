@@ -16,18 +16,18 @@ import type {
   LineItem,
 } from '../types/billing.types'
 
+// V2 API : raw_currency_unit_price est une string (ex: "400.00")
 const PENNYLANE_LINE_ITEM: PennylaneLineItem = {
-  label: 'Accompagnement Foxeo One',
+  label: 'Accompagnement MonprojetPro One',
   description: 'Forfait mensuel',
   quantity: 1,
   unit: 'piece',
   vat_rate: 'FR_200',
-  currency_amount: 400,
-  plan_item_number: null,
+  raw_currency_unit_price: '400.00',
 }
 
 const FOXEO_LINE_ITEM: LineItem = {
-  label: 'Accompagnement Foxeo One',
+  label: 'Accompagnement MonprojetPro One',
   description: 'Forfait mensuel',
   quantity: 1,
   unit: 'piece',
@@ -36,19 +36,21 @@ const FOXEO_LINE_ITEM: LineItem = {
   total: 400,
 }
 
+// V2 API : id number, customer: {id, url}, invoice_lines: {url}, amounts strings
 const PENNYLANE_QUOTE: PennylaneQuote = {
-  id: 'quote-123',
-  customer_id: 'cust-456',
+  id: 4807770486,
+  customer: { id: 275890907, url: 'https://app.pennylane.com/api/external/v2/customers/275890907' },
   quote_number: 'DEV-2026-001',
   status: 'pending',
   date: '2026-03-01',
   deadline: '2026-03-31',
-  line_items: [PENNYLANE_LINE_ITEM],
+  invoice_lines: { url: 'https://app.pennylane.com/api/external/v2/quotes/4807770486/invoice_lines' },
   currency: 'EUR',
-  amount: 480,
-  currency_amount_before_tax: 400,
-  currency_tax: 80,
+  amount: '480.0',
+  currency_amount_before_tax: '400.0',
+  currency_tax: '80.0',
   pdf_invoice_free_text: null,
+  public_file_url: null,
   created_at: '2026-03-01T10:00:00Z',
   updated_at: '2026-03-01T10:00:00Z',
 }
@@ -88,7 +90,7 @@ describe('billing-mappers', () => {
   describe('fromPennylaneLineItem', () => {
     it('maps snake_case fields to camelCase correctly', () => {
       const result = fromPennylaneLineItem(PENNYLANE_LINE_ITEM)
-      expect(result.label).toBe('Accompagnement Foxeo One')
+      expect(result.label).toBe('Accompagnement MonprojetPro One')
       expect(result.unit).toBe('piece')
       expect(result.unitPrice).toBe(400)
       expect(result.vatRate).toBe('FR_200')
@@ -102,7 +104,7 @@ describe('billing-mappers', () => {
     })
 
     it('calculates total as quantity * unitPrice', () => {
-      const item = { ...PENNYLANE_LINE_ITEM, quantity: 3, currency_amount: 100 }
+      const item = { ...PENNYLANE_LINE_ITEM, quantity: 3, raw_currency_unit_price: '100.00' }
       const result = fromPennylaneLineItem(item)
       expect(result.total).toBe(300)
     })
@@ -111,45 +113,49 @@ describe('billing-mappers', () => {
   describe('toPennylaneLineItem', () => {
     it('maps camelCase fields to snake_case correctly', () => {
       const result = toPennylaneLineItem(FOXEO_LINE_ITEM)
-      expect(result.currency_amount).toBe(400)
+      // V2 : raw_currency_unit_price est une string (ex: "400.00")
+      expect(result.raw_currency_unit_price).toBe('400.00')
       expect(result.vat_rate).toBe('FR_200')
       expect(result.unit).toBe('piece')
-      expect(result.plan_item_number).toBeNull()
     })
   })
 
   describe('fromPennylaneQuote', () => {
     it('maps all quote fields correctly', () => {
       const result = fromPennylaneQuote(PENNYLANE_QUOTE)
-      expect(result.id).toBe('quote-123')
-      expect(result.clientId).toBe('cust-456')
+      // V2 : String(id number), String(customer.id number), amounts parseFloat(string)
+      expect(result.id).toBe('4807770486')
+      expect(result.clientId).toBe('275890907')
       expect(result.number).toBe('DEV-2026-001')
       expect(result.status).toBe('pending')
       expect(result.totalHt).toBe(400)
       expect(result.totalTtc).toBe(480)
       expect(result.tax).toBe(80)
       expect(result.validUntil).toBe('2026-03-31')
-      expect(result.lineItems).toHaveLength(1)
     })
 
-    it('maps line items via fromPennylaneLineItem', () => {
+    it('returns empty lineItems (invoice_lines is a lazy URL in V2)', () => {
       const result = fromPennylaneQuote(PENNYLANE_QUOTE)
-      expect(result.lineItems[0].unitPrice).toBe(400)
+      // V2 : invoice_lines est une URL lazy, lineItems retourné vide
+      expect(result.lineItems).toHaveLength(0)
     })
   })
 
   describe('toPennylaneQuote', () => {
-    it('maps Foxeo quote to Pennylane format', () => {
+    it('maps MonprojetPro quote to Pennylane format', () => {
       const result = toPennylaneQuote({
         clientId: 'cust-456',
         lineItems: [FOXEO_LINE_ITEM],
         validUntil: '2026-03-31',
         freeText: 'Merci de votre confiance',
       })
-      expect(result.customer_id).toBe('cust-456')
+      // V2 : customer_id est un number (parseInt)
+      expect(result.customer_id).toBe(parseInt('cust-456', 10))
       expect(result.deadline).toBe('2026-03-31')
       expect(result.pdf_invoice_free_text).toBe('Merci de votre confiance')
-      expect(result.line_items).toHaveLength(1)
+      // V2 : invoice_lines (pas line_items)
+      expect(result.invoice_lines).toHaveLength(1)
+      expect(result.date).toBeDefined() // date obligatoire V2
     })
 
     it('defaults freeText to null when not provided', () => {
@@ -191,7 +197,7 @@ describe('billing-mappers', () => {
   })
 
   describe('toPennylaneInvoice', () => {
-    it('maps Foxeo invoice to Pennylane format', () => {
+    it('maps MonprojetPro invoice to Pennylane format', () => {
       const result = toPennylaneInvoice({
         clientId: 'cust-456',
         lineItems: [FOXEO_LINE_ITEM],

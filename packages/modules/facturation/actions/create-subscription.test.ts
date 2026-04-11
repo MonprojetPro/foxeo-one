@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
@@ -17,7 +17,7 @@ vi.mock('./trigger-billing-sync', () => ({
   triggerBillingSync: vi.fn().mockResolvedValue({ data: { synced: 1 }, error: null }),
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
 import {
@@ -201,7 +201,8 @@ describe('createSubscription', () => {
           line_items: expect.arrayContaining([
             expect.objectContaining({
               label: PLAN_LABEL.essentiel,
-              currency_amount: PLAN_MONTHLY_PRICE.essentiel,
+              // toPennylaneLineItem produit raw_currency_unit_price (string) en V2
+              raw_currency_unit_price: String(PLAN_MONTHLY_PRICE.essentiel) + '.00',
             }),
           ]),
         }),
@@ -229,7 +230,8 @@ describe('createSubscription', () => {
     expect(lineItems).toHaveLength(2)
     expect(lineItems[1]).toMatchObject({
       label: visioExtra.label,
-      currency_amount: visioExtra.monthlyPrice,
+      // toPennylaneLineItem produit raw_currency_unit_price (string) en V2
+      raw_currency_unit_price: visioExtra.monthlyPrice.toFixed(2),
     })
   })
 

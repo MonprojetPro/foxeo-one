@@ -14,17 +14,19 @@ import type {
 // ============================================================
 
 export function fromPennylaneLineItem(item: PennylaneLineItem): LineItem {
+  const unitPrice = parseFloat(item.raw_currency_unit_price)
   return {
     label: item.label,
     description: item.description,
     quantity: item.quantity,
     unit: item.unit,
-    unitPrice: item.currency_amount,
+    unitPrice,
     vatRate: item.vat_rate,
-    total: item.quantity * item.currency_amount,
+    total: item.quantity * unitPrice,
   }
 }
 
+// V2 API : raw_currency_unit_price est une string, pas de plan_item_number
 export function toPennylaneLineItem(item: LineItem): PennylaneLineItem {
   return {
     label: item.label,
@@ -32,8 +34,7 @@ export function toPennylaneLineItem(item: LineItem): PennylaneLineItem {
     quantity: item.quantity,
     unit: item.unit,
     vat_rate: item.vatRate,
-    currency_amount: item.unitPrice,
-    plan_item_number: null,
+    raw_currency_unit_price: item.unitPrice.toFixed(2),
   }
 }
 
@@ -43,28 +44,31 @@ export function toPennylaneLineItem(item: LineItem): PennylaneLineItem {
 
 export function fromPennylaneQuote(quote: PennylaneQuote): Quote {
   return {
-    id: quote.id,
-    clientId: quote.customer_id,
+    id: String(quote.id),
+    clientId: String(quote.customer.id),
     number: quote.quote_number,
     status: quote.status,
-    lineItems: quote.line_items.map(fromPennylaneLineItem),
-    totalHt: quote.currency_amount_before_tax,
-    totalTtc: quote.amount,
-    tax: quote.currency_tax,
+    lineItems: [], // V2 : invoice_lines est une URL lazy — non embarquée dans la liste
+    totalHt: parseFloat(quote.currency_amount_before_tax),
+    totalTtc: parseFloat(quote.amount),
+    tax: parseFloat(quote.currency_tax),
     validUntil: quote.deadline,
     createdAt: quote.created_at,
   }
 }
 
+// V2 API : pas de wrapper, invoice_lines au lieu de line_items, date obligatoire
 export function toPennylaneQuote(
   quote: Pick<Quote, 'clientId' | 'lineItems' | 'validUntil'> & {
     freeText?: string | null
+    date?: string
   }
-): Partial<PennylaneQuote> {
+): Record<string, unknown> {
   return {
-    customer_id: quote.clientId,
+    customer_id: parseInt(quote.clientId, 10),
+    date: quote.date ?? new Date().toISOString().split('T')[0],
     deadline: quote.validUntil,
-    line_items: quote.lineItems.map(toPennylaneLineItem),
+    invoice_lines: quote.lineItems.map(toPennylaneLineItem),
     pdf_invoice_free_text: quote.freeText ?? null,
   }
 }

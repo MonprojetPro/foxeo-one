@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
 import { fromPennylaneQuote, fromPennylaneInvoice, fromPennylaneSubscription } from '../utils/billing-mappers'
 import type {
@@ -14,8 +14,9 @@ import type {
   ListQuotesFilters,
   ListInvoicesFilters,
   ListSubscriptionsFilters,
+  CreatePennylaneCustomerInput,
 } from '../types/billing.types'
-import type { ActionResponse, ActionError } from '@foxeo/types'
+import type { ActionResponse, ActionError } from '@monprojetpro/types'
 
 // ============================================================
 // Auth check helper — returns client for reuse
@@ -61,22 +62,29 @@ async function assertOperator(): Promise<AssertOperatorResult> {
 export async function createPennylaneCustomer(
   clientId: string,
   companyName: string,
-  email: string
+  email: string,
+  billingAddress?: CreatePennylaneCustomerInput['billingAddress']
 ): Promise<ActionResponse<string>> {
   const { supabase, error: authError } = await assertOperator()
   if (authError || !supabase) return { data: null, error: authError }
 
-  const result = await pennylaneClient.post<{ customer: PennylaneCustomer }>('/customers', {
-    customer: {
-      name: companyName,
-      emails: [{ email, label: 'work' }],
+  // V2 API : endpoint company_customers, emails = string[], billing_address obligatoire
+  const result = await pennylaneClient.post<PennylaneCustomer>('/company_customers', {
+    name: companyName,
+    emails: [email],
+    billing_address: {
+      address: billingAddress?.address ?? '',
+      postal_code: billingAddress?.postalCode ?? '',
+      city: billingAddress?.city ?? '',
+      country_alpha2: billingAddress?.countryAlpha2 ?? 'FR',
     },
   })
 
   if (result.error) return { data: null, error: result.error }
   if (!result.data) return { data: null, error: { message: 'No data returned', code: 'EMPTY_RESPONSE' } }
 
-  const pennylaneCustomerId = result.data.customer.id
+  // V2 : réponse directe (pas de wrapper { customer: ... }), id est un number
+  const pennylaneCustomerId = String(result.data.id)
 
   // Stocker le pennylane_customer_id dans la table clients (réutilise le client existant)
   const { error: dbError } = await supabase
@@ -104,14 +112,15 @@ export async function getPennylaneCustomer(
   const { error: authError } = await assertOperator()
   if (authError) return { data: null, error: authError }
 
-  const result = await pennylaneClient.get<{ customer: PennylaneCustomer }>(
+  // V2 : /customers/{id} fonctionne (alias de /company_customers/{id})
+  const result = await pennylaneClient.get<PennylaneCustomer>(
     `/customers/${pennylaneCustomerId}`
   )
 
   if (result.error) return { data: null, error: result.error }
   if (!result.data) return { data: null, error: { message: 'No data returned', code: 'EMPTY_RESPONSE' } }
 
-  return { data: result.data.customer, error: null }
+  return { data: result.data, error: null }
 }
 
 // ============================================================
@@ -133,12 +142,13 @@ export async function listQuotes(
   }
 
   const path = `/quotes${params.toString() ? `?${params.toString()}` : ''}`
-  const result = await pennylaneClient.get<{ quotes: PennylaneQuote[] }>(path)
+  // V2 : réponse { items: [...], has_more: bool, next_cursor: null }
+  const result = await pennylaneClient.get<{ items: PennylaneQuote[] }>(path)
 
   if (result.error) return { data: null, error: result.error }
   if (!result.data) return { data: null, error: { message: 'No data returned', code: 'EMPTY_RESPONSE' } }
 
-  return { data: result.data.quotes.map(fromPennylaneQuote), error: null }
+  return { data: result.data.items.map(fromPennylaneQuote), error: null }
 }
 
 // ============================================================
@@ -160,12 +170,13 @@ export async function listInvoices(
   }
 
   const path = `/customer_invoices${params.toString() ? `?${params.toString()}` : ''}`
-  const result = await pennylaneClient.get<{ customer_invoices: PennylaneCustomerInvoice[] }>(path)
+  // V2 : réponse { items: [...] }
+  const result = await pennylaneClient.get<{ items: PennylaneCustomerInvoice[] }>(path)
 
   if (result.error) return { data: null, error: result.error }
   if (!result.data) return { data: null, error: { message: 'No data returned', code: 'EMPTY_RESPONSE' } }
 
-  return { data: result.data.customer_invoices.map(fromPennylaneInvoice), error: null }
+  return { data: result.data.items.map(fromPennylaneInvoice), error: null }
 }
 
 // ============================================================
@@ -187,10 +198,11 @@ export async function listSubscriptions(
   }
 
   const path = `/billing_subscriptions${params.toString() ? `?${params.toString()}` : ''}`
-  const result = await pennylaneClient.get<{ billing_subscriptions: PennylaneBillingSubscription[] }>(path)
+  // V2 : réponse { items: [...] }
+  const result = await pennylaneClient.get<{ items: PennylaneBillingSubscription[] }>(path)
 
   if (result.error) return { data: null, error: result.error }
   if (!result.data) return { data: null, error: { message: 'No data returned', code: 'EMPTY_RESPONSE' } }
 
-  return { data: result.data.billing_subscriptions.map((s) => fromPennylaneSubscription(s)), error: null }
+  return { data: result.data.items.map((s) => fromPennylaneSubscription(s)), error: null }
 }

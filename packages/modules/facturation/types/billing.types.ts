@@ -8,23 +8,26 @@ export type PennylaneLineItem = {
   quantity: number
   unit: string
   vat_rate: string // ex: 'FR_200' pour 20%
-  currency_amount: number // prix unitaire HT
-  plan_item_number: string | null
+  // V2 API : prix unitaire HT en string (ex: "500.00"), remplace currency_amount
+  raw_currency_unit_price: string
 }
 
 export type PennylaneQuote = {
-  id: string
-  customer_id: string
+  // V2 API : id est un number, amount/currency_amount_before_tax/currency_tax sont des strings
+  id: number
+  customer: { id: number; url: string }
   quote_number: string
   status: 'draft' | 'pending' | 'accepted' | 'denied'
   date: string
   deadline: string
-  line_items: PennylaneLineItem[]
+  // V2 : invoice_lines est une URL (lazy), pas un tableau embarqué
+  invoice_lines: { url: string }
   currency: string
-  amount: number
-  currency_amount_before_tax: number
-  currency_tax: number
+  amount: string
+  currency_amount_before_tax: string
+  currency_tax: string
   pdf_invoice_free_text: string | null
+  public_file_url: string | null
   created_at: string
   updated_at: string
 }
@@ -75,7 +78,7 @@ export type PennylaneCustomer = {
 }
 
 // ============================================================
-// Types Foxeo internes (camelCase — convention projet)
+// Types MonprojetPro internes (camelCase — convention projet)
 // ============================================================
 
 export type LineItem = {
@@ -144,6 +147,13 @@ export type CreatePennylaneCustomerInput = {
   clientId: string
   companyName: string
   email: string
+  // V2 API : billing_address obligatoire pour company_customers
+  billingAddress?: {
+    address?: string
+    postalCode?: string
+    city?: string
+    countryAlpha2?: string
+  }
 }
 
 export type ListQuotesFilters = {
