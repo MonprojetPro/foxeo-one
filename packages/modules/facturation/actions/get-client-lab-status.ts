@@ -10,6 +10,10 @@ export type ClientLabStatus = {
   invoiceSent: boolean
   invoiceSentAt: string | null
   dashboardActivated: boolean
+  // Pennylane
+  pennylaneCustomerId: string | null
+  clientEmail: string
+  clientCompany: string | null
 }
 
 // Retourne le statut paiement Lab + process pour un client donné
@@ -21,7 +25,7 @@ export async function getClientLabStatus(
 
   const { data, error: dbError } = await supabase
     .from('clients')
-    .select('lab_paid, lab_paid_at, lab_amount, lab_invoice_sent_at, client_configs(dashboard_type)')
+    .select('lab_paid, lab_paid_at, lab_amount, lab_invoice_sent_at, pennylane_customer_id, email, company, client_configs(dashboard_type)')
     .eq('id', clientId)
     .single()
 
@@ -44,6 +48,9 @@ export async function getClientLabStatus(
       invoiceSent: !!(data.lab_invoice_sent_at as string | null),
       invoiceSentAt: (data.lab_invoice_sent_at as string | null) ?? null,
       dashboardActivated,
+      pennylaneCustomerId: (data.pennylane_customer_id as string | null) ?? null,
+      clientEmail: (data.email as string) ?? '',
+      clientCompany: (data.company as string | null) ?? null,
     },
     error: null,
   }
