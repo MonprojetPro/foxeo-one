@@ -13,6 +13,12 @@ export { BillingSummary } from './components/billing-summary'
 // Components (Story 11.6)
 export { LabBillingTab } from './components/lab-billing-tab'
 
+// Components (Story 13.2)
+export { DocumentsList } from './components/documents-list'
+export { SubscriptionCard } from './components/subscription-card'
+export { PdfDownloadButton } from './components/pdf-download-button'
+export { EmptyAccounting } from './components/empty-accounting'
+
 // Hooks
 export { useBillingQuotes, useBillingInvoices, useBillingSubscriptions, useBillingSummary, useBillingSyncRows, useBillingMetrics, billingKeys } from './hooks/use-billing'
 

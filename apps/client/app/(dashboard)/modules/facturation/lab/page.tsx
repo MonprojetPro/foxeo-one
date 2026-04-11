@@ -1,16 +1,17 @@
 import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
-import { InvoicesList, BillingSummary, SubscriptionCard } from '@monprojetpro/modules-facturation'
+import { DocumentsList } from '@monprojetpro/modules-facturation'
 
-// ── Page "Comptabilité" — Vue client One (lecture seule via RLS)
+export const metadata = { title: 'Comptabilité | MonprojetPro Lab' }
+
+// ── Page "Comptabilité" — Vue client Lab (lecture seule via RLS)
 // RLS policy billing_sync_select_owner garantit que le client ne voit que ses données
 
-export default async function ClientFacturationPage() {
+export default async function ClientLabFacturationPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()
 
-  // Récupérer le client courant
   const { data: client } = await supabase
     .from('clients')
     .select('id')
@@ -25,18 +26,19 @@ export default async function ClientFacturationPage() {
       <div>
         <h1 className="text-2xl font-semibold">Comptabilité</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Consultez vos devis, factures et l&apos;état de vos paiements
+          Consultez vos devis et factures MonprojetPro
         </p>
       </div>
 
-      {/* Abonnement actif */}
-      <SubscriptionCard clientId={client.id} />
+      {/* Teasing One — abonnement non encore actif */}
+      <div className="rounded-lg border border-dashed border-border bg-muted/30 p-4">
+        <p className="text-sm text-muted-foreground">
+          Votre abonnement One sera visible ici après la graduation
+        </p>
+      </div>
 
-      {/* Résumé financier */}
-      <BillingSummary clientId={client.id} />
-
-      {/* Liste des factures */}
-      <InvoicesList clientId={client.id} showRefreshButton />
+      {/* Liste unifiée devis + factures */}
+      <DocumentsList clientId={client.id} />
     </div>
   )
 }
