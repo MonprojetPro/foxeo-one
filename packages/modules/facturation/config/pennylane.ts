@@ -1,6 +1,11 @@
-import type { ActionResponse, ActionError } from '@foxeo/types'
+import type { ActionResponse, ActionError } from '@monprojetpro/types'
 
-const PENNYLANE_API_URL = 'https://app.pennylane.com/api/external/v2'
+// PENNYLANE_API_URL permet de switcher sandbox ↔ prod sans toucher au code :
+//   sandbox : PENNYLANE_API_URL=https://sandbox.pennylane.com/api/external/v2
+//   prod    : PENNYLANE_API_URL=https://app.pennylane.com/api/external/v2
+const PENNYLANE_API_URL =
+  process.env.PENNYLANE_API_URL ?? 'https://app.pennylane.com/api/external/v2'
+
 const REQUEST_TIMEOUT_MS = 30_000
 const MAX_RETRIES = 1
 const MAX_RATE_LIMIT_RETRIES = 3
