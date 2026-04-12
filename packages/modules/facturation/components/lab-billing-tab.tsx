@@ -5,7 +5,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Skeleton, showSuccess, showError } from '@monprojetpro/ui'
 import { getClientLabStatus } from '../actions/get-client-lab-status'
 import { sendLabInvoice } from '../actions/send-lab-invoice'
-import { createPennylaneCustomer } from '../actions/billing-proxy'
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -61,7 +60,6 @@ export function LabBillingTab({ clientId, clientName }: LabBillingTabProps) {
   const queryClient = useQueryClient()
   const [isPending, startTransition] = useTransition()
   const [showPreview, setShowPreview] = useState(false)
-  const [isCreatingPennylane, setIsCreatingPennylane] = useState(false)
 
   const { data: labStatus, isPending: isLoading } = useQuery({
     queryKey: ['billing', 'lab-status', clientId],
@@ -72,28 +70,6 @@ export function LabBillingTab({ clientId, clientName }: LabBillingTabProps) {
     },
     staleTime: 5 * 60 * 1_000,
   })
-
-  function handleCreatePennylane() {
-    if (!labStatus) return
-    setIsCreatingPennylane(true)
-    startTransition(async () => {
-      try {
-        const result = await createPennylaneCustomer(
-          clientId,
-          labStatus.clientCompany ?? clientName,
-          labStatus.clientEmail,
-        )
-        if (result.error) {
-          showError(result.error.message)
-          return
-        }
-        showSuccess(`Compte Pennylane créé pour ${clientName}`)
-        queryClient.invalidateQueries({ queryKey: ['billing', 'lab-status', clientId] })
-      } finally {
-        setIsCreatingPennylane(false)
-      }
-    })
-  }
 
   function handleSendInvoice() {
     startTransition(async () => {
@@ -120,7 +96,6 @@ export function LabBillingTab({ clientId, clientName }: LabBillingTabProps) {
   const invoiceSent = labStatus?.invoiceSent ?? false
   const labPaid = labStatus?.labPaid ?? false
   const dashboardActivated = labStatus?.dashboardActivated ?? false
-  const hasPennylane = !!(labStatus?.pennylaneCustomerId)
 
   // ── Étapes du timeline ─────────────────────────────────────────────────────
 
@@ -149,33 +124,8 @@ export function LabBillingTab({ clientId, clientName }: LabBillingTabProps) {
         </p>
       </div>
 
-      {/* Étape 0 — Créer le compte Pennylane si absent */}
-      {!hasPennylane && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <p className="text-sm font-semibold text-amber-400">Compte Pennylane manquant</p>
-            <p className="text-xs text-muted-foreground">
-              Ce client n&apos;a pas encore de compte Pennylane. Créez-le pour pouvoir envoyer la facture Lab et des devis.
-            </p>
-            {labStatus?.clientEmail && (
-              <p className="text-xs text-muted-foreground">
-                Email : <span className="text-foreground">{labStatus.clientEmail}</span>
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            disabled={isCreatingPennylane || isPending}
-            onClick={handleCreatePennylane}
-            className="w-fit rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-black hover:bg-amber-400 disabled:opacity-50 transition-colors"
-          >
-            {isCreatingPennylane ? 'Création en cours...' : 'Créer le compte Pennylane'}
-          </button>
-        </div>
-      )}
-
       {/* Bouton déclencheur — visible seulement si processus pas encore commencé */}
-      {hasPennylane && !invoiceSent && !showPreview && (
+      {!invoiceSent && !showPreview && (
         <button
           type="button"
           onClick={() => setShowPreview(true)}
@@ -186,7 +136,7 @@ export function LabBillingTab({ clientId, clientName }: LabBillingTabProps) {
       )}
 
       {/* Aperçu de la facture avant envoi */}
-      {hasPennylane && showPreview && !invoiceSent && (
+      {showPreview && !invoiceSent && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 flex flex-col gap-4">
           <h4 className="text-sm font-semibold text-primary">Aperçu — Facture Lab</h4>
           <div className="flex flex-col gap-2 text-sm">
@@ -238,7 +188,7 @@ export function LabBillingTab({ clientId, clientName }: LabBillingTabProps) {
       )}
 
       {/* Timeline — visible dès que le processus a commencé */}
-      {hasPennylane && (invoiceSent || showPreview) && (
+      {(invoiceSent || showPreview) && (
         <div className="flex flex-col pl-1 pt-2">
           <div className="relative">
             {/* Ligne verticale */}

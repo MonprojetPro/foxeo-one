@@ -20,14 +20,20 @@ vi.mock('./trigger-billing-sync', () => ({
   triggerBillingSync: vi.fn().mockResolvedValue({ data: { synced: 1 }, error: null }),
 }))
 
+vi.mock('./billing-proxy', () => ({
+  createPennylaneCustomer: vi.fn(),
+}))
+
 import { assertOperator } from './assert-operator'
 import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
+import { createPennylaneCustomer } from './billing-proxy'
 import { sendLabInvoice } from './send-lab-invoice'
 
 const mockAssertOperator = vi.mocked(assertOperator)
 const mockPennylane = vi.mocked(pennylaneClient)
 const mockTriggerBillingSync = vi.mocked(triggerBillingSync)
+const mockCreatePennylaneCustomer = vi.mocked(createPennylaneCustomer)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -40,7 +46,7 @@ function makeSupabaseMock(opts: {
   clientError?: { message: string } | null
 } = {}) {
   const {
-    clientData = { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: false },
+    clientData = { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: false },
     clientError = null,
   } = opts
 
@@ -109,7 +115,7 @@ describe('sendLabInvoice', () => {
 
   it('returns LAB_ALREADY_PAID when client.lab_paid is true', async () => {
     const supabase = makeSupabaseMock({
-      clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: true },
+      clientData: { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: true },
     })
     mockAssertOperator.mockResolvedValue({ supabase: supabase as never, userId: 'op-1', error: null })
 
@@ -117,14 +123,29 @@ describe('sendLabInvoice', () => {
     expect(result.error?.code).toBe('LAB_ALREADY_PAID')
   })
 
-  it('returns NO_PENNYLANE_ID when client has no pennylane_customer_id', async () => {
+  it('auto-creates Pennylane customer when absent and email exists', async () => {
     const supabase = makeSupabaseMock({
-      clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: null, lab_paid: false },
+      clientData: { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: null, lab_paid: false },
+    })
+    mockAssertOperator.mockResolvedValue({ supabase: supabase as never, userId: 'op-1', error: null })
+    mockCreatePennylaneCustomer.mockResolvedValue({ data: 'pl-new-cust', error: null })
+    mockPennylane.post.mockResolvedValue({ data: mockInvoiceResponse, error: null })
+
+    const result = await sendLabInvoice('client-1')
+    expect(mockCreatePennylaneCustomer).toHaveBeenCalledWith('client-1', 'ACME Corp', 'acme@example.com')
+    expect(result.error).toBeNull()
+    expect(result.data).toBe('4807770487')
+  })
+
+  it('returns MISSING_EMAIL when client has no pennylane_customer_id and no email', async () => {
+    const supabase = makeSupabaseMock({
+      clientData: { id: 'client-1', name: 'ACME', company: null, email: null, auth_user_id: 'auth-1', pennylane_customer_id: null, lab_paid: false },
     })
     mockAssertOperator.mockResolvedValue({ supabase: supabase as never, userId: 'op-1', error: null })
 
     const result = await sendLabInvoice('client-1')
-    expect(result.error?.code).toBe('NO_PENNYLANE_ID')
+    expect(result.error?.code).toBe('MISSING_EMAIL')
+    expect(mockCreatePennylaneCustomer).not.toHaveBeenCalled()
   })
 
   it('creates a customer invoice with correct Pennylane payload', async () => {
@@ -165,7 +186,7 @@ describe('sendLabInvoice', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
-                data: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: false },
+                data: { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: false },
                 error: null,
               }),
             }),

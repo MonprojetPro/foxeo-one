@@ -3,6 +3,7 @@
 import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
+import { createPennylaneCustomer } from './billing-proxy'
 import { LAB_INVOICE_TAG } from '../utils/billing-sync-logic'
 import type { ActionResponse } from '@monprojetpro/types'
 
@@ -21,7 +22,7 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
   // Récupérer le client
   const { data: client, error: clientError } = await supabase
     .from('clients')
-    .select('id, name, auth_user_id, pennylane_customer_id, lab_paid')
+    .select('id, name, company, email, auth_user_id, pennylane_customer_id, lab_paid')
     .eq('id', clientId)
     .single()
 
@@ -56,15 +57,24 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
     }
   }
 
-  const pennylaneCustomerId = client.pennylane_customer_id as string | null
+  let pennylaneCustomerId = client.pennylane_customer_id as string | null
+
+  // Auto-création du compte Pennylane si absent (même logique que create-quote / create-subscription)
   if (!pennylaneCustomerId) {
-    return {
-      data: null,
-      error: {
-        message: 'Ce client n\'a pas de compte Pennylane. Créez-le d\'abord.',
-        code: 'NO_PENNYLANE_ID',
-      },
+    const clientEmail = client.email as string | null
+    if (!clientEmail) {
+      return {
+        data: null,
+        error: { message: 'Email client requis pour créer le compte Pennylane', code: 'MISSING_EMAIL' },
+      }
     }
+    const customerResult = await createPennylaneCustomer(
+      clientId,
+      (client.company as string | null) ?? (client.name as string),
+      clientEmail,
+    )
+    if (customerResult.error) return { data: null, error: customerResult.error }
+    pennylaneCustomerId = customerResult.data!
   }
 
   // Dates
