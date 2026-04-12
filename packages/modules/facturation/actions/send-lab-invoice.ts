@@ -120,6 +120,14 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
   const rawInvoice = invoiceResult.data as Record<string, unknown>
   const createdInvoice = (rawInvoice.customer_invoice as Record<string, unknown> | undefined) ?? rawInvoice
 
+  // Envoi email automatique au client via Pennylane
+  const invoiceId = String(createdInvoice.id)
+  const emailResult = await pennylaneClient.post(`/customer_invoices/${invoiceId}/send_by_email`, {})
+  if (emailResult.error) {
+    // Non bloquant — la facture est créée, l'envoi email est best-effort
+    console.warn('[LAB_INVOICE] Email send failed (non-blocking):', emailResult.error)
+  }
+
   // Stocker dans billing_sync pour tracking
   await supabase
     .from('billing_sync')
@@ -127,9 +135,10 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
       {
         entity_type: 'invoice',
         pennylane_id: String(createdInvoice.id),
+        client_id: clientId,
         status: 'pending',
         amount: LAB_FORFAIT_AMOUNT * 100,
-        data: { is_lab_invoice: true, label: 'Forfait Lab MonprojetPro', client_id: clientId },
+        data: { is_lab_invoice: true, label: 'Forfait Lab MonprojetPro' },
         last_synced_at: new Date().toISOString(),
       },
       { onConflict: 'entity_type,pennylane_id' }
