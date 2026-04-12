@@ -46,7 +46,7 @@ function makeSupabaseMock(opts: {
   clientError?: { message: string } | null
 } = {}) {
   const {
-    clientData = { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: false },
+    clientData = { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: '275890907', lab_paid: false },
     clientError = null,
   } = opts
 
@@ -115,7 +115,7 @@ describe('sendLabInvoice', () => {
 
   it('returns LAB_ALREADY_PAID when client.lab_paid is true', async () => {
     const supabase = makeSupabaseMock({
-      clientData: { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: true },
+      clientData: { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: '275890907', lab_paid: true },
     })
     mockAssertOperator.mockResolvedValue({ supabase: supabase as never, userId: 'op-1', error: null })
 
@@ -158,18 +158,18 @@ describe('sendLabInvoice', () => {
     expect(result.error).toBeNull()
     // String(4807770487)
     expect(result.data).toBe('4807770487')
-    // V2 : pas de wrapper, invoice_lines, raw_currency_unit_price (string)
+    // V2 : line_items (pas invoice_lines), customer_id = integer
     expect(mockPennylane.post).toHaveBeenCalledWith(
       '/customer_invoices',
       expect.objectContaining({
-        customer_id: 'pl-cust-1',
-        invoice_lines: expect.arrayContaining([
+        customer_id: 275890907,
+        line_items: expect.arrayContaining([
           expect.objectContaining({
             label: 'Forfait Lab MonprojetPro',
             quantity: 1,
             raw_currency_unit_price: '199.00',
             vat_rate: 'FR_200',
-            unit: 'piece',
+            unit: 'service',
           }),
         ]),
         pdf_invoice_free_text: '[FOXEO_LAB]',
@@ -186,7 +186,7 @@ describe('sendLabInvoice', () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
-                data: { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: 'pl-cust-1', lab_paid: false },
+                data: { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: '275890907', lab_paid: false },
                 error: null,
               }),
             }),

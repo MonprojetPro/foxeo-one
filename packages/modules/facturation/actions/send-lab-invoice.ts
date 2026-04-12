@@ -83,31 +83,35 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
   deadline.setDate(deadline.getDate() + 30)
   const deadlineStr = deadline.toISOString().split('T')[0]
 
-  // POST /customer_invoices Pennylane — V2 : pas de wrapper, invoice_lines, raw_currency_unit_price string
+  // POST /customer_invoices Pennylane — V2 : line_items (pas invoice_lines), customer_id = integer
   const invoiceResult = await pennylaneClient.post<{ id: number; invoice_number: string }>(
     '/customer_invoices',
     {
-      customer_id: pennylaneCustomerId,
+      customer_id: parseInt(pennylaneCustomerId, 10),
       date,
       deadline: deadlineStr,
-      invoice_lines: [
+      line_items: [
         {
           label: 'Forfait Lab MonprojetPro',
           quantity: 1,
           raw_currency_unit_price: LAB_FORFAIT_AMOUNT.toFixed(2),
           vat_rate: 'FR_200',
-          unit: 'piece',
+          unit: 'service',
         },
       ],
       pdf_invoice_free_text: LAB_INVOICE_TAG,
     }
   )
 
-  if (invoiceResult.error) return { data: null, error: invoiceResult.error }
+  if (invoiceResult.error) {
+    console.error('[LAB_INVOICE] Pennylane 422 details:', invoiceResult.error.details)
+    return { data: null, error: invoiceResult.error }
+  }
   if (!invoiceResult.data) return { data: null, error: { message: 'No data returned', code: 'EMPTY_RESPONSE' } }
 
-  // V2 : réponse directe (pas de wrapper { customer_invoice: ... }), id est un number
-  const createdInvoice = invoiceResult.data
+  // V2 : réponse peut être wrappée { customer_invoice: { id } } ou directe { id }
+  const rawInvoice = invoiceResult.data as Record<string, unknown>
+  const createdInvoice = (rawInvoice.customer_invoice as Record<string, unknown> | undefined) ?? rawInvoice
 
   // Stocker dans billing_sync pour tracking
   await supabase
