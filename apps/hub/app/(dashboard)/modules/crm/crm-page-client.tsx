@@ -7,11 +7,13 @@ import {
   ClientSearch,
   ClientFiltersPanel,
   EmptyClientList,
+  CreateClientDialog,
+  ImportCsvDialog,
   useClients,
   type ClientFilters,
   type ClientListItem,
-} from '@foxeo/modules-crm'
-import { useOnlineUsers } from '@foxeo/modules-chat'
+} from '@monprojetpro/modules-crm'
+import { useOnlineUsers } from '@monprojetpro/modules-chat'
 
 interface CRMPageClientProps {
   initialClients: ClientListItem[]
@@ -87,11 +89,17 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Clients</h1>
-        <p className="text-sm text-muted-foreground">
-          Gérez vos clients et suivez vos relations
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Clients</h1>
+          <p className="text-sm text-muted-foreground">
+            Gérez vos clients et suivez vos relations
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <ImportCsvDialog />
+          <CreateClientDialog />
+        </div>
       </div>
 
       {/* Search + Filters */}
@@ -104,7 +112,7 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
       {showEmptyState ? (
         <EmptyClientList hasFilters={hasFilters} />
       ) : (
-        <ClientList clients={filteredClients} onRowClick={handleRowClick} onlineUserIds={onlineUserIds} />
+        <ClientList clients={filteredClients} onRowClick={handleRowClick} onlineUserIds={onlineUserIds} showCreateButton={false} />
       )}
     </div>
   )

@@ -80,10 +80,36 @@ export async function getClients(
       query = query.in('client_type', filters.clientType)
     }
 
-    const { data, error } = await query
+    let { data, error } = await query
       .order('is_pinned', { ascending: false }) // Pinned first
       .order('created_at', { ascending: false })
       .limit(500)
+
+    // Fallback si les colonnes prospect (migration 00080) ne sont pas encore appliquées
+    if (error && (error.message?.includes('hub_seen_at') || error.message?.includes('prospect_stage') || error.message?.includes('project_type') || error.message?.includes('lead_message') || error.code === 'PGRST204')) {
+      console.warn('[CRM:GET_CLIENTS] Prospect columns missing — retrying without them (migration 00080 not applied)')
+      let fallbackQuery = supabase
+        .from('clients')
+        .select(`id, operator_id, first_name, name, company, email, sector, client_type, status, created_at, is_pinned, deferred_until, archived_at, retention_until`)
+        .eq('operator_id', operatorId)
+
+      const hasStatusFilterFallback = filters?.status && filters.status.length > 0
+      if (hasStatusFilterFallback) {
+        fallbackQuery = fallbackQuery.in('status', filters.status)
+      } else {
+        fallbackQuery = fallbackQuery.neq('status', 'deleted')
+      }
+      if (filters?.clientType && filters.clientType.length > 0) {
+        fallbackQuery = fallbackQuery.in('client_type', filters.clientType)
+      }
+
+      const fallback = await fallbackQuery
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(500)
+      data = fallback.data
+      error = fallback.error
+    }
 
     if (error) {
       console.error('[CRM:GET_CLIENTS] Supabase error:', error)
@@ -114,10 +140,10 @@ export async function getClients(
         deferredUntil: client.deferred_until ?? null,
         archivedAt: client.archived_at ?? null,
         retentionUntil: client.retention_until ?? null,
-        hubSeenAt: client.hub_seen_at ?? null,
-        prospectStage: client.prospect_stage ?? null,
-        projectType: client.project_type ?? null,
-        leadMessage: client.lead_message ?? null,
+        hubSeenAt: ('hub_seen_at' in client ? client.hub_seen_at : null) ?? null,
+        prospectStage: ('prospect_stage' in client ? client.prospect_stage : null) ?? null,
+        projectType: ('project_type' in client ? client.project_type : null) ?? null,
+        leadMessage: ('lead_message' in client ? client.lead_message : null) ?? null,
       })
     )
 
