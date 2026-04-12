@@ -35,6 +35,12 @@ export async function createAndSendQuote(
 
   let pennylaneCustomerId = client.pennylane_customer_id as string | null
 
+  // ID corrompu ('undefined', non-numérique) → re-création automatique
+  if (pennylaneCustomerId && isNaN(parseInt(pennylaneCustomerId, 10))) {
+    await supabase.from('clients').update({ pennylane_customer_id: null }).eq('id', clientId)
+    pennylaneCustomerId = null
+  }
+
   // Story G — Auto-créer le compte Pennylane si absent
   if (!pennylaneCustomerId) {
     const clientEmail = client.email as string | null

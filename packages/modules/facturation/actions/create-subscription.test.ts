@@ -55,7 +55,7 @@ function makeSupabaseMock(opts: {
       id: 'client-1',
       name: 'ACME',
       auth_user_id: 'auth-user-1',
-      pennylane_customer_id: 'pl-cust-1',
+      pennylane_customer_id: '275890907',
     },
     clientError = null,
   } = opts
@@ -198,7 +198,7 @@ describe('createSubscription', () => {
       '/billing_subscriptions',
       expect.objectContaining({
         billing_subscription: expect.objectContaining({
-          customer_id: 'pl-cust-1',
+          customer_id: '275890907',
           recurring_period: 'monthly',
           line_items: expect.arrayContaining([
             expect.objectContaining({
@@ -252,7 +252,7 @@ describe('createSubscription', () => {
                   id: 'client-1',
                   name: 'ACME',
                   auth_user_id: 'auth-user-1',
-                  pennylane_customer_id: 'pl-cust-1',
+                  pennylane_customer_id: '275890907',
                 },
                 error: null,
               }),
@@ -311,7 +311,7 @@ describe('createSubscription', () => {
                   id: 'client-1',
                   name: 'ACME',
                   auth_user_id: 'auth-user-1',
-                  pennylane_customer_id: 'pl-cust-1',
+                  pennylane_customer_id: '275890907',
                 },
                 error: null,
               }),
@@ -378,7 +378,7 @@ describe('createSubscription', () => {
                   id: 'client-1',
                   name: 'ACME',
                   auth_user_id: 'auth-user-1',
-                  pennylane_customer_id: 'pl-cust-1',
+                  pennylane_customer_id: '275890907',
                 },
                 error: null,
               }),
@@ -421,7 +421,7 @@ describe('createSubscription', () => {
                   id: 'client-1',
                   name: 'ACME',
                   auth_user_id: 'auth-user-1',
-                  pennylane_customer_id: 'pl-cust-1',
+                  pennylane_customer_id: '275890907',
                 },
                 error: null,
               }),

@@ -59,6 +59,13 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
 
   let pennylaneCustomerId = client.pennylane_customer_id as string | null
 
+  // Un ID corrompu ('undefined', non-numérique) est traité comme absent → re-création automatique
+  if (pennylaneCustomerId && isNaN(parseInt(pennylaneCustomerId, 10))) {
+    console.warn(`[LAB_INVOICE] pennylane_customer_id corrompu ("${pennylaneCustomerId}") pour client ${clientId} — re-création`)
+    await supabase.from('clients').update({ pennylane_customer_id: null }).eq('id', clientId)
+    pennylaneCustomerId = null
+  }
+
   // Auto-création du compte Pennylane si absent (même logique que create-quote / create-subscription)
   if (!pennylaneCustomerId) {
     const clientEmail = client.email as string | null
