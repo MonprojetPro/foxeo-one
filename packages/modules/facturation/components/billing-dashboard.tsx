@@ -1,13 +1,17 @@
 'use client'
 
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useTransition } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getClientsWithPennylane } from '../actions/get-clients'
 import { useBillingMetrics } from '../hooks/use-billing'
+import { triggerBillingSync } from '../actions/trigger-billing-sync'
+import { RefreshCw } from 'lucide-react'
+
 import { QuoteForm } from './quote-form'
 import { QuotesList } from './quotes-list'
 import { InvoicesList } from './invoices-list'
 import { SubscriptionsList } from './subscriptions-list'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import type { ClientWithPennylane } from '../types/billing.types'
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
@@ -81,6 +85,8 @@ function BillingMetricsSection() {
 
 export function BillingDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('devis')
+  const [isSyncing, startSync] = useTransition()
+  const queryClient = useQueryClient()
 
   const { data: clients = [] } = useQuery<ClientWithPennylane[]>({
     queryKey: ['billing', 'clients-with-pennylane'],
@@ -92,14 +98,37 @@ export function BillingDashboard() {
     staleTime: 5 * 60 * 1_000,
   })
 
+  function handleSync() {
+    startSync(async () => {
+      const result = await triggerBillingSync()
+      if (result.error) {
+        showError(`Sync échouée : ${result.error.message}`)
+        return
+      }
+      await queryClient.invalidateQueries({ queryKey: ['billing'] })
+      showSuccess('Données synchronisées depuis Pennylane')
+    })
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold">Comptabilité</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Gestion des devis, factures et abonnements via Pennylane
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Comptabilité</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Gestion des devis, factures et abonnements via Pennylane
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleSync}
+          disabled={isSyncing}
+          className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/50 disabled:opacity-50 transition-colors"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+          {isSyncing ? 'Synchronisation…' : 'Synchroniser'}
+        </button>
       </div>
 
       {/* Métriques financières (AC #4) */}
