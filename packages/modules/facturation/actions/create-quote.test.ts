@@ -114,12 +114,13 @@ describe('createAndSendQuote', () => {
     expect(result.error?.code).toBe('CLIENT_NOT_FOUND')
   })
 
-  it('returns NO_PENNYLANE_ID when client has no pennylane_customer_id', async () => {
-    const supabase = makeSupabaseMock({ clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: null } })
+  it('returns MISSING_EMAIL when client has no pennylane_customer_id and no email (auto-creation impossible)', async () => {
+    // Story G : sans pennylane_customer_id, on tente l'auto-création — mais sans email c'est impossible
+    const supabase = makeSupabaseMock({ clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: null, email: null } })
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
 
     const result = await createAndSendQuote('client-1', mockLineItems, {})
-    expect(result.error?.code).toBe('NO_PENNYLANE_ID')
+    expect(result.error?.code).toBe('MISSING_EMAIL')
   })
 
   it('returns error when Pennylane POST fails', async () => {

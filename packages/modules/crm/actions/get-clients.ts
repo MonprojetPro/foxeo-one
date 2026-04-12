@@ -1,11 +1,11 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { ClientListItem as ClientListItemSchema } from '../types/crm.types'
 import type { ClientListItem, ClientFilters } from '../types/crm.types'
 
@@ -45,6 +45,7 @@ export async function getClients(
         `
         id,
         operator_id,
+        first_name,
         name,
         company,
         email,
@@ -55,7 +56,11 @@ export async function getClients(
         is_pinned,
         deferred_until,
         archived_at,
-        retention_until
+        retention_until,
+        hub_seen_at,
+        prospect_stage,
+        project_type,
+        lead_message
       `
       )
       .eq('operator_id', operatorId)
@@ -66,9 +71,8 @@ export async function getClients(
       // If specific statuses are requested, filter by those statuses
       query = query.in('status', filters.status)
     } else {
-      // Story 2.9b AC2: Exclude archived clients by default when no status filter is active
-      query = query.neq('status', 'archived')
-      // Story 9.5c: Also exclude deleted (anonymized) clients by default
+      // Exclude deleted (anonymized) clients by default — never visible in UI
+      // Prospects, archived, suspended, active clients are all visible
       query = query.neq('status', 'deleted')
     }
 
@@ -98,6 +102,7 @@ export async function getClients(
     const clients: ClientListItem[] = data.map((client) =>
       ClientListItemSchema.parse({
         id: client.id,
+        firstName: client.first_name ?? undefined,
         name: client.name,
         company: client.company,
         email: client.email ?? undefined,
@@ -109,6 +114,10 @@ export async function getClients(
         deferredUntil: client.deferred_until ?? null,
         archivedAt: client.archived_at ?? null,
         retentionUntil: client.retention_until ?? null,
+        hubSeenAt: client.hub_seen_at ?? null,
+        prospectStage: client.prospect_stage ?? null,
+        projectType: client.project_type ?? null,
+        leadMessage: client.lead_message ?? null,
       })
     )
 

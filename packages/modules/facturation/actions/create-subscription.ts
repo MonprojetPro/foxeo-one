@@ -4,7 +4,7 @@ import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { LineItem, PennylaneBillingSubscription } from '../types/billing.types'
 
 // ============================================================
@@ -22,7 +22,7 @@ export const PLAN_MONTHLY_PRICE: Record<SubscriptionPlan, number | null> = {
   agentique: 99,
 }
 
-// Mapping plan Foxeo → label Pennylane (1ère ligne)
+// Mapping plan MonprojetPro → label Pennylane (1ère ligne)
 export const PLAN_LABEL: Record<SubscriptionPlan, string> = {
   ponctuel: 'Forfait ponctuel',
   essentiel: 'Abonnement Essentiel',
@@ -65,7 +65,7 @@ export async function createSubscription(
   // Récupérer le client pour obtenir pennylane_customer_id
   const { data: client, error: clientError } = await supabase
     .from('clients')
-    .select('id, name, auth_user_id, pennylane_customer_id')
+    .select('id, name, company, email, auth_user_id, pennylane_customer_id')
     .eq('id', input.clientId)
     .single()
 
@@ -76,15 +76,27 @@ export async function createSubscription(
     }
   }
 
-  const pennylaneCustomerId = client.pennylane_customer_id as string | null
+  let pennylaneCustomerId = client.pennylane_customer_id as string | null
+
+  // Story G — Auto-créer le compte Pennylane si absent
   if (!pennylaneCustomerId) {
-    return {
-      data: null,
-      error: {
-        message: "Ce client n'a pas de compte Pennylane. Créez-le d'abord.",
-        code: 'NO_PENNYLANE_ID',
-      },
+    const clientEmail = client.email as string | null
+    if (!clientEmail) {
+      return {
+        data: null,
+        error: { message: 'Email client manquant — impossible de créer le compte Pennylane', code: 'MISSING_EMAIL' },
+      }
     }
+    const customerResult = await pennylaneClient.post<{ id: number }>('/company_customers', {
+      name: (client.company as string | null) ?? (client.name as string),
+      emails: [clientEmail],
+      billing_address: { address: '', postal_code: '', city: '', country_alpha2: 'FR' },
+    })
+    if (customerResult.error || !customerResult.data) {
+      return { data: null, error: customerResult.error ?? { message: 'Échec création Pennylane', code: 'PENNYLANE_ERROR' } }
+    }
+    pennylaneCustomerId = String(customerResult.data.id)
+    await supabase.from('clients').update({ pennylane_customer_id: pennylaneCustomerId }).eq('id', input.clientId)
   }
 
   // Construire les line_items

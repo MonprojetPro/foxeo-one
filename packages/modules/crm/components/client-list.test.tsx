@@ -21,7 +21,7 @@ vi.mock('../actions/import-clients-csv', () => ({
 vi.mock('../actions/reactivate-client', () => ({
   reactivateClient: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
 }))
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal()
   return { ...actual, showSuccess: vi.fn(), showError: vi.fn() }
 })
@@ -119,10 +119,10 @@ describe('ClientList', () => {
       retentionUntil: futureDate,
     }
 
-    it('should render archived badge with date for archived client', () => {
+    it('should render the Archivé status text for an archived client', () => {
       render(<ClientList clients={[archivedClient]} />)
 
-      expect(screen.getByTestId(`archived-badge-${archivedClient.id}`)).toBeInTheDocument()
+      expect(screen.getByText('Archivé')).toBeInTheDocument()
     })
 
     it('should show retention date for archived client', () => {

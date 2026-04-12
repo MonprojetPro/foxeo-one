@@ -66,12 +66,31 @@ export type Database = {
           operator_id: string
           email: string
           name: string
+          first_name: string | null
           company: string | null
           contact: string | null
+          phone: string | null
           sector: string | null
           client_type: 'complet' | 'direct_one' | 'ponctuel'
-          status: 'active' | 'suspended' | 'archived'
+          status: 'active' | 'suspended' | 'archived' | 'deleted' | 'prospect'
           auth_user_id: string | null
+          is_pinned: boolean | null
+          deferred_until: string | null
+          suspended_at: string | null
+          archived_at: string | null
+          retention_until: string | null
+          previous_status: string | null
+          pennylane_customer_id: string | null
+          lab_paid: boolean | null
+          lab_paid_at: string | null
+          lab_amount: number | null
+          lab_invoice_sent_at: string | null
+          hub_seen_at: string | null
+          prospect_stage: 'nouveau' | 'qualifié' | 'sans_suite' | null
+          project_type: string | null
+          lead_message: string | null
+          notes: string | null
+          website: string | null
           created_at: string
           updated_at: string
         }
@@ -80,12 +99,31 @@ export type Database = {
           operator_id: string
           email: string
           name: string
+          first_name?: string | null
           company?: string | null
           contact?: string | null
+          phone?: string | null
           sector?: string | null
           client_type: 'complet' | 'direct_one' | 'ponctuel'
-          status?: 'active' | 'suspended' | 'archived'
+          status?: 'active' | 'suspended' | 'archived' | 'deleted' | 'prospect'
           auth_user_id?: string | null
+          is_pinned?: boolean | null
+          deferred_until?: string | null
+          suspended_at?: string | null
+          archived_at?: string | null
+          retention_until?: string | null
+          previous_status?: string | null
+          pennylane_customer_id?: string | null
+          lab_paid?: boolean | null
+          lab_paid_at?: string | null
+          lab_amount?: number | null
+          lab_invoice_sent_at?: string | null
+          hub_seen_at?: string | null
+          prospect_stage?: 'nouveau' | 'qualifié' | 'sans_suite' | null
+          project_type?: string | null
+          lead_message?: string | null
+          notes?: string | null
+          website?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -94,12 +132,31 @@ export type Database = {
           operator_id?: string
           email?: string
           name?: string
+          first_name?: string | null
           company?: string | null
           contact?: string | null
+          phone?: string | null
           sector?: string | null
           client_type?: 'complet' | 'direct_one' | 'ponctuel'
-          status?: 'active' | 'suspended' | 'archived'
+          status?: 'active' | 'suspended' | 'archived' | 'deleted' | 'prospect'
           auth_user_id?: string | null
+          is_pinned?: boolean | null
+          deferred_until?: string | null
+          suspended_at?: string | null
+          archived_at?: string | null
+          retention_until?: string | null
+          previous_status?: string | null
+          pennylane_customer_id?: string | null
+          lab_paid?: boolean | null
+          lab_paid_at?: string | null
+          lab_amount?: number | null
+          lab_invoice_sent_at?: string | null
+          hub_seen_at?: string | null
+          prospect_stage?: 'nouveau' | 'qualifié' | 'sans_suite' | null
+          project_type?: string | null
+          lead_message?: string | null
+          notes?: string | null
+          website?: string | null
           created_at?: string
           updated_at?: string
         }

@@ -2,9 +2,9 @@
 
 import { useTransition } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { DataTable, type ColumnDef } from '@foxeo/ui'
-import { Badge, Button } from '@foxeo/ui'
-import { showSuccess, showError } from '@foxeo/ui'
+import { DataTable, type ColumnDef } from '@monprojetpro/ui'
+import { Badge, Button } from '@monprojetpro/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { CreateClientDialog } from './create-client-dialog'
 import { ImportCsvDialog } from './import-csv-dialog'
 import { PinButton } from './pin-button'
@@ -41,6 +41,10 @@ const formatDate = (isoDate: string): string => {
 // Check if a client is currently deferred
 const isDeferred = (client: ClientListItem): boolean =>
   !!client.deferredUntil && new Date(client.deferredUntil) > new Date()
+
+// Prospect jamais vu par MiKL → badge "Nouveau"
+const isNewProspect = (client: ClientListItem): boolean =>
+  client.status === 'prospect' && client.hubSeenAt == null
 
 // Story 9.5c: Check if archived client can still be reactivated
 const canReactivate = (client: ClientListItem): boolean =>
@@ -97,16 +101,19 @@ export function ClientList({ clients, onRowClick, showCreateButton = true, onlin
         <div className="flex items-center gap-2">
           {/* AC4 (Story 3.5): Realtime presence dot next to client name */}
           <PresenceDot isOnline={onlineSet.has(client.id)} clientId={client.id} />
-          <span>{client.name}</span>
+          <span>{client.firstName ? `${client.firstName} ${client.name}` : client.name}</span>
+          {isNewProspect(client) && (
+            <Badge
+              variant="default"
+              className="text-xs bg-blue-500 text-white border-0 animate-pulse"
+              data-testid={`new-prospect-badge-${client.id}`}
+            >
+              Nouveau
+            </Badge>
+          )}
           {isDeferred(client) && (
             <Badge variant="outline" className="text-xs" data-testid={`deferred-badge-${client.id}`}>
               Reporté
-            </Badge>
-          )}
-          {/* Story 9.5c: Archived badge */}
-          {client.status === 'archived' && client.archivedAt && (
-            <Badge variant="secondary" className="text-xs" data-testid={`archived-badge-${client.id}`}>
-              Archivé le {formatDate(client.archivedAt)}
             </Badge>
           )}
         </div>

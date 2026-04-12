@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge } from '@foxeo/ui'
+import { Badge } from '@monprojetpro/ui'
 import type { ClientStatus } from '../types/crm.types'
 
 interface ClientStatusBadgeProps {
@@ -21,17 +21,27 @@ const statusConfig: Record<
   active: {
     label: 'Actif',
     variant: 'default',
-    className: 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20',
+    className: 'bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/40 font-medium',
   },
   suspended: {
     label: 'Suspendu',
     variant: 'secondary',
-    className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
+    className: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40 font-medium',
   },
   archived: {
     label: 'Archivé',
     variant: 'outline',
-    className: 'bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/20',
+    className: 'bg-slate-500/20 text-slate-500 dark:text-slate-400 border-slate-500/40',
+  },
+  deleted: {
+    label: 'Supprimé',
+    variant: 'destructive',
+    className: 'bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/40',
+  },
+  prospect: {
+    label: 'Prospect',
+    variant: 'outline',
+    className: 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/40 font-medium',
   },
 }
 

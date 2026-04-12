@@ -1,9 +1,10 @@
 import { z } from 'zod'
-import { createClientSchema, updateClientSchema } from '@foxeo/utils'
+import { createClientSchema, updateClientSchema } from '@monprojetpro/utils'
 
 // Client type enums
 export const ClientTypeEnum = z.enum(['complet', 'direct_one', 'ponctuel'])
-export const ClientStatusEnum = z.enum(['active', 'suspended', 'archived', 'deleted'])
+export const ClientStatusEnum = z.enum(['active', 'suspended', 'archived', 'deleted', 'prospect'])
+export const ProspectStageEnum = z.enum(['nouveau', 'qualifié', 'sans_suite'])
 
 // Client Config types (from client_configs table)
 export const ClientConfig = z.object({
@@ -22,6 +23,7 @@ export type ClientConfig = z.infer<typeof ClientConfig>
 export const Client = z.object({
   id: z.string().uuid(),
   operatorId: z.string().uuid(),
+  firstName: z.string().optional(),
   name: z.string().min(1, 'Le nom est requis'),
   company: z.string().min(1, 'L\'entreprise est requise'),
   email: z.string().email('Email invalide'),
@@ -43,10 +45,12 @@ export const Client = z.object({
 export type Client = z.infer<typeof Client>
 export type ClientType = z.infer<typeof ClientTypeEnum>
 export type ClientStatus = z.infer<typeof ClientStatusEnum>
+export type ProspectStage = z.infer<typeof ProspectStageEnum>
 
 // Client list item schema (optimized for list views)
 export const ClientListItem = z.object({
   id: z.string().uuid(),
+  firstName: z.string().optional(),
   name: z.string(),
   company: z.string(),
   email: z.string().optional(),
@@ -58,6 +62,11 @@ export const ClientListItem = z.object({
   deferredUntil: z.string().datetime({ offset: true }).nullable().optional(),
   archivedAt: z.string().datetime({ offset: true }).nullable().optional(),
   retentionUntil: z.string().datetime({ offset: true }).nullable().optional(),
+  // Prospect fields (Story parcours entrée)
+  hubSeenAt: z.string().datetime({ offset: true }).nullable().optional(),
+  prospectStage: ProspectStageEnum.nullable().optional(),
+  projectType: z.string().nullable().optional(),
+  leadMessage: z.string().nullable().optional(),
 })
 
 export type ClientListItem = z.infer<typeof ClientListItem>
@@ -72,7 +81,7 @@ export const ClientFilters = z.object({
 
 export type ClientFilters = z.infer<typeof ClientFilters>
 
-// Create/Update input schemas (re-exported from @foxeo/utils)
+// Create/Update input schemas (re-exported from @monprojetpro/utils)
 export const CreateClientInput = createClientSchema
 export const UpdateClientInput = updateClientSchema
 
@@ -83,6 +92,7 @@ export type UpdateClientInput = z.infer<typeof updateClientSchema>
 export type ClientDB = {
   id: string
   operator_id: string
+  first_name?: string
   name: string
   company: string
   email: string
@@ -101,17 +111,8 @@ export type ClientDB = {
 }
 
 // Activity Log types (for client timeline/history)
-export const ActivityLogTypeEnum = z.enum([
-  'client_created',
-  'status_changed',
-  'validation_submitted',
-  'validation_approved',
-  'validation_rejected',
-  'visio_completed',
-  'graduated_to_one',
-  'document_shared',
-  'message_sent'
-])
+// eventType maps to the `action` column in the activity_logs DB table
+export const ActivityLogTypeEnum = z.string()
 
 export const ActivityLog = z.object({
   id: z.string().uuid(),
@@ -123,7 +124,7 @@ export const ActivityLog = z.object({
 })
 
 export type ActivityLog = z.infer<typeof ActivityLog>
-export type ActivityLogType = z.infer<typeof ActivityLogTypeEnum>
+export type ActivityLogType = string
 
 // Client Document types (stub for Epic 4)
 export const ClientDocument = z.object({

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { ClientListItem } from '../types/crm.types'
 
 const validOperatorUuid = '550e8400-e29b-41d4-a716-446655440000'
@@ -26,7 +26,7 @@ const mockFrom = vi.fn((table: string) => {
 })
 const mockGetUser = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },
@@ -173,7 +173,7 @@ describe('getClients Server Action', () => {
     expect(mockEq).toHaveBeenCalledWith('operator_id', validOperatorUuid)
   })
 
-  it('should exclude archived clients by default', async () => {
+  it('should exclude deleted clients by default (prospects and archived are visible)', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: validAuthUuid } },
       error: null,
@@ -184,7 +184,7 @@ describe('getClients Server Action', () => {
     const { getClients } = await import('./get-clients')
     await getClients()
 
-    expect(mockNeq).toHaveBeenCalledWith('status', 'archived')
+    expect(mockNeq).toHaveBeenCalledWith('status', 'deleted')
   })
 
   it('should include archived clients when archived filter is active', async () => {

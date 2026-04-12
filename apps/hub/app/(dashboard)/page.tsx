@@ -56,6 +56,19 @@ function minutesUntil(iso: string | null): number | null {
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
+async function getNewProspects(operatorId: string) {
+  const supabase = await createServerSupabaseClient()
+  const { data } = await supabase
+    .from('clients')
+    .select('id, first_name, name, company, email, lead_message, created_at')
+    .eq('operator_id', operatorId)
+    .eq('status', 'prospect')
+    .is('hub_seen_at', null)
+    .order('created_at', { ascending: false })
+    .limit(5)
+  return (data ?? []) as { id: string; first_name: string | null; name: string; company: string; email: string; lead_message: string | null; created_at: string }[]
+}
+
 async function getHubStats(operatorId: string) {
   const supabase = await createServerSupabaseClient()
 
@@ -179,9 +192,11 @@ export default async function HubHomePage() {
   const [
     { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, mrr, unpaidAmount },
     breakdown,
+    newProspects,
   ] = await Promise.all([
     getHubStats(operatorId),
     getClientsBreakdown(operatorId),
+    getNewProspects(operatorId),
   ])
 
   const today = new Date().toLocaleDateString('fr-FR', {
@@ -311,6 +326,36 @@ export default async function HubHomePage() {
           </p>
         </DashboardCard>
       </div>
+
+      {/* Nouveaux prospects non vus */}
+      {newProspects.length > 0 && (
+        <DashboardCard
+          title="Nouveaux prospects"
+          badge={newProspects.length}
+          linkHref="/modules/crm?status=prospect"
+        >
+          {newProspects.map((p) => {
+            const displayName = p.first_name ? `${p.first_name} ${p.name}` : p.name
+            return (
+              <div
+                key={p.id}
+                className="flex items-start gap-3 px-3 py-2.5 hover:bg-muted/40 transition-colors"
+              >
+                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-400 animate-pulse" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{p.company} · {p.email}</p>
+                  {p.lead_message && (
+                    <p className="text-xs text-muted-foreground/70 line-clamp-1 mt-0.5 italic">
+                      {p.lead_message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </DashboardCard>
+      )}
 
       {/* Messages + Alertes Élio */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
