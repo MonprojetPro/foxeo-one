@@ -68,10 +68,14 @@ export async function createPennylaneCustomer(
   const { supabase, error: authError } = await assertOperator()
   if (authError || !supabase) return { data: null, error: authError }
 
+  if (!email || email.trim() === '') {
+    return { data: null, error: { message: 'Email client requis pour créer un compte Pennylane', code: 'MISSING_EMAIL' } }
+  }
+
   // V2 API : endpoint company_customers, emails = string[], billing_address obligatoire
   const result = await pennylaneClient.post<PennylaneCustomer>('/company_customers', {
     name: companyName,
-    emails: [email],
+    emails: [email.trim()],
     billing_address: {
       address: billingAddress?.address ?? '',
       postal_code: billingAddress?.postalCode ?? '',
@@ -83,8 +87,14 @@ export async function createPennylaneCustomer(
   if (result.error) return { data: null, error: result.error }
   if (!result.data) return { data: null, error: { message: 'No data returned', code: 'EMPTY_RESPONSE' } }
 
-  // V2 : réponse directe (pas de wrapper { customer: ... }), id est un number
-  const pennylaneCustomerId = String(result.data.id)
+  // V2 API : la réponse peut être directe { id, ... } ou wrappée { company_customer: { id, ... } }
+  const rawData = result.data as Record<string, unknown>
+  const customerData = (rawData.company_customer as Record<string, unknown> | undefined) ?? rawData
+  const pennylaneCustomerId = customerData.id != null ? String(customerData.id) : undefined
+
+  if (!pennylaneCustomerId || pennylaneCustomerId === 'undefined') {
+    return { data: null, error: { message: 'ID Pennylane invalide dans la réponse API', code: 'INVALID_RESPONSE' } }
+  }
 
   // Stocker le pennylane_customer_id dans la table clients (réutilise le client existant)
   const { error: dbError } = await supabase

@@ -145,6 +145,29 @@ describe('billing-proxy', () => {
       }))
     })
 
+    it('handles wrapped response { company_customer: { id } }', async () => {
+      const supabase = makeSupabaseMock()
+      mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+      mockPennylane.post.mockResolvedValue({
+        data: { company_customer: { id: 999888, name: 'ACME Corp', emails: ['acme@example.com'], billing_address: null, created_at: '', updated_at: '' } },
+        error: null,
+      })
+
+      const result = await createPennylaneCustomer('client-1', 'ACME Corp', 'acme@example.com')
+      expect(result.data).toBe('999888')
+      expect(result.error).toBeNull()
+    })
+
+    it('returns MISSING_EMAIL when email is empty', async () => {
+      const supabase = makeSupabaseMock()
+      mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+
+      const result = await createPennylaneCustomer('client-1', 'ACME', '')
+      expect(result.data).toBeNull()
+      expect(result.error?.code).toBe('MISSING_EMAIL')
+      expect(mockPennylane.post).not.toHaveBeenCalled()
+    })
+
     it('returns error when Pennylane API fails', async () => {
       const supabase = makeSupabaseMock()
       mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
