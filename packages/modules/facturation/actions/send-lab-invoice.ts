@@ -97,7 +97,7 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
       customer_id: parseInt(pennylaneCustomerId, 10),
       date,
       deadline: deadlineStr,
-      line_items: [
+      invoice_lines: [
         {
           label: 'Forfait Lab MonprojetPro',
           quantity: 1,

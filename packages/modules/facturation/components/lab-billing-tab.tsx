@@ -75,7 +75,9 @@ export function LabBillingTab({ clientId, clientName }: LabBillingTabProps) {
     startTransition(async () => {
       const result = await sendLabInvoice(clientId)
       if (result.error) {
-        showError(result.error.message)
+        console.error('[LAB_INVOICE] Client error:', result.error)
+        const detail = result.error.details ? ` — ${JSON.stringify(result.error.details)}` : ''
+        showError(`${result.error.message}${detail}`)
         return
       }
       showSuccess(`Facture Lab envoyée à ${clientName}`)

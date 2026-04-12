@@ -163,7 +163,7 @@ describe('sendLabInvoice', () => {
       '/customer_invoices',
       expect.objectContaining({
         customer_id: 275890907,
-        line_items: expect.arrayContaining([
+        invoice_lines: expect.arrayContaining([
           expect.objectContaining({
             label: 'Forfait Lab MonprojetPro',
             quantity: 1,
