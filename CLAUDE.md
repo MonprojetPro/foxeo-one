@@ -1,8 +1,10 @@
-# CLAUDE.md — Foxeo One
+# CLAUDE.md — MonprojetPro
+
+> ⚠️ **Rebrand (Avril 2026)** : La plateforme s'appelait autrefois "Foxeo" / "Foxio". Ces noms n'existent plus. Le produit s'appelle désormais **MonprojetPro** avec le domaine **monprojet-pro.com**. Ne jamais utiliser les anciens noms dans les URLs, docs ou commentaires.
 
 ## Project Overview
 
-Foxeo is a modular SaaS B2B platform for entrepreneurs, using the "Centaure" model (AI + Human). Three dashboards: **Hub** (MiKL operator), **Lab** (client incubation), **One** (client business tool).
+MonprojetPro is a modular SaaS B2B platform for entrepreneurs, using the "Centaure" model (AI + Human). Three dashboards: **Hub** (MiKL operator), **Lab** (client incubation), **One** (client business tool).
 
 - **Monorepo Turborepo** with 2 apps (`hub`, `client`) + shared packages
 - **Stack**: Next.js 16.1, React 19, TypeScript strict, Tailwind CSS 4, Vitest
@@ -15,7 +17,7 @@ Foxeo is a modular SaaS B2B platform for entrepreneurs, using the "Centaure" mod
 
 | Pattern | Usage | Example |
 |---------|-------|---------|
-| **Server Component** | Read data | RSC with `@foxeo/supabase` server client |
+| **Server Component** | Read data | RSC with `@monprojetpro/supabase` server client |
 | **Server Action** | Mutations | `'use server'` functions in `actions/` |
 | **API Route** | External webhooks only | `app/api/webhooks/[service]/route.ts` |
 
@@ -67,21 +69,21 @@ Modules CANNOT import other modules directly. Inter-module communication goes th
 | Constants | UPPER_SNAKE_CASE | `MAX_FILE_SIZE` |
 | Types/Interfaces | PascalCase, no `I` prefix | `ClientConfig` |
 
-**DB ↔ API boundary**: Transform snake_case to camelCase at the service layer using `toCamelCase()` / `toSnakeCase()` from `@foxeo/utils`.
+**DB ↔ API boundary**: Transform snake_case to camelCase at the service layer using `toCamelCase()` / `toSnakeCase()` from `@monprojetpro/utils`.
 
 ## Project Structure
 
 ```
-foxeo-dash/
+monprojetpro-dash/
 ├── apps/
-│   ├── hub/                    # Foxeo-Hub (MiKL admin) → hub.foxeo.io
-│   └── client/                 # Foxeo-Client template → lab.foxeo.io / {slug}.foxeo.io
+│   ├── hub/                    # Hub MonprojetPro (MiKL admin) → hub.monprojet-pro.com
+│   └── client/                 # Client MonprojetPro template → lab.monprojet-pro.com / {slug}.monprojet-pro.com
 ├── packages/
-│   ├── ui/                     # @foxeo/ui — shadcn/ui + Radix, dashboard shell, themes
-│   ├── supabase/               # @foxeo/supabase — client, server, middleware, realtime helpers
-│   ├── utils/                  # @foxeo/utils — cn, dates, case-transform, validation schemas
-│   ├── types/                  # @foxeo/types — database.types.ts (auto-generated), ModuleManifest, ActionResponse
-│   ├── tsconfig/               # @foxeo/tsconfig
+│   ├── ui/                     # @monprojetpro/ui — shadcn/ui + Radix, dashboard shell, themes
+│   ├── supabase/               # @monprojetpro/supabase — client, server, middleware, realtime helpers
+│   ├── utils/                  # @monprojetpro/utils — cn, dates, case-transform, validation schemas
+│   ├── types/                  # @monprojetpro/types — database.types.ts (auto-generated), ModuleManifest, ActionResponse
+│   ├── tsconfig/               # @monprojetpro/tsconfig
 │   └── modules/                # Catalogue: core-dashboard, chat, elio, documents, visio, crm, etc.
 ├── supabase/                   # Migrations, seed, config
 ├── docker/                     # OpenVidu, Cal.com
@@ -136,13 +138,13 @@ Full reference: `_bmad-output/planning-artifacts/design-system-themes.css`
 - **Typography**: Poppins (headings/UI) + Inter (body)
 - **Theme generator**: [tweakcn.com](https://tweakcn.com)
 
-### Visual Assets (`image foxeo/`)
+### Visual Assets (`image monprojetpro/`)
 
 | Asset | File | Usage |
 |-------|------|-------|
-| Logo Hub | `logo foxeo hub.png` | Dashboard shell header (Hub) |
-| Logo Lab | `logo foxeo lab.png` | Dashboard shell header (Lab) |
-| Logo One | `logo foxeo one.png` | Dashboard shell header (One) |
+| Logo Hub | `logo monprojetpro hub.png` | Dashboard shell header (Hub) |
+| Logo Lab | `logo monprojetpro lab.png` | Dashboard shell header (Lab) |
+| Logo One | `logo monprojetpro one.png` | Dashboard shell header (One) |
 | Élio Lab | `Image Elio lab.png` | Agent Élio — version Lab |
 | Élio One | `Image Elio one.png` | Agent Élio — version One |
 | Élio One+ | `Image Elio one +.png` | Agent Élio — variante One |
@@ -151,7 +153,7 @@ Full reference: `_bmad-output/planning-artifacts/design-system-themes.css`
 
 ### Key UI Patterns
 
-- **Dashboard shell** shared across apps (`@foxeo/ui/dashboard-shell`) with content slot
+- **Dashboard shell** shared across apps (`@monprojetpro/ui/dashboard-shell`) with content slot
 - **Module loading**: `loading.tsx` (skeleton) + `error.tsx` (error boundary) per module route
 - **Élio chat** accessible on every page (floating, non-intrusive)
 - **Validation Hub** as primary MiKL ↔ Client workflow (1-click validate/comment/video)
@@ -159,15 +161,25 @@ Full reference: `_bmad-output/planning-artifacts/design-system-themes.css`
 
 ## Deployment Model
 
-| Target | Model | URL |
-|--------|-------|-----|
-| **Hub** | Single instance | `hub.foxeo.io` |
-| **Lab** | Multi-tenant (RLS) | `lab.foxeo.io` |
-| **One** | Instance per client | `{slug}.foxeo.io` |
+`apps/client` est une base de code unique qui sert à la fois Lab et One. La cible de déploiement dépend de l'état du client (pré- ou post-graduation).
 
-Hub communicates with instances via **API REST + HMAC-signed webhooks**. No shared databases between Hub and client instances.
+| Target | Model | URL | Contenu |
+|--------|-------|-----|---------|
+| **Hub** | Instance unique | `hub.monprojet-pro.com` | Cockpit MiKL (opérateur) |
+| **Lab (pré-graduation)** | Multi-tenant (RLS) | `lab.monprojet-pro.com` | `apps/client` en mode Lab uniquement pour les clients en parcours d'incubation |
+| **Lab + One (post-graduation)** | Instance dédiée par client | `{slug}.monprojet-pro.com` | `apps/client` avec **les deux modules** Lab et One, données client reportées |
 
-Client One **owns** their code + data. On exit: export code + DB + documentation.
+**Toggle Mode Lab / Mode One** : après graduation, un switch persistant dans le shell permet au client de basculer instantanément entre la vue Lab (thème violet, historique parcours) et la vue One (thème vert/orange, outil quotidien). Le jeu d'onglets et le thème changent, la session ne redémarre pas.
+
+**Feature flag Élio Lab** : après graduation, `client_config.elio_lab_enabled` est `false` par défaut. L'agent Élio Lab est désactivé. MiKL peut le réactiver depuis le Hub à tout moment (ex : lancement d'un nouveau projet d'amélioration pour ce client).
+
+**Export One standalone** : le module Lab et les agents sont tree-shakables à la build via les flags `NEXT_PUBLIC_ENABLE_LAB_MODULE` et `NEXT_PUBLIC_ENABLE_AGENTS`. En cas de sortie d'abonnement, le client repart avec un bundle One pur (sans Lab, sans agents MonprojetPro).
+
+Hub communicates with client instances via **API REST + HMAC-signed webhooks**. No shared databases between Hub and client instances.
+
+Client **owns** their code + data. On exit: export One standalone (Lab + agents tree-shaken) + DB + documentation.
+
+See `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md` for full rationale.
 
 ## Quality Gates (CI — all blocking)
 
@@ -200,39 +212,42 @@ npm run clean         # Clean builds (turbo clean)
 
 ## Story Pipeline — Enchainement automatique (MUST follow)
 
-Le pipeline est en **2 phases** separees par un changement de modele obligatoire pour le Code Review.
+> 🚫 **REGLE ABSOLUE — NE JAMAIS invoquer le skill `bmad:bmm:workflows:dev-story`** pour développer une story.
+> Quand MiKL dit "dev la story X", "SPARK développe la story X", "commence la story X" → exécuter DIRECTEMENT le pipeline MPP ci-dessous, sans passer par aucun skill BMAD ni charger workflow.xml.
 
-### Phase 1 — Dev Story (Sonnet, automatique)
+Le pipeline s'exécute **entièrement en autonome** jusqu'au HALT final (Gate MiKL).
 
-Quand le Dev Agent execute une story via `ds` (dev-story workflow), il DOIT enchainer **automatiquement** les etapes suivantes sans pause :
+### Pipeline complet — Story par story
 
-1. **Dev Story** — Implementer toutes les tasks/subtasks de la story
-2. **Tests** — Lancer `npx vitest run` et verifier 0 echec
+| Étape | Agent | Action | Règles projet |
+|-------|-------|--------|---------------|
+| **0** | ATLAS | Consulter `docs/08-lessons-learned.md` — leçons pertinentes à la story | Toujours en premier |
+| **1** | SPARK | Lire le fichier story `_bmad-output/implementation-artifacts/[story-key].md` — implémenter toutes les tasks/subtasks | Jamais d'extra features |
+| **2** | TESS | Lancer `npx vitest run [fichiers story uniquement]` — si KO : auto-fix max 3 tentatives | **JAMAIS** le full suite |
+| **3** | SCAN | Code review adversarial (`_bmad/bmm/workflows/4-implementation/code-review/instructions.xml`) — 3-10 issues minimum, fix auto HIGH+MEDIUM | Jamais "looks good" |
+| **4** | TESS | Re-test après fixes SCAN — confirmer 0 régression | Mêmes fichiers story |
+| **5** | CLEAN | Vérifier code mort / console.log — seulement si SCAN a trouvé du bruit | Optionnel |
+| **6** | DOC | Mettre à jour `docs/client-release-notes.md` si feature touche un module client | Skip si infra/migration interne |
+| **7** | PIXEL | Vérifier responsive + accessibilité + cohérence design Hub/One | Skip si story 100% backend |
+| **8** | Auto | `git add` fichiers modifiés + `git commit` + `git push origin master` | Format : `feat: Story X.Y — Description (N tests)` |
+| **9** | ATLAS | Enregistrer leçons dans `docs/08-lessons-learned.md` si problèmes rencontrés | Skip si story sans embûche |
+| **⛔ HALT** | MiKL | Afficher résumé → attendre validation sur preview | Gate obligatoire |
 
-**⛔ HALT OBLIGATOIRE apres l'etape 2** — Afficher le message suivant et ATTENDRE l'utilisateur :
+**Message HALT :**
+> **Pipeline terminé — Story X.Y.** Tests : ✅ N passing. Commit : `[hash]` pushé.
+> **MiKL** : valide sur la preview pour confirmer.
 
-> **Phase 1 terminee.** Tests : ✅ N tests passing.
->
-> **Action requise :** Lance `/model`, switche sur **Claude Opus 4.6**, puis dis **"cr"** pour lancer la Phase 2.
+### Règles projet spécifiques
 
-### Phase 2 — Code Review + Fixes + Commit + Push (Opus, entierement automatique)
+- Tests : `npx vitest run [fichier1.test.ts] [fichier2.test.ts]` — uniquement les fichiers de la story (jamais `npx vitest run` seul)
+- Commit message : suivre le pattern `git log --oneline -5`
+- Story file : mettre à jour tasks [x], File List, Completion Notes, status → `done`
+- sprint-status.yaml : mettre à jour le status de la story → `done`
+- Si un fix SCAN crée une régression → itérer TESS → fix jusqu'à 0 échec avant de continuer
 
-A la reception de **"cr"** (tout s'enchaine automatiquement sans pause, sur Opus) :
+### Code Review "cr"
 
-3. **Code Review adversarial** — Executer le workflow code-review (instructions de `_bmad/bmm/workflows/4-implementation/code-review/instructions.xml`) : charger la story, analyser git vs story, verifier chaque AC et task [x], trouver 3-10 issues minimum (JAMAIS "looks good")
-4. **Fix automatique** — Corriger tous les HIGH et MEDIUM trouves, sans demander. Choisir automatiquement l'option [1] (fix them)
-5. **Re-test** — Relancer `npx vitest run` pour confirmer 0 regression apres les fixes
-6. **Mettre a jour** — Story file (status → done, completion notes avec CR fixes, file list) + sprint-status.yaml
-7. **Commit** — `git add` + `git commit` avec message format : `feat: Story X.Y — Description, code review fixes (N tests)`
-8. **Push** — `git push` vers origin
-
-**Regles pipeline :**
-- Si les tests echouent a l'etape 2 ou 5, corriger et re-tester avant de continuer
-- Le code review doit trouver des issues (jamais "looks good") — c'est adversarial par design
-- Les issues LOW du code review sont documentees mais pas forcement fixees
-- Si un fix cree une regression, iterer jusqu'a 0 echec
-- Le commit message suit le pattern des commits existants (voir `git log --oneline -5`)
-- La Phase 1 est autonome sur Sonnet. La Phase 2 s'execute entierement sur Opus, sans aucune pause ni interaction — du CR au push
+La commande **"cr"** déclenche uniquement les étapes SCAN → TESS → mise à jour story → commit → push (sans reprendre depuis ATLAS/SPARK).
 
 ## Lovable Integration Pipeline — Mini-cycle par page (MUST follow)
 
@@ -240,7 +255,7 @@ Quand MiKL fournit un repo GitHub Lovable pour une page du Hub, executer ce pipe
 
 ### Etape 1 — Integration (SPARK)
 - Lire le repo Lovable via `gh api` (pas de clone)
-- Adapter au monorepo : imports `@foxeo/ui`, hooks TanStack existants, Server Actions existantes, types existants
+- Adapter au monorepo : imports `@monprojetpro/ui`, hooks TanStack existants, Server Actions existantes, types existants
 - NE PAS creer de composants en doublon — reutiliser ceux du module
 
 ### Etape 2 — Tests (TESS)

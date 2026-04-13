@@ -1,5 +1,15 @@
 # Story 9.4: Changement de tier abonnement client One
 
+> ## ⚠️ REWORK REQUIRED — Décision architecturale 2026-04-13
+>
+> Cette story a été implémentée sous l'ancienne architecture (Lab et One déployés séparément). Le modèle a changé : Lab et One cohabitent désormais dans la même instance client avec un toggle persistant.
+>
+> **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
+>
+> **Impact sur cette story** : Clarifier dans le code que le tier s'applique à Élio One uniquement — pas au déploiement (il n'y a plus de provisioning différencié).
+>
+> **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
+
 Status: done
 
 ## Story
@@ -69,7 +79,7 @@ so that **je peux adapter l'offre à l'évolution des besoins du client**.
 
 - [x] Créer modale de changement de tier (AC: #2)
   - [x] Créer `packages/modules/crm/components/change-tier-dialog.tsx`
-  - [x] Utiliser Dialog component de @foxeo/ui (Radix UI)
+  - [x] Utiliser Dialog component de @monprojetpro/ui (Radix UI)
   - [x] RadioGroup avec 3 options : Base, Essentiel, Agentique (toggle buttons custom)
   - [x] Chaque option affiche : nom tier, prix, capacité Elio, description
   - [x] Tier actuel surligné + badge "(actuel)"

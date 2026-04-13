@@ -1,10 +1,10 @@
-# Foxeo One - Architecture Technique
+# MonprojetPro One - Architecture Technique
 
 > Documentation générée le 2026-01-20 par BMM Document Project Workflow
 
 ## Vue d'ensemble architecturale
 
-Foxeo One utilise une **architecture monorepo modulaire** basée sur Turborepo, permettant :
+MonprojetPro One utilise une **architecture monorepo modulaire** basée sur Turborepo, permettant :
 
 - **Isolation des modules** : Chaque app est indépendante
 - **Partage de code** : Packages communs (ui, utils, tsconfig)
@@ -26,7 +26,7 @@ Foxeo One utilise une **architecture monorepo modulaire** basée sur Turborepo, 
 │   ┌────────────────────────┴────────────────────────┐       │
 │   │                 PACKAGES PARTAGÉS                │       │
 │   ├─────────────┬─────────────┬─────────────────────┤       │
-│   │  @foxeo/ui  │@foxeo/utils │ @foxeo/tsconfig     │       │
+│   │  @monprojetpro/ui  │@monprojetpro/utils │ @monprojetpro/tsconfig     │       │
 │   │ (Radix UI)  │ (helpers)   │ (TypeScript)        │       │
 │   └─────────────┴─────────────┴─────────────────────┘       │
 │                                                              │
@@ -118,7 +118,7 @@ BriefProvider
 | `useAutoSave` | hooks/ | Sauvegarde automatique |
 | `useSettings` | hooks/ | Paramètres utilisateur |
 | `useDebouncedValue` | hooks/ | Debounce de valeurs |
-| `useMobile` | @foxeo/ui | Détection mobile |
+| `useMobile` | @monprojetpro/ui | Détection mobile |
 
 ## Architecture AI Providers
 
@@ -199,7 +199,7 @@ optimal       + Différenciant clair                  ⭐
 
 ## Architecture des packages partagés
 
-### @foxeo/ui
+### @monprojetpro/ui
 
 ```typescript
 // Composants exportés (14)
@@ -223,7 +223,7 @@ export {
 }
 ```
 
-### @foxeo/utils
+### @monprojetpro/utils
 
 ```typescript
 // Utilitaires exportés
@@ -310,3 +310,26 @@ composants/
 - **App Router** : Streaming et Server Components
 - **Font optimization** : Google Fonts optimisées (Geist)
 - **Code splitting** : Automatique par route
+
+## Modèle de déploiement (Mise à jour 13/04/2026 — ADR-01)
+
+> **Changement majeur** : Lab et One ne sont plus deux applications déployées séparément. Ils coexistent dans **la même instance client** (`apps/client`) en tant que deux vues commutables. Le Hub (`apps/hub`) reste une application standalone déployée de manière indépendante sur `hub.monprojet-pro.com`.
+
+- **Hub MiKL** : déploiement unique, multi-tenant côté opérateur uniquement
+- **App Client (Lab + One)** : une instance par client (lab multi-tenant historique en cours de migration vers ce modèle unifié). Après graduation, le toggle Lab/One est activé dans le shell et le client conserve l'accès aux deux modes
+- Plus de migration de données entre deux applications distinctes lors de la graduation — uniquement l'activation du Mode One dans la même instance
+
+Référence complète : `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md`
+
+## Module Lab — Tree-shakable pour export standalone
+
+Pour permettre à un client sortant (résiliation de l'abonnement mensuel) de récupérer son outil métier sous forme d'application self-hostable **purifiée** de toute la partie incubation, le module Lab et les agents IA sont **tree-shakable au build**.
+
+- **Guards de build-time** : les imports du module Lab, d'Élio Lab, d'Élio One et du SDK Claude sont conditionnés par les flags `NEXT_PUBLIC_ENABLE_LAB_MODULE` et `NEXT_PUBLIC_ENABLE_AGENTS`
+- **Deux cibles de build** :
+  - `build` (défaut) : application complète avec Lab + agents actifs, toggle Lab/One visible pour les clients gradués
+  - `build:standalone` : Lab + agents entièrement supprimés du bundle (dead code elimination via les flags). Le toggle Lab/One n'est plus rendu, aucun code d'agent n'est présent dans le JS livré
+- **Cas d'usage** : lorsqu'un client résilie son abonnement mensuel, MiKL génère un build `standalone` livrable en self-hosting. Le client conserve son outil métier One pur, sans dépendance aux services IA de MonprojetPro ni à l'agent Élio
+- **Données** : l'export DB inclut l'intégralité des données (y compris historique Lab), mais la version standalone n'expose aucune interface pour les consulter activement — les données Lab restent présentes pour des raisons d'audit et de continuité, sans UI dédiée
+
+Référence complète : `_bmad-output/planning-artifacts/architecture/adr-02-lab-module-tree-shakable-export.md`

@@ -1,30 +1,40 @@
 # Story 9.5b: Transfert instance One au client sortant
 
+> ## ⚠️ REWORK REQUIRED — Décision architecturale 2026-04-13
+>
+> Cette story a été implémentée sous l'ancienne architecture (Lab et One déployés séparément). Le modèle a changé : Lab et One cohabitent désormais dans la même instance client avec un toggle persistant.
+>
+> **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
+>
+> **Impact sur cette story** : Le transfert ne consiste plus à copier une instance déjà provisionnée. Il faut générer un build 'One standalone' (tree-shake du module Lab et des agents via les feature flags de l'[ADR-02](../../planning-artifacts/architecture/adr-02-lab-module-tree-shakable-export.md)), exporter la DB, et livrer le tout au client sortant.
+>
+> **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
+
 Status: done
 
 ## Story
 
 As a **MiKL (opérateur)**,
-I want **transférer l'instance One dédiée à un client qui quitte Foxeo, avec code source, DB et documentation**,
-so that **le client est autonome et propriétaire de son outil conformément aux engagements Foxeo (FR154)**.
+I want **transférer l'instance One dédiée à un client qui quitte MonprojetPro, avec code source, DB et documentation**,
+so that **le client est autonome et propriétaire de son outil conformément aux engagements MonprojetPro (FR154)**.
 
 ## Acceptance Criteria
 
-**Given** un client One quitte Foxeo et récupère son outil (FR154, FR157)
+**Given** un client One quitte MonprojetPro et récupère son outil (FR154, FR157)
 **When** MiKL déclenche la procédure de sortie depuis la fiche client (bouton "Transférer l'instance au client")
 **Then** la procédure suivante est exécutée :
 1. Le code source du monorepo client est exporté dans un repo Git dédié
 2. La documentation complète de chaque module actif est incluse (guide.md, faq.md, flows.md)
 3. Les credentials Supabase sont transférés au client (ou un dump DB est fourni)
-4. Les modules service Foxeo sont retirés (chat MiKL, visio, Elio) — sauf si inclus dans le périmètre projet
+4. Les modules service MonprojetPro sont retirés (chat MiKL, visio, Elio) — sauf si inclus dans le périmètre projet
 5. Un document "Guide d'autonomie" est généré avec :
    - Architecture technique de l'instance
    - Variables d'environnement documentées
-   - Procédure de déploiement sans Foxeo
+   - Procédure de déploiement sans MonprojetPro
    - Contacts support technique (optionnel, payant)
 6. `client_instances.status` → 'transferred'
 7. Le client reçoit par email : repo Git + dump DB + documentation + Guide d'autonomie
-**And** le dossier BMAD (briefs internes, analyses Orpheus) reste propriété Foxeo — le client reçoit les documents stratégiques (brief final, PRD, architecture client)
+**And** le dossier BMAD (briefs internes, analyses Orpheus) reste propriété MonprojetPro — le client reçoit les documents stratégiques (brief final, PRD, architecture client)
 **And** un événement 'client_instance_transferred' est loggé dans `activity_logs`
 
 ## Tasks / Subtasks
@@ -37,7 +47,7 @@ so that **le client est autonome et propriétaire de son outil conformément aux
 
 - [x] Créer modale de confirmation transfert (AC: #1)
   - [x] Créer `packages/modules/crm/components/transfer-instance-dialog.tsx`
-  - [x] Utiliser Dialog component de @foxeo/ui (Radix UI)
+  - [x] Utiliser Dialog component de @monprojetpro/ui (Radix UI)
   - [x] Header : "Transférer l'instance One au client"
   - [x] Warning : "Cette action est irréversible. Le client deviendra propriétaire complet de son instance."
   - [x] Checklist pré-transfert :
@@ -100,7 +110,7 @@ so that **le client est autonome et propriétaire de son outil conformément aux
 ### Architecture Patterns
 - **Pattern async**: Transfert asynchrone via Edge Function (processus long 10-30 min)
 - **Pattern ownership**: Client devient propriétaire complet (code + données)
-- **Pattern cleanup**: Retirer modules service Foxeo (chat MiKL, visio, Elio non-inclus)
+- **Pattern cleanup**: Retirer modules service MonprojetPro (chat MiKL, visio, Elio non-inclus)
 - **Pattern documentation**: Guide d'autonomie généré automatiquement
 - **Pattern security**: Credentials Supabase transférés OU nouveau projet client
 
@@ -150,10 +160,10 @@ supabase/migrations/
 
 **2. Code source exporté**
 - Monorepo client complet (`apps/client/`) + modules actifs
-- Retirer modules service Foxeo (chat MiKL, visio, Elio) — sauf si inclus périmètre projet
+- Retirer modules service MonprojetPro (chat MiKL, visio, Elio) — sauf si inclus périmètre projet
 - Inclure documentation modules (`docs/guide.md`, `faq.md`, `flows.md`)
 - Repo Git privé (GitHub/GitLab) OU export ZIP
-- Commit initial : "Instance transférée depuis Foxeo — {date}"
+- Commit initial : "Instance transférée depuis MonprojetPro — {date}"
 
 **3. Base de données exportée**
 - Dump Supabase via pg_dump ou Admin API
@@ -164,7 +174,7 @@ supabase/migrations/
 
 **4. Documents stratégiques inclus**
 - Brief final, PRD, architecture client (livrables)
-- Exclure briefs internes BMAD, analyses Orpheus (propriété Foxeo)
+- Exclure briefs internes BMAD, analyses Orpheus (propriété MonprojetPro)
 - Format : PDF + sources Markdown
 - Compressé en ZIP "Documents Stratégiques"
 
@@ -175,14 +185,14 @@ supabase/migrations/
 - Format : Markdown + PDF
 - Inclus dans package transfert
 
-**6. Modules service Foxeo retirés**
-- Chat MiKL : retiré (communication directe Foxeo)
-- Visio : retiré (infrastructure Foxeo)
+**6. Modules service MonprojetPro retirés**
+- Chat MiKL : retiré (communication directe MonprojetPro)
+- Visio : retiré (infrastructure MonprojetPro)
 - Elio : retiré SAUF si inclus dans périmètre projet initial
-- Si Elio inclus : conserver code mais désactiver accès API Foxeo (client doit configurer son propre LLM)
+- Si Elio inclus : conserver code mais désactiver accès API MonprojetPro (client doit configurer son propre LLM)
 
 **7. Accès post-transfert**
-- Client : accès bloqué à instance Foxeo (status 'transferred')
+- Client : accès bloqué à instance MonprojetPro (status 'transferred')
 - Instructions dans email : déployer instance sur infrastructure propre
 - MiKL : peut consulter fiche client Hub (lecture seule, historique)
 - Pas de rollback possible (action irréversible)
@@ -264,7 +274,7 @@ CREATE POLICY "transfers_delete_system"
 ### Guide d'Autonomie Template
 
 ```markdown
-# Guide d'Autonomie — Instance Foxeo One
+# Guide d'Autonomie — Instance MonprojetPro One
 
 **Client** : {clientName}
 **Instance** : {instanceUrl}
@@ -272,7 +282,7 @@ CREATE POLICY "transfers_delete_system"
 
 ## 1. Architecture Technique
 
-Votre instance Foxeo One est construite sur les technologies suivantes :
+Votre instance MonprojetPro One est construite sur les technologies suivantes :
 - **Framework** : Next.js 16.1 (App Router)
 - **UI** : React 19, Tailwind CSS 4
 - **Backend** : Supabase (PostgreSQL, Auth, Storage, Realtime)
@@ -316,8 +326,8 @@ Vos credentials Supabase ont été transférés. Vous êtes propriétaire du pro
 
 ## 5. Support Technique
 
-Foxeo propose un support technique optionnel (payant) :
-- **Email** : support@foxeo.io
+MonprojetPro propose un support technique optionnel (payant) :
+- **Email** : support@monprojet-pro.com
 - **Tarif** : 150€/h (interventions ponctuelles)
 - **Abonnement** : 300€/mois (support continu)
 
@@ -329,7 +339,7 @@ Foxeo propose un support technique optionnel (payant) :
 ### Package Transfert Structure
 
 ```
-foxeo-instance-{clientName}-{date}.zip
+monprojetpro-instance-{clientName}-{date}.zip
 ├── code-source/
 │   ├── apps/client/                  # Monorepo client complet
 │   ├── packages/modules/             # Modules actifs uniquement
@@ -369,7 +379,7 @@ foxeo-instance-{clientName}-{date}.zip
 claude-sonnet-4-6
 
 ### Debug Log References
-- `@foxeo/module-admin` n'était pas dans `node_modules/@foxeo/` → `npm install` requis pour symlinker le workspace package
+- `@monprojetpro/module-admin` n'était pas dans `node_modules/@monprojetpro/` → `npm install` requis pour symlinker le workspace package
 - `client-info-tab.test.tsx`: test `/modifier/i` matchait aussi "Modifier le tier" → corrigé avec exact match `'Modifier'`
 - `transfer-instance-dialog.test.tsx`: "irréversible" apparaît 2 fois dans le dialog → corrigé avec `getAllByText`
 - Edge Function: génération guide d'autonomie en plain text (MVP), PDF + repo Git + pg_dump = prod

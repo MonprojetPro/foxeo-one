@@ -24,7 +24,15 @@ MIKL DÉCIDE parmi 4 options :
 
 [A] Réactiver Élio Lab
     → Besoin complexe, parcours à faire
-    → Élio Lab reprend avec le client
+    → MiKL bascule un feature flag depuis le Hub (1 clic, pas de re-provisioning)
+    → Le client accède immédiatement à Élio Lab en mode Lab
+      (le toggle Lab/One est déjà visible dans le shell depuis la graduation)
+    → Le client continue d'utiliser One en parallèle pour son quotidien business
+      (les deux modes coexistent dans la même instance)
+    → Quand l'amélioration est cadrée et que MiKL démarre le développement,
+      Élio Lab est désactivé à nouveau (flag off)
+    → Tout le contenu Lab créé durant le cycle s'ajoute à l'historique Lab existant
+    → Voir ADR-01 et ADR-02 (../architecture/)
 
 [B] Programmer visio
     → Besoin de clarifier en live
@@ -39,7 +47,7 @@ MIKL DÉCIDE parmi 4 options :
             │
             ▼
 POST-DÉPLOIEMENT (si option C)
-• Module déployé sur Foxeo One du client
+• Module déployé sur MonprojetPro One du client
 • Documentation injectée dans Élio One
 • Élio One peut assister sur le nouvel outil
 ```

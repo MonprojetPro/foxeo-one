@@ -6,7 +6,7 @@
 
 ### Existing Foundation
 
-Monorepo Turborepo existant avec packages partagés (`@foxeo/ui`, `@foxeo/utils`, `@foxeo/tsconfig`). Stack confirmée et à jour : Next.js 16.1, React 19, TypeScript, Tailwind CSS 4, Vitest.
+Monorepo Turborepo existant avec packages partagés (`@monprojetpro/ui`, `@monprojetpro/utils`, `@monprojetpro/tsconfig`). Stack confirmée et à jour : Next.js 16.1, React 19, TypeScript, Tailwind CSS 4, Vitest.
 
 **Versions cibles :**
 
@@ -24,10 +24,10 @@ Monorepo Turborepo existant avec packages partagés (`@foxeo/ui`, `@foxeo/utils`
 **Architecture retenue : 2 applications Next.js + catalogue de modules**
 
 ```
-foxeo-dash/
+monprojetpro-dash/
 ├── apps/
-│   ├── hub/                    # Foxeo-Hub (opérateur/admin)
-│   └── client/                 # Foxeo-Client (dashboard unifié Lab+One)
+│   ├── hub/                    # MonprojetPro-Hub (opérateur/admin)
+│   └── client/                 # MonprojetPro-Client (dashboard unifié Lab+One)
 │
 ├── packages/
 │   ├── ui/                     # Design system partagé (shadcn/Radix)
@@ -51,7 +51,7 @@ foxeo-dash/
 **Rationale :**
 
 - Hub et Client sont des audiences distinctes (admin vs utilisateur final)
-- Déploiement indépendant : `hub.foxeo.io` / `app.foxeo.io`
+- Déploiement indépendant : `hub.monprojet-pro.com` / `app.monprojet-pro.com`
 - Sécurité simplifiée (pas de risque d'exposer des routes admin)
 - Bundles optimisés (chaque app charge uniquement ce qu'elle utilise)
 - Packages partagés assurent la cohérence entre les deux apps
@@ -62,40 +62,69 @@ foxeo-dash/
 
 Le système repose sur 3 piliers :
 
-#### Pilier 1 : Modèle de déploiement dual — Propriété client
+#### Pilier 1 : Modèle de déploiement — Architecture unifiée Lab + One
 
-**Principe fondamental : le client est propriétaire de sa solution.**
+**Principe fondamental : une base de code unique `apps/client` sert à la fois Lab et One. La cible de déploiement dépend de l'état du client.**
 
-Le code développé dans le cadre du projet appartient au client. Foxeo conserve le droit de réutiliser les patterns et modules développés. Si le client quitte Foxeo One, il repart avec un outil opérationnel complet (hors modules service Foxeo : chat MiKL, visio, Élio — sauf si inclus dans le périmètre projet).
+> Décision validée le 2026-04-13. Références : [ADR-01 — Coexistence Lab & One dans la même instance](./adr-01-lab-one-coexistence-same-instance.md) et [ADR-02 — Feature flags & export One standalone](./adr-02-feature-flags-export.md).
 
-**3 modes de déploiement :**
+Le code développé dans le cadre du projet appartient au client. MonprojetPro conserve le droit de réutiliser les patterns et modules développés. Si le client quitte MonprojetPro, il repart avec un bundle One pur (Lab et agents tree-shaken via feature flags), sa base de données et sa documentation complète.
 
-| Cible | Modèle | Infrastructure | Propriété |
-|-------|--------|----------------|-----------|
-| **Hub** | Instance unique | 1 Vercel + 1 Supabase | Foxeo |
-| **Lab** | Multi-tenant | 1 Vercel + 1 Supabase (partagé) | Foxeo |
-| **One** | Instance par client | 1 Vercel + 1 Supabase **par client** | Client |
+**Cibles de déploiement :**
 
-**Lab (multi-tenant — propriété Foxeo) :**
+| Cible | Modèle | Infrastructure | Contenu | Propriété |
+|-------|--------|----------------|---------|-----------|
+| **Hub** | Instance unique | 1 Vercel + 1 Supabase | Cockpit opérateur MiKL | MonprojetPro |
+| **Lab (pré-graduation)** | Multi-tenant | 1 Vercel + 1 Supabase (partagé) | `apps/client` en mode Lab uniquement | MonprojetPro |
+| **Lab + One (post-graduation)** | Instance dédiée par client | 1 Vercel + 1 Supabase **par client** | `apps/client` avec **les deux** modules Lab et One | Client |
 
-- Une seule instance déployée pour tous les clients Lab
+**Lab (multi-tenant, pré-graduation) :**
+
+- Une seule instance déployée pour tous les clients en parcours d'incubation
 - Isolation par `client_id` + Row Level Security (RLS)
-- Configuration dynamique par client (modules actifs, parcours, thème)
-- Les clients Lab ne possèdent pas l'outil — ils récupèrent uniquement leurs documents
+- Configuration dynamique par client (modules actifs, parcours, thème violet)
+- Les clients Lab ne possèdent pas encore d'outil dédié — ils travaillent sur la plateforme partagée
 
-**One (instance dédiée — propriété client) :**
+**Instance dédiée (post-graduation, Lab + One coexistants) :**
 
-- Chaque client One reçoit sa propre instance Vercel + son propre projet Supabase
+- Chaque client gradué reçoit sa propre instance Vercel + son propre projet Supabase
 - Pas de RLS inter-client nécessaire (base de données dédiée)
-- Modules activés selon le périmètre projet (configuration par env variables)
-- Le client peut récupérer le code et être indépendant si demandé
+- L'instance contient **à la fois** les modules Lab et les modules One — le client peut revenir à tout moment sur ses données Lab
+- Données Lab reportées lors de la graduation : brief, livrables, historique Élio Lab, profil de communication
+- Le client peut récupérer le code et être indépendant si demandé (voir "Export One standalone")
 - Coût estimé par client : ~5-7€/mois sur tiers gratuits (Vercel Hobby + Supabase Free + VPS prorata + Élio)
 
-**Hub (instance unique — Foxeo) :**
+**Hub (instance unique — MonprojetPro) :**
 
 - Le Hub est multi-opérateur dès le départ (prépare la commercialisation)
 - Table `operators` : MiKL = `operator_id: 1`
-- Communique avec les instances Lab et One via **API REST + webhooks** (pas de DB partagée)
+- Communique avec les instances dédiées via **API REST + webhooks HMAC** (pas de DB partagée)
+
+##### Toggle Lab/One — bascule post-graduation
+
+Après graduation, le shell dashboard expose un **toggle persistant "Mode Lab / Mode One"** qui permet au client de basculer instantanément entre les deux vues au sein de la même instance dédiée :
+
+- **Mode Lab** : thème violet, onglets du parcours d'incubation, accès lecture aux livrables, historique Élio Lab
+- **Mode One** : thème vert/orange, onglets de l'outil quotidien (CRM, facturation, visio, etc.)
+- La bascule est instantanée (pas de reload, pas de session qui redémarre) — seul le jeu d'onglets et le thème changent
+- Le toggle est persistant : la préférence est mémorisée entre les sessions (Zustand UI state)
+
+**Feature flag Élio Lab :**
+
+- `client_config.elio_lab_enabled` (boolean) : `false` par défaut après graduation
+- L'agent Élio Lab est désactivé dans l'interface Mode Lab post-graduation (Élio Hub reste accessible côté MiKL)
+- MiKL peut réactiver Élio Lab depuis le Hub à tout moment, par exemple pour accompagner un nouveau projet d'amélioration, une itération sur le positionnement, un nouveau livrable stratégique
+- Le flag est synchronisé Hub → instance client via webhook HMAC
+
+##### Export One standalone — tree-shaking au build
+
+Pour le scénario de sortie d'abonnement ou de transfert de propriété, le bundle `apps/client` doit pouvoir être exporté en mode **One pur** (sans Lab, sans agents MonprojetPro) :
+
+- `NEXT_PUBLIC_ENABLE_LAB_MODULE` : feature flag qui, à `false`, tree-shake l'intégralité du module Lab (parcours, soumissions, livrables Lab, toggle Lab/One)
+- `NEXT_PUBLIC_ENABLE_AGENTS` : feature flag qui, à `false`, tree-shake Élio (Lab, One, One+), le chat MiKL, et tout code d'agent
+- Les deux flags sont lus au build (`next build`) — le code exclu n'est pas présent dans le bundle final
+- Le client sortant reçoit : le code source One standalone, sa base de données exportée, sa documentation complète
+- Voir [ADR-02 — Feature flags & export One standalone](./adr-02-feature-flags-export.md) pour le détail des conditions d'import, des barrels et de la CI de vérification
 
 #### Pilier 2 : Catalogue de modules plug & play
 
@@ -200,7 +229,7 @@ CREATE TABLE client_instances (
   instance_type TEXT NOT NULL,          -- 'lab' | 'one'
 
   -- URLs de l'instance
-  instance_url TEXT NOT NULL,           -- https://{slug}.foxeo.io
+  instance_url TEXT NOT NULL,           -- https://{slug}.monprojet-pro.com
   supabase_url TEXT,                    -- URL Supabase de l'instance (One uniquement)
   vercel_project_id TEXT,               -- ID projet Vercel (One uniquement)
 
@@ -222,7 +251,7 @@ CREATE TABLE client_instances (
 
 1. MiKL crée le client dans le Hub
 2. Le Hub insère `clients` + `client_config` dans la DB Lab partagée
-3. Le client reçoit ses identifiants → se connecte à `lab.foxeo.io`
+3. Le client reçoit ses identifiants → se connecte à `lab.monprojet-pro.com`
 4. Le middleware Auth lit `client_id` → charge `client_config` (RLS)
 5. Le dashboard Lab s'affiche avec les modules du parcours
 
@@ -232,15 +261,17 @@ CREATE TABLE client_instances (
 2. Script de provisioning : création projet Supabase + déploiement Vercel dédié
 3. Configuration des env variables (Supabase URL, clés, modules actifs)
 4. Le Hub enregistre l'URL de l'instance One (pour communication API)
-5. Le client reçoit ses identifiants → se connecte à `{slug}.foxeo.io`
+5. Le client reçoit ses identifiants → se connecte à `{slug}.monprojet-pro.com`
 6. **Livrable obligatoire** : documentation d'utilisation de chaque module activé
 
 **Flux "graduation Lab → One" :**
 
-1. Le client Lab termine son parcours et choisit Foxeo One
-2. Script de provisioning One (nouveau Supabase + nouveau Vercel)
-3. Migration des données Lab pertinentes vers l'instance One dédiée
-4. Archivage Lab accessible en lecture dans l'instance One (module historique-lab)
+1. Le client Lab termine son parcours et choisit MonprojetPro One
+2. Script de provisioning de l'instance dédiée (nouveau Supabase + nouveau Vercel) — l'instance contient **à la fois** les modules Lab et les modules One
+3. Copie des données Lab du client depuis la DB Lab multi-tenant vers la DB dédiée de la nouvelle instance (brief, livrables, historique Élio Lab, profil de communication)
+4. Activation du Mode One par défaut + mise à disposition du toggle Lab/One dans le shell
+5. Désactivation de Élio Lab (`elio_lab_enabled = false`) — réactivable par MiKL à la demande
+6. Les données Lab restent pleinement accessibles en lecture via le Mode Lab de la nouvelle instance
 
 **Flux "ajouter un module" (Lab — multi-tenant) :**
 
@@ -259,8 +290,8 @@ CREATE TABLE client_instances (
 
 1. Export des données depuis le Supabase du client
 2. Le client repart avec : code source + base de données + documentation complète
-3. Retrait des modules service Foxeo (chat MiKL, visio, Élio) — sauf si dans le périmètre projet
-4. Le dossier BMAD reste propriété Foxeo — le client reçoit les documents stratégiques (brief, PRD, architecture)
+3. Retrait des modules service MonprojetPro (chat MiKL, visio, Élio) — sauf si dans le périmètre projet
+4. Le dossier BMAD reste propriété MonprojetPro — le client reçoit les documents stratégiques (brief, PRD, architecture)
 
 #### Pilier 4 : Communication Hub ↔ Instances
 

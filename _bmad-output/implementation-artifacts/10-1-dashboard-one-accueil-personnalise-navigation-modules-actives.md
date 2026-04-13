@@ -1,5 +1,15 @@
 # Story 10.1: Dashboard One — Accueil personnalisé, navigation & modules actives
 
+> ## ⚠️ REWORK REQUIRED — Décision architecturale 2026-04-13
+>
+> Cette story a été implémentée sous l'ancienne architecture (Lab et One déployés séparément). Le modèle a changé : Lab et One cohabitent désormais dans la même instance client avec un toggle persistant.
+>
+> **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
+>
+> **Impact sur cette story** : Ajouter le toggle Mode Lab / Mode One dans le header du shell (visible uniquement si `clientConfig.labModeAvailable === true`). Le toggle bascule le thème CSS, le jeu d'onglets, et l'état global sans rechargement de page.
+>
+> **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
+
 Status: done
 
 ## Story
@@ -13,7 +23,7 @@ so that **j'ai un espace professionnel clair avec uniquement les outils dont j'a
 **Given** un client One se connecte à son dashboard (FR38)
 **When** la page d'accueil se charge
 **Then** le dashboard One affiche :
-- Un header avec le logo Foxeo One (ou branding personnalisé si configuré)
+- Un header avec le logo MonprojetPro One (ou branding personnalisé si configuré)
 - Un message d'accueil : "Bonjour {prénom}" avec la date du jour
 - Une section "Actions rapides" avec raccourcis vers les modules les plus utilisés
 - Une section "Activité récente" : derniers messages MiKL, derniers documents mis à jour, dernière activité Elio
@@ -55,7 +65,7 @@ so that **j'ai un espace professionnel clair avec uniquement les outils dont j'a
   - [x] Créer `packages/modules/core-dashboard/hooks/use-client-config.ts`
   - [x] `queryKey: ['client-config', clientId]`
   - [x] Fetch via Server Component (passage prop depuis RSC → client) OU via server action
-  - [x] Type: `ClientConfig` de `@foxeo/types`
+  - [x] Type: `ClientConfig` de `@monprojetpro/types`
   - [x] Stale time: 5 minutes (config peu volatile)
 
 - [x] Implémenter page d'accueil One personnalisée (AC: #1)
@@ -64,8 +74,8 @@ so that **j'ai un espace professionnel clair avec uniquement les outils dont j'a
   - [x] Section header: "Bonjour {prenom}" + date du jour (`new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full' }).format(new Date())`)
   - [x] Section "Actions rapides" : cards cliquables pour les 4 modules les plus utilisés (liste depuis `active_modules`)
   - [x] Section "Activité récente" : 3 widgets skeleton si données non disponibles (Epic 10 scope = structure + skeleton)
-  - [x] Accès rapide Elio : bouton flottant ou card (composant `ElioFloatingButton` depuis `@foxeo/modules-elio`)
-  - [x] Si `custom_branding.logoUrl` → afficher logo client, sinon logo Foxeo One
+  - [x] Accès rapide Elio : bouton flottant ou card (composant `ElioFloatingButton` depuis `@monprojetpro/modules-elio`)
+  - [x] Si `custom_branding.logoUrl` → afficher logo client, sinon logo MonprojetPro One
 
 - [x] Créer Server Component page accueil avec data fetching (AC: #1, #3)
   - [x] Modifier `apps/client/app/(dashboard)/page.tsx`
@@ -115,7 +125,7 @@ packages/utils/src/
 - `apps/client/app/(dashboard)/layout.tsx` — hardcode `client-lab` target → à dynamiser
 - `packages/utils/src/module-registry.ts` — `discoverModules()` stub ne charge que `core-dashboard`
 - `packages/modules/core-dashboard/components/core-dashboard.tsx` — stub minimal sans data
-- `ClientConfig` type dans `@foxeo/types/src/client-config.types.ts` : `activeModules: string[]`, `customBranding?: CustomBranding`, `dashboardType`
+- `ClientConfig` type dans `@monprojetpro/types/src/client-config.types.ts` : `activeModules: string[]`, `customBranding?: CustomBranding`, `dashboardType`
 - `client_configs` table : `active_modules TEXT[] DEFAULT ARRAY['core-dashboard']`, `dashboard_type TEXT DEFAULT 'one'`, `custom_branding JSONB DEFAULT '{}'`
 
 ### Technical Constraints
@@ -127,8 +137,8 @@ packages/utils/src/
 ### UI Patterns
 - Palette One : `--accent` orange `#F7931E`, dark mode par défaut
 - `DashboardShell` accepte `density="comfortable"` pour One
-- `ModuleSidebar` de `@foxeo/ui` accepte `modules: ModuleManifest[]` et `target`
-- Skeleton loaders : utiliser `Skeleton` de `@foxeo/ui` dans `loading.tsx`
+- `ModuleSidebar` de `@monprojetpro/ui` accepte `modules: ModuleManifest[]` et `target`
+- Skeleton loaders : utiliser `Skeleton` de `@monprojetpro/ui` dans `loading.tsx`
 - Message "Bonjour {prénom}" : `clients.first_name` ou fallback sur `clients.name`
 
 ### Previous Story Learnings (Epic 9)
@@ -160,7 +170,7 @@ claude-sonnet-4-6
 - Sidebar dynamique : target calculé depuis `dashboard_type`, density depuis `dashboard_type`, filtrage par `active_modules`
 - `CoreDashboard` refactoré : props `{ clientConfig, clientName }`, greeting FR, actions rapides (4 premiers modules hors core-dashboard), skeletons activité, fallback branding
 - Server action `getClientConfig` créée, hook `useClientConfig` avec staleTime 5min
-- `ElioFloatingButton` créé dans `@foxeo/module-elio`
+- `ElioFloatingButton` créé dans `@monprojetpro/module-elio`
 - `error.tsx` créé pour le dashboard
 - 34 tests passants (module-registry: 13, core-dashboard: 8, use-client-config: 7, get-client-config: 6)
 

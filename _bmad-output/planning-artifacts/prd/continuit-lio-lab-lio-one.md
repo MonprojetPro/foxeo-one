@@ -1,8 +1,10 @@
 # Continuité Élio Lab → Élio One
 
+> **Mise à jour 13/04/2026** — Depuis la décision [ADR-01](../architecture/adr-01-lab-one-coexistence-same-instance.md), Lab et One coexistent dans la **même instance client**. Les données Lab ne sont **jamais archivées** après la graduation : elles restent pleinement accessibles dans la base du client. Un toggle Lab/One persistant dans le shell permet au client de basculer entre les deux modes en permanence. Élio Lab devient un **feature flag** (off par défaut post-graduation) que MiKL peut réactiver à tout moment depuis le Hub pour ouvrir un nouveau cycle d'amélioration, sans re-provisioning — voir [ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md). La continuité décrite ci-dessous (transmission du profil de communication et des apprentissages Lab vers Élio One au moment de la graduation) reste inchangée : elle s'appuie désormais sur une base de connaissances partagée au sein de la même instance.
+
 ## Mémoire Persistante
 
-Lors de la graduation, Élio One hérite de TOUT ce qu'Élio Lab a collecté :
+Lors de la graduation, Élio One hérite de TOUT ce qu'Élio Lab a collecté (sans migration cross-database — tout vit dans la même instance) :
 
 | Donnée | Source | Utilisé par One |
 |--------|--------|-----------------|

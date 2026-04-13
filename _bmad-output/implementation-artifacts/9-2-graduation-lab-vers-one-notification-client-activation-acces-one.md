@@ -1,5 +1,15 @@
 # Story 9.2: Graduation Lab vers One — Notification client & activation accès One
 
+> ## ⚠️ REWORK REQUIRED — Décision architecturale 2026-04-13
+>
+> Cette story a été implémentée sous l'ancienne architecture (Lab et One déployés séparément). Le modèle a changé : Lab et One cohabitent désormais dans la même instance client avec un toggle persistant.
+>
+> **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
+>
+> **Impact sur cette story** : Supprimer la logique de redirection vers `{slug}.monprojet-pro.com` après graduation. L'utilisateur reste sur la même URL, le shell affiche le toggle Lab/One et l'écran de bienvenue contextuel.
+>
+> **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
+
 Status: done
 
 ## Story
@@ -14,19 +24,19 @@ so that **je sais que mon parcours est terminé et je peux commencer à utiliser
 **When** la Server Action termine la transaction
 **Then** une notification est envoyée au client :
 - Type : 'graduation'
-- Titre : "Félicitations ! Votre espace professionnel Foxeo One est prêt !"
+- Titre : "Félicitations ! Votre espace professionnel MonprojetPro One est prêt !"
 - Body : "Votre parcours Lab est terminé. Vous avez maintenant accès à votre dashboard personnalisé avec {X} modules activés."
 - Link : "/" (redirige vers l'accueil du dashboard One)
 **And** la notification est envoyée en temps réel via Supabase Realtime (NFR-P5, < 2 secondes)
 **And** un email de graduation est également envoyé (template spécifique) :
-- Objet : "Bienvenue dans Foxeo One — Votre espace professionnel est prêt"
+- Objet : "Bienvenue dans MonprojetPro One — Votre espace professionnel est prêt"
 - Contenu : récapitulatif du parcours Lab, lien de connexion, aperçu des modules activés
 **And** MiKL est également notifié (type : 'system') : "Graduation effectuée — {nom} est maintenant client One"
 
 **Given** le client se connecte après la graduation
 **When** le middleware d'authentification vérifie son profil
 **Then** :
-1. Le client est redirigé vers son instance dédiée `{slug}.foxeo.io` (au lieu de `lab.foxeo.io`)
+1. Le client est redirigé vers son instance dédiée `{slug}.monprojet-pro.com` (au lieu de `lab.monprojet-pro.com`)
    - Le Hub fournit l'URL de l'instance One via `client_instances.instance_url`
    - Le middleware Auth de l'instance Lab détecte le client gradué et redirige
 2. Le flag `show_graduation_screen` est détecté
@@ -54,7 +64,7 @@ so that **je sais que mon parcours est terminé et je peux commencer à utiliser
 - [x] Créer système de notifications de graduation (AC: #1)
   - [x] Créer helper `sendGraduationNotification(clientId)` dans `packages/modules/notifications/actions/send-notification.ts`
   - [x] Créer notification in-app : type 'graduation', insérer dans table `notifications`
-  - [x] Titre : "Félicitations ! Votre espace professionnel Foxeo One est prêt !"
+  - [x] Titre : "Félicitations ! Votre espace professionnel MonprojetPro One est prêt !"
   - [x] Body : template avec interpolation `{modulesCount}` modules activés
   - [x] Link : "/" (racine du dashboard One)
   - [x] Envoyer via Supabase Realtime channel `client:notifications:{clientId}`

@@ -1,5 +1,15 @@
 # Story 9.1: Graduation Lab vers One — Déclenchement & migration automatique du contexte
 
+> ## ⚠️ REWORK REQUIRED — Décision architecturale 2026-04-13
+>
+> Cette story a été implémentée sous l'ancienne architecture (Lab et One déployés séparément). Le modèle a changé : Lab et One cohabitent désormais dans la même instance client avec un toggle persistant.
+>
+> **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
+>
+> **Impact sur cette story** : La fonction `graduateClient()` ne doit plus provisionner une instance dédiée ni migrer les données. La graduation bascule le `client_config.dashboard_type` vers 'one', active `lab_mode_available = true`, met `elio_lab_enabled = false` et préserve les données Lab dans la même base.
+>
+> **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
+
 Status: done
 
 ## Story
@@ -12,7 +22,7 @@ so that **le client transite en douceur vers son espace professionnel sans perte
 
 **Given** MiKL consulte la fiche d'un client Lab dont le parcours est terminé (FR74)
 **When** il accède à la section "Parcours Lab" de la fiche client
-**Then** un bouton "Graduer vers Foxeo One" est visible si les conditions suivantes sont remplies :
+**Then** un bouton "Graduer vers MonprojetPro One" est visible si les conditions suivantes sont remplies :
 - Le parcours Lab est en statut 'completed' (toutes les étapes validées)
 - Le client n'a aucune `validation_request` en statut 'pending'
 - Le client n'est pas déjà en statut 'one'
@@ -20,7 +30,7 @@ so that **le client transite en douceur vers son espace professionnel sans perte
 - "Parcours non terminé — {X} étapes restantes"
 - "Demandes de validation en attente — traitez-les d'abord"
 
-**Given** MiKL clique sur "Graduer vers Foxeo One" (FR74)
+**Given** MiKL clique sur "Graduer vers MonprojetPro One" (FR74)
 **When** la modale de confirmation s'affiche
 **Then** elle contient :
 - Nom et entreprise du client
@@ -48,7 +58,7 @@ Le provisioning complet (création Supabase, migrations DB, déploiement Vercel,
    - Les `documents` du Lab sont copiés dans le Storage One
    - Le `parcours` complet est copié (lecture seule)
    - Les observations Elio Lab sont compilées dans `communication_profile.lab_learnings`
-6. Les données Lab ORIGINALES restent dans la DB Lab partagée (archivage, propriété Foxeo — FR168)
+6. Les données Lab ORIGINALES restent dans la DB Lab partagée (archivage, propriété MonprojetPro — FR168)
 
 **Phase C — Mise à jour du client dans le Hub :**
 7. `clients.client_type` → 'one' (était 'lab')
@@ -77,14 +87,14 @@ Le provisioning complet (création Supabase, migrations DB, déploiement Vercel,
 
 - [x] Créer le bouton de graduation dans la fiche client (AC: #1, #2)
   - [x] Modifier `packages/modules/crm/components/client-info-tab.tsx` pour ajouter section "Parcours Lab"
-  - [x] Afficher statut parcours + bouton "Graduer vers Foxeo One"
+  - [x] Afficher statut parcours + bouton "Graduer vers MonprojetPro One"
   - [x] Implémenter logique de validation des conditions (parcours completed, pas de validation pending)
   - [x] Désactiver bouton + tooltip si conditions non remplies
-  - [x] Utiliser composants Button, Tooltip de @foxeo/ui
+  - [x] Utiliser composants Button, Tooltip de @monprojetpro/ui
 
 - [x] Créer la modale de graduation (AC: #2)
   - [x] Créer `packages/modules/crm/components/graduation-dialog.tsx`
-  - [x] Utiliser Dialog component de @foxeo/ui (Radix UI)
+  - [x] Utiliser Dialog component de @monprojetpro/ui (Radix UI)
   - [x] Section récapitulatif : nom, entreprise, stats parcours Lab (durée, étapes, briefs)
   - [x] Section tier : RadioGroup avec 3 options (Ponctuel, Essentiel, Agentique) + descriptions
   - [x] Section modules : Checkbox list des modules disponibles (fetch depuis module registry)
@@ -196,7 +206,7 @@ supabase/migrations/
 
 **2. Migration données Lab → One**
 - Cross-database copy requiert credentials Supabase des 2 instances
-- Données Lab ORIGINALES restent dans DB Lab (archivage, propriété Foxeo)
+- Données Lab ORIGINALES restent dans DB Lab (archivage, propriété MonprojetPro)
 - Données One COPIÉES dans instance dédiée (propriété client)
 - Pour MVP: préparer structure sans exécution réelle (Story 12.6 implémente réellement)
 
@@ -317,7 +327,7 @@ Aucun blocage majeur. Notes clés :
 - ✅ Types graduation : `GraduationTier`, `GraduateClientSchema`, `GraduationResult`
 - ✅ `graduateClient` action : validation conditions, 4 phases, rollback sur erreur Phase C
 - ✅ `GraduationDialog` : tier pré-sélectionné Essentiel, 6 modules checkboxes, notes optionnelles
-- ✅ `client-info-tab.tsx` : section "Graduation vers Foxeo One" + bouton activé/désactivé + tooltips
+- ✅ `client-info-tab.tsx` : section "Graduation vers MonprojetPro One" + bouton activé/désactivé + tooltips
 - ✅ 30 tests unitaires passant : provision-instance (5), migrate-lab-data (2), graduate-client (8), pending-validations (4), graduation-dialog (11)
 - ✅ Tests RLS client_instances : isolation opérateurs + client ne peut pas auto-graduer
 

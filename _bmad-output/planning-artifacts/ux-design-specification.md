@@ -1,18 +1,18 @@
 ---
 stepsCompleted: [1, 2, 3, "party-mode", "party-mode-2", "visual-design-session"]
 inputDocuments:
-  - "_bmad-output/analysis/foxeo-one-brainstorming-complet-final.md"
+  - "_bmad-output/analysis/monprojetpro-one-brainstorming-complet-final.md"
   - "_bmad-output/analysis/brainstorming-session-2026-01-23.md"
-  - "_bmad-output/analysis/foxeo-one-resume-complet.md"
+  - "_bmad-output/analysis/monprojetpro-one-resume-complet.md"
   - "docs/project-overview.md"
   - "docs/architecture.md"
   - "docs/source-tree-analysis.md"
   - "docs/component-inventory.md"
-  - "documentation autre projet BMAD/charte-graphique-foxeo-2026-01-15.md"
+  - "documentation autre projet BMAD/charte-graphique-monprojetpro-2026-01-15.md"
 partyModeSession: "2026-01-25"
 ---
 
-# UX Design Specification - Foxeo
+# UX Design Specification - MonprojetPro
 
 **Author:** MiKL
 **Date:** 2026-01-24
@@ -24,7 +24,7 @@ partyModeSession: "2026-01-25"
 
 ### Project Vision
 
-Foxeo est un écosystème de dashboards qui accompagne les entrepreneurs de l'idée au business opérationnel, via le modèle "Centaure" (IA + Humain) :
+MonprojetPro est un écosystème de dashboards qui accompagne les entrepreneurs de l'idée au business opérationnel, via le modèle "Centaure" (IA + Humain) :
 - **Élio** : Agent IA disponible 24/7 pour structurer et stimuler
 - **MiKL** : Expertise humaine pour les validations stratégiques
 
@@ -38,11 +38,13 @@ Le client ne voit jamais "BMAD" — pour lui, c'est Élio qui l'accompagne.
 | **FOXEO-LAB** | Client en création | Incubation, accompagnement, Validation Hub | **Élio Lab** (LLM) | Terracotta/Corail (Light) |
 | **FOXEO-ONE** | Client établi | Outil métier personnalisé avec modules | **Élio One** | Orange vif + bleu-gris (Light) |
 
-> **Note Orpheus (04/02/2026)** : Orpheus est l'agent BMAD dans Cursor, pas dans Foxeo. Il travaille avec MiKL pour générer des documents sources (estimations, docs techniques, livrables) qui alimentent ensuite les Élio.
+> **Note Orpheus (04/02/2026)** : Orpheus est l'agent BMAD dans Cursor, pas dans MonprojetPro. Il travaille avec MiKL pour générer des documents sources (estimations, docs techniques, livrables) qui alimentent ensuite les Élio.
 
-> **Note nomenclature (25/01/2026)** : Les noms ont été finalisés lors de la session Party Mode. L'ancien "Foxeo-One" (cockpit MiKL) devient "Foxeo-Hub", et "Foxeo-Outil" devient "Foxeo-One".
+> **Note nomenclature (25/01/2026)** : Les noms ont été finalisés lors de la session Party Mode. L'ancien "MonprojetPro-One" (cockpit MiKL) devient "MonprojetPro-Hub", et "MonprojetPro-Outil" devient "MonprojetPro-One".
 
-> **Note architecturale (08/02/2026)** : Foxeo One utilise un modèle instance-per-client : chaque client One reçoit sa propre instance dédiée (Vercel + Supabase). Le Lab reste multi-tenant. Le client One est propriétaire de son code et de ses données.
+> **Note architecturale (08/02/2026)** : MonprojetPro One utilise un modèle instance-per-client : chaque client One reçoit sa propre instance dédiée (Vercel + Supabase). Le Lab reste multi-tenant. Le client One est propriétaire de son code et de ses données.
+
+> **⚠️ Mise à jour architecturale (13/04/2026 — ADR-01 + ADR-02)** : Lab et One ne sont plus deux applications séparées. Ce sont désormais **deux vues de la même application client** (`apps/client`). Le Hub (cockpit MiKL) reste une app standalone inchangée. Après la graduation, le client conserve un **toggle persistant "Mode Lab / Mode One"** dans le shell qui lui permet de basculer instantanément entre les deux vues — le thème change (violet Lab ↔ vert/orange One), les onglets de sidebar changent, mais la session et les données restent identiques (pas de rechargement de page). Les deux modes coexistent en permanence dans la même instance. Élio Lab est désactivé par défaut après graduation mais MiKL peut le réactiver depuis le Hub pour un cycle d'amélioration. Voir `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md` et `adr-02-lab-module-tree-shakable-export.md`.
 
 ### Target Users
 
@@ -74,7 +76,7 @@ Le client ne voit jamais "BMAD" — pour lui, c'est Élio qui l'accompagne.
 
 - **Stockage BMAD** : DD externe + backup serveur distant
 - **Visibilité client** : Jamais accès à BMAD, uniquement Élio
-- **Visio** : Outil externe intégré, piloté depuis Foxeo-One
+- **Visio** : Outil externe intégré, piloté depuis MonprojetPro-One
 - **Création client** : Fiche auto-remplie par transcription visio
 - **Responsive** : Dès la V1, app native mobile en V2/V3
 
@@ -84,13 +86,16 @@ Le client ne voit jamais "BMAD" — pour lui, c'est Élio qui l'accompagne.
 
 ### Defining Experience
 
-**3 expériences distinctes, 1 écosystème cohérent :**
+**2 applications, 3 expériences, 1 écosystème cohérent :**
 
-| Dashboard | Action Core | Fréquence |
-|-----------|-------------|-----------|
-| **Foxeo-One** | Valider les soumissions Validation Hub + Traiter les messages | Quotidienne |
-| **Foxeo-Lab** | Avancer sur les devoirs + Échanger avec Élio | Régulière (stimulée par Élio) |
-| **Foxeo-One** | Gérer son activité (clients, RDV, factures) | Quotidienne |
+- **Hub** (`apps/hub`) — cockpit MiKL, application standalone indépendante.
+- **App Client** (`apps/client`) — application unique qui héberge **deux vues** : Mode Lab (incubation) et Mode One (outil métier). Après graduation, le client dispose d'un toggle persistant pour basculer entre les deux modes dans la même session.
+
+| Expérience | Vue | Action Core | Fréquence |
+|-----------|-----|-------------|-----------|
+| **Hub (MiKL)** | App Hub | Valider les soumissions Validation Hub + Traiter les messages | Quotidienne |
+| **Client — Mode Lab** | App Client (vue Lab) | Avancer sur les devoirs + Échanger avec Élio Lab | Régulière (stimulée par Élio) |
+| **Client — Mode One** | App Client (vue One) | Gérer son activité (clients, RDV, factures) | Quotidienne |
 
 ### Platform Strategy
 
@@ -192,20 +197,20 @@ Prospect découvre MiKL (Site, LinkedIn, Bouche-à-oreille)
          Prise de RDV (lien calendrier)
 ```
 
-### Phase 1 : Qualification (Foxeo-One)
+### Phase 1 : Qualification (MonprojetPro-One)
 
 ```
-• Visio intégrée dans Foxeo-One
+• Visio intégrée dans MonprojetPro-One
 • Enregistrement + Transcription auto
 • Création fiche client (CRM auto-rempli)
 • Création dossier BMAD (invisible client)
                     ↓
 🎯 DÉCISION MiKL : Quel parcours ?
-   [A] Direct → Foxeo-One
-   [B] Incubation → Foxeo-Lab
+   [A] Direct → MonprojetPro-One
+   [B] Incubation → MonprojetPro-Lab
 ```
 
-### Parcours A : Direct (Client mûr → Foxeo-One)
+### Parcours A : Direct (Client mûr → MonprojetPro-One)
 
 ```
 PHASE 2: CONFIGURATION
@@ -233,7 +238,7 @@ PHASE 5: ÉVOLUTIONS (Boucle continue)
 ├─→ MiKL évalue (micro-évolution ou devis)
 ```
 
-### Parcours B : Incubation (Client en création → Foxeo-Lab → Foxeo-One)
+### Parcours B : Incubation (Client en création → MonprojetPro-Lab → MonprojetPro-One)
 
 ```
 PHASE 2: ONBOARDING FOXEO-LAB
@@ -251,7 +256,7 @@ PHASE 3: INCUBATION (Boucle répétée)
 │           ↓
 │  CLIENT soumet à MiKL (Validation Hub)
 │  • Élio prépare un résumé
-│  • Notification dans Foxeo-One
+│  • Notification dans MonprojetPro-One
 │           ↓
 │  MiKL valide/commente/visio
 │  • ✅ Validation → Étape suivante
@@ -263,7 +268,7 @@ PHASE 3: INCUBATION (Boucle répétée)
 PHASE 4: GRADUATION
 ├─→ Toutes les étapes validées
 ├─→ Rituel de passage (célébration)
-├─→ Migration vers Foxeo-One
+├─→ Migration vers MonprojetPro-One
 │   • Mémoire Lab conservée
 │   • Nouveaux modules activés
 
@@ -271,7 +276,7 @@ PHASE 5: CLIENT ÉTABLI
 └─→ (Voir Parcours A - Phase 4+)
 ```
 
-### Parcours MiKL : Journée type sur Foxeo-One
+### Parcours MiKL : Journée type sur MonprojetPro-One
 
 ```
 🌅 MATIN - Prise de poste
@@ -286,7 +291,7 @@ PHASE 5: CLIENT ÉTABLI
 
 📋 MATINÉE - Travail client
 ├─→ Visio planifiée
-│   • Lancer depuis Foxeo-One
+│   • Lancer depuis MonprojetPro-One
 │   • Enregistrement auto
 │   • Post-visio : fiche client, décision parcours
 ├─→ Validations Validation Hub
@@ -317,7 +322,7 @@ PHASE 5: CLIENT ÉTABLI
 
 ### Matrice des Fonctions par Dashboard
 
-| Fonction | Foxeo-Lab | Foxeo-One |
+| Fonction | MonprojetPro-Lab | MonprojetPro-One |
 |----------|-----------|-------------|
 | **Guidance projet** | ✅ Principal | ❌ |
 | **Questions de découverte** | ✅ Principal | ❌ |
@@ -343,7 +348,7 @@ CLIENT pose une question
    "Je ne suis pas sûr... Tu veux que je contacte MiKL ?"
    [Oui]  [Non, ça va]
               ↓ (si oui)
-   📨 NOTIFICATION dans Foxeo-One
+   📨 NOTIFICATION dans MonprojetPro-One
    • Question du client
    • Contexte conversation
    → MiKL répond via Chat direct
@@ -394,8 +399,8 @@ CLIENT pose une question
 
 | Ancien nom | Nouveau nom | Rôle |
 |------------|-------------|------|
-| Dashboard Mère / Foxeo-One | **FOXEO-HUB** | Cockpit MiKL |
-| Dashboard Coaching / Foxeo-Lab | **FOXEO-LAB** | Incubation clients |
+| Dashboard Mère / MonprojetPro-One | **FOXEO-HUB** | Cockpit MiKL |
+| Dashboard Coaching / MonprojetPro-Lab | **FOXEO-LAB** | Incubation clients |
 | Dashboard Outil | **FOXEO-ONE** | Outil métier clients |
 
 ### Design System V1
@@ -403,9 +408,9 @@ CLIENT pose une question
 | Élément | Décision |
 |---------|----------|
 | **Composants** | shadcn/ui + 21st.dev (payants validés au cas par cas) + Radix UI |
-| **Typographie** | Poppins (titres/UI) + Inter (corps) - Charte Foxeo |
+| **Typographie** | Poppins (titres/UI) + Inter (corps) - Charte MonprojetPro |
 | **Template** | Unique pour les 3 dashboards, couleur distinctive |
-| **Générateur thèmes** | [tweakcn.com](https://tweakcn.com) avec logo Foxeo |
+| **Générateur thèmes** | [tweakcn.com](https://tweakcn.com) avec logo MonprojetPro |
 | **Format couleurs** | OKLCH (Tailwind CSS v4 ready) |
 
 #### Densité par Dashboard
@@ -502,13 +507,29 @@ Contient pour chaque dashboard :
 | **Élio Lab** | Lab | Guide création, challenger | LLM connecté, accès contrôlé par MiKL |
 | **Élio One** | One | Support + demandes évolutions | Pas de LLM création, mode support |
 
-### Migration Lab → One
+### Graduation Lab → One (Mise à jour 13/04/2026 — ADR-01)
 
-- Le client garde accès à son dashboard Lab depuis One (onglet "Historique Lab")
-- Tous les documents créés en Lab sont accessibles en lecture
-- Élio Lab est **désactivé par défaut** après graduation
-- MiKL peut **réactiver** Élio Lab si le client a besoin d'un retour au laboratoire
-- Archivage complet côté Hub : docs, chats, transcriptions, données externes
+La graduation **n'est plus une migration irréversible** vers une interface distincte. Elle active le Mode One dans la même application client et expose un toggle persistant Lab/One dans le shell.
+
+- Lab et One coexistent en permanence dans la même instance `apps/client`
+- Le client garde un **accès complet** au Mode Lab après graduation — pas seulement un historique en lecture seule : docs, chats, historique des soumissions Validation Hub, transcriptions visio restent pleinement navigables
+- Élio Lab est **désactivé par défaut** après graduation (feature flag par client, contrôlé par MiKL depuis le Hub)
+- Quand Élio Lab est désactivé : la vue Lab affiche l'historique, les documents et les chats archivés en mode lecture, sans agent actif
+- Quand MiKL **réactive** Élio Lab pour un cycle d'amélioration, l'agent redevient actif dans la vue Lab sans changer d'application
+- Archivage complet côté Hub : docs, chats, transcriptions, données externes (inchangé)
+
+#### Toggle Lab/One — Mécanique
+
+- **Placement** : dans le header du shell, en haut à droite (proposé) — emplacement définitif à préciser lors de l'implémentation
+- **Visibilité conditionnelle** : visible uniquement pour les clients gradués (`clientConfig.dashboardType === 'one' && clientConfig.labModeAvailable === true`)
+- **Bascule instantanée** : change le thème CSS (violet Lab ↔ vert/orange One), les onglets de la sidebar, et les accents de couleur du header
+- **Pas de rechargement** : la bascule se fait via routing côté client, la session et l'état React sont préservés
+- **Ressenti client** : "Je suis dans mon outil métier, et je peux revenir dans mon laboratoire quand je veux"
+
+#### Références
+
+- `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md`
+- `_bmad-output/planning-artifacts/architecture/adr-02-lab-module-tree-shakable-export.md`
 
 ### Stockage (Décision 30/01/2026)
 
@@ -537,10 +558,10 @@ Mobile ───┘              API INSEE)
 
 | Point d'entrée | Destination | UX |
 |----------------|-------------|-----|
-| QR Code carte | Cal.com Foxeo | Scan → Page RDV directe |
-| Lien LinkedIn | Cal.com Foxeo | Clic → Page RDV |
-| Bouton site | Cal.com Foxeo | Clic → Page RDV |
-| MiKL mobile | Hub Foxeo | Création manuelle |
+| QR Code carte | Cal.com MonprojetPro | Scan → Page RDV directe |
+| Lien LinkedIn | Cal.com MonprojetPro | Clic → Page RDV |
+| Bouton site | Cal.com MonprojetPro | Clic → Page RDV |
+| MiKL mobile | Hub MonprojetPro | Création manuelle |
 
 **Informations collectées (légères) :** Prénom, Nom, Email, Société (optionnel)
 
@@ -586,10 +607,10 @@ Mobile ───┘              API INSEE)
 
 ## Prochaines Étapes
 
-- [x] ~~Finaliser le nom de Foxeo-Outil~~ → Renommé **FOXEO-ONE** ✅
+- [x] ~~Finaliser le nom de MonprojetPro-Outil~~ → Renommé **FOXEO-ONE** ✅
 - [x] ~~Définir les palettes couleurs détaillées~~ → Thèmes tweakcn générés ✅ (25/01/2026)
 - [ ] Retravailler le design des dashboards avec les 2 chats distincts
-- [ ] **Créer wireframes détaillés style "Minimal Futuriste"** (Foxeo-Hub, Foxeo-Lab, Foxeo-One)
+- [ ] **Créer wireframes détaillés style "Minimal Futuriste"** (MonprojetPro-Hub, MonprojetPro-Lab, MonprojetPro-One)
 - [ ] **Affiner les palettes couleurs** (cyan/violet/vert sur base noir profond)
 - [ ] **Explorer animations et détails composants** (glow, transitions)
 - [ ] Spécifier le template de documentation BMAD pour Élio

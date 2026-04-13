@@ -1,10 +1,20 @@
 # Story 9.5a: Export RGPD des données client
 
+> ## ⚠️ REWORK REQUIRED — Décision architecturale 2026-04-13
+>
+> Cette story a été implémentée sous l'ancienne architecture (Lab et One déployés séparément). Le modèle a changé : Lab et One cohabitent désormais dans la même instance client avec un toggle persistant.
+>
+> **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
+>
+> **Impact sur cette story** : Ajouter une option `includeLabData` (true par défaut) et une option `buildStandalone` pour générer un export code + bundle 'One standalone' (Lab + agents tree-shaken via `NEXT_PUBLIC_ENABLE_LAB_MODULE=false`).
+>
+> **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
+
 Status: done
 
 ## Story
 
-As a **client Foxeo ou MiKL (opérateur)**,
+As a **client MonprojetPro ou MiKL (opérateur)**,
 I want **exporter l'ensemble des données personnelles d'un client (droit d'accès RGPD)**,
 so that **le client peut exercer son droit à la portabilité des données**.
 

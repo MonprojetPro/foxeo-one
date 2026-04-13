@@ -1,8 +1,9 @@
-# Functional Requirements — Foxeo Plateforme
+# Functional Requirements — MonprojetPro Plateforme
 
-**Total : 170 FRs** couvrant l'ensemble de l'écosystème Foxeo (Hub, Lab, One).
+**Total : 173 FRs** couvrant l'ensemble de l'écosystème MonprojetPro (Hub, Lab, One).
 > Mis à jour le 08/02/2026 : ajout FR153-168 (propriété client, instance dédiée, documentation livrable, surveillance usage).
 > Mis à jour le 08/02/2026 : ajout FR169-170 (facturation forfait Lab 199€, déduction setup One).
+> Mis à jour le 13/04/2026 : refonte FR153, FR166, FR167 + ajout FR171-173 (coexistence Lab/One dans la même instance, toggle shell, feature flag Élio Lab, export One standalone). Voir [ADR-01](../architecture/adr-01-lab-one-coexistence-same-instance.md) et [ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md).
 
 ## Hub — Gestion Clients
 
@@ -28,9 +29,9 @@
 | FR13 | MiKL peut choisir une action de traitement (Réactiver Lab, Programmer Visio, Dev direct, Reporter) |
 | FR14 | Le client est notifié automatiquement du traitement de sa demande |
 
-## Orpheus — Cerveau Foxeo (Cursor/BMAD)
+## Orpheus — Cerveau MonprojetPro (Cursor/BMAD)
 
-> **Note** : Orpheus n'est PAS dans Foxeo. Il travaille avec MiKL dans Cursor et génère des documents sources pour alimenter les Élio.
+> **Note** : Orpheus n'est PAS dans MonprojetPro. Il travaille avec MiKL dans Cursor et génère des documents sources pour alimenter les Élio.
 
 | ID | Functional Requirement |
 |----|------------------------|
@@ -39,7 +40,7 @@
 | FR17 | Orpheus peut détecter le profil de communication d'un client |
 | FR18 | Orpheus peut recommander un type de parcours Lab |
 | FR19 | Orpheus peut générer une config Élio (client_config.yaml) |
-| FR20 | Orpheus accumule les apprentissages métier Foxeo (pricing, patterns, durées) |
+| FR20 | Orpheus accumule les apprentissages métier MonprojetPro (pricing, patterns, durées) |
 | FR20b | Orpheus peut générer des estimations prix → Élio Hub fait les devis |
 | FR20c | Orpheus peut générer des docs techniques → Élio One accompagne les clients |
 | FR20d | Orpheus peut retravailler docs brainstorming Lab → livrables clients |
@@ -63,7 +64,7 @@
 | FR28 | Le client Lab peut consulter les briefs produits à chaque étape |
 | FR29 | Le client Lab peut soumettre un brief pour validation MiKL |
 | FR30 | Le client Lab est notifié quand un brief est validé/refusé |
-| FR31 | Le client Lab peut voir un teasing de Foxeo One (motivation graduation) |
+| FR31 | Le client Lab peut voir un teasing de MonprojetPro One (motivation graduation) |
 
 ## Lab — Élio Lab (Agent Accompagnement)
 
@@ -350,11 +351,11 @@
 
 | ID | Functional Requirement |
 |----|------------------------|
-| FR153 | Chaque client One reçoit une instance déployée dédiée (Vercel + Supabase propre) |
+| FR153 | Chaque client gradué reçoit une instance déployée dédiée sur `{slug}.monprojet-pro.com` (Vercel + Supabase propre) qui contient à la fois les modules Lab ET One — pas de provisioning séparé ([ADR-01](../architecture/adr-01-lab-one-coexistence-same-instance.md)) |
 | FR154 | Le client One est propriétaire de son code source et de ses données |
 | FR155 | Le Hub communique avec les instances One via API REST et webhooks signés (HMAC) |
 | FR156 | MiKL peut provisionner une nouvelle instance One via le Hub (script automatisé) |
-| FR157 | Le client One peut récupérer le code source, la base de données et la documentation s'il quitte Foxeo |
+| FR157 | Le client One peut récupérer le code source, la base de données et la documentation s'il quitte MonprojetPro |
 
 ## Documentation comme Livrable
 
@@ -378,14 +379,14 @@
 
 | ID | Functional Requirement |
 |----|------------------------|
-| FR166 | La graduation Lab→One provisionne une nouvelle instance dédiée pour le client |
-| FR167 | La graduation migre les données Lab pertinentes vers l'instance One dédiée |
+| FR166 | La graduation Lab→One n'effectue AUCUNE migration de données cross-database : elle active le mode One au sein de l'instance client existante (Lab et One partagent la même base) ([ADR-01](../architecture/adr-01-lab-one-coexistence-same-instance.md)) |
+| FR167 | La graduation active le mode One et préserve les données Lab en lecture, avec possibilité de réactivation d'Élio Lab par MiKL depuis le Hub (plus d'« archivage » — les données Lab restent pleinement accessibles) |
 
-## Lab — Propriété Foxeo
+## Lab — Propriété MonprojetPro
 
 | ID | Functional Requirement |
 |----|------------------------|
-| FR168 | Le Lab reste propriété Foxeo — le client récupère uniquement ses documents à la sortie |
+| FR168 | Le Lab reste propriété MonprojetPro — le client récupère uniquement ses documents à la sortie |
 
 ## Lab — Facturation Forfait
 
@@ -393,5 +394,13 @@
 |----|------------------------|
 | FR169 | Le système permet le paiement du forfait Lab (199€) et active automatiquement l'accès au dashboard Lab + Élio Lab |
 | FR170 | Si le client Lab gradue vers One, les 199€ du Lab sont automatiquement déduits du devis setup One |
+
+## Coexistence Lab/One & Feature Flags Agents
+
+| ID | Functional Requirement |
+|----|------------------------|
+| FR171 | Après la graduation, un toggle persistant Lab/One est affiché dans le shell de l'instance client et permet de basculer à tout moment entre le mode Lab (thème violet, vue incubation pré-graduation) et le mode One (thème vert/orange, outil business quotidien) — les deux modes coexistent en permanence ([ADR-01](../architecture/adr-01-lab-one-coexistence-same-instance.md)) |
+| FR172 | Élio Lab est piloté par un feature flag : désactivé par défaut après la graduation, MiKL peut le réactiver à tout moment depuis le Hub (1 clic, pas de re-provisioning) pour démarrer un nouveau cycle d'amélioration ([ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md)) |
+| FR173 | MiKL peut produire un build « One standalone » tree-shaké à la compilation — Lab, Élio Lab, Élio One et Claude sont exclus du bundle via feature flags — pour un client qui sort de l'abonnement mensuel et souhaite auto-héberger une version réduite ([ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md)) |
 
 ---
