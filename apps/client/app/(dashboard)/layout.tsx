@@ -1,11 +1,19 @@
 import Link from 'next/link'
-import { DashboardShell, ThemeToggle, ModuleSidebar, Button } from '@foxeo/ui'
-import { discoverModules, getModulesForTarget } from '@foxeo/utils'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { NotificationBadge } from '@foxeo/modules-notifications'
-import { PresenceProvider } from '@foxeo/modules-chat'
+import { cookies } from 'next/headers'
+import {
+  DashboardShell,
+  ThemeToggle,
+  ModeToggle,
+  MODE_TOGGLE_COOKIE,
+  ModuleSidebar,
+  Button,
+} from '@monprojetpro/ui'
+import { discoverModules, getModulesForTarget } from '@monprojetpro/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { NotificationBadge } from '@monprojetpro/modules-notifications'
+import { PresenceProvider } from '@monprojetpro/modules-chat'
 import { LogoutButton } from './logout-button'
-import type { ModuleTarget, CustomBranding } from '@foxeo/types'
+import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
 async function ClientSidebar({
   dashboardType,
@@ -48,10 +56,14 @@ function ClientHeader({
   authUserId,
   displayName,
   logoUrl,
+  activeMode,
+  labModeAvailable,
 }: {
   authUserId: string
   displayName?: string | null
   logoUrl?: string | null
+  activeMode: 'lab' | 'one'
+  labModeAvailable: boolean
 }) {
   return (
     <div className="flex w-full items-center justify-between">
@@ -60,6 +72,7 @@ function ClientHeader({
         <span className="text-sm font-medium">{displayName || 'Mon espace'}</span>
       </div>
       <div className="flex items-center gap-2">
+        <ModeToggle currentMode={activeMode} labModeAvailable={labModeAvailable} />
         <Button variant="ghost" size="sm" asChild>
           <Link href="/help">Aide</Link>
         </Button>
@@ -83,10 +96,11 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   // Single query: fetch client record with joined client_configs (including custom_branding)
+  // ADR-01 Révision 2 — `lab_mode_available` ajouté pour piloter la visibilité du toggle Mode Lab/One.
   const { data: clientRecord } = user
     ? await supabase
         .from('clients')
-        .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, density, custom_branding)')
+        .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, density, custom_branding, lab_mode_available)')
         .eq('auth_user_id', user.id)
         .maybeSingle()
     : { data: null }
@@ -98,9 +112,26 @@ export default async function DashboardLayout({
   const configRelation = clientRecord?.client_configs
   const clientConfig = Array.isArray(configRelation) ? configRelation[0] : configRelation
 
-  const dashboardType = clientConfig?.dashboard_type ?? 'lab'
+  const dashboardType: 'lab' | 'one' = (clientConfig?.dashboard_type === 'one' ? 'one' : 'lab')
+  const labModeAvailable = clientConfig?.lab_mode_available ?? false
   const activeModules: string[] = clientConfig?.active_modules ?? ['core-dashboard']
-  const density = dashboardType === 'one' ? 'comfortable' : 'spacious'
+
+  // ADR-01 Révision 2 — Le mode actif est piloté par cookie navigateur.
+  // dashboard_type reste le statut canonique. Le cookie ne peut activer le Mode Lab
+  // que si le client a effectivement lab_mode_available === true.
+  const cookieStore = await cookies()
+  const cookieView = cookieStore.get(MODE_TOGGLE_COOKIE)?.value
+  const cookieMode: 'lab' | 'one' | null =
+    cookieView === 'lab' || cookieView === 'one' ? cookieView : null
+
+  const activeMode: 'lab' | 'one' =
+    cookieMode === 'lab' && labModeAvailable
+      ? 'lab'
+      : cookieMode === 'one' && (dashboardType === 'one' || labModeAvailable)
+        ? 'one'
+        : dashboardType
+
+  const density = activeMode === 'one' ? 'comfortable' : 'spacious'
 
   // Custom branding (from Hub operator configuration)
   const customBranding = (clientConfig?.custom_branding ?? null) as CustomBranding | null
@@ -118,9 +149,17 @@ export default async function DashboardLayout({
       <DashboardShell
         density={density}
         sidebar={
-          <ClientSidebar dashboardType={dashboardType} activeModules={activeModules} logoUrl={logoUrl} />
+          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} logoUrl={logoUrl} />
         }
-        header={<ClientHeader authUserId={user?.id ?? ''} displayName={displayName} logoUrl={logoUrl} />}
+        header={
+          <ClientHeader
+            authUserId={user?.id ?? ''}
+            displayName={displayName}
+            logoUrl={logoUrl}
+            activeMode={activeMode}
+            labModeAvailable={labModeAvailable}
+          />
+        }
       >
         <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
           {children}

@@ -1,5 +1,11 @@
 'use client'
 
+/**
+ * @deprecated Depuis ADR-01 Révision 2 (2026-04-13).
+ * Voir Story 13.1 — Kit de sortie client (Epic 13). Ce dialog sera remplacé
+ * par le bouton "Lancer kit de sortie" lors de l'implémentation de Story 13.1.
+ */
+
 import { useState, useEffect, useTransition } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -11,8 +17,8 @@ import {
   Button,
   showSuccess,
   showError,
-} from '@foxeo/ui'
-import { transferInstanceToClient } from '@foxeo/module-admin'
+} from '@monprojetpro/ui'
+import { transferInstanceToClient } from '@monprojetpro/module-admin'
 
 interface TransferInstanceDialogProps {
   clientId: string
@@ -80,7 +86,7 @@ export function TransferInstanceDialog({
               ⚠️ Cette action est irréversible. Le client deviendra propriétaire complet de son instance.
             </p>
             <p className="text-xs text-destructive/80 mt-1">
-              L&apos;accès à l&apos;instance Foxeo One sera désactivé après le transfert.
+              L&apos;accès à l&apos;instance MonprojetPro One sera désactivé après le transfert.
             </p>
           </div>
 

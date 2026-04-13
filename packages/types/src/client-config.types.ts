@@ -36,6 +36,9 @@ export type ClientConfig = {
   elioModuleDocs?: ElioModuleDoc[]
   density: 'compact' | 'comfortable' | 'spacious'
   showLabTeasing?: boolean
+  // ADR-01 Révision 2 — Toggle Mode Lab/One et feature flag Élio Lab
+  labModeAvailable: boolean
+  elioLabEnabled: boolean
   createdAt: string
   updatedAt: string
 }

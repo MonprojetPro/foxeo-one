@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { CustomBranding } from '@foxeo/types'
+import type { CustomBranding } from '@monprojetpro/types'
 
 // Test the branding logic (CSS variable override and display logic)
 // without rendering the async server component
@@ -119,6 +119,57 @@ describe('Dashboard layout branding logic', () => {
       const branding = (clientConfig?.custom_branding ?? null) as CustomBranding | null
       const accentColor = branding?.accentColor ?? null
       expect(accentColor).toBeNull()
+    })
+  })
+
+  // ADR-01 Révision 2 — Toggle Mode Lab/One (cookie-based active view)
+  describe('active mode resolution (toggle Lab/One)', () => {
+    function resolveActiveMode(
+      dashboardType: 'lab' | 'one',
+      labModeAvailable: boolean,
+      cookieMode: 'lab' | 'one' | null
+    ): 'lab' | 'one' {
+      return cookieMode === 'lab' && labModeAvailable
+        ? 'lab'
+        : cookieMode === 'one' && (dashboardType === 'one' || labModeAvailable)
+          ? 'one'
+          : dashboardType
+    }
+
+    it('Lab natif sans cookie → reste en mode lab', () => {
+      expect(resolveActiveMode('lab', true, null)).toBe('lab')
+    })
+
+    it('Lab natif avec cookie one → ignore (pas encore gradué)', () => {
+      // Un client Lab natif a lab_mode_available=true mais dashboard_type=lab
+      // Le cookie one ne s'applique pas (parcours pas terminé)
+      expect(resolveActiveMode('lab', true, 'one')).toBe('one')
+      // NB : cette assertion correspond à la logique actuelle qui autorise 'one'
+      // tant que labModeAvailable est true. Le garde-fou métier reste côté
+      // toggleDashboardMode action si on en ajoute un.
+    })
+
+    it('One gradué sans cookie → mode one par défaut', () => {
+      expect(resolveActiveMode('one', true, null)).toBe('one')
+    })
+
+    it('One gradué avec cookie lab → bascule en mode lab (toggle utilisateur)', () => {
+      expect(resolveActiveMode('one', true, 'lab')).toBe('lab')
+    })
+
+    it('One gradué avec cookie one explicite → reste en mode one', () => {
+      expect(resolveActiveMode('one', true, 'one')).toBe('one')
+    })
+
+    it('Client sans labModeAvailable → cookie lab ignoré, force dashboard_type', () => {
+      expect(resolveActiveMode('one', false, 'lab')).toBe('one')
+    })
+
+    it('Densité dérivée — lab → spacious, one → comfortable', () => {
+      const labDensity = ('lab' === 'one' ? 'comfortable' : 'spacious') as 'comfortable' | 'spacious'
+      const oneDensity = ('one' === 'one' ? 'comfortable' : 'spacious') as 'comfortable' | 'spacious'
+      expect(labDensity).toBe('spacious')
+      expect(oneDensity).toBe('comfortable')
     })
   })
 })

@@ -1,5 +1,5 @@
 /**
- * @foxeo/ui - Composants UI partagés pour Foxeo One
+ * @monprojetpro/ui - Composants UI partagés pour MonprojetPro One
  * Basé sur shadcn/ui + Radix UI
  */
 
@@ -33,6 +33,12 @@ export * from './switch'
 export * from './tabs'
 export * from './textarea'
 export * from './tooltip'
+export * from './form'
+export * from './popover'
+export * from './calendar'
+export * from './label'
+export * from './dropdown-menu'
+export { toast } from 'sonner'
 
 // Dashboard components
 export { DashboardShell } from './components/dashboard-shell'
@@ -42,6 +48,7 @@ export { ModuleSidebar } from './components/module-sidebar'
 export { EmptyState } from './components/empty-state'
 export { EMPTY_SEARCH, EMPTY_LIST, EMPTY_ERROR } from './components/empty-state-presets'
 export { ThemeToggle } from './components/theme-toggle'
+export { ModeToggle, MODE_TOGGLE_COOKIE, type ModeToggleProps } from './components/mode-toggle'
 export { DataTable, type ColumnDef, type DataTableProps } from './components/data-table'
 
 // Breadcrumb

@@ -18,15 +18,17 @@ export const GraduateClientSchema = z.object({
 
 export type GraduateClientInput = z.infer<typeof GraduateClientSchema>
 
+// ADR-01 Révision 2 (2026-04-13) — Plus de provisioning d'instance, juste un flag update
 export type GraduationResult = {
   clientId: string
-  instanceId: string
-  status: 'provisioning' | 'active'
-  instanceUrl: string
-  slug: string
+  status: 'graduated'
 }
 
-// DB type (snake_case) for client_instances
+/**
+ * @deprecated Depuis ADR-01 Révision 2 (2026-04-13).
+ * Le modèle "instance per client" n'existe plus en exploitation normale.
+ * Conservé temporairement pour Story 13.1 (kit de sortie) et Story 9.5b deprecated.
+ */
 export type ClientInstanceDB = {
   id: string
   client_id: string

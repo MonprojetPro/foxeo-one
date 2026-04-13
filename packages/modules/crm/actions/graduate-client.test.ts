@@ -3,36 +3,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const CLIENT_UUID = '550e8400-e29b-41d4-a716-446655440000'
 const OPERATOR_UUID = '550e8400-e29b-41d4-a716-446655440001'
 const AUTH_UUID = '550e8400-e29b-41d4-a716-446655440099'
-const INSTANCE_UUID = '550e8400-e29b-41d4-a716-446655440002'
 
 // Mocks
 const mockGetUser = vi.fn()
 const mockOpSingle = vi.fn()
 const mockClientSingle = vi.fn()
-const mockClientCompanySingle = vi.fn()
 const mockConfigSingle = vi.fn()
 const mockParcoursMaybeSingle = vi.fn()
-const mockValidationSelect = vi.fn()
 const mockActivityInsert = vi.fn().mockResolvedValue({ error: null })
-const mockInstanceInsert = vi.fn()
-const mockInstanceUpdate = vi.fn()
 const mockClientsUpdate = vi.fn()
 const mockConfigUpdate = vi.fn()
 
-// eq chain builder
-function makeEqChain(finalFn: () => unknown) {
-  const chain = {
-    eq: vi.fn(() => chain),
-    single: vi.fn(finalFn),
-    maybeSingle: vi.fn(finalFn),
-    select: vi.fn(() => chain),
-    insert: vi.fn(() => ({ select: vi.fn(() => ({ single: vi.fn(finalFn) })) })),
-    update: vi.fn(() => chain),
-  }
-  return chain
-}
-
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     from: vi.fn((table: string) => {
@@ -43,21 +25,11 @@ vi.mock('@foxeo/supabase', () => ({
       }
       if (table === 'clients') {
         return {
-          select: vi.fn((fields: string) => {
-            if (fields === 'id, operator_id') {
-              return {
-                eq: vi.fn(() => ({
-                  eq: vi.fn(() => ({ single: mockClientSingle })),
-                })),
-              }
-            }
-            // 'company' select
-            return {
-              eq: vi.fn(() => ({
-                eq: vi.fn(() => ({ single: mockClientCompanySingle })),
-              })),
-            }
-          }),
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({ single: mockClientSingle })),
+            })),
+          })),
           update: mockClientsUpdate,
         }
       }
@@ -85,15 +57,6 @@ vi.mock('@foxeo/supabase', () => ({
           })),
         }
       }
-      if (table === 'client_instances') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })),
-          })),
-          insert: mockInstanceInsert,
-          update: mockInstanceUpdate,
-        }
-      }
       if (table === 'activity_logs') {
         return { insert: mockActivityInsert }
       }
@@ -104,23 +67,6 @@ vi.mock('@foxeo/supabase', () => ({
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
-vi.mock('../utils/provision-instance', () => ({
-  provisionOneInstance: vi.fn().mockResolvedValue({
-    data: {
-      clientId: CLIENT_UUID,
-      instanceId: INSTANCE_UUID,
-      status: 'active',
-      instanceUrl: 'https://acme-corp.foxeo.io',
-      slug: 'acme-corp',
-    },
-    error: null,
-  }),
-}))
-
-vi.mock('./migrate-lab-data', () => ({
-  migrateLabDataToOne: vi.fn().mockResolvedValue({ data: {}, error: null }),
-}))
-
 const validInput = {
   clientId: CLIENT_UUID,
   tier: 'essentiel' as const,
@@ -128,7 +74,7 @@ const validInput = {
   notes: 'Graduation réussie',
 }
 
-describe('graduateClient Server Action', () => {
+describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
@@ -138,10 +84,6 @@ describe('graduateClient Server Action', () => {
     // Default: conditions met
     mockClientSingle.mockResolvedValue({
       data: { id: CLIENT_UUID, operator_id: OPERATOR_UUID },
-      error: null,
-    })
-    mockClientCompanySingle.mockResolvedValue({
-      data: { company: 'Acme Corp' },
       error: null,
     })
     mockConfigSingle.mockResolvedValue({
@@ -158,17 +100,6 @@ describe('graduateClient Server Action', () => {
       eq: vi.fn(() => ({ eq: vi.fn(() => ({ error: null })) })),
     })
     mockConfigUpdate.mockReturnValue({
-      eq: vi.fn(() => ({ error: null })),
-    })
-    mockInstanceInsert.mockReturnValue({
-      select: vi.fn(() => ({
-        single: vi.fn().mockResolvedValue({
-          data: { id: INSTANCE_UUID },
-          error: null,
-        }),
-      })),
-    })
-    mockInstanceUpdate.mockReturnValue({
       eq: vi.fn(() => ({ error: null })),
     })
   })
@@ -282,7 +213,7 @@ describe('graduateClient Server Action', () => {
       }),
     }
 
-    const { createServerSupabaseClient } = await import('@foxeo/supabase')
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockResolvedValueOnce(supabaseMock as never)
 
     const { graduateClient } = await import('./graduate-client')
@@ -300,8 +231,49 @@ describe('graduateClient Server Action', () => {
     expect(result.error).toBeNull()
     expect(result.data).toBeTruthy()
     expect(result.data?.clientId).toBe(CLIENT_UUID)
-    expect(result.data?.status).toBe('active')
-    expect(result.data?.slug).toBe('acme-corp')
+    expect(result.data?.status).toBe('graduated')
+  })
+
+  it('should pass the new toggle flags lab_mode_available=true and elio_lab_enabled=false to client_configs update', async () => {
+    let capturedConfigUpdate: Record<string, unknown> | null = null
+    mockConfigUpdate.mockImplementation((payload: Record<string, unknown>) => {
+      capturedConfigUpdate = payload
+      return { eq: vi.fn(() => ({ error: null })) }
+    })
+
+    const { graduateClient } = await import('./graduate-client')
+    await graduateClient(validInput)
+
+    expect(capturedConfigUpdate).toBeTruthy()
+    expect(capturedConfigUpdate).toMatchObject({
+      dashboard_type: 'one',
+      lab_mode_available: true,
+      elio_lab_enabled: false,
+      graduation_source: 'lab',
+    })
+  })
+
+  it('should NOT touch the deprecated client_instances table (multi-tenant model)', async () => {
+    let touchedClientInstances = false
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
+    const originalImpl = vi.mocked(createServerSupabaseClient).getMockImplementation()
+
+    vi.mocked(createServerSupabaseClient).mockImplementationOnce(async () => {
+      const original = await (originalImpl?.() as Promise<unknown>)
+      const proxied = original as { from: (table: string) => unknown }
+      const wrappedFrom = (table: string) => {
+        if (table === 'client_instances') {
+          touchedClientInstances = true
+        }
+        return proxied.from(table)
+      }
+      return { ...(proxied as object), from: wrappedFrom } as never
+    })
+
+    const { graduateClient } = await import('./graduate-client')
+    await graduateClient(validInput)
+
+    expect(touchedClientInstances).toBe(false)
   })
 
   it('should return GRADUATION_ERROR when clients update fails and rollback', async () => {

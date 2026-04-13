@@ -344,82 +344,39 @@ describe('middleware routing logic', () => {
     })
   })
 
-  describe('One instance redirect logic (Story 9.2)', () => {
-    it('client gradué avec screen montré ET dashboard_type=one doit être redirigé vers instance One', () => {
-      const client = { graduated_at: '2026-02-24T10:00:00Z', graduation_screen_shown: true }
-      const clientConfig = { dashboard_type: 'one' }
-      const instance = { instance_url: 'https://jean.foxeo.io', status: 'active' }
+  describe('Graduation flow — multi-tenant (ADR-01 Révision 2)', () => {
+    // Le client gradué reste sur le même déploiement multi-tenant.
+    // Plus de redirect cross-subdomain. Voir ADR-01 Révision 2.
 
-      const currentHost = 'lab.foxeo.io'
-      const instanceHost = new URL(instance.instance_url).host
-
-      const shouldRedirect =
-        !!client.graduated_at &&
-        client.graduation_screen_shown &&
-        clientConfig.dashboard_type === 'one' &&
-        instance.status === 'active' &&
-        currentHost !== instanceHost
-
-      expect(shouldRedirect).toBe(true)
-    })
-
-    it('client gradué mais screen PAS encore montré NE doit PAS être redirigé vers One (→ graduation/celebrate)', () => {
+    it('client gradué mais screen PAS encore montré → redirect vers /graduation/celebrate', () => {
       const client = { graduated_at: '2026-02-24T10:00:00Z', graduation_screen_shown: false }
-      const clientConfig = { dashboard_type: 'one' }
-      const instance = { instance_url: 'https://jean.foxeo.io', status: 'active' }
-
-      const currentHost = 'lab.foxeo.io'
-      const instanceHost = new URL(instance.instance_url).host
-
-      const shouldRedirectToOne =
-        !!client.graduated_at &&
-        client.graduation_screen_shown &&
-        clientConfig.dashboard_type === 'one' &&
-        instance.status === 'active' &&
-        currentHost !== instanceHost
-
-      expect(shouldRedirectToOne).toBe(false)
+      const shouldShowCelebrate = !!client.graduated_at && !client.graduation_screen_shown
+      expect(shouldShowCelebrate).toBe(true)
     })
 
-    it('client en provisioning doit être redirigé vers page d\'attente', () => {
+    it('client gradué avec screen déjà montré → reste sur la même URL (toggle Lab/One pris en charge par le shell)', () => {
       const client = { graduated_at: '2026-02-24T10:00:00Z', graduation_screen_shown: true }
-      const clientConfig = { dashboard_type: 'one' }
-      const instance = { instance_url: 'https://jean.foxeo.io', status: 'provisioning' }
-
-      const shouldShowProvisioning =
-        !!client.graduated_at &&
-        client.graduation_screen_shown &&
-        clientConfig.dashboard_type === 'one' &&
-        instance.status === 'provisioning'
-
-      expect(shouldShowProvisioning).toBe(true)
+      const shouldShowCelebrate = !!client.graduated_at && !client.graduation_screen_shown
+      expect(shouldShowCelebrate).toBe(false)
+      // Aucune autre redirection liée à la graduation : le client navigue normalement.
     })
 
-    it('client déjà sur son instance One (même host) NE doit PAS être redirigé', () => {
-      const client = { graduated_at: '2026-02-24T10:00:00Z', graduation_screen_shown: true }
-      const clientConfig = { dashboard_type: 'one' }
-      const instance = { instance_url: 'https://jean.foxeo.io', status: 'active' }
-
-      const currentHost = 'jean.foxeo.io' // même host que l'instance
-      const instanceHost = new URL(instance.instance_url).host
-
-      const shouldRedirect =
-        !!client.graduated_at &&
-        client.graduation_screen_shown &&
-        clientConfig.dashboard_type === 'one' &&
-        instance.status === 'active' &&
-        currentHost !== instanceHost
-
-      expect(shouldRedirect).toBe(false)
+    it('client non gradué → aucun écran de bienvenue post-graduation', () => {
+      const client = { graduated_at: null, graduation_screen_shown: false }
+      const shouldShowCelebrate = !!client.graduated_at && !client.graduation_screen_shown
+      expect(shouldShowCelebrate).toBe(false)
     })
 
-    it('préserve le path et les query params dans la redirect URL', () => {
-      const instanceUrl = 'https://jean.foxeo.io'
-      const pathname = '/modules/crm'
-      const search = '?filter=active'
-
-      const redirectUrl = `${instanceUrl}${pathname}${search}`
-      expect(redirectUrl).toBe('https://jean.foxeo.io/modules/crm?filter=active')
+    it('aucune logique liée à instance_url ni à un sous-domaine {slug}.monprojet-pro.com', () => {
+      // Sentinelle : si quelqu'un réintroduit un redirect cross-subdomain, ce test devra être supprimé
+      // ET un nouveau ADR devra l'expliquer. Voir ADR-01 Révision 2.
+      const middlewareSource = require('fs').readFileSync(
+        require('path').join(__dirname, 'middleware.ts'),
+        'utf-8'
+      ) as string
+      expect(middlewareSource).not.toMatch(/instance_url/)
+      expect(middlewareSource).not.toMatch(/ONE_REDIRECT/)
+      expect(middlewareSource).not.toMatch(/graduation\/provisioning/)
     })
   })
 

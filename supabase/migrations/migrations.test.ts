@@ -37,7 +37,7 @@ describe('Supabase project structure', () => {
     const configPath = join(SUPABASE_DIR, 'config.toml')
     expect(existsSync(configPath)).toBe(true)
     const content = readFileSync(configPath, 'utf-8')
-    expect(content).toContain('project_id = "foxeo-dash"')
+    expect(content).toContain('project_id = "monprojetpro-dash"')
   })
 
   it('seed.sql exists', () => {
@@ -390,7 +390,7 @@ describe('Seed data', () => {
   const sql = readFileSync(join(SUPABASE_DIR, 'seed.sql'), 'utf-8')
 
   it('inserts MiKL operator', () => {
-    expect(sql).toContain("'mikl@foxeo.io'")
+    expect(sql).toContain("'mikl@monprojet-pro.com'")
     expect(sql).toContain("'MiKL'")
     expect(sql).toContain("'operator'")
   })
@@ -522,6 +522,37 @@ describe('Migration 00068: P2 integration tables', () => {
     expect(sql).toContain('api_keys_delete_operator')
     expect(sql).toContain('api_keys_select_owner')
     expect(sql).toContain('auth_user_id = auth.uid()')
+  })
+})
+
+// Story 9.1 / 10.1 rework — Migration 00082: Lab/One toggle flags (ADR-01 Révision 2)
+describe('Migration 00082: Lab/One toggle flags', () => {
+  const sql = readFileSync(
+    join(MIGRATIONS_DIR, '00082_add_lab_one_toggle_flags.sql'),
+    'utf-8'
+  )
+
+  it('adds lab_mode_available column with NOT NULL default false', () => {
+    expect(sql).toContain('ALTER TABLE client_configs')
+    expect(sql).toContain('ADD COLUMN IF NOT EXISTS lab_mode_available BOOLEAN DEFAULT false NOT NULL')
+  })
+
+  it('adds elio_lab_enabled column with NOT NULL default false', () => {
+    expect(sql).toContain('ADD COLUMN IF NOT EXISTS elio_lab_enabled BOOLEAN DEFAULT false NOT NULL')
+  })
+
+  it('backfills Lab clients with both flags enabled', () => {
+    expect(sql).toMatch(/UPDATE client_configs[\s\S]*?lab_mode_available = true[\s\S]*?elio_lab_enabled = true[\s\S]*?WHERE dashboard_type = 'lab'/)
+  })
+
+  it('backfills One clients with lab_mode_available true but elio_lab_enabled false', () => {
+    expect(sql).toMatch(/UPDATE client_configs[\s\S]*?lab_mode_available = true[\s\S]*?elio_lab_enabled = false[\s\S]*?WHERE dashboard_type = 'one'/)
+  })
+
+  it('adds COMMENT documentation referencing ADR-01', () => {
+    expect(sql).toContain("COMMENT ON COLUMN client_configs.lab_mode_available")
+    expect(sql).toContain("COMMENT ON COLUMN client_configs.elio_lab_enabled")
+    expect(sql).toContain('ADR-01')
   })
 })
 

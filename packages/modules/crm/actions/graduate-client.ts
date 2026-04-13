@@ -1,16 +1,27 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import {
   GraduateClientSchema,
   type GraduateClientInput,
   type GraduationResult,
 } from '../types/graduation.types'
-import { provisionOneInstance } from '../utils/provision-instance'
-import { migrateLabDataToOne } from './migrate-lab-data'
 
+/**
+ * Graduate a client from Lab to One.
+ *
+ * ADR-01 Révision 2 (2026-04-13) — Multi-tenant unique :
+ * - Pas de provisioning d'instance dédiée (tout vit dans `app.monprojet-pro.com`)
+ * - Pas de migration cross-DB (les données Lab restent en place)
+ * - Simple bascule de flags sur `client_configs` :
+ *   - `dashboard_type: 'lab' → 'one'`
+ *   - `lab_mode_available: true` (toggle Mode Lab/One visible dans le shell)
+ *   - `elio_lab_enabled: false` (Élio Lab désactivé par défaut, MiKL le réactive au cas par cas)
+ *
+ * Le client garde l'accès à toutes ses données Lab via le toggle dans le shell.
+ */
 export async function graduateClient(
   input: GraduateClientInput
 ): Promise<ActionResponse<GraduationResult>> {
@@ -52,38 +63,7 @@ export async function graduateClient(
     const conditionCheck = await checkGraduationConditions(supabase, clientId, operatorId)
     if (conditionCheck.error) return conditionCheck
 
-    // 5. Phase A — Provisioning (async stub for MVP)
-    const { data: client } = await supabase
-      .from('clients')
-      .select('company')
-      .eq('id', clientId)
-      .eq('operator_id', operatorId)
-      .single()
-
-    const companyName = client?.company ?? clientId
-
-    const provisionResult = await provisionOneInstance(supabase, {
-      clientId,
-      companyName,
-      tier,
-      modules: activeModules,
-    })
-
-    if (provisionResult.error || !provisionResult.data) {
-      console.error('[CRM:GRADUATE_CLIENT] Provisioning error:', provisionResult.error)
-      return errorResponse(
-        'Erreur lors du provisioning de l\'instance',
-        'PROVISION_ERROR',
-        provisionResult.error
-      )
-    }
-
-    const { instanceId, instanceUrl, slug } = provisionResult.data
-
-    // 6. Phase B — Migration Lab data (MVP stub, non-blocking)
-    await migrateLabDataToOne(clientId, instanceUrl)
-
-    // 7. Phase C — Update Hub client records
+    // 5. Update clients table — graduation timestamp + notes
     const { error: clientUpdateError } = await supabase
       .from('clients')
       .update({
@@ -95,11 +75,6 @@ export async function graduateClient(
 
     if (clientUpdateError) {
       console.error('[CRM:GRADUATE_CLIENT] Client update error:', clientUpdateError)
-      // Attempt cleanup of provisioned instance
-      await supabase
-        .from('client_instances')
-        .update({ status: 'failed' })
-        .eq('id', instanceId)
       return errorResponse(
         'Erreur lors de la graduation — aucune modification effectuée. Réessayez.',
         'GRADUATION_ERROR',
@@ -107,7 +82,7 @@ export async function graduateClient(
       )
     }
 
-    // Map graduation tier to elio_tier
+    // 6. Update client_configs — flip dashboard_type + activate toggle + disable Élio Lab
     const elioTier = tier === 'agentique' ? 'one_plus' : 'one'
 
     const { error: configUpdateError } = await supabase
@@ -117,12 +92,15 @@ export async function graduateClient(
         elio_tier: elioTier,
         active_modules: activeModules,
         graduation_source: 'lab',
+        // ADR-01 Révision 2 — Toggle Mode Lab/One disponible + Élio Lab off par défaut
+        lab_mode_available: true,
+        elio_lab_enabled: false,
       })
       .eq('client_id', clientId)
 
     if (configUpdateError) {
       console.error('[CRM:GRADUATE_CLIENT] Config update error:', configUpdateError)
-      // Rollback: revert clients update
+      // Rollback: revert clients update so the operator can retry cleanly
       await supabase
         .from('clients')
         .update({
@@ -130,10 +108,6 @@ export async function graduateClient(
           graduation_notes: null,
         })
         .eq('id', clientId)
-      await supabase
-        .from('client_instances')
-        .update({ status: 'failed' })
-        .eq('id', instanceId)
       return errorResponse(
         'Erreur lors de la graduation — aucune modification effectuée. Réessayez.',
         'GRADUATION_ERROR',
@@ -141,16 +115,7 @@ export async function graduateClient(
       )
     }
 
-    // 8. Phase D — Flag graduation screen in metadata
-    // Safe: instance was just created above with default metadata '{}'
-    await supabase
-      .from('client_instances')
-      .update({
-        metadata: { show_graduation_screen: true },
-      })
-      .eq('id', instanceId)
-
-    // 9. Log activity
+    // 7. Log activity
     const { error: logError } = await supabase.from('activity_logs').insert({
       actor_type: 'operator',
       actor_id: operatorId,
@@ -160,9 +125,6 @@ export async function graduateClient(
       metadata: {
         tier,
         active_modules: activeModules,
-        instance_id: instanceId,
-        instance_url: instanceUrl,
-        slug,
       },
     })
 
@@ -171,16 +133,13 @@ export async function graduateClient(
       // Non-blocking — graduation succeeded
     }
 
-    // 10. Revalidate cache
+    // 8. Revalidate cache
     revalidatePath('/modules/crm')
     revalidatePath(`/modules/crm/clients/${clientId}`)
 
     return successResponse({
       clientId,
-      instanceId,
-      status: 'active' as const,
-      instanceUrl,
-      slug,
+      status: 'graduated' as const,
     })
   } catch (error) {
     console.error('[CRM:GRADUATE_CLIENT] Unexpected error:', error)

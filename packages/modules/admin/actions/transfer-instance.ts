@@ -1,13 +1,38 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { TransferInstanceInput, type TransferResult } from '../types/transfer.types'
 
+/**
+ * @deprecated Depuis ADR-01 Révision 2 (2026-04-13).
+ *
+ * Cette fonction reposait sur le modèle "instance per client" qui n'existe plus
+ * en exploitation normale. Tous les clients vivent désormais sur le même déploiement
+ * multi-tenant `app.monprojet-pro.com`.
+ *
+ * Le nouveau workflow de remise client au désabonnement est le **Kit de sortie** :
+ * voir Story 13.1 dans
+ * `_bmad-output/implementation-artifacts/13-1-kit-de-sortie-client-handoff-vercel-github-supabase-standalone.md`
+ *
+ * Le kit de sortie automatise via un script unique :
+ *  1. Provisioning Vercel API (nouveau projet)
+ *  2. Création repo GitHub privé
+ *  3. Provisioning nouvelle instance Supabase dédiée
+ *  4. Export des données client (RLS-filtered) vers la nouvelle DB
+ *  5. Push d'un build standalone (Lab + agents tree-shaken via flags `NEXT_PUBLIC_ENABLE_LAB_MODULE=false` + `NEXT_PUBLIC_ENABLE_AGENTS=false`)
+ *  6. Connexion Vercel ↔ GitHub + premier déploiement
+ *  7. Génération credentials + draft email pour livraison clé en main
+ *  8. MiKL transfère la propriété Vercel + GitHub au client (1 clic)
+ *
+ * Cette fonction reste en place pour ne pas casser les tests existants et pour
+ * référence pendant l'implémentation de Story 13.1. Elle sera supprimée
+ * complètement après merge de Story 13.1.
+ */
 export async function transferInstanceToClient(
   input: TransferInstanceInput
 ): Promise<ActionResponse<TransferResult>> {

@@ -1,7 +1,18 @@
 'use server'
 
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse } from '@foxeo/types'
+/**
+ * @deprecated Depuis ADR-01 Révision 2 (2026-04-13).
+ *
+ * Plus de migration cross-DB à la graduation : Lab et One vivent dans la même base
+ * multi-tenant. Les données Lab restent en place et sont accessibles via le toggle
+ * Mode Lab/One dans le shell.
+ *
+ * Conservé temporairement pour Story 13.1 (kit de sortie) qui pourra réutiliser
+ * la logique d'extraction sélective de données client. À supprimer après merge de Story 13.1.
+ */
+
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse } from '@monprojetpro/types'
 
 export type MigrationSummary = {
   communicationProfileCopied: boolean

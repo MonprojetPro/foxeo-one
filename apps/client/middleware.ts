@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { createMiddlewareSupabaseClient } from '@foxeo/supabase'
+import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
 import { checkConsentVersion } from './middleware-consent'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
 
@@ -119,9 +119,11 @@ export async function middleware(request: NextRequest) {
   // Check CGU consent version and client status for authenticated users (exclude specific paths)
   if (user && !isConsentExcluded(request.nextUrl.pathname)) {
     // Get client info from clients table (include onboarding + graduation fields)
+    // ADR-01 Révision 2 — Multi-tenant unique : aucune redirection cross-subdomain.
+    // client_instances(status) conservé pour Story 9.5b transferred check uniquement.
     const { data: client } = await supabase
       .from('clients')
-      .select('id, status, first_login_at, onboarding_completed, graduated_at, graduation_screen_shown, client_configs(dashboard_type), client_instances(instance_url, status)')
+      .select('id, status, first_login_at, onboarding_completed, graduated_at, graduation_screen_shown, client_configs(dashboard_type), client_instances(status)')
       .eq('auth_user_id', user.id)
       .maybeSingle()
 
@@ -194,6 +196,9 @@ export async function middleware(request: NextRequest) {
       }
 
       // Graduation detection — only for non-graduation paths
+      // ADR-01 Révision 2 — Le client gradué reste sur le même déploiement multi-tenant.
+      // On affiche juste l'écran de bienvenue post-graduation une fois, puis le toggle
+      // Mode Lab/One dans le shell prend le relais. Pas de redirect cross-subdomain.
       if (!isGraduationExcluded(request.nextUrl.pathname)) {
         if (client.graduated_at && !client.graduation_screen_shown) {
           console.log('[GRADUATION:CELEBRATE] Client graduated:', user.id)
@@ -203,47 +208,6 @@ export async function middleware(request: NextRequest) {
           const celebrateResponse = NextResponse.redirect(celebrateUrl)
           setLocaleCookie(celebrateResponse, locale)
           return celebrateResponse
-        }
-      }
-
-      // One instance redirect — client gradué avec graduation_screen_shown = true
-      // Si le client est maintenant sur One (dashboard_type='one'), rediriger vers son instance
-      // Données déjà chargées via jointure dans la query initiale (pas de queries supplémentaires)
-      if (client.graduated_at && client.graduation_screen_shown) {
-        const clientConfig = Array.isArray(client.client_configs)
-          ? client.client_configs[0]
-          : client.client_configs
-
-        if (clientConfig?.dashboard_type === 'one') {
-          const instance = Array.isArray(client.client_instances)
-            ? client.client_instances[0]
-            : client.client_instances
-
-          if (instance) {
-            if (instance.status === 'provisioning') {
-              // Instance en cours de provisionnement → page d'attente
-              if (request.nextUrl.pathname !== '/graduation/provisioning') {
-                const provisioningUrl = request.nextUrl.clone()
-                provisioningUrl.pathname = '/graduation/provisioning'
-                const provisioningResponse = NextResponse.redirect(provisioningUrl)
-                setLocaleCookie(provisioningResponse, locale)
-                return provisioningResponse
-              }
-            } else if (instance.status === 'active' && instance.instance_url) {
-              // Redirect vers l'instance One en préservant le path et les query params
-              const currentHost = request.nextUrl.host
-              const instanceHost = new URL(instance.instance_url).host
-
-              if (currentHost !== instanceHost) {
-                console.log('[GRADUATION:ONE_REDIRECT] Client:', user.id, '→', instance.instance_url)
-                const { pathname, search } = request.nextUrl
-                const oneUrl = `${instance.instance_url}${pathname}${search}`
-                const oneResponse = NextResponse.redirect(oneUrl, { status: 302 })
-                setLocaleCookie(oneResponse, locale)
-                return oneResponse
-              }
-            }
-          }
         }
       }
     }
