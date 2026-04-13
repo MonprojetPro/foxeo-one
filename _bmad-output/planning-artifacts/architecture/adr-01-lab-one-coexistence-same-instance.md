@@ -1,82 +1,90 @@
-# ADR-01 — Coexistence Lab et One dans une instance unique par client
+# ADR-01 — Coexistence Lab et One dans un déploiement multi-tenant unique
 
 | Champ | Valeur |
 |-------|--------|
 | **Date** | 2026-04-13 |
-| **Statut** | Accepté |
+| **Statut** | Accepté (Révision 2) |
 | **Auteur** | ARCH (sur demande de MiKL) |
 | **Décideur** | MiKL (PDG MonprojetPro) |
 | **Remplace** | Modèle initial « Lab multi-tenant + One instance-per-client » |
+
+> **Révision 2 — 2026-04-13** : Précision apportée par MiKL — abandon du modèle « instance dédiée par client post-graduation » au profit d'un déploiement multi-tenant unique. Le provisioning par client n'existe que via le kit de sortie (cf. ADR-02).
 
 ---
 
 ## Contexte
 
-L'architecture initiale de MonprojetPro reposait sur une séparation physique entre Lab et One :
+Deux modèles ont été successivement envisagés avant d'aboutir au modèle retenu :
 
-- **Lab** était déployé en multi-tenant sur `lab.monprojet-pro.com`, tous les clients partageant la même application avec isolation RLS. Le Lab servait de phase d'incubation (brainstorming, briefs, livrables Élio Lab).
-- **One** était déployé en **instance isolée par client** sur `{slug}.monprojet-pro.com`, chaque client possédant son propre déploiement Vercel, sa propre base Supabase et son propre code. Le One était l'outil business quotidien.
-- La **graduation** consistait à migrer les données du client depuis le Lab multi-tenant vers sa nouvelle instance One dédiée, puis à archiver son espace Lab (lecture seule, accès technique uniquement).
+**Modèle initial (abandonné)** : Lab multi-tenant sur `lab.monprojet-pro.com` + One en instance isolée par client sur `{slug}.monprojet-pro.com` (Vercel + Supabase dédiés par client). Graduation = migration cross-instance.
 
-Ce modèle présentait plusieurs limitations opérationnelles identifiées au fil des epics 9 et 10 :
+**Révision 1 (également abandonnée)** : coexistence Lab/One dans une **instance dédiée par client** dès le premier jour, avec toggle Lab/One. Ce modèle résolvait la friction UX mais imposait un provisioning Vercel + Supabase par client dès la souscription, une dette infra lourde et un coût opérationnel croissant à chaque nouveau client.
 
-1. **Graduation unidirectionnelle** — une fois le client gradué, il ne pouvait plus revenir activement dans le Lab pour un nouveau cycle d'idéation (nouveau projet, pivot, évolution majeure). Il fallait reprovisionner manuellement ou créer un second parcours.
-2. **Fracture UX** — le client changeait d'URL, de thème, et perdait tout son contexte Élio Lab au moment où il « graduait ». L'expérience ressemblait à un déménagement brutal plutôt qu'à une évolution naturelle.
-3. **Complexité de migration** — copier les données Lab vers l'instance One (briefs, conversations Élio, profil de communication, livrables) impliquait un pipeline de migration fragile, des webhooks HMAC et une fenêtre de downtime.
-4. **Réalité du workflow entrepreneur** — un entrepreneur qui utilise One au quotidien a régulièrement besoin de revenir en mode « brainstorming / projet » pour structurer une nouvelle idée. Forcer un aller-retour cross-URL casse ce flux.
+**Révision 2 (retenue, 2026-04-13)** : MiKL a clarifié son intention réelle. Tant que le client est abonné (Lab ou One), il vit dans un **déploiement multi-tenant unique** partagé par tous les clients. Le provisioning individuel n'a lieu **qu'une seule fois**, à la sortie (résiliation ou livraison one-shot), via un « kit de sortie » automatisé qui crée un déploiement autonome que MiKL transmet au client.
 
-MiKL a validé le 2026-04-13 un nouveau modèle unifié.
+Ce modèle est justifié par :
+
+1. **Simplicité opérationnelle** — un seul Vercel, un seul Supabase, une seule CI, un seul set de migrations. Zéro provisioning à la souscription.
+2. **Graduation triviale** — un simple flag `dashboard_type` passe de `lab` à `one`, en transaction SQL. Aucun pipeline, aucune migration, aucune latence.
+3. **Toggle Lab/One instantané** — puisque tout vit dans la même base, le basculement est une simple mise à jour d'état UI.
+4. **Coûts maîtrisés** — le coût infra ne croît pas linéairement avec le nombre de clients abonnés.
+5. **Sortie propre** — le kit de sortie produit une instance autonome que le client possède réellement, respectant l'engagement fondateur « le client possède son One ».
 
 ---
 
 ## Décision
 
-**Lab et One coexistent dans la même instance client, en permanence, accessibles via un toggle persistant dans le shell du dashboard.**
+**Tous les clients abonnés (Lab comme One) vivent dans un déploiement multi-tenant unique hébergé sur `app.monprojet-pro.com`. Lab et One coexistent dans ce déploiement en permanence, l'isolation entre clients étant assurée par les politiques RLS sur la colonne `client_id`.**
 
 ### Principes
 
-1. **Une seule instance par client** — le déploiement Vercel et la base Supabase du client hébergent simultanément le code Lab ET le code One. Il n'existe plus qu'une seule URL par client (`{slug}.monprojet-pro.com`).
-2. **Toggle visible persistant** — un switch « Mode Lab / Mode One » dans le header du shell permet au client de basculer instantanément entre les deux vues. Le basculement change le thème (violet Lab ↔ vert/orange One), la navigation latérale, les modules affichés, et l'agent Élio actif.
-3. **Phase pré-graduation** — avant graduation, le mode par défaut est Lab, le mode One est verrouillé (invisible ou grisé). Le client vit son incubation.
-4. **Phase post-graduation** — après graduation, le mode par défaut devient One. Le mode Lab reste accessible en lecture (historique, livrables, briefs) mais l'agent **Élio Lab est désactivé par défaut** via le flag `elio_lab_enabled = false`.
-5. **Réactivation Lab à la demande** — MiKL peut réactiver Élio Lab à tout moment sur un client donné via le Hub (feature flag `elio_lab_enabled = true`), sans aucun reprovisioning. Le client retrouve alors un Lab pleinement fonctionnel en parallèle de son One.
-6. **Coexistence permanente** — le client peut utiliser One pour son business quotidien et brainstormer avec Élio Lab en parallèle pour un nouveau projet, sans friction ni changement de contexte.
+1. **Un seul déploiement pour tous les clients abonnés** — un unique projet Vercel (`app.monprojet-pro.com`), une unique base Supabase, une unique CI. Isolation par RLS `client_id`, pas par infrastructure.
+2. **Graduation = flag SQL** — à la graduation, `client_configs.dashboard_type` passe de `lab` à `one` et `lab_mode_available` reste `true` (le client garde accès au Lab en lecture + réactivation possible). Aucun provisioning, aucune migration, aucun downtime.
+3. **Toggle Lab/One instantané** — un switch « Mode Lab / Mode One » dans le header du shell bascule thème, navigation, modules et agent Élio actif. Le basculement est purement UI — toutes les données du client sont déjà dans la même base.
+4. **Phase pré-graduation** — `dashboard_type = 'lab'`, mode One verrouillé (`one_mode_available = false`). Le client vit son incubation.
+5. **Phase post-graduation** — `dashboard_type = 'one'`, `one_mode_available = true`. Le mode Lab reste accessible (historique, réactivation à la demande). L'agent Élio Lab est contrôlé par `elio_lab_enabled` (toggle MiKL dans le Hub admin).
+6. **Coexistence de code permanente** — Lab et One modules cohabitent dans le déploiement multi-tenant à tout moment. **Aucun tree-shaking runtime** : le tree-shaking (cf. ADR-02) n'existe que dans le contexte du kit de sortie.
+7. **Kit de sortie = unique moment de provisioning** — à la résiliation ou livraison one-shot, un script handoff crée une instance autonome (Vercel + GitHub + Supabase dédiés) depuis laquelle Lab et agents sont tree-shakés au build. Cf. ADR-02 pour le workflow détaillé.
 
 ### Modèle de données
 
-Le schéma `clients` évolue :
+Le schéma `client_configs` porte les flags de mode :
 
 | Colonne | Type | Rôle |
 |---------|------|------|
-| `dashboard_type` | enum | Conservé pour routing par défaut (`lab` \| `one`) |
-| `lab_mode_available` | boolean | Si le mode Lab est accessible (true par défaut) |
-| `elio_lab_enabled` | boolean | Si l'agent Élio Lab répond (contrôlé par MiKL) |
-| `one_mode_available` | boolean | Si le mode One est débloqué (devient true à graduation) |
+| `client_id` | uuid | FK vers `clients`, pivot RLS de toute la base multi-tenant |
+| `dashboard_type` | enum (`lab` \| `one`) | Mode par défaut au login |
+| `lab_mode_available` | boolean | Accès Lab autorisé (true par défaut) |
+| `one_mode_available` | boolean | Mode One débloqué (devient true à graduation) |
+| `elio_lab_enabled` | boolean | Agent Élio Lab actif (toggle MiKL depuis Hub admin) |
 | `graduated_at` | timestamp | Date de graduation (nullable) |
 
-Les tables métier Lab (`lab_briefs`, `lab_conversations`, `lab_learnings`) et les tables métier One (`one_*`) cohabitent dans la même base — aucune migration inter-instance.
+Toutes les tables métier (Lab et One) portent `client_id` et sont isolées par RLS. Aucune migration inter-base, aucun provisioning.
 
 ### Impact technique
 
+- **Un seul projet Vercel** (`app.monprojet-pro.com`) servant tous les clients abonnés. URLs `{slug}.monprojet-pro.com` abandonnées pendant l'abonnement.
 - **Shell partagé** — `@monprojetpro/ui/dashboard-shell` reçoit une prop `mode: 'lab' | 'one'` et un handler `onModeChange`. Le thème CSS est injecté conditionnellement (`data-theme="lab"` vs `data-theme="one"`).
-- **Middleware Next.js** — redirige vers `/lab` ou `/one` selon le mode actif (stocké en cookie `mpp_mode`), en vérifiant que le mode cible est disponible (`lab_mode_available` / `one_mode_available`).
-- **Feature flags runtime** — `elio_lab_enabled` est lu au chargement et conditionne l'affichage du composant chat Élio Lab. Si désactivé, le chat est remplacé par un message « Élio Lab est en pause — contactez MiKL pour le réactiver ».
-- **Feature flag build-time** — `NEXT_PUBLIC_ENABLE_LAB_MODULE` permet de **stripper** entièrement Lab du bundle pour les exports standalone (voir ADR-02).
+- **Middleware Next.js** — résout `client_id` depuis la session, lit `client_configs`, et route vers `/lab` ou `/one` selon `dashboard_type` + cookie `mpp_mode`.
+- **Hub ↔ client** — le Hub opère directement sur la base multi-tenant. **Plus de webhooks HMAC Hub ↔ instance client** pendant l'abonnement (obsolètes). Ce concept ne subsiste éventuellement que pour le kit de sortie.
+- **Feature flags runtime** — `elio_lab_enabled` conditionne l'affichage du chat Élio Lab (lecture `client_configs`).
+- **Feature flag build-time** — `NEXT_PUBLIC_ENABLE_LAB_MODULE` et `NEXT_PUBLIC_ENABLE_AGENTS` sont utilisés **uniquement par le kit de sortie** (cf. ADR-02), jamais en production normale.
 
 ---
 
 ## Rationale
 
-| Critère | Ancien modèle | Nouveau modèle |
-|---------|---------------|----------------|
-| **UX graduation** | Déménagement brutal, nouvelle URL | Switch instantané, même instance |
-| **Réactivation Lab** | Reprovisioning manuel | Toggle d'un flag |
-| **Migration de données** | Pipeline HMAC fragile | Aucune migration (même DB) |
-| **Cycles d'évolution** | Impossibles sans friction | Natifs et permanents |
-| **Complexité infra** | 2 déploiements (Lab multi-tenant + One par client) | 1 déploiement par client |
-| **Alignement workflow entrepreneur** | Forcé linéaire | Oscillation business ↔ idéation |
+| Critère | Modèle initial (Lab multi-tenant + One par client) | Révision 1 (instance dédiée par client) | **Révision 2 retenue (multi-tenant unique)** |
+|---------|-----|-----|-----|
+| **Provisioning à la souscription** | 1 instance Vercel + Supabase par One | 1 instance dès le Lab | **Aucun** |
+| **Graduation** | Migration cross-instance | Update flag local | **Update flag SQL** |
+| **Toggle Lab/One** | Impossible (URLs distinctes) | Instantané (même instance) | **Instantané (même DB)** |
+| **Coût infra par client** | Linéaire (2x) | Linéaire (1x) | **Mutualisé** |
+| **Complexité CI** | 2 pipelines | 1 pipeline × N clients | **1 pipeline** |
+| **Sortie client** | Export manuel depuis instance dédiée | Export depuis instance dédiée | **Kit de sortie (ADR-02)** |
+| **Propriété du One** | Théorique | Théorique | **Effective via kit de sortie** |
 
-Le gain principal est **philosophique** : un entrepreneur ne « gradue » pas une fois pour toutes — il alterne en permanence entre exécution (One) et idéation (Lab). L'architecture doit refléter cette réalité.
+Le gain principal : **simplicité opérationnelle maximale pendant l'abonnement**, combinée à la promesse « le client possède son One » tenue via un kit de sortie automatisé au moment opportun. Un entrepreneur ne « gradue » pas une fois pour toutes — il alterne entre exécution (One) et idéation (Lab) dans la même base, sans friction ni provisioning.
 
 ---
 
@@ -84,29 +92,32 @@ Le gain principal est **philosophique** : un entrepreneur ne « gradue » pas un
 
 ### Positives
 
-- **Toggle instantané** sans latence réseau ni authentification re-négociée
-- **Lab réactivable** à volonté par MiKL sans déploiement
-- **Zéro provisioning** à la graduation — simple update SQL (`one_mode_available = true`)
-- **Données cohérentes** — plus de synchronisation Lab → One
-- **Expérience client unifiée** — une seule URL, un seul login, un seul contexte
-- **Réduction de l'infrastructure** — suppression du déploiement Lab multi-tenant central
-- **Continuité d'Élio** — le profil de communication et l'historique de conversations Lab restent accessibles à Élio One
+- **Zéro provisioning** pendant toute la vie de l'abonnement — ni à l'inscription, ni à la graduation
+- **Graduation triviale** — simple UPDATE SQL, transaction instantanée, aucun downtime
+- **Toggle Lab/One instantané** — tout est dans la même base, le basculement est purement UI
+- **Coût infra mutualisé** — un seul Vercel, un seul Supabase, une seule CI pour tous les clients abonnés
+- **Données cohérentes par construction** — RLS `client_id` isole sans migration
+- **Lab réactivable** à volonté par MiKL via le flag `elio_lab_enabled` dans le Hub
+- **Continuité Élio totale** — profil de communication et historique Lab/One dans la même base
+- **Sortie propre garantie** — le kit de sortie (ADR-02) produit une vraie instance autonome
 
 ### Négatives / compromis
 
-- **Empreinte code plus lourde par instance client** — chaque déploiement contient le code Lab + One (~30-40% de bundle supplémentaire)
-- **Tree-shaking obligatoire** pour les exports standalone (voir ADR-02)
-- **Discipline d'architecture renforcée** — aucun import direct cross-module, registry obligatoire
-- **Multi-tenant Lab supprimé** — les clients pré-graduation vivent désormais dans leur propre instance dès le premier jour (impact coût infra par client, compensé par la suppression du déploiement multi-tenant central)
-- **Middleware plus complexe** — gestion du mode actif, fallback, vérification des flags
+- **Isolation RLS critique** — toute faille RLS exposerait les données de tous les clients. Les tests RLS (lab et one) deviennent le garde-fou n°1 en CI.
+- **Mutualisation des performances** — un client gros consommateur peut impacter les autres. À monitorer via métriques Supabase.
+- **Code Lab + One toujours présent** dans le bundle production — accepté, seul le kit de sortie fait du tree-shaking
+- **Middleware plus complexe** — résolution `client_id` + lecture `client_configs` à chaque requête
+- **Kit de sortie à développer** — dette technique à combler dans Epic 13 avant première résiliation réelle
 
 ### Impact technique détaillé
 
-- Le module `packages/modules/lab/*` devient **optionnel au build** via `NEXT_PUBLIC_ENABLE_LAB_MODULE`
-- Le shell `DashboardShell` accepte `availableModes` et `currentMode`
+- Un **unique projet Vercel** `app.monprojet-pro.com` + **unique base Supabase** pour tous les clients abonnés
+- Les URLs `{slug}.monprojet-pro.com` sont **abandonnées** pendant l'abonnement (éventuellement réutilisées par le kit de sortie ou domaine custom du client post-livraison)
+- Le shell `DashboardShell` accepte `availableModes` et `currentMode` (lus depuis `client_configs`)
 - Le hook `useMode()` expose `{ mode, setMode, canSwitch }`
-- Les routes `/lab/*` et `/one/*` coexistent dans `apps/client/app/`
-- L'agent `Élio Lab` devient conditionnel (`elio_lab_enabled`), `Élio One` toujours actif post-graduation
+- Les routes `/lab/*` et `/one/*` coexistent dans `apps/client/app/` en permanence
+- L'agent `Élio Lab` est conditionnel runtime (`elio_lab_enabled`)
+- Les flags build-time `NEXT_PUBLIC_ENABLE_LAB_MODULE` et `NEXT_PUBLIC_ENABLE_AGENTS` ne sont consommés que par le build `standalone-export` du kit de sortie
 
 ---
 
@@ -116,10 +127,10 @@ Les stories suivantes nécessitent un **rework** pour s'aligner sur ce nouveau m
 
 | Story | Titre | Rework nécessaire |
 |-------|-------|-------------------|
-| **9.1** | Graduation Lab → One : déclenchement & migration | Supprimer la migration cross-instance, remplacer par un simple update SQL (`one_mode_available = true`, `graduated_at = now()`, `elio_lab_enabled = false`) |
-| **9.2** | Graduation : notification client & activation accès One | Remplacer l'envoi d'URL par la notification « Mode One débloqué — utilisez le toggle » |
-| **9.5b** | Transfert instance One au client sortant | S'appuyer sur le build `standalone-export` de l'ADR-02 (Lab et agents strippés) |
-| **10.1** | Dashboard One accueil personnalisé | Ajouter le composant toggle dans le header shell, gérer l'état `mode` persistant |
+| **9.1** | Graduation Lab → One : déclenchement & migration | Supprimer toute migration. Un simple UPDATE (`dashboard_type='one'`, `one_mode_available=true`, `graduated_at=now()`) suffit. Aucun provisioning. |
+| **9.2** | Graduation : notification client & activation accès One | Notification in-app + email « Mode One débloqué », aucun changement d'URL |
+| **9.5b** | Transfert instance One au client sortant | Réécrire autour du **kit de sortie** (ADR-02) : script handoff qui crée Vercel + GitHub + Supabase dédiés et exporte les données RLS-filtrées |
+| **10.1** | Dashboard One accueil personnalisé | Ajouter le composant toggle dans le header shell, gérer l'état `mode` persistant (cookie `mpp_mode`) |
 
 Un epic de transition (Epic 12+ ou Epic 13) devra être planifié par OTTO pour tracker ce rework.
 
@@ -133,11 +144,11 @@ Garder deux déploiements distincts (`lab.monprojet-pro.com` et `{slug}.monproje
 
 **Rejet** : la latence réseau (redirect + re-hydratation), la complexité CORS/cookies cross-domain et la double maintenance (deux codebases déployés) ne justifiaient pas le maintien de la séparation.
 
-### Option 3 — Full multi-tenant unique (rejetée)
+### Option 3 — Instance dédiée par client dès le Lab (Révision 1, rejetée)
 
-Fusionner Lab et One dans un seul déploiement multi-tenant central où tous les clients cohabitent avec isolation RLS.
+Provisionner un Vercel + Supabase par client dès l'inscription Lab, avec Lab/One coexistant dans cette instance.
 
-**Rejet** : contradit le principe fondateur de MonprojetPro selon lequel **le client possède son instance One** (exit propre, export code + DB, autonomie). Un multi-tenant central rend l'export impossible sans pipeline de fork complexe.
+**Rejet** : coût infra et complexité opérationnelle (N déploiements à maintenir, N CI, N sets de migrations) disproportionnés vs. le bénéfice. Le kit de sortie (ADR-02) permet de tenir la promesse « client possède son One » sans payer ce coût pendant l'abonnement.
 
 ### Option 4 — Statu quo avec amélioration graduation (rejetée)
 

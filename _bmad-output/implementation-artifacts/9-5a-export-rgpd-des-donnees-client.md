@@ -6,7 +6,7 @@
 >
 > **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
 >
-> **Impact sur cette story** : Ajouter une option `includeLabData` (true par défaut) et une option `buildStandalone` pour générer un export code + bundle 'One standalone' (Lab + agents tree-shaken via `NEXT_PUBLIC_ENABLE_LAB_MODULE=false`).
+> **Impact sur cette story** : L'export RGPD reste une simple extraction RLS-filtered de la base multi-tenant. Si le client part définitivement, l'export RGPD peut être enrichi par le kit de sortie (Story 13.1) qui ajoute le bundle code standalone et les credentials Vercel/GitHub/Supabase dédiés.
 >
 > **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
 

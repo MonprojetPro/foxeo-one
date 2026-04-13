@@ -6,7 +6,7 @@
 >
 > **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
 >
-> **Impact sur cette story** : La fonction `graduateClient()` ne doit plus provisionner une instance dédiée ni migrer les données. La graduation bascule le `client_config.dashboard_type` vers 'one', active `lab_mode_available = true`, met `elio_lab_enabled = false` et préserve les données Lab dans la même base.
+> **Impact sur cette story** : La fonction `graduateClient()` est maintenant beaucoup plus simple : un seul UPDATE SQL sur `client_configs` (`dashboard_type = 'one'`, `lab_mode_available = true`, `elio_lab_enabled = false`). Pas de provisioning, pas de migration cross-DB. Tout reste dans la base multi-tenant `app.monprojet-pro.com`.
 >
 > **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
 

@@ -3,26 +3,29 @@
 | Champ | Valeur |
 |-------|--------|
 | **Date** | 2026-04-13 |
-| **Statut** | Accepté |
+| **Statut** | Accepté (Révision 2) |
 | **Auteur** | ARCH (sur demande de MiKL) |
 | **Décideur** | MiKL (PDG MonprojetPro) |
-| **Dépend de** | ADR-01 (coexistence Lab/One dans une instance unique) |
+| **Dépend de** | ADR-01 (coexistence Lab/One dans un déploiement multi-tenant unique) |
+
+> **Révision 2 — 2026-04-13** : Précision MiKL — le tree-shaking est déclenché uniquement par le kit de sortie (script handoff), pas par un second build production permanent. Un seul build production tourne pour tous les clients abonnés.
 
 ---
 
 ## Contexte
 
-MonprojetPro repose sur un engagement fondateur : **le client possède son instance One**. Lors d'une résiliation (arrêt de l'abonnement mensuel, changement de stratégie, fin de la relation), MiKL doit pouvoir transmettre au client sortant son dashboard One tel quel, afin qu'il puisse l'héberger lui-même sur son propre Vercel / VPS / infrastructure.
+MonprojetPro repose sur un engagement fondateur : **le client possède son instance One**. Pendant la vie de l'abonnement, tous les clients vivent dans un déploiement multi-tenant unique (cf. ADR-01). À la sortie — résiliation d'abonnement OU livraison one-shot d'un projet — MiKL doit pouvoir transmettre au client sortant un dashboard One autonome, qu'il héberge lui-même.
 
-Ce transfert implique des contraintes fortes :
+**Précision importante de la Révision 2 (2026-04-13)** : le tree-shaking décrit dans cet ADR s'applique **uniquement au kit de sortie**. En production normale, un seul build tourne sur `app.monprojet-pro.com` avec Lab + agents toujours activés. Il n'existe **pas** de second build permanent parallèle. Les flags `NEXT_PUBLIC_ENABLE_LAB_MODULE` et `NEXT_PUBLIC_ENABLE_AGENTS` ne sont consommés que par le script handoff lorsqu'il génère un bundle de sortie.
 
-1. **Aucune dépendance SaaS externe** — le client ne doit pas avoir besoin d'un compte Anthropic, Supabase Hub MonprojetPro, ou Pennylane propriétaire MiKL. Le bundle doit fonctionner en autonomie avec ses propres clés.
-2. **Retrait complet du Lab** — le client sortant n'a plus besoin du module Lab (incubation, briefs, livrables Élio Lab). Ce code ne doit pas être livré.
-3. **Retrait complet des agents IA** — Élio Lab, Élio One, Élio One+ et toute intégration Claude/Anthropic SDK doivent être strippés. Le client sortant reçoit un **outil business pur**, sans IA intégrée.
-4. **Conformité RGPD simplifiée** — en retirant les agents, on supprime tout transfert de données vers Anthropic, ce qui simplifie le registre des traitements pour le client sortant.
-5. **Bundle réduit** — moins de code = moins de surface d'attaque, moins de maintenance, déploiement plus léger.
+Le transfert au client sortant implique des contraintes fortes :
 
-Avec l'ADR-01, Lab et One cohabitent dans la même instance client. Sans mécanisme de tree-shaking, un export livrerait **tout** le code Lab + agents au client sortant, ce qui contredit les exigences ci-dessus.
+1. **Aucune dépendance SaaS externe** — le client ne doit pas avoir besoin d'un compte Anthropic, Hub MonprojetPro, ou Pennylane propriétaire MiKL. Le bundle doit fonctionner en autonomie avec ses propres clés.
+2. **Retrait complet du Lab** — le client sortant n'a plus besoin du module Lab. Ce code ne doit pas être livré.
+3. **Retrait complet des agents IA** — Élio Lab, Élio One, Élio One+ et toute intégration Claude/Anthropic SDK doivent être strippés. Le client sortant reçoit un **outil business pur**.
+4. **Conformité RGPD simplifiée** — plus aucun transfert de données vers Anthropic.
+5. **Bundle réduit** — moins de code, moins de surface d'attaque, déploiement plus léger.
+6. **Livraison turnkey** — le client reçoit une URL fonctionnelle, pas un repo à configurer.
 
 ---
 
@@ -40,14 +43,14 @@ Avec l'ADR-01, Lab et One cohabitent dans la même instance client. Sans mécani
 
 Ces flags sont lus au build-time par `next.config.ts` et par le registry de modules.
 
-### Deux builds Vercel distincts
+### Un seul build production + un build à la demande pour le kit de sortie
 
-| Build | Commande | Flags | Usage |
-|-------|----------|-------|-------|
-| **production** | `npm run build` | tous `true` | Instances clients actives, hébergées par MiKL |
-| **standalone-export** | `npm run build:standalone` | Lab, agents, Hub sync = `false` | Bundle livré au client sortant |
+| Build | Commande | Flags | Quand | Usage |
+|-------|----------|-------|-------|-------|
+| **production** | `npm run build` | tous `true` | En permanence sur Vercel `app.monprojet-pro.com` | Déploiement multi-tenant servant tous les clients abonnés |
+| **standalone-export** | `npm run build:standalone` | Lab, agents, Hub sync = `false` | **Uniquement** au déclenchement du kit de sortie | Bundle poussé vers le nouveau Vercel dédié du client sortant |
 
-Le script `build:standalone` est défini dans `apps/client/package.json` et injecte les variables d'environnement correspondantes avant d'appeler `next build`.
+Le build production tourne en continu avec Lab et agents actifs — c'est le fonctionnement normal. Le build `standalone-export` n'est invoqué qu'**une fois par sortie client**, par le script handoff décrit plus bas. Il n'y a donc **jamais deux builds qui tournent en parallèle en production**.
 
 ### Architecture du mécanisme
 
@@ -70,24 +73,48 @@ La base de données client exportée contient **toutes les données historiques*
 
 ---
 
+## Kit de sortie — Workflow complet
+
+Le kit de sortie est un **script handoff** exécuté par MiKL depuis le Hub, déclenché soit par une résiliation d'abonnement, soit par la livraison finale d'un projet one-shot. Il matérialise la promesse « le client possède son One » en produisant une instance autonome turnkey.
+
+Le script exécute les 8 étapes suivantes dans l'ordre :
+
+1. **Créer un nouveau projet Vercel** via l'API Vercel, sur l'équipe MiKL (ownership transférée ensuite au client).
+2. **Créer un nouveau repo GitHub privé** via l'API GitHub, dans l'organisation MiKL (ownership transférée ensuite au client).
+3. **Provisionner un nouveau projet Supabase dédié** au client (DB + Auth + Storage), via l'API Supabase.
+4. **Exporter les données du client** depuis la base multi-tenant, filtrées par RLS sur `client_id`, et les importer dans le nouveau Supabase dédié (pg_dump ciblé ou script ETL).
+5. **Pusher le codebase `apps/client` sur le nouveau repo** en mode standalone — build exécuté avec `NEXT_PUBLIC_ENABLE_LAB_MODULE=false` et `NEXT_PUBLIC_ENABLE_AGENTS=false`, déclenchant le tree-shaking via registry + IgnorePlugin.
+6. **Connecter le nouveau Vercel au nouveau GitHub** et déclencher le premier déploiement automatique.
+7. **Produire un rapport de synthèse** avec les credentials à transférer (accès Supabase, Vercel, GitHub) et un **draft d'email** prêt à envoyer au client.
+8. **Transfert manuel d'ownership** — MiKL transfère en 1 clic par plateforme (Vercel, GitHub, Supabase) la propriété au compte du client.
+
+À l'issue, le client reçoit une URL fonctionnelle, se connecte, et son application tourne. Il n'a rien à configurer. C'est un **export one-time**, pas un service managé continu : aucun lien opérationnel ne subsiste entre le Hub MiKL et l'instance livrée.
+
+Ce workflow sera implémenté dans **Story 13.1 de l'Epic 13**, qui est la seule story devant mobiliser le mécanisme de tree-shaking décrit dans cet ADR.
+
+---
+
 ## Conséquences
 
 ### Positives
 
-- **Bundle réduit d'environ 40%** pour le standalone (retrait de Lab ~20%, agents + Claude SDK ~20%)
-- **Conformité RGPD simplifiée** — aucune donnée envoyée à Anthropic dans le standalone
-- **Autonomie totale du client sortant** — aucun compte SaaS tiers requis (hors Supabase et Vercel qu'il gère lui-même)
-- **Sécurité renforcée** — moins de surface d'attaque, moins de clés API exposées
-- **Coût d'exploitation nul pour le client sortant** — plus de coût Claude API, plus d'abonnement Hub
-- **Discipline architecturale bénéfique** — force une séparation propre des modules dès maintenant, utile bien au-delà du cas standalone
+- **Un seul build production** à maintenir, servant tous les clients abonnés → CI simple, déploiements rapides
+- **Tree-shaking invoqué à la demande** uniquement, pas de coût CI permanent
+- **Bundle de sortie réduit d'environ 40%** (Lab ~20%, agents + Claude SDK ~20%)
+- **Conformité RGPD simplifiée** pour le client sorti — aucune donnée envoyée à Anthropic
+- **Autonomie totale du client sortant** — aucun compte SaaS tiers requis (hors Supabase/Vercel qu'il gère)
+- **Sécurité renforcée côté client** — moins de surface d'attaque, moins de clés API exposées
+- **Coût d'exploitation nul pour le client sortant** — plus de coût Claude API
+- **Discipline architecturale bénéfique** — séparation propre des modules, utile bien au-delà du cas standalone
 
 ### Négatives
 
-- **Discipline stricte imposée à toute l'équipe** — aucun import direct cross-module toléré. Tout passe par le registry ou par des contrats d'interface explicites.
-- **Tests CI doublés** — la pipeline doit builder **les deux versions** (production + standalone) pour vérifier que le standalone compile sans Lab/agents. Cela allonge la CI d'environ 3-5 minutes.
-- **Complexité de `next.config.ts`** — conditional imports + IgnorePlugin + gestion des alias workspace nécessitent une configuration soignée.
-- **Risque de régression silencieuse** — un développeur qui ajoute un import Lab dans un fichier One commun casserait le build standalone. Mitigé par le test CI dédié.
-- **Maintenance de deux profils de dépendances** — `@anthropic-ai/sdk` optionnel demande une gestion fine de `package.json`.
+- **Kit de sortie à développer** (Story 13.1) — dette technique à traiter avant la première résiliation/livraison réelle
+- **Discipline stricte imposée à toute l'équipe** — aucun import direct cross-module toléré, sinon le build standalone du kit de sortie casserait
+- **Job CI dédié `build-standalone-check`** — vérifie ponctuellement que `npm run build:standalone` compile sans Lab/agents (sans pour autant le déployer). Allonge la CI d'environ 3-5 minutes.
+- **Complexité de `next.config.ts`** — conditional imports + IgnorePlugin + gestion des alias workspace
+- **Risque de régression silencieuse** — un import Lab résiduel dans un fichier One commun casserait le build standalone. Mitigé par le job CI.
+- **Maintenance d'une dépendance optionnelle** — `@anthropic-ai/sdk` en `peerDependenciesMeta.optional`
 
 ### Impact technique
 
@@ -117,9 +144,10 @@ La base de données client exportée contient **toutes les données historiques*
 
 | Story | Titre | Rework nécessaire |
 |-------|-------|-------------------|
-| **9.5a** | Export RGPD des données client | Conserver l'export DB + documents, mais ajouter la génération du bundle standalone (code source + configuration Vercel) |
-| **9.5b** | Transfert instance One au client sortant | Réécrire : utiliser `npm run build:standalone` pour produire le bundle, package le dépôt Git épuré (sans Lab/agents), fournir une documentation de self-hosting |
-| **1.1** | Setup monorepo packages partagés dashboard shell | Ajouter le registry de modules + la config `next.config.ts` conditionnelle (en dette technique à combler) |
+| **9.5a** | Export RGPD des données client | Reste un export DB + documents côté client actif, indépendant du kit de sortie |
+| **9.5b** | Transfert instance One au client sortant | Réécrire autour du **kit de sortie (Story 13.1)** — appel au script handoff |
+| **13.1** | **Kit de sortie — script handoff automatisé** (NEW) | Nouvelle story à créer dans Epic 13 : implémenter les 8 étapes décrites plus haut |
+| **1.1** | Setup monorepo packages partagés dashboard shell | Ajouter le registry de modules + la config `next.config.ts` conditionnelle (dette à combler) |
 | **Toutes stories modules** | — | Respecter strictement l'interdiction d'import cross-module (règle de lint à activer) |
 
 Un epic dédié de mise en conformité architecture (à planifier par OTTO) devra traiter le registry, le build standalone et la règle de lint, **avant** la première résiliation client réelle.

@@ -161,25 +161,26 @@ Full reference: `_bmad-output/planning-artifacts/design-system-themes.css`
 
 ## Deployment Model
 
-`apps/client` est une base de code unique qui sert à la fois Lab et One. La cible de déploiement dépend de l'état du client (pré- ou post-graduation).
+`apps/client` est une base de code unique, déployée **une seule fois** en multi-tenant sur `app.monprojet-pro.com`. TOUS les clients (Lab ou One) sont servis depuis ce même déploiement pendant toute la durée de leur abonnement. La graduation Lab → One est un simple changement de flag, pas un provisioning.
 
 | Target | Model | URL | Contenu |
 |--------|-------|-----|---------|
 | **Hub** | Instance unique | `hub.monprojet-pro.com` | Cockpit MiKL (opérateur) |
-| **Lab (pré-graduation)** | Multi-tenant (RLS) | `lab.monprojet-pro.com` | `apps/client` en mode Lab uniquement pour les clients en parcours d'incubation |
-| **Lab + One (post-graduation)** | Instance dédiée par client | `{slug}.monprojet-pro.com` | `apps/client` avec **les deux modules** Lab et One, données client reportées |
+| **App Client (Lab + One)** | Multi-tenant (RLS) | `app.monprojet-pro.com` | `apps/client` sert les deux modes pour TOUS les clients pendant l'abonnement (Lab pré-graduation OU One post-graduation, selon `dashboard_type`) |
 
-**Toggle Mode Lab / Mode One** : après graduation, un switch persistant dans le shell permet au client de basculer instantanément entre la vue Lab (thème violet, historique parcours) et la vue One (thème vert/orange, outil quotidien). Le jeu d'onglets et le thème changent, la session ne redémarre pas.
+**Graduation Lab → One** : la graduation ne provisionne rien. C'est une mise à jour du flag `client_configs.dashboard_type` (`'lab'` → `'one'`). Le client reste sur le même déploiement, la même DB Supabase, la même session. Seul le jeu d'onglets et le thème changent.
 
-**Feature flag Élio Lab** : après graduation, `client_config.elio_lab_enabled` est `false` par défaut. L'agent Élio Lab est désactivé. MiKL peut le réactiver depuis le Hub à tout moment (ex : lancement d'un nouveau projet d'amélioration pour ce client).
+**Toggle Mode Lab / Mode One** : au sein de ce déploiement multi-tenant unique, un switch persistant dans le shell permet au client gradué de basculer instantanément entre la vue Lab (thème violet, historique parcours en lecture) et la vue One (thème vert/orange, outil quotidien). Pas de reload, pas de provisioning.
 
-**Export One standalone** : le module Lab et les agents sont tree-shakables à la build via les flags `NEXT_PUBLIC_ENABLE_LAB_MODULE` et `NEXT_PUBLIC_ENABLE_AGENTS`. En cas de sortie d'abonnement, le client repart avec un bundle One pur (sans Lab, sans agents MonprojetPro).
+**Feature flag Élio Lab** : `client_configs.elio_lab_enabled` contrôle la disponibilité de l'agent Élio Lab pour chaque client. MiKL active/désactive ce flag depuis le Hub admin à tout moment (ex : lancement d'un nouveau projet d'amélioration pour un client gradué).
 
-Hub communicates with client instances via **API REST + HMAC-signed webhooks**. No shared databases between Hub and client instances.
+**Kit de sortie — Export One standalone** : le tree-shaking du module Lab et des agents (flags `NEXT_PUBLIC_ENABLE_LAB_MODULE` et `NEXT_PUBLIC_ENABLE_AGENTS`) n'est **PAS** utilisé en fonctionnement normal. Il n'est déclenché que par le **kit de sortie** (Story 13.1) quand un client quitte MonprojetPro : un script one-off crée un nouveau projet Vercel, un nouveau repo GitHub privé, un nouveau projet Supabase, exporte les données RLS-filtrées du client, pousse un build standalone de `apps/client` (Lab + agents tree-shakés), et transfère Vercel + GitHub au client sortant.
 
-Client **owns** their code + data. On exit: export One standalone (Lab + agents tree-shaken) + DB + documentation.
+Hub communicates with the multi-tenant client app directly via shared Supabase. The kit de sortie generates a one-off standalone deployment for departing clients (cf. ADR-02 + Story 13.1).
 
-See `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md` for full rationale.
+Client **owns** their code + data uniquement à la sortie : le kit de sortie produit un déploiement Vercel + repo GitHub + Supabase dédiés, puis transfère l'ownership au client.
+
+Voir `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md` (Révision 2 du 2026-04-13) pour le rationale complet.
 
 ## Quality Gates (CI — all blocking)
 

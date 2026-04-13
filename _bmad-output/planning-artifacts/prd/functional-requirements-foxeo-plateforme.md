@@ -1,9 +1,9 @@
 # Functional Requirements — MonprojetPro Plateforme
 
-**Total : 173 FRs** couvrant l'ensemble de l'écosystème MonprojetPro (Hub, Lab, One).
+**Total : 174 FRs** couvrant l'ensemble de l'écosystème MonprojetPro (Hub, Lab, One).
 > Mis à jour le 08/02/2026 : ajout FR153-168 (propriété client, instance dédiée, documentation livrable, surveillance usage).
 > Mis à jour le 08/02/2026 : ajout FR169-170 (facturation forfait Lab 199€, déduction setup One).
-> Mis à jour le 13/04/2026 : refonte FR153, FR166, FR167 + ajout FR171-173 (coexistence Lab/One dans la même instance, toggle shell, feature flag Élio Lab, export One standalone). Voir [ADR-01](../architecture/adr-01-lab-one-coexistence-same-instance.md) et [ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md).
+> Mis à jour le 13/04/2026 (Révision 2) : refonte FR153, FR166, FR167, FR173 + ajout FR171-174. Décision finale : **déploiement multi-tenant unique `app.monprojet-pro.com`** pour tous les clients (Lab et One) pendant l'abonnement, isolation par RLS sur `client_id`. La graduation est une simple bascule de flag, sans provisioning ni migration. Le build standalone et l'infra dédiée n'existent QUE via le « kit de sortie » (Story 13.1, Epic 13 à créer) déclenché à la résiliation. Voir [ADR-01 Révision 2](../architecture/adr-01-lab-one-coexistence-same-instance.md) et [ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md).
 
 ## Hub — Gestion Clients
 
@@ -351,11 +351,11 @@
 
 | ID | Functional Requirement |
 |----|------------------------|
-| FR153 | Chaque client gradué reçoit une instance déployée dédiée sur `{slug}.monprojet-pro.com` (Vercel + Supabase propre) qui contient à la fois les modules Lab ET One — pas de provisioning séparé ([ADR-01](../architecture/adr-01-lab-one-coexistence-same-instance.md)) |
-| FR154 | Le client One est propriétaire de son code source et de ses données |
-| FR155 | Le Hub communique avec les instances One via API REST et webhooks signés (HMAC) |
-| FR156 | MiKL peut provisionner une nouvelle instance One via le Hub (script automatisé) |
-| FR157 | Le client One peut récupérer le code source, la base de données et la documentation s'il quitte MonprojetPro |
+| FR153 | Tous les clients (Lab phase ou One phase) sont servis par le déploiement multi-tenant unique `app.monprojet-pro.com` (un seul Vercel, une seule base Supabase). Aucun provisioning par client pendant l'abonnement. L'isolation se fait exclusivement par RLS sur `client_id` ([ADR-01 Révision 2](../architecture/adr-01-lab-one-coexistence-same-instance.md)) |
+| FR154 | Le client One est propriétaire de ses données et, à la sortie, devient propriétaire du code source et de l'infrastructure générés par le kit de sortie (voir FR174) |
+| FR155 | Les apps du monorepo (Hub, Lab, One) communiquent au sein du même déploiement multi-tenant ; les webhooks signés (HMAC) restent utilisés pour les intégrations externes (Cal.com, Pennylane, etc.) |
+| FR156 | MiKL peut activer un nouveau client via le Hub : création de la fiche + RLS → accès immédiat au déploiement multi-tenant, sans aucun provisioning d'infra |
+| FR157 | À la résiliation, le client One peut récupérer le code source, la base de données et la documentation via le kit de sortie automatisé (voir FR174) |
 
 ## Documentation comme Livrable
 
@@ -375,12 +375,12 @@
 | FR164 | MiKL peut consulter un tableau de bord de santé de toutes les instances One |
 | FR165 | MiKL peut initier un upgrade de tier d'instance après validation avec le client |
 
-## Graduation Lab → One (Instance Dédiée)
+## Graduation Lab → One (Bascule de Flag)
 
 | ID | Functional Requirement |
 |----|------------------------|
-| FR166 | La graduation Lab→One n'effectue AUCUNE migration de données cross-database : elle active le mode One au sein de l'instance client existante (Lab et One partagent la même base) ([ADR-01](../architecture/adr-01-lab-one-coexistence-same-instance.md)) |
-| FR167 | La graduation active le mode One et préserve les données Lab en lecture, avec possibilité de réactivation d'Élio Lab par MiKL depuis le Hub (plus d'« archivage » — les données Lab restent pleinement accessibles) |
+| FR166 | La graduation Lab→One est une simple bascule du flag `dashboard_type` de `'lab'` vers `'one'` dans `client_configs`. Aucun provisioning, aucune migration de base, aucune manipulation d'infra — tout se passe dans le déploiement multi-tenant existant ([ADR-01 Révision 2](../architecture/adr-01-lab-one-coexistence-same-instance.md)) |
+| FR167 | Les données Lab du client restent dans la même base multi-tenant après la graduation, accessibles en permanence via le toggle Mode Lab (aucun archivage, aucun déplacement). Élio Lab est désactivé par défaut post-graduation via le feature flag `elio_lab_enabled`, réactivable à tout moment par MiKL depuis le Hub (voir FR172) |
 
 ## Lab — Propriété MonprojetPro
 
@@ -399,8 +399,14 @@
 
 | ID | Functional Requirement |
 |----|------------------------|
-| FR171 | Après la graduation, un toggle persistant Lab/One est affiché dans le shell de l'instance client et permet de basculer à tout moment entre le mode Lab (thème violet, vue incubation pré-graduation) et le mode One (thème vert/orange, outil business quotidien) — les deux modes coexistent en permanence ([ADR-01](../architecture/adr-01-lab-one-coexistence-same-instance.md)) |
-| FR172 | Élio Lab est piloté par un feature flag : désactivé par défaut après la graduation, MiKL peut le réactiver à tout moment depuis le Hub (1 clic, pas de re-provisioning) pour démarrer un nouveau cycle d'amélioration ([ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md)) |
-| FR173 | MiKL peut produire un build « One standalone » tree-shaké à la compilation — Lab, Élio Lab, Élio One et Claude sont exclus du bundle via feature flags — pour un client qui sort de l'abonnement mensuel et souhaite auto-héberger une version réduite ([ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md)) |
+| FR171 | Après la graduation, un toggle persistant Lab/One est affiché dans le shell du déploiement multi-tenant et permet au client de basculer à tout moment entre le mode Lab (thème violet, vue incubation) et le mode One (thème vert/orange, outil business quotidien) — les deux modes coexistent en permanence au sein du même déploiement, via un simple switch d'UI ([ADR-01 Révision 2](../architecture/adr-01-lab-one-coexistence-same-instance.md)) |
+| FR172 | Élio Lab est piloté par un feature flag `elio_lab_enabled` : désactivé par défaut après la graduation, MiKL peut le réactiver à tout moment depuis le Hub (1 clic, pas de provisioning, pas de redéploiement) pour démarrer un nouveau cycle d'amélioration. Le flag est évalué côté serveur sur le déploiement multi-tenant partagé ([ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md)) |
+| FR173 | Le build « One standalone » tree-shaké (Lab, Élio Lab, Élio One, Claude exclus du bundle) est produit **uniquement** par le kit de sortie (FR174) au moment de la résiliation d'un client. Il n'existe **pas** en exploitation normale : pendant l'abonnement, tous les clients utilisent le build multi-tenant complet ([ADR-02](../architecture/adr-02-agents-feature-flags-tree-shaking.md)) |
+
+## Kit de Sortie Client
+
+| ID | Functional Requirement |
+|----|------------------------|
+| FR174 | Kit de sortie client — script automatisé déclenchable par MiKL depuis le Hub à la résiliation d'un abonnement. Le script provisionne un projet Vercel dédié (API), un repo GitHub privé dédié (API) et une nouvelle base Supabase dédiée, exporte les données du client (filtrées par RLS), pousse le build standalone tree-shaké (Lab + agents exclus, cf. FR173), connecte Vercel à GitHub, déclenche le premier déploiement et produit en sortie les credentials + un brouillon d'email au client. MiKL transfère ensuite la propriété Vercel et GitHub au client (1 clic chacun). Cf. Story 13.1 (Epic 13 à créer) et [ADR-01 Révision 2](../architecture/adr-01-lab-one-coexistence-same-instance.md) |
 
 ---

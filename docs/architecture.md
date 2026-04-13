@@ -311,25 +311,35 @@ composants/
 - **Font optimization** : Google Fonts optimisées (Geist)
 - **Code splitting** : Automatique par route
 
-## Modèle de déploiement (Mise à jour 13/04/2026 — ADR-01)
+## Modèle de déploiement (Mise à jour 13/04/2026 — ADR-01 Révision 2)
 
-> **Changement majeur** : Lab et One ne sont plus deux applications déployées séparément. Ils coexistent dans **la même instance client** (`apps/client`) en tant que deux vues commutables. Le Hub (`apps/hub`) reste une application standalone déployée de manière indépendante sur `hub.monprojet-pro.com`.
+> **Clarification majeure** : Il n'y a que **deux déploiements en fonctionnement normal** — le Hub pour MiKL, et une **app client multi-tenant unique** pour TOUS les clients. Les instances dédiées par client **n'existent pas** pendant l'abonnement ; elles ne sont créées qu'à la sortie via le kit de sortie (Story 13.1, Epic 13).
 
-- **Hub MiKL** : déploiement unique, multi-tenant côté opérateur uniquement
-- **App Client (Lab + One)** : une instance par client (lab multi-tenant historique en cours de migration vers ce modèle unifié). Après graduation, le toggle Lab/One est activé dans le shell et le client conserve l'accès aux deux modes
-- Plus de migration de données entre deux applications distinctes lors de la graduation — uniquement l'activation du Mode One dans la même instance
+- **Hub MiKL** (`apps/hub`) : déploiement unique standalone sur `hub.monprojet-pro.com` (Vercel + Supabase dédiés côté opérateur)
+- **App Client** (`apps/client`) : **un seul déploiement multi-tenant** sur `app.monprojet-pro.com` (un seul Vercel, un seul Supabase) qui sert TOUS les clients, qu'ils soient en Mode Lab ou en Mode One. L'isolation entre clients est assurée par **RLS sur `client_id`** — pas de sous-domaine par client, pas de base dédiée, pas de build dédié
+- **Graduation Lab → One** : un simple `UPDATE` sur `client_configs` (`dashboard_type: 'lab' → 'one'`, `lab_mode_available = true`, `elio_lab_enabled = false`). **Aucun provisioning, aucune migration cross-DB, aucun redéploiement.** Le shell détecte le flag et expose le toggle Lab/One
+- **Toggle Mode Lab / Mode One** : bascule côté UI dans le même déploiement (routing client, pas de rechargement de page)
+- **Pas d'instance per-client en production** : tant que le client est abonné, il partage l'infrastructure mutualisée avec tous les autres clients
 
-Référence complète : `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md`
+Références :
+- `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md` (Révision 2)
+- Story 13.1 (kit de sortie, Epic 13 à créer) — seul scénario où une instance dédiée est produite
 
-## Module Lab — Tree-shakable pour export standalone
+## Module Lab — Tree-shakable uniquement pour le kit de sortie (ADR-02 Révision 2)
 
-Pour permettre à un client sortant (résiliation de l'abonnement mensuel) de récupérer son outil métier sous forme d'application self-hostable **purifiée** de toute la partie incubation, le module Lab et les agents IA sont **tree-shakable au build**.
+> **Important** : le tree-shaking Lab + agents n'est **pas** un build parallèle qui tourne en production. Il n'est déclenché **qu'une seule fois**, à la sortie d'un client, par le **kit de sortie** (Story 13.1, Epic 13 à créer). En fonctionnement normal, l'app client multi-tenant `app.monprojet-pro.com` est compilée **une seule fois** avec Lab + agents actifs.
 
-- **Guards de build-time** : les imports du module Lab, d'Élio Lab, d'Élio One et du SDK Claude sont conditionnés par les flags `NEXT_PUBLIC_ENABLE_LAB_MODULE` et `NEXT_PUBLIC_ENABLE_AGENTS`
-- **Deux cibles de build** :
-  - `build` (défaut) : application complète avec Lab + agents actifs, toggle Lab/One visible pour les clients gradués
-  - `build:standalone` : Lab + agents entièrement supprimés du bundle (dead code elimination via les flags). Le toggle Lab/One n'est plus rendu, aucun code d'agent n'est présent dans le JS livré
-- **Cas d'usage** : lorsqu'un client résilie son abonnement mensuel, MiKL génère un build `standalone` livrable en self-hosting. Le client conserve son outil métier One pur, sans dépendance aux services IA de MonprojetPro ni à l'agent Élio
-- **Données** : l'export DB inclut l'intégralité des données (y compris historique Lab), mais la version standalone n'expose aucune interface pour les consulter activement — les données Lab restent présentes pour des raisons d'audit et de continuité, sans UI dédiée
+- **Guards de build-time** : les imports du module Lab, d'Élio Lab, d'Élio One et du SDK Claude sont conditionnés par les flags `NEXT_PUBLIC_ENABLE_LAB_MODULE` et `NEXT_PUBLIC_ENABLE_AGENTS`. Ces flags restent à `true` pour le build de production `app.monprojet-pro.com`
+- **Cible de build unique en production** : `app.monprojet-pro.com` utilise la cible complète (Lab + agents actifs, toggle Lab/One visible pour les clients gradués). Il n'existe **pas** de variante `standalone` servie aux clients actifs
+- **Cible `standalone` — uniquement via le kit de sortie** : lorsqu'un client résilie son abonnement, MiKL lance le **kit de sortie** (Story 13.1) qui :
+  1. Provisionne un nouveau projet Vercel, un repo GitHub et un projet Supabase **dédiés au client sortant** (via les API respectives)
+  2. Exporte les données du client (RLS-filtered) vers la nouvelle Supabase
+  3. Compile un build `standalone` avec `NEXT_PUBLIC_ENABLE_LAB_MODULE=false` + `NEXT_PUBLIC_ENABLE_AGENTS=false` (dead code elimination de Lab + agents + SDK Claude)
+  4. Push le build sur le repo GitHub dédié et connecte Vercel au repo
+  5. Livre au client un bundle credentials (Vercel, GitHub, Supabase) + email draft, avec transfert de propriété en 1 clic
+- **Effet** : le client sortant récupère un outil métier One pur, self-hostable, sans dépendance aux services IA de MonprojetPro ni à l'agent Élio. Cette opération est **ponctuelle et one-shot** — elle ne concerne que les clients qui quittent la plateforme
+- **Données** : l'export DB inclut l'intégralité des données (y compris historique Lab) ; la version standalone n'expose aucune UI pour les consulter, elles restent pour audit et continuité
 
-Référence complète : `_bmad-output/planning-artifacts/architecture/adr-02-lab-module-tree-shakable-export.md`
+Références :
+- `_bmad-output/planning-artifacts/architecture/adr-02-lab-module-tree-shakable-export.md` (Révision 2)
+- Story 13.1 (kit de sortie, Epic 13 à créer) — unique déclencheur du tree-shaking

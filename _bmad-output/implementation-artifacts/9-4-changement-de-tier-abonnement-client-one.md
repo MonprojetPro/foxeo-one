@@ -6,7 +6,7 @@
 >
 > **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
 >
-> **Impact sur cette story** : Clarifier dans le code que le tier s'applique à Élio One uniquement — pas au déploiement (il n'y a plus de provisioning différencié).
+> **Impact sur cette story** : Clarifier dans le code que le tier s'applique à Élio One uniquement — pas au déploiement (il n'y a pas de provisioning différencié, tous les clients sont sur la même instance multi-tenant).
 >
 > **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
 

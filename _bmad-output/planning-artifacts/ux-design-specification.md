@@ -42,9 +42,7 @@ Le client ne voit jamais "BMAD" — pour lui, c'est Élio qui l'accompagne.
 
 > **Note nomenclature (25/01/2026)** : Les noms ont été finalisés lors de la session Party Mode. L'ancien "MonprojetPro-One" (cockpit MiKL) devient "MonprojetPro-Hub", et "MonprojetPro-Outil" devient "MonprojetPro-One".
 
-> **Note architecturale (08/02/2026)** : MonprojetPro One utilise un modèle instance-per-client : chaque client One reçoit sa propre instance dédiée (Vercel + Supabase). Le Lab reste multi-tenant. Le client One est propriétaire de son code et de ses données.
-
-> **⚠️ Mise à jour architecturale (13/04/2026 — ADR-01 + ADR-02)** : Lab et One ne sont plus deux applications séparées. Ce sont désormais **deux vues de la même application client** (`apps/client`). Le Hub (cockpit MiKL) reste une app standalone inchangée. Après la graduation, le client conserve un **toggle persistant "Mode Lab / Mode One"** dans le shell qui lui permet de basculer instantanément entre les deux vues — le thème change (violet Lab ↔ vert/orange One), les onglets de sidebar changent, mais la session et les données restent identiques (pas de rechargement de page). Les deux modes coexistent en permanence dans la même instance. Élio Lab est désactivé par défaut après graduation mais MiKL peut le réactiver depuis le Hub pour un cycle d'amélioration. Voir `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md` et `adr-02-lab-module-tree-shakable-export.md`.
+> **⚠️ Mise à jour architecturale (13/04/2026 — ADR-01 Révision 2 + ADR-02 Révision 2)** : Il n'existe **qu'un seul déploiement client** : `app.monprojet-pro.com`, une application multi-tenant unique (Vercel + Supabase mutualisés) qui héberge **tous les clients** — qu'ils soient en Mode Lab (incubation) ou en Mode One (outil métier). Le Hub (cockpit MiKL) reste une app standalone distincte sur `hub.monprojet-pro.com`. Lab et One sont **deux vues** de la même application client, commutables via un toggle persistant dans le shell ; l'isolation entre clients est assurée par RLS sur `client_id`. La graduation Lab → One est un **simple flag update** (`dashboard_type: 'lab' → 'one'`) dans le même déploiement multi-tenant — **aucun provisioning, aucune migration cross-DB, aucun sous-domaine dédié**. Les instances per-client **n'existent pas en fonctionnement normal** : elles ne sont produites qu'à la sortie, one-shot, par un **kit de sortie** (Story 13.1 à créer, Epic 13) qui tree-shake Lab+agents et déploie un build standalone sur une infra Vercel + GitHub + Supabase dédiée au client sortant. Voir `_bmad-output/planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md` (Révision 2) et `adr-02-lab-module-tree-shakable-export.md` (Révision 2).
 
 ### Target Users
 
@@ -88,8 +86,8 @@ Le client ne voit jamais "BMAD" — pour lui, c'est Élio qui l'accompagne.
 
 **2 applications, 3 expériences, 1 écosystème cohérent :**
 
-- **Hub** (`apps/hub`) — cockpit MiKL, application standalone indépendante.
-- **App Client** (`apps/client`) — application unique qui héberge **deux vues** : Mode Lab (incubation) et Mode One (outil métier). Après graduation, le client dispose d'un toggle persistant pour basculer entre les deux modes dans la même session.
+- **Hub** (`apps/hub`) — cockpit MiKL, application standalone déployée sur `hub.monprojet-pro.com`.
+- **App Client** (`apps/client`) — **déploiement multi-tenant unique** sur `app.monprojet-pro.com` qui héberge **tous les clients** en Mode Lab ou en Mode One (isolation par RLS `client_id`). Après graduation, le client dispose d'un toggle persistant pour basculer entre les deux modes dans la même session. Il n'y a **pas de sous-domaine par client** en fonctionnement normal — les instances dédiées n'existent que lors du kit de sortie (Story 13.1).
 
 | Expérience | Vue | Action Core | Fréquence |
 |-----------|-----|-------------|-----------|
@@ -507,11 +505,11 @@ Contient pour chaque dashboard :
 | **Élio Lab** | Lab | Guide création, challenger | LLM connecté, accès contrôlé par MiKL |
 | **Élio One** | One | Support + demandes évolutions | Pas de LLM création, mode support |
 
-### Graduation Lab → One (Mise à jour 13/04/2026 — ADR-01)
+### Graduation Lab → One (Mise à jour 13/04/2026 — ADR-01 Révision 2)
 
-La graduation **n'est plus une migration irréversible** vers une interface distincte. Elle active le Mode One dans la même application client et expose un toggle persistant Lab/One dans le shell.
+La graduation **n'est plus une migration irréversible** vers une interface distincte — et surtout **ce n'est plus un redéploiement** ni un provisioning d'instance dédiée. C'est un **simple flag update** dans la base multi-tenant `app.monprojet-pro.com` : `client_configs.dashboard_type` passe de `'lab'` à `'one'`, `lab_mode_available` passe à `true`, `elio_lab_enabled` passe à `false`. Le client reste sur la même URL, dans le même déploiement, avec la même session. Le shell détecte le changement et active le Mode One ainsi que le toggle persistant Lab/One.
 
-- Lab et One coexistent en permanence dans la même instance `apps/client`
+- Lab et One coexistent en permanence dans le **déploiement multi-tenant unique** `app.monprojet-pro.com` (même Vercel, même Supabase, isolation par RLS `client_id`)
 - Le client garde un **accès complet** au Mode Lab après graduation — pas seulement un historique en lecture seule : docs, chats, historique des soumissions Validation Hub, transcriptions visio restent pleinement navigables
 - Élio Lab est **désactivé par défaut** après graduation (feature flag par client, contrôlé par MiKL depuis le Hub)
 - Quand Élio Lab est désactivé : la vue Lab affiche l'historique, les documents et les chats archivés en mode lecture, sans agent actif

@@ -6,7 +6,7 @@
 >
 > **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
 >
-> **Impact sur cette story** : Supprimer la logique de redirection vers `{slug}.monprojet-pro.com` après graduation. L'utilisateur reste sur la même URL, le shell affiche le toggle Lab/One et l'écran de bienvenue contextuel.
+> **Impact sur cette story** : Pas de redirection vers un sous-domaine. Le client reste sur `app.monprojet-pro.com`. Le shell détecte le changement de `dashboard_type` et bascule automatiquement le thème + le jeu d'onglets. Afficher l'écran de bienvenue contextuel sur la même URL.
 >
 > **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
 

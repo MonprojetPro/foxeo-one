@@ -62,69 +62,80 @@ monprojetpro-dash/
 
 Le système repose sur 3 piliers :
 
-#### Pilier 1 : Modèle de déploiement — Architecture unifiée Lab + One
+#### Pilier 1 : Modèle de déploiement — Architecture multi-tenant unifiée Lab + One
 
-**Principe fondamental : une base de code unique `apps/client` sert à la fois Lab et One. La cible de déploiement dépend de l'état du client.**
+**Principe fondamental : une base de code unique `apps/client` est déployée UNE SEULE FOIS en multi-tenant sur `app.monprojet-pro.com`. TOUS les clients (phase Lab OU phase One) sont servis depuis ce même déploiement pendant toute la durée de leur abonnement. La graduation Lab → One n'est qu'un changement de flag dans `client_configs`, jamais un provisioning.**
 
-> Décision validée le 2026-04-13. Références : [ADR-01 — Coexistence Lab & One dans la même instance](./adr-01-lab-one-coexistence-same-instance.md) et [ADR-02 — Feature flags & export One standalone](./adr-02-feature-flags-export.md).
+> Décision validée le 2026-04-13 (Révision 2). Références : [ADR-01 — Coexistence Lab & One dans la même instance](./adr-01-lab-one-coexistence-same-instance.md) (Révision 2) et [ADR-02 — Feature flags & export One standalone](./adr-02-feature-flags-export.md) (Révision 2).
 
-Le code développé dans le cadre du projet appartient au client. MonprojetPro conserve le droit de réutiliser les patterns et modules développés. Si le client quitte MonprojetPro, il repart avec un bundle One pur (Lab et agents tree-shaken via feature flags), sa base de données et sa documentation complète.
+Pendant l'abonnement, le client n'a pas son propre déploiement ni sa propre DB : il est un tenant parmi d'autres dans l'app multi-tenant, isolé par RLS. Ce n'est qu'à la **sortie** qu'un kit de sortie (one-off) crée un déploiement standalone qui lui est transféré en propriété.
 
 **Cibles de déploiement :**
 
 | Cible | Modèle | Infrastructure | Contenu | Propriété |
 |-------|--------|----------------|---------|-----------|
 | **Hub** | Instance unique | 1 Vercel + 1 Supabase | Cockpit opérateur MiKL | MonprojetPro |
-| **Lab (pré-graduation)** | Multi-tenant | 1 Vercel + 1 Supabase (partagé) | `apps/client` en mode Lab uniquement | MonprojetPro |
-| **Lab + One (post-graduation)** | Instance dédiée par client | 1 Vercel + 1 Supabase **par client** | `apps/client` avec **les deux** modules Lab et One | Client |
+| **App Client (Lab + One)** | Multi-tenant (RLS) | 1 Vercel + 1 Supabase partagé | `apps/client` servant les deux modes pour TOUS les clients (Lab ou One selon `dashboard_type`) | MonprojetPro |
+| **Standalone client sortant** | One-off via kit de sortie | 1 Vercel + 1 GitHub + 1 Supabase créés à la demande | Build `apps/client` tree-shaké (Lab et agents désactivés) | Client (transfert à la sortie) |
 
-**Lab (multi-tenant, pré-graduation) :**
+**App Client multi-tenant (`app.monprojet-pro.com`) :**
 
-- Une seule instance déployée pour tous les clients en parcours d'incubation
-- Isolation par `client_id` + Row Level Security (RLS)
-- Configuration dynamique par client (modules actifs, parcours, thème violet)
-- Les clients Lab ne possèdent pas encore d'outil dédié — ils travaillent sur la plateforme partagée
-
-**Instance dédiée (post-graduation, Lab + One coexistants) :**
-
-- Chaque client gradué reçoit sa propre instance Vercel + son propre projet Supabase
-- Pas de RLS inter-client nécessaire (base de données dédiée)
-- L'instance contient **à la fois** les modules Lab et les modules One — le client peut revenir à tout moment sur ses données Lab
-- Données Lab reportées lors de la graduation : brief, livrables, historique Élio Lab, profil de communication
-- Le client peut récupérer le code et être indépendant si demandé (voir "Export One standalone")
-- Coût estimé par client : ~5-7€/mois sur tiers gratuits (Vercel Hobby + Supabase Free + VPS prorata + Élio)
+- Un seul déploiement Vercel + un seul projet Supabase pour **tous les clients**, qu'ils soient en phase Lab ou en phase One
+- Isolation par `client_id` + Row Level Security (RLS) sur toutes les tables métier
+- Le mode affiché dépend du flag `client_configs.dashboard_type` (`'lab'` ou `'one'`) et du toggle persistant côté client gradué
+- Les modules Lab et les modules One coexistent dans le bundle en permanence — c'est le rôle du shell et du routage de n'exposer que ceux qui sont pertinents selon le `dashboard_type`
+- Aucun client ne possède "son propre déploiement" pendant son abonnement — tout se passe dans ce déploiement unique
+- Coût marginal par client : quasi nul (même infra partagée, scaling géré par Vercel + Supabase)
 
 **Hub (instance unique — MonprojetPro) :**
 
 - Le Hub est multi-opérateur dès le départ (prépare la commercialisation)
 - Table `operators` : MiKL = `operator_id: 1`
-- Communique avec les instances dédiées via **API REST + webhooks HMAC** (pas de DB partagée)
+- Partage la même base Supabase que l'app client multi-tenant (policies RLS distinctes pour les rôles opérateur vs client)
 
-##### Toggle Lab/One — bascule post-graduation
+##### Flux graduation Lab → One — un simple flag update
 
-Après graduation, le shell dashboard expose un **toggle persistant "Mode Lab / Mode One"** qui permet au client de basculer instantanément entre les deux vues au sein de la même instance dédiée :
+La graduation d'un client Lab vers One **ne provisionne rien** et **ne migre aucune donnée** :
 
-- **Mode Lab** : thème violet, onglets du parcours d'incubation, accès lecture aux livrables, historique Élio Lab
+1. MiKL (ou un processus automatisé) met à jour `client_configs.dashboard_type` : `'lab'` → `'one'`
+2. Optionnellement, `client_configs.active_modules` est étendu pour ajouter les modules One du périmètre projet
+3. `client_configs.elio_lab_enabled` peut être basculé à `false` (Élio Lab masqué par défaut côté client gradué, mais réactivable par MiKL)
+4. Au prochain chargement du shell côté client, le thème change (vert/orange) et le jeu d'onglets passe en Mode One
+5. Toutes les données Lab restent dans la même DB Supabase multi-tenant et restent accessibles via le toggle Mode Lab
+
+Pas de nouveau Supabase, pas de nouveau Vercel, pas de copie de données, pas de redéploiement. C'est instantané.
+
+##### Toggle Lab/One — bascule post-graduation dans l'app multi-tenant
+
+Après graduation, le shell dashboard expose un **toggle persistant "Mode Lab / Mode One"** qui permet au client de basculer instantanément entre les deux vues au sein du **même déploiement multi-tenant** :
+
+- **Mode Lab** : thème violet, onglets du parcours d'incubation (en lecture pour l'historique), accès aux livrables, historique Élio Lab
 - **Mode One** : thème vert/orange, onglets de l'outil quotidien (CRM, facturation, visio, etc.)
 - La bascule est instantanée (pas de reload, pas de session qui redémarre) — seul le jeu d'onglets et le thème changent
 - Le toggle est persistant : la préférence est mémorisée entre les sessions (Zustand UI state)
 
 **Feature flag Élio Lab :**
 
-- `client_config.elio_lab_enabled` (boolean) : `false` par défaut après graduation
-- L'agent Élio Lab est désactivé dans l'interface Mode Lab post-graduation (Élio Hub reste accessible côté MiKL)
-- MiKL peut réactiver Élio Lab depuis le Hub à tout moment, par exemple pour accompagner un nouveau projet d'amélioration, une itération sur le positionnement, un nouveau livrable stratégique
-- Le flag est synchronisé Hub → instance client via webhook HMAC
+- `client_configs.elio_lab_enabled` (boolean) contrôle la visibilité de l'agent Élio Lab pour un client donné
+- MiKL l'active/désactive depuis le Hub admin à tout moment (ex : accompagner un nouveau projet d'amélioration pour un client gradué)
+- Pas de synchronisation inter-instances nécessaire : le flag est lu directement dans la DB Supabase partagée
 
-##### Export One standalone — tree-shaking au build
+##### Export One standalone — déclenché UNIQUEMENT par le kit de sortie
 
-Pour le scénario de sortie d'abonnement ou de transfert de propriété, le bundle `apps/client` doit pouvoir être exporté en mode **One pur** (sans Lab, sans agents MonprojetPro) :
+Le tree-shaking du module Lab et des agents via `NEXT_PUBLIC_ENABLE_LAB_MODULE` / `NEXT_PUBLIC_ENABLE_AGENTS` **n'est pas utilisé en fonctionnement normal**. L'app multi-tenant en production garde toujours Lab ET One ET les agents activés dans son bundle.
 
-- `NEXT_PUBLIC_ENABLE_LAB_MODULE` : feature flag qui, à `false`, tree-shake l'intégralité du module Lab (parcours, soumissions, livrables Lab, toggle Lab/One)
-- `NEXT_PUBLIC_ENABLE_AGENTS` : feature flag qui, à `false`, tree-shake Élio (Lab, One, One+), le chat MiKL, et tout code d'agent
-- Les deux flags sont lus au build (`next build`) — le code exclu n'est pas présent dans le bundle final
-- Le client sortant reçoit : le code source One standalone, sa base de données exportée, sa documentation complète
-- Voir [ADR-02 — Feature flags & export One standalone](./adr-02-feature-flags-export.md) pour le détail des conditions d'import, des barrels et de la CI de vérification
+Ce tree-shaking n'existe que pour un scénario : le **kit de sortie** (Story 13.1 — à créer). Quand un client quitte MonprojetPro, MiKL déclenche un script one-off qui :
+
+1. Crée un nouveau projet Vercel dédié au client (via Vercel API)
+2. Crée un nouveau repo GitHub privé (via GitHub API)
+3. Provisionne un nouveau projet Supabase dédié au client
+4. Exporte les données RLS-filtrées du client depuis la DB multi-tenant vers le nouveau Supabase
+5. Pousse un **build standalone** de `apps/client` avec `NEXT_PUBLIC_ENABLE_LAB_MODULE=false` et `NEXT_PUBLIC_ENABLE_AGENTS=false` (Lab et agents exclus du bundle)
+6. Connecte le nouveau Vercel au nouveau repo GitHub et déclenche le premier déploiement
+7. Produit les credentials + un brouillon d'email pour le client
+8. MiKL transfère l'ownership Vercel + GitHub au client
+
+Après ce kit, le client possède son propre déploiement indépendant, sans aucun lien avec l'app multi-tenant MonprojetPro. Voir [ADR-02 — Feature flags & export One standalone](./adr-02-feature-flags-export.md) (Révision 2) pour le détail des conditions d'import, des barrels et de la CI de vérification, et [ADR-01 — Coexistence Lab & One](./adr-01-lab-one-coexistence-same-instance.md) (Révision 2) pour le rationale.
 
 #### Pilier 2 : Catalogue de modules plug & play
 
@@ -165,169 +176,88 @@ export interface ModuleManifest {
 
 #### Pilier 3 : Configuration-driven, pas code-driven
 
-**Table client_config (Lab — DB partagée multi-tenant) :**
+**Table `client_configs` (app multi-tenant — source unique de vérité) :**
 
 ```sql
--- Dans la DB Lab partagée : détermine ce que chaque client Lab voit
-CREATE TABLE client_config (
+-- Dans la DB Supabase multi-tenant partagée : une ligne par client
+-- RLS garantit qu'un client ne lit/écrit que sa propre config
+CREATE TABLE client_configs (
   client_id UUID PRIMARY KEY REFERENCES clients(id),
   operator_id UUID REFERENCES operators(id),
 
-  -- Modules actifs
+  -- Modules actifs (mix Lab + One selon la phase du client)
   active_modules TEXT[] DEFAULT ARRAY['core-dashboard', 'chat', 'documents', 'parcours-lab'],
 
-  -- Type de dashboard
-  dashboard_type TEXT DEFAULT 'lab',  -- 'lab' (fixe dans cette DB)
+  -- Phase courante du client : détermine le mode par défaut du shell
+  dashboard_type TEXT DEFAULT 'lab',  -- 'lab' | 'one' — flag modifié à la graduation
+
+  -- Feature flag Élio Lab (contrôlé par MiKL depuis le Hub)
+  elio_lab_enabled BOOLEAN DEFAULT TRUE,
 
   -- Personnalisation
-  theme_variant TEXT DEFAULT 'lab',   -- Palette vert émeraude
-  custom_branding JSONB,              -- Logo, nom affiché
+  theme_variant TEXT DEFAULT 'lab',
+  custom_branding JSONB,
 
   -- Configuration Élio
-  elio_config JSONB,                  -- Contexte, profil comm, tier
+  elio_config JSONB,
 
   -- Parcours Lab
-  parcours_config JSONB,              -- Étapes, progression
+  parcours_config JSONB,
 
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
 ```
 
-**Table client_config (One — DB dédiée par client) :**
+Il n'y a **pas** de table `client_instances` pour un registre d'instances dédiées : il n'y a qu'un seul déploiement multi-tenant. Un éventuel registre n'existe que pour les clients sortis (post kit de sortie), à des fins de suivi commercial, et n'est pas nécessaire au fonctionnement normal de la plateforme.
 
-```sql
--- Dans chaque DB One dédiée : un seul client, pas de RLS inter-client
-CREATE TABLE client_config (
-  client_id UUID PRIMARY KEY,         -- Un seul enregistrement dans cette DB
-
-  -- Modules actifs (définis par le périmètre projet)
-  active_modules TEXT[] DEFAULT ARRAY['core-dashboard', 'chat', 'documents'],
-
-  -- Type de dashboard
-  dashboard_type TEXT DEFAULT 'one',   -- 'one' (fixe)
-
-  -- Personnalisation
-  theme_variant TEXT DEFAULT 'one',    -- Palette orange
-  custom_branding JSONB,               -- Logo, nom affiché
-
-  -- Configuration Élio
-  elio_config JSONB,                   -- Contexte, profil comm, tier
-
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-**Table client_instances (Hub — registre des instances) :**
-
-```sql
--- Dans la DB Hub : registre de toutes les instances déployées
-CREATE TABLE client_instances (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID REFERENCES clients(id),
-  instance_type TEXT NOT NULL,          -- 'lab' | 'one'
-
-  -- URLs de l'instance
-  instance_url TEXT NOT NULL,           -- https://{slug}.monprojet-pro.com
-  supabase_url TEXT,                    -- URL Supabase de l'instance (One uniquement)
-  vercel_project_id TEXT,               -- ID projet Vercel (One uniquement)
-
-  -- Sécurité inter-instances
-  instance_secret TEXT NOT NULL,        -- Secret HMAC pour communication signée
-
-  -- Monitoring
-  status TEXT DEFAULT 'active',         -- 'provisioning', 'active', 'suspended', 'archived'
-  last_health_check TIMESTAMP,
-  usage_metrics JSONB,                  -- Dernières métriques (DB rows, storage, bandwidth)
-  alert_level TEXT DEFAULT 'none',      -- 'none', 'info', 'warning', 'critical'
-
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-**Flux "nouveau client Lab" :**
+**Flux "nouveau client" (Lab ou One) :**
 
 1. MiKL crée le client dans le Hub
-2. Le Hub insère `clients` + `client_config` dans la DB Lab partagée
-3. Le client reçoit ses identifiants → se connecte à `lab.monprojet-pro.com`
-4. Le middleware Auth lit `client_id` → charge `client_config` (RLS)
-5. Le dashboard Lab s'affiche avec les modules du parcours
+2. Le Hub insère `clients` + `client_configs` dans la DB multi-tenant partagée
+3. `dashboard_type` est initialisé selon la phase (`'lab'` par défaut, ou `'one'` directement si le client entre sans passer par Lab)
+4. Le client reçoit ses identifiants → se connecte à `app.monprojet-pro.com`
+5. Le middleware Auth lit `client_id` → charge `client_configs` (RLS)
+6. Le shell s'affiche dans le mode correspondant avec les modules du périmètre
 
-**Flux "nouveau client One" :**
-
-1. MiKL crée le client dans le Hub
-2. Script de provisioning : création projet Supabase + déploiement Vercel dédié
-3. Configuration des env variables (Supabase URL, clés, modules actifs)
-4. Le Hub enregistre l'URL de l'instance One (pour communication API)
-5. Le client reçoit ses identifiants → se connecte à `{slug}.monprojet-pro.com`
-6. **Livrable obligatoire** : documentation d'utilisation de chaque module activé
-
-**Flux "graduation Lab → One" :**
+**Flux "graduation Lab → One" — aucun provisioning :**
 
 1. Le client Lab termine son parcours et choisit MonprojetPro One
-2. Script de provisioning de l'instance dédiée (nouveau Supabase + nouveau Vercel) — l'instance contient **à la fois** les modules Lab et les modules One
-3. Copie des données Lab du client depuis la DB Lab multi-tenant vers la DB dédiée de la nouvelle instance (brief, livrables, historique Élio Lab, profil de communication)
-4. Activation du Mode One par défaut + mise à disposition du toggle Lab/One dans le shell
-5. Désactivation de Élio Lab (`elio_lab_enabled = false`) — réactivable par MiKL à la demande
-6. Les données Lab restent pleinement accessibles en lecture via le Mode Lab de la nouvelle instance
+2. MiKL (ou un processus automatisé) met à jour `client_configs.dashboard_type` : `'lab'` → `'one'`
+3. Optionnellement, `active_modules` est étendu avec les modules One du périmètre projet, et `elio_lab_enabled` peut passer à `false`
+4. Au prochain chargement du shell côté client, le thème passe en vert/orange et le jeu d'onglets passe en Mode One
+5. Toutes les données Lab restent dans la même DB Supabase et restent accessibles via le toggle Mode Lab du shell
 
-**Flux "ajouter un module" (Lab — multi-tenant) :**
+Pas de nouveau Supabase. Pas de nouveau Vercel. Pas de copie de données. Pas de redéploiement.
+
+**Flux "ajouter un module" :**
 
 1. MiKL dans le Hub : active le module pour le client
-2. `UPDATE client_config SET active_modules = active_modules || ARRAY['formations']`
-3. Au prochain chargement, le client voit le nouveau module
+2. `UPDATE client_configs SET active_modules = active_modules || ARRAY['formations'] WHERE client_id = ...`
+3. Au prochain chargement, le client voit le nouveau module — pas de redéploiement, pas de migration cross-instance
+4. **Livrable obligatoire** : documentation module (`guide.md`, `faq.md`, `flows.md`)
 
-**Flux "ajouter un module" (One — instance dédiée) :**
+**Flux "client quitte MonprojetPro" — kit de sortie (Story 13.1) :**
 
-1. Développement/personnalisation du module dans le monorepo
-2. Redéploiement de l'instance Vercel du client avec le module ajouté
-3. Migration Supabase sur l'instance du client si nécessaire
-4. **Livrable obligatoire** : documentation module (guide.md, faq.md, flows.md)
+1. MiKL déclenche le script one-off "kit de sortie" depuis le Hub
+2. Le script crée un nouveau projet Vercel, un nouveau repo GitHub privé, et un nouveau projet Supabase dédiés au client
+3. Les données RLS-filtrées du client sont exportées depuis la DB multi-tenant vers le nouveau Supabase
+4. Un build standalone de `apps/client` est poussé avec `NEXT_PUBLIC_ENABLE_LAB_MODULE=false` et `NEXT_PUBLIC_ENABLE_AGENTS=false` (Lab et agents tree-shakés, exclus du bundle final)
+5. Le nouveau Vercel est connecté au nouveau repo GitHub et déclenche le premier déploiement
+6. Le script produit les credentials + un brouillon d'email pour le client
+7. MiKL transfère l'ownership Vercel + GitHub au client
+8. Le client possède désormais un déploiement indépendant, sans aucun lien avec l'app multi-tenant MonprojetPro
+9. Les données Lab + documentation stratégique (brief, PRD, architecture) sont incluses dans l'export
 
-**Flux "client quitte One" :**
+#### Pilier 4 : Communication Hub ↔ App Client
 
-1. Export des données depuis le Supabase du client
-2. Le client repart avec : code source + base de données + documentation complète
-3. Retrait des modules service MonprojetPro (chat MiKL, visio, Élio) — sauf si dans le périmètre projet
-4. Le dossier BMAD reste propriété MonprojetPro — le client reçoit les documents stratégiques (brief, PRD, architecture)
+Hub et App Client partagent la **même DB Supabase multi-tenant**. Il n'y a donc pas de protocole HTTP/webhook à mettre en place pour la communication Hub ↔ Client en fonctionnement normal : toute la synchronisation passe par la base de données partagée et les policies RLS distinguent les rôles opérateur et client.
 
-#### Pilier 4 : Communication Hub ↔ Instances
+- MiKL depuis le Hub modifie directement `client_configs`, `active_modules`, `elio_lab_enabled`, `dashboard_type`, etc. via des Server Actions qui écrivent dans la DB commune
+- Côté client, le shell lit `client_configs` au prochain chargement (ou via Supabase Realtime) et se met à jour automatiquement
+- Les webhooks HMAC ne sont **pas** nécessaires pour piloter l'app client (c'est le même Supabase) — ils ne sont utilisés que pour les intégrations externes (Pennylane, Cal.com, etc.)
 
-Le Hub ne partage pas de base de données avec les instances One. Toute communication passe par des API sécurisées.
-
-```typescript
-// API Hub → Instance One (dans l'instance client)
-// apps/client/app/api/hub/route.ts
-export interface HubApiContract {
-  'POST /api/hub/sync': {        // Hub push des mises à jour config
-    body: { action: string; payload: unknown }
-    response: { success: boolean }
-  }
-  'GET /api/hub/health': {       // Hub vérifie la santé de l'instance
-    response: { status: 'ok' | 'degraded'; metrics: UsageMetrics }
-  }
-}
-
-// Webhook Instance One → Hub (dans le Hub)
-// apps/hub/app/api/webhooks/client-instance/route.ts
-export interface ClientWebhookContract {
-  'POST /api/webhooks/client-instance': {
-    body: {
-      instanceId: string
-      event: 'usage_alert' | 'client_action' | 'health_report'
-      data: unknown
-    }
-  }
-}
-```
-
-**Sécurité inter-instances :**
-
-- Chaque instance One possède un `INSTANCE_SECRET` partagé avec le Hub
-- Toutes les requêtes Hub↔One sont signées (HMAC SHA-256)
-- Le Hub maintient un registre des instances actives (`client_instances` table)
+**Scénarios nécessitant un protocole HTTP :** uniquement le kit de sortie (Story 13.1), qui utilise la Vercel API, la GitHub API et la Supabase Management API pour provisionner le déploiement standalone du client sortant. Ces appels sont one-off et ne sont pas un protocole de fonctionnement courant.
 
 #### Pilier 5 : Documentation comme livrable obligatoire
 

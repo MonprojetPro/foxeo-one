@@ -6,7 +6,7 @@
 >
 > **Référence** : [ADR-01](../../planning-artifacts/architecture/adr-01-lab-one-coexistence-same-instance.md) — Coexistence Lab+One dans une instance unique.
 >
-> **Impact sur cette story** : Le transfert ne consiste plus à copier une instance déjà provisionnée. Il faut générer un build 'One standalone' (tree-shake du module Lab et des agents via les feature flags de l'[ADR-02](../../planning-artifacts/architecture/adr-02-lab-module-tree-shakable-export.md)), exporter la DB, et livrer le tout au client sortant.
+> **Impact sur cette story** : Cette story devient le **kit de sortie complet** (renommée et reformulée dans Story 13.1, Epic 13 à créer). Le code actuel `transferOneInstance()` doit être supprimé et remplacé par un nouveau workflow handoff orchestrant : (1) provisioning Vercel API, (2) création repo GitHub API, (3) provisioning Supabase dédié, (4) export données RLS, (5) push build standalone (`NEXT_PUBLIC_ENABLE_LAB_MODULE=false` + `NEXT_PUBLIC_ENABLE_AGENTS=false`), (6) connexion Vercel ↔ GitHub, (7) génération credentials + draft email, (8) MiKL transfère propriété Vercel + GitHub au client en 1 clic.
 >
 > **À reworker** : Une story de refonte sera créée dans l'Epic 13 — Refonte coexistence Lab/One.
 
