@@ -1,9 +1,9 @@
 'use server'
 
 import { z } from 'zod'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse, type ActionResponse } from '@foxeo/types'
-import type { ElioModuleDoc } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse, type ActionResponse } from '@monprojetpro/types'
+import type { ElioModuleDoc } from '@monprojetpro/types'
 
 const FaqItemSchema = z.object({
   question: z.string().min(1),

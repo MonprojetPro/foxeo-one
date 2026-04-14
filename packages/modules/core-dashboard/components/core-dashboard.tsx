@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle, Skeleton } from '@foxeo/ui'
-import type { ClientConfig } from '@foxeo/types'
+import { Card, CardContent, CardHeader, CardTitle, Skeleton } from '@monprojetpro/ui'
+import type { ClientConfig } from '@monprojetpro/types'
 import { LabTeasingCard } from './lab-teasing-card'
 
 interface CoreDashboardProps {
@@ -29,7 +29,7 @@ export function CoreDashboard({ clientConfig, clientName, showTeasing = false }:
     .slice(0, 4)
 
   const logoUrl = customBranding?.logoUrl
-  const displayName = customBranding?.displayName ?? 'Foxeo One'
+  const displayName = customBranding?.displayName ?? 'MonprojetPro One'
   const greeting = clientName ? `Bonjour ${clientName}` : 'Bonjour'
 
   return (

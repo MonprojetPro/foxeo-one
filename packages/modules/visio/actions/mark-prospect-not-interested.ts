@@ -1,23 +1,9 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
-import { z } from 'zod'
-
-export const NotInterestedReasonValues = [
-  'budget',
-  'timing',
-  'competitor',
-  'not_ready',
-  'other',
-] as const
-export type NotInterestedReason = typeof NotInterestedReasonValues[number]
-
-export const MarkProspectNotInterestedInput = z.object({
-  meetingId: z.string().uuid('meetingId invalide'),
-  reason: z.enum(NotInterestedReasonValues).optional(),
-})
-export type MarkProspectNotInterestedInput = z.infer<typeof MarkProspectNotInterestedInput>
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { NotInterestedReasonValues, MarkProspectNotInterestedInput } from './post-meeting-schemas'
+export type { NotInterestedReason, MarkProspectNotInterestedInput } from './post-meeting-schemas'
 
 export async function markProspectNotInterested(
   input: MarkProspectNotInterestedInput

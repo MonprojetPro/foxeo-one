@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge } from '@foxeo/ui'
+import { Badge } from '@monprojetpro/ui'
 
 export function ApiPlaceholder() {
   return (
@@ -11,7 +11,7 @@ export function ApiPlaceholder() {
         <Badge variant="outline" className="text-amber-500 border-amber-500">Phase 2</Badge>
       </div>
       <p className="text-sm text-gray-400">
-        Générez des clés API pour permettre à vos clients d&apos;intégrer Foxeo dans leurs systèmes.
+        Générez des clés API pour permettre à vos clients d&apos;intégrer MonprojetPro dans leurs systèmes.
         Cette fonctionnalité sera disponible en Phase 2.
       </p>
     </div>

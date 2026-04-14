@@ -9,7 +9,7 @@ const mockFrom = vi.fn(() => ({
   })),
 }))
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
   })),
@@ -35,7 +35,7 @@ describe('getClientInstance Server Action', () => {
       data: {
         id: 'inst-123',
         client_id: '550e8400-e29b-41d4-a716-446655440001',
-        instance_url: 'https://jean.foxeo.io',
+        instance_url: 'https://jean.monprojet-pro.com',
         slug: 'jean',
         status: 'active',
         tier: 'base',
@@ -54,7 +54,7 @@ describe('getClientInstance Server Action', () => {
     expect(result.data).toEqual({
       id: 'inst-123',
       clientId: '550e8400-e29b-41d4-a716-446655440001',
-      instanceUrl: 'https://jean.foxeo.io',
+      instanceUrl: 'https://jean.monprojet-pro.com',
       slug: 'jean',
       status: 'active',
       tier: 'base',
@@ -83,7 +83,7 @@ describe('getClientInstance Server Action', () => {
       data: {
         id: 'inst-456',
         client_id: '550e8400-e29b-41d4-a716-446655440001',
-        instance_url: 'https://jean.foxeo.io',
+        instance_url: 'https://jean.monprojet-pro.com',
         slug: 'jean',
         status: 'transferred',
         tier: 'base',

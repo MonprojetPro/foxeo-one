@@ -18,7 +18,7 @@ const createMockSupabase = (rpcData: unknown, rpcError?: unknown) => {
   }
 }
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
@@ -42,7 +42,7 @@ describe('toggleReminderComplete', () => {
       updated_at: '2026-02-15T10:00:00Z',
     }
 
-    const { createServerSupabaseClient } = await import('@foxeo/supabase')
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockResolvedValue(
       createMockSupabase(mockReminderDB) as never
     )
@@ -68,7 +68,7 @@ describe('toggleReminderComplete', () => {
       updated_at: '2026-02-15T10:00:00Z',
     }
 
-    const { createServerSupabaseClient } = await import('@foxeo/supabase')
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockResolvedValue(
       createMockSupabase(mockReminderDB) as never
     )
@@ -82,7 +82,7 @@ describe('toggleReminderComplete', () => {
   })
 
   it('should return error if reminder not found', async () => {
-    const { createServerSupabaseClient } = await import('@foxeo/supabase')
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockResolvedValue(
       createMockSupabase(null, { message: 'Not found', code: 'PGRST116' }) as never
     )

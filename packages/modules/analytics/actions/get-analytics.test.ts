@@ -11,11 +11,11 @@ import {
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 const mockGetUser = vi.fn()
 const mockRpc = vi.fn()

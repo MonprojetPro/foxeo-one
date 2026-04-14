@@ -20,7 +20,7 @@ So that **le client transite en douceur vers son espace professionnel sans perte
 
 **Given** MiKL consulte la fiche d'un client Lab dont le parcours est termine (FR74)
 **When** il accede a la section "Parcours Lab" de la fiche client
-**Then** un bouton "Graduer vers Foxeo One" est visible si les conditions suivantes sont remplies :
+**Then** un bouton "Graduer vers MonprojetPro One" est visible si les conditions suivantes sont remplies :
 - Le parcours Lab est en statut 'completed' (toutes les etapes validees)
 - Le client n'a aucune `validation_request` en statut 'pending'
 - Le client n'est pas deja en statut 'one'
@@ -28,7 +28,7 @@ So that **le client transite en douceur vers son espace professionnel sans perte
 - "Parcours non termine — {X} etapes restantes"
 - "Demandes de validation en attente — traitez-les d'abord"
 
-**Given** MiKL clique sur "Graduer vers Foxeo One" (FR74)
+**Given** MiKL clique sur "Graduer vers MonprojetPro One" (FR74)
 **When** la modale de confirmation s'affiche
 **Then** elle contient :
 - Nom et entreprise du client
@@ -56,7 +56,7 @@ Le provisioning complet (creation Supabase, migrations DB, deploiement Vercel, h
    - Les `documents` du Lab sont copies dans le Storage One
    - Le `parcours` complete est copie (lecture seule)
    - Les observations Elio Lab sont compilees dans `communication_profile.lab_learnings`
-6. Les donnees Lab ORIGINALES restent dans la DB Lab partagee (archivage, propriete Foxeo — FR168)
+6. Les donnees Lab ORIGINALES restent dans la DB Lab partagee (archivage, propriete MonprojetPro — FR168)
 
 **Phase C — Mise a jour du client dans le Hub :**
 7. `clients.client_type` → 'one' (etait 'lab')
@@ -95,19 +95,19 @@ So that **je sais que mon parcours est termine et je peux commencer a utiliser m
 **When** la Server Action termine la transaction
 **Then** une notification est envoyee au client :
 - Type : 'graduation'
-- Titre : "Felicitations ! Votre espace professionnel Foxeo One est pret !"
+- Titre : "Felicitations ! Votre espace professionnel MonprojetPro One est pret !"
 - Body : "Votre parcours Lab est termine. Vous avez maintenant acces a votre dashboard personnalise avec {X} modules actives."
 - Link : "/" (redirige vers l'accueil du dashboard One)
 **And** la notification est envoyee en temps reel via Supabase Realtime (NFR-P5, < 2 secondes)
 **And** un email de graduation est egalement envoye (template specifique) :
-- Objet : "Bienvenue dans Foxeo One — Votre espace professionnel est pret"
+- Objet : "Bienvenue dans MonprojetPro One — Votre espace professionnel est pret"
 - Contenu : recapitulatif du parcours Lab, lien de connexion, apercu des modules actives
 **And** MiKL est egalement notifie (type : 'system') : "Graduation effectuee — {nom} est maintenant client One"
 
 **Given** le client se connecte apres la graduation
 **When** le middleware d'authentification verifie son profil
 **Then** :
-1. Le client est redirige vers son instance dediee `{slug}.foxeo.io` (au lieu de `lab.foxeo.io`)
+1. Le client est redirige vers son instance dediee `{slug}.monprojet-pro.com` (au lieu de `lab.monprojet-pro.com`)
    - Le Hub fournit l'URL de l'instance One via `client_instances.instance_url`
    - Le middleware Auth de l'instance Lab detecte le client gradue et redirige
 2. Le flag `show_graduation_screen` est detecte
@@ -246,7 +246,7 @@ So that **je peux adapter l'offre a l'evolution des besoins du client**.
 
 ## Story 9.5a : Export RGPD des donnees client
 
-As a **client Foxeo ou MiKL (operateur)**,
+As a **client MonprojetPro ou MiKL (operateur)**,
 I want **exporter l'ensemble des donnees personnelles d'un client (droit d'acces RGPD)**,
 So that **le client peut exercer son droit a la portabilite des donnees**.
 
@@ -289,26 +289,26 @@ So that **le client peut exercer son droit a la portabilite des donnees**.
 ## Story 9.5b : Transfert instance One au client sortant
 
 As a **MiKL (operateur)**,
-I want **transferer l'instance One dediee a un client qui quitte Foxeo, avec code source, DB et documentation**,
-So that **le client est autonome et proprietaire de son outil conformement aux engagements Foxeo (FR154)**.
+I want **transferer l'instance One dediee a un client qui quitte MonprojetPro, avec code source, DB et documentation**,
+So that **le client est autonome et proprietaire de son outil conformement aux engagements MonprojetPro (FR154)**.
 
 **Acceptance Criteria :**
 
-**Given** un client One quitte Foxeo et recupere son outil (FR154, FR157)
+**Given** un client One quitte MonprojetPro et recupere son outil (FR154, FR157)
 **When** MiKL declenche la procedure de sortie depuis la fiche client (bouton "Transferer l'instance au client")
 **Then** la procedure suivante est executee :
 1. Le code source du monorepo client est exporte dans un repo Git dedie
 2. La documentation complete de chaque module actif est incluse (guide.md, faq.md, flows.md)
 3. Les credentials Supabase sont transferes au client (ou un dump DB est fourni)
-4. Les modules service Foxeo sont retires (chat MiKL, visio, Elio) — sauf si inclus dans le perimetre projet
+4. Les modules service MonprojetPro sont retires (chat MiKL, visio, Elio) — sauf si inclus dans le perimetre projet
 5. Un document "Guide d'autonomie" est genere avec :
    - Architecture technique de l'instance
    - Variables d'environnement documentees
-   - Procedure de deploiement sans Foxeo
+   - Procedure de deploiement sans MonprojetPro
    - Contacts support technique (optionnel, payant)
 6. `client_instances.status` → 'transferred'
 7. Le client recoit par email : repo Git + dump DB + documentation + Guide d'autonomie
-**And** le dossier BMAD (briefs internes, analyses Orpheus) reste propriete Foxeo — le client recoit les documents strategiques (brief final, PRD, architecture client)
+**And** le dossier BMAD (briefs internes, analyses Orpheus) reste propriete MonprojetPro — le client recoit les documents strategiques (brief final, PRD, architecture client)
 **And** un evenement 'client_instance_transferred' est logge dans `activity_logs`
 
 ---
@@ -337,7 +337,7 @@ So that **la plateforme est conforme RGPD et les obligations comptables sont res
 **When** un processus de nettoyage s'execute (Supabase Edge Function, cron hebdomadaire)
 **Then** les donnees du client sont anonymisees :
 1. `clients.name` → 'Client supprime #{id_court}'
-2. `clients.email` → 'deleted_{uuid}@anonymized.foxeo.io'
+2. `clients.email` → 'deleted_{uuid}@anonymized.monprojet-pro.com'
 3. `clients.company` → null
 4. Les `elio_conversations` et `elio_messages` sont supprimees
 5. Les `messages` (chat MiKL) sont anonymises (contenu → 'Message supprime')
@@ -364,7 +364,7 @@ So that **la plateforme est conforme RGPD et les obligations comptables sont res
 **Then** `clients.status` → le statut precedent ('lab' ou 'one')
 **And** `clients.archived_at` → null, `clients.retention_until` → null
 **And** le client retrouve l'acces a son dashboard avec toutes ses donnees intactes
-**And** une notification est envoyee au client : "Votre compte Foxeo a ete reactive"
+**And** une notification est envoyee au client : "Votre compte MonprojetPro a ete reactive"
 
 ---
 

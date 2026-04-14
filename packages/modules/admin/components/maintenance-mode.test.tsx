@@ -6,8 +6,8 @@ import * as toggleModule from '../actions/toggle-maintenance'
 
 vi.mock('../hooks/use-maintenance')
 vi.mock('../actions/toggle-maintenance')
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return { ...actual, showSuccess: vi.fn(), showError: vi.fn() }
 })
 vi.mock('@tanstack/react-query', async (importOriginal) => {
@@ -90,7 +90,7 @@ describe('MaintenanceMode', () => {
       data: null,
       error: { message: 'Erreur serveur', code: 'INTERNAL_ERROR' },
     })
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
 
     render(<MaintenanceMode />)
     const toggle = screen.getByRole('switch')

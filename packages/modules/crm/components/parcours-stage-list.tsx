@@ -1,6 +1,6 @@
 'use client'
 
-import { Checkbox } from '@foxeo/ui'
+import { Checkbox } from '@monprojetpro/ui'
 import type { ParcoursStage } from '../types/crm.types'
 
 interface StageToggle {

@@ -14,11 +14,11 @@ So that **seuls les fichiers autorisés et de taille raisonnable sont stockés s
 
 2. **AC2 — Module Documents structure** : Module `packages/modules/documents/` structuré. Manifest id: `documents`, targets: `['hub', 'client-lab', 'client-one']`, requiredTables: `['documents']`. Composants: document-list, document-upload. Hook: use-documents. Action: upload-document. Types: document.types.ts.
 
-3. **AC3 — Validation upload** : Component document-upload (drag & drop ou bouton). Valide AVANT upload (FR145) : type de fichier (PDF, DOCX, XLSX, PNG, JPG, SVG, MD, TXT, CSV), taille max 10 Mo (constante MAX_FILE_SIZE dans @foxeo/utils). Message d'erreur clair si invalide.
+3. **AC3 — Validation upload** : Component document-upload (drag & drop ou bouton). Valide AVANT upload (FR145) : type de fichier (PDF, DOCX, XLSX, PNG, JPG, SVG, MD, TXT, CSV), taille max 10 Mo (constante MAX_FILE_SIZE dans @monprojetpro/utils). Message d'erreur clair si invalide.
 
 4. **AC4 — Upload Supabase Storage** : Fichier valide → upload vers `documents/{operatorId}/{clientId}/`. Barre de progression. Server Action `uploadDocument()` crée enregistrement table `documents`. Pattern `{ data, error }`. Toast "Document uploadé". Invalidation `['documents', clientId]`.
 
-5. **AC5 — Liste documents** : Chaque document : nom, type (icône), taille formatée, date, tag visibilité. DataTable de @foxeo/ui. Skeleton loader.
+5. **AC5 — Liste documents** : Chaque document : nom, type (icône), taille formatée, date, tag visibilité. DataTable de @monprojetpro/ui. Skeleton loader.
 
 6. **AC6 — Tests** : Tests unitaires co-localisés. Tests RLS. Coverage >80%.
 
@@ -38,7 +38,7 @@ So that **seuls les fichiers autorisés et de taille raisonnable sont stockés s
   - [x] 2.4 `docs/guide.md`, `faq.md`, `flows.md`
 
 - [x] Task 3 — Constantes validation (AC: #3)
-  - [x] 3.1 Dans `@foxeo/utils` : `MAX_FILE_SIZE = 10 * 1024 * 1024` (10 Mo)
+  - [x] 3.1 Dans `@monprojetpro/utils` : `MAX_FILE_SIZE = 10 * 1024 * 1024` (10 Mo)
   - [x] 3.2 `ALLOWED_FILE_TYPES = ['pdf', 'docx', 'xlsx', 'png', 'jpg', 'jpeg', 'svg', 'md', 'txt', 'csv']`
   - [x] 3.3 Fonction `validateFile(file: File)` + `formatFileSize(bytes)`
 
@@ -233,7 +233,7 @@ packages/modules/documents/
 
 - Table `clients`, `operators`
 - Supabase Storage
-- `@foxeo/ui` — DataTable
+- `@monprojetpro/ui` — DataTable
 
 ### Anti-patterns — Interdit
 

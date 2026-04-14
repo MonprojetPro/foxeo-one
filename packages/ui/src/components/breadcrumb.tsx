@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { ChevronRight, MoreHorizontal } from 'lucide-react'
-import { cn, t } from '@foxeo/utils'
+import { cn, t } from '@monprojetpro/utils'
 // Ensure messages are loaded
 import '../messages/init'
 

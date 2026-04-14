@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { SendMessageInput, type MessageDB } from '../types/chat.types'
 import { toMessage } from '../utils/to-message'
 

@@ -1,12 +1,12 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
-import { toCamelCase } from '@foxeo/utils'
+} from '@monprojetpro/types'
+import { toCamelCase } from '@monprojetpro/utils'
 import type { SupportTicket, SupportTicketDB } from '../types/support.types'
 
 export async function getSupportTickets(options?: {

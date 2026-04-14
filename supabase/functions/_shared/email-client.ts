@@ -1,4 +1,4 @@
-// [EMAIL:CLIENT] Foxeo email client — wrapper Resend avec retry
+// [EMAIL:CLIENT] MonprojetPro email client — wrapper Resend avec retry
 // Utilise uniquement l'API fetch standard (Deno + Node compatible)
 
 export interface EmailPayload {

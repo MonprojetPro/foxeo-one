@@ -12,7 +12,7 @@ const mockConfigSelectInner = vi.fn(() => ({ single: mockConfigSingle }))
 const mockConfigEq = vi.fn(() => ({ select: mockConfigSelectInner }))
 const mockConfigUpdate = vi.fn(() => ({ eq: mockConfigEq }))
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn((table: string) => {
       if (table === 'elio_config_history') {

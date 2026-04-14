@@ -7,7 +7,7 @@ inputDocuments:
   - "_bmad-output/planning-artifacts/prd/index.md"
   - "_bmad-output/planning-artifacts/prd/executive-summary.md"
   - "_bmad-output/planning-artifacts/prd/product-scope.md"
-  - "_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md"
+  - "_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md"
   - "_bmad-output/planning-artifacts/prd/infrastructure-architecture-donnes.md"
   - "_bmad-output/planning-artifacts/prd/project-scoping-phased-development.md"
   - "_bmad-output/planning-artifacts/prd/domain-specific-requirements.md"
@@ -17,7 +17,7 @@ inputDocuments:
   - "_bmad-output/planning-artifacts/modules-et-stack-technique.md"
   - "docs/project-overview.md"
 workflowType: 'architecture'
-project_name: 'foxeo-dash'
+project_name: 'monprojetpro-dash'
 user_name: 'MiKL'
 date: '2026-02-06'
 ---

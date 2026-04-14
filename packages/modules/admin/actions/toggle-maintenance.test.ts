@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { toggleMaintenanceMode } from './toggle-maintenance'
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 function makeSupabaseMock(overrides: {
   getUser?: { data: { user: { id: string } | null }; error: null | { message: string } }

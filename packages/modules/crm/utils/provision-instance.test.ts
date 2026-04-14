@@ -45,7 +45,7 @@ describe('provisionOneInstance (MVP stub)', () => {
     expect(result.error).toBeNull()
     expect(result.data).toBeTruthy()
     expect(result.data?.slug).toBe('acme-corp')
-    expect(result.data?.instanceUrl).toBe('https://acme-corp.foxeo.io')
+    expect(result.data?.instanceUrl).toBe('https://acme-corp.monprojet-pro.com')
     expect(result.data?.status).toBe('active')
   })
 

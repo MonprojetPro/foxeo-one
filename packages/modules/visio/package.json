@@ -1,25 +1,35 @@
 {
-  "name": "@foxeo/module-visio",
+  "name": "@monprojetpro/module-visio",
   "version": "1.0.0",
   "private": true,
   "main": "./index.ts",
   "types": "./index.ts",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    },
+    "./manifest": {
+      "types": "./manifest.ts",
+      "default": "./manifest.ts"
+    }
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@foxeo/supabase": "*",
-    "@foxeo/types": "*",
-    "@foxeo/ui": "*",
-    "@foxeo/utils": "*",
+    "@monprojetpro/supabase": "*",
+    "@monprojetpro/types": "*",
+    "@monprojetpro/ui": "*",
+    "@monprojetpro/utils": "*",
     "@tanstack/react-query": "^5.90.0",
     "openvidu-browser": "^2.30.0",
     "react": "^19.0.0",
     "zod": "*"
   },
   "devDependencies": {
-    "@foxeo/tsconfig": "*",
+    "@monprojetpro/tsconfig": "*",
     "@testing-library/react": "*",
     "vitest": "*"
   }

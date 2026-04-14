@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Copy, Edit, Send } from 'lucide-react'
-import { Button, showSuccess, showError } from '@foxeo/ui'
+import { Button, showSuccess, showError } from '@monprojetpro/ui'
 
 interface DraftDisplayProps {
   draft: string

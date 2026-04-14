@@ -1,11 +1,11 @@
-# Foxeo Dash
+# MonprojetPro Dash
 
 Plateforme modulaire de dashboards professionnels.
 
 ## Structure
 
 ```
-foxeo-dash/
+monprojetpro-dash/
 ├── apps/                     # Applications (dashboards)
 │
 ├── packages/
@@ -37,18 +37,18 @@ npm run dev
 
 ## Packages partagés
 
-### @foxeo/ui
+### @monprojetpro/ui
 
 Composants UI basés sur shadcn/ui et Radix UI.
 
 ```tsx
-import { Button, Card, Input } from '@foxeo/ui'
+import { Button, Card, Input } from '@monprojetpro/ui'
 ```
 
-### @foxeo/utils
+### @monprojetpro/utils
 
 Utilitaires partagés (cn, formatDate, etc.)
 
 ```tsx
-import { cn, formatRelativeDate } from '@foxeo/utils'
+import { cn, formatRelativeDate } from '@monprojetpro/utils'
 ```

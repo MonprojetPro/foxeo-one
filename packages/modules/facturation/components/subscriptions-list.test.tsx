@@ -4,7 +4,7 @@ import { SubscriptionsList } from './subscriptions-list'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createBrowserSupabaseClient: vi.fn(),
 }))
 
@@ -12,7 +12,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   return { ...actual, Skeleton: ({ className }: { className?: string }) => <div data-testid="skeleton" className={className} /> }
 })

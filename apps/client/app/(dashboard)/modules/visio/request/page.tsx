@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { CalcomBookingWidget, MeetingRequestForm } from '@foxeo/module-visio'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { CalcomBookingWidget, MeetingRequestForm } from '@monprojetpro/module-visio'
 
-const CALCOM_URL = process.env.NEXT_PUBLIC_CALCOM_URL ?? 'https://cal.foxeo.io/mikl/consultation'
+const CALCOM_URL = process.env.NEXT_PUBLIC_CALCOM_URL ?? 'https://cal.monprojet-pro.com/mikl/consultation'
 
 export default async function ClientRequestVisioPage() {
   const supabase = await createServerSupabaseClient()

@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, showSuccess, showError } from '@foxeo/ui'
+import { Button, showSuccess, showError } from '@monprojetpro/ui'
 import { togglePinClient } from '../actions/toggle-pin-client'
 
 interface PinButtonProps {

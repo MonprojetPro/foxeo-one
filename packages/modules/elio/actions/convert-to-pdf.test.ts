@@ -5,7 +5,7 @@ const mockCreateSignedUrl = vi.fn()
 const mockUpload = vi.fn()
 const mockFrom = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     storage: {
       from: mockFrom,
@@ -13,7 +13,7 @@ vi.mock('@foxeo/supabase', () => ({
   })),
 }))
 
-vi.mock('@foxeo/types', async (importOriginal) => {
+vi.mock('@monprojetpro/types', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,

@@ -1,4 +1,4 @@
-import { Skeleton, Card, CardContent, CardHeader } from '@foxeo/ui'
+import { Skeleton, Card, CardContent, CardHeader } from '@monprojetpro/ui'
 
 export default function ConsentsLoading() {
   return (

@@ -17,7 +17,7 @@ import {
   DialogFooter,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { toggleAccess } from '../actions/toggle-access'
 
 interface AccessTogglesProps {

@@ -13,7 +13,7 @@ import {
   Textarea,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { postponeRequest } from '../actions/postpone-request'
 
 type PostponeDialogProps = {

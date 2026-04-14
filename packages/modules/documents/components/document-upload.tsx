@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { Upload, X, AlertCircle } from 'lucide-react'
-import { validateFile, formatFileSize, ALLOWED_FILE_TYPES } from '@foxeo/utils'
+import { validateFile, formatFileSize, ALLOWED_FILE_TYPES } from '@monprojetpro/utils'
 
 interface DocumentUploadProps {
   onUpload: (file: File) => void

@@ -10,7 +10,7 @@ so that **je peux gerer devis, factures et paiements de mes clients depuis une i
 
 ## Acceptance Criteria
 
-**Given** le module Facturation n'existe pas encore dans Foxeo
+**Given** le module Facturation n'existe pas encore dans MonprojetPro
 **When** le module est cree
 **Then** la structure suivante est en place :
 ```
@@ -106,7 +106,7 @@ type PennylaneBillingSubscription = {
   updated_at: string
 }
 
-// Types Foxeo internes (camelCase, convention projet)
+// Types MonprojetPro internes (camelCase, convention projet)
 type Quote = {
   id: string
   clientId: string
@@ -156,8 +156,8 @@ type BillingSubscription = {
 }
 ```
 
-**Given** le mapping client Foxeo ↔ Pennylane
-**When** un client est cree dans Foxeo Hub
+**Given** le mapping client MonprojetPro ↔ Pennylane
+**When** un client est cree dans MonprojetPro Hub
 **Then** un customer correspondant est cree dans Pennylane via `POST /api/external/v2/customers`
 **And** le `pennylane_customer_id` est stocke dans la table `clients` (nouvelle colonne)
 **And** la migration Supabase ajoute :
@@ -175,7 +175,7 @@ ALTER TABLE clients ADD COLUMN pennylane_customer_id TEXT;
   - [x] Creer `packages/modules/facturation/docs/flows.md` — flux devis → facture → paiement → avoir
 
 - [x] Creer les types billing (AC: #3)
-  - [x] Creer `packages/modules/facturation/types/billing.types.ts` avec tous les types Pennylane (PennylaneQuote, PennylaneCustomerInvoice, PennylaneLineItem, PennylaneBillingSubscription) et types Foxeo internes (Quote, Invoice, LineItem, BillingSubscription)
+  - [x] Creer `packages/modules/facturation/types/billing.types.ts` avec tous les types Pennylane (PennylaneQuote, PennylaneCustomerInvoice, PennylaneLineItem, PennylaneBillingSubscription) et types MonprojetPro internes (Quote, Invoice, LineItem, BillingSubscription)
   - [x] Creer fonctions de mapping `toPennylaneQuote()`, `fromPennylaneQuote()`, `toPennylaneInvoice()`, `fromPennylaneInvoice()`, `fromPennylaneSubscription()` dans `packages/modules/facturation/utils/billing-mappers.ts`
 
 - [x] Creer le client API Pennylane (AC: #2)
@@ -215,7 +215,7 @@ ALTER TABLE clients ADD COLUMN pennylane_customer_id TEXT;
 
 - [x] Creer les tests unitaires (TDD)
   - [x] Test `pennylane.ts` : client HTTP, retry, rate limiting, headers, error handling (13 tests)
-  - [x] Test `billing-mappers.ts` : mapping Pennylane ↔ Foxeo, edge cases null fields (14 tests)
+  - [x] Test `billing-mappers.ts` : mapping Pennylane ↔ MonprojetPro, edge cases null fields (14 tests)
   - [x] Test `billing-proxy.ts` : createCustomer, listQuotes, listInvoices, auth check, error responses (10 tests)
   - [x] Test `use-billing.ts` : query keys, staleTime, data transformation (10 tests)
   - [x] Test `manifest.ts` : contract test validité manifest (2 tests)
@@ -227,7 +227,7 @@ ALTER TABLE clients ADD COLUMN pennylane_customer_id TEXT;
 - **Pattern proxy API** : les Server Actions dans `billing-proxy.ts` appellent `pennylane.ts` qui fait le vrai HTTP vers Pennylane. Le front ne connait PAS l'API Pennylane — il lit `billing_sync` (table miroir, Story 11.2) via TanStack Query.
 - **Pattern `{ data, error }`** : toutes les fonctions du client Pennylane et des Server Actions retournent `ActionResponse<T>`. Jamais de throw.
 - **Pattern module plug & play** : `manifest.ts` est le premier fichier, `requiredTables: ['billing_sync']` (table creee en Story 11.2).
-- **Separation types** : types Pennylane (snake_case, miroir API) dans la meme fichier que les types Foxeo (camelCase). Mappers dans un fichier separe.
+- **Separation types** : types Pennylane (snake_case, miroir API) dans la meme fichier que les types MonprojetPro (camelCase). Mappers dans un fichier separe.
 - **Hook reads billing_sync** : le hook `use-billing.ts` lit depuis la table `billing_sync` (pas d'appel direct Pennylane). Les Server Actions proxy sont pour les mutations (creation devis, factures — Stories 11.3+).
 
 ### Pennylane API v2 — Specifications techniques (mars 2026)
@@ -262,7 +262,7 @@ packages/modules/facturation/
 ├── types/
 │   └── billing.types.ts              # CREER: tous les types
 ├── utils/
-│   ├── billing-mappers.ts            # CREER: mapping Pennylane ↔ Foxeo
+│   ├── billing-mappers.ts            # CREER: mapping Pennylane ↔ MonprojetPro
 │   └── billing-mappers.test.ts       # CREER: tests mappers
 ├── hooks/
 │   ├── use-billing.ts                # CREER: hooks TanStack Query
@@ -331,7 +331,7 @@ claude-sonnet-4-6
 ### Completion Notes List
 - Module `facturation` créé avec structure complète plug & play
 - Client HTTP Pennylane avec retry (1x sur 5xx/timeout), rate limiting (retry-after sur 429, max 3 retries), header 2026 migration
-- Types séparés : Pennylane snake_case (miroir API) + Foxeo camelCase (interne)
+- Types séparés : Pennylane snake_case (miroir API) + MonprojetPro camelCase (interne)
 - Mappers bidirectionnels Quote ↔ PennylaneQuote, Invoice ↔ PennylaneCustomerInvoice, Subscription
 - Server Actions proxy avec auth check `is_operator()` retourne client Supabase pour réutilisation, pattern `{ data, error }` strict
 - Hook `use-billing.ts` lit depuis `billing_sync` (table Story 11.2), staleTime 5min aligné polling

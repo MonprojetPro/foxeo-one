@@ -79,7 +79,7 @@ type ValidationQueueFilters = {
   sortOrder: 'asc' | 'desc'
 }
 ```
-**And** les types sont exportes depuis @foxeo/types si le pattern du projet l'exige, sinon depuis le module local
+**And** les types sont exportes depuis @monprojetpro/types si le pattern du projet l'exige, sinon depuis le module local
 
 **Given** le hook use-validation-queue est cree
 **When** il est utilise dans un composant

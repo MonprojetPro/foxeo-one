@@ -1,6 +1,6 @@
 'use client'
 
-import { ErrorDisplay } from '@foxeo/ui'
+import { ErrorDisplay } from '@monprojetpro/ui'
 
 export default function ElioAdvancedSettingsError({
   error,

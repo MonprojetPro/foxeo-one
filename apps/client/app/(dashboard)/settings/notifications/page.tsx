@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getNotificationPrefs, NotificationPrefsPage } from '@foxeo/modules-notifications'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getNotificationPrefs, NotificationPrefsPage } from '@monprojetpro/modules-notifications'
 
 export const metadata = {
-  title: 'Notifications — Foxeo',
+  title: 'Notifications — MonprojetPro',
   description: 'Gérez vos préférences de notification',
 }
 

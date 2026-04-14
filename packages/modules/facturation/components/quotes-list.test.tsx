@@ -5,7 +5,7 @@ import { QuotesList } from './quotes-list'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createBrowserSupabaseClient: vi.fn(),
 }))
 
@@ -21,8 +21,8 @@ vi.mock('../actions/convert-quote-to-invoice', () => ({
   convertQuoteToInvoice: vi.fn(),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -31,7 +31,7 @@ vi.mock('@foxeo/ui', async (importOriginal) => {
 })
 
 import { useQuery } from '@tanstack/react-query'
-import { showSuccess } from '@foxeo/ui'
+import { showSuccess } from '@monprojetpro/ui'
 
 const mockUseQuery = vi.mocked(useQuery)
 const mockShowSuccess = vi.mocked(showSuccess)

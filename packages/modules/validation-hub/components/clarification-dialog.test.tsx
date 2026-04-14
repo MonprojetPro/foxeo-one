@@ -15,8 +15,8 @@ vi.mock('../actions/request-clarification', () => ({
   requestClarification: (...args: unknown[]) => mockRequestClarification(...args),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -145,7 +145,7 @@ describe('ClarificationDialog', () => {
 
   it('should show success toast and call onClose on success', async () => {
     const ClarificationDialog = await importComponent()
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
     const user = userEvent.setup()
     const onClose = vi.fn()
     mockRequestClarification.mockResolvedValue({ data: {}, error: null })
@@ -163,7 +163,7 @@ describe('ClarificationDialog', () => {
 
   it('should show error toast when action returns error', async () => {
     const ClarificationDialog = await importComponent()
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     const user = userEvent.setup()
     mockRequestClarification.mockResolvedValue({
       data: null,

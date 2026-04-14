@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { WebhooksPlaceholder } from './webhooks-placeholder'
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return { ...actual }
 })
 

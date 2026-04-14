@@ -1,2 +1,14 @@
-@import "@foxeo/ui/globals.css";
-@import "@foxeo/ui/themes/hub.css";
+@import "@monprojetpro/ui/globals.css";
+@import "@monprojetpro/ui/themes/hub.css";
+
+/* Scan workspace packages so Tailwind v4 generates all used utilities */
+@source "../../../packages/ui/src/**/*.{tsx,ts}";
+@source "../../../packages/modules/**/*.{tsx,ts}";
+@source "../../../packages/supabase/src/**/*.{tsx,ts}";
+
+/* Couleurs custom agenda */
+@theme {
+  --color-monprojetpro-blue: oklch(0.70 0.15 220);
+  --color-monprojetpro-green: oklch(0.70 0.18 145);
+  --color-monprojetpro-orange: oklch(0.70 0.20 60);
+}

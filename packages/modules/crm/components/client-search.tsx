@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Input } from '@foxeo/ui'
+import { Input } from '@monprojetpro/ui'
 
 interface ClientSearchProps {
   onSearchChange: (search: string) => void

@@ -2,8 +2,8 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createClientSchema } from '@foxeo/utils'
-import { Input, Button } from '@foxeo/ui'
+import { createClientSchema } from '@monprojetpro/utils'
+import { Input, Button } from '@monprojetpro/ui'
 import type { CreateClientInput } from '../types/crm.types'
 
 interface ServerError {
@@ -35,6 +35,7 @@ export function ClientForm({
   } = useForm<CreateClientInput>({
     resolver: zodResolver(createClientSchema),
     defaultValues: {
+      firstName: '',
       name: '',
       email: '',
       company: '',
@@ -47,20 +48,32 @@ export function ClientForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-      {/* Nom */}
-      <div className="space-y-1">
-        <label htmlFor="client-name" className="text-sm font-medium">
-          Nom *
-        </label>
-        <Input
-          id="client-name"
-          placeholder="Nom du client"
-          aria-invalid={!!errors.name}
-          {...register('name')}
-        />
-        {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
-        )}
+      {/* Prénom + Nom */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label htmlFor="client-firstname" className="text-sm font-medium">
+            Prénom
+          </label>
+          <Input
+            id="client-firstname"
+            placeholder="Prénom"
+            {...register('firstName')}
+          />
+        </div>
+        <div className="space-y-1">
+          <label htmlFor="client-name" className="text-sm font-medium">
+            Nom *
+          </label>
+          <Input
+            id="client-name"
+            placeholder="Nom de famille"
+            aria-invalid={!!errors.name}
+            {...register('name')}
+          />
+          {errors.name && (
+            <p className="text-sm text-destructive">{errors.name.message}</p>
+          )}
+        </div>
       </div>
 
       {/* Email */}

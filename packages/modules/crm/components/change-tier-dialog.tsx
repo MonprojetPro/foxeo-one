@@ -11,7 +11,7 @@ import {
   Button,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { changeClientTier } from '../actions/change-tier'
 import { TIER_INFO, TIER_BADGE_CLASSES, isDowngradeFromOnePlus } from '../utils/tier-helpers'
 import type { SubscriptionTier } from '../types/subscription.types'

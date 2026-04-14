@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { hubLogoutAction } from '../(auth)/actions/auth'
 
 export function LogoutButton() {

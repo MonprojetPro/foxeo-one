@@ -1,7 +1,7 @@
 'use client'
 
-import { StatsDashboard, CrmSubNav } from '@foxeo/modules-crm'
-import type { PortfolioStats, GraduationRate, ClientTimeEstimate } from '@foxeo/modules-crm'
+import { StatsDashboard, CrmSubNav } from '@monprojetpro/modules-crm'
+import type { PortfolioStats, GraduationRate, ClientTimeEstimate } from '@monprojetpro/modules-crm'
 
 interface StatsPageClientProps {
   initialStats?: PortfolioStats

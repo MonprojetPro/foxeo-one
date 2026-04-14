@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { type ElioConfig, DEFAULT_ELIO_CONFIG } from '../types/elio-config.types'
 
 export async function resetElioConfig(): Promise<ActionResponse<ElioConfig>> {

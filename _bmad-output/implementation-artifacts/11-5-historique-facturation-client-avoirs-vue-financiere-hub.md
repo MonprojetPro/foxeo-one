@@ -4,7 +4,7 @@ Status: done
 
 ## Story
 
-As a **client Foxeo ou MiKL (operateur)**,
+As a **client MonprojetPro ou MiKL (operateur)**,
 I want **consulter l'historique de facturation, generer des avoirs et avoir une vue financiere globale**,
 so that **la gestion financiere est transparente, les corrections sont possibles, et MiKL a une vision cockpit**.
 
@@ -34,7 +34,7 @@ so that **la gestion financiere est transparente, les corrections sont possibles
 **Then** :
 - Mode actuel affiché (virement IBAN / CB / SEPA)
 - Bouton "Modifier" → redirection vers portail Stripe Customer (si CB)
-- Aucune donnee CB stockee dans Foxeo (NFR-S1)
+- Aucune donnee CB stockee dans MonprojetPro (NFR-S1)
 
 **Given** MiKL consulte le dashboard facturation Hub
 **When** il accede au tableau de bord
@@ -138,7 +138,7 @@ Aucun blocage notable.
 - `useBillingMetrics` hook ajouté dans use-billing.ts avec agrégations CA/pending/quotes/MRR
 - MRR normalisé : monthly=×1, quarterly÷3, yearly÷12
 - Migration 00064 : table email_templates avec RLS opérateur + 5 seeds par défaut
-- `@foxeo/modules-facturation` ajouté dans apps/client/package.json
+- `@monprojetpro/modules-facturation` ajouté dans apps/client/package.json
 
 ### Code Review Fixes (Phase 2)
 

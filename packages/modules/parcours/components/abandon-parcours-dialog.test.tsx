@@ -11,7 +11,7 @@ vi.mock('../actions/request-abandonment', () => ({
   requestParcoursAbandonment: (...args: unknown[]) => mockRequestAbandonment(...args),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, unknown>
   return {
     ...actual,
@@ -121,7 +121,7 @@ describe('AbandonParcoursDialog', () => {
   })
 
   it('shows error toast when action fails', async () => {
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     mockRequestAbandonment.mockResolvedValue({
       data: null,
       error: { message: 'DB Error', code: 'DATABASE_ERROR' },

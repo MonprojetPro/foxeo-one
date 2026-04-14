@@ -13,7 +13,7 @@ so that **le parcours Lab est financierement clair et le client beneficie de la 
 **Given** MiKL cree un client Lab et doit facturer le forfait Lab (FR169)
 **When** il clique "Facturer le Lab" sur la fiche client
 **Then** :
-1. `POST /api/external/v2/customer_invoices` avec line_item : `{ label: "Forfait Lab Foxeo", quantity: 1, currency_amount: 199, vat_rate: "FR_200", unit: "piece" }`
+1. `POST /api/external/v2/customer_invoices` avec line_item : `{ label: "Forfait Lab MonprojetPro", quantity: 1, currency_amount: 199, vat_rate: "FR_200", unit: "piece" }`
 2. `triggerBillingSync(clientId)`
 3. Toast "Facture Lab envoyee a {client}"
 4. Activity log 'lab_invoice_sent'
@@ -83,7 +83,7 @@ so that **le parcours Lab est financierement clair et le client beneficie de la 
 
 - **Identification facture Lab** : Pennylane n'a pas de tags natifs sur les factures. Identifier une facture Lab par son `pdf_invoice_free_text` contenant un tag interne (ex: `[FOXEO_LAB]`) ou par un champ `plan_item_number` specifique.
 - **`lab_amount` en centimes** : convention projet (comme `amount` dans `billing_sync`). 199€ = 19900 centimes.
-- **Deduction dans le formulaire** : auto-insert une ligne avec `currency_amount: -199` et `label: "Deduction forfait Lab Foxeo"`. L'utilisateur peut voir mais pas supprimer cette ligne (read-only si lab_paid).
+- **Deduction dans le formulaire** : auto-insert une ligne avec `currency_amount: -199` et `label: "Deduction forfait Lab MonprojetPro"`. L'utilisateur peut voir mais pas supprimer cette ligne (read-only si lab_paid).
 
 ### Source Tree
 

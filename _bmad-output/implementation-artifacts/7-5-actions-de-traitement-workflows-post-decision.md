@@ -38,7 +38,7 @@ So that **je peux orienter chaque demande vers le workflow le plus adapté**.
 - Description : "Pas maintenant — à traiter plus tard"
 - Affiche un champ date optionnel (rappel) et un champ raison
 
-**And** le dropdown utilise le composant DropdownMenu de @foxeo/ui
+**And** le dropdown utilise le composant DropdownMenu de @monprojetpro/ui
 
 ### AC 2 : Option A — Réactiver Lab
 
@@ -127,7 +127,7 @@ So that **je peux orienter chaque demande vers le workflow le plus adapté**.
 - [x] Option B : Programmer Visio
 - [x] Option C : Dev direct
 - [x] Option D : Reporter
-- [x] Utiliser DropdownMenu de @foxeo/ui
+- [x] Utiliser DropdownMenu de @monprojetpro/ui
 - [x] Icônes Lucide appropriées pour chaque option
 - [x] Écrire test `action-picker.test.tsx`
 
@@ -224,7 +224,7 @@ Cette story **intègre plusieurs modules** :
 
 #### Pattern DropdownMenu
 
-**Source** : `@foxeo/ui` (shadcn/ui)
+**Source** : `@monprojetpro/ui` (shadcn/ui)
 
 ```typescript
 import {
@@ -234,7 +234,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { RefreshCw, Video, Code, Clock } from 'lucide-react'
 
 export function ActionPicker({ requestId, clientId, parcoursId, bmadProjectPath }: Props) {
@@ -366,9 +366,9 @@ window.open(calComUrl, '_blank', 'width=800,height=600')
 | @tanstack/react-query | ^5.90.x | Cache invalidation |
 | @supabase/supabase-js | ^2.95.x | Database client |
 | lucide-react | Latest | Icons (RefreshCw, Video, Code, Clock) |
-| @foxeo/ui | Internal | DropdownMenu, Button, Dialog |
+| @monprojetpro/ui | Internal | DropdownMenu, Button, Dialog |
 
-#### Composants UI disponibles (@foxeo/ui)
+#### Composants UI disponibles (@monprojetpro/ui)
 
 - `DropdownMenu`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuTrigger`
 - `Button` : Bouton avec variants
@@ -483,8 +483,8 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
-- `DropdownMenu` absent de `@foxeo/ui` → custom dropdown avec `useState` + click-outside detection
-- `DatePicker` absent de `@foxeo/ui` → `<input type="date">` natif
+- `DropdownMenu` absent de `@monprojetpro/ui` → custom dropdown avec `useState` + click-outside detection
+- `DatePicker` absent de `@monprojetpro/ui` → `<input type="date">` natif
 - Collision de texte dans `postpone-dialog` (titre = bouton "Reporter la demande") → bouton renommé "Confirmer le report"
 - `bmadProjectPath` prop supprimée de `ActionPicker` → l'action `startDev` récupère directement en DB
 

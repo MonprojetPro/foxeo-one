@@ -5,7 +5,7 @@
 import { useState, useTransition } from 'react'
 import type { MonitoredInstance } from '../hooks/use-instances-monitoring'
 import { upgradeInstance, type UpgradePlan } from '../actions/upgrade-instance'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 
 export interface UpgradeInstanceModalProps {
   instance: MonitoredInstance
@@ -63,7 +63,7 @@ function getRecommendedPlan(instance: MonitoredInstance): UpgradePlan {
 }
 
 const CONTACT_MESSAGE_TEMPLATE = (slug: string, plan: string) =>
-  `Bonjour,\n\nJe vous contacte concernant votre instance Foxeo One (${slug}).\n` +
+  `Bonjour,\n\nJe vous contacte concernant votre instance MonprojetPro One (${slug}).\n` +
   `Vos ressources approchent des limites du plan actuel. Je vous recommande de passer au plan ${plan} ` +
   `pour garantir la continuité de service.\n\nPouvez-vous me confirmer si vous souhaitez procéder à cet upgrade ?\n\nCordialement, MiKL`
 

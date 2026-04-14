@@ -2,31 +2,19 @@
 
 import { headers } from 'next/headers'
 import { createHash } from 'crypto'
-import { z } from 'zod'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   type UserSession,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
-import { emailSchema } from '@foxeo/utils'
+} from '@monprojetpro/types'
+import { hubLoginSchema, mfaCodeSchema } from './auth-schemas'
 
 // --- Type casts ---
 // Supabase typed client does not resolve RPC function args or operators table
 // columns added after initial gen:types. All `as never` casts below are for
 // this reason and will be removed once database.types.ts is auto-generated.
-
-// --- Validation Schemas ---
-
-export const hubLoginSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1, 'Mot de passe requis'),
-})
-
-export const mfaCodeSchema = z.object({
-  code: z.string().length(6, 'Le code doit contenir 6 chiffres').regex(/^\d{6}$/, 'Le code doit etre numerique'),
-})
 
 // --- Types ---
 
@@ -229,7 +217,7 @@ export async function hubSetupMfaAction(): Promise<ActionResponse<MfaSetupResult
 
   const { data: enroll, error: enrollError } = await supabase.auth.mfa.enroll({
     factorType: 'totp',
-    friendlyName: 'Foxeo Hub TOTP',
+    friendlyName: 'MonprojetPro Hub TOTP',
   })
 
   if (enrollError || !enroll) {

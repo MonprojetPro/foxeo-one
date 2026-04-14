@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Button, Input, Textarea, showSuccess, showError } from '@foxeo/ui'
-import type { CommunicationProfile } from '@foxeo/types'
-import { DEFAULT_COMMUNICATION_PROFILE } from '@foxeo/utils'
+import { Button, Input, Textarea, showSuccess, showError } from '@monprojetpro/ui'
+import type { CommunicationProfile } from '@monprojetpro/types'
+import { DEFAULT_COMMUNICATION_PROFILE } from '@monprojetpro/utils'
 import { updateCommunicationProfile } from '../actions/update-communication-profile'
 
 interface CommunicationProfileFormProps {

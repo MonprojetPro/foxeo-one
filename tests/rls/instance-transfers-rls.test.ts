@@ -43,7 +43,7 @@ describe.skipIf(!isSupabaseAvailable)('RLS: Instance Transfers Isolation (Story 
       .from('client_instances')
       .insert({
         client_id: TEST_IDS.clientA,
-        instance_url: 'https://test-instance.foxeo.io',
+        instance_url: 'https://test-instance.monprojet-pro.com',
         slug: 'test-instance-rls',
         status: 'active',
         tier: 'base',

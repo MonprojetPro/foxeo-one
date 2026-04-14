@@ -34,7 +34,7 @@ So that **je ne rate aucune demande urgente et je sais toujours combien de soumi
 - Une notification toast apparaît : "Nouvelle demande de {client} — {titre}"
 
 **And** la notification apparaît en moins de 2 secondes (NFR-P5)
-**And** le toast utilise le composant toast de @foxeo/ui
+**And** le toast utilise le composant toast de @monprojetpro/ui
 
 ### AC 3 : Mises à jour de demandes en temps réel (UPDATE)
 
@@ -197,7 +197,7 @@ Cette story est la **sixième et dernière** de l'Epic 7. Elle ajoute le **temps
 
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createBrowserClient } from '@foxeo/supabase'
+import { createBrowserClient } from '@monprojetpro/supabase'
 
 export function useValidationRealtime(operatorId: string) {
   const queryClient = useQueryClient()
@@ -268,7 +268,7 @@ export function useValidationRealtime(operatorId: string) {
 
 ```typescript
 // Dans la sidebar du Hub
-import { Badge } from '@foxeo/ui'
+import { Badge } from '@monprojetpro/ui'
 import { useValidationBadge } from '@/modules/validation-hub/hooks/use-validation-badge'
 
 export function Sidebar() {
@@ -294,7 +294,7 @@ export function Sidebar() {
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { createBrowserClient } from '@foxeo/supabase'
+import { createBrowserClient } from '@monprojetpro/supabase'
 
 export function useValidationBadge(operatorId: string) {
   const supabase = createBrowserClient()
@@ -328,11 +328,11 @@ export function useValidationBadge(operatorId: string) {
 ```typescript
 'use client'
 
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@foxeo/ui'
-import { Button } from '@foxeo/ui'
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@monprojetpro/ui'
+import { Button } from '@monprojetpro/ui'
 import { ArrowRight, AlertCircle } from 'lucide-react'
 import { useValidationQueue } from '@/modules/validation-hub/hooks/use-validation-queue'
-import { formatRelativeDate } from '@foxeo/utils'
+import { formatRelativeDate } from '@monprojetpro/utils'
 import Link from 'next/link'
 
 export function ValidationHubWidget() {
@@ -449,8 +449,8 @@ useEffect(() => {
 | React | 19.2.3 | UI Components |
 | @tanstack/react-query | ^5.90.x | Cache management + invalidation |
 | @supabase/supabase-js | ^2.95.x | Realtime client |
-| @foxeo/ui | Internal | Badge, Card, Button, Toast |
-| @foxeo/utils | Internal | formatRelativeDate |
+| @monprojetpro/ui | Internal | Badge, Card, Button, Toast |
+| @monprojetpro/utils | Internal | formatRelativeDate |
 
 #### Supabase Realtime Events
 
@@ -603,7 +603,7 @@ Claude Opus 4.6 (claude-opus-4-6)
 
 - **Bug 1**: Test "creates channel with correct name" échouait car chaque appel à `createBrowserSupabaseClient()` dans le mock créait un objet `channel` distinct. Fix : référence partagée `mockChannelFn` définie au niveau module, injectée dans le mock factory.
 - **Bug 2**: Tests widget "displays pending count" et "uses 'demandes' plural" échouaient car JSX produit des nœuds texte séparés pour `{count}` et `{' demande(s)'} en attente`. Fix : assertions en regex `/demande\s+en attente/`.
-- **Discovery**: `createBrowserSupabaseClient` n'était pas exporté depuis `@foxeo/supabase/src/index.ts` alors que tous les hooks realtime existants l'utilisent. Ajout d'un alias export dans `packages/supabase/src/index.ts`.
+- **Discovery**: `createBrowserSupabaseClient` n'était pas exporté depuis `@monprojetpro/supabase/src/index.ts` alors que tous les hooks realtime existants l'utilisent. Ajout d'un alias export dans `packages/supabase/src/index.ts`.
 
 ### Completion Notes List
 

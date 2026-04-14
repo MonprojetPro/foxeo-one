@@ -22,7 +22,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'

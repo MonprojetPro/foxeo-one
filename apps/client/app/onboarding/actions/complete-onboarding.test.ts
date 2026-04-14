@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock @foxeo/supabase
-vi.mock('@foxeo/supabase', () => ({
+// Mock @monprojetpro/supabase
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
-// Mock @foxeo/types
-vi.mock('@foxeo/types', () => ({
+// Mock @monprojetpro/types
+vi.mock('@monprojetpro/types', () => ({
   successResponse: vi.fn((data) => ({ data, error: null })),
   errorResponse: vi.fn((message, code, details?) => ({
     data: null,
@@ -14,7 +14,7 @@ vi.mock('@foxeo/types', () => ({
   })),
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { completeOnboarding } from './complete-onboarding'
 
 const mockSupabase = {

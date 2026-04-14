@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Button, Input } from '@foxeo/ui'
+import { Button, Input } from '@monprojetpro/ui'
 import { Upload, X } from 'lucide-react'
 import { uploadScreenshot } from '../actions/upload-screenshot'
 

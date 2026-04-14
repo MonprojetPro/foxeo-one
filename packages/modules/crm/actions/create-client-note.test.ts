@@ -23,7 +23,7 @@ const validOperatorUuid = '550e8400-e29b-41d4-a716-446655440001'
 const validClientUuid = '550e8400-e29b-41d4-a716-446655440000'
 const validNoteUuid = '550e8400-e29b-41d4-a716-446655440002'
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: {
@@ -117,7 +117,7 @@ describe('createClientNote', () => {
   })
 
   it('should return error if not authenticated', async () => {
-    const { createServerSupabaseClient } = await import('@foxeo/supabase')
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockReturnValueOnce({
       from: mockFrom,
       auth: {

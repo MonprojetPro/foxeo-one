@@ -5,14 +5,14 @@ describe('prospectResourcesEmailTemplate', () => {
   const data = {
     links: [
       { name: 'Guide démarrage.pdf', url: 'https://storage.example.com/signed/guide.pdf' },
-      { name: 'Présentation Foxeo.pdf', url: 'https://storage.example.com/signed/preso.pdf' },
+      { name: 'Présentation MonprojetPro.pdf', url: 'https://storage.example.com/signed/preso.pdf' },
     ],
   }
 
   it('includes all link names', () => {
     const html = prospectResourcesEmailTemplate(data)
     expect(html).toContain('Guide démarrage.pdf')
-    expect(html).toContain('Présentation Foxeo.pdf')
+    expect(html).toContain('Présentation MonprojetPro.pdf')
   })
 
   it('includes all link URLs', () => {

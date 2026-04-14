@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import type { ParcoursStep, ParcoursStepDB, ParcoursStepStatus } from '../types/parcours.types'
 import { UpdateStepStatusInput } from '../types/parcours.types'
 import { toParcoursStep } from '../utils/parcours-mappers'

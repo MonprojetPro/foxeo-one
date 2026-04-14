@@ -5,7 +5,7 @@ const mockSingle = vi.fn()
 const mockInsertVR = vi.fn()
 const mockInsertNotif = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn((table: string) => {
       if (table === 'clients') {

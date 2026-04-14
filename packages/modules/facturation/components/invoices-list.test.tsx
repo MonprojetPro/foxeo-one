@@ -8,7 +8,7 @@ vi.mock('../hooks/use-billing', () => ({
   useBillingSyncRows: vi.fn(),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,

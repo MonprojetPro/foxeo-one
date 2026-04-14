@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { GraduationCelebrate } from '../../components/graduation/graduation-celebrate'
 
 export const metadata = {
-  title: 'Félicitations — Foxeo One',
-  description: 'Vous avez terminé votre parcours Lab et accédez à Foxeo One.',
+  title: 'Félicitations — MonprojetPro One',
+  description: 'Vous avez terminé votre parcours Lab et accédez à MonprojetPro One.',
 }
 
 export default async function GraduationCelebratePage() {

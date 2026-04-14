@@ -1,11 +1,11 @@
--- Seed: Donnees initiales Foxeo
+-- Seed: Donnees initiales MonprojetPro
 -- Story: 1.2 — Migrations Supabase fondation
 
 -- Operateur MiKL (fondateur)
 INSERT INTO operators (id, email, name, role)
 VALUES (
   '00000000-0000-0000-0000-000000000001',
-  'mikl@foxeo.io',
+  'mikl@monprojet-pro.com',
   'MiKL',
   'operator'
 );

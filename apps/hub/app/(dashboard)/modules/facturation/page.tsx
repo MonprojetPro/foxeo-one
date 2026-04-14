@@ -1,6 +1,6 @@
 'use client'
 
-import { BillingDashboard } from '@foxeo/modules-facturation'
+import { BillingDashboard } from '@monprojetpro/modules-facturation'
 
 export default function FacturationPage() {
   return <BillingDashboard />

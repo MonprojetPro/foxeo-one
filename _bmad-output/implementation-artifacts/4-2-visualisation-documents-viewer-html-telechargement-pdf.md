@@ -6,7 +6,7 @@ Status: done
 
 ## Story
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **consulter mes documents directement dans le dashboard (rendu HTML) et les telecharger en PDF**,
 so that **j'accede a mes livrables sans quitter la plateforme et je peux les conserver hors ligne**.
 
@@ -14,7 +14,7 @@ so that **j'accede a mes livrables sans quitter la plateforme et je peux les con
 
 1. **AC1 — Viewer document** : Un clic sur un document dans la liste ouvre `document-viewer.tsx` dans un panneau ou page dediee (FR62). Formats supportes pour rendu HTML : Markdown (rendu HTML natif), PDF (viewer embarque via iframe), images (PNG, JPG, SVG — affichage direct). Les fichiers non visualisables (DOCX, XLSX, CSV, TXT) affichent un apercu des metadonnees avec bouton "Telecharger". Skeleton loader pendant le chargement. Viewer responsive (mobile >=320px).
 
-2. **AC2 — Telechargement PDF** : Bouton "Telecharger en PDF" (FR63). Si le document est deja un PDF, telechargement direct via signed URL Supabase Storage. Si le document est un Markdown, PDF genere cote serveur via Server Action `generatePDF()` et telecharge. Generation PDF < 5 secondes (NFR-P6). PDF genere conserve le branding Foxeo (header logo, footer date).
+2. **AC2 — Telechargement PDF** : Bouton "Telecharger en PDF" (FR63). Si le document est deja un PDF, telechargement direct via signed URL Supabase Storage. Si le document est un Markdown, PDF genere cote serveur via Server Action `generatePDF()` et telecharge. Generation PDF < 5 secondes (NFR-P6). PDF genere conserve le branding MonprojetPro (header logo, footer date).
 
 3. **AC3 — Signed URLs** : Tous les fichiers sont telecharges via signed URL Supabase Storage (URL temporaire, expiration 1h). Le signed URL est genere cote serveur (pas d'exposition des chemins internes).
 
@@ -31,7 +31,7 @@ so that **j'accede a mes livrables sans quitter la plateforme et je peux les con
 - [x] Task 2 — Server Action generation PDF (AC: #2)
   - [x] 2.1 Creer `actions/generate-pdf.ts` — Server Action `generatePDF(documentId)` : approche legere regex Markdown → HTML + template brande, retourne `ActionResponse<{ htmlContent: string; fileName: string }>`
   - [x] 2.2 Creer `utils/markdown-to-html.ts` — Helper conversion Markdown → HTML regex-based (pas de deps externes)
-  - [x] 2.3 Creer `utils/pdf-generator.ts` — Helper generation HTML avec template branding Foxeo : header (logo Foxeo + nom document), body (contenu HTML), footer (date generation + "Genere depuis Foxeo")
+  - [x] 2.3 Creer `utils/pdf-generator.ts` — Helper generation HTML avec template branding MonprojetPro : header (logo MonprojetPro + nom document), body (contenu HTML), footer (date generation + "Genere depuis MonprojetPro")
   - [x] 2.4 Tests `actions/generate-pdf.test.ts` — 7 tests (auth, validation, not found, unsupported format, success, storage error, fetch error)
   - [x] 2.5 Tests `utils/markdown-to-html.test.ts` — 11 tests (headings, bold, italic, code blocks, inline code, links, lists, blockquotes, paragraphs, horizontal rules, mixed)
 
@@ -87,7 +87,7 @@ so that **j'accede a mes livrables sans quitter la plateforme et je peux les con
 **Generation PDF Markdown :**
 - Approche legere : `marked` (Markdown → HTML) + template HTML avec branding + conversion serveur
 - Alternative : utiliser une Edge Function ou une lib comme `@react-pdf/renderer` si besoin de mise en page avancee
-- Le PDF genere doit inclure : header (logo Foxeo), body (contenu converti), footer (date + "Genere depuis Foxeo")
+- Le PDF genere doit inclure : header (logo MonprojetPro), body (contenu converti), footer (date + "Genere depuis MonprojetPro")
 - Contrainte performance : < 5 secondes (NFR-P6) → eviter puppeteer, preferer lib legere
 
 **Signed URLs — Pattern :**
@@ -175,7 +175,7 @@ apps/client/app/(dashboard)/modules/documents/[documentId]/error.tsx
 ### Patterns existants a suivre (story 4.1)
 
 - **Types** : `Document` (camelCase) et `DocumentDB` (snake_case) — utiliser `toDocument()` pour la conversion
-- **Imports partages** : `createServerSupabaseClient` depuis `@foxeo/supabase`, `ActionResponse/successResponse/errorResponse` depuis `@foxeo/types`, `validateFile/formatFileSize` depuis `@foxeo/utils`
+- **Imports partages** : `createServerSupabaseClient` depuis `@monprojetpro/supabase`, `ActionResponse/successResponse/errorResponse` depuis `@monprojetpro/types`, `validateFile/formatFileSize` depuis `@monprojetpro/utils`
 - **Hook pattern** : Query key `['documents', clientId]` pour les listes, creer `['document', documentId]` pour le detail
 - **Composant page** : Pattern `DocumentsPageClient` — composant 'use client' qui recoit les props serveur
 - **Tests mocks** : Pattern chained `vi.fn()` pour mocker le query builder Supabase
@@ -186,9 +186,9 @@ apps/client/app/(dashboard)/modules/documents/[documentId]/error.tsx
 - Table `documents` (migration 00027)
 - Bucket Storage `documents` avec RLS
 - Module `packages/modules/documents/` (story 4.1)
-- `@foxeo/utils` — `formatFileSize()`, `validateFile()`
-- `@foxeo/types` — `ActionResponse`, `successResponse`, `errorResponse`
-- `@foxeo/supabase` — `createServerSupabaseClient`
+- `@monprojetpro/utils` — `formatFileSize()`, `validateFile()`
+- `@monprojetpro/types` — `ActionResponse`, `successResponse`, `errorResponse`
+- `@monprojetpro/supabase` — `createServerSupabaseClient`
 
 ### Anti-patterns — Interdit
 
@@ -220,7 +220,7 @@ Claude Opus 4.6
 
 ### Debug Log References
 
-- Fixed `@foxeo/utils` mock missing `DEFAULT_LOCALE` — used `importOriginal` pattern in vi.mock
+- Fixed `@monprojetpro/utils` mock missing `DEFAULT_LOCALE` — used `importOriginal` pattern in vi.mock
 - Fixed `mockToast` hoisting error — used `vi.hoisted()` for mock variables in document-download-button.test.tsx
 - Chose lightweight regex-based Markdown→HTML instead of external deps (react-markdown, marked) to avoid bundle bloat and stay <5s NFR-P6
 - generate-pdf returns branded HTML (not binary PDF) — client-side blob download approach
@@ -244,7 +244,7 @@ Claude Opus 4.6
 - 1570 project-wide tests passing, 0 failures (post code review)
 - No external dependencies added (zero new npm packages)
 - Markdown→HTML: custom regex converter (no marked/react-markdown dependency)
-- PDF generation: server-side HTML template with Foxeo branding, client-side download
+- PDF generation: server-side HTML template with MonprojetPro branding, client-side download
 - Signed URLs: 1h expiration, server-side only via getDocumentUrl action
 - Viewer supports: Markdown (HTML render), PDF (iframe), images (img), fallback (metadata preview)
 

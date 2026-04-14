@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button, Input, Alert, AlertDescription, ConsentCheckbox } from '@foxeo/ui'
+import { Button, Input, Alert, AlertDescription, ConsentCheckbox } from '@monprojetpro/ui'
 import { signupAction } from '../actions/auth'
 import { signupSchema } from '../actions/schemas'
 
@@ -136,7 +136,7 @@ export function SignupForm() {
           label="J'accepte les Conditions Générales d'Utilisation"
           link="/legal/cgu"
           linkText="Consulter les CGU"
-          tooltip="Vous devez accepter les CGU pour créer un compte Foxeo. Les CGU définissent les règles d'utilisation de la plateforme."
+          tooltip="Vous devez accepter les CGU pour créer un compte MonprojetPro. Les CGU définissent les règles d'utilisation de la plateforme."
           required
         />
         {errors.acceptCgu && (
@@ -150,7 +150,7 @@ export function SignupForm() {
           label="J'accepte le traitement de mes données par l'IA Élio"
           link="/legal/ia-processing"
           linkText="En savoir plus sur Élio"
-          tooltip="Optionnel : Élio est l'assistant IA de Foxeo. Si vous refusez, vous pourrez utiliser la plateforme sans Élio. Vous pourrez modifier ce choix à tout moment dans vos paramètres."
+          tooltip="Optionnel : Élio est l'assistant IA de MonprojetPro. Si vous refusez, vous pourrez utiliser la plateforme sans Élio. Vous pourrez modifier ce choix à tout moment dans vos paramètres."
         />
       </div>
 

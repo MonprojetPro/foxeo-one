@@ -23,7 +23,7 @@ describe('email-client', () => {
       const { sendEmail } = await import('./email-client')
       await sendEmail(
         { to: 'user@example.com', subject: 'Test', html: '<p>Test</p>' },
-        { apiKey: 'test-key', from: 'Foxeo <noreply@foxeo.io>' }
+        { apiKey: 'test-key', from: 'MonprojetPro <noreply@monprojet-pro.com>' }
       )
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -35,7 +35,7 @@ describe('email-client', () => {
             'Content-Type': 'application/json',
           }),
           body: JSON.stringify({
-            from: 'Foxeo <noreply@foxeo.io>',
+            from: 'MonprojetPro <noreply@monprojet-pro.com>',
             to: 'user@example.com',
             subject: 'Test',
             html: '<p>Test</p>',
@@ -55,7 +55,7 @@ describe('email-client', () => {
       await expect(
         sendEmail(
           { to: 'user@example.com', subject: 'Test', html: '<p>Test</p>' },
-          { apiKey: 'bad-key', from: 'Foxeo <noreply@foxeo.io>' }
+          { apiKey: 'bad-key', from: 'MonprojetPro <noreply@monprojet-pro.com>' }
         )
       ).rejects.toThrow('Resend API error')
     })
@@ -68,7 +68,7 @@ describe('email-client', () => {
       const { sendWithRetry } = await import('./email-client')
       await sendWithRetry(
         { to: 'user@example.com', subject: 'Test', html: '<p>Test</p>' },
-        { apiKey: 'test-key', from: 'Foxeo <noreply@foxeo.io>' }
+        { apiKey: 'test-key', from: 'MonprojetPro <noreply@monprojet-pro.com>' }
       )
 
       expect(mockFetch).toHaveBeenCalledTimes(1)
@@ -85,7 +85,7 @@ describe('email-client', () => {
       const { sendWithRetry } = await import('./email-client')
       const promise = sendWithRetry(
         { to: 'user@example.com', subject: 'Test', html: '<p>Test</p>' },
-        { apiKey: 'test-key', from: 'Foxeo <noreply@foxeo.io>' },
+        { apiKey: 'test-key', from: 'MonprojetPro <noreply@monprojet-pro.com>' },
         2
       )
 
@@ -110,7 +110,7 @@ describe('email-client', () => {
       let caughtError: Error | undefined
       const promise = sendWithRetry(
         { to: 'user@example.com', subject: 'Test', html: '<p>Test</p>' },
-        { apiKey: 'test-key', from: 'Foxeo <noreply@foxeo.io>' },
+        { apiKey: 'test-key', from: 'MonprojetPro <noreply@monprojet-pro.com>' },
         3
       ).catch((err: Error) => { caughtError = err })
 
@@ -129,7 +129,7 @@ describe('email-client', () => {
       mockFetch.mockResolvedValue({ ok: true, json: async () => ({}) })
 
       const { createEmailClient } = await import('./email-client')
-      const client = createEmailClient({ apiKey: 'test-key', from: 'Foxeo <noreply@foxeo.io>' })
+      const client = createEmailClient({ apiKey: 'test-key', from: 'MonprojetPro <noreply@monprojet-pro.com>' })
 
       await client.send({ to: 'user@example.com', subject: 'Test', html: '<p>Test</p>' })
 

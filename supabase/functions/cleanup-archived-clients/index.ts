@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
   for (const client of clientsToAnonymize) {
     try {
       const shortId = client.id.slice(-8)
-      const anonymizedEmail = `deleted_${crypto.randomUUID()}@anonymized.foxeo.io`
+      const anonymizedEmail = `deleted_${crypto.randomUUID()}@anonymized.monprojet-pro.com`
 
       // 2a. Anonymize personal data in clients table
       const { error: clientUpdateError } = await supabase

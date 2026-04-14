@@ -1,6 +1,6 @@
 'use client'
 
-import { Input } from '@foxeo/ui'
+import { Input } from '@monprojetpro/ui'
 import { Search } from 'lucide-react'
 
 interface FaqSearchProps {

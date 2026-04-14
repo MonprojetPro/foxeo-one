@@ -6,9 +6,10 @@ ALTER TABLE clients
   ADD COLUMN IF NOT EXISTS retention_until TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS previous_status TEXT;
 
--- Add 'archived' and 'deleted' enum values (archived may already exist)
-ALTER TYPE client_status ADD VALUE IF NOT EXISTS 'archived';
-ALTER TYPE client_status ADD VALUE IF NOT EXISTS 'deleted';
+-- Update CHECK constraint to include 'deleted' status
+ALTER TABLE clients DROP CONSTRAINT IF EXISTS clients_status_check;
+ALTER TABLE clients ADD CONSTRAINT clients_status_check
+  CHECK (status IN ('active', 'suspended', 'archived', 'deleted'));
 
 -- Index for cleanup cron: efficiently find clients whose retention has expired
 CREATE INDEX IF NOT EXISTS idx_clients_retention_until

@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import type { NotificationPreference, UpdatePreferenceInput } from '../types/notification-prefs.types'
 import { getNotificationPrefs } from '../actions/get-notification-prefs'
 import { updateNotificationPrefs } from '../actions/update-notification-prefs'

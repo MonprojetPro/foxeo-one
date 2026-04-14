@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getDocuments, DocumentsPageClient } from '@foxeo/module-documents'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getDocuments, DocumentsPageClient } from '@monprojetpro/module-documents'
 
 export default async function ClientDocumentsPage() {
   const supabase = await createServerSupabaseClient()

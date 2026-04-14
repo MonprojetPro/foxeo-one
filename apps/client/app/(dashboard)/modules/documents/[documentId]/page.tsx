@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { DocumentViewerPageClient } from '@foxeo/module-documents'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { DocumentViewerPageClient } from '@monprojetpro/module-documents'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 

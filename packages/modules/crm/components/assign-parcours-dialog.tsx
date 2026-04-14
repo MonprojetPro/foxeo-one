@@ -13,8 +13,8 @@ import {
   Skeleton,
   showSuccess,
   showError,
-} from '@foxeo/ui'
-import { EmptyState } from '@foxeo/ui'
+} from '@monprojetpro/ui'
+import { EmptyState } from '@monprojetpro/ui'
 import { ParcoursStageList } from './parcours-stage-list'
 import { useParcoursTemplates } from '../hooks/use-parcours-templates'
 import { assignParcours } from '../actions/assign-parcours'

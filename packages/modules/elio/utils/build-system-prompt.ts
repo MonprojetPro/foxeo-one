@@ -45,7 +45,7 @@ export function buildElioSystemPrompt(
     stepContext = `\n\nLe client est actuellement à l'étape ${step.stepNumber} : "${step.title}". ${step.description}\n\nVotre rôle est de l'aider à progresser sur cette étape en particulier.`
   }
 
-  const basePrompt = `Vous êtes Élio, l'assistant IA personnel du client dans son parcours Foxeo Lab.
+  const basePrompt = `Vous êtes Élio, l'assistant IA personnel du client dans son parcours MonprojetPro Lab.
 
 **Profil de communication du client :**
 - Ton : ${toneInstruction}

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { GeneratedBriefDialog } from './generated-brief-dialog'
 
 interface ElioGenerateBriefSectionProps {

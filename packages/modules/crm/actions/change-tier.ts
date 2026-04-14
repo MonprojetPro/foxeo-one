@@ -2,8 +2,8 @@
 
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse, type ActionResponse } from '@monprojetpro/types'
 import { mapTierToElio, isDowngradeFromOnePlus, isUpgradeToOnePlus } from '../utils/tier-helpers'
 import type { SubscriptionTier } from '../types/subscription.types'
 

@@ -18,8 +18,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@foxeo/ui'
-import { showSuccess, showError } from '@foxeo/ui'
+} from '@monprojetpro/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { CreateTicketInputSchema, type CreateTicketInput } from '../types/support.types'
 import { ScreenshotUpload } from './screenshot-upload'
 import { useCreateSupportTicket } from '../hooks/use-support-tickets'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ParcourTemplateEditor, EmailTemplateEditor } from '@foxeo/module-templates'
+import { ParcourTemplateEditor, EmailTemplateEditor } from '@monprojetpro/module-templates'
 
 type TemplatesTab = 'parcours' | 'emails'
 

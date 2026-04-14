@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
 
@@ -284,7 +284,7 @@ export async function provisionOneInstanceFromHub(
     )
   }
 
-  const instanceUrl = `https://${slug}.foxeo.io`
+  const instanceUrl = `https://${slug}.monprojet-pro.com`
 
   // Create initial record with status='provisioning'
   const { data: instance, error: insertError } = await supabase
@@ -319,7 +319,7 @@ export async function provisionOneInstanceFromHub(
   await emitProgress(supabase, clientId, 'supabase', 'Création Supabase...')
 
   if (supabaseToken) {
-    const supabaseResult = await createSupabaseProject(supabaseToken, `foxeo-one-${slug}`)
+    const supabaseResult = await createSupabaseProject(supabaseToken, `monprojetpro-one-${slug}`)
     if (!supabaseResult) {
       await rollback(supabase, instanceId, null, null, supabaseToken, vercelToken)
       await emitProgress(supabase, clientId, 'failed', 'Échec création Supabase')
@@ -344,7 +344,7 @@ export async function provisionOneInstanceFromHub(
       INSTANCE_ID: instanceId,
       INSTANCE_SLUG: slug,
       INSTANCE_SECRET: instanceSecret,
-      HUB_URL: 'https://hub.foxeo.io',
+      HUB_URL: 'https://hub.monprojet-pro.com',
     }
     if (supabaseProjectId) {
       envVars.SUPABASE_PROJECT_ID = supabaseProjectId
@@ -352,9 +352,9 @@ export async function provisionOneInstanceFromHub(
 
     const vercelId = await createVercelProject(
       vercelToken,
-      `foxeo-one-${slug}`,
+      `monprojetpro-one-${slug}`,
       envVars,
-      `${slug}.foxeo.io`
+      `${slug}.monprojet-pro.com`
     )
     if (!vercelId) {
       await rollback(supabase, instanceId, supabaseProjectId, null, supabaseToken, vercelToken)

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 
 export function useChatRealtime(clientId: string) {
   const queryClient = useQueryClient()

@@ -1,7 +1,7 @@
 'use client'
 
-import { Badge } from '@foxeo/ui'
-import { cn } from '@foxeo/utils'
+import { Badge } from '@monprojetpro/ui'
+import { cn } from '@monprojetpro/utils'
 import { useConversations } from '../hooks/use-conversations'
 
 interface UnreadBadgeProps {

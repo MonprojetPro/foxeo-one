@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 import type { EmailTemplate } from '../actions/save-email-template'
 
 export function useEmailTemplates() {

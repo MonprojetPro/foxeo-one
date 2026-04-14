@@ -1,5 +1,5 @@
 /**
- * @foxeo/types - Types partages pour Foxeo One
+ * @monprojetpro/types - Types partages pour MonprojetPro One
  */
 
 export type { ActionError, ActionResponse } from './action-response'

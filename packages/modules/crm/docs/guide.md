@@ -2,7 +2,7 @@
 
 ## Accès au module
 
-Le module CRM est accessible depuis le **Foxeo Hub** (opérateur MiKL uniquement).
+Le module CRM est accessible depuis le **MonprojetPro Hub** (opérateur MiKL uniquement).
 
 Navigation : **Menu principal → CRM**
 

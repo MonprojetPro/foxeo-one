@@ -91,7 +91,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('transfers', 'transfers', false)
 ON CONFLICT (id) DO NOTHING;
 
-COMMENT ON TABLE storage.buckets IS 'Updated: transfers bucket added for instance transfer packages (expire 30 days)';
+-- Note: Cannot COMMENT ON storage.buckets (owned by supabase_admin)
 
 -- RLS: Only service_role can insert (Edge Function)
 CREATE POLICY transfers_insert_system

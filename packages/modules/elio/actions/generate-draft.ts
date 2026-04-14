@@ -1,25 +1,13 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 import type { CommunicationProfile } from '../types/communication-profile.types'
 import { toCommunicationProfile, type CommunicationProfileDB } from '../types/communication-profile.types'
 import { getProfileLabels } from '../utils/profile-labels'
+import type { DraftResult, GenerateDraftInput } from '../types/elio.types'
 
 const ELIO_TIMEOUT_MS = 60_000
-
-export interface DraftResult {
-  content: string
-  draftType: 'email' | 'validation_hub' | 'chat'
-  clientName: string
-}
-
-export interface GenerateDraftInput {
-  clientName: string
-  draftType: 'email' | 'validation_hub' | 'chat'
-  subject: string
-  recentContext?: string[]
-}
 
 /**
  * Construit le prompt de génération de brouillon.
@@ -31,7 +19,7 @@ function buildDraftPrompt(
   const { toneLabel, lengthLabel } = getProfileLabels(profile)
 
   const typeInstructions: Record<string, string> = {
-    email: 'Génère un email professionnel avec objet et signature "MiKL — Foxeo"',
+    email: 'Génère un email professionnel avec objet et signature "MiKL — MonprojetPro"',
     validation_hub: 'Génère une réponse pour le Validation Hub (ton pro mais chaleureux, pas de signature)',
     chat: 'Génère un message de chat (conversationnel, naturel)',
   }
@@ -41,7 +29,7 @@ function buildDraftPrompt(
       ? `\n**Contexte récent** :\n${input.recentContext.join('\n')}\n`
       : ''
 
-  return `Tu es un assistant de rédaction professionnelle pour MiKL (opérateur Foxeo).
+  return `Tu es un assistant de rédaction professionnelle pour MiKL (opérateur MonprojetPro).
 
 **Tâche** : ${typeInstructions[input.draftType]}
 
@@ -55,7 +43,7 @@ ${contextBlock}
 **Instructions** :
 1. Génère un brouillon complet et professionnel
 2. Adapte le ton selon le profil de communication
-3. ${input.draftType === 'email' ? 'Inclus un objet clair et une signature "MiKL — Foxeo"' : 'Reste dans le style approprié au canal'}
+3. ${input.draftType === 'email' ? 'Inclus un objet clair et une signature "MiKL — MonprojetPro"' : 'Reste dans le style approprié au canal'}
 4. Utilise le contexte récent si pertinent
 
 **Format de réponse** :

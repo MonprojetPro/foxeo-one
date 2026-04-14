@@ -1,5 +1,5 @@
 {
-  "name": "foxeo-dash",
+  "name": "monprojetpro-dash",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
@@ -17,6 +17,7 @@
     "check:docs": "ts-node scripts/check-module-docs.ts"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.1",
     "happy-dom": "^20.6.1",
     "supabase": "^2.76.7",
     "turbo": "^2.3.0",
@@ -27,6 +28,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0"
+    "@anthropic-ai/sdk": "^0.78.0",
+    "server-only": "^0.0.1"
   }
 }

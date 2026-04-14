@@ -26,7 +26,7 @@ export function paymentFailedEmailTemplate(data: PaymentFailedEmailData): string
       <p>Bonjour <strong>${data.recipientName}</strong>,</p>
       <p>Un <strong>échec</strong> de paiement a été détecté sur votre compte.</p>
       <p>Nous n'avons pas pu traiter votre <strong>paiement</strong> de <strong>${data.amount} ${data.currency}</strong>.</p>
-      <p>Veuillez vérifier votre moyen de paiement pour continuer à utiliser Foxeo sans interruption.</p>
+      <p>Veuillez vérifier votre moyen de paiement pour continuer à utiliser MonprojetPro sans interruption.</p>
     `
 
   return baseTemplate({

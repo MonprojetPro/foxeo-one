@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 const REQ_ID = '550e8400-e29b-41d4-a716-446655440001'
 const CLIENT_ID = '550e8400-e29b-41d4-a716-446655440002'

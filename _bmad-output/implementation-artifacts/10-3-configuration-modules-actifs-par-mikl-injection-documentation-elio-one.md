@@ -170,16 +170,16 @@ packages/modules/elio/actions/
 - Import JSON : valider avec Zod le JSON collé → `ElioModuleDoc` schema
 
 ### UI Patterns
-- Toggle switch : pas de `Switch` dans `@foxeo/ui` → utiliser `<input type="checkbox" role="switch">` ou vérifier si Radix Switch est disponible
+- Toggle switch : pas de `Switch` dans `@monprojetpro/ui` → utiliser `<input type="checkbox" role="switch">` ou vérifier si Radix Switch est disponible
 - Formulaire React Hook Form : `useFieldArray` pour les arrays FAQ et problèmes courants
-- Dropdown module : pas de `Select` natif dans `@foxeo/ui` → utiliser `<select>` HTML natif ou custom dropdown `useState`
+- Dropdown module : pas de `Select` natif dans `@monprojetpro/ui` → utiliser `<select>` HTML natif ou custom dropdown `useState`
 - Import JSON : `textarea` + `JSON.parse` + validation Zod avec try/catch
 
 ### Previous Story Learnings
 - Pattern activity_logs INSERT : `supabase.from('activity_logs').insert({ client_id, operator_id, type, metadata })`
 - Pattern invalidation TanStack Query : depuis Server Action impossible directement → retourner succès, côté client appeler `queryClient.invalidateQueries({ queryKey: ['client-config', clientId] })`
 - `useFieldArray` de react-hook-form fonctionne pour sections dynamiques (FAQ, problèmes)
-- Toast: `showSuccess()` et `showError()` depuis `@foxeo/ui`
+- Toast: `showSuccess()` et `showError()` depuis `@monprojetpro/ui`
 
 ### References
 - [Source: _bmad-output/planning-artifacts/epics/epic-10-dashboard-one-modules-commerciaux-stories-detaillees.md#Story 10.3]
@@ -187,7 +187,7 @@ packages/modules/elio/actions/
 - [Source: packages/types/src/client-config.types.ts] — types existants
 - [Source: docs/project-context.md#API Response Format] — ActionResponse
 - [Source: docs/project-context.md#Anti-Patterns] — jamais throw dans Server Actions
-- [Source: _bmad-output/planning-artifacts/foxeo-modules-commerciaux.md] — liste modules commerciaux
+- [Source: _bmad-output/planning-artifacts/monprojetpro-modules-commerciaux.md] — liste modules commerciaux
 
 ## Dev Agent Record
 
@@ -200,17 +200,17 @@ claude-sonnet-4-6
 ### Completion Notes List
 
 - Migration `00060_add_elio_module_docs.sql` : colonne JSONB `elio_module_docs NOT NULL DEFAULT '[]'`
-- Type `ElioModuleDoc` ajouté dans `@foxeo/types` + `ClientConfig.elioModuleDocs?`
+- Type `ElioModuleDoc` ajouté dans `@monprojetpro/types` + `ClientConfig.elioModuleDocs?`
 - `updateActiveModules` : guard `MODULE_LOCKED` pour les 4 modules de base, déduplique l'array lors de l'activation, logge `module_toggled` dans `activity_logs`
 - `injectElioDocumentation` : remplace le doc existant pour le même moduleId (upsert TS), logge `elio_doc_injected`
-- `ModuleToggleList` : toggle `<input type="checkbox" role="switch">` (pas de Switch dans @foxeo/ui), badge "Inclus" pour modules de base, invalidation TanStack Query après succès
+- `ModuleToggleList` : toggle `<input type="checkbox" role="switch">` (pas de Switch dans @monprojetpro/ui), badge "Inclus" pour modules de base, invalidation TanStack Query après succès
 - `ElioDocForm` : `useFieldArray` pour FAQ + problèmes courants, import JSON avec validation Zod, `<select>` HTML natif
 - `client-tabs.tsx` : onglet "Modules" ajouté avec props `activeModules` et `allModules`
 - `send-to-elio.ts` : colonne `modules_documentation` → `elio_module_docs`, ajout `buildElioModuleDocsPrompt()` format compact
 - **43 tests** créés et passants (13 + 10 + 8 + 12)
 
 #### Code Review Fixes (Opus)
-- **HIGH** : `ElioModuleDoc` ajouté au barrel export `@foxeo/types/index.ts` (manquant → build cassé)
+- **HIGH** : `ElioModuleDoc` ajouté au barrel export `@monprojetpro/types/index.ts` (manquant → build cassé)
 - **MEDIUM** : `successResponse(null)` au lieu de `successResponse(undefined)` dans les 2 server actions (cohérence pattern projet)
 - **MEDIUM** : Utilisation de `parsed.data.doc` (données validées) au lieu du paramètre brut `doc` dans `inject-elio-documentation.ts`
 - **MEDIUM (documenté)** : "Date d'activation" (AC #1) nécessiterait une extension du schéma `active_modules` (TEXT[] → JSONB) — gap documenté, non bloquant

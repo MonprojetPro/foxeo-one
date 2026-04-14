@@ -4,7 +4,7 @@
  * NOTE: Presets are getter functions to avoid race conditions with message loading
  */
 
-import { t } from '@foxeo/utils'
+import { t } from '@monprojetpro/utils'
 // Ensure messages are loaded
 import '../messages/init'
 

@@ -3,7 +3,7 @@ import type { Quote, Invoice, BillingSubscription, BillingSummary, BillingSyncRo
 
 // Données lues depuis billing_sync (table miroir Story 11.2), pas appels directs Pennylane.
 // Note: Les casts `as unknown as T` sont temporaires — la table billing_sync n'existe pas encore.
-// Story 11.2 définira le schema billing_sync et la transformation DB→Foxeo types sera typée.
+// Story 11.2 définira le schema billing_sync et la transformation DB→MonprojetPro types sera typée.
 const STALE_TIME = 5 * 60 * 1_000 // 5 minutes — aligné sur le cycle polling
 
 // ============================================================
@@ -26,7 +26,7 @@ export function useBillingQuotes(clientId?: string) {
   return useQuery<Quote[]>({
     queryKey: billingKeys.quotes(clientId),
     queryFn: async () => {
-      const { createBrowserSupabaseClient } = await import('@foxeo/supabase')
+      const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
       const supabase = createBrowserSupabaseClient()
       let query = supabase
         .from('billing_sync')
@@ -51,7 +51,7 @@ export function useBillingInvoices(clientId?: string) {
   return useQuery<Invoice[]>({
     queryKey: billingKeys.invoices(clientId),
     queryFn: async () => {
-      const { createBrowserSupabaseClient } = await import('@foxeo/supabase')
+      const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
       const supabase = createBrowserSupabaseClient()
       let query = supabase
         .from('billing_sync')
@@ -75,7 +75,7 @@ export function useBillingSubscriptions(clientId?: string) {
   return useQuery<BillingSubscription[]>({
     queryKey: billingKeys.subscriptions(clientId),
     queryFn: async () => {
-      const { createBrowserSupabaseClient } = await import('@foxeo/supabase')
+      const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
       const supabase = createBrowserSupabaseClient()
       let query = supabase
         .from('billing_sync')
@@ -100,7 +100,7 @@ export function useBillingSyncRows(entityType: 'quote' | 'invoice' | 'subscripti
   return useQuery<BillingSyncRow[]>({
     queryKey: ['billing', 'sync-rows', entityType, clientId],
     queryFn: async () => {
-      const { createBrowserSupabaseClient } = await import('@foxeo/supabase')
+      const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
       const supabase = createBrowserSupabaseClient()
       let query = supabase
         .from('billing_sync')
@@ -124,7 +124,7 @@ export function useBillingSummary() {
   return useQuery<BillingSummary>({
     queryKey: billingKeys.summary(),
     queryFn: async () => {
-      const { createBrowserSupabaseClient } = await import('@foxeo/supabase')
+      const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
       const supabase = createBrowserSupabaseClient()
 
       const { data, error } = await supabase
@@ -169,7 +169,7 @@ export function useBillingMetrics() {
   return useQuery<BillingMetrics>({
     queryKey: ['billing', 'metrics'],
     queryFn: async () => {
-      const { createBrowserSupabaseClient } = await import('@foxeo/supabase')
+      const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
       const supabase = createBrowserSupabaseClient()
 
       const { data, error } = await supabase

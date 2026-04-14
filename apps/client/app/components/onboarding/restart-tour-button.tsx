@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 
 export function RestartTourButton() {
   const router = useRouter()
@@ -9,7 +9,7 @@ export function RestartTourButton() {
   function handleRestart() {
     // Supprimer le flag localStorage pour permettre de relancer le tour
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('foxeo-onboarding-tour-completed')
+      localStorage.removeItem('monprojetpro-onboarding-tour-completed')
     }
     // Rediriger vers la page du tour (sans toucher onboarding_completed en DB)
     router.push('/onboarding/tour')

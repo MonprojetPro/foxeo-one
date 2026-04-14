@@ -1,8 +1,8 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
-import { toCamelCase } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
+import { toCamelCase } from '@monprojetpro/utils'
 import type { ElioMessagePersisted, ElioMessageRole } from '../types/elio.types'
 
 /**

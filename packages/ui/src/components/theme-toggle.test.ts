@@ -11,8 +11,8 @@ describe('ThemeToggle component', () => {
     expect(source).toContain("'use client'")
   })
 
-  it('imports useTheme from @foxeo/supabase/theme', () => {
-    expect(source).toContain("from '@foxeo/supabase/theme'")
+  it('imports useTheme from @monprojetpro/supabase/theme', () => {
+    expect(source).toContain("from '@monprojetpro/supabase/theme'")
     expect(source).toContain('useTheme')
   })
 

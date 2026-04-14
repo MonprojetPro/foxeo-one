@@ -116,7 +116,7 @@ Utilisateur clique "Telecharger" ou "Telecharger en PDF"
   → Si Markdown → Server Action generatePdf({ documentId })
     → Telecharge contenu Markdown depuis Storage
     → Convertit Markdown → HTML
-    → Enveloppe dans template PDF brande Foxeo
+    → Enveloppe dans template PDF brande MonprojetPro
     → Retourne HTML brande
     → Telechargement cote client
   → Toast "Document telecharge"
@@ -256,7 +256,7 @@ Utilisateur (sur page viewer) ouvre "Exporter" → "Telecharger en PDF"
     → Server Action generatePdf({ documentId }) [reutilise story 4.2]
       → Telecharge contenu Markdown depuis Storage
       → Convertit Markdown → HTML
-      → Enveloppe dans template brande Foxeo
+      → Enveloppe dans template brande MonprojetPro
       → Retourne { htmlContent, fileName }
     → Blob HTML → URL.createObjectURL → lien <a> download
     → Toast "PDF telecharge : {filename}"

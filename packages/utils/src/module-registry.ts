@@ -1,4 +1,4 @@
-import type { ModuleManifest, ModuleTarget } from '@foxeo/types'
+import type { ModuleManifest, ModuleTarget } from '@monprojetpro/types'
 
 const registry = new Map<string, ModuleManifest>()
 let isDiscovered = false
@@ -22,17 +22,17 @@ export async function discoverModules(): Promise<void> {
     pkg: string
     named?: string
   }> = [
-    { pkg: '@foxeo/module-core-dashboard', named: 'coreDashboardManifest' },
-    { pkg: '@foxeo/modules-chat' },
-    { pkg: '@foxeo/module-documents' },
-    { pkg: '@foxeo/module-elio' },
-    { pkg: '@foxeo/module-parcours' },
-    { pkg: '@foxeo/modules-validation-hub' },
-    { pkg: '@foxeo/modules-crm' },
-    { pkg: '@foxeo/modules-notifications' },
-    { pkg: '@foxeo/module-visio' },
-    { pkg: '@foxeo/modules-support' },
-    { pkg: '@foxeo/module-admin' },
+    { pkg: '@monprojetpro/module-core-dashboard', named: 'coreDashboardManifest' },
+    { pkg: '@monprojetpro/modules-chat' },
+    { pkg: '@monprojetpro/module-documents' },
+    { pkg: '@monprojetpro/module-elio' },
+    { pkg: '@monprojetpro/module-parcours' },
+    { pkg: '@monprojetpro/modules-validation-hub' },
+    { pkg: '@monprojetpro/modules-crm' },
+    { pkg: '@monprojetpro/modules-notifications' },
+    { pkg: '@monprojetpro/module-visio' },
+    { pkg: '@monprojetpro/modules-support' },
+    { pkg: '@monprojetpro/module-admin' },
   ]
 
   for (const { pkg, named } of moduleImports) {

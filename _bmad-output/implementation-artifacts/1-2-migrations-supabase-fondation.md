@@ -46,7 +46,7 @@ So that la structure de donnees est en place pour gerer mes clients et leur mult
 
 **Given** les migrations executees
 **When** le seed.sql est joue
-**Then** un operateur MiKL est cree avec email='mikl@foxeo.io', name='MiKL', role='operator'
+**Then** un operateur MiKL est cree avec email='mikl@monprojet-pro.com', name='MiKL', role='operator'
 **And** un client de demo est cree avec ses configs associees
 **And** les modules socle sont references dans la config client
 
@@ -63,7 +63,7 @@ So that la structure de donnees est en place pour gerer mes clients et leur mult
 - [x] **Task 1: Initialiser le projet Supabase local** (AC: #1)
   - [x] 1.1 Installer le CLI `supabase` en devDependency root (`npm install -D supabase`)
   - [x] 1.2 Executer `npx supabase init` pour creer le dossier `supabase/` avec `config.toml`
-  - [x] 1.3 Configurer `config.toml` pour le dev local (port 54321, project_id foxeo-dash, studio active)
+  - [x] 1.3 Configurer `config.toml` pour le dev local (port 54321, project_id monprojetpro-dash, studio active)
   - [x] 1.4 Ajouter le script `gen:types` dans le `package.json` root : `"gen:types": "supabase gen types typescript --local > packages/types/src/database.types.ts"`
   - [x] 1.5 Verifier que `.env.local` est dans `.gitignore`
   - [x] 1.6 Ecrire un test : verifier que la structure supabase/ existe et que config.toml est valide
@@ -119,7 +119,7 @@ So that la structure de donnees est en place pour gerer mes clients et leur mult
 
 - [x] **Task 9: Creer le seed.sql** (AC: #4)
   - [x] 9.1 Creer `supabase/seed.sql`
-  - [x] 9.2 Inserer l'operateur MiKL : email='mikl@foxeo.io', name='MiKL', role='operator'
+  - [x] 9.2 Inserer l'operateur MiKL : email='mikl@monprojet-pro.com', name='MiKL', role='operator'
   - [x] 9.3 Inserer un client demo avec operator_id referencant MiKL
   - [x] 9.4 Inserer la client_config pour le client demo : active_modules=ARRAY['core-dashboard'], dashboard_type='lab'
   - [x] 9.5 Inserer un consentement initial pour le client demo (cgu, accepted)
@@ -227,8 +227,8 @@ type ClientConfig = { id, clientId, dashboardType, activeModules, themeVariant, 
 
 **Apprentissages de l'implementation Story 1.1 :**
 - Problemes de build avec des dependances manquantes : toujours verifier que les deps sont dans le bon package.json
-- `tailwindcss` et `tw-animate-css` necessaires au niveau app, pas seulement dans @foxeo/ui
-- Les assertions non-null (`!`) sur les variables env ont ete signalees en code review — utiliser `getRequiredEnv()` de @foxeo/utils
+- `tailwindcss` et `tw-animate-css` necessaires au niveau app, pas seulement dans @monprojetpro/ui
+- Les assertions non-null (`!`) sur les variables env ont ete signalees en code review — utiliser `getRequiredEnv()` de @monprojetpro/utils
 - Les assertions `as T` necessitent des commentaires documentant pourquoi elles sont sures
 - Le fichier `nul` parasite — attention aux operations fichier
 
@@ -329,7 +329,7 @@ Claude Opus 4.6 (claude-opus-4-6)
 ### File List
 
 **Nouveaux fichiers crees :**
-- `supabase/config.toml` — Configuration Supabase local (project_id=foxeo-dash)
+- `supabase/config.toml` — Configuration Supabase local (project_id=monprojetpro-dash)
 - `supabase/seed.sql` — Donnees initiales (MiKL, client demo, config, consent, log)
 - `supabase/migrations/00001_create_operators.sql` — Table operators
 - `supabase/migrations/00002_create_clients.sql` — Table clients + indexes

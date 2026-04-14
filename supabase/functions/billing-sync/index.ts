@@ -392,7 +392,7 @@ async function handleOverdueNotifications(
               recipientName: client.name ?? 'Client',
               amount: amountFormatted,
               currency: inv.currency ?? 'EUR',
-              platformUrl: Deno.env.get('APP_URL') ?? 'https://foxeo.io',
+              platformUrl: Deno.env.get('APP_URL') ?? 'https://monprojet-pro.com',
               recipientType: 'client',
             },
           },
@@ -729,7 +729,7 @@ serve(async (req: Request) => {
     try {
       const body = await req.json() as { clientId?: string }
       if (body.clientId) {
-        // Résoudre le foxeo client_id en pennylane_customer_id
+        // Résoudre le monprojetpro client_id en pennylane_customer_id
         const { data: client } = await supabase
           .from('clients')
           .select('pennylane_customer_id')

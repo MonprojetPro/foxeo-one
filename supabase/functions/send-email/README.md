@@ -13,7 +13,7 @@ Envoie un email transactionnel lors de l'insertion d'une nouvelle notification d
 | `SUPABASE_URL` | URL du projet Supabase (auto-injecté) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Clé service role (auto-injectée) |
 | `RESEND_API_KEY` | Clé API Resend — https://resend.com/api-keys |
-| `EMAIL_FROM` | Adresse expéditeur — `Foxeo <noreply@foxeo.io>` (défaut) |
+| `EMAIL_FROM` | Adresse expéditeur — `MonprojetPro <noreply@monprojet-pro.com>` (défaut) |
 
 ### Configuration dans Supabase Dashboard
 

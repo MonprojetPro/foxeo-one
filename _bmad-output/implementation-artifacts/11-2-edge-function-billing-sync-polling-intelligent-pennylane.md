@@ -5,7 +5,7 @@ Status: done
 ## Story
 
 As a **MiKL (operateur)**,
-I want **que les donnees de facturation Pennylane soient synchronisees automatiquement dans Foxeo**,
+I want **que les donnees de facturation Pennylane soient synchronisees automatiquement dans MonprojetPro**,
 so that **le Hub et les dashboards clients affichent des donnees de facturation a jour sans action manuelle**.
 
 ## Acceptance Criteria

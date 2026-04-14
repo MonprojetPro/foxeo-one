@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getMeetingRecordings } from '@foxeo/module-visio'
-import { RecordingListPage } from '@foxeo/module-visio'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getMeetingRecordings } from '@monprojetpro/module-visio'
+import { RecordingListPage } from '@monprojetpro/module-visio'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 

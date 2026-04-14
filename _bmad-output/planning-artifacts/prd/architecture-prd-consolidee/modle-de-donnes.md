@@ -76,7 +76,7 @@ CREATE TABLE email_templates (
 
 -- Templates par défaut
 INSERT INTO email_templates (code, nom, objet, corps) VALUES
-('post_visio_chaud', 'Post-visio - Chaud', '{prenom}, bienvenue chez Foxeo !', '...'),
+('post_visio_chaud', 'Post-visio - Chaud', '{prenom}, bienvenue chez MonprojetPro !', '...'),
 ('post_visio_tiede', 'Post-visio - Tiède', '{prenom}, suite à notre échange', '...'),
 ('post_visio_froid', 'Post-visio - Froid', '{prenom}, merci pour notre échange', '...'),
 ('post_visio_non', 'Post-visio - Non', '{prenom}, merci pour votre temps', '...');

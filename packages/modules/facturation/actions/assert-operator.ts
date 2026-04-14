@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import type { ActionError } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import type { ActionError } from '@monprojetpro/types'
 
 // ============================================================
 // Shared auth helper — returns supabase client + userId for reuse

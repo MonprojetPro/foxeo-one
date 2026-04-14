@@ -17,7 +17,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { useToggleReminderComplete, useDeleteReminder } from '../hooks/use-reminders'
 import type { Reminder } from '../types/crm.types'

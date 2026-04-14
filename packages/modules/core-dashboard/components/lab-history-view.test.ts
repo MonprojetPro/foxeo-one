@@ -4,7 +4,7 @@ import { createElement } from 'react'
 import { LabHistoryView } from './lab-history-view'
 import type { ParcoursData } from './lab-history-view'
 
-vi.mock('@foxeo/ui', () => ({
+vi.mock('@monprojetpro/ui', () => ({
   Card: ({ children }: { children: React.ReactNode }) =>
     createElement('div', { 'data-testid': 'card' }, children),
   CardContent: ({ children }: { children: React.ReactNode }) =>

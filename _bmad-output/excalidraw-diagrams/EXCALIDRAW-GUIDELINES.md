@@ -1,4 +1,4 @@
-# Guidelines Excalidraw - Wireframes Foxeo
+# Guidelines Excalidraw - Wireframes MonprojetPro
 
 ## Propriétés OBLIGATOIRES pour chaque élément
 
@@ -90,4 +90,4 @@ Sans ces propriétés, le fichier .excalidraw ne s'affichera pas correctement.
 - Ne jamais dupliquer ces valeurs dans un même fichier
 
 ---
-*Créé le 2026-02-04 - Référence pour tous les wireframes Foxeo*
+*Créé le 2026-02-04 - Référence pour tous les wireframes MonprojetPro*

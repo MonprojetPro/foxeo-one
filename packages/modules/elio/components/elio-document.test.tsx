@@ -12,7 +12,7 @@ vi.mock('next/navigation', () => ({
 // Mock window.open
 Object.defineProperty(window, 'open', { value: mockOpen, writable: true })
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,

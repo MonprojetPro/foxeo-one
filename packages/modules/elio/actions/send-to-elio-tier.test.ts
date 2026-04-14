@@ -18,7 +18,7 @@ const makeEqChain = (): object => ({
   then: undefined,
 })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({

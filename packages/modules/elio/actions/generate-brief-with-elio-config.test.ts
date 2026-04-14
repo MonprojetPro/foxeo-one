@@ -13,12 +13,12 @@ vi.mock('@anthropic-ai/sdk', () => ({
   })),
 }))
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
 import { generateBrief } from './generate-brief'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import Anthropic from '@anthropic-ai/sdk'
 
 const mockCreate = vi.fn()

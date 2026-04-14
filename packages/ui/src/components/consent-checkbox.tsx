@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '../tooltip'
-import { t } from '@foxeo/utils'
+import { t } from '@monprojetpro/utils'
 import '../messages/init'
 
 interface ConsentCheckboxProps {

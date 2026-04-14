@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@foxeo/ui'
+import { Card, CardContent, CardHeader, CardTitle } from '@monprojetpro/ui'
 
 interface LabTeasingCardProps {
   show: boolean

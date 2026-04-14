@@ -1,8 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Avatar, AvatarFallback, AvatarImage, Badge, Card, CardContent, Skeleton } from '@foxeo/ui'
-import { cn, formatRelativeDate } from '@foxeo/utils'
+import { Avatar, AvatarFallback, AvatarImage, Badge, Card, CardContent, Skeleton } from '@monprojetpro/ui'
+import { cn, formatRelativeDate } from '@monprojetpro/utils'
 import { CheckCircle2, Clock, AlertCircle, PauseCircle } from 'lucide-react'
 import { useValidationQueue } from '../hooks/use-validation-queue'
 import { useValidationRealtime } from '../hooks/use-validation-realtime'

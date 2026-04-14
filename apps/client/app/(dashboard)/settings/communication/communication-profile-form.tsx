@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, showSuccess, showError } from '@foxeo/ui'
-import { createCommunicationProfile, updateCommunicationProfile } from '@foxeo/module-elio'
+import { Button, showSuccess, showError } from '@monprojetpro/ui'
+import { createCommunicationProfile, updateCommunicationProfile } from '@monprojetpro/module-elio'
 import type {
   CommunicationProfile,
   PreferredTone,
   PreferredLength,
   InteractionStyle,
-} from '@foxeo/module-elio'
+} from '@monprojetpro/module-elio'
 
 interface CommunicationProfileFormProps {
   clientId: string

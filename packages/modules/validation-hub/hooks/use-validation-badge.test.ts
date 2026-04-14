@@ -7,7 +7,7 @@ const mockCount = vi.fn()
 const mockSelect = vi.fn()
 const mockEq = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createBrowserSupabaseClient: vi.fn(() => ({
     from: vi.fn(() => ({
       select: mockSelect,
@@ -61,7 +61,7 @@ describe('useValidationBadge', () => {
 
   it('queries with correct filters (operator_id + status=pending)', async () => {
     const { useValidationBadge } = await import('./use-validation-badge')
-    const { createBrowserSupabaseClient } = await import('@foxeo/supabase')
+    const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
 
     renderHook(() => useValidationBadge('op-456'), {
       wrapper: createWrapper(),

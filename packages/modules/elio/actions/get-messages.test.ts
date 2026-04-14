@@ -6,7 +6,7 @@ const mockEq = vi.fn()
 const mockOrder = vi.fn()
 const mockRange = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn(() => ({
       select: mockSelect,

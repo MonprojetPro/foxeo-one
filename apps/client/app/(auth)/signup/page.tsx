@@ -1,12 +1,12 @@
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@foxeo/ui'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@monprojetpro/ui'
 import { SignupForm } from './signup-form'
 
 export default function SignupPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Foxeo</CardTitle>
+        <CardTitle className="text-2xl font-bold">MonprojetPro</CardTitle>
         <CardDescription>Creer votre compte</CardDescription>
       </CardHeader>
       <CardContent>

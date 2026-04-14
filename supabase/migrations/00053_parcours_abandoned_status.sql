@@ -28,7 +28,10 @@ CREATE INDEX IF NOT EXISTS idx_parcours_status_client ON parcours(status, client
 -- Full updates (reactivation etc.) go through operator RLS policies (00017)
 -- ============================================================
 
-CREATE POLICY IF NOT EXISTS parcours_update_owner
+DROP POLICY IF EXISTS parcours_update_owner ON parcours;
+DROP POLICY IF EXISTS parcours_select_owner ON parcours;
+
+CREATE POLICY parcours_update_owner
   ON parcours
   FOR UPDATE
   TO authenticated
@@ -45,7 +48,7 @@ CREATE POLICY IF NOT EXISTS parcours_update_owner
   );
 
 -- Client can read own parcours
-CREATE POLICY IF NOT EXISTS parcours_select_owner
+CREATE POLICY parcours_select_owner
   ON parcours
   FOR SELECT
   TO authenticated

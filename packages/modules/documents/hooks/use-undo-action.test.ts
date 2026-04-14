@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { toast } from '@foxeo/ui'
+import { toast } from '@monprojetpro/ui'
 import { useUndoableAction } from './use-undo-action'
 
-// Mock toast from @foxeo/ui
-vi.mock('@foxeo/ui', async () => {
-  const actual = await vi.importActual('@foxeo/ui')
+// Mock toast from @monprojetpro/ui
+vi.mock('@monprojetpro/ui', async () => {
+  const actual = await vi.importActual('@monprojetpro/ui')
   return {
     ...actual,
     toast: {

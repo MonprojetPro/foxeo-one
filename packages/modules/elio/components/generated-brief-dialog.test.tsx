@@ -12,9 +12,9 @@ vi.mock('../actions/submit-elio-brief', () => ({
   submitElioBrief: vi.fn(),
 }))
 
-// Mock @foxeo/ui
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+// Mock @monprojetpro/ui
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -29,7 +29,7 @@ vi.mock('next/navigation', () => ({
 
 import { generateBrief } from '../actions/generate-brief'
 import { submitElioBrief } from '../actions/submit-elio-brief'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { useRouter } from 'next/navigation'
 
 const mockPush = vi.fn()

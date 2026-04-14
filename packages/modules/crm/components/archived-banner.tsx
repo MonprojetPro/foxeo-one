@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, showSuccess, showError } from '@foxeo/ui'
+import { Button, showSuccess, showError } from '@monprojetpro/ui'
 import { Archive, Play } from 'lucide-react'
 import { reactivateClient } from '../actions/reactivate-client'
 import { format } from 'date-fns'

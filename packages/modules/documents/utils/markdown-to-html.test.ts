@@ -41,9 +41,9 @@ describe('markdownToHtml', () => {
   })
 
   it('converts links', () => {
-    const result = markdownToHtml('[Foxeo](https://foxeo.io)')
-    expect(result).toContain('<a href="https://foxeo.io"')
-    expect(result).toContain('Foxeo')
+    const result = markdownToHtml('[MonprojetPro](https://monprojet-pro.com)')
+    expect(result).toContain('<a href="https://monprojet-pro.com"')
+    expect(result).toContain('MonprojetPro')
   })
 
   it('converts blockquotes', () => {

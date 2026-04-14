@@ -44,7 +44,7 @@ describe.skipIf(!isSupabaseAvailable)('RLS: client_instances isolation', () => {
       .from('client_instances')
       .insert({
         client_id: TEST_IDS.clientA,
-        instance_url: 'https://test-client-a.foxeo.io',
+        instance_url: 'https://test-client-a.monprojet-pro.com',
         slug: 'test-client-a',
         status: 'active',
         tier: 'essentiel',
@@ -89,7 +89,7 @@ describe.skipIf(!isSupabaseAvailable)('RLS: client_instances isolation', () => {
         .from('client_instances')
         .insert({
           client_id: TEST_IDS.clientA,
-          instance_url: 'https://unauthorized.foxeo.io',
+          instance_url: 'https://unauthorized.monprojet-pro.com',
           slug: 'unauthorized-insert',
           status: 'provisioning',
           tier: 'base',
@@ -106,7 +106,7 @@ describe.skipIf(!isSupabaseAvailable)('RLS: client_instances isolation', () => {
         .from('client_instances')
         .insert({
           client_id: TEST_IDS.clientA,
-          instance_url: 'https://self-graduate.foxeo.io',
+          instance_url: 'https://self-graduate.monprojet-pro.com',
           slug: 'self-graduate',
           status: 'provisioning',
           tier: 'essentiel',

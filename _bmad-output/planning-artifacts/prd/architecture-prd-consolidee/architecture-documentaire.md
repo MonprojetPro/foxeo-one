@@ -19,11 +19,11 @@ SOURCE OF TRUTH : .md
 | Fonction | Outil | Licence | Usage |
 |----------|-------|---------|-------|
 | **Rendu HTML** | react-markdown | MIT | Visualisation dans les dashboards |
-| **Génération PDF** | Gotenberg (Docker) | MIT | Export client avec template Foxeo |
+| **Génération PDF** | Gotenberg (Docker) | MIT | Export client avec template MonprojetPro |
 | **Stockage** | Supabase Storage | - | Documents clients |
 | **Backup travail** | Google Workspace | - | Dossiers BMAD locaux (sync auto) |
 
-> **Note technique :** Gotenberg est hébergé sur le même VPS que N8N. Il expose une API qui convertit Markdown → PDF via Chromium. Temps de génération : ~1-2 secondes par document. Template CSS Foxeo à créer pour le branding.
+> **Note technique :** Gotenberg est hébergé sur le même VPS que N8N. Il expose une API qui convertit Markdown → PDF via Chromium. Temps de génération : ~1-2 secondes par document. Template CSS MonprojetPro à créer pour le branding.
 
 ## Workflow Validation avec Double Copie
 
@@ -94,7 +94,7 @@ C:/Google Drive/Projets/clients/{client_id}/
 │  ─────────────────────────────────────────────  │
 │                                                 │
 │  [Contenu du document rendu en HTML]            │
-│  Avec le style Foxeo, joli, lisible             │
+│  Avec le style MonprojetPro, joli, lisible             │
 │                                                 │
 │  ─────────────────────────────────────────────  │
 │  [📥 Télécharger PDF]  [📝 Voir source (.md)]   │
@@ -107,7 +107,7 @@ C:/Google Drive/Projets/clients/{client_id}/
 |--------|-------------------|--------|
 | Documents clients | Supabase Storage | Backup Supabase auto |
 | Travail BMAD | Google Drive | Sync auto Google |
-| Code Foxeo | GitHub | Versionné |
+| Code MonprojetPro | GitHub | Versionné |
 
 **Règle d'or : Le PC local n'est JAMAIS la source de vérité.**
 

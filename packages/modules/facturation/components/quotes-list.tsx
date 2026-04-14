@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Skeleton, showSuccess, showError } from '@foxeo/ui'
+import { Skeleton, showSuccess, showError } from '@monprojetpro/ui'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import { convertQuoteToInvoice } from '../actions/convert-quote-to-invoice'
 import type { BillingSyncRow, ClientWithPennylane } from '../types/billing.types'

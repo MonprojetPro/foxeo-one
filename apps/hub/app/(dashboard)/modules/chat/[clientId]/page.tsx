@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getMessages, markMessagesRead } from '@foxeo/modules-chat'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getMessages, markMessagesRead } from '@monprojetpro/modules-chat'
 import { ChatConversationClient } from './chat-conversation-client'
 
 interface ChatConversationPageProps {

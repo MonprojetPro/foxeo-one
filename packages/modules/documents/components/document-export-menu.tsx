@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useTransition } from 'react'
-import { Button, toast } from '@foxeo/ui'
+import { Button, toast } from '@monprojetpro/ui'
 import { ChevronDown, Download, Loader2 } from 'lucide-react'
 import { useExportDocuments } from '../hooks/use-export-documents'
 import { generatePdf } from '../actions/generate-pdf'

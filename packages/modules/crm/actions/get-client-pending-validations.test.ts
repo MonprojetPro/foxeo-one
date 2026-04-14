@@ -6,7 +6,7 @@ const CLIENT_UUID = '550e8400-e29b-41d4-a716-446655440001'
 const mockGetUser = vi.fn()
 const mockValidationData = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     from: vi.fn((table: string) => {

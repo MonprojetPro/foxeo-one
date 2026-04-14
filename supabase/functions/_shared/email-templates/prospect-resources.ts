@@ -34,7 +34,7 @@ export function prospectResourcesEmailTemplate(data: ProspectResourcesEmailData)
   `
 
   return baseTemplate({
-    title: 'Vos ressources Foxeo',
+    title: 'Vos ressources MonprojetPro',
     body,
   })
 }

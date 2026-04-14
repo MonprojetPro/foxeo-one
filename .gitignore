@@ -50,6 +50,7 @@ Thumbs.db
 
 # MCP config (contains secrets)
 .mcp.json
+.playwright-mcp/
 
 # Windows artifacts
 nul

@@ -1,5 +1,5 @@
 {
-  "name": "@foxeo/client",
+  "name": "@monprojetpro/client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,12 +10,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@foxeo/supabase": "*",
-    "@foxeo/types": "*",
-    "@foxeo/ui": "*",
-    "@foxeo/utils": "*",
-    "@foxeo/modules-chat": "*",
-    "@foxeo/modules-facturation": "*",
+    "@monprojetpro/supabase": "*",
+    "@monprojetpro/types": "*",
+    "@monprojetpro/ui": "*",
+    "@monprojetpro/utils": "*",
+    "@monprojetpro/modules-chat": "*",
+    "@monprojetpro/modules-facturation": "*",
     "@hookform/resolvers": "^5.2.2",
     "next": "^15.1.0",
     "react": "^19.0.0",
@@ -27,7 +27,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@foxeo/tsconfig": "*",
+    "@monprojetpro/tsconfig": "*",
     "@types/canvas-confetti": "^1.6.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",

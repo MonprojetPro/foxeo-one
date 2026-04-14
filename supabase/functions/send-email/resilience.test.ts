@@ -57,7 +57,7 @@ describe('Resilience — mode dégradé email', () => {
         supabaseUrl: 'https://test.supabase.co',
         serviceRoleKey: 'svc-key',
         resendApiKey: 'resend-key',
-        emailFrom: 'noreply@foxeo.io',
+        emailFrom: 'noreply@monprojet-pro.com',
       }
     )
 
@@ -86,7 +86,7 @@ describe('Resilience — mode dégradé email', () => {
         error: null,
       })
       .mockResolvedValueOnce({
-        data: { email: 'mikl@foxeo.io', name: 'MiKL', email_notifications_enabled: false },
+        data: { email: 'mikl@monprojet-pro.com', name: 'MiKL', email_notifications_enabled: false },
         error: null,
       })
 
@@ -99,7 +99,7 @@ describe('Resilience — mode dégradé email', () => {
         supabaseUrl: 'https://test.supabase.co',
         serviceRoleKey: 'svc-key',
         resendApiKey: 'resend-key',
-        emailFrom: 'noreply@foxeo.io',
+        emailFrom: 'noreply@monprojet-pro.com',
       }
     )
 

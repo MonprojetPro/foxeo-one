@@ -1,7 +1,7 @@
 'use client'
 
-import { Card, CardContent, CardHeader } from '@foxeo/ui'
-import { formatFullDate } from '@foxeo/utils'
+import { Card, CardContent, CardHeader } from '@monprojetpro/ui'
+import { formatFullDate } from '@monprojetpro/utils'
 
 export type ExchangeEntry = {
   date: string

@@ -32,7 +32,7 @@ const mockChannel = {
   subscribe: mockSubscribeFn,
 }
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createBrowserSupabaseClient: vi.fn(() => ({
     channel: mockChannelFn,
     removeChannel: mockRemoveChannel,
@@ -40,7 +40,7 @@ vi.mock('@foxeo/supabase', () => ({
 }))
 
 const mockShowInfo = vi.fn()
-vi.mock('@foxeo/ui', () => ({
+vi.mock('@monprojetpro/ui', () => ({
   showInfo: vi.fn((...args) => mockShowInfo(...args)),
 }))
 
@@ -61,7 +61,7 @@ describe('useValidationRealtime', () => {
 
   it('does nothing when operatorId is empty', async () => {
     const { useValidationRealtime } = await import('./use-validation-realtime')
-    const { createBrowserSupabaseClient } = await import('@foxeo/supabase')
+    const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
     renderHook(() => useValidationRealtime(''))
     expect(createBrowserSupabaseClient).not.toHaveBeenCalled()
   })

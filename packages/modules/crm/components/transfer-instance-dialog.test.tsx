@@ -4,12 +4,12 @@ import { TransferInstanceDialog } from './transfer-instance-dialog'
 
 const mockTransferInstanceToClient = vi.fn()
 
-vi.mock('@foxeo/module-admin', () => ({
+vi.mock('@monprojetpro/module-admin', () => ({
   transferInstanceToClient: (...args: unknown[]) => mockTransferInstanceToClient(...args),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -108,7 +108,7 @@ describe('TransferInstanceDialog', () => {
   })
 
   it('should show success toast on successful transfer', async () => {
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
     mockTransferInstanceToClient.mockResolvedValue({
       data: { transferId: 'transfer-123' },
       error: null,
@@ -130,7 +130,7 @@ describe('TransferInstanceDialog', () => {
   })
 
   it('should show error toast on failed transfer', async () => {
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     mockTransferInstanceToClient.mockResolvedValue({
       data: null,
       error: { message: 'Erreur serveur', code: 'INTERNAL_ERROR' },

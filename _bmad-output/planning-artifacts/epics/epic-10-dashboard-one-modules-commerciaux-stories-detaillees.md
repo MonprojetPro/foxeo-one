@@ -6,7 +6,7 @@
 
 **NFRs pertinentes:** NFR-P1, NFR-P2, NFR-S7, NFR-A1 a NFR-A4, NFR-M1 a NFR-M5
 
-**Note architecturale :** Le dashboard shell, le module registry et le systeme de module manifests existent depuis l'Epic 1. L'app `client-one` (apps/client/) est deja deployable. Cet epic construit l'experience One specifique : accueil personnalise, modules visibles, configuration par MiKL, branding. Les modules commerciaux (Signature, Calendrier, Branding, Site Web, SEO, Social, Maintenance) sont definis dans foxeo-modules-commerciaux.md — leur integration complete avec les APIs externes (Yousign, Google Calendar, etc.) est prevue en P2. Cet epic met en place la structure d'activation et l'UI shell de chaque module.
+**Note architecturale :** Le dashboard shell, le module registry et le systeme de module manifests existent depuis l'Epic 1. L'app `client-one` (apps/client/) est deja deployable. Cet epic construit l'experience One specifique : accueil personnalise, modules visibles, configuration par MiKL, branding. Les modules commerciaux (Signature, Calendrier, Branding, Site Web, SEO, Social, Maintenance) sont definis dans monprojetpro-modules-commerciaux.md — leur integration complete avec les APIs externes (Yousign, Google Calendar, etc.) est prevue en P2. Cet epic met en place la structure d'activation et l'UI shell de chaque module.
 
 ---
 
@@ -21,7 +21,7 @@ So that **j'ai un espace professionnel clair avec uniquement les outils dont j'a
 **Given** un client One se connecte a son dashboard (FR38)
 **When** la page d'accueil se charge
 **Then** le dashboard One affiche :
-- Un header avec le logo Foxeo One (ou branding personnalise si configure)
+- Un header avec le logo MonprojetPro One (ou branding personnalise si configure)
 - Un message d'accueil : "Bonjour {prenom}" avec la date du jour
 - Une section "Actions rapides" avec les raccourcis vers les modules les plus utilises
 - Une section "Activite recente" : derniers messages MiKL, derniers documents mis a jour, derniere activite Elio
@@ -198,8 +198,8 @@ type CustomBranding = {
 **Given** le client One se connecte avec un branding personnalise
 **When** le dashboard se charge
 **Then** :
-- Le logo personnalise remplace le logo Foxeo One dans le header et la sidebar
-- Le nom affiche remplace "Foxeo One" dans le header
+- Le logo personnalise remplace le logo MonprojetPro One dans le header et la sidebar
+- Le nom affiche remplace "MonprojetPro One" dans le header
 - La couleur d'accent est appliquee via des CSS custom properties (override de la variable `--accent`)
 - Le reste du design (typographie, layout, structure) reste standard
 **And** si aucun branding personnalise n'est defini, le design One par defaut est utilise

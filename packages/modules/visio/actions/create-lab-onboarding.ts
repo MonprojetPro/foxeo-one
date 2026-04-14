@@ -1,16 +1,9 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
-import { z } from 'zod'
-
-export const CreateLabOnboardingInput = z.object({
-  meetingId: z.string().uuid('meetingId invalide'),
-  clientName: z.string().min(1, 'Le nom est requis'),
-  clientEmail: z.string().email('Email invalide'),
-  parcoursTemplateId: z.string().uuid('parcoursTemplateId invalide'),
-})
-export type CreateLabOnboardingInput = z.infer<typeof CreateLabOnboardingInput>
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { CreateLabOnboardingInput } from './post-meeting-schemas'
+export type { CreateLabOnboardingInput } from './post-meeting-schemas'
 
 export interface LabOnboardingResult {
   clientId: string

@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge } from '@foxeo/ui'
+import { Badge } from '@monprojetpro/ui'
 
 interface DocumentSyncBadgeProps {
   lastSyncedAt: string | null

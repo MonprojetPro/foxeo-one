@@ -14,7 +14,7 @@
 
 > **Technical Enabler** — Consolidation technique, benefice indirect pour tous les utilisateurs d'Elio.
 
-As a **client Foxeo (Lab ou One)**,
+As a **client MonprojetPro (Lab ou One)**,
 I want **qu'Elio fonctionne de maniere fiable et coherente quel que soit le dashboard**,
 So that **mon experience avec l'assistant IA est fluide, sans bugs ni incoherences entre les contextes**.
 
@@ -192,7 +192,7 @@ So that **Elio s'ameliore grace aux retours, les documents sont accessibles sans
 
 As a **operateur ou agent IA**,
 I want **un systeme de profil de communication par client qui est stocke, affine par Elio Lab, et transmis a Elio One lors de la graduation**,
-So that **chaque client beneficie d'une communication adaptee a son style tout au long de son parcours Foxeo**.
+So that **chaque client beneficie d'une communication adaptee a son style tout au long de son parcours MonprojetPro**.
 
 **Acceptance Criteria :**
 
@@ -213,7 +213,7 @@ type CommunicationProfile = {
 }
 ```
 **And** un schema Zod `communicationProfileSchema` valide cette structure
-**And** un profil par defaut existe dans `@foxeo/utils` (DEFAULT_COMMUNICATION_PROFILE) : `{ levelTechnical: 'intermediaire', styleExchange: 'conversationnel', adaptedTone: 'pro_decontracte', messageLength: 'moyen', tutoiement: false, concreteExamples: true, avoid: [], privilege: [], styleNotes: '' }`
+**And** un profil par defaut existe dans `@monprojetpro/utils` (DEFAULT_COMMUNICATION_PROFILE) : `{ levelTechnical: 'intermediaire', styleExchange: 'conversationnel', adaptedTone: 'pro_decontracte', messageLength: 'moyen', tutoiement: false, concreteExamples: true, avoid: [], privilege: [], styleNotes: '' }`
 
 **Given** Orpheus (hors perimetre applicatif) genere un profil de communication pour un client (FR67)
 **When** MiKL injecte ce profil via la fiche client (Story 6.6)
@@ -274,7 +274,7 @@ So that **j'ai un assistant IA dans mon cockpit qui me fait gagner du temps au q
 - Palette Hub : cyan/turquoise (Minimal Futuriste dark mode)
 - Header : "Elio Hub — Votre assistant" avec avatar Elio Hub
 - Zone de chat avec historique
-- Champ de saisie avec placeholder : "Demande-moi n'importe quoi sur Foxeo..."
+- Champ de saisie avec placeholder : "Demande-moi n'importe quoi sur MonprojetPro..."
 - Panneau de conversations lateral (Story 8.2)
 **And** un message d'accueil s'affiche si c'est la premiere conversation : "Hey MiKL ! Je suis Elio Hub, ton assistant. Je peux t'aider a naviguer dans le Hub, chercher des infos clients, corriger tes textes ou generer des brouillons. Qu'est-ce que tu veux faire ?"
 
@@ -368,7 +368,7 @@ J'ai le plaisir de vous informer que le devis pour l'ajout du module SMS a ete f
 N'hesitez pas a me contacter si vous avez des questions.
 
 Cordialement,
-MiKL — Foxeo
+MiKL — MonprojetPro
 ---
 
 J'ai utilise le ton "formel + vouvoiement" du profil de Sandrine. Tu veux modifier quelque chose ?
@@ -580,7 +580,7 @@ So that **je suis informe en temps reel sans avoir a surveiller moi-meme tous me
 **When** des conditions specifiques sont detectees
 **Then** Elio One+ envoie des alertes proactives au client :
 - **Alertes basees sur les donnees** : "3 feuilles d'emargement manquent pour les cours d'hier" / "Vous avez 5 cotisations impayees depuis plus de 30 jours"
-- **Alertes basees sur le calendrier** : "Rappel : evenement 'Assemblee Generale' dans 2 jours — 12 inscrits" / "Votre abonnement Foxeo est renouvele dans 7 jours"
+- **Alertes basees sur le calendrier** : "Rappel : evenement 'Assemblee Generale' dans 2 jours — 12 inscrits" / "Votre abonnement MonprojetPro est renouvele dans 7 jours"
 - **Alertes basees sur l'activite** : "Vous n'avez pas publie de contenu depuis 2 semaines"
 **And** les alertes sont implementees via un systeme de regles configurables :
 ```typescript

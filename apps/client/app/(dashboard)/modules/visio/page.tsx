@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getMeetings, MeetingList } from '@foxeo/module-visio'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getMeetings, MeetingList } from '@monprojetpro/module-visio'
 
 export default async function ClientVisioPage() {
   const supabase = await createServerSupabaseClient()

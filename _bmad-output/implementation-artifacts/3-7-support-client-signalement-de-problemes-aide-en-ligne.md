@@ -4,7 +4,7 @@ Status: done
 
 ## Story
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **signaler un problème ou bug depuis l'interface et accéder à une aide en ligne / FAQ**,
 So that **je peux obtenir de l'aide rapidement sans quitter la plateforme**.
 
@@ -143,8 +143,8 @@ export const FAQ_CATEGORIES = [
     icon: 'rocket',
     questions: [
       {
-        q: 'Comment fonctionne mon espace Foxeo ?',
-        a: 'Votre espace Foxeo est votre tableau de bord personnel...',
+        q: 'Comment fonctionne mon espace MonprojetPro ?',
+        a: 'Votre espace MonprojetPro est votre tableau de bord personnel...',
       },
       {
         q: "Qu'est-ce qu'Élio ?",

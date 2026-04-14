@@ -10,7 +10,7 @@ import {
   Button,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { createCommunicationProfile } from '../actions/create-communication-profile'
 import type {
   PreferredTone,

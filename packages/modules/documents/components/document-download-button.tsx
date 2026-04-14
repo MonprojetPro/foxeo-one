@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Download } from 'lucide-react'
-import { toast } from '@foxeo/ui'
+import { toast } from '@monprojetpro/ui'
 import { generatePdf } from '../actions/generate-pdf'
 import type { Document } from '../types/document.types'
 
@@ -43,9 +43,9 @@ export function DocumentDownloadButton({
           setTimeout(() => URL.revokeObjectURL(url), 1000)
           toast.success('Document téléchargé')
         }
-      } else if (contentUrl) {
-        // Direct download via signed URL
-        triggerDownload(contentUrl, document.name)
+      } else {
+        // Download via route API proxy (évite le blocage cross-origin du navigateur)
+        triggerDownload(`/api/documents/download/${document.id}`)
         toast.success('Téléchargement lancé')
       }
     } catch {
@@ -84,10 +84,10 @@ export function DocumentDownloadButton({
   )
 }
 
-function triggerDownload(url: string, fileName: string) {
+function triggerDownload(url: string) {
   const link = window.document.createElement('a')
   link.href = url
-  link.download = fileName
+  link.style.display = 'none'
   window.document.body.appendChild(link)
   link.click()
   window.document.body.removeChild(link)

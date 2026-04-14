@@ -31,7 +31,7 @@ let operatorsChain: ReturnType<typeof makeChain>
 let notificationsChain: ReturnType<typeof makeChain>
 let parcoursStepsChain: ReturnType<typeof makeChain>
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
     from: (table: string) => {

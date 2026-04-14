@@ -1,11 +1,11 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { createNotification } from './create-notification'
 
 export interface GraduationNotificationInput {
@@ -56,7 +56,7 @@ export async function sendGraduationNotification(
     recipientType: 'client',
     recipientId: client.auth_user_id,
     type: 'graduation',
-    title: "Félicitations ! Votre espace professionnel Foxeo One est prêt !",
+    title: "Félicitations ! Votre espace professionnel MonprojetPro One est prêt !",
     body: `Votre parcours Lab est terminé. Vous avez maintenant accès à votre dashboard personnalisé avec ${modulesCount} module${modulesCount > 1 ? 's' : ''} activé${modulesCount > 1 ? 's' : ''}.`,
     link: '/',
   })

@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertCircle } from 'lucide-react'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 
 export default function RequestDetailError({
   error,

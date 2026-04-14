@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FaqPage, ReportIssueDialog } from '@foxeo/modules-support'
+import { FaqPage, ReportIssueDialog } from '@monprojetpro/modules-support'
 
 export default function HelpPage() {
   const [reportOpen, setReportOpen] = useState(false)

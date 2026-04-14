@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Skeleton } from '@foxeo/ui'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Skeleton } from '@monprojetpro/ui'
 import { PrefToggleRow } from './pref-toggle-row'
 import { useNotificationPrefs } from '../hooks/use-notification-prefs'
 import { CRITICAL_INAPP_TYPES, type NotificationPreferenceType } from '../types/notification-prefs.types'

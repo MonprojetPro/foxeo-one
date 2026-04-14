@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getParcours, SubmitStepForm } from '@foxeo/module-parcours'
-import { ElioGenerateBriefSection } from '@foxeo/module-elio'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getParcours, SubmitStepForm } from '@monprojetpro/module-parcours'
+import { ElioGenerateBriefSection } from '@monprojetpro/module-elio'
 
 interface SubmitStepPageProps {
   params: Promise<{ stepNumber: string }>

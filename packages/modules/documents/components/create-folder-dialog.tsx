@@ -9,7 +9,7 @@ import {
   DialogFooter,
   Input,
   Button,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 
 interface CreateFolderDialogProps {
   open: boolean

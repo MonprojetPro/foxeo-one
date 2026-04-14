@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 

@@ -5,11 +5,11 @@ import { saveParcourTemplate, duplicateParcourTemplate, archiveParcourTemplate }
 // Mocks
 // ============================================================
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 const VALID_UUID_TEMPLATE = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
 const VALID_UUID_OPERATOR = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'

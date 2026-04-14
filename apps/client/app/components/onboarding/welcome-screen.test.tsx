@@ -33,8 +33,8 @@ vi.mock('../../onboarding/actions/complete-onboarding', () => ({
   }),
 }))
 
-// Mock @foxeo/ui Button
-vi.mock('@foxeo/ui', () => ({
+// Mock @monprojetpro/ui Button
+vi.mock('@monprojetpro/ui', () => ({
   Button: ({ children, asChild, onClick, disabled, ...props }: {
     children: React.ReactNode
     asChild?: boolean

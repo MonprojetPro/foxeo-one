@@ -1,27 +1,13 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 import type { CommunicationProfile } from '../types/communication-profile.types'
 import { toCommunicationProfile, type CommunicationProfileDB } from '../types/communication-profile.types'
 import { getProfileLabels } from '../utils/profile-labels'
+import type { AdjustDraftInput, AdjustedDraftResult } from '../types/elio.types'
 
 const ELIO_TIMEOUT_MS = 60_000
-
-export interface AdjustDraftInput {
-  previousDraft: string
-  instruction: string
-  clientName: string
-  draftType: 'email' | 'validation_hub' | 'chat'
-  currentVersion?: number
-}
-
-export interface AdjustedDraftResult {
-  content: string
-  draftType: 'email' | 'validation_hub' | 'chat'
-  clientName: string
-  version: number
-}
 
 function buildAdjustPrompt(
   previousDraft: string,

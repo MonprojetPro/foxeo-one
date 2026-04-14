@@ -17,13 +17,13 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
    - **When** il est dans un module (ex: /modules/crm/clients/123)
    - **Then** un fil d'ariane affiche sa position : Dashboard > CRM > Client > Fiche (FR108)
    - **And** chaque niveau est cliquable pour remonter
-   - **And** le composant `Breadcrumb` est dans `@foxeo/ui`
+   - **And** le composant `Breadcrumb` est dans `@monprojetpro/ui`
 
 2. **AC2: Etats vides explicatifs**
    - **Given** un utilisateur qui accede a une section sans contenu
    - **When** la liste est vide (pas de documents, pas de messages, pas de clients)
    - **Then** un etat vide explicatif s'affiche avec illustration, message engageant et CTA (FR73)
-   - **And** le composant `EmptyState` existant de @foxeo/ui est utilise (deja cree en Story 1.1)
+   - **And** le composant `EmptyState` existant de @monprojetpro/ui est utilise (deja cree en Story 1.1)
    - **And** des presets d'etats vides sont disponibles pour les cas transversaux (pas de resultats, erreur chargement, premiere utilisation)
 
 3. **AC3: Toast de confirmation apres action reussie**
@@ -39,7 +39,7 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
    - **Then** un message explicite s'affiche — jamais d'ecran blanc (FR82)
    - **And** l'error boundary du module capture le crash sans affecter le reste du shell
    - **And** le message indique la nature de l'erreur et une action possible
-   - **And** un composant `ErrorDisplay` reutilisable est dans `@foxeo/ui`
+   - **And** un composant `ErrorDisplay` reutilisable est dans `@monprojetpro/ui`
 
 5. **AC5: Navigateur non supporte**
    - **Given** un navigateur non supporte
@@ -57,7 +57,7 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
    - **Given** une action sensible (suppression, modification critique)
    - **When** l'utilisateur la declenche
    - **Then** une boite de dialogue de confirmation s'affiche avant execution (FR56)
-   - **And** le composant AlertDialog existant de @foxeo/ui est utilise
+   - **And** le composant AlertDialog existant de @monprojetpro/ui est utilise
    - **And** un hook `useConfirmDialog()` simplifie l'usage programmatique
 
 8. **AC8: Tests**
@@ -71,10 +71,10 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
 
 - [x] Task 1 — Installer Sonner et creer le systeme Toast (AC: #3)
   - [x] 1.1 Installer `sonner` dans `packages/ui/`
-  - [x] 1.2 Creer `packages/ui/src/components/sonner.tsx` — wrapper Toaster avec theming Foxeo (dark mode, OKLCH variables)
+  - [x] 1.2 Creer `packages/ui/src/components/sonner.tsx` — wrapper Toaster avec theming MonprojetPro (dark mode, OKLCH variables)
   - [x] 1.3 Creer `packages/ui/src/components/toast-utils.ts` — helpers `showSuccess()`, `showError()`, `showInfo()` pour messages contextualises
   - [x] 1.4 Ajouter `<Toaster />` dans les root layouts des 2 apps (hub + client)
-  - [x] 1.5 Exporter depuis `@foxeo/ui` index.ts
+  - [x] 1.5 Exporter depuis `@monprojetpro/ui` index.ts
   - [x] 1.6 Creer `packages/ui/src/components/sonner.test.ts` — tests du wrapper
 
 - [x] Task 2 — Creer le composant Breadcrumb (AC: #1)
@@ -82,7 +82,7 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
   - [x] 2.2 Le breadcrumb utilise `<nav aria-label="Fil d'ariane">` et `<ol>` semantique (accessibilite WCAG)
   - [x] 2.3 Chaque niveau est un lien cliquable sauf le dernier (page courante)
   - [x] 2.4 Separator par defaut : ChevronRight de lucide-react
-  - [x] 2.5 Exporter depuis `@foxeo/ui` index.ts
+  - [x] 2.5 Exporter depuis `@monprojetpro/ui` index.ts
   - [x] 2.6 Creer `packages/ui/src/components/breadcrumb.test.ts`
 
 - [x] Task 3 — Creer le composant ErrorDisplay reutilisable (AC: #4)
@@ -92,7 +92,7 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
   - [x] 3.4 Refactorer `apps/hub/app/(dashboard)/modules/[moduleId]/error.tsx` pour utiliser `<ErrorDisplay />`
   - [x] 3.5 Refactorer `apps/client/app/(dashboard)/modules/[moduleId]/error.tsx` pour utiliser `<ErrorDisplay />`
   - [x] 3.6 Refactorer `apps/client/app/(dashboard)/settings/sessions/error.tsx` pour utiliser `<ErrorDisplay />`
-  - [x] 3.7 Exporter depuis `@foxeo/ui` index.ts
+  - [x] 3.7 Exporter depuis `@monprojetpro/ui` index.ts
   - [x] 3.8 Creer `packages/ui/src/components/error-display.test.ts`
 
 - [x] Task 4 — Creer le hook useOnline et le composant OfflineBanner (AC: #6)
@@ -100,24 +100,24 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
   - [x] 4.2 Creer `packages/ui/src/components/offline-banner.tsx` — banniere discrete "Connexion perdue — Reconnexion en cours..." avec animation, auto-dismiss quand online revient
   - [x] 4.3 Configurer TanStack Query retry dans les QueryProvider des 2 apps : `retry: 3`, `retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000)`, `refetchOnReconnect: true`
   - [x] 4.4 Integrer `<OfflineBanner />` dans les root layouts des 2 apps (au-dessus du contenu principal)
-  - [x] 4.5 Exporter depuis `@foxeo/ui` index.ts
+  - [x] 4.5 Exporter depuis `@monprojetpro/ui` index.ts
   - [x] 4.6 Creer `packages/ui/src/hooks/use-online.test.ts` et `packages/ui/src/components/offline-banner.test.ts`
 
 - [x] Task 5 — Creer le composant BrowserWarning (AC: #5)
   - [x] 5.1 Creer `packages/ui/src/components/browser-warning.tsx` — banniere conditionnelle pour navigateurs non supportes
   - [x] 5.2 Navigateurs supportes : Chrome >= 90, Firefox >= 90, Safari >= 15, Edge >= 90. Afficher un message pour les autres
-  - [x] 5.3 Detection via `navigator.userAgent` (reutiliser `parseUserAgent` de `@foxeo/utils` si possible, sinon detection simplifiee cote client)
+  - [x] 5.3 Detection via `navigator.userAgent` (reutiliser `parseUserAgent` de `@monprojetpro/utils` si possible, sinon detection simplifiee cote client)
   - [x] 5.4 Banniere dismissable (une seule fois par session, persister dans sessionStorage)
   - [x] 5.5 Integrer dans les root layouts des 2 apps
-  - [x] 5.6 Exporter depuis `@foxeo/ui` index.ts
+  - [x] 5.6 Exporter depuis `@monprojetpro/ui` index.ts
   - [x] 5.7 Creer `packages/ui/src/components/browser-warning.test.ts`
 
 - [x] Task 6 — Creer le hook useConfirmDialog (AC: #7)
   - [x] 6.1 Creer `packages/ui/src/hooks/use-confirm-dialog.ts` — hook qui retourne `{ confirm, ConfirmDialog }` pour usage programmatique avec AlertDialog
   - [x] 6.2 API : `const confirmed = await confirm({ title, description, confirmLabel?, cancelLabel?, variant? })`
-  - [x] 6.3 Utilise AlertDialog existant de @foxeo/ui (ne pas creer un nouveau composant dialog)
+  - [x] 6.3 Utilise AlertDialog existant de @monprojetpro/ui (ne pas creer un nouveau composant dialog)
   - [x] 6.4 Support `variant: 'destructive'` pour les suppressions (bouton rouge)
-  - [x] 6.5 Exporter depuis `@foxeo/ui` index.ts
+  - [x] 6.5 Exporter depuis `@monprojetpro/ui` index.ts
   - [x] 6.6 Creer `packages/ui/src/hooks/use-confirm-dialog.test.ts`
 
 - [x] Task 7 — Enrichir EmptyState avec presets (AC: #2)
@@ -125,7 +125,7 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
   - [x] 7.2 Chaque preset fournit : icon (Lucide), title, description en francais
   - [x] 7.3 Usage : `<EmptyState {...EMPTY_SEARCH} action={<Button>Modifier les filtres</Button>} />`
   - [x] 7.4 NE PAS modifier le composant EmptyState existant — il est deja fonctionnel
-  - [x] 7.5 Exporter depuis `@foxeo/ui` index.ts
+  - [x] 7.5 Exporter depuis `@monprojetpro/ui` index.ts
   - [x] 7.6 Creer `packages/ui/src/components/empty-state-presets.test.ts`
 
 - [x] Task 8 — Integration dans le DashboardShell (AC: #1, #6)
@@ -233,7 +233,7 @@ Suivre le pattern de composition shadcn/ui (comme les autres composants existant
 ```tsx
 // packages/ui/src/components/breadcrumb.tsx
 import { ChevronRight } from 'lucide-react'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 
 // Composants : Breadcrumb, BreadcrumbList, BreadcrumbItem,
 // BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis
@@ -335,7 +335,7 @@ type ConfirmOptions = {
 // Retourne { confirm, ConfirmDialog }
 // confirm(options) retourne une Promise<boolean>
 // ConfirmDialog est le composant a rendre dans le JSX
-// Utilise AlertDialog existant de @foxeo/ui
+// Utilise AlertDialog existant de @monprojetpro/ui
 ```
 
 **Usage cote composant :**
@@ -367,7 +367,7 @@ function DeleteButton({ clientId }) {
 
 ### BrowserWarning — Detection navigateurs
 
-Navigateurs supportes (cibles V1 Foxeo) :
+Navigateurs supportes (cibles V1 MonprojetPro) :
 - Chrome >= 90
 - Firefox >= 90
 - Safari >= 15
@@ -375,7 +375,7 @@ Navigateurs supportes (cibles V1 Foxeo) :
 
 Le composant affiche une banniere jaune/warning si le navigateur n'est pas dans la liste. La banniere est dismissable (persister dans `sessionStorage` pour ne pas reafficher).
 
-**ATTENTION :** `parseUserAgent` de `@foxeo/utils` est concu pour le server-side (Story 1.6, sessions). Pour la detection cote client dans un composant React, utiliser directement `navigator.userAgent` et une regex simple. Ne pas importer le util server-side dans un composant `'use client'`.
+**ATTENTION :** `parseUserAgent` de `@monprojetpro/utils` est concu pour le server-side (Story 1.6, sessions). Pour la detection cote client dans un composant React, utiliser directement `navigator.userAgent` et une regex simple. Ne pas importer le util server-side dans un composant `'use client'`.
 
 ### Fichiers root layout a modifier
 
@@ -468,7 +468,7 @@ apps/client/app/
 
 - [Source: _bmad-output/planning-artifacts/epics/epic-1-fondation-plateforme-authentification-stories-detaillees.md — Story 1.8]
 - [Source: _bmad-output/planning-artifacts/architecture/04-implementation-patterns.md — Error Handling, Loading States, Communication Patterns]
-- [Source: _bmad-output/planning-artifacts/architecture/05-project-structure.md — @foxeo/ui structure, empty-state.tsx, toast.tsx mentionné]
+- [Source: _bmad-output/planning-artifacts/architecture/05-project-structure.md — @monprojetpro/ui structure, empty-state.tsx, toast.tsx mentionné]
 - [Source: _bmad-output/planning-artifacts/ux-design-specification.md — Experience Principles, Zero friction]
 - [Source: docs/project-context.md — Error Handling 3 niveaux, Loading States, Anti-Patterns]
 - [Source: CLAUDE.md — Quality Gates, Module System, UX Design]
@@ -477,7 +477,7 @@ apps/client/app/
 
 **Learnings from Story 1.7 :**
 - Les composants UI suivent le pattern shadcn/ui : CVA + `cn()` + Radix primitives
-- `@foxeo/supabase` a un subpath export `./theme` pour eviter d'importer le barrel (qui tire next/headers)
+- `@monprojetpro/supabase` a un subpath export `./theme` pour eviter d'importer le barrel (qui tire next/headers)
 - Les accents francais sont importants dans les textes UI (code review Story 1.6 L1)
 - 481 tests passent au total (211 existants + 270 Story 1.7) — zero regressions attendues
 - Pattern de test CSS : parser les fichiers CSS avec regex pour verifier la structure
@@ -545,7 +545,7 @@ None required — build and tests passed on first attempt after fixing pre-exist
 4. **Offline detection** — useOnline hook + OfflineBanner + TanStack Query retry configuration (3 retries with exponential backoff)
 5. **Browser warning** — Client-side detection with sessionStorage persistence, dismissable banner
 6. **Confirmation dialog** — useConfirmDialog hook with programmatic API, supports destructive variant for dangerous actions
-7. **Empty state presets** — EMPTY_SEARCH, EMPTY_LIST, EMPTY_ERROR constants exported from @foxeo/ui
+7. **Empty state presets** — EMPTY_SEARCH, EMPTY_LIST, EMPTY_ERROR constants exported from @monprojetpro/ui
 8. **DashboardShell breadcrumb slot** — Added optional breadcrumb prop to shell header
 9. **Tests** — 18 new tests added (8 test files), all co-located. Total: 499 tests passing, zero regressions
 10. **Build** — TypeScript strict mode, both apps (hub + client) compile successfully
@@ -554,7 +554,7 @@ None required — build and tests passed on first attempt after fixing pre-exist
 ### File List
 
 **Created:**
-- `packages/ui/src/components/sonner.tsx` — Toaster wrapper with Foxeo theming
+- `packages/ui/src/components/sonner.tsx` — Toaster wrapper with MonprojetPro theming
 - `packages/ui/src/components/toast-utils.ts` — showSuccess, showError, showInfo helpers
 - `packages/ui/src/components/sonner.test.ts` — 3 tests
 - `packages/ui/src/components/breadcrumb.tsx` — 7 composable components (Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis)

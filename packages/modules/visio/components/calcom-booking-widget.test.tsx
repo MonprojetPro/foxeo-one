@@ -6,7 +6,7 @@ describe('CalcomBookingWidget', () => {
   it('renders an iframe', () => {
     render(
       <CalcomBookingWidget
-        calcomUrl="https://cal.foxeo.io/mikl/consultation"
+        calcomUrl="https://cal.monprojet-pro.com/mikl/consultation"
         clientId="client-123"
         operatorId="op-456"
       />
@@ -19,7 +19,7 @@ describe('CalcomBookingWidget', () => {
   it('includes clientId and operatorId in iframe src', () => {
     render(
       <CalcomBookingWidget
-        calcomUrl="https://cal.foxeo.io/mikl/consultation"
+        calcomUrl="https://cal.monprojet-pro.com/mikl/consultation"
         clientId="client-123"
         operatorId="op-456"
       />
@@ -33,20 +33,20 @@ describe('CalcomBookingWidget', () => {
   it('uses the provided calcomUrl as base', () => {
     render(
       <CalcomBookingWidget
-        calcomUrl="https://cal.foxeo.io/mikl/consultation"
+        calcomUrl="https://cal.monprojet-pro.com/mikl/consultation"
         clientId="c1"
         operatorId="o1"
       />
     )
     const iframe = screen.getByTitle('Prendre rendez-vous avec MiKL')
     const src = iframe.getAttribute('src') ?? ''
-    expect(src).toContain('cal.foxeo.io/mikl/consultation')
+    expect(src).toContain('cal.monprojet-pro.com/mikl/consultation')
   })
 
   it('sets loading=lazy on iframe', () => {
     render(
       <CalcomBookingWidget
-        calcomUrl="https://cal.foxeo.io/mikl/consultation"
+        calcomUrl="https://cal.monprojet-pro.com/mikl/consultation"
         clientId="c1"
         operatorId="o1"
       />

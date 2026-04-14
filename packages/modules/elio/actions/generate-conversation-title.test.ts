@@ -5,7 +5,7 @@ const mockInvoke = vi.fn()
 const mockUpdate = vi.fn()
 const mockEq = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     functions: { invoke: mockInvoke },
     from: vi.fn(() => ({

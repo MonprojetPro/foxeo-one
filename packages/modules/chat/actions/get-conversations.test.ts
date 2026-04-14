@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { Conversation } from '../types/chat.types'
 
 const mockGetUser = vi.fn()
@@ -26,7 +26,7 @@ function buildChain() {
 
 const mockFrom = vi.fn(() => buildChain())
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },

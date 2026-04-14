@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { ThumbsUp, ThumbsDown } from 'lucide-react'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 import type { FeedbackRating } from '../types/elio.types'
 import { submitFeedback } from '../actions/submit-feedback'
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { ClientConfig } from '@foxeo/types'
+import type { ClientConfig } from '@monprojetpro/types'
 
 // Mock the server action
 const mockGetClientConfig = vi.fn()

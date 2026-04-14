@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { MoveDocumentInput } from '../types/folder.types'
 import { type Document, type DocumentDB } from '../types/document.types'
 import { toDocument } from '../utils/to-document'

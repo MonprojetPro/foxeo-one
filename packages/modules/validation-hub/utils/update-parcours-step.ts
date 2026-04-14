@@ -1,6 +1,6 @@
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse } from '@foxeo/types'
-import type { ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse } from '@monprojetpro/types'
+import type { ActionResponse } from '@monprojetpro/types'
 
 /**
  * Marks a parcours step as completed.

@@ -11,7 +11,7 @@ import {
 
 describe('emailSchema', () => {
   it('accepts valid email', () => {
-    expect(emailSchema.safeParse('test@foxeo.io').success).toBe(true)
+    expect(emailSchema.safeParse('test@monprojet-pro.com').success).toBe(true)
   })
 
   it('rejects invalid email', () => {
@@ -22,7 +22,7 @@ describe('emailSchema', () => {
 
 describe('passwordSchema', () => {
   it('accepts valid password', () => {
-    expect(passwordSchema.safeParse('Foxeo123').success).toBe(true)
+    expect(passwordSchema.safeParse('MonprojetPro123').success).toBe(true)
     expect(passwordSchema.safeParse('MyStr0ngPass').success).toBe(true)
   })
 
@@ -31,7 +31,7 @@ describe('passwordSchema', () => {
   })
 
   it('rejects without uppercase', () => {
-    expect(passwordSchema.safeParse('foxeo123').success).toBe(false)
+    expect(passwordSchema.safeParse('monprojetpro123').success).toBe(false)
   })
 
   it('rejects without lowercase', () => {
@@ -39,7 +39,7 @@ describe('passwordSchema', () => {
   })
 
   it('rejects without digit', () => {
-    expect(passwordSchema.safeParse('FoxeoPass').success).toBe(false)
+    expect(passwordSchema.safeParse('MonprojetProPass').success).toBe(false)
   })
 })
 
@@ -58,7 +58,7 @@ describe('uuidSchema', () => {
 describe('slugSchema', () => {
   it('accepts valid slugs', () => {
     expect(slugSchema.safeParse('my-company').success).toBe(true)
-    expect(slugSchema.safeParse('foxeo-one-123').success).toBe(true)
+    expect(slugSchema.safeParse('monprojetpro-one-123').success).toBe(true)
   })
 
   it('rejects too short', () => {

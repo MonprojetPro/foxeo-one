@@ -1,6 +1,6 @@
 'use client'
 
-import { showInfo } from '@foxeo/ui'
+import { showInfo } from '@monprojetpro/ui'
 
 export function notifyToast(title: string, body?: string | null) {
   showInfo(body ? `${title}: ${body}` : title)

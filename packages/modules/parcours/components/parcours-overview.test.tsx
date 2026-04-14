@@ -22,7 +22,7 @@ vi.mock('@tanstack/react-query', () => ({
   }),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, unknown>
   return {
     ...actual,

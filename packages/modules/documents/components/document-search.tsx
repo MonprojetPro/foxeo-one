@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Input } from '@foxeo/ui'
+import { Input } from '@monprojetpro/ui'
 import { Search, X } from 'lucide-react'
 
 interface DocumentSearchProps {

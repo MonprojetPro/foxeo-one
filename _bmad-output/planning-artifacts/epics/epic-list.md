@@ -1,7 +1,7 @@
 # Epic List
 
 ## Epic 1 : Fondation Plateforme & Authentification
-MiKL et les clients peuvent acceder aux dashboards Foxeo de maniere securisee avec isolation des donnees, design responsive et dark mode "Minimal Futuriste". Setup monorepo + packages partages, migrations Supabase, dashboard shell avec module registry, auth (2FA MiKL, login client), RLS Lab, middleware, CGU/consentements, multi-device, etats vides, messages confirmation, robustesse. **Modele dual** : Lab multi-tenant (RLS) + One instance par client. Communication Hub↔Instances via API REST + HMAC.
+MiKL et les clients peuvent acceder aux dashboards MonprojetPro de maniere securisee avec isolation des donnees, design responsive et dark mode "Minimal Futuriste". Setup monorepo + packages partages, migrations Supabase, dashboard shell avec module registry, auth (2FA MiKL, login client), RLS Lab, middleware, CGU/consentements, multi-device, etats vides, messages confirmation, robustesse. **Modele dual** : Lab multi-tenant (RLS) + One instance par client. Communication Hub↔Instances via API REST + HMAC.
 **FRs couverts:** FR52, FR53, FR54, FR55, FR56, FR73, FR82, FR108, FR112, FR113, FR114, FR117, FR118, FR119, FR134, FR140, FR141, FR142, FR143, FR151, FR152, **FR155**
 
 ## Epic 2 : Gestion de la Relation Client (CRM Hub)
@@ -33,7 +33,7 @@ MiKL et les clients beneficient d'une assistance IA contextuelle adaptee a leur 
 **FRs couverts:** FR21, FR22, FR23, FR24, FR25, FR44, FR45, FR46, FR47, FR48, FR49, FR50, FR51, FR66, FR67, FR68, FR69, FR83, FR87, FR122, FR123, FR124, FR125, FR126
 
 ## Epic 9 : Graduation Lab vers One & Cycle de Vie Client
-Les clients transitent de Lab vers One avec **provisioning d'une instance dediee** (Supabase + Vercel) et migration complete du contexte. MiKL gere le cycle de vie complet (abandon, changement tier, export RGPD, retention). **Le client quitte One** avec code + DB + documentation. Lab = propriete Foxeo (client recupere uniquement ses documents).
+Les clients transitent de Lab vers One avec **provisioning d'une instance dediee** (Supabase + Vercel) et migration complete du contexte. MiKL gere le cycle de vie complet (abandon, changement tier, export RGPD, retention). **Le client quitte One** avec code + DB + documentation. Lab = propriete MonprojetPro (client recupere uniquement ses documents).
 **FRs couverts:** FR74, FR75, FR76, FR88, FR91, FR92, FR93, **FR157, FR161, FR166, FR167, FR168**
 
 ## Epic 10 : Dashboard One & Modules Commerciaux

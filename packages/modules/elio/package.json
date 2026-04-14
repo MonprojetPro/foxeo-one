@@ -1,19 +1,29 @@
 {
-  "name": "@foxeo/module-elio",
+  "name": "@monprojetpro/module-elio",
   "version": "1.0.0",
   "private": true,
   "main": "./index.ts",
   "types": "./index.ts",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    },
+    "./manifest": {
+      "types": "./manifest.ts",
+      "default": "./manifest.ts"
+    }
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "*",
-    "@foxeo/supabase": "*",
-    "@foxeo/types": "*",
-    "@foxeo/ui": "*",
-    "@foxeo/utils": "*",
+    "@monprojetpro/supabase": "*",
+    "@monprojetpro/types": "*",
+    "@monprojetpro/ui": "*",
+    "@monprojetpro/utils": "*",
     "@hookform/resolvers": "*",
     "@tanstack/react-query": "^5.90.0",
     "react": "^19.0.0",
@@ -23,7 +33,7 @@
     "zod": "*"
   },
   "devDependencies": {
-    "@foxeo/tsconfig": "*",
+    "@monprojetpro/tsconfig": "*",
     "@testing-library/react": "*",
     "@testing-library/user-event": "*",
     "vitest": "*"

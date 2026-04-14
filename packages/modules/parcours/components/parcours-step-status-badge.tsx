@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 import type { ParcoursStepStatus } from '../types/parcours.types'
 
 const statusConfig: Record<ParcoursStepStatus, { label: string; className: string }> = {

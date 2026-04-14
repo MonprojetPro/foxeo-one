@@ -1,4 +1,4 @@
-import { formatFileSize } from '@foxeo/utils'
+import { formatFileSize } from '@monprojetpro/utils'
 import type { Document, ExportMetadata } from '../types/document.types'
 import type { DocumentFolder } from '../types/folder.types'
 

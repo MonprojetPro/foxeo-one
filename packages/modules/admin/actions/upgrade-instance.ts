@@ -3,8 +3,8 @@
 // Story 12.7 — Task 5: Server Action upgrade instance
 // Enregistre l'intention d'upgrade (implémentation manuelle Supabase/Vercel)
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, errorResponse, successResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, errorResponse, successResponse } from '@monprojetpro/types'
 import { z } from 'zod'
 
 const UpgradeSchema = z.object({

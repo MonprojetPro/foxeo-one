@@ -4,7 +4,7 @@ Status: done
 
 ## Story
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **pouvoir m'inscrire avec email + mot de passe, me connecter et avoir une session persistante**,
 So that **j'accede de maniere securisee a mon dashboard personnalise**.
 
@@ -12,7 +12,7 @@ So that **j'accede de maniere securisee a mon dashboard personnalise**.
 
 1. **AC1: Login fonctionnel**
    - **Given** un client avec un compte existant
-   - **When** il accede a `app.foxeo.io/login` et saisit email + mot de passe valides
+   - **When** il accede a `app.monprojet-pro.com/login` et saisit email + mot de passe valides
    - **Then** il est redirige vers le dashboard `/(dashboard)/`
    - **And** un access token et un refresh token sont crees via Supabase Auth
    - **And** les cookies de session sont configures cote serveur via `@supabase/ssr`
@@ -77,7 +77,7 @@ So that **j'accede de maniere securisee a mon dashboard personnalise**.
   - [x] 4.1 Creer `apps/client/app/(auth)/login/page.tsx` (Server Component)
   - [x] 4.2 Creer `apps/client/app/(auth)/login/login-form.tsx` (Client Component)
   - [x] 4.3 Utiliser React Hook Form + Zod pour validation
-  - [x] 4.4 Integration composants `@foxeo/ui` : Input, Button, Card, Alert
+  - [x] 4.4 Integration composants `@monprojetpro/ui` : Input, Button, Card, Alert
   - [x] 4.5 Gestion des etats : loading (skeleton), erreur (Alert), succes (redirect)
   - [x] 4.6 Design dark mode "Minimal Futuriste" — fond #020402, accent Lab (violet)
   - [x] 4.7 Responsive : mobile >=320px, desktop optimise
@@ -122,8 +122,8 @@ So that **j'accede de maniere securisee a mon dashboard personnalise**.
 ```typescript
 // apps/client/app/(auth)/actions/auth.ts
 'use server'
-import { ActionResponse, UserSession } from '@foxeo/types'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { ActionResponse, UserSession } from '@monprojetpro/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 export async function loginAction(formData: FormData): Promise<ActionResponse<UserSession>> {
   const supabase = await createServerSupabaseClient()
@@ -158,15 +158,15 @@ export async function loginAction(formData: FormData): Promise<ActionResponse<Us
 ### Types existants a utiliser
 
 ```typescript
-// @foxeo/types — DEJA DEFINIS
-import { ActionResponse, successResponse, errorResponse } from '@foxeo/types'
-import { UserSession, UserRole, DashboardType } from '@foxeo/types'
-import type { Database } from '@foxeo/types'
+// @monprojetpro/types — DEJA DEFINIS
+import { ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { UserSession, UserRole, DashboardType } from '@monprojetpro/types'
+import type { Database } from '@monprojetpro/types'
 ```
 
 ### Composants UI existants a utiliser
 
-Depuis `@foxeo/ui` — DEJA DISPONIBLES :
+Depuis `@monprojetpro/ui` — DEJA DISPONIBLES :
 - `Button` (variants: default, destructive, outline, secondary, ghost, link)
 - `Input` (full-width, dark mode support, ARIA invalid states)
 - `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter`
@@ -174,7 +174,7 @@ Depuis `@foxeo/ui` — DEJA DISPONIBLES :
 - `Skeleton` (pulsing loader)
 - `Dialog` (pour confirmations)
 
-**NE PAS creer de nouveaux composants UI basiques.** Utiliser ceux de `@foxeo/ui`.
+**NE PAS creer de nouveaux composants UI basiques.** Utiliser ceux de `@monprojetpro/ui`.
 
 ### Middleware — Transformer le placeholder existant
 
@@ -183,7 +183,7 @@ Le middleware actuel dans `apps/client/middleware.ts` est un **placeholder** (la
 ```typescript
 // apps/client/middleware.ts — PATTERN A SUIVRE
 import { NextResponse, type NextRequest } from 'next/server'
-import { createMiddlewareSupabaseClient } from '@foxeo/supabase'
+import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
 
 const PUBLIC_ROUTES = ['/(auth)', '/api/webhooks']
 
@@ -225,7 +225,7 @@ Tables disponibles :
 
 **Typographies :** Poppins (headings/UI) + Inter (body) — deja configures.
 
-**Skeleton loaders obligatoires :** Utiliser `<Skeleton />` de `@foxeo/ui` pour tout loading state.
+**Skeleton loaders obligatoires :** Utiliser `<Skeleton />` de `@monprojetpro/ui` pour tout loading state.
 
 ### Validation Zod — Pattern a suivre
 

@@ -26,7 +26,7 @@ So that **j'ai une vision d'ensemble de mon portefeuille et je retrouve instanta
 **Given** la liste des clients est chargee
 **When** MiKL visualise la liste
 **Then** chaque ligne affiche : nom, entreprise, type de client (Complet / Direct One / Ponctuel), statut (Lab actif, One actif, Inactif, Suspendu), date de creation
-**And** la liste utilise le composant `DataTable` de @foxeo/ui
+**And** la liste utilise le composant `DataTable` de @monprojetpro/ui
 **And** la liste est paginee (20 elements par page par defaut)
 **And** la liste est triable par nom, entreprise, type, statut, date de creation
 **And** les donnees sont fetched via TanStack Query avec queryKey `['clients', operatorId]`
@@ -49,7 +49,7 @@ So that **j'ai une vision d'ensemble de mon portefeuille et je retrouve instanta
 
 **Given** aucun client ne correspond aux filtres ou a la recherche
 **When** la liste est vide
-**Then** un etat vide explicatif s'affiche avec message engageant et CTA "Creer un client" (composant EmptyState de @foxeo/ui)
+**Then** un etat vide explicatif s'affiche avec message engageant et CTA "Creer un client" (composant EmptyState de @monprojetpro/ui)
 
 ---
 
@@ -66,7 +66,7 @@ So that **chaque nouveau client est enregistre dans mon portefeuille avec les do
 **Then** un formulaire de creation s'affiche (dialog modal ou page dediee)
 **And** le formulaire contient les champs : nom (obligatoire), email (obligatoire, unique par operateur), entreprise, telephone, secteur d'activite, type de client (Complet / Direct One / Ponctuel, obligatoire, defaut: Ponctuel) (FR1, FR2)
 **And** le formulaire utilise react-hook-form avec validation Zod
-**And** les schemas de validation sont dans @foxeo/utils/validation-schemas.ts
+**And** les schemas de validation sont dans @monprojetpro/utils/validation-schemas.ts
 
 **Given** MiKL remplit le formulaire de creation
 **When** il soumet le formulaire avec des donnees valides

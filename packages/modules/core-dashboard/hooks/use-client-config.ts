@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import type { ClientConfig } from '@foxeo/types'
+import type { ClientConfig } from '@monprojetpro/types'
 import { getClientConfig } from '../actions/get-client-config'
 
 /**

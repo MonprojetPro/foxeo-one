@@ -1,8 +1,8 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
-import { toCamelCase } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
+import { toCamelCase } from '@monprojetpro/utils'
 import type { DashboardType, ElioMessagePersisted } from '../types/elio.types'
 
 const WELCOME_MESSAGES: Record<DashboardType, { formal: string; casual: string }> = {
@@ -20,11 +20,11 @@ const WELCOME_MESSAGES: Record<DashboardType, { formal: string; casual: string }
   },
 }
 
-export function getWelcomeMessage(
+export async function getWelcomeMessage(
   dashboardType: DashboardType,
   tutoiement: boolean,
   customGreeting?: string
-): string {
+): Promise<string> {
   // Task 2.1 — utiliser le greeting custom si fourni (Story 6.6 / Orpheus config)
   if (customGreeting?.trim()) {
     return customGreeting.trim()
@@ -52,7 +52,7 @@ export async function generateWelcomeMessage(
 
   const supabase = await createServerSupabaseClient()
 
-  const content = getWelcomeMessage(dashboardType, tutoiement, customGreeting)
+  const content = await getWelcomeMessage(dashboardType, tutoiement, customGreeting)
 
   const { data, error } = await supabase
     .from('elio_messages')

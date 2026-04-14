@@ -20,7 +20,7 @@ export function validationEmailTemplate(data: ValidationEmailData): string {
 
   const body = `
     <p>Bonjour <strong>${escapeHtml(data.clientName)}</strong>,</p>
-    <p>Votre brief <strong>"${escapeHtml(data.briefTitle)}"</strong> a été <strong>${outcomeText}</strong> par votre accompagnateur Foxeo.</p>
+    <p>Votre brief <strong>"${escapeHtml(data.briefTitle)}"</strong> a été <strong>${outcomeText}</strong> par votre accompagnateur MonprojetPro.</p>
     ${commentSection}
     ${isValidated ? '<p>Félicitations ! Vous pouvez passer à l\'étape suivante.</p>' : '<p>Pas d\'inquiétude — consultez les retours et soumettez une nouvelle version.</p>'}
   `
@@ -29,6 +29,6 @@ export function validationEmailTemplate(data: ValidationEmailData): string {
     title,
     body,
     ctaUrl: data.platformUrl,
-    ctaText: 'Voir sur Foxeo',
+    ctaText: 'Voir sur MonprojetPro',
   })
 }

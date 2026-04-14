@@ -1,12 +1,12 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   type ClientConfig,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 
 /**
  * Server Action — Fetche la configuration client depuis client_configs.

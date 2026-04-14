@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { CommunicationProfileForm } from './communication-profile-form'
-import type { CommunicationProfile } from '@foxeo/types'
+import type { CommunicationProfile } from '@monprojetpro/types'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -11,8 +11,8 @@ vi.mock('../actions/update-communication-profile', () => ({
   updateCommunicationProfile: (...args: unknown[]) => mockUpdateCommunicationProfile(...args),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -29,8 +29,8 @@ vi.mock('@foxeo/ui', async (importOriginal) => {
   }
 })
 
-vi.mock('@foxeo/utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/utils')>()
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/utils')>()
   return {
     ...actual,
     DEFAULT_COMMUNICATION_PROFILE: {
@@ -139,7 +139,7 @@ describe('CommunicationProfileForm', () => {
   })
 
   it('shows success toast on successful save', async () => {
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
 
     render(<CommunicationProfileForm clientId={CLIENT_ID} initialProfile={sampleProfile} />)
 
@@ -156,7 +156,7 @@ describe('CommunicationProfileForm', () => {
       data: null,
       error: { message: 'Erreur', code: 'DATABASE_ERROR' },
     })
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
 
     render(<CommunicationProfileForm clientId={CLIENT_ID} initialProfile={sampleProfile} />)
 

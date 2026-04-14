@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { formatRelativeDate } from '@foxeo/utils'
+import { formatRelativeDate } from '@monprojetpro/utils'
 import type { ElioConversation, DashboardType } from '../types/elio.types'
 
 interface ConversationItemProps {
@@ -10,6 +10,7 @@ interface ConversationItemProps {
   dashboardType: DashboardType
   onSelect: () => void
   onRenameTitle?: (id: string, newTitle: string) => void
+  onDelete?: (id: string) => void
 }
 
 const ACTIVE_CLASSES: Record<DashboardType, string> = {
@@ -31,6 +32,7 @@ export function ConversationItem({
   dashboardType,
   onSelect,
   onRenameTitle,
+  onDelete,
 }: ConversationItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(conversation.title)
@@ -107,11 +109,24 @@ export function ConversationItem({
                 setEditValue(conversation.title)
                 setIsEditing(true)
               }}
-              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity text-xs p-0.5"
+              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity text-xs p-0.5 cursor-pointer"
               aria-label="Renommer la conversation"
               tabIndex={-1}
             >
               ✎
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(conversation.id)
+              }}
+              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity text-xs p-0.5 cursor-pointer"
+              aria-label="Supprimer la conversation"
+              tabIndex={-1}
+            >
+              ✕
             </button>
           )}
         </div>

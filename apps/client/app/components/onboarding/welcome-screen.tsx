@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import { toast } from 'sonner'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { completeOnboarding } from '../../onboarding/actions/complete-onboarding'
 
 interface WelcomeScreenProps {
@@ -37,7 +37,7 @@ export function WelcomeScreen({ firstName }: WelcomeScreenProps) {
             Bienvenue {firstName} !
           </h1>
           <p className="text-lg text-purple-200 max-w-lg mx-auto">
-            Votre espace Foxeo Lab est prêt. Découvrons ensemble ce que vous pouvez faire ici.
+            Votre espace MonprojetPro Lab est prêt. Découvrons ensemble ce que vous pouvez faire ici.
           </p>
         </div>
 

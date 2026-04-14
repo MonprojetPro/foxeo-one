@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
   showSuccess,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import {
   buildClientSlug,
   buildBmadPath,

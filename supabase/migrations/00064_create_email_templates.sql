@@ -39,13 +39,13 @@ CREATE POLICY email_templates_update_operator
 INSERT INTO public.email_templates (template_key, subject, body, variables) VALUES
   (
     'welcome_lab',
-    'Bienvenue dans votre espace Lab Foxeo',
-    'Bonjour {{client_name}},\n\nBienvenue dans votre espace Lab Foxeo. Votre accompagnement commence aujourd''hui.\n\nVotre Centaure,\n{{operator_name}}',
+    'Bienvenue dans votre espace Lab MonprojetPro',
+    'Bonjour {{client_name}},\n\nBienvenue dans votre espace Lab MonprojetPro. Votre accompagnement commence aujourd''hui.\n\nVotre Centaure,\n{{operator_name}}',
     ARRAY['client_name', 'operator_name']
   ),
   (
     'welcome_one',
-    'Votre dashboard One Foxeo est prêt',
+    'Votre dashboard One MonprojetPro est prêt',
     'Bonjour {{client_name}},\n\nFélicitations ! Votre dashboard One est maintenant accessible à l''adresse : {{dashboard_url}}\n\nVotre Centaure,\n{{operator_name}}',
     ARRAY['client_name', 'operator_name', 'dashboard_url']
   ),

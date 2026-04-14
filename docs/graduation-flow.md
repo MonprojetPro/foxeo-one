@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le flux de graduation permet à un client Lab de transitionner vers Foxeo One avec une expérience célébratoire.
+Le flux de graduation permet à un client Lab de transitionner vers MonprojetPro One avec une expérience célébratoire.
 
 ## Prérequis
 
@@ -24,7 +24,7 @@ Page /graduation/celebrate
     → Animation confetti (canvas-confetti)
     → Transition thème Lab (violet) → One (vert/orange)
     → Affiche prénom + message MiKL + récapitulatif parcours
-    → CTA : "Découvrir Foxeo One" → /graduation/discover-one
+    → CTA : "Découvrir MonprojetPro One" → /graduation/discover-one
     → Skip : "Accéder directement" → appelle markGraduationScreenShown() + redirect /
         ↓
 Page /graduation/discover-one

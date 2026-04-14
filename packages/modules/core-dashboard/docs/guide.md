@@ -2,7 +2,7 @@
 
 ## Description
 
-Module d'accueil principal pour tous les dashboards Foxeo (Hub, Lab, One).
+Module d'accueil principal pour tous les dashboards MonprojetPro (Hub, Lab, One).
 Affiche une vue d'ensemble personnalisee selon le type de dashboard et le role utilisateur.
 
 ## Fonctionnalites

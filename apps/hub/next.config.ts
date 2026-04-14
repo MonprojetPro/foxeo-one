@@ -5,12 +5,13 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   transpilePackages: [
-    '@foxeo/ui',
-    '@foxeo/supabase',
-    '@foxeo/utils',
-    '@foxeo/types',
-    '@foxeo/modules-chat',
-    '@foxeo/module-elio',
+    '@monprojetpro/ui',
+    '@monprojetpro/supabase',
+    '@monprojetpro/utils',
+    '@monprojetpro/types',
+    '@monprojetpro/modules-chat',
+    '@monprojetpro/module-elio',
+    '@monprojetpro/modules-email',
   ],
 }
 

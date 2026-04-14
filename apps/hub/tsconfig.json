@@ -1,5 +1,5 @@
 {
-  "extends": "@foxeo/tsconfig/nextjs.json",
+  "extends": "@monprojetpro/tsconfig/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {

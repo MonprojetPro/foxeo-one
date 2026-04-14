@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, showSuccess, showError } from '@foxeo/ui'
-import type { CustomBranding } from '@foxeo/types'
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, showSuccess, showError } from '@monprojetpro/ui'
+import type { CustomBranding } from '@monprojetpro/types'
 import { updateClientBranding } from '../actions/update-client-branding'
 import { uploadClientLogo } from '../actions/upload-client-logo'
 
@@ -121,7 +121,7 @@ export function ClientBrandingForm({ clientId, initialBranding, clientCompanyNam
     }
   }
 
-  const previewName = displayName || clientCompanyName || 'Foxeo One'
+  const previewName = displayName || clientCompanyName || 'MonprojetPro One'
   const previewColor = accentColor || DEFAULT_ACCENT
 
   return (
@@ -162,7 +162,7 @@ export function ClientBrandingForm({ clientId, initialBranding, clientCompanyNam
               placeholder={clientCompanyName || 'Nom de l\'entreprise'}
               maxLength={50}
             />
-            <p className="text-xs text-muted-foreground mt-1">Remplace &quot;Foxeo One&quot; dans le header du dashboard</p>
+            <p className="text-xs text-muted-foreground mt-1">Remplace &quot;MonprojetPro One&quot; dans le header du dashboard</p>
           </div>
 
           {/* Accent color */}

@@ -1,11 +1,11 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 
 export async function deleteClientNote(
   noteId: string

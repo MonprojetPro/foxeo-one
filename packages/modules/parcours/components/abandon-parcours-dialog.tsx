@@ -12,7 +12,7 @@ import {
   Textarea,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { requestParcoursAbandonment } from '../actions/request-abandonment'
 import { ABANDONMENT_REASONS } from '../types/parcours.types'
 

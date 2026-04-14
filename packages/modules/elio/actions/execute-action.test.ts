@@ -3,7 +3,7 @@ import { checkElioTierAccess } from './execute-action'
 
 const mockMaybySingle = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({

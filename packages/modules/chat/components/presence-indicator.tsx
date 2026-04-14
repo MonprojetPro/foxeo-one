@@ -1,5 +1,5 @@
 import type { HTMLAttributes } from 'react'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 
 interface PresenceIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'role'> {
   status: 'online' | 'offline'

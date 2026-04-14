@@ -102,7 +102,7 @@ UPDATE clients SET onboarding_completed = TRUE WHERE created_at < NOW();
 
 ```typescript
 // apps/client/middleware.ts
-import { createMiddlewareSupabaseClient } from '@foxeo/supabase/middleware'
+import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase/middleware'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -156,7 +156,7 @@ export const config = {
 
 ```typescript
 // apps/client/app/onboarding/welcome/page.tsx
-import { Button } from '@foxeo/ui/components/button'
+import { Button } from '@monprojetpro/ui/components/button'
 import Link from 'next/link'
 
 export default function WelcomePage() {
@@ -164,7 +164,7 @@ export default function WelcomePage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-black text-white">
       <div className="max-w-2xl text-center space-y-8 px-4">
         <h1 className="text-5xl font-bold animate-fade-in">
-          Bienvenue dans Foxeo Lab 👋
+          Bienvenue dans MonprojetPro Lab 👋
         </h1>
         <p className="text-xl text-purple-200">
           Votre espace de création et d'accompagnement pour donner vie à votre projet.

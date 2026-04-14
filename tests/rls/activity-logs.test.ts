@@ -80,7 +80,7 @@ describe.skipIf(!isSupabaseAvailable)('RLS: activity_logs isolation', () => {
     const { data, error } = await adminClient
       .from('operators')
       .select('*')
-      .eq('email', 'mikl@foxeo.io')
+      .eq('email', 'mikl@monprojet-pro.com')
       .single()
 
     expect(error).toBeNull()

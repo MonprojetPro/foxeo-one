@@ -1,11 +1,11 @@
-# Architecture PRD Consolidée — Foxeo One
+# Architecture PRD Consolidée — MonprojetPro One
 
 ## Table of Contents
 
-- [Architecture PRD Consolidée — Foxeo One](#table-of-contents)
+- [Architecture PRD Consolidée — MonprojetPro One](#table-of-contents)
   - [Architecture Agents IA](./architecture-agents-ia.md)
     - [Vue d'Ensemble](./architecture-agents-ia.md#vue-densemble)
-    - [Orpheus — Cerveau Foxeo (BMAD/Cursor)](./architecture-agents-ia.md#orpheus-cerveau-foxeo-bmadcursor)
+    - [Orpheus — Cerveau MonprojetPro (BMAD/Cursor)](./architecture-agents-ia.md#orpheus-cerveau-monprojetpro-bmadcursor)
     - [Élio Hub — Assistant Opérationnel MiKL](./architecture-agents-ia.md#lio-hub-assistant-oprationnel-mikl)
     - [Élio Lab — Assistant Parcours Création](./architecture-agents-ia.md#lio-lab-assistant-parcours-cration)
     - [Élio One — Assistant Client Établi](./architecture-agents-ia.md#lio-one-assistant-client-tabli)
@@ -38,7 +38,7 @@
     - [Phase 1 : Prise de Rendez-vous](./flux-onboarding-client.md#phase-1-prise-de-rendez-vous)
       - [Points d'Entrée](./flux-onboarding-client.md#points-dentre)
       - [Outil : Cal.com (Self-hosted)](./flux-onboarding-client.md#outil-calcom-self-hosted)
-      - [Flux Technique Cal.com → Foxeo](./flux-onboarding-client.md#flux-technique-calcom-foxeo)
+      - [Flux Technique Cal.com → MonprojetPro](./flux-onboarding-client.md#flux-technique-calcom-monprojetpro)
     - [Phase 2 : Salle d'Attente (Pré-visio)](./flux-onboarding-client.md#phase-2-salle-dattente-pr-visio)
       - [Timing](./flux-onboarding-client.md#timing)
       - [Interface Salle d'Attente](./flux-onboarding-client.md#interface-salle-dattente)

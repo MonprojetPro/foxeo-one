@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { ParcoursOverview } from '@foxeo/module-parcours'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { ParcoursOverview } from '@monprojetpro/module-parcours'
 
 export default async function ClientParcoursPage() {
   const supabase = await createServerSupabaseClient()

@@ -2,7 +2,7 @@
 
 import { useOnline } from '../hooks/use-online'
 import { WifiOff } from 'lucide-react'
-import { t } from '@foxeo/utils'
+import { t } from '@monprojetpro/utils'
 // Ensure messages are loaded
 import '../messages/init'
 

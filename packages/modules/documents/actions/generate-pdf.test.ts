@@ -11,7 +11,7 @@ const mockFrom = vi.fn(() => ({
   select: mockSelectAll,
 }))
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },
@@ -108,9 +108,9 @@ describe('generatePdf Server Action', () => {
     const result = await generatePdf({ documentId: DOC_ID })
 
     expect(result.error).toBeNull()
-    expect(result.data?.htmlContent).toContain('Foxeo')
+    expect(result.data?.htmlContent).toContain('MonprojetPro')
     expect(result.data?.htmlContent).toContain('Mon Guide')
-    expect(result.data?.htmlContent).toContain('Généré depuis Foxeo')
+    expect(result.data?.htmlContent).toContain('Généré depuis MonprojetPro')
     expect(result.data?.htmlContent).toContain('guide.md')
     expect(result.data?.fileName).toBe('guide.pdf')
   })

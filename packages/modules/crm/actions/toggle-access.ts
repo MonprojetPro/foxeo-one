@@ -1,11 +1,11 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { ToggleAccessInput as ToggleAccessInputSchema } from '../types/crm.types'
 import type { ToggleAccessInput } from '../types/crm.types'
 

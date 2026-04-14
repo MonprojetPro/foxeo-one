@@ -1,11 +1,11 @@
-# Foxeo One - Analyse de l'arborescence source
+# MonprojetPro One - Analyse de l'arborescence source
 
 > Documentation générée le 2026-01-20 par BMM Document Project Workflow
 
 ## Structure complète
 
 ```
-foxeo-one/
+monprojetpro-one/
 │
 ├── 📁 apps/                          # Applications (modules)
 │   └── 📁 brief/                     # 🎯 MODULE BRIEF - App Next.js
@@ -116,7 +116,7 @@ foxeo-one/
 │
 ├── 📁 packages/                      # Packages partagés
 │   │
-│   ├── 📁 ui/                        # 📦 @foxeo/ui - Design System
+│   ├── 📁 ui/                        # 📦 @monprojetpro/ui - Design System
 │   │   ├── 📁 src/
 │   │   │   ├── alert.tsx
 │   │   │   ├── alert-dialog.tsx
@@ -139,7 +139,7 @@ foxeo-one/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   ├── 📁 utils/                     # 📦 @foxeo/utils - Utilitaires
+│   ├── 📁 utils/                     # 📦 @monprojetpro/utils - Utilitaires
 │   │   ├── 📁 src/
 │   │   │   ├── cn.ts                 # Merge classnames
 │   │   │   ├── date.ts               # Formatage dates
@@ -147,7 +147,7 @@ foxeo-one/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   └── 📁 tsconfig/                  # 📦 @foxeo/tsconfig - Configs TS
+│   └── 📁 tsconfig/                  # 📦 @monprojetpro/tsconfig - Configs TS
 │       ├── base.json                 # Config de base
 │       ├── nextjs.json               # Config Next.js
 │       ├── package.json
@@ -240,4 +240,4 @@ apps/brief/
 | Utilitaires | camelCase | `calculateScore.ts` |
 | Types | PascalCase | `Brief`, `BriefElement` |
 | Routes API | kebab-case | `integrate-responses/` |
-| Packages | kebab-case | `@foxeo/ui` |
+| Packages | kebab-case | `@monprojetpro/ui` |

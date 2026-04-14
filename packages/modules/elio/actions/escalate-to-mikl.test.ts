@@ -4,7 +4,7 @@ import { escalateToMiKL } from './escalate-to-mikl'
 const mockSingle = vi.fn()
 const mockInsert = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn((table: string) => {
       if (table === 'clients') {

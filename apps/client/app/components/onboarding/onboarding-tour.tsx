@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { completeOnboarding } from '../../onboarding/actions/complete-onboarding'
 import { useOnboardingTour } from '../../hooks/use-onboarding-tour'
 

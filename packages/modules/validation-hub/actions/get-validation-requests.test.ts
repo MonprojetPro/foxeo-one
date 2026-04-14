@@ -12,7 +12,7 @@ const mockEqOperatorLookup = vi.fn(() => ({ single: mockSingle }))
 const mockSelectOperator = vi.fn(() => ({ eq: mockEqOperatorLookup }))
 const mockGetUser = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: (table: string) => {
       if (table === 'operators') {

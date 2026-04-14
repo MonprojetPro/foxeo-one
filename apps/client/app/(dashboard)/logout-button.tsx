@@ -2,7 +2,7 @@
 
 import { useTransition, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Alert, AlertDescription } from '@foxeo/ui'
+import { Button, Alert, AlertDescription } from '@monprojetpro/ui'
 import { logoutAction } from '../(auth)/actions/auth'
 
 export function LogoutButton() {

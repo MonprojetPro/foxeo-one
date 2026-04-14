@@ -29,7 +29,7 @@
 |-----------|--------------|-------------|----------|----------|---------|
 | **Dashboard Mère** | **FOXEO-HUB** | MiKL | Cockpit central - gestion clients/projets | **Élio Hub** | Bordeaux Foncé `#6B1B1B` |
 | **Dashboard Coaching** | **FOXEO-LAB** | Client en création | Accompagnement de l'idée au business | **Élio Lab** (LLM, accès contrôlé) | Vert Émeraude `#2E8B57` |
-| **Dashboard Outil** | **FOXEO-ONE** | Client établi | Outil métier personnalisé | **Élio One** (support + évolutions) | Orange Foxeo `#F7931E` |
+| **Dashboard Outil** | **FOXEO-ONE** | Client établi | Outil métier personnalisé | **Élio One** (support + évolutions) | Orange MonprojetPro `#F7931E` |
 
 ### Architecture des Agents IA
 
@@ -38,7 +38,7 @@
 │  🦉 ORPHEUS - CERVEAU FOXEO (BMAD/Cursor)                           │
 ├─────────────────────────────────────────────────────────────────────┤
 │  • Agent BMAD dans Cursor, travaille avec MiKL                      │
-│  • Connaissance complète de l'entreprise Foxeo                      │
+│  • Connaissance complète de l'entreprise MonprojetPro                      │
 │  • GÉNÈRE des documents sources pour alimenter les Élio :           │
 │    - Estimations prix projets → Élio Hub fait les devis             │
 │    - Docs techniques modules → Élio One accompagne les clients      │
@@ -49,23 +49,23 @@
                     génère documents
                               ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  🦊 ÉLIO - 3 CONFIGURATIONS (dans Foxeo)                            │
+│  🦊 ÉLIO - 3 CONFIGURATIONS (dans MonprojetPro)                            │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  ÉLIO HUB (Foxeo-Hub) - Pour MiKL                                   │
+│  ÉLIO HUB (MonprojetPro-Hub) - Pour MiKL                                   │
 │  ├── Récupère les docs Orpheus (estimations, specs...)              │
 │  ├── Gère agenda, visios, devis, facturation                        │
 │  ├── Orchestration des workflows Hub                                │
 │  └── Interface quotidienne de MiKL                                  │
 │                                                                     │
-│  ÉLIO LAB (Foxeo-Lab) - Pour clients en création                    │
+│  ÉLIO LAB (MonprojetPro-Lab) - Pour clients en création                    │
 │  ├── Instance par CLIENT                                            │
 │  ├── Guide bienveillant, accompagne la création                     │
 │  ├── Génère docs brainstorming → envoyés à Orpheus                  │
 │  ├── Reçoit les livrables retravaillés par Orpheus                  │
 │  └── Connecté LLM = coûts, accès contrôlé par MiKL                  │
 │                                                                     │
-│  ÉLIO ONE (Foxeo-One) - Pour clients établis                        │
+│  ÉLIO ONE (MonprojetPro-One) - Pour clients établis                        │
 │  ├── Instance par CLIENT                                            │
 │  ├── Récupère docs techniques générés par Orpheus                   │
 │  ├── Accompagne le client dans l'utilisation de son outil           │
@@ -436,14 +436,14 @@ module_seances:
 │                                                             │
 │  STYLING : Tailwind CSS 4                                   │
 │                                                             │
-│  TYPOGRAPHIE (Charte Foxeo)                                │
+│  TYPOGRAPHIE (Charte MonprojetPro)                                │
 │  ├── Poppins (titres, UI, boutons)                         │
 │  └── Inter (corps de texte)                                │
 │                                                             │
 │  COULEURS PAR DASHBOARD                                     │
 │  ├── FOXEO-HUB  → Bordeaux Foncé #6B1B1B                   │
 │  ├── FOXEO-LAB  → Vert Émeraude  #2E8B57                   │
-│  └── FOXEO-ONE  → Orange Foxeo   #F7931E                   │
+│  └── FOXEO-ONE  → Orange MonprojetPro   #F7931E                   │
 │                                                             │
 │  PRINCIPE V1                                                │
 │  └── Template unique + couleur distinctive par dashboard   │
@@ -822,7 +822,7 @@ Deno.serve(async (req) => {
 **Variables d'environnement `.env` :**
 ```bash
 # OpenVidu Server
-OPENVIDU_URL=https://openvidu.foxeo.io
+OPENVIDU_URL=https://openvidu.monprojet-pro.com
 OPENVIDU_API_KEY=your-api-key
 OPENVIDU_API_SECRET=your-api-secret
 
@@ -992,9 +992,9 @@ const transcript = results.channels[0].alternatives[0].transcript;
 - **App mobile** iOS/Android (Flutter)
 - **Portail client** pour que les clients voient/paient leurs factures
 
-#### Couverture des Besoins Foxeo
+#### Couverture des Besoins MonprojetPro
 
-| Besoin Foxeo | Invoice Ninja | Endpoint API |
+| Besoin MonprojetPro | Invoice Ninja | Endpoint API |
 |--------------|---------------|--------------|
 | Créer des devis | ✅ OUI | `POST /api/v1/quotes` |
 | Créer des factures | ✅ OUI | `POST /api/v1/invoices` |
@@ -1084,7 +1084,7 @@ POST /api/v1/payments
 Facture marquée "Payée" ✅
         │
         ▼
-Webhook notifie Foxeo
+Webhook notifie MonprojetPro
 ```
 
 **Code pour enregistrer un paiement manuel :**
@@ -1122,7 +1122,7 @@ async function recordManualPayment(invoiceId, amount, reference, type = 'bank_tr
 }
 ```
 
-#### Architecture d'Intégration Foxeo
+#### Architecture d'Intégration MonprojetPro
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -1137,7 +1137,7 @@ async function recordManualPayment(invoiceId, amount, reference, type = 'bank_tr
 │   │   ├── Relances automatiques                                            │
 │   │   └── Rapports CA                                                      │
 │   │                                                                         │
-│   └── API Foxeo Backend (proxy vers Invoice Ninja)                         │
+│   └── API MonprojetPro Backend (proxy vers Invoice Ninja)                         │
 │       ├── POST /api/billing/quotes      → IN /api/v1/quotes                │
 │       ├── POST /api/billing/invoices    → IN /api/v1/invoices              │
 │       ├── POST /api/billing/payments    → IN /api/v1/payments              │
@@ -1160,7 +1160,7 @@ async function recordManualPayment(invoiceId, amount, reference, type = 'bank_tr
 │   ├── Stripe Connect OAuth                                                 │
 │   ├── Envoi emails automatiques                                            │
 │   ├── Relances programmées                                                 │
-│   └── Webhooks → Foxeo                                                     │
+│   └── Webhooks → MonprojetPro                                                     │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -1194,8 +1194,8 @@ async function createQuote(clientId, items, terms = "Devis valable 30 jours") {
         cost: item.price
       })),
       terms: terms,
-      footer: "Merci pour votre confiance - MiKL / Foxeo",
-      public_notes: "Ce devis est généré automatiquement depuis Foxeo-One"
+      footer: "Merci pour votre confiance - MiKL / MonprojetPro",
+      public_notes: "Ce devis est généré automatiquement depuis MonprojetPro-One"
     })
   });
 
@@ -1278,7 +1278,7 @@ app.post('/webhooks/invoice-ninja', async (req, res) => {
         data: event.data
       });
 
-      // Mettre à jour le statut dans Foxeo
+      // Mettre à jour le statut dans MonprojetPro
       await projectService.updatePaymentStatus(
         event.data.invoice_id,
         'paid'
@@ -1317,7 +1317,7 @@ services:
     ports:
       - "8080:80"
     environment:
-      - APP_URL=https://billing.foxeo.io
+      - APP_URL=https://billing.monprojet-pro.com
       - APP_KEY=${INVOICE_NINJA_APP_KEY}
       - DB_HOST=db
       - DB_DATABASE=ninja
@@ -1354,7 +1354,7 @@ volumes:
 
 ```bash
 # Invoice Ninja
-INVOICE_NINJA_URL=https://billing.foxeo.io
+INVOICE_NINJA_URL=https://billing.monprojet-pro.com
 INVOICE_NINJA_TOKEN=your-api-token
 INVOICE_NINJA_APP_KEY=base64:xxxxx
 
@@ -1364,7 +1364,7 @@ DB_ROOT_PASSWORD=secure-root-password
 
 # Email (pour envoi factures)
 SMTP_HOST=smtp.example.com
-SMTP_USER=billing@foxeo.io
+SMTP_USER=billing@monprojet-pro.com
 SMTP_PASS=smtp-password
 ```
 
@@ -1431,22 +1431,22 @@ SMTP_PASS=smtp-password
 - Équivalent de Calendly
 - Synchro bidirectionnelle Google Calendar
 - Formulaires personnalisables à la réservation
-- **Lien de visio custom** (notre lien Foxeo/OpenVidu au lieu de Meet/Zoom)
+- **Lien de visio custom** (notre lien MonprojetPro/OpenVidu au lieu de Meet/Zoom)
 - API complète pour création de RDV depuis mobile
-- Webhooks pour intégration avec Foxeo
+- Webhooks pour intégration avec MonprojetPro
 
 #### Fonctionnalités Utilisées
 
-| Fonctionnalité | Usage Foxeo |
+| Fonctionnalité | Usage MonprojetPro |
 |----------------|-------------|
 | **Event Types** | Type "Visio Découverte" (1h) |
 | **Booking Form** | Collecte Prénom, Nom, Email, Société |
-| **Custom Video Link** | Lien vers `visio.foxeo.io/rdv/{room-id}` |
-| **Webhooks** | Notification Foxeo à chaque réservation |
+| **Custom Video Link** | Lien vers `visio.monprojet-pro.com/rdv/{room-id}` |
+| **Webhooks** | Notification MonprojetPro à chaque réservation |
 | **Google Calendar Sync** | Synchro bidirectionnelle agenda MiKL |
 | **API** | Création RDV depuis Hub mobile |
 
-#### Webhook Cal.com → Foxeo
+#### Webhook Cal.com → MonprojetPro
 
 ```javascript
 // POST /api/webhooks/calcom
@@ -1492,7 +1492,7 @@ services:
       - DATABASE_URL=postgresql://...
       - NEXTAUTH_SECRET=${CALCOM_SECRET}
       - CALENDSO_ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - NEXT_PUBLIC_WEBAPP_URL=https://rdv.foxeo.io
+      - NEXT_PUBLIC_WEBAPP_URL=https://rdv.monprojet-pro.com
     volumes:
       - calcom-data:/app/data
     depends_on:
@@ -1518,7 +1518,7 @@ volumes:
 **Site :** https://api.insee.fr/
 **Coût :** Gratuit (API publique)
 
-#### Usage dans Foxeo
+#### Usage dans MonprojetPro
 
 Lors du formulaire pré-visio, le client saisit son SIRET. L'API INSEE retourne automatiquement :
 
@@ -1606,11 +1606,11 @@ return {
 | 25/01/2026 | Invoice Ninja API v5 validée pour facturation | Analyse doc API Invoice Ninja |
 | 25/01/2026 | Stripe Connect OAuth via Invoice Ninja | Analyse doc API Invoice Ninja |
 | 25/01/2026 | Paiements manuels via API /payments | Analyse doc API Invoice Ninja |
-| 25/01/2026 | Webhooks Invoice Ninja → Foxeo | Analyse doc API Invoice Ninja |
-| 25/01/2026 | **Nomenclature officielle** : Foxeo-Hub / Foxeo-Lab / Foxeo-One | Party Mode Session |
+| 25/01/2026 | Webhooks Invoice Ninja → MonprojetPro | Analyse doc API Invoice Ninja |
+| 25/01/2026 | **Nomenclature officielle** : MonprojetPro-Hub / MonprojetPro-Lab / MonprojetPro-One | Party Mode Session |
 | 25/01/2026 | **Couleurs dashboards** : Hub=#6B1B1B, Lab=#2E8B57, One=#F7931E | Party Mode Session |
 | 25/01/2026 | **Élio Hub** = agent MiKL pour Dashboard Hub | Party Mode Session |
-| 04/02/2026 | **CORRECTION** : Orpheus = BMAD/Cursor uniquement, pas Foxeo | Session wireframes |
+| 04/02/2026 | **CORRECTION** : Orpheus = BMAD/Cursor uniquement, pas MonprojetPro | Session wireframes |
 | 25/01/2026 | **Élio** = 2 configs (Lab: guide création LLM / One: support+évolutions) | Party Mode Session |
 | 25/01/2026 | **Migration Lab→One** : Lab accessible depuis One, Élio Lab désactivable | Party Mode Session |
 | 25/01/2026 | **Design stack** : shadcn/ui + 21st.dev (payants validés au cas par cas) | Party Mode Session |

@@ -1,4 +1,4 @@
-import { ShellSkeleton } from '@foxeo/ui'
+import { ShellSkeleton } from '@monprojetpro/ui'
 
 export default function DashboardLoading() {
   return <ShellSkeleton />

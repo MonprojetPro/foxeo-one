@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
-import { showInfo } from '@foxeo/ui'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
+import { showInfo } from '@monprojetpro/ui'
 
 export function useNotificationsRealtime(recipientId: string) {
   const queryClient = useQueryClient()

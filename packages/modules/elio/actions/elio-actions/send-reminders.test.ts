@@ -4,7 +4,7 @@ import { sendReminders } from './send-reminders'
 const mockInsert = vi.fn(async () => ({ error: null }))
 const mockMaybeSingle = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({

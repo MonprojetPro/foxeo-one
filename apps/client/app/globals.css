@@ -1,6 +1,6 @@
-@import "@foxeo/ui/globals.css";
-@import "@foxeo/ui/themes/lab.css";
-@import "@foxeo/ui/themes/one.css";
+@import "@monprojetpro/ui/globals.css";
+@import "@monprojetpro/ui/themes/lab.css";
+@import "@monprojetpro/ui/themes/one.css";
 
 /* Graduation theme transition — Lab → One */
 html.theme-transition {

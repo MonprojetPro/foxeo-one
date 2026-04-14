@@ -1,8 +1,8 @@
-# Foxeo One - Inventaire des composants
+# MonprojetPro One - Inventaire des composants
 
 > Documentation générée le 2026-01-20 par BMM Document Project Workflow
 
-## Packages partagés (@foxeo/ui)
+## Packages partagés (@monprojetpro/ui)
 
 ### Composants de base
 
@@ -39,9 +39,9 @@ import {
   Dialog,
   Input,
   // ... autres composants
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 
-import { useMobile } from '@foxeo/ui'
+import { useMobile } from '@monprojetpro/ui'
 ```
 
 ---
@@ -183,7 +183,7 @@ page.tsx
 
 ## Dépendances UI
 
-### Radix UI (via @foxeo/ui)
+### Radix UI (via @monprojetpro/ui)
 
 - `@radix-ui/react-alert-dialog`
 - `@radix-ui/react-dialog`

@@ -1,4 +1,4 @@
-import { DocumentViewerSkeleton } from '@foxeo/module-documents'
+import { DocumentViewerSkeleton } from '@monprojetpro/module-documents'
 
 export default function DocumentViewerLoadingState() {
   return <DocumentViewerSkeleton />

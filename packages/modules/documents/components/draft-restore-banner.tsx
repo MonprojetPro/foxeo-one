@@ -1,5 +1,5 @@
 import { AlertCircle } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle, Button } from '@foxeo/ui'
+import { Alert, AlertDescription, AlertTitle, Button } from '@monprojetpro/ui'
 
 interface DraftRestoreBannerProps {
   hasDraft: boolean

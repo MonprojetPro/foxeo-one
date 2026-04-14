@@ -24,7 +24,7 @@ docker compose up -d
 
 ## Q: Combien de participants par visio ?
 
-**A:** OpenVidu CE supporte techniquement jusqu'à plusieurs dizaines de participants. Dans le contexte Foxeo (MiKL + un client), 2-4 participants est la cible.
+**A:** OpenVidu CE supporte techniquement jusqu'à plusieurs dizaines de participants. Dans le contexte MonprojetPro (MiKL + un client), 2-4 participants est la cible.
 
 ## Q: Les meetings sont-ils enregistrés automatiquement ?
 

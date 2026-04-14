@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 
 /**
  * Server Action — Mise à jour manuelle du titre d'une conversation Élio.

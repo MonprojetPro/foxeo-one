@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { SupportTicket, UpdateTicketStatusInput } from '../types/support.types'
 import { getSupportTickets } from '../actions/get-support-tickets'
 import { createSupportTicket } from '../actions/create-support-ticket'

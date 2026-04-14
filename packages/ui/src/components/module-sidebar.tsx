@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { cn } from '@foxeo/utils'
-import type { ModuleManifest, ModuleTarget } from '@foxeo/types'
+import { cn } from '@monprojetpro/utils'
+import type { ModuleManifest, ModuleTarget } from '@monprojetpro/types'
 import * as LucideIcons from 'lucide-react'
 
 type ModuleSidebarProps = {
@@ -19,7 +19,7 @@ export function ModuleSidebar({ target, modules }: ModuleSidebarProps) {
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-sidebar-border">
         <h2 className="text-lg font-semibold text-sidebar-foreground">
-          {target === 'hub' ? 'Foxeo Hub' : 'Foxeo Client'}
+          {target === 'hub' ? 'MonprojetPro Hub' : 'MonprojetPro Client'}
         </h2>
       </div>
 

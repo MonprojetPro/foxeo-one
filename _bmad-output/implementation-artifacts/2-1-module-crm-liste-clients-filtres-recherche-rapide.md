@@ -22,7 +22,7 @@ so that **j'ai une vision d'ensemble de mon portefeuille et je retrouve instanta
 **Given** la liste des clients est chargée
 **When** MiKL visualise la liste
 **Then** chaque ligne affiche : nom, entreprise, type de client (Complet / Direct One / Ponctuel), statut (Lab actif, One actif, Inactif, Suspendu), date de création
-**And** la liste utilise le composant `DataTable` de @foxeo/ui
+**And** la liste utilise le composant `DataTable` de @monprojetpro/ui
 **And** la liste est paginée (20 éléments par page par défaut)
 **And** la liste est triable par nom, entreprise, type, statut, date de création
 **And** les données sont fetched via TanStack Query avec queryKey `['clients']`
@@ -45,7 +45,7 @@ so that **j'ai une vision d'ensemble de mon portefeuille et je retrouve instanta
 
 **Given** aucun client ne correspond aux filtres ou à la recherche
 **When** la liste est vide
-**Then** un état vide explicatif s'affiche avec message engageant et CTA "Créer un client" (composant EmptyState de @foxeo/ui)
+**Then** un état vide explicatif s'affiche avec message engageant et CTA "Créer un client" (composant EmptyState de @monprojetpro/ui)
 
 ## Tasks / Subtasks
 
@@ -57,11 +57,11 @@ so that **j'ai une vision d'ensemble de mon portefeuille et je retrouve instanta
 
 - [x] Implémenter le schema de validation et les types (AC: #2)
   - [x] Créer `packages/modules/crm/types/crm.types.ts` avec types `Client`, `ClientListItem`, `ClientFilters`
-  - [x] Ajouter validation schemas dans `@foxeo/utils/validation-schemas.ts` pour filtres
+  - [x] Ajouter validation schemas dans `@monprojetpro/utils/validation-schemas.ts` pour filtres
   - [x] Vérifier que les types DB (snake_case) sont transformés en camelCase via helpers
 
 - [x] Créer le composant DataTable principal (AC: #2)
-  - [x] Créer `packages/modules/crm/components/client-list.tsx` avec `DataTable` de @foxeo/ui
+  - [x] Créer `packages/modules/crm/components/client-list.tsx` avec `DataTable` de @monprojetpro/ui
   - [x] Implémenter les colonnes : nom, entreprise, type (badge), statut (badge), date création
   - [x] Configurer tri multi-colonnes (nom, entreprise, type, statut, date)
   - [x] Configurer pagination (20 items/page par défaut, configurable)
@@ -70,7 +70,7 @@ so that **j'ai une vision d'ensemble de mon portefeuille et je retrouve instanta
 - [x] Implémenter le fetching de données avec TanStack Query (AC: #2)
   - [x] Créer Server Action `getClients(operatorId: string)` dans `packages/modules/crm/actions/get-clients.ts`
   - [x] Utiliser Supabase query avec RLS (filtre automatique par `operator_id`)
-  - [x] Transformer snake_case → camelCase avec helper `toCamelCase` de @foxeo/utils
+  - [x] Transformer snake_case → camelCase avec helper `toCamelCase` de @monprojetpro/utils
   - [x] Retourner format `{ data, error }` (jamais de throw)
   - [x] Créer hook `useClients(operatorId: string)` avec `useQuery(['clients', operatorId], ...)`
 
@@ -83,7 +83,7 @@ so that **j'ai une vision d'ensemble de mon portefeuille et je retrouve instanta
 
 - [x] Implémenter les filtres multi-critères (AC: #4)
   - [x] Créer `packages/modules/crm/components/client-filters-panel.tsx` avec filtres : type, statut, secteur
-  - [x] Utiliser composants filtres de @foxeo/ui (Select dropdowns type + statut)
+  - [x] Utiliser composants filtres de @monprojetpro/ui (Select dropdowns type + statut)
   - [x] Combiner filtres + recherche dans un filtrage client-side optimisé
   - [ ] Persister filtres actifs dans URL query params (différé — story 2.3 ou ultérieur)
   - [x] Bouton "Réinitialiser les filtres" quand filtres actifs
@@ -94,14 +94,14 @@ so that **j'ai une vision d'ensemble de mon portefeuille et je retrouve instanta
   - [ ] Prefetch data de la fiche au hover (différé — optimisation story 2.3)
 
 - [x] Implémenter l'état vide (AC: #6)
-  - [x] Créer `packages/modules/crm/components/empty-client-list.tsx` avec EmptyState de @foxeo/ui
+  - [x] Créer `packages/modules/crm/components/empty-client-list.tsx` avec EmptyState de @monprojetpro/ui
   - [x] Message : "Aucun client trouvé. Commencez par créer votre premier client."
   - [x] CTA : bouton "Créer un client" qui ouvre le formulaire de création (Story 2.2)
   - [x] Gérer 2 cas : aucun client existant vs aucun résultat de recherche/filtre
 
 - [x] Créer la page route Hub CRM (AC: #1)
   - [x] Créer `apps/hub/app/(dashboard)/modules/crm/page.tsx` (Server Component)
-  - [x] Charger le module via registry : `const CrmModule = dynamic(() => import('@foxeo/modules/crm'))`
+  - [x] Charger le module via registry : `const CrmModule = dynamic(() => import('@monprojetpro/modules/crm'))`
   - [x] Passer operatorId au composant
   - [x] Créer `apps/hub/app/(dashboard)/modules/crm/loading.tsx` avec skeleton loader spécifique
 
@@ -226,7 +226,7 @@ apps/hub/lib/module-registry.ts            # AUTO-UPDATED: Registry détecte le 
 - [Source: _bmad-output/planning-artifacts/epics/epic-2-gestion-de-la-relation-client-crm-hub-stories-detaillees.md#Story-2.1]
 - [Source: _bmad-output/planning-artifacts/architecture/04-implementation-patterns.md#Data-Fetching-Patterns]
 - [Source: _bmad-output/planning-artifacts/architecture/04-implementation-patterns.md#Naming-Patterns]
-- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md#FR3-FR106]
+- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md#FR3-FR106]
 - [Source: _bmad-output/planning-artifacts/prd/non-functional-requirements.md#NFR-P4]
 - [Source: CLAUDE.md#Data-Fetching-3-patterns-only]
 - [Source: CLAUDE.md#State-Management-strict-separation]
@@ -254,11 +254,11 @@ N/A — Tâche 1 réussie du premier coup
 - Créé types Zod : `Client`, `ClientListItem`, `ClientFilters`
 - Défini enums : `ClientTypeEnum`, `ClientStatusEnum`
 - Type `ClientDB` pour transformation snake_case → camelCase
-- Helpers `toCamelCase` / `toSnakeCase` disponibles dans `@foxeo/utils`
+- Helpers `toCamelCase` / `toSnakeCase` disponibles dans `@monprojetpro/utils`
 - Tests de validation : 6/6 passent ✅
 
 **Tâche 3 (Composant DataTable principal) — COMPLÈTE**
-- Créé composant générique `DataTable` dans @foxeo/ui (réutilisable)
+- Créé composant générique `DataTable` dans @monprojetpro/ui (réutilisable)
 - Créé composant `ClientList` avec colonnes spécifiques CRM
 - Badges pour type client (Complet, Direct One, Ponctuel)
 - Badges pour statut (Lab actif, One actif, Inactif, Suspendu)

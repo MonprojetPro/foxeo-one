@@ -1,11 +1,11 @@
-# Story 6.2: Consultation des briefs par étape — Teasing Foxeo One
+# Story 6.2: Consultation des briefs par étape — Teasing MonprojetPro One
 
 Status: done
 
 ## Story
 
 As a **client Lab**,
-I want **consulter le brief détaillé de chaque étape de mon parcours avec un teasing de Foxeo One**,
+I want **consulter le brief détaillé de chaque étape de mon parcours avec un teasing de MonprojetPro One**,
 So that **je comprends ce qui est attendu à chaque étape et je suis motivé par la perspective d'accéder à One**.
 
 ## Acceptance Criteria
@@ -16,7 +16,7 @@ So that **je comprends ce qui est attendu à chaque étape et je suis motivé pa
 
 3. **AC3 — Brief markdown** : Le brief est rendu en markdown (lib `react-markdown` ou `marked`). Support : headings, listes, bold, italic, liens, images. Code syntax highlighting si nécessaire (optionnel).
 
-4. **AC4 — Teasing Foxeo One** : En bas de chaque étape, section "🚀 Aperçu Foxeo One" affichant `one_teasing_message` personnalisé. Exemples : "Une fois dans Foxeo One, cette fonctionnalité sera automatisée par Élio+", "Dans One, vous aurez accès à un CRM complet pour gérer vos clients". Design : card accent violet/vert avec picto fusée.
+4. **AC4 — Teasing MonprojetPro One** : En bas de chaque étape, section "🚀 Aperçu MonprojetPro One" affichant `one_teasing_message` personnalisé. Exemples : "Une fois dans MonprojetPro One, cette fonctionnalité sera automatisée par Élio+", "Dans One, vous aurez accès à un CRM complet pour gérer vos clients". Design : card accent violet/vert avec picto fusée.
 
 5. **AC5 — Navigation** : Boutons "Étape précédente" / "Étape suivante" (disabled si locked). Breadcrumb : "Mon Parcours > Étape X : [Titre]".
 
@@ -33,7 +33,7 @@ So that **je comprends ce qui est attendu à chaque étape et je suis motivé pa
   - [x] 2.1 `components/parcours-step-detail.tsx` — Vue détaillée étape
   - [x] 2.2 `components/brief-markdown-renderer.tsx` — Rendu markdown avec styles
   - [x] 2.3 `components/brief-assets-gallery.tsx` — Gallery images/vidéos
-  - [x] 2.4 `components/one-teasing-card.tsx` — Card teasing Foxeo One
+  - [x] 2.4 `components/one-teasing-card.tsx` — Card teasing MonprojetPro One
   - [x] 2.5 `components/step-navigation-buttons.tsx` — Boutons prev/next
 
 - [x] Task 3 — Page détaillée étape (AC: #2, #5)
@@ -86,7 +86,7 @@ UPDATE parcours_steps SET brief_content = brief_template WHERE brief_template IS
 'use client'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 
 export function BriefMarkdownRenderer({ content }: { content: string }) {
   return (
@@ -122,7 +122,7 @@ export function BriefMarkdownRenderer({ content }: { content: string }) {
 // components/one-teasing-card.tsx
 'use client'
 import { Rocket } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@foxeo/ui/components/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@monprojetpro/ui/components/card'
 
 export function OneTeasingCard({ message }: { message?: string }) {
   if (!message) return null
@@ -132,7 +132,7 @@ export function OneTeasingCard({ message }: { message?: string }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Rocket className="w-5 h-5 text-purple-400" />
-          Aperçu Foxeo One
+          Aperçu MonprojetPro One
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -147,14 +147,14 @@ export function OneTeasingCard({ message }: { message?: string }) {
 
 ```typescript
 // apps/client/app/(dashboard)/modules/parcours/steps/[stepNumber]/page.tsx
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
 import { notFound } from 'next/navigation'
 import { BriefMarkdownRenderer } from '@/components/brief-markdown-renderer'
 import { BriefAssetsGallery } from '@/components/brief-assets-gallery'
 import { OneTeasingCard } from '@/components/one-teasing-card'
 import { StepNavigationButtons } from '@/components/step-navigation-buttons'
 import { ParcoursStepStatusBadge } from '@/components/parcours-step-status-badge'
-import { Button } from '@foxeo/ui/components/button'
+import { Button } from '@monprojetpro/ui/components/button'
 import Link from 'next/link'
 
 export default async function ParcoursStepDetailPage({
@@ -230,7 +230,7 @@ export default async function ParcoursStepDetailPage({
         <BriefAssetsGallery assets={step.brief_assets} />
       )}
 
-      {/* Teasing Foxeo One */}
+      {/* Teasing MonprojetPro One */}
       <OneTeasingCard message={step.one_teasing_message} />
 
       {/* CTA */}
@@ -333,7 +333,7 @@ Claude Sonnet 4.6 (claude-sonnet-4-6)
 - ✅ [M2] Tests ajoutés pour `ParcoursStepDetail` (11 tests)
 - ✅ [M3] Tests `BriefMarkdownRenderer` améliorés (vérifient prose classes + component overrides)
 - ✅ [M4] Import `vi` ajouté dans `step-navigation-buttons.test.tsx` + tests lock-aware
-- ✅ [FIX] Import `Button` corrigé: `@foxeo/ui` au lieu de `@foxeo/ui/components/button`
+- ✅ [FIX] Import `Button` corrigé: `@monprojetpro/ui` au lieu de `@monprojetpro/ui/components/button`
 
 ### File List
 

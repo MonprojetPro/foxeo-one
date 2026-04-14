@@ -10,7 +10,7 @@
 
 ## Story 3.1 : Module Chat — Migration messages & messagerie temps reel MiKL-client
 
-As a **client Foxeo (Lab ou One)**,
+As a **client MonprojetPro (Lab ou One)**,
 I want **echanger avec MiKL via un chat asynchrone en temps reel depuis mon dashboard**,
 So that **je peux poser mes questions et recevoir des reponses directes de MiKL sans delai**.
 
@@ -102,7 +102,7 @@ So that **je suis informe immediatement de ce qui necessite mon attention**.
 **Given** un utilisateur clique sur le badge notification
 **When** le centre de notifications s'ouvre (dropdown ou panneau lateral)
 **Then** la liste des notifications s'affiche ordonnee de la plus recente a la plus ancienne
-**And** chaque notification affiche : icone par type, titre, body (tronque), date relative (formatRelativeDate de @foxeo/utils)
+**And** chaque notification affiche : icone par type, titre, body (tronque), date relative (formatRelativeDate de @monprojetpro/utils)
 **And** les notifications non lues sont visuellement distinguees (fond accent subtil)
 **And** un bouton "Tout marquer comme lu" est disponible
 
@@ -146,9 +146,9 @@ So that **je suis informe meme quand je ne suis pas connecte a la plateforme**.
 
 **Given** un email transactionnel est envoye
 **When** le contenu est genere
-**Then** l'email utilise un template HTML responsive au branding Foxeo
-**And** le template inclut : logo Foxeo, titre, corps, bouton CTA (lien vers la plateforme), pied de page avec lien de desabonnement
-**And** les emails sont envoyes depuis une adresse noreply@foxeo.io (ou similaire)
+**Then** l'email utilise un template HTML responsive au branding MonprojetPro
+**And** le template inclut : logo MonprojetPro, titre, corps, bouton CTA (lien vers la plateforme), pied de page avec lien de desabonnement
+**And** les emails sont envoyes depuis une adresse noreply@monprojet-pro.com (ou similaire)
 
 **Given** la double delivery est active (email + in-app)
 **When** un evenement declencheur survient
@@ -166,7 +166,7 @@ So that **je suis informe meme quand je ne suis pas connecte a la plateforme**.
 
 ## Story 3.4 : Preferences de notification (client & MiKL)
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **configurer mes preferences de notification pour choisir quels types de notifications je recois et par quel canal**,
 So that **je ne suis pas submerge par des notifications non pertinentes**.
 
@@ -256,7 +256,7 @@ So that **je ne perds pas mon travail et les modifications ne s'ecrasent pas sil
 
 **Given** le mecanisme de verrouillage optimiste n'existe pas encore
 **When** la story est completee
-**Then** un helper `optimisticLock()` est disponible dans @foxeo/utils
+**Then** un helper `optimisticLock()` est disponible dans @monprojetpro/utils
 **And** le pattern est base sur le champ `updated_at` existant sur les tables clients, client_configs, documents
 
 **Given** MiKL ouvre un formulaire d'edition (ex: fiche client, document)
@@ -286,7 +286,7 @@ So that **je ne perds pas mon travail et les modifications ne s'ecrasent pas sil
 
 ## Story 3.7 : Support client — Signalement de problemes & aide en ligne
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **signaler un probleme ou bug depuis l'interface et acceder a une aide en ligne / FAQ**,
 So that **je peux obtenir de l'aide rapidement sans quitter la plateforme**.
 

@@ -1,6 +1,6 @@
 # Epic 1 : Fondation Plateforme & Authentification — Stories detaillees
 
-**Objectif :** MiKL et les clients peuvent acceder aux dashboards Foxeo de maniere securisee avec isolation des donnees, design responsive et dark mode "Minimal Futuriste".
+**Objectif :** MiKL et les clients peuvent acceder aux dashboards MonprojetPro de maniere securisee avec isolation des donnees, design responsive et dark mode "Minimal Futuriste".
 
 **FRs couverts:** FR52, FR53, FR54, FR55, FR56, FR73, FR82, FR108, FR112, FR113, FR114, FR117, FR118, FR119, FR134, FR140, FR141, FR142, FR143, FR151, FR152
 
@@ -18,7 +18,7 @@ So that **chaque audience a une experience dediee et optimisee des le depart**.
 
 **Acceptance Criteria :**
 
-**Given** le starter template Turborepo existant avec @foxeo/ui, @foxeo/utils, @foxeo/tsconfig
+**Given** le starter template Turborepo existant avec @monprojetpro/ui, @monprojetpro/utils, @monprojetpro/tsconfig
 **When** la story est completee
 **Then** les packages suivants existent et sont fonctionnels :
 - `packages/supabase/` avec client.ts, server.ts, middleware.ts, realtime.ts, providers (query-provider, realtime-provider, theme-provider)
@@ -84,14 +84,14 @@ So that **la structure de donnees est en place pour gerer mes clients et leur mu
 
 ## Story 1.3 : Authentification client (inscription, login, sessions)
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **pouvoir m'inscrire avec email + mot de passe, me connecter et avoir une session persistante**,
 So that **j'accede de maniere securisee a mon dashboard personnalise**.
 
 **Acceptance Criteria :**
 
 **Given** un client avec un compte existant
-**When** il accede a app.foxeo.io/login et saisit email + mot de passe valides
+**When** il accede a app.monprojet-pro.com/login et saisit email + mot de passe valides
 **Then** il est redirige vers le dashboard (dashboard)/
 **And** un access token et un refresh token sont crees via Supabase Auth
 **And** les cookies de session sont configures cote serveur via @supabase/ssr
@@ -133,7 +133,7 @@ So that **mon acces administrateur est hautement securise**.
 **Acceptance Criteria :**
 
 **Given** MiKL avec un compte operateur
-**When** il accede a hub.foxeo.io/login et saisit email + mot de passe valides
+**When** il accede a hub.monprojet-pro.com/login et saisit email + mot de passe valides
 **Then** il est redirige vers l'ecran de saisie du code 2FA (TOTP)
 
 **Given** MiKL sur l'ecran 2FA
@@ -147,7 +147,7 @@ So that **mon acces administrateur est hautement securise**.
 **And** le compteur d'echecs s'incremente
 
 **Given** un utilisateur non authentifie ou sans role admin
-**When** il tente d'acceder a une route hub.foxeo.io/(dashboard)/*
+**When** il tente d'acceder a une route hub.monprojet-pro.com/(dashboard)/*
 **Then** le middleware hub/ verifie admin + 2FA
 **And** il est redirige vers /login
 
@@ -200,7 +200,7 @@ So that **la securite et la confidentialite des donnees sont garanties nativemen
 
 ## Story 1.6 : Gestion sessions avancee (multi-device, voir/revoquer, forcer deconnexion)
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **pouvoir voir mes sessions actives et en revoquer, et me connecter simultanement sur plusieurs appareils**,
 So that **j'ai le controle total sur la securite de mon compte**.
 
@@ -237,7 +237,7 @@ So that **j'ai une experience visuelle coherente, agreable et utilisable sur tou
 
 **Acceptance Criteria :**
 
-**Given** le package @foxeo/ui existant
+**Given** le package @monprojetpro/ui existant
 **When** les themes sont configures
 **Then** 3 fichiers CSS OKLCH existent dans packages/ui/src/themes/ :
 - `hub.css` — palette Cyan/Turquoise sur fond #020402
@@ -296,7 +296,7 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
 **Given** un utilisateur qui accede a une section sans contenu
 **When** la liste est vide (pas de documents, pas de messages, pas de clients)
 **Then** un etat vide explicatif s'affiche avec illustration, message engageant et CTA (FR73)
-**And** le composant `EmptyState` de @foxeo/ui est utilise
+**And** le composant `EmptyState` de @monprojetpro/ui est utilise
 
 **Given** un utilisateur qui effectue une action (creation, modification, suppression)
 **When** l'action reussit
@@ -327,7 +327,7 @@ So that **je sais toujours ou je suis, ce que je peux faire et ce qui se passe**
 
 ## Story 1.9 : Consentements & legal (CGU, traitement IA, traces, notification MAJ)
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **accepter les CGU et le consentement IA lors de mon inscription, et etre notifie des mises a jour**,
 So that **la plateforme est conforme RGPD et je garde le controle sur mes donnees**.
 
@@ -364,15 +364,15 @@ So that **la plateforme est conforme RGPD et je garde le controle sur mes donnee
 
 As a **MiKL (operateur)**,
 I want **la plateforme structuree pour supporter facilement plusieurs langues a l'avenir**,
-So that **quand je voudrai proposer Foxeo en anglais, il n'y aura pas de refactoring massif**.
+So that **quand je voudrai proposer MonprojetPro en anglais, il n'y aura pas de refactoring massif**.
 
 **Acceptance Criteria :**
 
 **Given** l'architecture actuelle en francais uniquement
 **When** la structure i18n est mise en place
 **Then** un dossier `messages/` (ou `locales/`) existe dans chaque app avec un fichier `fr.json` contenant les chaines UI principales
-**And** un helper `t()` ou un hook `useTranslations()` est disponible dans @foxeo/utils
-**And** les chaines statiques des composants partages (@foxeo/ui) passent par ce helper
+**And** un helper `t()` ou un hook `useTranslations()` est disponible dans @monprojetpro/utils
+**And** les chaines statiques des composants partages (@monprojetpro/ui) passent par ce helper
 
 **Given** la structure i18n en place
 **When** un developpeur ajoute un nouveau composant

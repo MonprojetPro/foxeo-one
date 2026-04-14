@@ -64,9 +64,9 @@ So that **je gagne du temps et je suis guidé efficacement sans effort de rédac
 ```typescript
 // actions/generate-brief.ts
 'use server'
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse, errorResponse } from '@monprojetpro/types'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({
@@ -98,7 +98,7 @@ export async function generateBrief(stepId: string): Promise<ActionResponse<{ br
   const conversationContext = "Simulation conversation client..." // À remplacer par vraie récupération
 
   // Construire prompt
-  const prompt = `Tu es Élio, l'assistant IA personnel du client dans son parcours Foxeo Lab.
+  const prompt = `Tu es Élio, l'assistant IA personnel du client dans son parcours MonprojetPro Lab.
 
 Le client est à l'étape ${step.step_number} : "${step.title}".
 Description de l'étape : ${step.description}
@@ -148,13 +148,13 @@ Génère uniquement le brief, sans introduction ni commentaire additionnel.`
 // components/generated-brief-dialog.tsx
 'use client'
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@foxeo/ui/components/dialog'
-import { Button } from '@foxeo/ui/components/button'
-import { Textarea } from '@foxeo/ui/components/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@monprojetpro/ui/components/dialog'
+import { Button } from '@monprojetpro/ui/components/button'
+import { Textarea } from '@monprojetpro/ui/components/textarea'
 import { BriefMarkdownRenderer } from './brief-markdown-renderer'
 import { submitStep } from '../actions/submit-step'
 import { generateBrief } from '../actions/generate-brief'
-import { toast } from '@foxeo/ui/components/use-toast'
+import { toast } from '@monprojetpro/ui/components/use-toast'
 import { useRouter } from 'next/navigation'
 
 export function GeneratedBriefDialog({
@@ -334,7 +334,7 @@ Claude Sonnet 4.6 (claude-sonnet-4-6)
 
 ### Debug Log References
 - `@anthropic-ai/sdk` absent → installé à la racine du monorepo + ajouté dans `package.json` elio
-- Architecture: modules ne peuvent pas s'importer directement → `submit-elio-brief.ts` créé pour éviter import de `@foxeo/module-parcours` dans elio
+- Architecture: modules ne peuvent pas s'importer directement → `submit-elio-brief.ts` créé pour éviter import de `@monprojetpro/module-parcours` dans elio
 - `elio_conversations` table pas encore créée (Story 8.2) → fallback gracieux avec try/catch
 
 ### Completion Notes List

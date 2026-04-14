@@ -1,5 +1,5 @@
-import { ChatSkeleton } from '@foxeo/modules-chat'
-import { Skeleton } from '@foxeo/ui'
+import { ChatSkeleton } from '@monprojetpro/modules-chat'
+import { Skeleton } from '@monprojetpro/ui'
 
 export default function ChatConversationLoading() {
   return (

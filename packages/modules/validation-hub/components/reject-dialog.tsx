@@ -16,7 +16,7 @@ import {
   Textarea,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { rejectRequest } from '../actions/reject-request'
 import type { ValidationRequestType } from '../types/validation.types'
 

@@ -13,7 +13,7 @@ import {
   Input,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { deferClient } from '../actions/defer-client'
 
 interface DeferDialogProps {

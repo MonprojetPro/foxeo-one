@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Skeleton } from '@foxeo/ui'
+import { Button, Skeleton } from '@monprojetpro/ui'
 import { Plus } from 'lucide-react'
 import {
   RemindersCalendar,
@@ -9,9 +9,9 @@ import {
   RemindersFilter,
   CreateReminderDialog,
   EditReminderDialog,
-} from '@foxeo/modules-crm/components'
-import { useReminders } from '@foxeo/modules-crm/hooks/use-reminders'
-import type { ReminderFilter, Reminder } from '@foxeo/modules-crm/types/crm.types'
+  useReminders,
+} from '@monprojetpro/modules-crm'
+import type { ReminderFilter, Reminder } from '@monprojetpro/modules-crm'
 
 export default function RemindersPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import type { ExchangeEntry } from './request-exchanges'
 
-vi.mock('@foxeo/utils', async (importOriginal) => {
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,

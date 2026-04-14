@@ -7,13 +7,13 @@ describe('newMessageEmailTemplate', () => {
       recipientName: 'Alice',
       senderName: 'MiKL',
       messagePreview: 'Bonjour, voici les retours...',
-      platformUrl: 'https://lab.foxeo.io/chat',
+      platformUrl: 'https://lab.monprojet-pro.com/chat',
       recipientType: 'client',
     })
     expect(html).toContain('Alice')
     expect(html).toContain('MiKL')
     expect(html).toContain('Bonjour, voici les retours...')
-    expect(html).toContain('https://lab.foxeo.io/chat')
+    expect(html).toContain('https://lab.monprojet-pro.com/chat')
     expect(html).toContain('nouveau message')
     expect(html).toContain('<!DOCTYPE html>')
   })
@@ -23,7 +23,7 @@ describe('newMessageEmailTemplate', () => {
       recipientName: 'MiKL',
       senderName: 'Alice Dupont',
       messagePreview: 'Bonjour MiKL, j\'ai une question...',
-      platformUrl: 'https://hub.foxeo.io/chat',
+      platformUrl: 'https://hub.monprojet-pro.com/chat',
       recipientType: 'operator',
     })
     expect(html).toContain('Alice Dupont')
@@ -36,7 +36,7 @@ describe('newMessageEmailTemplate', () => {
       recipientName: 'Alice',
       senderName: 'MiKL',
       messagePreview: longMessage,
-      platformUrl: 'https://lab.foxeo.io',
+      platformUrl: 'https://lab.monprojet-pro.com',
       recipientType: 'client',
     })
     // Should not include more than 200 chars of preview

@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getCommunicationProfile } from '@foxeo/module-elio'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getCommunicationProfile } from '@monprojetpro/module-elio'
 import { CommunicationProfileForm } from './communication-profile-form'
 
 export const metadata = {
-  title: 'Profil de communication Élio — Foxeo',
+  title: 'Profil de communication Élio — MonprojetPro',
   description: 'Personnalisez les réponses d\'Élio selon vos préférences',
 }
 

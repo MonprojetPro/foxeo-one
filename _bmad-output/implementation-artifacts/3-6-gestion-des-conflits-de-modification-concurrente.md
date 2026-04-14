@@ -10,7 +10,7 @@ So that **je ne perds pas mon travail et les modifications ne s'écrasent pas si
 
 ## Acceptance Criteria
 
-1. **AC1 — Helper optimisticLock** : Helper `optimisticLock()` disponible dans `@foxeo/utils`. Pattern basé sur le champ `updated_at` existant.
+1. **AC1 — Helper optimisticLock** : Helper `optimisticLock()` disponible dans `@monprojetpro/utils`. Pattern basé sur le champ `updated_at` existant.
 
 2. **AC2 — Capture version** : Quand un formulaire d'édition s'ouvre, le `updated_at` de l'enregistrement est stocké comme référence.
 
@@ -28,7 +28,7 @@ So that **je ne perds pas mon travail et les modifications ne s'écrasent pas si
   - [x] 1.1 `packages/utils/src/optimistic-lock.ts` — Helper function
   - [x] 1.2 Fonction `withOptimisticLock(supabase, table, id, updatedAt, updateData)` qui vérifie updated_at
   - [x] 1.3 Retourne `ActionResponse` avec code `CONFLICT` si mismatch
-  - [x] 1.4 Export depuis `@foxeo/utils`
+  - [x] 1.4 Export depuis `@monprojetpro/utils`
 
 - [x] Task 2 — Hook useOptimisticLock (AC: #2)
   - [x] 2.1 `packages/ui/src/hooks/use-optimistic-lock.ts` — Hook qui capture le updated_at initial
@@ -55,8 +55,8 @@ So that **je ne perds pas mon travail et les modifications ne s'écrasent pas si
 ### Architecture — Règles critiques
 
 - **Pas de migration DB** : Utilise les colonnes `updated_at` existantes sur toutes les tables.
-- **Package utils** : Le helper va dans `@foxeo/utils` (réutilisable par tous les modules).
-- **Package ui** : Le hook et le dialog vont dans `@foxeo/ui` (composants partagés).
+- **Package utils** : Le helper va dans `@monprojetpro/utils` (réutilisable par tous les modules).
+- **Package ui** : Le hook et le dialog vont dans `@monprojetpro/ui` (composants partagés).
 - **Response format** : `{ data: null, error: { code: 'CONFLICT', message: '...' } }`
 
 ### Helper optimisticLock
@@ -64,8 +64,8 @@ So that **je ne perds pas mon travail et les modifications ne s'écrasent pas si
 ```typescript
 // packages/utils/src/optimistic-lock.ts
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse, errorResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse, errorResponse } from '@monprojetpro/types'
 
 export async function withOptimisticLock<T>(
   supabase: SupabaseClient,
@@ -184,8 +184,8 @@ function EditClientForm({ client }: { client: Client }) {
 
 ### Dépendances
 
-- `@foxeo/types` — ActionResponse, errorResponse, successResponse
-- `@foxeo/supabase` — SupabaseClient
+- `@monprojetpro/types` — ActionResponse, errorResponse, successResponse
+- `@monprojetpro/supabase` — SupabaseClient
 - Colonnes `updated_at` existantes sur toutes les tables principales
 
 ### Anti-patterns — Interdit
@@ -210,9 +210,9 @@ Claude Opus 4.6
 - Story-specific tests: 26 new tests (7 helper + 8 hook + 8 dialog + 3 integration)
 
 ### Completion Notes List
-- Task 1: Created `withOptimisticLock` helper in `@foxeo/utils` — generic optimistic locking using `updated_at` column with force bypass option. Returns `CONFLICT` error code on PGRST116.
-- Task 2: Created `useOptimisticLock` hook in `@foxeo/ui` — captures initial `updated_at`, detects conflict from response, exposes `resolveConflict()` to reset state.
-- Task 3: Created `ConflictDialog` component in `@foxeo/ui` — uses Dialog primitives, two actions (Recharger default, Forcer), custom message support.
+- Task 1: Created `withOptimisticLock` helper in `@monprojetpro/utils` — generic optimistic locking using `updated_at` column with force bypass option. Returns `CONFLICT` error code on PGRST116.
+- Task 2: Created `useOptimisticLock` hook in `@monprojetpro/ui` — captures initial `updated_at`, detects conflict from response, exposes `resolveConflict()` to reset state.
+- Task 3: Created `ConflictDialog` component in `@monprojetpro/ui` — uses Dialog primitives, two actions (Recharger default, Forcer), custom message support.
 - Task 4: Integrated optimistic lock pattern into `updateClient` Server Action — optional `updatedAt`/`force` params, PGRST116 → CONFLICT detection. Pattern documented via code for future Server Actions.
 - Task 5: All tests written and passing — 26 new tests across 4 test files.
 

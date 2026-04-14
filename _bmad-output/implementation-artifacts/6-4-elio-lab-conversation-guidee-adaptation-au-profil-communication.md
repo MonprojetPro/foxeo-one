@@ -148,7 +148,7 @@ export function buildElioSystemPrompt(
     stepContext = `\n\nLe client est actuellement à l'étape ${step.step_number} : "${step.title}". ${step.description}\n\nVotre rôle est de l'aider à progresser sur cette étape en particulier.`
   }
 
-  return `Vous êtes Élio, l'assistant IA personnel du client dans son parcours Foxeo Lab.
+  return `Vous êtes Élio, l'assistant IA personnel du client dans son parcours MonprojetPro Lab.
 
 **Profil de communication du client :**
 - Ton : ${toneInstructions[profile.preferred_tone]}
@@ -167,12 +167,12 @@ Adaptez vos réponses selon ces préférences tout en restant utile et bienveill
 // components/personalize-elio-dialog.tsx
 'use client'
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@foxeo/ui/components/dialog'
-import { Button } from '@foxeo/ui/components/button'
-import { RadioGroup, RadioGroupItem } from '@foxeo/ui/components/radio-group'
-import { Label } from '@foxeo/ui/components/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@monprojetpro/ui/components/dialog'
+import { Button } from '@monprojetpro/ui/components/button'
+import { RadioGroup, RadioGroupItem } from '@monprojetpro/ui/components/radio-group'
+import { Label } from '@monprojetpro/ui/components/label'
 import { createCommunicationProfile } from '../actions/create-communication-profile'
-import { toast } from '@foxeo/ui/components/use-toast'
+import { toast } from '@monprojetpro/ui/components/use-toast'
 
 export function PersonalizeElioDialog({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [tone, setTone] = useState<string>('friendly')
@@ -371,8 +371,8 @@ Claude Sonnet 4.6 (claude-sonnet-4-6)
 ### Debug Log References
 
 - Migration 00037 déjà prise (parcours_steps) → utilisé 00042
-- `RadioGroup`/`RadioGroupItem` non disponibles dans `@foxeo/ui` → implémenté avec toggle buttons custom
-- Import `@foxeo/ui/components/button` → corrigé en `@foxeo/ui` (pas de deep imports)
+- `RadioGroup`/`RadioGroupItem` non disponibles dans `@monprojetpro/ui` → implémenté avec toggle buttons custom
+- Import `@monprojetpro/ui/components/button` → corrigé en `@monprojetpro/ui` (pas de deep imports)
 - Trigger fn: `fn_update_updated_at()` (pas `update_updated_at_column()`)
 
 ### Completion Notes List

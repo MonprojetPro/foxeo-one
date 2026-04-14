@@ -110,7 +110,7 @@ So that **je peux prendre une décision éclairée sans avoir à chercher les in
 
 **And** les boutons sont désactivés si le statut n'est pas 'pending' ou 'needs_clarification'
 **And** les boutons "Actions de traitement" restent actifs sur statut 'approved'
-**And** les boutons utilisent le composant Button de @foxeo/ui
+**And** les boutons utilisent le composant Button de @monprojetpro/ui
 
 ### AC 8 : Design responsive et performance
 
@@ -231,7 +231,7 @@ const { data, error } = await supabase
   .single()
 ```
 
-**Transformation** : Utiliser `toCamelCase()` de `@foxeo/utils` pour transformer les données DB → API.
+**Transformation** : Utiliser `toCamelCase()` de `@monprojetpro/utils` pour transformer les données DB → API.
 
 ### Références architecture importantes
 
@@ -353,10 +353,10 @@ export function ClientHeader({ client }: { client: Client }) {
 | @tanstack/react-query | ^5.90.x | Data fetching & cache |
 | @supabase/supabase-js | ^2.95.x | Database client |
 | react-markdown | Latest | Markdown rendering |
-| @foxeo/ui | Internal | Design system |
-| @foxeo/utils | Internal | Helpers (toCamelCase, formatRelativeDate) |
+| @monprojetpro/ui | Internal | Design system |
+| @monprojetpro/utils | Internal | Helpers (toCamelCase, formatRelativeDate) |
 
-#### Composants UI disponibles (@foxeo/ui)
+#### Composants UI disponibles (@monprojetpro/ui)
 
 - `Card`, `CardHeader`, `CardContent`, `CardFooter` : Cartes avec sections
 - `Avatar`, `AvatarImage`, `AvatarFallback` : Avatar avec fallback initiales
@@ -366,7 +366,7 @@ export function ClientHeader({ client }: { client: Client }) {
 - `Skeleton` : Skeleton loader
 - `ScrollArea` : Zone scrollable
 
-#### Helpers disponibles (@foxeo/utils)
+#### Helpers disponibles (@monprojetpro/utils)
 
 - `formatRelativeDate(isoDate)` : "il y a 2h", "hier"
 - `formatFullDate(isoDate)` : "15 février 2026 à 14h30"
@@ -429,7 +429,7 @@ function RequestDetailWrapper({ requestId }: { requestId: string }) {
 
 ```typescript
 // apps/hub/app/(dashboard)/modules/validation-hub/[requestId]/loading.tsx
-import { Skeleton } from '@foxeo/ui'
+import { Skeleton } from '@monprojetpro/ui'
 
 export default function RequestDetailLoading() {
   return (
@@ -590,7 +590,7 @@ Claude Sonnet 4 (implementation) + Claude Sonnet 4 (code review)
 - Migration 00044 created for `validation_requests` table (was missing from Story 7.1)
 - Added `avatar_url` column to `clients` table
 - Installed `react-markdown` in validation-hub workspace
-- Added `formatFullDate`, `getInitials`, `truncate` to `@foxeo/utils`
+- Added `formatFullDate`, `getInitials`, `truncate` to `@monprojetpro/utils`
 - Code Review fixes: extracted shared STATUS_CONFIG to `utils/status-config.ts` (DRY), added operator auth check to `get-client-recent-messages.ts` (security), added missing `use-client-history.test.ts` (test coverage)
 - 2535 tests passing (up from 2451)
 

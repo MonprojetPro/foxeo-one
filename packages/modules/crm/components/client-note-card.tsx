@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { updateClientNote } from '../actions/update-client-note'
 import { deleteClientNote } from '../actions/delete-client-note'
 import type { ClientNote } from '../types/crm.types'

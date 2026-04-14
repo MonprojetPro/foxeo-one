@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, Button, Skeleton } from '@foxeo/ui'
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, Button, Skeleton } from '@monprojetpro/ui'
 import { AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react'
-import { formatRelativeDate } from '@foxeo/utils'
+import { formatRelativeDate } from '@monprojetpro/utils'
 import { useValidationQueue } from '../hooks/use-validation-queue'
 import { useValidationRealtime } from '../hooks/use-validation-realtime'
 

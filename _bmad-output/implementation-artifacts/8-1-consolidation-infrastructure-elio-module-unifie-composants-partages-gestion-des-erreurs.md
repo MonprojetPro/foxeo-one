@@ -4,7 +4,7 @@ Status: done
 
 ## Story
 
-As a **client Foxeo (Lab ou One)**,
+As a **client MonprojetPro (Lab ou One)**,
 I want **qu'Élio fonctionne de manière fiable et cohérente quel que soit le dashboard**,
 So that **mon expérience avec l'assistant IA est fluide, sans bugs ni incohérences entre les contextes**.
 
@@ -262,7 +262,7 @@ type CommunicationProfile = {
   styleNotes: string       // notes libres
 }
 
-// Défaut dans @foxeo/utils
+// Défaut dans @monprojetpro/utils
 const DEFAULT_COMMUNICATION_PROFILE: CommunicationProfile = {
   levelTechnical: 'intermediaire',
   styleExchange: 'conversationnel',
@@ -413,7 +413,7 @@ export function useElioConfig(
 // actions/send-to-elio.ts
 'use server'
 
-import { createServerClient } from '@foxeo/supabase/server'
+import { createServerClient } from '@monprojetpro/supabase/server'
 import { buildSystemPrompt } from '../config/system-prompts'
 
 export async function sendToElio(
@@ -484,10 +484,10 @@ function handleElioError(err: unknown): ActionError {
 - `apps/client/` : importe le module via le registry, passe `dashboardType='lab'` ou `dashboardType='one'` selon `client_configs.dashboard_type`
 
 **Dépendances** :
-- `@foxeo/ui` : composants de base (Button, Card, Input)
-- `@foxeo/supabase` : client Supabase, providers
-- `@foxeo/utils` : `cn()`, `formatRelativeDate()`, `DEFAULT_COMMUNICATION_PROFILE`
-- `@foxeo/types` : `ActionResponse`, `ActionError`, types DB
+- `@monprojetpro/ui` : composants de base (Button, Card, Input)
+- `@monprojetpro/supabase` : client Supabase, providers
+- `@monprojetpro/utils` : `cn()`, `formatRelativeDate()`, `DEFAULT_COMMUNICATION_PROFILE`
+- `@monprojetpro/types` : `ActionResponse`, `ActionError`, types DB
 
 **Pas de dépendances circulaires** : Le module Elio ne peut PAS importer d'autres modules directement.
 
@@ -498,7 +498,7 @@ function handleElioError(err: unknown): ActionError {
 - [Source: Architecture — Implementation Patterns](file:///_bmad-output/planning-artifacts/architecture/04-implementation-patterns.md)
 - [Source: Architecture — Project Structure](file:///_bmad-output/planning-artifacts/architecture/05-project-structure.md#module-elio)
 - [Source: PRD — Stack LLM & Coûts IA](file:///_bmad-output/planning-artifacts/prd/stack-llm-cots-ia.md)
-- [Source: PRD — Functional Requirements (FR21-25, FR44-51, FR66-69, FR83, FR122-126)](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — Functional Requirements (FR21-25, FR44-51, FR66-69, FR83, FR122-126)](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 - [Source: project-context.md](file:///docs/project-context.md)
 - [Source: CLAUDE.md](file:///CLAUDE.md)
 

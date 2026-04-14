@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { RestartTourButton } from '../../components/onboarding/restart-tour-button'
 import { ParcoursSettingsSection } from './parcours-settings-section'
 import { DataExportSection } from './data-export-section'

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { SubmissionDetailView } from '@foxeo/module-parcours'
+import { SubmissionDetailView } from '@monprojetpro/module-parcours'
 
 interface SubmissionDetailPageProps {
   params: Promise<{

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 
 // Re-export types from the canonical source (Edge Function logic file)
 // Note: These types are duplicated here rather than imported from supabase/functions/

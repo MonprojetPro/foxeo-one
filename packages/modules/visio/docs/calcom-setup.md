@@ -56,7 +56,7 @@ CALCOM_ENCRYPTION_KEY=your-encryption-key
 ## Production
 
 En production, Cal.com est déployé sur un VPS Docker :
-- URL : `https://cal.foxeo.io`
+- URL : `https://cal.monprojet-pro.com`
 - Webhook : `https://{project-ref}.supabase.co/functions/v1/calcom-webhook`
 - Secrets gérés via Supabase Dashboard > Edge Functions > Secrets
 

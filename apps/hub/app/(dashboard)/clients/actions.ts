@@ -1,8 +1,8 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse } from '@foxeo/types'
-import type { ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse } from '@monprojetpro/types'
+import type { ActionResponse } from '@monprojetpro/types'
 
 /**
  * Force disconnect all sessions for a specific client.

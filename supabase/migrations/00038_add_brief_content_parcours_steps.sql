@@ -1,5 +1,5 @@
 -- Migration: Add brief content columns to parcours_steps
--- Story: 6.2 — Consultation des briefs par étape — Teasing Foxeo One
+-- Story: 6.2 — Consultation des briefs par étape — Teasing MonprojetPro One
 
 -- 1. Add columns for brief content, assets, and One teasing message
 ALTER TABLE parcours_steps

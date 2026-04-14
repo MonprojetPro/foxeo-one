@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Calendar } from 'lucide-react'
-import { Badge, Button, Card, CardContent } from '@foxeo/ui'
-import { cn, formatFullDate } from '@foxeo/utils'
+import { Badge, Button, Card, CardContent } from '@monprojetpro/ui'
+import { cn, formatFullDate } from '@monprojetpro/utils'
 import type {
   ValidationRequestType,
   ValidationRequestStatus,

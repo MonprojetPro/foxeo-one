@@ -1,5 +1,5 @@
 {
-  "name": "@foxeo/modules-support",
+  "name": "@monprojetpro/modules-support",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,10 @@
     ".": {
       "types": "./index.ts",
       "default": "./index.ts"
+    },
+    "./manifest": {
+      "types": "./manifest.ts",
+      "default": "./manifest.ts"
     }
   },
   "scripts": {
@@ -18,10 +22,10 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "@foxeo/types": "*",
-    "@foxeo/ui": "*",
-    "@foxeo/utils": "*",
-    "@foxeo/supabase": "*",
+    "@monprojetpro/types": "*",
+    "@monprojetpro/ui": "*",
+    "@monprojetpro/utils": "*",
+    "@monprojetpro/supabase": "*",
     "@tanstack/react-query": "^5.90.0",
     "@hookform/resolvers": "^3.9.0",
     "react-hook-form": "^7.71.0",
@@ -29,7 +33,7 @@
     "lucide-react": "^0.511.0"
   },
   "devDependencies": {
-    "@foxeo/tsconfig": "*",
+    "@monprojetpro/tsconfig": "*",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.5.2",

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { createMiddlewareSupabaseClient } from '@foxeo/supabase'
+import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
 
 export const PUBLIC_PATHS = ['/login', '/setup-mfa', '/auth/callback']
@@ -14,6 +14,7 @@ export function isStaticOrApi(pathname: string): boolean {
   return (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/webhooks') ||
+    pathname.startsWith('/api/dev-login') ||
     pathname === '/favicon.ico'
   )
 }
@@ -78,19 +79,22 @@ export async function middleware(request: NextRequest) {
     }
 
     // Check AAL (Authentication Assurance Level)
-    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    // DEV: Skip MFA check in development
+    if (process.env.NODE_ENV !== 'development') {
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 
-    if (aal?.currentLevel !== 'aal2') {
-      // 2FA not yet setup → redirect to setup
-      if (!operator.twoFactorEnabled) {
-        const redirectResponse = NextResponse.redirect(new URL('/setup-mfa', request.url))
+      if (aal?.currentLevel !== 'aal2') {
+        // 2FA not yet setup → redirect to setup
+        if (!operator.twoFactorEnabled) {
+          const redirectResponse = NextResponse.redirect(new URL('/setup-mfa', request.url))
+          setLocaleCookie(redirectResponse, locale)
+          return redirectResponse
+        }
+        // 2FA setup but not verified this session → redirect to verify
+        const redirectResponse = NextResponse.redirect(new URL('/login/verify-mfa', request.url))
         setLocaleCookie(redirectResponse, locale)
         return redirectResponse
       }
-      // 2FA setup but not verified this session → redirect to verify
-      const redirectResponse = NextResponse.redirect(new URL('/login/verify-mfa', request.url))
-      setLocaleCookie(redirectResponse, locale)
-      return redirectResponse
     }
   }
 

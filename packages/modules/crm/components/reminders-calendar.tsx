@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button, Badge } from '@foxeo/ui'
+import { Button, Badge } from '@monprojetpro/ui'
 import type { Reminder } from '../types/crm.types'
 
 interface RemindersCalendarProps {

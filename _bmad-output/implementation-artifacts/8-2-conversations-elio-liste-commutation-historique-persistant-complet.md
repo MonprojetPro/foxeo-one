@@ -369,7 +369,7 @@ export function ConversationList() {
 ```typescript
 // hooks/use-elio-chat.ts
 import { useEffect } from 'react'
-import { createBrowserClient } from '@foxeo/supabase/client'
+import { createBrowserClient } from '@monprojetpro/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
 
 export function useElioChat(conversationId: string) {
@@ -409,7 +409,7 @@ export function useElioChat(conversationId: string) {
 
 - [Source: Epic 8 — Story 8.2](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-82)
 - [Source: Architecture — Implementation Patterns](file:///_bmad-output/planning-artifacts/architecture/04-implementation-patterns.md)
-- [Source: PRD — FR123, FR124](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR123, FR124](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 

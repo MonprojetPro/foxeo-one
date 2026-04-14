@@ -7,7 +7,7 @@ import {
   type UseQueryResult,
   type UseMutationResult,
 } from '@tanstack/react-query'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { Notification, CsvImportRow, CsvImportResult } from '../types/crm.types'
 import { getNotifications } from '../actions/get-notifications'
 import { markNotificationRead } from '../actions/mark-notification-read'

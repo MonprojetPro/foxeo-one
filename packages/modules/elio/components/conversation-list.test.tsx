@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { ConversationList } from './conversation-list'
 import type { ElioConversation } from '../types/elio.types'
 
-vi.mock('@foxeo/utils', () => ({
+vi.mock('@monprojetpro/utils', () => ({
   formatRelativeDate: vi.fn(() => 'il y a 2 min'),
 }))
 

@@ -21,7 +21,7 @@ const mockProfileRow = {
   updated_at: '2024-01-01',
 }
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn((table: string) => {
       if (table === 'clients') {
@@ -149,7 +149,7 @@ describe('generateDraft (Story 8.6 — Task 3)', () => {
   })
 
   it('Task 3.2 — retourne CLIENT_NOT_FOUND si client introuvable', async () => {
-    const { createServerSupabaseClient } = await import('@foxeo/supabase')
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockImplementationOnce(async () => ({
       from: vi.fn(() => ({
         select: vi.fn(() => ({

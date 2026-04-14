@@ -8,7 +8,7 @@ const mockParcoursRowSingle = vi.fn()
 const mockStepsResult = vi.fn()
 const mockDocsResult = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     from: (table: string) => {

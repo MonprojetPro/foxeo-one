@@ -13,7 +13,7 @@ import {
   Skeleton,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { useClientNotes } from '../hooks/use-client-notes'
 import { createClientNote } from '../actions/create-client-note'
 import { ClientNoteCard } from './client-note-card'

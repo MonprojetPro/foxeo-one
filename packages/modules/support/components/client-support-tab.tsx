@@ -1,10 +1,10 @@
 'use client'
 
-import { Card, Skeleton, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@foxeo/ui'
-import { formatRelativeDate } from '@foxeo/utils'
+import { Card, Skeleton, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@monprojetpro/ui'
+import { formatRelativeDate } from '@monprojetpro/utils'
 import { useSupportTickets, useUpdateTicketStatus } from '../hooks/use-support-tickets'
 import { TicketStatusBadge } from './ticket-status-badge'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import type { TicketType, TicketStatus } from '../types/support.types'
 
 const TYPE_LABELS: Record<TicketType, string> = {

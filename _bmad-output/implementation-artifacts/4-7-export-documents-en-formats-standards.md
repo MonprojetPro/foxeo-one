@@ -14,7 +14,7 @@ so that **je peux utiliser mes donnees en dehors de la plateforme et rester conf
 
 1. **AC1 — Menu export** : Un bouton "Exporter" (avec icone Download) dans la barre d'actions de la liste de documents ouvre un menu `DropdownMenu` shadcn/ui proposant : "Telecharger en PDF" (document individuel uniquement), "Exporter la liste en CSV", "Exporter la liste en JSON" (FR150). Format par defaut : PDF pour document unique, CSV pour une liste.
 
-2. **AC2 — Export PDF individuel** : Pour un document individuel : si PDF → telechargement direct via signed URL Supabase Storage. Si Markdown → generation serveur via `generatePdf()` existant (story 4.2). Le PDF inclut le branding Foxeo. Export < 5 secondes (NFR-P6).
+2. **AC2 — Export PDF individuel** : Pour un document individuel : si PDF → telechargement direct via signed URL Supabase Storage. Si Markdown → generation serveur via `generatePdf()` existant (story 4.2). Le PDF inclut le branding MonprojetPro. Export < 5 secondes (NFR-P6).
 
 3. **AC3 — Export CSV liste** : Server Action `exportDocumentsCSV(clientId, filters?)` genere un fichier CSV cote serveur. Colonnes : nom, type, taille (formatee), dossier, visibilite, date_creation, date_modification. Encodage UTF-8 avec BOM (compatibilite Excel). Telechargement automatique du fichier.
 
@@ -88,10 +88,10 @@ export function generateDocumentsCsv(
   const rows = documents.map(doc => [
     escapeCsvValue(doc.name),
     escapeCsvValue(doc.fileType),
-    escapeCsvValue(formatFileSize(doc.fileSize)), // @foxeo/utils
+    escapeCsvValue(formatFileSize(doc.fileSize)), // @monprojetpro/utils
     escapeCsvValue(doc.folderId ? (folderMap.get(doc.folderId) ?? 'Inconnu') : 'Non classes'),
     escapeCsvValue(doc.visibility === 'shared' ? 'Partage' : 'Prive'),
-    escapeCsvValue(formatDate(doc.createdAt)), // @foxeo/utils
+    escapeCsvValue(formatDate(doc.createdAt)), // @monprojetpro/utils
     escapeCsvValue(formatDate(doc.updatedAt)),
   ])
 
@@ -153,7 +153,7 @@ export function generateDocumentsJson(
       name: doc.name,
       fileType: doc.fileType,
       fileSize: doc.fileSize,
-      formattedSize: formatFileSize(doc.fileSize), // @foxeo/utils
+      formattedSize: formatFileSize(doc.fileSize), // @monprojetpro/utils
       folderId: doc.folderId,
       visibility: doc.visibility,
       uploadedBy: doc.uploadedBy,
@@ -186,11 +186,11 @@ const jsonFileName = `documents-${clientId.slice(0, 8)}-${date}.json`
 ### Dependances existantes
 
 - `generatePdf()` (story 4.2) — reutilise directement pour PDF individuel
-- `formatFileSize()` de `@foxeo/utils` — formatage taille
+- `formatFileSize()` de `@monprojetpro/utils` — formatage taille
 - `DocumentFolder` types (story 4.4) — pour la colonne dossier dans le CSV
 - `getDocuments()` (story 4.1) — pour charger les documents
-- `@foxeo/types` — `ActionResponse`, `successResponse`, `errorResponse`
-- `@foxeo/supabase` — `createServerSupabaseClient`
+- `@monprojetpro/types` — `ActionResponse`, `successResponse`, `errorResponse`
+- `@monprojetpro/supabase` — `createServerSupabaseClient`
 
 ### Anti-patterns — Interdit
 

@@ -23,7 +23,7 @@ let activityChain: ReturnType<typeof makeChain>
 let clientsChain: ReturnType<typeof makeChain>
 let operatorsChain: ReturnType<typeof makeChain>
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
     from: (table: string) => {

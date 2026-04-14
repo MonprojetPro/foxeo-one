@@ -22,7 +22,7 @@ const mockFrom = vi.fn((table: string) => {
   }
 })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     from: mockFrom,

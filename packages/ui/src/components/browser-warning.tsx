@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
-import { t } from '@foxeo/utils'
+import { t } from '@monprojetpro/utils'
 // Ensure messages are loaded
 import '../messages/init'
 
@@ -44,7 +44,7 @@ export function BrowserWarning() {
 
   useEffect(() => {
     // Check if already dismissed in this session
-    const wasDismissed = sessionStorage.getItem('foxeo-browser-warning-dismissed')
+    const wasDismissed = sessionStorage.getItem('monprojetpro-browser-warning-dismissed')
     if (wasDismissed) {
       setDismissed(true)
       return
@@ -57,7 +57,7 @@ export function BrowserWarning() {
   }, [])
 
   const handleDismiss = () => {
-    sessionStorage.setItem('foxeo-browser-warning-dismissed', 'true')
+    sessionStorage.setItem('monprojetpro-browser-warning-dismissed', 'true')
     setDismissed(true)
   }
 

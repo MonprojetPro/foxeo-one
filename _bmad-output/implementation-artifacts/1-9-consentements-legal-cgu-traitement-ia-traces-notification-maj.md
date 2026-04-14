@@ -92,7 +92,7 @@ Implémentation complète et conforme aux 7 critères d'acceptation. Aucune issu
 
 ## Story
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **accepter les CGU et le consentement IA lors de mon inscription, et etre notifie des mises a jour**,
 So that **la plateforme est conforme RGPD et je garde le controle sur mes donnees**.
 
@@ -176,7 +176,7 @@ So that **la plateforme est conforme RGPD et je garde le controle sur mes donnee
 
 ### Phase 1 — Composants UI (30 min)
 
-- [x] Task 1 — Creer le composant ConsentCheckbox dans @foxeo/ui (AC: #1, #2)
+- [x] Task 1 — Creer le composant ConsentCheckbox dans @monprojetpro/ui (AC: #1, #2)
   - [x]1.1 Creer `packages/ui/src/components/consent-checkbox.tsx`
   - [x]1.2 Props : id, checked, onCheckedChange, label, link, linkText, tooltip, required
   - [x]1.3 Utiliser le composant Checkbox existant (`packages/ui/src/checkbox.tsx`)
@@ -184,7 +184,7 @@ So that **la plateforme est conforme RGPD et je garde le controle sur mes donnee
   - [x]1.5 Afficher un lien externe (target="_blank") vers la page legale
   - [x]1.6 Afficher une icone Info (lucide-react) a cote du label avec le tooltip au survol
   - [x]1.7 Afficher une etoile rouge (*) si `required={true}` pour indiquer l'obligation
-  - [x]1.8 Exporter le composant depuis `@foxeo/ui` (index.ts)
+  - [x]1.8 Exporter le composant depuis `@monprojetpro/ui` (index.ts)
 
 - [x] Task 2 — Creer les pages legales CGU et Politique IA (AC: #1, #2)
   - [x]2.1 Creer `apps/client/app/(auth)/legal/cgu/page.tsx` — page CGU (markdown ou HTML simple)
@@ -197,11 +197,11 @@ So that **la plateforme est conforme RGPD et je garde le controle sur mes donnee
 
 - [x] Task 3 — Modifier le formulaire d'inscription pour ajouter les 2 consentements (AC: #1, #2)
   - [x]3.1 Editer `apps/client/app/(auth)/signup/signup-form.tsx`
-  - [x]3.2 Importer le composant ConsentCheckbox depuis `@foxeo/ui`
+  - [x]3.2 Importer le composant ConsentCheckbox depuis `@monprojetpro/ui`
   - [x]3.3 Ajouter un state `acceptCgu` (boolean, initial: false)
   - [x]3.4 Ajouter un state `acceptIaProcessing` (boolean, initial: false)
-  - [x]3.5 Ajouter un ConsentCheckbox pour les CGU avec `required={true}`, label="J'accepte les Conditions Generales d'Utilisation", link="/legal/cgu", linkText="Consulter les CGU", tooltip="Vous devez accepter les CGU pour creer un compte Foxeo. Les CGU definissent les regles d'utilisation de la plateforme."
-  - [x]3.6 Ajouter un ConsentCheckbox pour le traitement IA avec `required={false}`, label="J'accepte le traitement de mes donnees par l'IA Elio", link="/legal/ia-processing", linkText="En savoir plus sur Elio", tooltip="Optionnel : Elio est l'assistant IA de Foxeo. Si vous refusez, vous pourrez utiliser la plateforme sans Elio. Vous pourrez modifier ce choix a tout moment dans vos parametres."
+  - [x]3.5 Ajouter un ConsentCheckbox pour les CGU avec `required={true}`, label="J'accepte les Conditions Generales d'Utilisation", link="/legal/cgu", linkText="Consulter les CGU", tooltip="Vous devez accepter les CGU pour creer un compte MonprojetPro. Les CGU definissent les regles d'utilisation de la plateforme."
+  - [x]3.6 Ajouter un ConsentCheckbox pour le traitement IA avec `required={false}`, label="J'accepte le traitement de mes donnees par l'IA Elio", link="/legal/ia-processing", linkText="En savoir plus sur Elio", tooltip="Optionnel : Elio est l'assistant IA de MonprojetPro. Si vous refusez, vous pourrez utiliser la plateforme sans Elio. Vous pourrez modifier ce choix a tout moment dans vos parametres."
   - [x]3.7 Desactiver le bouton de soumission tant que `acceptCgu === false` (validation cote UI)
   - [x]3.8 Ajouter `acceptCgu` et `acceptIaProcessing` au schema Zod `signupSchema` (Story 1.8)
   - [x]3.9 Ajouter `acceptCgu` (required: true) et `acceptIaProcessing` (required: false) a la validation Zod
@@ -220,12 +220,12 @@ So that **la plateforme est conforme RGPD et je garde le controle sur mes donnee
   - [x]4.6 Gerer les erreurs : si l'insertion des consentements echoue, supprimer le compte Auth cree (rollback)
   - [x]4.7 Retourner `{ data: null, error }` si echec, `{ data: user, error: null }` si succes
 
-- [x] Task 5 — Creer une constante CURRENT_CGU_VERSION dans @foxeo/utils (AC: #3, #4)
+- [x] Task 5 — Creer une constante CURRENT_CGU_VERSION dans @monprojetpro/utils (AC: #3, #4)
   - [x]5.1 Creer `packages/utils/src/constants/legal-versions.ts` avec :
     - [x]5.1.1 `export const CURRENT_CGU_VERSION = 'v1.0'`
     - [x]5.1.2 `export const CURRENT_IA_POLICY_VERSION = 'v1.0'`
     - [x]5.1.3 `export const CGU_LAST_UPDATED = new Date('2026-02-01')`
-  - [x]5.2 Exporter depuis `@foxeo/utils` index.ts
+  - [x]5.2 Exporter depuis `@monprojetpro/utils` index.ts
   - [x]5.3 Utiliser cette constante dans la Server Action signup et dans le middleware interstitiel
 
 - [x] Task 6 — Creer le middleware interstitiel MAJ CGU (AC: #4)
@@ -259,7 +259,7 @@ So that **la plateforme est conforme RGPD et je garde le controle sur mes donnee
   - [x]8.2 La fonction retourne `boolean` : true si le dernier consentement IA est accepted=true
   - [x]8.3 Utiliser cette fonction dans les modules Elio (chat, lab, one) pour conditionner l'affichage
   - [x]8.4 Si le consentement est refuse, afficher un EmptyState avec message et CTA vers les parametres
-  - [x]8.5 Exporter depuis `@foxeo/supabase` index.ts
+  - [x]8.5 Exporter depuis `@monprojetpro/supabase` index.ts
 
 - [x] Task 9 — Creer une fonction RLS pour verifier le consentement IA (AC: #5)
   - [x]9.1 Creer une fonction SQL `has_ia_consent(p_client_id UUID)` qui retourne BOOLEAN
@@ -363,7 +363,7 @@ $$;
 
 ```typescript
 // packages/supabase/src/queries/get-consent.ts
-import { createClient } from '@foxeo/supabase/server'
+import { createClient } from '@monprojetpro/supabase/server'
 
 export async function hasIaConsent(clientId: string): Promise<boolean> {
   const supabase = await createClient()
@@ -411,8 +411,8 @@ export async function getLatestConsents(clientId: string) {
 
 ```typescript
 // apps/client/middleware-consent.ts
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { CURRENT_CGU_VERSION } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { CURRENT_CGU_VERSION } from '@monprojetpro/utils'
 import { NextResponse } from 'next/server'
 
 export async function checkConsentVersion(request: NextRequest, clientId: string): Promise<NextResponse | null> {

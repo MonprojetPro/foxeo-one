@@ -1,4 +1,4 @@
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import Link from 'next/link'
 
 export default function ClientNotFound() {

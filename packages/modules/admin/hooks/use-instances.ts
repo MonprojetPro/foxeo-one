@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 
 export interface ClientInstance {
   id: string

@@ -10,10 +10,10 @@
 **Le renard digital** — agile, à l'affût, précis
 
 ### Tagline
-**"Soyez rusé, pensez Foxeo."**
+**"Soyez rusé, pensez MonprojetPro."**
 
 ### Signature
-*Foxeo — Stratégie digitale & accompagnement de projets*
+*MonprojetPro — Stratégie digitale & accompagnement de projets*
 
 ### Positionnement
 Stratège & Coach de Transformation | Formateur • Conférencier
@@ -26,7 +26,7 @@ Stratège & Coach de Transformation | Formateur • Conférencier
 
 | Nom | Hex | RGB | Usage |
 |-----|-----|-----|-------|
-| **Orange Foxeo** | `#F7931E` | 247, 147, 30 | Couleur principale, CTA, accents |
+| **Orange MonprojetPro** | `#F7931E` | 247, 147, 30 | Couleur principale, CTA, accents |
 | **Orange Foncé** | `#E55A2B` | 229, 90, 43 | Hover, dégradés, liens |
 | **Bordeaux** | `#A52A2A` | 165, 42, 42 | Accents sombres, profondeur |
 
@@ -103,10 +103,10 @@ font-family: 'Inter', sans-serif;
 
 | Version | Usage | Fichier |
 |---------|-------|---------|
-| **Couleur sur blanc** | Usage principal | `logo-foxeo-couleur.png` |
-| **Blanc sur couleur** | Fonds colorés, photos | `logo-foxeo-blanc.png` |
-| **Noir monochrome** | Documents, impression N&B | `logo-foxeo-noir.png` |
-| **Favicon** | Navigateur, app | `favicon-foxeo.png` (tête renard seule) |
+| **Couleur sur blanc** | Usage principal | `logo-monprojetpro-couleur.png` |
+| **Blanc sur couleur** | Fonds colorés, photos | `logo-monprojetpro-blanc.png` |
+| **Noir monochrome** | Documents, impression N&B | `logo-monprojetpro-noir.png` |
+| **Favicon** | Navigateur, app | `favicon-monprojetpro.png` (tête renard seule) |
 
 ### Zones de protection
 Espace minimum autour du logo = hauteur du "F"
@@ -132,7 +132,7 @@ Espace minimum autour du logo = hauteur du "F"
 - Style : Ligne (outline) ou rempli simple
 - Épaisseur : 2px
 - Coins : Arrondis
-- Couleur : Orange Foxeo ou Gris Texte
+- Couleur : Orange MonprojetPro ou Gris Texte
 
 ---
 
@@ -169,7 +169,7 @@ Espace minimum autour du logo = hauteur du "F"
 
 - Jargon technique non expliqué
 - Buzzwords creux ("disruptif", "synergies", "scalable")
-- Tournures impersonnelles ("Foxeo propose...")
+- Tournures impersonnelles ("MonprojetPro propose...")
 - Longs paragraphes monotones
 - Ton condescendant ou trop vendeur
 - Promesses vagues
@@ -177,15 +177,15 @@ Espace minimum autour du logo = hauteur du "F"
 ### Exemples
 
 **❌ À éviter :**
-> "Foxeo propose des prestations de conseil en transformation digitale adaptées aux besoins des entreprises souhaitant optimiser leur présence numérique."
+> "MonprojetPro propose des prestations de conseil en transformation digitale adaptées aux besoins des entreprises souhaitant optimiser leur présence numérique."
 
-**✅ Ton Foxeo :**
+**✅ Ton MonprojetPro :**
 > "Vous avez un projet qui vous tient à cœur mais vous ne savez pas par où commencer ? Je vous aide à y voir clair, puis à avancer — étape par étape."
 
 **❌ À éviter :**
 > "Notre méthodologie propriétaire permet d'accélérer le time-to-market de vos produits digitaux."
 
-**✅ Ton Foxeo :**
+**✅ Ton MonprojetPro :**
 > "Ma méthode en 3 étapes — Comprendre, Créer, Concrétiser — vous évite de perdre du temps et de l'argent sur des solutions qui ne vous correspondent pas."
 
 ---
@@ -244,14 +244,14 @@ Espace minimum autour du logo = hauteur du "F"
 
 ```
 FOXEO
-Soyez rusé, pensez Foxeo.
+Soyez rusé, pensez MonprojetPro.
 
 Mickaël CULUS
 Fondateur | Stratège & Coach de Transformation
 
 📞 06.70.32.02.16
-📧 mickael-culus@foxeo.biz
-🌐 foxeo.biz
+📧 mickael-culus@monprojetpro.biz
+🌐 monprojetpro.biz
 ```
 
 ### LinkedIn
@@ -266,9 +266,9 @@ Fondateur | Stratège & Coach de Transformation
 
 | Fichier | Emplacement |
 |---------|-------------|
-| Logo couleur | `/fichiers-ext-produit/logo foxeo.png` |
-| Bannière LinkedIn | `/fichiers-ext-produit/banniere 3 linkedin foxeo.png` |
-| Signature email | `/fichiers-ext-produit/signature email foxeo.png` |
+| Logo couleur | `/fichiers-ext-produit/logo monprojetpro.png` |
+| Bannière LinkedIn | `/fichiers-ext-produit/banniere 3 linkedin monprojetpro.png` |
+| Signature email | `/fichiers-ext-produit/signature email monprojetpro.png` |
 | Photo profil | `/fichiers-ext-produit/photo profil linkedin (3).png` |
 
 ---
@@ -280,10 +280,10 @@ Fondateur | Stratège & Coach de Transformation
 - [ ] Typographies Poppins + Inter utilisées
 - [ ] Ton de voix respecté (direct, chaleureux, rassurant)
 - [ ] Vouvoiement sur supports formels
-- [ ] Tagline "Soyez rusé, pensez Foxeo." présente
+- [ ] Tagline "Soyez rusé, pensez MonprojetPro." présente
 - [ ] CTA clairs et visibles
 - [ ] Pas de jargon non expliqué
 
 ---
 
-*Document de référence pour toutes les productions Foxeo.*
+*Document de référence pour toutes les productions MonprojetPro.*

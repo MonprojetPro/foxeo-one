@@ -20,8 +20,8 @@ import {
   showError,
   EmptyState,
   Label,
-} from '@foxeo/ui'
-import { getModulesForTarget } from '@foxeo/utils'
+} from '@monprojetpro/ui'
+import { getModulesForTarget } from '@monprojetpro/utils'
 import { ParcoursStageList } from './parcours-stage-list'
 import { useParcoursTemplates } from '../hooks/use-parcours-templates'
 import { upgradeClient } from '../actions/upgrade-client'

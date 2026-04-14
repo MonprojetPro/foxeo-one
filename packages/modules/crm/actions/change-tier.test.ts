@@ -20,7 +20,7 @@ let insertResult: { error: unknown } = { error: null }
 const mockUpdate = vi.fn()
 const mockInsert = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({

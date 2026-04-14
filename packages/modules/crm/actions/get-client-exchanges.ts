@@ -1,11 +1,11 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { ClientExchange as ClientExchangeSchema } from '../types/crm.types'
 import type { ClientExchange } from '../types/crm.types'
 
@@ -21,7 +21,6 @@ export async function getClientExchanges(
 
     const supabase = await createServerSupabaseClient()
 
-    // Triple-layer security: verify authenticated user
     const {
       data: { user },
       error: userError,
@@ -31,55 +30,54 @@ export async function getClientExchanges(
       return errorResponse('Non authentifié', 'UNAUTHORIZED')
     }
 
-    // Check if messages table exists
-    const { error: tableCheckError } = await supabase
+    // Query 1 : messages du chat MiKL-client (colonne sender_type, pas type)
+    const { data: messagesData, error: messagesError } = await supabase
       .from('messages')
-      .select('id')
-      .limit(1)
-
-    // If table doesn't exist yet (Epic 3), return empty array
-    if (tableCheckError && tableCheckError.code === '42P01') {
-      return successResponse([])
-    }
-
-    const { data, error } = await supabase
-      .from('messages')
-      .select(
-        `
-        id,
-        client_id,
-        type,
-        content,
-        created_at
-      `
-      )
+      .select('id, client_id, sender_type, content, created_at')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(15)
 
-    if (error) {
-      console.error('[CRM:GET_CLIENT_EXCHANGES] Supabase error:', error)
-      return errorResponse(
-        'Impossible de charger les échanges',
-        'DATABASE_ERROR',
-        error
-      )
+    if (messagesError && messagesError.code !== '42P01') {
+      console.error('[CRM:GET_CLIENT_EXCHANGES] Messages error:', messagesError)
+      return errorResponse('Impossible de charger les messages', 'DATABASE_ERROR', messagesError)
     }
 
-    if (!data) {
-      return successResponse([])
-    }
+    // Query 2 : notifications opérateur liées à ce client
+    const { data: notificationsData } = await supabase
+      .from('notifications')
+      .select('id, title, message, created_at')
+      .eq('entity_type', 'client')
+      .eq('entity_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(10)
 
-    // Transform snake_case DB fields to camelCase with Zod validation
-    const exchanges: ClientExchange[] = data.map((exchange) =>
+    // Map messages → ClientExchange
+    const messageExchanges: ClientExchange[] = (messagesData ?? []).map((msg) =>
       ClientExchangeSchema.parse({
-        id: exchange.id,
-        clientId: exchange.client_id,
-        type: exchange.type,
-        content: exchange.content,
-        createdAt: exchange.created_at,
+        id: msg.id,
+        clientId: msg.client_id,
+        type: 'message',
+        content: msg.content,
+        createdAt: msg.created_at,
       })
     )
+
+    // Map notifications → ClientExchange
+    const notificationExchanges: ClientExchange[] = (notificationsData ?? []).map((notif) =>
+      ClientExchangeSchema.parse({
+        id: notif.id,
+        clientId: clientId,
+        type: 'notification',
+        content: notif.message || notif.title || 'Notification',
+        createdAt: notif.created_at,
+      })
+    )
+
+    // Fusion, tri par date desc, limite à 20
+    const exchanges = [...messageExchanges, ...notificationExchanges]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 20)
 
     return successResponse(exchanges)
   } catch (error) {

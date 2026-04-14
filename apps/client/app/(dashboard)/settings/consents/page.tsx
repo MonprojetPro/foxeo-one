@@ -1,10 +1,10 @@
-import { createServerSupabaseClient, getLatestConsents } from '@foxeo/supabase'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from '@foxeo/ui'
+import { createServerSupabaseClient, getLatestConsents } from '@monprojetpro/supabase'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from '@monprojetpro/ui'
 import { UpdateIaConsentDialog } from './update-ia-consent-dialog'
 import { redirect } from 'next/navigation'
 
 export const metadata = {
-  title: 'Consentements — Foxeo',
+  title: 'Consentements — MonprojetPro',
   description: 'Gérez vos consentements CGU et traitement IA',
 }
 
@@ -51,7 +51,7 @@ export default async function ConsentsPage() {
         <h1 className="text-3xl font-bold">Gestion des consentements</h1>
         <p className="text-muted-foreground mt-2">
           Consultez et gérez vos consentements relatifs à l'utilisation de la
-          plateforme Foxeo.
+          plateforme MonprojetPro.
         </p>
       </div>
 
@@ -185,10 +185,10 @@ export default async function ConsentsPage() {
               Pour toute question ou pour exercer vos droits, contactez notre
               DPO :{' '}
               <a
-                href="mailto:dpo@foxeo.io"
+                href="mailto:dpo@monprojet-pro.com"
                 className="text-primary underline hover:text-primary/80"
               >
-                dpo@foxeo.io
+                dpo@monprojet-pro.com
               </a>
             </p>
           </div>

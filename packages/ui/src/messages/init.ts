@@ -1,9 +1,9 @@
 /**
- * Initialize i18n messages for @foxeo/ui package
+ * Initialize i18n messages for @monprojetpro/ui package
  * Must be called once at app startup (in layout.tsx)
  */
 
-import { loadMessages } from '@foxeo/utils'
+import { loadMessages } from '@monprojetpro/utils'
 import frMessages from './fr.json'
 
 // Load French messages into translation cache

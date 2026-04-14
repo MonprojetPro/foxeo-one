@@ -51,8 +51,8 @@ vi.mock('../../hooks/use-onboarding-tour', () => ({
   })),
 }))
 
-// Mock @foxeo/ui Button
-vi.mock('@foxeo/ui', () => ({
+// Mock @monprojetpro/ui Button
+vi.mock('@monprojetpro/ui', () => ({
   Button: ({ children, onClick, disabled, ...props }: {
     children: React.ReactNode
     onClick?: () => void

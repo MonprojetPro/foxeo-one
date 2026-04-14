@@ -13,5 +13,5 @@ CREATE TABLE operators (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE operators IS 'Operateurs de la plateforme Foxeo (MiKL et futurs operateurs)';
+COMMENT ON TABLE operators IS 'Operateurs de la plateforme MonprojetPro (MiKL et futurs operateurs)';
 COMMENT ON COLUMN operators.role IS 'operator = standard, admin = super-admin';

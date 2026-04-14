@@ -1,11 +1,11 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 
 /**
  * Interpole les variables dans un template HTML.
@@ -75,7 +75,7 @@ export async function sendGraduationEmail(
   const instance = Array.isArray(client.client_instances)
     ? client.client_instances[0]
     : client.client_instances
-  const instanceUrl = instance?.instance_url ?? 'https://app.foxeo.io'
+  const instanceUrl = instance?.instance_url ?? 'https://app.monprojet-pro.com'
 
   const modules: string[] = Array.isArray(instance?.active_modules)
     ? instance.active_modules

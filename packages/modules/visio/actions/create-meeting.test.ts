@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { Meeting } from '../types/meeting.types'
 
 const mockGetUser = vi.fn()
@@ -23,7 +23,7 @@ const mockFrom = vi.fn((table: string) => {
   return { insert: mockInsert }
 })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     from: mockFrom,

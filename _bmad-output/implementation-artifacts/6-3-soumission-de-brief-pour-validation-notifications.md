@@ -127,9 +127,9 @@ CREATE POLICY step_submissions_update_operator ON step_submissions FOR UPDATE
 ```typescript
 // actions/submit-step.ts
 'use server'
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse, errorResponse } from '@monprojetpro/types'
 
 export async function submitStep(input: {
   stepId: string
@@ -226,9 +226,9 @@ export async function submitStep(input: {
 ```typescript
 // actions/validate-submission.ts
 'use server'
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse, errorResponse } from '@monprojetpro/types'
 
 export async function validateSubmission(input: {
   submissionId: string
@@ -326,12 +326,12 @@ export async function validateSubmission(input: {
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button } from '@foxeo/ui/components/button'
-import { Textarea } from '@foxeo/ui/components/textarea'
+import { Button } from '@monprojetpro/ui/components/button'
+import { Textarea } from '@monprojetpro/ui/components/textarea'
 import { SubmissionFileUpload } from './submission-file-upload'
 import { submitStep } from '../actions/submit-step'
 import { useRouter } from 'next/navigation'
-import { toast } from '@foxeo/ui/components/use-toast'
+import { toast } from '@monprojetpro/ui/components/use-toast'
 
 const schema = z.object({
   content: z.string().min(50, 'Votre soumission doit contenir au moins 50 caractères'),

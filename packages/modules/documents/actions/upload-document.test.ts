@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { Document } from '../types/document.types'
 
 const mockGetUser = vi.fn()
@@ -26,7 +26,7 @@ const mockFrom = vi.fn((table: string) => {
   return { insert: mockInsert }
 })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },
@@ -40,8 +40,8 @@ vi.mock('@foxeo/supabase', () => ({
 }))
 
 // Mock validateFile to use real implementation
-vi.mock('@foxeo/utils', async () => {
-  const actual = await vi.importActual<typeof import('@foxeo/utils')>('@foxeo/utils')
+vi.mock('@monprojetpro/utils', async () => {
+  const actual = await vi.importActual<typeof import('@monprojetpro/utils')>('@monprojetpro/utils')
   return actual
 })
 

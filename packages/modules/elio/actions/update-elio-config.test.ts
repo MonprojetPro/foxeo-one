@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
 import { updateElioConfig } from './update-elio-config'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 const makeUpsertMock = (config: Record<string, unknown> | null = null, error: unknown = null) => {
   const selectMock = vi.fn().mockReturnThis()

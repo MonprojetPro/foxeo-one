@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Avatar, AvatarFallback, Badge, Skeleton, Input } from '@foxeo/ui'
-import { cn } from '@foxeo/utils'
+import { Avatar, AvatarFallback, Badge, Skeleton, Input } from '@monprojetpro/ui'
+import { cn } from '@monprojetpro/utils'
 import { Search } from 'lucide-react'
 import { useConversations } from '../hooks/use-conversations'
 import { useOnlineUsers } from '../hooks/use-online-users'

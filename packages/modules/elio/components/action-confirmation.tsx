@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import type { ModuleActionVerb } from '../utils/detect-intent'
 
 export const CONFIRMATION_REQUIRED_LABEL = 'Confirmation requise'

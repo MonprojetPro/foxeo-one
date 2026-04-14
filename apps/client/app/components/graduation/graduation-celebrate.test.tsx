@@ -19,7 +19,7 @@ vi.mock('../../graduation/actions/mark-graduation-screen-shown', () => ({
   markGraduationScreenShown: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
 }))
 
-vi.mock('@foxeo/ui', () => ({
+vi.mock('@monprojetpro/ui', () => ({
   Button: ({ children, onClick, disabled, ...props }: {
     children: React.ReactNode
     onClick?: () => void
@@ -68,9 +68,9 @@ describe('GraduationCelebrate', () => {
     expect(screen.queryByText(/MiKL, votre accompagnateur/i)).not.toBeInTheDocument()
   })
 
-  it('affiche le bouton "Découvrir Foxeo One"', () => {
+  it('affiche le bouton "Découvrir MonprojetPro One"', () => {
     render(<GraduationCelebrate {...defaultProps} />)
-    expect(screen.getByRole('button', { name: /Découvrir Foxeo One/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Découvrir MonprojetPro One/i })).toBeInTheDocument()
   })
 
   it('navigue vers /graduation/discover-one au clic "Découvrir"', async () => {
@@ -79,7 +79,7 @@ describe('GraduationCelebrate', () => {
     vi.mocked(useRouter).mockReturnValue({ push: pushMock } as any)
 
     render(<GraduationCelebrate {...defaultProps} />)
-    fireEvent.click(screen.getByRole('button', { name: /Découvrir Foxeo One/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Découvrir MonprojetPro One/i }))
 
     expect(pushMock).toHaveBeenCalledWith('/graduation/discover-one')
   })

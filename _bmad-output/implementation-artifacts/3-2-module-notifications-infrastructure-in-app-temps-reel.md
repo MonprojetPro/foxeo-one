@@ -138,8 +138,8 @@ ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
 'use client'
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
-import { toast } from '@foxeo/ui' // ou le système toast existant
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
+import { toast } from '@monprojetpro/ui' // ou le système toast existant
 
 export function useNotificationsRealtime(recipientId: string) {
   const queryClient = useQueryClient()
@@ -181,7 +181,7 @@ const NOTIFICATION_ICONS: Record<NotificationType, string> = {
 
 ### Date relative
 
-Utiliser `formatRelativeDate` de `@foxeo/utils` (ou créer si inexistant) :
+Utiliser `formatRelativeDate` de `@monprojetpro/utils` (ou créer si inexistant) :
 ```typescript
 // "il y a 2 minutes", "il y a 3 heures", "hier", "12 fév."
 ```
@@ -219,14 +219,14 @@ packages/modules/notifications/
 
 ### Fichiers à modifier
 
-- Dashboard shell header dans `@foxeo/ui` pour intégrer NotificationBadge
+- Dashboard shell header dans `@monprojetpro/ui` pour intégrer NotificationBadge
 - Layouts Hub et Client pour setup Realtime provider
 
 ### Dépendances
 
-- `@foxeo/supabase` — Realtime + Server client
+- `@monprojetpro/supabase` — Realtime + Server client
 - `@tanstack/react-query` — Cache + invalidation
-- `@foxeo/ui` — Toast, Badge, Dropdown
+- `@monprojetpro/ui` — Toast, Badge, Dropdown
 
 ### Anti-patterns — Interdit
 
@@ -257,7 +257,7 @@ Claude Opus 4.6
 - Module notifications created with 49 tests across 10 test files
 - Full suite: 1242 tests pass, 0 failures
 - Realtime subscription is co-located with NotificationBadge (not at provider level) — subscribes on mount, unsubscribes on unmount
-- Toast uses Sonner via `showInfo()` from `@foxeo/ui`
+- Toast uses Sonner via `showInfo()` from `@monprojetpro/ui`
 - RLS test for notification isolation (Task 7.4) covered by policy design (recipient_id = auth.uid()) — actual DB-level RLS tests require running Supabase instance (skipped like other RLS tests in CI)
 
 ### Change Log

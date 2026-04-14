@@ -1,4 +1,4 @@
-# Onboarding Flow — Foxeo Lab
+# Onboarding Flow — MonprojetPro Lab
 
 ## Vue d'ensemble
 
@@ -48,7 +48,7 @@ Si `first_login_at IS NOT NULL` mais `onboarding_completed = FALSE`, le middlewa
 ## Relancer le tutoriel (AC6)
 
 Depuis `/settings` → "Tutoriel interactif" → bouton "Revoir le tutoriel" :
-- Supprime le flag localStorage `foxeo-onboarding-tour-completed`
+- Supprime le flag localStorage `monprojetpro-onboarding-tour-completed`
 - Redirige vers `/onboarding/tour`
 - **Ne modifie PAS** `onboarding_completed` en DB (l'accès au dashboard reste débloqué)
 

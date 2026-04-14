@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, type KeyboardEvent } from 'react'
-import { Button, Textarea } from '@foxeo/ui'
+import { Button, Textarea } from '@monprojetpro/ui'
 import { Send, Paperclip, X } from 'lucide-react'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']

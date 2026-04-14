@@ -4,7 +4,7 @@ const mockGetUser = vi.fn()
 const mockOperatorSingle = vi.fn()
 const mockLimit = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     from: (table: string) => {

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Poppins, Inter } from 'next/font/google'
-import { QueryProvider, ThemeProvider, RealtimeProvider } from '@foxeo/supabase'
-import { Toaster, OfflineBanner, BrowserWarning, LocaleProvider } from '@foxeo/ui'
+import { QueryProvider, ThemeProvider, RealtimeProvider } from '@monprojetpro/supabase'
+import { Toaster, OfflineBanner, BrowserWarning, LocaleProvider } from '@monprojetpro/ui'
 import './globals.css'
 
 const poppins = Poppins({
@@ -19,8 +19,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Foxeo',
-  description: 'Votre espace Foxeo',
+  title: 'MonprojetPro',
+  description: 'Votre espace MonprojetPro',
 }
 
 export default function RootLayout({
@@ -39,7 +39,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('foxeo-theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light')}else if(t==='system'&&window.matchMedia('(prefers-color-scheme:light)').matches){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light')}}catch(e){}})()`,
+            __html: `(function(){try{var t=localStorage.getItem('monprojetpro-theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light')}else if(t==='system'&&window.matchMedia('(prefers-color-scheme:light)').matches){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light')}}catch(e){}})()`,
           }}
         />
       </head>

@@ -1,5 +1,5 @@
 import { ArchiveIcon } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@foxeo/ui'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@monprojetpro/ui'
 
 export default function ArchivedPage() {
   return (
@@ -11,7 +11,7 @@ export default function ArchivedPage() {
           </div>
           <CardTitle className="text-2xl">Compte archivé</CardTitle>
           <CardDescription className="text-base">
-            Votre compte Foxeo a été archivé par votre opérateur.
+            Votre compte MonprojetPro a été archivé par votre opérateur.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

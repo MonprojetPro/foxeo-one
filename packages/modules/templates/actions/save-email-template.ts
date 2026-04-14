@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { z } from 'zod'
 
 // ============================================================
@@ -24,31 +24,31 @@ export interface EmailTemplate {
 
 export const DEFAULT_EMAIL_TEMPLATES: Record<string, { subject: string; body: string }> = {
   bienvenue_lab: {
-    subject: 'Bienvenue dans votre espace Lab Foxeo',
-    body: 'Bonjour {prenom},\n\nBienvenue dans votre espace Lab Foxeo. Votre parcours d\'accompagnement commence aujourd\'hui.\n\nVotre Centaure,\nMiKL',
+    subject: 'Bienvenue dans votre espace Lab MonprojetPro',
+    body: 'Bonjour {prenom},\n\nBienvenue dans votre espace Lab MonprojetPro. Votre parcours d\'accompagnement commence aujourd\'hui.\n\nVotre Centaure,\nMiKL',
   },
   brief_valide: {
-    subject: 'Votre brief a été validé — Foxeo',
+    subject: 'Votre brief a été validé — MonprojetPro',
     body: 'Bonjour {prenom},\n\nBonne nouvelle ! Votre brief "{titre_brief}" a été validé par votre accompagnateur.\n\n{commentaire}\n\nRejoignez votre espace Lab pour voir les prochaines étapes : {lien}\n\nVotre Centaure,\nMiKL',
   },
   brief_refuse: {
-    subject: 'Votre brief nécessite des ajustements — Foxeo',
+    subject: 'Votre brief nécessite des ajustements — MonprojetPro',
     body: 'Bonjour {prenom},\n\nVotre brief "{titre_brief}" a été retourné avec des commentaires.\n\n{commentaire}\n\nRendez-vous sur votre espace Lab pour le modifier : {lien}\n\nVotre Centaure,\nMiKL',
   },
   graduation: {
-    subject: 'Félicitations ! Votre espace One est prêt — Foxeo',
-    body: 'Bonjour {prenom},\n\nFélicitations pour votre graduation ! Votre dashboard One Foxeo est maintenant accessible : {lien}\n\nVotre Centaure,\nMiKL',
+    subject: 'Félicitations ! Votre espace One est prêt — MonprojetPro',
+    body: 'Bonjour {prenom},\n\nFélicitations pour votre graduation ! Votre dashboard One MonprojetPro est maintenant accessible : {lien}\n\nVotre Centaure,\nMiKL',
   },
   facture_envoyee: {
-    subject: 'Votre facture Foxeo est disponible',
+    subject: 'Votre facture MonprojetPro est disponible',
     body: 'Bonjour {prenom},\n\nVotre facture d\'un montant de {montant} est disponible sur votre espace : {lien}\n\nVotre Centaure,\nMiKL',
   },
   echec_paiement: {
-    subject: 'Échec de paiement — Foxeo',
+    subject: 'Échec de paiement — MonprojetPro',
     body: 'Bonjour {prenom},\n\nNous n\'avons pas pu traiter votre paiement de {montant}. Veuillez mettre à jour vos informations de paiement : {lien}\n\nVotre Centaure,\nMiKL',
   },
   rappel_parcours: {
-    subject: 'Votre parcours Lab vous attend — Foxeo',
+    subject: 'Votre parcours Lab vous attend — MonprojetPro',
     body: 'Bonjour {prenom},\n\nVotre accompagnateur a remarqué que vous n\'avez pas visité votre espace Lab depuis quelques jours. Continuez votre aventure : {lien}\n\nVotre Centaure,\nMiKL',
   },
 }

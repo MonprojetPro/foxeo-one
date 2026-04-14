@@ -14,7 +14,7 @@ vi.mock('../actions/upload-client-logo', () => ({
   uploadClientLogo: (...args: unknown[]) => mockUploadClientLogo(...args),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, unknown>
   return {
     ...actual,
@@ -151,7 +151,7 @@ describe('ClientBrandingForm', () => {
     const saveBtn = container.querySelector('[data-testid="btn-sauvegarder"]')
     fireEvent.click(saveBtn!)
 
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     await waitFor(() => {
       expect(showError).toHaveBeenCalledWith('Upload failed')
     })
@@ -165,7 +165,7 @@ describe('ClientBrandingForm', () => {
     const jpgFile = new File(['data'], 'test.jpg', { type: 'image/jpeg' })
     fireEvent.change(fileInput!, { target: { files: [jpgFile] } })
 
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     expect(showError).toHaveBeenCalledWith('Format non supporté. Utilisez PNG ou SVG.')
   })
 
@@ -177,7 +177,7 @@ describe('ClientBrandingForm', () => {
     const bigFile = new File([new ArrayBuffer(3 * 1024 * 1024)], 'big.png', { type: 'image/png' })
     fireEvent.change(fileInput!, { target: { files: [bigFile] } })
 
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     expect(showError).toHaveBeenCalledWith('Le fichier dépasse 2 Mo.')
   })
 
@@ -217,7 +217,7 @@ describe('ClientBrandingForm', () => {
     const saveBtn = container.querySelector('[data-testid="btn-sauvegarder"]')
     fireEvent.click(saveBtn!)
 
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     expect(showError).toHaveBeenCalledWith("Couleur d'accent invalide. Format attendu : #RRGGBB (ex: #F7931E)")
     expect(mockUpdateClientBranding).not.toHaveBeenCalled()
   })

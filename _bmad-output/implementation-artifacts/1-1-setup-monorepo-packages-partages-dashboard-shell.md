@@ -14,7 +14,7 @@ So that chaque audience a une experience dediee et optimisee des le depart.
 
 ### AC1: Shared Packages Foundation
 
-**Given** le starter template Turborepo existant avec @foxeo/ui, @foxeo/utils, @foxeo/tsconfig
+**Given** le starter template Turborepo existant avec @monprojetpro/ui, @monprojetpro/utils, @monprojetpro/tsconfig
 **When** la story est completee
 **Then** les packages suivants existent et sont fonctionnels :
 - `packages/supabase/` avec client.ts, server.ts, middleware.ts, realtime.ts, providers (query-provider, realtime-provider, theme-provider)
@@ -48,9 +48,9 @@ So that chaque audience a une experience dediee et optimisee des le depart.
 
 ## Tasks / Subtasks
 
-- [x] **Task 1: Create @foxeo/supabase package** (AC: #1)
+- [x] **Task 1: Create @monprojetpro/supabase package** (AC: #1)
   - [x] 1.1 Create `packages/supabase/package.json` with deps: @supabase/supabase-js ^2.95.x, @supabase/ssr latest
-  - [x] 1.2 Create `packages/supabase/tsconfig.json` extending @foxeo/tsconfig/react-library.json
+  - [x] 1.2 Create `packages/supabase/tsconfig.json` extending @monprojetpro/tsconfig/react-library.json
   - [x] 1.3 Create `src/client.ts` — `createClient()` using `createBrowserClient` from @supabase/ssr
   - [x] 1.4 Create `src/server.ts` — `createServerClient()` using @supabase/ssr + next/headers cookies
   - [x] 1.5 Create `src/middleware.ts` — `createMiddlewareClient()` for Next.js middleware
@@ -61,7 +61,7 @@ So that chaque audience a une experience dediee et optimisee des le depart.
   - [x] 1.10 Create `src/index.ts` barrel export
   - [x] 1.11 Write co-located unit tests for client.ts, server.ts, realtime.ts
 
-- [x] **Task 2: Create @foxeo/types package** (AC: #1)
+- [x] **Task 2: Create @monprojetpro/types package** (AC: #1)
   - [x] 2.1 Create `packages/types/package.json` (pure types, no runtime deps)
   - [x] 2.2 Create `packages/types/tsconfig.json`
   - [x] 2.3 Create `src/action-response.ts` — ActionResponse<T>, ActionError types
@@ -71,7 +71,7 @@ So that chaque audience a une experience dediee et optimisee des le depart.
   - [x] 2.7 Create `src/database.types.ts` — placeholder (auto-generated later by `supabase gen types`)
   - [x] 2.8 Create `src/index.ts` barrel export
 
-- [x] **Task 3: Update @foxeo/utils package** (AC: #1)
+- [x] **Task 3: Update @monprojetpro/utils package** (AC: #1)
   - [x] 3.1 Create `src/case-transform.ts` — toCamelCase() / toSnakeCase() (deep recursive object transform)
   - [x] 3.2 Create `src/format-currency.ts` — cents to EUR formatting (2500 → "25,00 €")
   - [x] 3.3 Create `src/validation-schemas.ts` — shared Zod schemas (email, password, uuid, etc.)
@@ -80,7 +80,7 @@ So that chaque audience a une experience dediee et optimisee des le depart.
   - [x] 3.6 Add zod to package.json dependencies
   - [x] 3.7 Write co-located unit tests for case-transform.ts, format-currency.ts, module-registry.ts
 
-- [x] **Task 4: Update @foxeo/ui — Dashboard Shell & Themes** (AC: #1, #2, #3)
+- [x] **Task 4: Update @monprojetpro/ui — Dashboard Shell & Themes** (AC: #1, #2, #3)
   - [x] 4.1 Create `src/themes/hub.css` — Hub cyan/turquoise OKLCH palette (density: compact)
   - [x] 4.2 Create `src/themes/lab.css` — Lab violet/terracotta OKLCH palette (density: spacious)
   - [x] 4.3 Create `src/themes/one.css` — One orange/green OKLCH palette (density: comfortable)
@@ -95,8 +95,8 @@ So that chaque audience a une experience dediee et optimisee des le depart.
 
 - [x] **Task 5: Create Hub app (apps/hub/)** (AC: #2)
   - [x] 5.1 Initialize Next.js 16.1 app in `apps/hub/` with TypeScript strict, Tailwind CSS 4, App Router
-  - [x] 5.2 Configure `next.config.ts` with transpilePackages for @foxeo/* packages
-  - [x] 5.3 Configure `tailwind.config.ts` extending @foxeo/ui
+  - [x] 5.2 Configure `next.config.ts` with transpilePackages for @monprojetpro/* packages
+  - [x] 5.3 Configure `tailwind.config.ts` extending @monprojetpro/ui
   - [x] 5.4 Create `app/layout.tsx` root with providers (QueryProvider, RealtimeProvider, ThemeProvider)
   - [x] 5.5 Create `app/globals.css` importing hub.css theme
   - [x] 5.6 Create `app/(auth)/layout.tsx` + `app/(auth)/login/page.tsx` (placeholder)
@@ -107,7 +107,7 @@ So that chaque audience a une experience dediee et optimisee des le depart.
   - [x] 5.11 Create `app/(dashboard)/modules/[moduleId]/loading.tsx` with ModuleSkeleton
   - [x] 5.12 Create `app/(dashboard)/modules/[moduleId]/error.tsx` — error boundary
   - [x] 5.13 Create `middleware.ts` (placeholder auth check)
-  - [x] 5.14 Create `package.json` with workspace deps (@foxeo/ui, @foxeo/supabase, @foxeo/utils, @foxeo/types)
+  - [x] 5.14 Create `package.json` with workspace deps (@monprojetpro/ui, @monprojetpro/supabase, @monprojetpro/utils, @monprojetpro/types)
 
 - [x] **Task 6: Create Client app (apps/client/)** (AC: #2)
   - [x] 6.1 Same structure as hub but with Lab/One dynamic theme loading
@@ -142,7 +142,7 @@ So that chaque audience a une experience dediee et optimisee des le depart.
 ### Architecture Patterns (MUST follow)
 
 **Data Fetching — 3 patterns ONLY:**
-1. Server Component → read data (RSC with @foxeo/supabase server client)
+1. Server Component → read data (RSC with @monprojetpro/supabase server client)
 2. Server Action → mutations (`'use server'` functions in `actions/`)
 3. API Route → external webhooks ONLY (`app/api/webhooks/[service]/route.ts`)
 
@@ -182,7 +182,7 @@ NEVER throw in Server Actions. Always return typed response.
 | Constants | UPPER_SNAKE_CASE | `MAX_FILE_SIZE` |
 | Types/Interfaces | PascalCase, no `I` prefix | `ClientConfig` |
 
-**DB ↔ API boundary:** Transform snake_case to camelCase at service layer using toCamelCase()/toSnakeCase() from @foxeo/utils.
+**DB ↔ API boundary:** Transform snake_case to camelCase at service layer using toCamelCase()/toSnakeCase() from @monprojetpro/utils.
 
 ### Key Type Definitions
 
@@ -334,10 +334,10 @@ Claude Opus 4.6 (claude-opus-4-6)
 ### Debug Log References
 
 - Build error 1: `tailwindcss` not found — fixed by adding `tailwindcss` + `tw-animate-css` to app dependencies
-- Build error 2: `next/server` not found in @foxeo/supabase — fixed by adding `next` as peerDependency
+- Build error 2: `next/server` not found in @monprojetpro/supabase — fixed by adding `next` as peerDependency
 - Build error 3: `cookiesToSet` implicit any — fixed by adding explicit `CookieToSet[]` type annotation
 - Build error 4: `SupabaseClient` generic mismatch in RealtimeProvider — fixed by using `ReturnType<typeof createClient>` instead
-- Code review C1: Non-null assertions on env vars — fixed by creating `getRequiredEnv()` in @foxeo/utils
+- Code review C1: Non-null assertions on env vars — fixed by creating `getRequiredEnv()` in @monprojetpro/utils
 - Code review C3: Undocumented `as T` assertions in case-transform.ts — fixed by adding documentation comment
 - Code review W1+W7: DashboardShell string concat + unnecessary 'use client' — fixed by using cn() and removing directive
 - Code review W10: Spurious `nul` file at root — removed

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { emailSchema, passwordSchema } from '@foxeo/utils'
+import { emailSchema, passwordSchema } from '@monprojetpro/utils'
 
 export const loginSchema = z.object({
   email: emailSchema,

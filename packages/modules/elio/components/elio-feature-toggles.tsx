@@ -1,6 +1,6 @@
 'use client'
 
-import { Switch } from '@foxeo/ui'
+import { Switch } from '@monprojetpro/ui'
 
 const AVAILABLE_FEATURES: Array<{ key: string; label: string; description: string }> = [
   {

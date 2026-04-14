@@ -42,7 +42,7 @@ so that **les clients peuvent utiliser leurs outils en autonomie et Elio One dis
 - Seuls les fichiers du module concerne injectes (pas toute la doc a chaque conv)
 
 **Given** l'export client inclut la documentation (FR161)
-**When** un client quitte Foxeo
+**When** un client quitte MonprojetPro
 **Then** export inclut dossier `documentation/` avec un sous-dossier par module + README.md
 
 ## Tasks / Subtasks

@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le module Support permet aux clients Foxeo de signaler des problèmes, poser des questions ou faire des suggestions directement depuis leur dashboard. Il inclut également une FAQ en ligne.
+Le module Support permet aux clients MonprojetPro de signaler des problèmes, poser des questions ou faire des suggestions directement depuis leur dashboard. Il inclut également une FAQ en ligne.
 
 ## Fonctionnalités
 

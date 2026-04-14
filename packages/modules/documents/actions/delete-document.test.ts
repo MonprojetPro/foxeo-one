@@ -10,7 +10,7 @@ const mockFrom = vi.fn(() => ({
   update: mockUpdate,
 }))
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },

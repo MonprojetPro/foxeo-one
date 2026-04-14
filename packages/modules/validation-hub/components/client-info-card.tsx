@@ -11,8 +11,8 @@ import {
   CardContent,
   CardHeader,
   Separator,
-} from '@foxeo/ui'
-import { cn, getInitials } from '@foxeo/utils'
+} from '@monprojetpro/ui'
+import { cn, getInitials } from '@monprojetpro/utils'
 import type { ClientDetail, ParcoursDetail } from '../types/validation.types'
 
 const CLIENT_TYPE_CONFIG: Record<string, { label: string; className: string }> =

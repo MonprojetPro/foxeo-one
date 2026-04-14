@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ChatList, useConversations, type Conversation } from '@foxeo/modules-chat'
+import { ChatList, useConversations, type Conversation } from '@monprojetpro/modules-chat'
 
 interface ChatPageClientProps {
   initialConversations: Conversation[]

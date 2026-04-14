@@ -1,4 +1,4 @@
-import { RequestDetail } from '@foxeo/modules-validation-hub'
+import { RequestDetail } from '@monprojetpro/modules-validation-hub'
 
 export default async function ValidationRequestDetailPage({
   params,

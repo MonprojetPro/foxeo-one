@@ -1,7 +1,7 @@
 'use client'
 
-import type { SessionInfo } from '@foxeo/utils'
-import { formatRelativeDate } from '@foxeo/utils'
+import type { SessionInfo } from '@monprojetpro/utils'
+import { formatRelativeDate } from '@monprojetpro/utils'
 
 interface SessionCardProps {
   session: SessionInfo

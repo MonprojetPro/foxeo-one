@@ -3,7 +3,7 @@
 import { useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { GraduationConfetti } from './graduation-confetti'
 import { GraduationRecap } from './graduation-recap'
 import { markGraduationScreenShown } from '../../graduation/actions/mark-graduation-screen-shown'
@@ -48,7 +48,7 @@ export function GraduationCelebrate({
   function handleSkip() {
     startTransition(async () => {
       await markGraduationScreenShown()
-      toast.success('Bienvenue dans Foxeo One 🚀')
+      toast.success('Bienvenue dans MonprojetPro One 🚀')
       router.push('/')
     })
   }
@@ -84,7 +84,7 @@ export function GraduationCelebrate({
               onClick={handleDiscoverOne}
               className="bg-gradient-to-r from-green-600 to-orange-600 hover:from-green-500 hover:to-orange-500 text-white px-10 py-6 text-lg font-semibold rounded-xl shadow-lg transition-all hover:scale-105"
             >
-              Découvrir Foxeo One
+              Découvrir MonprojetPro One
             </Button>
             <Button
               variant="ghost"

@@ -9,7 +9,7 @@ const mockSelectFromMessages = vi.fn(() => ({ eq: mockEqForSelect }))
 const mockEqForUpdate = vi.fn()
 const mockUpdate = vi.fn(() => ({ eq: mockEqForUpdate }))
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn(() => ({
       select: mockSelectFromMessages,

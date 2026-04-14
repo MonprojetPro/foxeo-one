@@ -11,8 +11,8 @@ vi.mock('../actions/integrate-observation', () => ({
   integrateObservation: (...args: unknown[]) => mockIntegrateObservation(...args),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -32,8 +32,8 @@ vi.mock('@foxeo/ui', async (importOriginal) => {
   }
 })
 
-vi.mock('@foxeo/utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/utils')>()
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/utils')>()
   return {
     ...actual,
     formatRelativeDate: (date: string) => `relatif:${date}`,
@@ -133,7 +133,7 @@ describe('ElioObservations', () => {
   })
 
   it('shows success toast on successful integration', async () => {
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
     render(<ElioObservations clientId={CLIENT_ID} observations={sampleObservations} />)
 
     const validateButtons = screen.getAllByRole('button', { name: /valider/i })
@@ -169,7 +169,7 @@ describe('ElioObservations', () => {
       data: null,
       error: { message: 'Erreur', code: 'DATABASE_ERROR' },
     })
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
 
     render(<ElioObservations clientId={CLIENT_ID} observations={sampleObservations} />)
 

@@ -1,6 +1,6 @@
 # Module Admin — Guide
 
-Module d'administration système pour les opérateurs Foxeo (MiKL).
+Module d'administration système pour les opérateurs MonprojetPro (MiKL).
 
 ## Fonctionnalités
 
@@ -20,7 +20,7 @@ Le provisioning crée une instance One dédiée pour un client diplômé du Lab.
 1. MiKL déclenche la graduation depuis la fiche client CRM
 2. `provisionOneInstance()` appelle l'API Supabase Management pour créer un projet
 3. Les migrations DB sont lancées sur le nouveau projet
-4. Un déploiement Vercel est créé sur `{slug}.foxeo.io`
+4. Un déploiement Vercel est créé sur `{slug}.monprojet-pro.com`
 5. Un health check valide l'activation — status → `active`
 
 **Stub MVP** (avant Story 12.6) : crée directement l'entrée `client_instances` avec status `active`.

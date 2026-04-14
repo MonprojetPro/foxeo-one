@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Élio est l'assistant IA personnel intégré au parcours Foxeo. Il adapte ses réponses selon le profil de communication de chaque client.
+Élio est l'assistant IA personnel intégré au parcours MonprojetPro. Il adapte ses réponses selon le profil de communication de chaque client.
 
 ## Fonctionnalités Story 6.4
 

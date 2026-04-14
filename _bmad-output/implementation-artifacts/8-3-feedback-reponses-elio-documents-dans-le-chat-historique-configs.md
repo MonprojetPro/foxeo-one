@@ -204,7 +204,7 @@ export interface ElioMessageMetadata {
 import { useState, useTransition } from 'react'
 import { ThumbsUp, ThumbsDown } from 'lucide-react'
 import { submitFeedback } from '../actions/submit-feedback'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 
 interface ElioFeedbackProps {
   messageId: string
@@ -263,7 +263,7 @@ export function ElioFeedback({ messageId, currentFeedback }: ElioFeedbackProps) 
 'use client'
 
 import { FileText, Download, ExternalLink } from 'lucide-react'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { useRouter } from 'next/navigation'
 
 interface ElioDocumentProps {
@@ -338,7 +338,7 @@ export function ElioDocument({
 ### References
 
 - [Source: Epic 8 — Story 8.3](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-83)
-- [Source: PRD — FR87, FR125, FR126](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR87, FR125, FR126](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 

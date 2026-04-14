@@ -40,7 +40,7 @@ describe('elio-chat — config Hub (Story 8.5)', () => {
 
   describe('HUB_PLACEHOLDER_DEFAULT', () => {
     it('Task 1.3 — retourne le placeholder Hub spécifique', () => {
-      expect(HUB_PLACEHOLDER_DEFAULT).toBe("Demande-moi n'importe quoi sur Foxeo...")
+      expect(HUB_PLACEHOLDER_DEFAULT).toBe("Demande-moi n'importe quoi sur MonprojetPro...")
     })
   })
 })

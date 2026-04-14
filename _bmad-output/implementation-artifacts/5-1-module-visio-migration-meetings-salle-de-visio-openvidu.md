@@ -6,7 +6,7 @@ Status: done
 
 As a **utilisateur (MiKL ou client)**,
 I want **lancer une visioconférence directement depuis la plateforme avec OpenVidu**,
-So that **je peux échanger avec mon interlocuteur sans quitter l'écosystème Foxeo**.
+So that **je peux échanger avec mon interlocuteur sans quitter l'écosystème MonprojetPro**.
 
 ## Acceptance Criteria
 
@@ -18,7 +18,7 @@ So that **je peux échanger avec mon interlocuteur sans quitter l'écosystème F
 
 4. **AC4 — Salle de visio** : Component `meeting-room.tsx` utilise SDK OpenVidu (openvidu-browser). Affichage caméra locale + remote. Boutons : mute/unmute micro, on/off caméra, partage écran, quitter. État : connecting → connected → disconnected. Gestion erreurs (permissions refusées, connexion échouée).
 
-5. **AC5 — Liste meetings** : Page Hub : liste tous les meetings (filtres : client, statut, date). Page Client : liste ses meetings. Colonnes : titre, date, statut, durée, actions (rejoindre si in_progress, voir détails si completed). DataTable de @foxeo/ui.
+5. **AC5 — Liste meetings** : Page Hub : liste tous les meetings (filtres : client, statut, date). Page Client : liste ses meetings. Colonnes : titre, date, statut, durée, actions (rejoindre si in_progress, voir détails si completed). DataTable de @monprojetpro/ui.
 
 6. **AC6 — Server Actions** : `createMeeting()` crée enregistrement + notification au destinataire. `startMeeting()` crée session OpenVidu via Edge Function + met à jour DB (status=in_progress, started_at, session_id). `endMeeting()` ferme session OpenVidu + calcule durée + met à jour DB (status=completed, ended_at, duration_seconds).
 
@@ -355,7 +355,7 @@ Claude Sonnet 4.6 (claude-sonnet-4-6)
 ### Completion Notes List
 
 - Migration `00031_create_meetings.sql` : table meetings, 4 index, trigger updated_at, 4 politiques RLS
-- Module `@foxeo/module-visio` : manifest, types, 4 Server Actions, 1 Server Action edge-function proxy, 2 hooks TanStack Query, 5 composants UI, barrel export
+- Module `@monprojetpro/module-visio` : manifest, types, 4 Server Actions, 1 Server Action edge-function proxy, 2 hooks TanStack Query, 5 composants UI, barrel export
 - Edge Function `get-openvidu-token` : auth Supabase, vérification RLS meeting, appel API OpenVidu, retourne token éphémère
 - Server Actions : createMeeting (+ notification best-effort), startMeeting (via getOpenViduToken), endMeeting (calcul durée), getMeetings (filtres clientId/status)
 - Hook useOpenVidu : import statique openvidu-browser résolu via stub + alias Vite
@@ -367,7 +367,7 @@ Claude Sonnet 4.6 (claude-sonnet-4-6)
   - [H2] handleLeave: ne termine plus le meeting pour tous, juste disconnect
   - [H3] État erreur: ajout bouton "Réessayer" pour reconnecter
   - [M1] Partage d'écran: implémenté via getDisplayMedia + replaceTrack OpenVidu
-  - [M2] Edge Function CORS: restreint aux domaines *.foxeo.io + localhost
+  - [M2] Edge Function CORS: restreint aux domaines *.monprojet-pro.com + localhost
   - [M3] Tests RLS contract: réécrits pour valider MeetingStatusValues du module réel
   - [M4] Vidéo streams: publisher et subscribers attachent les flux via createVideoElement + refs
 

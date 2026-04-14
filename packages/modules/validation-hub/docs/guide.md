@@ -6,7 +6,7 @@ Le **Validation Hub** est le centre de traitement des demandes de validation pou
 
 ## Accès au module
 
-Le Validation Hub est accessible depuis la sidebar du Hub Foxeo, sous l'icône "check-circle-2". Il est réservé à l'opérateur (MiKL).
+Le Validation Hub est accessible depuis la sidebar du Hub MonprojetPro, sous l'icône "check-circle-2". Il est réservé à l'opérateur (MiKL).
 
 ## File d'attente des demandes
 

@@ -14,7 +14,7 @@ import {
   Textarea,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { suspendClient } from '../actions/suspend-client'
 import { AlertTriangle } from 'lucide-react'
 

@@ -23,13 +23,13 @@ Le module Chat fournit une messagerie asynchrone en temps réel entre MiKL (opé
 
 ```tsx
 // Hub — liste des conversations
-import { ChatList } from '@foxeo/modules-chat'
+import { ChatList } from '@monprojetpro/modules-chat'
 
 // Client — fenêtre chat
-import { ChatWindow } from '@foxeo/modules-chat'
+import { ChatWindow } from '@monprojetpro/modules-chat'
 
 // Hook messages
-import { useChatMessages } from '@foxeo/modules-chat'
+import { useChatMessages } from '@monprojetpro/modules-chat'
 const { messages, sendMessage } = useChatMessages(clientId)
 ```
 

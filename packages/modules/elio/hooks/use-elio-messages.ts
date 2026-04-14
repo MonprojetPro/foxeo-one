@@ -1,7 +1,9 @@
 'use client'
 
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { getMessages, PAGE_SIZE } from '../actions/get-messages'
+import { getMessages } from '../actions/get-messages'
+
+const PAGE_SIZE = 50
 import type { ElioMessagePersisted } from '../types/elio.types'
 
 interface UseElioMessagesReturn {

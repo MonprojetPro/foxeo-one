@@ -2,8 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { Paperclip, X, FileText, Image } from 'lucide-react'
-import { Button } from '@foxeo/ui'
-import { cn } from '@foxeo/utils'
+import { Button } from '@monprojetpro/ui'
+import { cn } from '@monprojetpro/utils'
 
 interface SubmissionFileUploadProps {
   onFilesChange: (files: File[]) => void

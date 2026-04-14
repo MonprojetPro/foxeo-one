@@ -1,9 +1,9 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse } from '@foxeo/types'
-import type { ActionResponse } from '@foxeo/types'
-import { toCamelCase } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse } from '@monprojetpro/types'
+import type { ActionResponse } from '@monprojetpro/types'
+import { toCamelCase } from '@monprojetpro/utils'
 import { z } from 'zod'
 import type { ValidationRequest } from '../types/validation.types'
 

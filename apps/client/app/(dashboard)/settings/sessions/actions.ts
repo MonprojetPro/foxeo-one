@@ -1,10 +1,10 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse } from '@foxeo/types'
-import type { ActionResponse } from '@foxeo/types'
-import { parseUserAgent, maskIpAddress } from '@foxeo/utils'
-import type { SessionInfo } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse } from '@monprojetpro/types'
+import type { ActionResponse } from '@monprojetpro/types'
+import { parseUserAgent, maskIpAddress } from '@monprojetpro/utils'
+import type { SessionInfo } from '@monprojetpro/utils'
 import { jwtDecode } from './jwt-decode'
 
 /** Raw session row from fn_get_user_sessions RPC */

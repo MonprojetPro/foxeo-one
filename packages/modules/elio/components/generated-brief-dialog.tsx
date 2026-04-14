@@ -11,7 +11,7 @@ import {
   Skeleton,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { useRouter } from 'next/navigation'
 import { BriefMarkdownRenderer } from './brief-markdown-renderer'
 import { generateBrief } from '../actions/generate-brief'

@@ -1,6 +1,6 @@
 // Story 12.7 — Task 4: TanStack Query hook for instances monitoring
 import { useQuery } from '@tanstack/react-query'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 
 export interface UsageMetrics {
   dbRows: number

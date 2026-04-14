@@ -1,12 +1,12 @@
 import { Suspense } from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@foxeo/ui'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@monprojetpro/ui'
 import { LoginForm } from './login-form'
 
 export default function LoginPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Foxeo Hub</CardTitle>
+        <CardTitle className="text-2xl font-bold">MonprojetPro Hub</CardTitle>
         <CardDescription>Connexion operateur</CardDescription>
       </CardHeader>
       <CardContent>

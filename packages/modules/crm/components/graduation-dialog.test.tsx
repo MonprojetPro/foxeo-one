@@ -11,8 +11,8 @@ vi.mock('../actions/graduate-client', () => ({
   graduateClient: vi.fn().mockResolvedValue({ data: null, error: null }),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -51,7 +51,7 @@ describe('GraduationDialog', () => {
   it('should render dialog title', () => {
     render(<GraduationDialog {...defaultProps} />)
 
-    expect(screen.getByText('Graduer vers Foxeo One')).toBeDefined()
+    expect(screen.getByText('Graduer vers MonprojetPro One')).toBeDefined()
   })
 
   it('should display client name and company', () => {

@@ -24,10 +24,10 @@ export const TEST_IDS = {
 } as const
 
 export const TEST_EMAILS = {
-  operatorA: 'rls-test-operator-a@foxeo.test',
-  operatorB: 'rls-test-operator-b@foxeo.test',
-  clientA: 'rls-test-client-a@foxeo.test',
-  clientB: 'rls-test-client-b@foxeo.test',
+  operatorA: 'rls-test-operator-a@monprojetpro.test',
+  operatorB: 'rls-test-operator-b@monprojetpro.test',
+  clientA: 'rls-test-client-a@monprojetpro.test',
+  clientB: 'rls-test-client-b@monprojetpro.test',
 } as const
 
 const TEST_PASSWORD = 'TestPassword123!'

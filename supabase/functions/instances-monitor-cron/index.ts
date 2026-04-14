@@ -91,9 +91,9 @@ async function sendAlertNotification(
   if (newLevel === 'warning' || newLevel === 'critical') {
     await supabase.functions.invoke('send-email', {
       body: {
-        to: Deno.env.get('OPERATOR_EMAIL') ?? 'mikl@foxeo.io',
+        to: Deno.env.get('OPERATOR_EMAIL') ?? 'mikl@monprojet-pro.com',
         subject: title,
-        html: `<p>${body}</p><p><a href="${Deno.env.get('HUB_URL') ?? 'https://hub.foxeo.io'}${link}">Voir le tableau de bord</a></p>`,
+        html: `<p>${body}</p><p><a href="${Deno.env.get('HUB_URL') ?? 'https://hub.monprojet-pro.com'}${link}">Voir le tableau de bord</a></p>`,
       },
     })
   }

@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { GetDocumentUrlInput, type Document, type DocumentDB } from '../types/document.types'
 import { toDocument } from '../utils/to-document'
 
@@ -42,13 +42,15 @@ export async function getDocumentUrl(
 
     const typedDoc = doc as DocumentDB
 
+    const download = parsed.data.download ?? false
+
     const { data: urlData, error: urlError } = await supabase.storage
       .from('documents')
-      .createSignedUrl(typedDoc.file_path, 3600)
+      .createSignedUrl(typedDoc.file_path, 3600, download ? { download: typedDoc.name } : undefined)
 
     if (urlError || !urlData) {
       console.error('[DOCUMENTS:VIEW] Signed URL error:', urlError)
-      return errorResponse('Erreur lors de la génération de l\'URL', 'STORAGE_ERROR', urlError)
+      return errorResponse('Erreur lors de la génération de l\'URL', 'STORAGE_ERROR', { message: urlError?.message })
     }
 
     return successResponse({

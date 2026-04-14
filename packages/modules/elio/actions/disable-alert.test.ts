@@ -26,13 +26,13 @@ const mockFrom = vi.fn((table: string) => {
   return {}
 })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: mockFrom,
   })),
 }))
 
-vi.mock('@foxeo/types', async (importOriginal) => {
+vi.mock('@monprojetpro/types', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,

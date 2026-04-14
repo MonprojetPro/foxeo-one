@@ -12,13 +12,13 @@ const mockEqMetadata = vi.fn()
 const mockSingleMetadata = vi.fn()
 const mockFrom = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: mockFrom,
   })),
 }))
 
-vi.mock('@foxeo/types', async (importOriginal) => {
+vi.mock('@monprojetpro/types', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,
@@ -30,7 +30,7 @@ vi.mock('@foxeo/types', async (importOriginal) => {
   }
 })
 
-vi.mock('@foxeo/utils', async (importOriginal) => {
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,

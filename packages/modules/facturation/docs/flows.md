@@ -3,7 +3,7 @@
 ## Flux 1 : Devis → Facture → Paiement
 
 ```
-MiKL crée un devis (Foxeo Hub)
+MiKL crée un devis (MonprojetPro Hub)
     ↓
 Server Action billing-proxy.ts → POST /quotes (Pennylane API v2)
     ↓
@@ -21,13 +21,13 @@ Edge Function billing-sync (toutes les 5 min) détecte le changement
     ↓
 Table billing_sync mise à jour → Supabase Realtime → TanStack Query invalidateQueries()
     ↓
-Interface Foxeo Hub rafraîchie automatiquement
+Interface MonprojetPro Hub rafraîchie automatiquement
 ```
 
 ## Flux 2 : Abonnement Récurrent
 
 ```
-MiKL configure un abonnement (Foxeo Hub)
+MiKL configure un abonnement (MonprojetPro Hub)
     ↓
 Server Action → POST /billing_subscriptions (Pennylane)
     ↓
@@ -39,7 +39,7 @@ Pennylane génère les factures selon la périodicité (mensuel/trimestriel/annu
     ↓
 [Échec] statut → unpaid → tentative de relance automatique
     ↓
-Edge Function détecte l'échec → alerte dans Foxeo Hub + email relance client
+Edge Function détecte l'échec → alerte dans MonprojetPro Hub + email relance client
 ```
 
 ## Flux 3 : Graduation Lab → Abonnement One
@@ -63,7 +63,7 @@ pending_billing_update = false
 ## Flux 4 : Export RGPD / Résiliation
 
 ```
-Client demande la résiliation (Foxeo Hub)
+Client demande la résiliation (MonprojetPro Hub)
     ↓
 Vérification des factures en attente
     ↓
@@ -83,7 +83,7 @@ Création d'un avoir dans Pennylane (annule partiellement ou totalement la factu
     ↓
 Edge Function détecte le nouvel avoir
     ↓
-billing_sync mis à jour → visible dans Foxeo Hub et Foxeo One
+billing_sync mis à jour → visible dans MonprojetPro Hub et MonprojetPro One
 ```
 
 ## États des entités

@@ -11,7 +11,7 @@ const mockUpload = vi.fn()
 
 const mockGetUser = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     storage: {

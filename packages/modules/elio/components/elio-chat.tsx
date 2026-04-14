@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
+import { Zap, MessageCircle, SlidersHorizontal, PenLine, Mic, Paperclip, Send, Loader2, FileText } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useElioChat } from '../hooks/use-elio-chat'
 import { useElioConversations } from '../hooks/use-elio-conversations'
@@ -16,13 +17,56 @@ import { generateWelcomeMessage } from '../actions/generate-welcome-message'
 import { generateConversationTitle } from '../actions/generate-conversation-title'
 import { saveElioMessage } from '../actions/save-elio-message'
 import { updateConversationTitle } from '../actions/update-conversation-title'
+import { deleteConversation } from '../actions/delete-conversation'
 import { sendToElio } from '../actions/send-to-elio'
 import { escalateToMiKL } from '../actions/escalate-to-mikl'
 import { submitEvolutionRequest } from '../actions/submit-evolution-request'
 import { getNextQuestion, processResponse, isCancel, type EvolutionCollectionData } from '../utils/evolution-collection'
 import { generateEvolutionBrief } from '../actions/generate-evolution-brief'
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
+import { readFileContent } from '@monprojetpro/utils'
 import type { DashboardType, ElioMessage, ElioError } from '../types/elio.types'
+
+// ── Mode Hub ──────────────────────────────────────────────────────────────────
+
+type ElioMode = 'ordre' | 'avis' | 'maj-elio' | 'brouillon'
+
+const HUB_MODES: {
+  id: ElioMode
+  label: string
+  description: string
+  placeholder: string
+  prefix: string
+  Icon: React.ElementType
+}[] = [
+  { id: 'ordre',    label: 'Ordre',    description: 'Exécuter une action Hub',      placeholder: 'Dis à Élio ce que tu veux faire…',                            prefix: '[ORDRE] ',     Icon: Zap },
+  { id: 'avis',     label: 'Avis',     description: "Demander l'avis d'Élio",       placeholder: "Demande l'avis d'Élio…",                                      prefix: '[AVIS] ',      Icon: MessageCircle },
+  { id: 'maj-elio', label: 'Màj Élio', description: 'Mettre à jour ses directives', placeholder: 'Ex: À partir de maintenant, toujours tutoyer les clients…',    prefix: '[DIRECTIVE] ', Icon: SlidersHorizontal },
+  { id: 'brouillon',label: 'Brouillon',description: 'Générer un texte ou message',  placeholder: 'Décris le texte ou message à rédiger…',                       prefix: '[BROUILLON] ', Icon: PenLine },
+]
+
+const MODE_ACTIVE_HUB: Record<ElioMode, string> = {
+  'ordre':    'bg-[oklch(0.7_0.15_190/0.18)] border-[oklch(0.7_0.15_190/0.5)] text-[oklch(0.7_0.15_190)]',
+  'avis':     'bg-[oklch(0.65_0.12_220/0.18)] border-[oklch(0.65_0.12_220/0.5)] text-[oklch(0.65_0.12_220)]',
+  'maj-elio': 'bg-[oklch(0.7_0.2_50/0.18)] border-[oklch(0.7_0.2_50/0.5)] text-[oklch(0.7_0.2_50)]',
+  'brouillon':'bg-[oklch(0.65_0.15_160/0.18)] border-[oklch(0.65_0.15_160/0.5)] text-[oklch(0.65_0.15_160)]',
+}
+
+const MODE_GLOW_HUB: Record<ElioMode, string> = {
+  'ordre':    'border-[oklch(0.7_0.15_190/0.4)] shadow-[0_0_0_1px_oklch(0.7_0.15_190/0.12),0_0_20px_oklch(0.7_0.15_190/0.1)]',
+  'avis':     'border-[oklch(0.65_0.12_220/0.4)] shadow-[0_0_0_1px_oklch(0.65_0.12_220/0.12),0_0_20px_oklch(0.65_0.12_220/0.1)]',
+  'maj-elio': 'border-[oklch(0.7_0.2_50/0.4)] shadow-[0_0_0_1px_oklch(0.7_0.2_50/0.12),0_0_20px_oklch(0.7_0.2_50/0.1)]',
+  'brouillon':'border-[oklch(0.65_0.15_160/0.4)] shadow-[0_0_0_1px_oklch(0.65_0.15_160/0.12),0_0_20px_oklch(0.65_0.15_160/0.1)]',
+}
+
+const MODE_GLOW_LINE_HUB: Record<ElioMode, string> = {
+  'ordre':    'via-[oklch(0.7_0.15_190/0.6)]',
+  'avis':     'via-[oklch(0.65_0.12_220/0.6)]',
+  'maj-elio': 'via-[oklch(0.7_0.2_50/0.6)]',
+  'brouillon':'via-[oklch(0.65_0.15_160/0.6)]',
+}
+
+// ── Props ─────────────────────────────────────────────────────────────────────
 
 interface ElioChatProps {
   dashboardType: DashboardType
@@ -54,7 +98,7 @@ export const HEADER_LABELS: Record<DashboardType, string> = {
   one: 'Élio — Votre assistant',
 }
 
-export const HUB_PLACEHOLDER_DEFAULT = "Demande-moi n'importe quoi sur Foxeo..."
+export const HUB_PLACEHOLDER_DEFAULT = "Demande-moi n'importe quoi sur MonprojetPro..."
 // Story 8.7 — Task 1.3 : placeholder adapté au profil (tutoiement/vouvoiement)
 export const ONE_PLACEHOLDER_VOUVOIEMENT = 'Comment puis-je vous aider aujourd\'hui ?'
 export const ONE_PLACEHOLDER_TUTOIEMENT = 'Comment je peux t\'aider aujourd\'hui ?'
@@ -153,6 +197,7 @@ function ElioChatPersisted({
   const queryClient = useQueryClient()
 
   const [inputValue, setInputValue] = useState('')
+  const [mode, setMode] = useState<ElioMode>('ordre')
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [isCreatingConversation, setIsCreatingConversation] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -257,6 +302,15 @@ function ElioChatPersisted({
     [invalidateConversations]
   )
 
+  const handleDeleteConversation = useCallback(
+    async (id: string) => {
+      await deleteConversation(id)
+      if (activeConversationId === id) setActiveConversationId(null)
+      await invalidateConversations()
+    },
+    [activeConversationId, invalidateConversations]
+  )
+
   // Story 8.7 — Task 9 : escalade vers MiKL
   // CR fix HIGH-1: utiliser escalationMessages (capturés avant clear) au lieu de localMessages
   // CR fix HIGH-2: vérifier le résultat de escalateToMiKL
@@ -324,8 +378,11 @@ function ElioChatPersisted({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const content = inputValue.trim()
-    if (!content || isLoading) return
+    const raw = inputValue.trim()
+    if (!raw || isLoading) return
+    const content = dashboardType === 'hub'
+      ? (HUB_MODES.find((m) => m.id === mode)?.prefix ?? '') + raw
+      : raw
     setInputValue('')
     setError(null)
     setPendingEscalation(null)
@@ -475,17 +532,9 @@ function ElioChatPersisted({
     const newCount = userMessageCount + 1
     setUserMessageCount(newCount)
 
-    // Auto-génération du titre après 3 messages utilisateur (AC5)
-    // Combiner les messages persistés ET locaux pour couvrir la session courante
-    if (newCount === 3) {
-      const persistedUserMsgs = persistedMessages
-        .filter((m) => m.role === 'user')
-        .map((m) => m.content)
-      const localUserMsgs = localMessages
-        .filter((m) => m.role === 'user')
-        .map((m) => m.content)
-      // Inclure le message actuel qui vient d'être envoyé
-      const allUserMsgs = [...persistedUserMsgs, ...localUserMsgs, content].slice(0, 3)
+    // Auto-génération du titre après le 1er message utilisateur
+    if (newCount === 1) {
+      const allUserMsgs = [content]
 
       if (allUserMsgs.length >= 1) {
         void generateConversationTitle(convId, allUserMsgs).then(() => {
@@ -547,6 +596,7 @@ function ElioChatPersisted({
             onSelectConversation={handleSelectConversation}
             onNewConversation={handleNewConversation}
             onRenameTitle={handleRenameTitle}
+            onDeleteConversation={handleDeleteConversation}
             isCreating={isCreatingConversation}
             labConversations={dashboardType === 'one' ? labConversations : undefined}
           />
@@ -694,7 +744,13 @@ function ElioChatPersisted({
             onKeyDown={handleKeyDown}
             isLoading={isLoading}
             focusRing={focusRing}
-            placeholder={placeholder}
+            placeholder={
+              dashboardType === 'hub'
+                ? (HUB_MODES.find((m) => m.id === mode)?.placeholder ?? placeholder)
+                : placeholder
+            }
+            mode={dashboardType === 'hub' ? mode : undefined}
+            onModeChange={dashboardType === 'hub' ? setMode : undefined}
           />
         </div>
       </div>
@@ -713,6 +769,8 @@ interface ChatInputProps {
   isLoading: boolean
   focusRing: string
   placeholder?: string
+  mode?: ElioMode
+  onModeChange?: (m: ElioMode) => void
 }
 
 function ChatInput({
@@ -724,7 +782,141 @@ function ChatInput({
   isLoading,
   focusRing,
   placeholder = 'Écrivez un message à Élio...',
+  mode,
+  onModeChange,
 }: ChatInputProps) {
+  const [isFocused, setIsFocused] = useState(false)
+  const [attachedFile, setAttachedFile] = useState<string | null>(null)
+  const hasMode = mode !== undefined && onModeChange !== undefined
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    const { text, error: fileError } = await readFileContent(file)
+    if (fileError || !text) {
+      // Afficher l'erreur inline plutôt qu'un alert() natif
+      onChange(`[Fichier non lisible: ${file.name} — ${fileError ?? 'format non supporté'}]`)
+      return
+    }
+
+    setAttachedFile(file.name)
+    const current = inputRef.current?.value ?? ''
+    const prefix = current.trim() ? current + '\n\n' : ''
+    onChange(`${prefix}[Fichier: ${file.name}]\n${text.slice(0, 8000)}`)
+    inputRef.current?.focus()
+  }
+
+  if (hasMode) {
+    const glowClass = isFocused ? MODE_GLOW_HUB[mode] : 'border-border/60'
+    const glowLine = MODE_GLOW_LINE_HUB[mode]
+
+    return (
+      <form onSubmit={(e) => { setAttachedFile(null); onSubmit(e) }} className="border-t border-border px-4 py-4">
+        {/* Input fichier caché */}
+
+        {/* Indicateur fichier attaché */}
+        {attachedFile && (
+          <div className="flex items-center gap-1.5 mb-2 px-2 py-1 rounded-md bg-primary/8 border border-primary/20">
+            <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-xs text-primary truncate flex-1">{attachedFile}</span>
+            <button type="button" onClick={() => { setAttachedFile(null); onChange('') }}
+              className="text-primary/60 hover:text-primary transition-colors cursor-pointer text-xs">✕</button>
+          </div>
+        )}
+
+        <div
+          className={[
+            'relative rounded-2xl border transition-all duration-200',
+            'bg-gradient-to-b from-card/80 to-muted/20',
+            glowClass,
+          ].join(' ')}
+        >
+          {/* Glow line bas */}
+          <div
+            className={[
+              'absolute inset-x-4 bottom-0 h-px rounded-full transition-opacity duration-200',
+              `bg-gradient-to-r from-transparent ${glowLine} to-transparent`,
+              isFocused ? 'opacity-100' : 'opacity-0',
+            ].join(' ')}
+          />
+
+          {/* Mode buttons */}
+          <div className="flex items-center gap-1.5 px-3 pt-2.5">
+            {HUB_MODES.map((m) => (
+              <div key={m.id} className="relative group/tip">
+                <button
+                  type="button"
+                  onClick={() => { onModeChange(m.id); inputRef.current?.focus() }}
+                  className={[
+                    'h-7 w-7 rounded-full border flex items-center justify-center transition-all duration-150 cursor-pointer',
+                    mode === m.id
+                      ? MODE_ACTIVE_HUB[m.id]
+                      : 'bg-transparent border-border/40 text-muted-foreground hover:border-border hover:text-foreground',
+                  ].join(' ')}
+                  aria-label={m.label}
+                >
+                  <m.Icon className="h-3.5 w-3.5" />
+                </button>
+                {/* Tooltip */}
+                <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150">
+                  <div className="bg-popover border border-border rounded-md px-2.5 py-1.5 shadow-md whitespace-nowrap">
+                    <p className="text-[11px] font-semibold text-foreground leading-none mb-0.5">{m.label}</p>
+                    <p className="text-[10px] text-muted-foreground leading-none">{m.description}</p>
+                  </div>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-border" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Textarea */}
+          <textarea
+            ref={inputRef}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={onKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder={placeholder}
+            disabled={isLoading}
+            rows={2}
+            aria-label="Message à envoyer à Élio"
+            className="w-full bg-transparent px-3 pt-2 pb-1 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none disabled:opacity-60"
+          />
+
+          {/* Bottom row */}
+          <div className="flex items-center justify-between px-2 pb-2">
+            <div className="flex items-center gap-0.5">
+              <button type="button" title="Microphone (bientôt disponible)"
+                className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-pointer">
+                <Mic className="h-3.5 w-3.5" />
+              </button>
+              <label title="Joindre un fichier texte"
+                className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-pointer">
+                <Paperclip className="h-3.5 w-3.5" />
+                <input type="file" className="sr-only" accept=".txt,.md,.csv,.json,.xml,.html,.js,.ts,.py,.yaml,.yml,.pdf,.docx,text/*" onChange={handleFileChange} />
+              </label>
+            </div>
+            <button
+              type="submit"
+              disabled={isLoading || !value.trim()}
+              aria-label="Envoyer le message"
+              className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer"
+            >
+              {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+        </div>
+        <p className="mt-1.5 text-center text-[10px] text-muted-foreground/50">
+          Entrée pour envoyer · Maj+Entrée pour nouvelle ligne
+        </p>
+      </form>
+    )
+  }
+
+  // Mode standard (Lab / One)
   return (
     <form onSubmit={onSubmit} className="border-t border-border px-4 py-3">
       <div className="flex items-end gap-2">

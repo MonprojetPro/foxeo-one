@@ -6,7 +6,7 @@ Le provisioning complet (création Supabase project, migrations, déploiement Ve
 
 ## Q: Que fait `provisionOneInstance` en MVP ?
 
-Il crée une entrée dans `client_instances` avec status='active' et une URL simulée `{slug}.foxeo.io`. Aucune infrastructure réelle n'est créée.
+Il crée une entrée dans `client_instances` avec status='active' et une URL simulée `{slug}.monprojet-pro.com`. Aucune infrastructure réelle n'est créée.
 
 ## Q: Comment activer le mode maintenance ?
 

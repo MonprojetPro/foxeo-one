@@ -4,7 +4,7 @@ import { updateConversationTitle } from './update-conversation-title'
 const mockUpdate = vi.fn()
 const mockEq = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn(() => ({
       update: mockUpdate,

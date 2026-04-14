@@ -19,7 +19,7 @@ So that **j'ai un assistant IA dans mon cockpit qui me fait gagner du temps au q
 - **Palette Hub** : cyan/turquoise (Minimal Futuriste dark mode)
 - **Header** : "Élio Hub — Votre assistant" avec avatar Élio Hub
 - **Zone de chat** avec historique
-- **Champ de saisie** avec placeholder : "Demande-moi n'importe quoi sur Foxeo..."
+- **Champ de saisie** avec placeholder : "Demande-moi n'importe quoi sur MonprojetPro..."
 - **Panneau de conversations** latéral (Story 8.2)
 
 **And** un message d'accueil s'affiche si c'est la première conversation :
@@ -86,7 +86,7 @@ So that **j'ai un assistant IA dans mon cockpit qui me fait gagner du temps au q
 - [x] **Task 1** : Configurer la palette Hub dans `elio-chat.tsx` (AC: #1, FR21)
   - [x] 1.1 : Vérifier que `dashboardType='hub'` applique la palette cyan/turquoise
   - [x] 1.2 : Tester le header "Élio Hub — Votre assistant"
-  - [x] 1.3 : Tester le placeholder "Demande-moi n'importe quoi sur Foxeo..."
+  - [x] 1.3 : Tester le placeholder "Demande-moi n'importe quoi sur MonprojetPro..."
 
 - [x] **Task 2** : Créer le message d'accueil Hub (AC: #1)
   - [x] 2.1 : Ajouter dans `config/welcome-messages.ts`
@@ -267,7 +267,7 @@ export function detectIntent(userMessage: string): Intent {
 // actions/search-client-info.ts
 'use server'
 
-import { createServerClient } from '@foxeo/supabase/server'
+import { createServerClient } from '@monprojetpro/supabase/server'
 
 export async function searchClientInfo(query: string): Promise<ActionResponse<ClientInfo>> {
   const supabase = createServerClient()
@@ -382,7 +382,7 @@ export async function sendToElio(
 ### References
 
 - [Source: Epic 8 — Story 8.5](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-85)
-- [Source: PRD — FR21, FR22, FR23](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR21, FR22, FR23](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 

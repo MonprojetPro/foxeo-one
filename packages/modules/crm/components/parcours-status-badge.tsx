@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge } from '@foxeo/ui'
+import { Badge } from '@monprojetpro/ui'
 import type { ParcoursStatus } from '../types/crm.types'
 
 interface ParcoursStatusBadgeProps {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Badge } from '@foxeo/ui'
+import { Badge } from '@monprojetpro/ui'
 import { useInstances } from '../hooks/use-instances'
 import type { ClientInstance } from '../hooks/use-instances'
 

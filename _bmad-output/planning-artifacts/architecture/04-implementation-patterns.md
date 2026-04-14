@@ -51,9 +51,9 @@ CREATE TABLE ClientConfig (
 | **Route params** | camelCase dans le code, kebab-case dans l'URL | `[clientId]` → `/clients/abc-123` |
 | **Query params** | camelCase | `?pageSize=20&sortBy=createdAt` |
 | **JSON request/response** | camelCase | `{ clientId, activeModules, dashboardType }` |
-| **Headers custom** | `X-Foxeo-*` | `X-Foxeo-Client-Id`, `X-Foxeo-Operator-Id` |
+| **Headers custom** | `X-MonprojetPro-*` | `X-MonprojetPro-Client-Id`, `X-MonprojetPro-Operator-Id` |
 
-**Transformation DB ↔ API :** Les données DB (snake_case) sont transformées en camelCase au niveau du service/query. Un helper `toCamelCase` / `toSnakeCase` dans `@foxeo/utils` gère cette conversion.
+**Transformation DB ↔ API :** Les données DB (snake_case) sont transformées en camelCase au niveau du service/query. Un helper `toCamelCase` / `toSnakeCase` dans `@monprojetpro/utils` gère cette conversion.
 
 ```typescript
 // ✅ BON — Server Action
@@ -157,7 +157,7 @@ packages/modules/chat/
 - **Tests co-localisés** : `*.test.ts` à côté du fichier source, jamais dans un dossier `__tests__/` séparé
 - **Organisation par feature** au sein du module, pas par type technique
 - **Un barrel export** (`index.ts`) par module qui expose uniquement l'API publique
-- **Pas de dépendances circulaires** entre modules — un module peut dépendre de `@foxeo/ui` et `@foxeo/utils`, jamais d'un autre module directement (passer par events)
+- **Pas de dépendances circulaires** entre modules — un module peut dépendre de `@monprojetpro/ui` et `@monprojetpro/utils`, jamais d'un autre module directement (passer par events)
 
 #### Organisation des apps (apps/hub/ et apps/client/)
 
@@ -244,7 +244,7 @@ export async function createClient(formData: any) {
 | Format | Convention | Exemple |
 |--------|-----------|---------|
 | **Dates JSON** | ISO 8601 string | `"2026-02-06T14:30:00.000Z"` |
-| **Dates affichage** | `formatRelativeDate()` de `@foxeo/utils` | `"il y a 2 heures"`, `"hier"` |
+| **Dates affichage** | `formatRelativeDate()` de `@monprojetpro/utils` | `"il y a 2 heures"`, `"hier"` |
 | **Dates DB** | `TIMESTAMP WITH TIME ZONE` | PostgreSQL gère le timezone |
 | **Booleans** | `true` / `false` natifs | Jamais `1` / `0`, jamais `"true"` |
 | **Null** | `null` explicite, jamais `undefined` en JSON | `{ data: null, error: null }` |
@@ -345,12 +345,12 @@ export const useClientStore = create((set) => ({
 
 1. **Error Boundary par module** (`error.tsx` dans chaque route module) — si un module crash, les autres restent fonctionnels
 2. **Pattern `{ data, error }`** dans toutes les Server Actions — jamais de `throw`, toujours un retour typé
-3. **Toast notifications** pour les erreurs user-facing — via `@foxeo/ui` toast component
+3. **Toast notifications** pour les erreurs user-facing — via `@monprojetpro/ui` toast component
 
 ```typescript
 // Pattern d'utilisation dans un composant
 'use client'
-import { toast } from '@foxeo/ui'
+import { toast } from '@monprojetpro/ui'
 
 function ClientForm() {
   async function handleSubmit(data: FormData) {
@@ -374,7 +374,7 @@ function ClientForm() {
 ```typescript
 // loading.tsx dans chaque route module — OBLIGATOIRE
 // app/(dashboard)/modules/[moduleId]/loading.tsx
-import { ModuleSkeleton } from '@foxeo/ui'
+import { ModuleSkeleton } from '@monprojetpro/ui'
 
 export default function ModuleLoading() {
   return <ModuleSkeleton />
@@ -387,7 +387,7 @@ export default function ModuleLoading() {
 - TanStack Query gère les états `isLoading` / `isPending` / `isFetching` — pas de state booléen custom
 - Prefetch intelligent : quand un module est visible dans la sidebar, ses données sont prefetchées en arrière-plan
 - Les Server Actions utilisent `useTransition` pour l'état pending des mutations
-- Skeleton loaders dans `@foxeo/ui` avec variantes par densité (compact/comfortable/spacious)
+- Skeleton loaders dans `@monprojetpro/ui` avec variantes par densité (compact/comfortable/spacious)
 
 ```typescript
 // ✅ BON — TanStack Query gère le loading

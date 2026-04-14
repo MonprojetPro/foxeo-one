@@ -5,7 +5,7 @@ Status: done
 ## Story
 
 As a **client Lab qui termine son parcours**,
-I want **un écran de graduation célébrant ma réussite et m'accueillant dans Foxeo One**,
+I want **un écran de graduation célébrant ma réussite et m'accueillant dans MonprojetPro One**,
 So that **je ressens une transition positive et comprends les nouvelles fonctionnalités disponibles**.
 
 ## Acceptance Criteria
@@ -14,13 +14,13 @@ So that **je ressens une transition positive et comprends les nouvelles fonction
 
 2. **AC2 — Déclenchement graduation** : Quand MiKL déclenche la graduation (Story 9.1, action `graduateClient()`), le champ `graduated_at` est renseigné. À la prochaine connexion du client, middleware détecte `graduated_at NOT NULL AND graduation_screen_shown = FALSE` → redirige vers `/graduation/celebrate`.
 
-3. **AC3 — Écran de célébration** : Page `/graduation/celebrate` (full-screen, pas de dashboard shell). Design : animation confetti (lib `canvas-confetti`), transition du thème Lab (violet) vers thème One (vert/orange). Contenu : "Félicitations [Prénom] ! 🎉", message personnalisé de MiKL (stocké dans `clients.graduation_message` TEXT nullable), récapitulatif du parcours Lab (durée, étapes complétées). CTA : "Découvrir Foxeo One".
+3. **AC3 — Écran de célébration** : Page `/graduation/celebrate` (full-screen, pas de dashboard shell). Design : animation confetti (lib `canvas-confetti`), transition du thème Lab (violet) vers thème One (vert/orange). Contenu : "Félicitations [Prénom] ! 🎉", message personnalisé de MiKL (stocké dans `clients.graduation_message` TEXT nullable), récapitulatif du parcours Lab (durée, étapes complétées). CTA : "Découvrir MonprojetPro One".
 
-4. **AC4 — Présentation Foxeo One** : Page `/graduation/discover-one` — Présentation des nouveaux modules disponibles dans One (selon les modules activés dans `client_configs`). Cards : CRM, Documents, Chat Élio+, Modules métiers. Chaque card : icône, titre, description courte. Navigation : bouton "Commencer le tutoriel One" ou "Accéder au dashboard".
+4. **AC4 — Présentation MonprojetPro One** : Page `/graduation/discover-one` — Présentation des nouveaux modules disponibles dans One (selon les modules activés dans `client_configs`). Cards : CRM, Documents, Chat Élio+, Modules métiers. Chaque card : icône, titre, description courte. Navigation : bouton "Commencer le tutoriel One" ou "Accéder au dashboard".
 
-5. **AC5 — Tutoriel One (optionnel)** : Réutilise le système de product tour (Story 5.5) avec steps adaptés aux modules One actifs. Skip possible. Dernière étape : "Bienvenue dans Foxeo One !".
+5. **AC5 — Tutoriel One (optionnel)** : Réutilise le système de product tour (Story 5.5) avec steps adaptés aux modules One actifs. Skip possible. Dernière étape : "Bienvenue dans MonprojetPro One !".
 
-6. **AC6 — Finalisation** : Clic "Accéder au dashboard" (ou fin du tutoriel) → Server Action `markGraduationScreenShown()` met à jour `graduation_screen_shown = TRUE`. Redirection vers `/dashboard` avec thème One actif. Toast "Bienvenue dans Foxeo One 🚀".
+6. **AC6 — Finalisation** : Clic "Accéder au dashboard" (ou fin du tutoriel) → Server Action `markGraduationScreenShown()` met à jour `graduation_screen_shown = TRUE`. Redirection vers `/dashboard` avec thème One actif. Toast "Bienvenue dans MonprojetPro One 🚀".
 
 7. **AC7 — Tests** : Tests unitaires co-localisés. Tests middleware graduation. Tests composant célébration. Coverage >80%.
 
@@ -139,7 +139,7 @@ export async function middleware(request: NextRequest) {
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
-import { Button } from '@foxeo/ui/components/button'
+import { Button } from '@monprojetpro/ui/components/button'
 import { GraduationRecap } from '@/components/graduation-recap'
 
 export default function GraduationCelebratePage() {
@@ -207,7 +207,7 @@ export default function GraduationCelebratePage() {
             onClick={() => router.push('/graduation/discover-one')}
             className="bg-gradient-to-r from-green-600 to-orange-600 hover:from-green-500 hover:to-orange-500 text-white px-10 py-6 text-lg"
           >
-            Découvrir Foxeo One
+            Découvrir MonprojetPro One
           </Button>
         </div>
       </div>
@@ -220,8 +220,8 @@ export default function GraduationCelebratePage() {
 
 ```typescript
 // apps/client/app/graduation/discover-one/page.tsx
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
-import { Button } from '@foxeo/ui/components/button'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
+import { Button } from '@monprojetpro/ui/components/button'
 import { OneModuleCard } from '@/components/one-module-card'
 import Link from 'next/link'
 
@@ -273,7 +273,7 @@ export default async function DiscoverOnePage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-green-900 via-orange-800 to-yellow-900 text-white p-8">
       <div className="max-w-5xl w-full space-y-12">
         <div className="text-center">
-          <h1 className="text-5xl font-bold mb-4">Bienvenue dans Foxeo One</h1>
+          <h1 className="text-5xl font-bold mb-4">Bienvenue dans MonprojetPro One</h1>
           <p className="text-xl text-green-200">
             Votre espace professionnel tout-en-un pour gérer votre activité
           </p>
@@ -373,7 +373,7 @@ Claude Sonnet 4.6
 ### Debug Log References
 
 - Migration numéro 00036 (pas 00033 qui existait déjà) : conflits avec migrations existantes
-- `@foxeo/supabase/server` n'est pas un export valide du package → utiliser `@foxeo/supabase` directement
+- `@monprojetpro/supabase/server` n'est pas un export valide du package → utiliser `@monprojetpro/supabase` directement
 - `canvas-confetti` absent des dépendances → installé (AC3 explicite dans story)
 - Packages `workspace:*` (`modules/documents`, `modules/visio`) bloquaient `npm install` → corrigés en `*` pour permettre l'install
 
@@ -386,7 +386,7 @@ Claude Sonnet 4.6
 - **Page discover-one** : Server Component, filtre modules actifs depuis `client_configs.active_modules`
 - **Page tour-one** : Server Component, `?skip=true` géré par `GraduationTourSkip` client component
 - **Tutoriel One** : `GraduationTour` adapté depuis `OnboardingTour`, steps adaptés aux modules actifs
-- **Hook `useGraduationTour`** : clé localStorage `foxeo-graduation-tour-completed` distincte de l'onboarding
+- **Hook `useGraduationTour`** : clé localStorage `monprojetpro-graduation-tour-completed` distincte de l'onboarding
 - **Tests** : 54 nouveaux tests (2183 total vs 2129 avant). Middleware, Server Action, Composants, Hook, Intégration
 
 ### File List

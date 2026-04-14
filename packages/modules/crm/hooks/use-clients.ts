@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { ClientListItem, ClientFilters } from '../types/crm.types'
 import { getClients } from '../actions/get-clients'
 

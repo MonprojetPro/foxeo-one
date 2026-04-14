@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { hubLoginSchema, mfaCodeSchema } from './auth'
+import { hubLoginSchema, mfaCodeSchema } from './auth-schemas'
 
 describe('Hub Auth Schemas', () => {
   describe('hubLoginSchema', () => {
     it('accepts valid email and password', () => {
       const result = hubLoginSchema.safeParse({
-        email: 'mikl@foxeo.io',
+        email: 'mikl@monprojet-pro.com',
         password: 'securepass',
       })
       expect(result.success).toBe(true)
@@ -29,7 +29,7 @@ describe('Hub Auth Schemas', () => {
 
     it('rejects empty password', () => {
       const result = hubLoginSchema.safeParse({
-        email: 'mikl@foxeo.io',
+        email: 'mikl@monprojet-pro.com',
         password: '',
       })
       expect(result.success).toBe(false)

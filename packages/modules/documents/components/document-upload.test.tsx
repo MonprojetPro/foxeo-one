@@ -2,8 +2,8 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DocumentUpload } from './document-upload'
 
-// Mock @foxeo/utils
-vi.mock('@foxeo/utils', () => ({
+// Mock @monprojetpro/utils
+vi.mock('@monprojetpro/utils', () => ({
   validateFile: vi.fn((file: File) => {
     const ext = file.name.split('.').pop()?.toLowerCase()
     if (ext === 'exe') return { valid: false, error: 'Type de fichier non autorisé' }
@@ -15,8 +15,8 @@ vi.mock('@foxeo/utils', () => ({
   ALLOWED_FILE_TYPES: ['pdf', 'docx', 'xlsx', 'png', 'jpg', 'jpeg', 'svg', 'md', 'txt', 'csv'],
 }))
 
-// Mock @foxeo/ui
-vi.mock('@foxeo/ui', () => ({
+// Mock @monprojetpro/ui
+vi.mock('@monprojetpro/ui', () => ({
   Button: ({ children, ...props }: React.ComponentProps<'button'>) => (
     <button {...props}>{children}</button>
   ),

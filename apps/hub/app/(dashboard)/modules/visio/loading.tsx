@@ -1,4 +1,4 @@
-import { MeetingListSkeleton } from '@foxeo/module-visio'
+import { MeetingListSkeleton } from '@monprojetpro/module-visio'
 
 export default function VisioHubLoading() {
   return <MeetingListSkeleton />

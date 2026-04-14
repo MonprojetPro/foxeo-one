@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { generateCsvTemplate } from '../utils/csv-parser'
 
 export function CsvTemplateDownload() {

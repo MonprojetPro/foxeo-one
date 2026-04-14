@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockInvoke = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn((table: string) => {
       if (table === 'clients') {
@@ -80,7 +80,7 @@ describe('correctAndAdaptText (Story 8.6 — Task 2)', () => {
   })
 
   it('Task 2.2 — retourne CLIENT_NOT_FOUND si aucun client trouvé', async () => {
-    const { createServerSupabaseClient } = await import('@foxeo/supabase')
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockImplementationOnce(async () => ({
       from: vi.fn(() => ({
         select: vi.fn(() => ({
@@ -129,7 +129,7 @@ describe('correctAndAdaptText (Story 8.6 — Task 2)', () => {
   })
 
   it('Task 2.3 — fonctionne même sans profil de communication (profil null → défaut)', async () => {
-    const { createServerSupabaseClient } = await import('@foxeo/supabase')
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockImplementationOnce(async () => ({
       from: vi.fn((table: string) => {
         if (table === 'clients') {

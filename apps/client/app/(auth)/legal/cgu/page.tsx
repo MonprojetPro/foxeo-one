@@ -1,9 +1,9 @@
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Conditions Générales d\'Utilisation — Foxeo',
-  description: 'Conditions Générales d\'Utilisation de la plateforme Foxeo',
+  title: 'Conditions Générales d\'Utilisation — MonprojetPro',
+  description: 'Conditions Générales d\'Utilisation de la plateforme MonprojetPro',
 }
 
 export default function CguPage() {
@@ -32,10 +32,10 @@ export default function CguPage() {
           <section className="space-y-3">
             <h2 className="text-2xl font-semibold">1. Objet</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Les présentes Conditions Générales d'Utilisation (« CGU ») régissent l'accès et l'utilisation de la plateforme Foxeo (ci-après « la Plateforme »), proposée par MiKL (ci-après « l'Opérateur »).
+              Les présentes Conditions Générales d'Utilisation (« CGU ») régissent l'accès et l'utilisation de la plateforme MonprojetPro (ci-après « la Plateforme »), proposée par MiKL (ci-après « l'Opérateur »).
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              La Plateforme est un outil SaaS B2B destiné aux entrepreneurs, proposant trois dashboards : Foxeo Hub (opérateur), Foxeo Lab (incubation client), et Foxeo One (outil business quotidien).
+              La Plateforme est un outil SaaS B2B destiné aux entrepreneurs, proposant trois dashboards : MonprojetPro Hub (opérateur), MonprojetPro Lab (incubation client), et MonprojetPro One (outil business quotidien).
             </p>
           </section>
 
@@ -155,7 +155,7 @@ export default function CguPage() {
           <section className="space-y-3 border-t border-border pt-6">
             <h2 className="text-2xl font-semibold">Contact</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Pour toute question relative aux présentes CGU ou à l'utilisation de la Plateforme, vous pouvez contacter l'Opérateur à l'adresse : contact@foxeo.io
+              Pour toute question relative aux présentes CGU ou à l'utilisation de la Plateforme, vous pouvez contacter l'Opérateur à l'adresse : contact@monprojet-pro.com
             </p>
           </section>
         </div>

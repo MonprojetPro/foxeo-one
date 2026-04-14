@@ -12,7 +12,7 @@ vi.mock('../actions/archive-client', () => ({
   archiveClient: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,

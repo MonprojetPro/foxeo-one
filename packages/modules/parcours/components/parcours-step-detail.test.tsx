@@ -12,7 +12,7 @@ vi.mock('next/link', () => ({
     <a href={href} {...props}>{children}</a>
   ),
 }))
-vi.mock('@foxeo/ui', () => ({
+vi.mock('@monprojetpro/ui', () => ({
   Button: ({ children, disabled, variant, size, ...props }: { children: React.ReactNode; disabled?: boolean; variant?: string; size?: string; [key: string]: unknown }) => (
     <button disabled={disabled} data-variant={variant} data-size={size} {...props}>{children}</button>
   ),
@@ -60,16 +60,16 @@ describe('ParcoursStepDetail', () => {
     expect(screen.getByTestId('markdown-content')).toBeDefined()
   })
 
-  it('renders teasing Foxeo One card', () => {
+  it('renders teasing MonprojetPro One card', () => {
     render(<ParcoursStepDetail step={baseStep} totalSteps={5} />)
-    expect(screen.getByText('Aperçu Foxeo One')).toBeDefined()
+    expect(screen.getByText('Aperçu MonprojetPro One')).toBeDefined()
     expect(screen.getByText('Dans One, cela sera automatisé.')).toBeDefined()
   })
 
   it('hides teasing card when no message', () => {
     const stepNoTeasing = { ...baseStep, oneTeasingMessage: null }
     render(<ParcoursStepDetail step={stepNoTeasing} totalSteps={5} />)
-    expect(screen.queryByText('Aperçu Foxeo One')).toBeNull()
+    expect(screen.queryByText('Aperçu MonprojetPro One')).toBeNull()
   })
 
   it('renders CTA "Commencer cette étape" for current step', () => {

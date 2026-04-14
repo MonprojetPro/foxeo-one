@@ -39,7 +39,7 @@ So that **seuls les fichiers autorises et de taille raisonnable sont stockes sur
 **When** il utilise le composant document-upload.tsx (drag & drop ou bouton parcourir)
 **Then** le systeme valide AVANT l'upload :
 - **Type de fichier** (FR145) : seuls les types autorises sont acceptes (PDF, DOCX, XLSX, PNG, JPG, SVG, MD, TXT, CSV)
-- **Taille de fichier** (FR144) : maximum 10 Mo par fichier (constante MAX_FILE_SIZE dans @foxeo/utils)
+- **Taille de fichier** (FR144) : maximum 10 Mo par fichier (constante MAX_FILE_SIZE dans @monprojetpro/utils)
 **And** si le fichier est invalide, un message d'erreur clair s'affiche ("Type de fichier non autorise" ou "Fichier trop volumineux (max 10 Mo)")
 
 **Given** un fichier valide est selectionne
@@ -54,14 +54,14 @@ So that **seuls les fichiers autorises et de taille raisonnable sont stockes sur
 **Given** la liste des documents est affichee
 **When** l'utilisateur la consulte
 **Then** chaque document affiche : nom, type (icone), taille formatee, date, tag de visibilite (prive/partage)
-**And** la liste utilise le composant DataTable de @foxeo/ui
+**And** la liste utilise le composant DataTable de @monprojetpro/ui
 **And** un skeleton loader s'affiche pendant le chargement
 
 ---
 
 ## Story 4.2 : Visualisation documents (viewer HTML) & telechargement PDF
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **consulter mes documents directement dans le dashboard (rendu HTML) et les telecharger en PDF**,
 So that **j'accede a mes livrables sans quitter la plateforme et je peux les conserver hors ligne**.
 
@@ -80,7 +80,7 @@ So that **j'accede a mes livrables sans quitter la plateforme et je peux les con
 **Then** si le document est deja un PDF, le fichier est telecharge directement via signed URL Supabase Storage
 **And** si le document est un Markdown, un PDF est genere cote serveur (via Server Action `generatePDF()`) et telecharge
 **And** la generation PDF prend moins de 5 secondes (NFR-P6)
-**And** le PDF genere conserve le branding Foxeo (header avec logo, footer avec date)
+**And** le PDF genere conserve le branding MonprojetPro (header avec logo, footer avec date)
 
 **Given** MiKL consulte un document dans le Hub
 **When** le viewer se charge
@@ -135,7 +135,7 @@ So that **je decide precisement ce que le client peut voir dans son espace docum
 
 ## Story 4.4 : Organisation en dossiers & recherche dans les documents
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **organiser mes documents en dossiers et rechercher rapidement dans mes documents**,
 So that **je retrouve facilement un document specifique meme avec beaucoup de fichiers**.
 
@@ -266,7 +266,7 @@ So that **je peux utiliser mes donnees en dehors de la plateforme et rester conf
 **Given** un utilisateur exporte un document individuel en PDF
 **When** l'export est declenche
 **Then** le fichier PDF est telecharge directement (si deja en PDF) ou genere cote serveur (si Markdown/HTML)
-**And** le PDF inclut le branding Foxeo (header logo, footer date + "Genere depuis Foxeo")
+**And** le PDF inclut le branding MonprojetPro (header logo, footer date + "Genere depuis MonprojetPro")
 **And** l'export prend moins de 5 secondes (NFR-P6)
 
 **Given** MiKL exporte la liste des documents d'un client en CSV

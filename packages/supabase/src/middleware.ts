@@ -1,7 +1,7 @@
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
-import type { Database } from '@foxeo/types'
-import { getRequiredEnv } from '@foxeo/utils'
+import type { Database } from '@monprojetpro/types'
+import { getRequiredEnv } from '@monprojetpro/utils'
 import type { CookieToSet } from './cookie-types'
 
 export async function createMiddlewareSupabaseClient(request: NextRequest) {

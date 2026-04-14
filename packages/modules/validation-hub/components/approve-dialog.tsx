@@ -13,7 +13,7 @@ import {
   Textarea,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { approveRequest } from '../actions/approve-request'
 import type { ValidationRequestType } from '../types/validation.types'
 

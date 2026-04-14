@@ -1,0 +1,2 @@
+[functions.elio-chat]
+verify_jwt = false

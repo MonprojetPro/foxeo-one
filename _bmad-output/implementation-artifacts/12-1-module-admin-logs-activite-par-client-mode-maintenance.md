@@ -155,7 +155,7 @@ claude-sonnet-4-6
 - `apps/client/middleware.ts` : check maintenance_mode après création du client Supabase (single client, pas de double call). Opérateurs non redirigés (bannière UI à implémenter).
 - `apps/client/app/maintenance/page.tsx` : Server Component qui lit le message depuis system_config, redirect vers / si maintenance inactive
 - `apps/hub/.../modules/admin/page.tsx` : 4 onglets (Logs, Maintenance, Backups placeholder, Webhooks placeholder)
-- `@foxeo/module-admin` ajouté aux deps du hub + peerDeps React + @tanstack/react-query dans package.json
+- `@monprojetpro/module-admin` ajouté aux deps du hub + peerDeps React + @tanstack/react-query dans package.json
 
 ### Code Review Fixes (Opus 4.6)
 - **H1** RLS system_config: SELECT policy changée de `is_operator()` à `true` (public) — middleware et page maintenance lisent en contexte non-operator
@@ -179,11 +179,11 @@ claude-sonnet-4-6
 - packages/modules/admin/actions/toggle-maintenance.test.ts
 - packages/modules/admin/index.ts (updated)
 - packages/modules/admin/manifest.ts (updated: system_config in requiredTables)
-- packages/modules/admin/package.json (updated: added @foxeo/ui, @tanstack/react-query, peerDeps React, devDeps testing)
+- packages/modules/admin/package.json (updated: added @monprojetpro/ui, @tanstack/react-query, peerDeps React, devDeps testing)
 - apps/client/middleware.ts (updated: maintenance check + isMaintenanceExcluded)
 - apps/client/middleware.test.ts (updated: maintenance tests added)
 - apps/client/app/maintenance/page.tsx
 - apps/hub/app/(dashboard)/modules/admin/page.tsx
 - apps/hub/app/(dashboard)/modules/admin/loading.tsx
 - apps/hub/app/(dashboard)/modules/admin/error.tsx
-- apps/hub/package.json (updated: @foxeo/module-admin dependency)
+- apps/hub/package.json (updated: @monprojetpro/module-admin dependency)

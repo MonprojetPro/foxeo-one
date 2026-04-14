@@ -18,7 +18,7 @@ Le profil de communication permet à chaque client de personnaliser la façon do
 La fonction `buildElioSystemPrompt(profile, step?)` dans `utils/build-system-prompt.ts` génère un system prompt personnalisé basé sur le profil du client.
 
 ```typescript
-import { buildElioSystemPrompt } from '@foxeo/module-elio'
+import { buildElioSystemPrompt } from '@monprojetpro/module-elio'
 
 const systemPrompt = buildElioSystemPrompt(profile, currentStep)
 // → Utiliser dans l'appel API Claude

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 
 const NAV_ITEMS = [
   { href: '/modules/crm', label: 'Clients' },

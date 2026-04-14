@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import { createElement } from 'react'
-import type { ClientConfig } from '@foxeo/types'
+import type { ClientConfig } from '@monprojetpro/types'
 import { CoreDashboard } from './core-dashboard'
 
-// Mock @foxeo/ui with proper React elements
-vi.mock('@foxeo/ui', () => ({
+// Mock @monprojetpro/ui with proper React elements
+vi.mock('@monprojetpro/ui', () => ({
   Card: ({ children, className }: { children: React.ReactNode; className?: string }) =>
     createElement('div', { 'data-testid': 'card', className }, children),
   CardContent: ({ children }: { children: React.ReactNode }) =>
@@ -81,10 +81,10 @@ describe('CoreDashboard', () => {
       expect(config.customBranding?.displayName).toBe('ACME')
     })
 
-    it('falls back to Foxeo One when no custom branding', () => {
+    it('falls back to MonprojetPro One when no custom branding', () => {
       const config = makeConfig({ customBranding: undefined })
-      const displayName = config.customBranding?.displayName ?? 'Foxeo One'
-      expect(displayName).toBe('Foxeo One')
+      const displayName = config.customBranding?.displayName ?? 'MonprojetPro One'
+      expect(displayName).toBe('MonprojetPro One')
     })
 
     it('formats date in French locale', () => {
@@ -132,14 +132,14 @@ describe('CoreDashboard', () => {
       expect(container.textContent).toContain('Contactez MiKL')
     })
 
-    it('renders Foxeo One fallback when no custom branding', () => {
+    it('renders MonprojetPro One fallback when no custom branding', () => {
       const { container } = render(
         CoreDashboard({
           clientConfig: makeConfig({ customBranding: undefined }),
           clientName: 'Test',
         })
       )
-      expect(container.textContent).toContain('Foxeo One')
+      expect(container.textContent).toContain('MonprojetPro One')
     })
 
     it('renders activity skeleton sections', () => {

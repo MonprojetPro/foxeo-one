@@ -192,7 +192,7 @@ Claude Opus 4.6
 
 ### Debug Log References
 
-- Tremor non installé dans le projet. Utilisation de composants shadcn/ui (@foxeo/ui) comme fallback pour les KPI cards et le donut chart SVG custom. Conforme aux Dev Notes ("utiliser des composants shadcn/ui simples comme fallback").
+- Tremor non installé dans le projet. Utilisation de composants shadcn/ui (@monprojetpro/ui) comme fallback pour les KPI cards et le donut chart SVG custom. Conforme aux Dev Notes ("utiliser des composants shadcn/ui simples comme fallback").
 
 ### Completion Notes List
 

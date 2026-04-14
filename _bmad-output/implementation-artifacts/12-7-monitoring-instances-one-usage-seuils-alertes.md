@@ -13,7 +13,7 @@ so that **je peux anticiper les depassements de capacite et proposer un upgrade 
 **Given** un cron quotidien (Edge Function, 6h00) (FR162)
 **When** il s'execute
 **Then** pour chaque instance avec `status='active'` :
-1. `GET https://{slug}.foxeo.io/api/hub/health` retourne :
+1. `GET https://{slug}.monprojet-pro.com/api/hub/health` retourne :
    ```typescript
    type UsageMetrics = {
      dbRows: number

@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '../server'
-import type { ActionResponse, ActionError } from '@foxeo/types'
+import type { ActionResponse, ActionError } from '@monprojetpro/types'
 
 interface Consent {
   id: string

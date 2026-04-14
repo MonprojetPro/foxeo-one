@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { showSuccess, showError } from '@foxeo/ui'
-import { exportClientData } from '@foxeo/module-admin'
+import { showSuccess, showError } from '@monprojetpro/ui'
+import { exportClientData } from '@monprojetpro/module-admin'
 
 interface DataExportSectionProps {
   clientId: string

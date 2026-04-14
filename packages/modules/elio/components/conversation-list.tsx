@@ -11,6 +11,7 @@ interface ConversationListProps {
   onSelectConversation: (id: string) => void
   onNewConversation: () => void
   onRenameTitle?: (id: string, newTitle: string) => void
+  onDeleteConversation?: (id: string) => void
   isCreating?: boolean
   // Story 8.7 — Task 6.3 : conversations Lab accessibles depuis One
   labConversations?: ElioConversation[]
@@ -29,6 +30,7 @@ export function ConversationList({
   onSelectConversation,
   onNewConversation,
   onRenameTitle,
+  onDeleteConversation,
   isCreating = false,
   labConversations,
 }: ConversationListProps) {
@@ -88,6 +90,7 @@ export function ConversationList({
               dashboardType={dashboardType}
               onSelect={() => handleSelect(conv.id)}
               onRenameTitle={onRenameTitle}
+              onDelete={onDeleteConversation}
             />
           ))
         )}

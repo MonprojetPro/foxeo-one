@@ -1,6 +1,6 @@
 # Executive Summary
 
-**Foxeo** est un écosystème de 3 dashboards interconnectés pour accompagner des entrepreneurs de l'idée au business opérationnel, via le modèle "Centaure" (IA 24/7 + Expertise humaine).
+**MonprojetPro** est un écosystème de 3 dashboards interconnectés pour accompagner des entrepreneurs de l'idée au business opérationnel, via le modèle "Centaure" (IA 24/7 + Expertise humaine).
 
 | Dashboard | Utilisateur | Fonction | Agent IA |
 |-----------|-------------|----------|----------|
@@ -8,7 +8,7 @@
 | **FOXEO-LAB** | Client en création | Incubation, accompagnement | **Élio Lab** |
 | **FOXEO-ONE** | Client établi | Outil métier personnalisé | **Élio One** |
 
-> **Orpheus** : Agent BMAD dans Cursor, travaille avec MiKL pour générer des documents sources (estimations, docs techniques, livrables) qui alimentent les Élio. Ne fait pas partie de l'interface Foxeo.
+> **Orpheus** : Agent BMAD dans Cursor, travaille avec MiKL pour générer des documents sources (estimations, docs techniques, livrables) qui alimentent les Élio. Ne fait pas partie de l'interface MonprojetPro.
 
 **Modèle Centaure** : Tu ne vends pas un logiciel, tu vends une disponibilité infinie (IA 24/7) couplée à une expertise haute couture (MiKL).
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChatList, ChatWindow, useConversations, markMessagesRead, type Message } from '@foxeo/modules-chat'
+import { ChatList, ChatWindow, useConversations, markMessagesRead, type Message } from '@monprojetpro/modules-chat'
 import { useQueryClient } from '@tanstack/react-query'
 
 interface ChatConversationClientProps {

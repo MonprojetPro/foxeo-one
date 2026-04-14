@@ -14,7 +14,7 @@ const makeInstance = (overrides: Partial<MonitoredInstance> = {}): MonitoredInst
   clientId: 'client-1',
   clientName: 'Acme Corp',
   slug: 'acme',
-  instanceUrl: 'https://acme.foxeo.io',
+  instanceUrl: 'https://acme.monprojet-pro.com',
   status: 'active',
   tier: 'essentiel',
   activeModules: ['chat', 'documents'],

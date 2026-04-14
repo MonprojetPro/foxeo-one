@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, ChevronRight, RotateCcw } from 'lucide-react'
-import { Button } from '@foxeo/ui'
-import { cn } from '@foxeo/utils'
+import { Button } from '@monprojetpro/ui'
+import { cn } from '@monprojetpro/utils'
 import { getElioConfigHistory, type ElioConfigElioConfigHistoryEntry } from '../actions/get-elio-config-history'
 import { restoreElioConfig } from '../actions/restore-elio-config'
 

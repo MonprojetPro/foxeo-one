@@ -14,7 +14,7 @@ La facturation est geree par **Pennylane API v2** (SaaS cloud). Ce choix remplac
 3. **API plus riche** : compta, export FEC, balance, abonnements, categories analytiques
 4. **Moins d'infra** : pas de Docker Invoice Ninja + MySQL a maintenir
 
-Foxeo Hub expose une UI custom (React) qui communique via des Server Actions proxy vers Pennylane API v2. Les clients accedent a une vue lecture seule "Mes Factures" dans leur dashboard One (donnees issues de la table miroir `billing_sync`).
+MonprojetPro Hub expose une UI custom (React) qui communique via des Server Actions proxy vers Pennylane API v2. Les clients accedent a une vue lecture seule "Mes Factures" dans leur dashboard One (donnees issues de la table miroir `billing_sync`).
 
 **Absence de webhooks Pennylane** : Pennylane n'a pas de webhooks publics. La synchronisation se fait par **polling intelligent** via une Supabase Edge Function (cron toutes les 5 minutes) qui detecte les changements et les propage via Supabase Realtime → invalidation TanStack Query.
 
@@ -32,7 +32,7 @@ So that **je peux gerer devis, factures et paiements de mes clients depuis une i
 
 **Acceptance Criteria :**
 
-**Given** le module Facturation n'existe pas encore dans Foxeo
+**Given** le module Facturation n'existe pas encore dans MonprojetPro
 **When** le module est cree
 **Then** la structure suivante est en place :
 ```
@@ -127,7 +127,7 @@ type PennylaneBillingSubscription = {
   updated_at: string
 }
 
-// Types Foxeo internes (mappes depuis Pennylane)
+// Types MonprojetPro internes (mappes depuis Pennylane)
 type Quote = {
   id: string
   clientId: string
@@ -177,8 +177,8 @@ type BillingSubscription = {
 }
 ```
 
-**Given** le mapping client Foxeo ↔ Pennylane
-**When** un client est cree dans Foxeo Hub
+**Given** le mapping client MonprojetPro ↔ Pennylane
+**When** un client est cree dans MonprojetPro Hub
 **Then** un customer correspondant est cree dans Pennylane via `POST /api/external/v2/customers`
 **And** le `pennylane_customer_id` est stocke dans la table `clients` (nouvelle colonne)
 **And** la migration Supabase ajoute :
@@ -193,7 +193,7 @@ ALTER TABLE clients ADD COLUMN pennylane_customer_id TEXT;
 > **Technical Enabler** — Synchronisation des donnees Pennylane vers Supabase, prerequis aux vues facturation.
 
 As a **MiKL (operateur)**,
-I want **que les donnees de facturation Pennylane soient synchronisees automatiquement dans Foxeo**,
+I want **que les donnees de facturation Pennylane soient synchronisees automatiquement dans MonprojetPro**,
 So that **le Hub et les dashboards clients affichent des donnees de facturation a jour sans action manuelle**.
 
 **Acceptance Criteria :**
@@ -368,7 +368,7 @@ So that **les paiements sont automatises et je suis prevenu immediatement si un 
 
 ## Story 11.5 : Historique facturation client, avoirs & vue financiere Hub
 
-As a **client Foxeo ou MiKL (operateur)**,
+As a **client MonprojetPro ou MiKL (operateur)**,
 I want **consulter l'historique de facturation, generer des avoirs et avoir une vue financiere globale**,
 So that **la gestion financiere est transparente, les corrections sont possibles, et MiKL a une vision cockpit**.
 
@@ -405,7 +405,7 @@ So that **la gestion financiere est transparente, les corrections sont possibles
 - Si CB : les 4 derniers chiffres de la carte
 - Un bouton "Modifier mes informations de paiement"
 **And** le bouton redirige vers le portail Stripe Customer (si CB) pour mise a jour securisee
-**And** les informations de paiement ne sont jamais stockees dans Foxeo (pas de donnees CB, NFR-S1)
+**And** les informations de paiement ne sont jamais stockees dans MonprojetPro (pas de donnees CB, NFR-S1)
 
 **Given** MiKL veut une vue financiere globale dans le Hub
 **When** il accede au tableau de bord facturation
@@ -430,7 +430,7 @@ So that **le parcours Lab est financierement clair et le client beneficie de la 
 **When** il accede a la section "Facturation" de la fiche client et clique "Facturer le Lab"
 **Then** une facture est generee via Pennylane `POST /api/external/v2/customer_invoices` avec :
 - `customer_id` : pennylane_customer_id du client
-- `line_items` : [{ label: "Forfait Lab Foxeo — Accompagnement creation de projet", quantity: 1, currency_amount: 199, vat_rate: "FR_200", unit: "piece" }]
+- `line_items` : [{ label: "Forfait Lab MonprojetPro — Accompagnement creation de projet", quantity: 1, currency_amount: 199, vat_rate: "FR_200", unit: "piece" }]
 - Type : facture unique (pas de recurrence)
 - Pennylane gere l'envoi email + PDF + lien de paiement
 **And** un sync immediat est declenche
@@ -446,7 +446,7 @@ So that **le parcours Lab est financierement clair et le client beneficie de la 
 4. Le dashboard Lab est active pour le client (si pas deja fait)
 5. Elio Lab est active
 6. MiKL est notifie : "Paiement Lab recu — {client} a acces au Lab"
-**And** le client recoit une notification in-app : "Votre acces au Lab Foxeo est active !"
+**And** le client recoit une notification in-app : "Votre acces au Lab MonprojetPro est active !"
 
 **Given** un client Lab gradue vers One (FR170)
 **When** MiKL cree le devis setup One pour ce client

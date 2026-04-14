@@ -26,17 +26,17 @@ files:
     path: planning-artifacts/ux-design-specification.md
   strategie:
     type: whole
-    path: planning-artifacts/foxeo-identite-strategie-retour.md
-    note: "Version à jour du 8 fév. Ancienne version: foxeo-identite-strategie.md"
+    path: planning-artifacts/monprojetpro-identite-strategie-retour.md
+    note: "Version à jour du 8 fév. Ancienne version: monprojetpro-identite-strategie.md"
   modules_commerciaux:
     type: whole
-    path: planning-artifacts/foxeo-modules-commerciaux.md
+    path: planning-artifacts/monprojetpro-modules-commerciaux.md
 ---
 
 # Rapport d'Évaluation de Préparation à l'Implémentation
 
 **Date :** 2026-02-08
-**Projet :** foxeo-dash
+**Projet :** monprojetpro-dash
 
 ---
 
@@ -50,8 +50,8 @@ files:
 | **Architecture** | Shardé | `architecture/` (8 fichiers + index) | OK (entier supprimé) |
 | **Epics & Stories** | Entier | `epics.md` | OK |
 | **UX Design** | Entier | `ux-design-specification.md` | OK |
-| **Stratégie/Identité** | Entier | `foxeo-identite-strategie-retour.md` (8 fév) | OK |
-| **Modules Commerciaux** | Entier | `foxeo-modules-commerciaux.md` | OK |
+| **Stratégie/Identité** | Entier | `monprojetpro-identite-strategie-retour.md` (8 fév) | OK |
+| **Modules Commerciaux** | Entier | `monprojetpro-modules-commerciaux.md` | OK |
 
 ### Problèmes résolus
 
@@ -71,7 +71,7 @@ files:
 
 ### Exigences Fonctionnelles (FRs) extraites
 
-**Total : 168 FRs** couvrant l'ensemble de l'écosystème Foxeo.
+**Total : 168 FRs** couvrant l'ensemble de l'écosystème MonprojetPro.
 
 | Catégorie | FRs | Nombre |
 |---|---|---|
@@ -116,7 +116,7 @@ files:
 | Documentation comme Livrable | FR158-FR161 | 4 |
 | Surveillance Usage & Upgrade | FR162-FR165 | 4 |
 | Graduation Instance Dédiée | FR166-FR167 | 2 |
-| Lab — Propriété Foxeo | FR168 | 1 |
+| Lab — Propriété MonprojetPro | FR168 | 1 |
 
 ### Exigences Non-Fonctionnelles (NFRs) extraites
 
@@ -230,7 +230,7 @@ Toutes les 159 FRs applicatives sont couvertes dans au moins un epic.
 | **Palette couleurs contradictoire** | CRITIQUE | La stratégie définit : Hub=Bordeaux (#6B1B1B), Lab=Vert émeraude (#2E8B57), One=Orange (#F7931E). Le UX définit un style "Minimal Futuriste" dark mode avec : Hub=Cyan/Turquoise, Lab=Violet/Purple, One=Vert émeraude ou Orange. **Les couleurs sont complètement différentes.** |
 | **Outil visio contradictoire** | Élevé | Le UX mentionne "Daily.co/Whereby" pour la visio (Core Communication Kit) alors que le PRD et l'architecture ont décidé **OpenVidu** (self-hosted). La section onboarding du UX utilise correctement OpenVidu → incohérence interne. |
 | **Stockage contradictoire** | Élevé | Le UX mentionne "Google Drive Workspace" pour le stockage fichiers, alors que le PRD et l'architecture utilisent **Supabase Storage** (V1) et **MinIO** (V2+). Google Drive n'apparaît nulle part ailleurs. |
-| **Naming "Foxeo-Outil" résiduel** | Modéré | Le UX utilise encore "Foxeo-Outil" dans plusieurs endroits (parcours utilisateurs, tableau d'actions core) au lieu de "Foxeo-One". |
+| **Naming "MonprojetPro-Outil" résiduel** | Modéré | Le UX utilise encore "MonprojetPro-Outil" dans plusieurs endroits (parcours utilisateurs, tableau d'actions core) au lieu de "MonprojetPro-One". |
 | **Orpheus placé dans le Hub** | Modéré | Le tableau "Architecture Agents IA" du UX (ligne 491) met "Orpheus | Hub | Assistant MiKL unique" alors qu'Orpheus est dans **Cursor/BMAD**, PAS dans le Hub. Corrigé dans une note mais le tableau est toujours faux. |
 | **Template Lite/Pro** | Faible | Le parcours direct (ligne 212) mentionne "Sélection template (Lite/Pro)" — nomenclature non définie ailleurs. |
 | **Densité non spécifiée** | Faible | La stratégie définit 3 densités (Hub=Compact, Lab=Spacieux, One=Confortable) mais le UX ne les mentionne pas. |
@@ -254,7 +254,7 @@ Toutes les 159 FRs applicatives sont couvertes dans au moins un epic.
 Le document UX nécessite une **mise à jour significative** pour s'aligner avec :
 1. La nouvelle palette couleurs de la stratégie (Bordeaux/Vert/Orange) OU clarifier que le "Minimal Futuriste" dark mode remplace les couleurs de la stratégie
 2. Les décisions techniques finales (OpenVidu, Supabase Storage, pas Google Drive)
-3. La nomenclature à jour (One/One+, Essentiel/Agentique, plus de "Foxeo-Outil")
+3. La nomenclature à jour (One/One+, Essentiel/Agentique, plus de "MonprojetPro-Outil")
 4. Le modèle propriété client + instances dédiées
 
 ---
@@ -283,7 +283,7 @@ Les 16 nouveaux FRs du modèle propriété client sont mappés dans la couvertur
 - Epic 9 header dit FR157, FR161, FR166-168 → Story 9.1 décrit toujours la graduation comme un update dans un Supabase partagé, PAS le provisioning d'une instance dédiée
 - Epic 12 header dit FR156, FR158-165 → aucune story pour le provisioning, monitoring d'instances, vérification documentation
 
-**Impact : Un développeur suivant ces stories construirait la MAUVAISE architecture pour Foxeo One.**
+**Impact : Un développeur suivant ces stories construirait la MAUVAISE architecture pour MonprojetPro One.**
 
 #### CRITIQUE-02 : 5 stories écrites pour un agent développeur, pas un utilisateur
 
@@ -323,7 +323,7 @@ Stories 1.1, 1.2, 1.10, 8.1, 11.1 utilisent "As a **développeur (agent IA)**" �
 
 ## ⚠️ NEEDS WORK — Corrections nécessaires avant implémentation
 
-La plateforme Foxeo dispose d'une base documentaire **solide** (168 FRs, 39 NFRs, 12 Epics, 79 Stories) mais l'évolution architecturale du 8 février (modèle instance-per-client, propriété client, nouvelle nomenclature) a créé un **désalignement significatif** entre les documents. Un développeur ou agent IA suivant ces documents en l'état construirait une architecture incorrecte pour Foxeo One.
+La plateforme MonprojetPro dispose d'une base documentaire **solide** (168 FRs, 39 NFRs, 12 Epics, 79 Stories) mais l'évolution architecturale du 8 février (modèle instance-per-client, propriété client, nouvelle nomenclature) a créé un **désalignement significatif** entre les documents. Un développeur ou agent IA suivant ces documents en l'état construirait une architecture incorrecte pour MonprojetPro One.
 
 ### Synthèse des Constatations
 
@@ -339,7 +339,7 @@ La plateforme Foxeo dispose d'une base documentaire **solide** (168 FRs, 39 NFRs
 
 | # | Problème | Documents affectés | Impact si non corrigé |
 |---|---|---|---|
-| **C1** | **FR153-168 fantômes** : 16 FRs instance-per-client sont mappées dans les en-têtes mais AUCUNE story ne les implémente. Le modèle de graduation (Story 9.1) décrit toujours un Supabase partagé, pas un provisioning d'instance dédiée. | Epics | Un agent développeur construirait un système multi-tenant là où il faut des instances dédiées. Architecture fondamentalement erronée pour Foxeo One. |
+| **C1** | **FR153-168 fantômes** : 16 FRs instance-per-client sont mappées dans les en-têtes mais AUCUNE story ne les implémente. Le modèle de graduation (Story 9.1) décrit toujours un Supabase partagé, pas un provisioning d'instance dédiée. | Epics | Un agent développeur construirait un système multi-tenant là où il faut des instances dédiées. Architecture fondamentalement erronée pour MonprojetPro One. |
 | **C2** | **3 nomenclatures coexistent** : Basic/Premium (PRD, Epics), One/One+ (Stratégie), et Ponctuel/Essentiel/Agentique (Story 9.4). Offres Pro(59€)/Business(99€) vs Essentiel(49€)/Agentique(99€). | PRD, Epics, Stratégie | Confusion totale lors de l'implémentation. Noms et prix incorrects dans l'interface, la facturation, les emails. |
 | **C3** | **Palette couleurs contradictoire** : Stratégie = Bordeaux/Vert/Orange. UX = Cyan/Turquoise/Violet en dark mode "Minimal Futuriste". Aucun document ne fait autorité. | Stratégie, UX | L'interface visuelle sera construite avec les mauvaises couleurs. Incohérence entre dashboards Hub/Lab/One. |
 
@@ -359,7 +359,7 @@ La plateforme Foxeo dispose d'une base documentaire **solide** (168 FRs, 39 NFRs
 | Lacune | Impact |
 |---|---|
 | **Profil MiKL** : MiKL est un développeur full-stack / product builder qui construit réellement les produits. Ce n'est pas du no-code. Non reflété dans PRD ni stratégie. | Positionnement commercial et crédibilité technique auprès des clients |
-| **Automatisation de process** : Compétence clé de l'offre non documentée dans aucun artefact | Proposition de valeur incomplète — les clients ne savent pas que Foxeo peut automatiser leurs process métier |
+| **Automatisation de process** : Compétence clé de l'offre non documentée dans aucun artefact | Proposition de valeur incomplète — les clients ne savent pas que MonprojetPro peut automatiser leurs process métier |
 | **Devis juste** : Le pricing n'est pas un forfait générique mais un devis calculé après analyse précise du projet. Concept absent des documents. | Différenciation commerciale et confiance client — le "juste prix" est un argument de vente majeur |
 
 ### Plan d'Action Recommandé (par priorité)
@@ -377,7 +377,7 @@ La plateforme Foxeo dispose d'une base documentaire **solide** (168 FRs, 39 NFRs
 
 #### Phase 2 — Mises à jour importantes (avant Epic 5-6)
 
-5. **Mettre à jour le document UX** : OpenVidu, Supabase Storage, nomenclature, densités, suppression de "Foxeo-Outil" et "Google Drive".
+5. **Mettre à jour le document UX** : OpenVidu, Supabase Storage, nomenclature, densités, suppression de "MonprojetPro-Outil" et "Google Drive".
 6. **Ajouter le Lab 199€** : FR dans le PRD + Story dans Epic 11.
 7. **Découper les stories surdimensionnées** : Stories 2.9, 8.9, 12.5.
 8. **Reformuler les 5 stories développeur** en valeur utilisateur.
@@ -395,7 +395,7 @@ Cette évaluation a identifié **3 problèmes critiques**, **6 problèmes majeur
 
 La base est solide : le PRD est détaillé (168 FRs), l'architecture shardée est à jour, les stories ont un excellent niveau de détail technique (Given/When/Then, schémas DB, RLS). Le problème principal est le **décalage temporel** — l'évolution architecturale du 8 février (instance-per-client, propriété client, nouvelle nomenclature) n'a pas encore été propagée dans tous les documents.
 
-Les corrections de la Phase 1 sont **bloquantes** — sans elles, un agent développeur construirait une architecture fondamentalement incorrecte pour Foxeo One. Les Phases 2 et 3 peuvent être faites progressivement pendant l'implémentation.
+Les corrections de la Phase 1 sont **bloquantes** — sans elles, un agent développeur construirait une architecture fondamentalement incorrecte pour MonprojetPro One. Les Phases 2 et 3 peuvent être faites progressivement pendant l'implémentation.
 
 **Évaluateur :** Claude (workflow check-implementation-readiness)
 **Date :** 2026-02-08

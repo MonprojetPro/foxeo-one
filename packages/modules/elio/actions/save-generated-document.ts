@@ -1,17 +1,9 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
-import { toCamelCase } from '@foxeo/utils'
-
-export interface SavedDocument {
-  id: string
-  clientId: string
-  title: string
-  content: string
-  source: string
-  createdAt: string
-}
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
+import { toCamelCase } from '@monprojetpro/utils'
+import type { SavedDocument } from '../types/elio.types'
 
 /**
  * Story 8.9b — Task 5

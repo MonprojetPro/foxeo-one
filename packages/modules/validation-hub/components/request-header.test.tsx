@@ -7,7 +7,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,
@@ -16,7 +16,7 @@ vi.mock('@foxeo/ui', async (importOriginal) => {
   }
 })
 
-vi.mock('@foxeo/utils', async (importOriginal) => {
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,

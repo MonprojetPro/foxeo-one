@@ -5,7 +5,7 @@
 **MVP Approach:** MVP Complet Portfolio
 - Pas de version allégée — chaque module est développé complètement
 - Co-construction progressive avec la cliente référence (pas d'urgence)
-- Chaque développement devient un actif réutilisable (catalogue Foxeo)
+- Chaque développement devient un actif réutilisable (catalogue MonprojetPro)
 
 **Resource Requirements:**
 - Développeur principal : MiKL (via Cursor/BMAD)

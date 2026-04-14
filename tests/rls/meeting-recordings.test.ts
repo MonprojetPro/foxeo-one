@@ -87,7 +87,7 @@ describe.skipIf(skipRLS)('RLS — meeting_recordings isolation', () => {
     const operatorClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
     const { data: authOp, error: errOp } = await operatorClient.auth.signInWithPassword({
-      email: process.env.TEST_OPERATOR_EMAIL ?? 'mikl@foxeo.io',
+      email: process.env.TEST_OPERATOR_EMAIL ?? 'mikl@monprojet-pro.com',
       password: process.env.TEST_OPERATOR_PASSWORD ?? '',
     })
 

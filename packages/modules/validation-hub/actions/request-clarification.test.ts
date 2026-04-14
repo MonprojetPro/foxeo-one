@@ -10,12 +10,12 @@ const mockSupabase = {
   from: mockFrom,
 }
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => Promise.resolve(mockSupabase)),
 }))
 
-vi.mock('@foxeo/types', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/types')>()
+vi.mock('@monprojetpro/types', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/types')>()
   return {
     ...actual,
     errorResponse: (message: string, code: string, details?: unknown) => ({
@@ -26,8 +26,8 @@ vi.mock('@foxeo/types', async (importOriginal) => {
   }
 })
 
-vi.mock('@foxeo/utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/utils')>()
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/utils')>()
   return {
     ...actual,
     toCamelCase: (obj: unknown) => obj,

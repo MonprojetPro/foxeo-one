@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation'
 import { AlertTriangle } from 'lucide-react'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { Alert, AlertDescription, AlertTitle } from '@foxeo/ui'
-import { getElioConfig, getCommunicationProfile, buildElioSystemPrompt, OrpheusConfigForm } from '@foxeo/module-elio'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { Alert, AlertDescription, AlertTitle } from '@monprojetpro/ui'
+import { getElioConfig, getCommunicationProfile, buildElioSystemPrompt, OrpheusConfigForm } from '@monprojetpro/module-elio'
 
 export const metadata = {
-  title: 'Configuration avancée Élio (Orpheus) — Foxeo',
+  title: 'Configuration avancée Élio (Orpheus) — MonprojetPro',
   description: 'Personnalisez les paramètres avancés de votre assistant IA Élio',
 }
 

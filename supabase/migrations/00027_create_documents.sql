@@ -44,7 +44,7 @@ CREATE INDEX idx_documents_visibility ON documents(visibility);
 CREATE TRIGGER set_documents_updated_at
   BEFORE UPDATE ON documents
   FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at();
+  EXECUTE FUNCTION fn_update_updated_at();
 
 -- ============================================================
 -- 4. RLS policies

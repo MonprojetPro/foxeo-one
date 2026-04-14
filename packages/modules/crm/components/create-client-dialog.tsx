@@ -13,7 +13,7 @@ import {
   Button,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { ClientForm } from './client-form'
 import { createClient } from '../actions/create-client'
 import type { CreateClientInput } from '../types/crm.types'

@@ -7,7 +7,7 @@
 │  🦉 ORPHEUS — CERVEAU FOXEO (Cursor/BMAD)                       │
 ├─────────────────────────────────────────────────────────────────┤
 │  • Travaille avec MiKL dans Cursor                              │
-│  • Connaissance complète entreprise Foxeo                       │
+│  • Connaissance complète entreprise MonprojetPro                       │
 │  • GÉNÈRE des documents sources pour les Élio                   │
 │  • NE S'ADRESSE PAS aux clients directement                     │
 │  • Claude (abonnement Max) — Coût: 0€                           │
@@ -35,7 +35,7 @@
 │                       CÔTÉ CLIENTS                              │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  🦊 ÉLIO LAB (Foxeo Lab)              🦊 ÉLIO ONE (Foxeo One)  │
+│  🦊 ÉLIO LAB (MonprojetPro Lab)              🦊 ÉLIO ONE (MonprojetPro One)  │
 │  ─────────────────────────            ─────────────────────     │
 │  • Accompagne parcours création       • One: FAQ + guide        │
 │  • Génère docs brainstorming          • One+: Actions auto      │
@@ -47,14 +47,14 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Orpheus — Cerveau Foxeo (BMAD/Cursor)
+## Orpheus — Cerveau MonprojetPro (BMAD/Cursor)
 
 **Plateforme :** Cursor/BMAD (utilise l'abonnement Claude Max)
 **Coût :** 0€ (abonnement existant)
-**Important :** Orpheus NE fait PAS partie de l'interface Foxeo. Il travaille avec MiKL dans Cursor.
+**Important :** Orpheus NE fait PAS partie de l'interface MonprojetPro. Il travaille avec MiKL dans Cursor.
 
 **Missions :**
-- Connaissance complète de l'entreprise Foxeo
+- Connaissance complète de l'entreprise MonprojetPro
 - Génère des documents sources pour alimenter les Élio
 - Analyse des transcriptions de visio client
 - Évalue les prix des projets → Élio Hub fait les devis
@@ -70,9 +70,9 @@
 | Livrable retravaillé | Élio Lab | Rendu au client |
 | Config client (yaml) | Tous Élio | Personnaliser l'agent |
 
-**Apprentissage Métier Foxeo :**
+**Apprentissage Métier MonprojetPro :**
 
-Orpheus apprend au fil du temps et devient expert de l'activité Foxeo :
+Orpheus apprend au fil du temps et devient expert de l'activité MonprojetPro :
 
 | Donnée captée | Apprentissage | Utilisation |
 |---------------|---------------|-------------|
@@ -82,11 +82,11 @@ Orpheus apprend au fil du temps et devient expert de l'activité Foxeo :
 | Feedbacks clients | Points de friction | "Les clients bloquent souvent sur l'étape Identité" |
 | Décisions MiKL | Préférences | "Tu refuses généralement les projets < 2K€" |
 
-**Mémoire Orpheus :** Stockée dans `_bmad/foxeo-knowledge/orpheus-memory.yaml`
+**Mémoire Orpheus :** Stockée dans `_bmad/monprojetpro-knowledge/orpheus-memory.yaml`
 
 ## Élio Hub — Assistant Opérationnel MiKL
 
-**Plateforme :** Hub Foxeo (interface web)
+**Plateforme :** Hub MonprojetPro (interface web)
 **Modèle :** DeepSeek V3.2
 **Coût :** ~1€/mois
 
@@ -121,7 +121,7 @@ le devis cmme convenu"          le devis comme convenu."          profil client
 
 ## Élio Lab — Assistant Parcours Création
 
-**Plateforme :** Foxeo Lab (interface web client)
+**Plateforme :** MonprojetPro Lab (interface web client)
 **Modèle :** DeepSeek V3.2
 **Coût :** ~0.40€/parcours complet
 
@@ -134,7 +134,7 @@ le devis cmme convenu"          le devis comme convenu."          profil client
 
 ## Élio One — Assistant Client Établi
 
-**Plateforme :** Foxeo One (interface web client)
+**Plateforme :** MonprojetPro One (interface web client)
 **Modèle :** DeepSeek V3.2
 
 ### Élio One (Inclus dans l'abonnement Essentiel)

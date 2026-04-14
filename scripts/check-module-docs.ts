@@ -84,7 +84,7 @@ function formatReport(results: ModuleResult[]): { lines: string[]; hasErrors: bo
   const lines: string[] = []
   let hasErrors = false
 
-  lines.push('\n📋 Vérification documentation des modules Foxeo\n')
+  lines.push('\n📋 Vérification documentation des modules MonprojetPro\n')
   lines.push('─'.repeat(60))
 
   for (const result of results) {

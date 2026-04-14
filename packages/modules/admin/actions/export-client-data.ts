@@ -2,12 +2,12 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { ExportClientDataInput, type ExportResult } from '../types/export.types'
 
 const MODULES_DIR = path.resolve(process.cwd(), 'packages/modules')
@@ -47,7 +47,7 @@ function buildDocumentationPayload(
 
   if (documented.length > 0) {
     files['documentation/README.md'] =
-      `# Documentation Foxeo\n\nCe dossier contient la documentation des modules actifs lors de votre utilisation de Foxeo.\n\n## Modules documentés\n\n${documented.map((id) => `- ${id}`).join('\n')}\n`
+      `# Documentation MonprojetPro\n\nCe dossier contient la documentation des modules actifs lors de votre utilisation de MonprojetPro.\n\n## Modules documentés\n\n${documented.map((id) => `- ${id}`).join('\n')}\n`
   }
 
   return files

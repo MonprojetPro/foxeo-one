@@ -31,7 +31,7 @@ const mockChannel = {
 
 const mockChannelFn = vi.fn().mockReturnValue(mockChannel)
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createClient: vi.fn(() => ({
     channel: mockChannelFn,
     removeChannel: mockRemoveChannel,

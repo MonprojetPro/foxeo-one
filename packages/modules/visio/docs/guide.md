@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le module Visio permet aux utilisateurs Foxeo (MiKL et clients) de lancer des visioconférences directement depuis la plateforme, sans quitter l'écosystème.
+Le module Visio permet aux utilisateurs MonprojetPro (MiKL et clients) de lancer des visioconférences directement depuis la plateforme, sans quitter l'écosystème.
 
 La technologie sous-jacente est **OpenVidu CE** (open source, auto-hébergé), qui utilise WebRTC pour la communication en temps réel.
 

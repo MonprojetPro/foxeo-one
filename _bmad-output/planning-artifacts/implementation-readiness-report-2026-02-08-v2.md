@@ -14,7 +14,7 @@ inputDocuments:
     - "prd/innovation-differentiation.md"
     - "prd/saas-b2b-specific-requirements.md"
     - "prd/project-scoping-phased-development.md"
-    - "prd/functional-requirements-foxeo-plateforme.md"
+    - "prd/functional-requirements-monprojetpro-plateforme.md"
     - "prd/non-functional-requirements.md"
     - "prd/types-de-clients.md"
     - "prd/architecture-documentaire.md"
@@ -44,8 +44,8 @@ inputDocuments:
   ux:
     - "ux-design-specification.md"
   supplements:
-    - "foxeo-identite-strategie-retour.md"
-    - "foxeo-modules-commerciaux.md"
+    - "monprojetpro-identite-strategie-retour.md"
+    - "monprojetpro-modules-commerciaux.md"
     - "design-system-themes.css"
     - "orpheus-integration-notes.md"
     - "ui-resources.md"
@@ -55,7 +55,7 @@ inputDocuments:
 # Implementation Readiness Assessment Report (v2)
 
 **Date:** 2026-02-08
-**Project:** foxeo-dash
+**Project:** monprojetpro-dash
 **Contexte:** Re-evaluation apres corrections des 3 phases identifiees dans le rapport v1
 
 ---
@@ -188,7 +188,7 @@ inputDocuments:
 
 ### FRs hors perimetre (Orpheus)
 
-9 FRs exclus : FR15-FR20, FR20b, FR20c, FR20d — operent dans Cursor/BMAD, pas dans la plateforme Foxeo.
+9 FRs exclus : FR15-FR20, FR20b, FR20c, FR20d — operent dans Cursor/BMAD, pas dans la plateforme MonprojetPro.
 
 ### FRs en GAP (non couverts par aucune story)
 
@@ -247,7 +247,7 @@ La couverture est **quasi-complete** a 98.8%. Les 2 gaps identifies (FR154 et FR
 
 #### Critiques
 1. **Tableau initial UX (lignes 36-39)** utilise encore les anciennes couleurs (Bleu nuit+cuivre, Terracotta/Corail) au lieu de Minimal Futuriste (Cyan, Violet, Vert/Orange)
-2. **Erreur tableau "Defining Experience"** (ligne 90) : "Foxeo-One" devrait etre "Foxeo-Hub" pour "Valider les soumissions Validation Hub"
+2. **Erreur tableau "Defining Experience"** (ligne 90) : "MonprojetPro-One" devrait etre "MonprojetPro-Hub" pour "Valider les soumissions Validation Hub"
 
 #### Importants
 3. **Dashboard Client Unifie (PRD) vs 3 dashboards separes (UX)** : Le PRD SaaS B2B definit un "Dashboard Client Unifie" avec sections conditionnelles; le UX presente 3 entites autonomes. L'architecture (2 apps: hub + client) confirme le PRD.
@@ -438,7 +438,7 @@ Cette re-evaluation (v2) a identifie **5 problemes critiques**, **11 problemes m
 - Les 3 lacunes strategiques du v1 sont **entierement resolues**
 - Les nouveaux problemes identifies en v2 sont de nature **structurelle** (sequencage des stories, contradictions locales) et non plus **fondamentale** (architecture erronee)
 
-**Un agent developpeur peut desormais implementer foxeo-dash sans construire une architecture fondamentalement incorrecte.** Les corrections restantes sont des ajustements de planning et de coherence locale, pas des erreurs de vision.
+**Un agent developpeur peut desormais implementer monprojetpro-dash sans construire une architecture fondamentalement incorrecte.** Les corrections restantes sont des ajustements de planning et de coherence locale, pas des erreurs de vision.
 
 La base est solide : **170 FRs, 39 NFRs, 12 Epics, 85 Stories, 98.8% de couverture FR, technologies alignees, nomenclature coherente.**
 

@@ -4,14 +4,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 Deno.serve(async (req) => {
-  // CORS — restreindre aux domaines Foxeo
+  // CORS — restreindre aux domaines MonprojetPro
   const allowedOrigins = [
-    'https://hub.foxeo.io',
-    'https://lab.foxeo.io',
+    'https://hub.monprojet-pro.com',
+    'https://lab.monprojet-pro.com',
     Deno.env.get('CORS_ALLOWED_ORIGIN') ?? 'http://localhost:3000',
   ]
   const origin = req.headers.get('Origin') ?? ''
-  const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.foxeo.io')
+  const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.monprojet-pro.com')
   const corsOrigin = isAllowed ? origin : allowedOrigins[0]
 
   const corsHeaders: Record<string, string> = {

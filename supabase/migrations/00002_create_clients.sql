@@ -22,7 +22,7 @@ CREATE TABLE clients (
 CREATE INDEX idx_clients_operator_id ON clients(operator_id);
 CREATE INDEX idx_clients_auth_user_id ON clients(auth_user_id);
 
-COMMENT ON TABLE clients IS 'Clients geres par les operateurs Foxeo';
+COMMENT ON TABLE clients IS 'Clients geres par les operateurs MonprojetPro';
 COMMENT ON COLUMN clients.client_type IS 'complet = Lab+One, direct_one = One seul, ponctuel = mission ponctuelle';
 COMMENT ON COLUMN clients.status IS 'active = actif, suspended = suspendu, archived = archive';
 COMMENT ON COLUMN clients.auth_user_id IS 'Lien vers auth.users de Supabase Auth';

@@ -1,6 +1,6 @@
 # Impact Assessment — Passage Instance Par Client (08/02/2026)
 
-> **Changement architectural majeur** : Foxeo One passe d'un modele multi-tenant a une instance dediee par client (Vercel + Supabase propre). Le Lab reste multi-tenant. Le Hub reste instance unique. 16 nouveaux FRs (FR153-168).
+> **Changement architectural majeur** : MonprojetPro One passe d'un modele multi-tenant a une instance dediee par client (Vercel + Supabase propre). Le Lab reste multi-tenant. Le Hub reste instance unique. 16 nouveaux FRs (FR153-168).
 
 ## Epics impactes
 
@@ -30,12 +30,12 @@
 | FR165 | Epic 12 (Story 12.7) | Initier upgrade tier instance |
 | FR166 | Epic 9 (Story 9.1) | Graduation provisionne instance dediee |
 | FR167 | Epic 9 (Story 9.1) | Graduation migre donnees Lab vers instance One |
-| FR168 | Epic 9 (Story 9.5) | Lab = propriete Foxeo, client recupere documents |
+| FR168 | Epic 9 (Story 9.5) | Lab = propriete MonprojetPro, client recupere documents |
 
 ## Notes d'impact par story existante
 
 - **Story 9.1** : Ajouter etape provisioning (Supabase + Vercel) avant migration des donnees. Le `dashboard_type` routing devient URL d'instance.
-- **Story 9.2** : Le client est redirige vers `{slug}.foxeo.io` au lieu de `app.foxeo.io`. Les conversations Elio sont migrees vers l'instance dediee.
+- **Story 9.2** : Le client est redirige vers `{slug}.monprojet-pro.com` au lieu de `app.monprojet-pro.com`. Les conversations Elio sont migrees vers l'instance dediee.
 - **Story 9.5** : Simplifie pour One — suppression directe de l'instance (pas d'anonymisation dans une DB partagee). Lab : anonymisation classique dans DB partagee.
 - **Story 12.1** : Les logs d'activite sont locaux a chaque instance. Le Hub aggrege via API. Mode maintenance = notification a toutes les instances.
 - **Story 12.4** : Analytics Hub doit collecter des metriques depuis chaque instance One via API health check.

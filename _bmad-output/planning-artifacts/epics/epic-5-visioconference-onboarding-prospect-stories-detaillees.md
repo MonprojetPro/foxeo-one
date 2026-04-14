@@ -14,7 +14,7 @@
 
 As a **MiKL (operateur)**,
 I want **lancer des visios avec mes clients et prospects via OpenVidu integre dans le Hub**,
-So that **je conduis mes rendez-vous directement depuis Foxeo sans outil externe**.
+So that **je conduis mes rendez-vous directement depuis MonprojetPro sans outil externe**.
 
 **Acceptance Criteria :**
 
@@ -72,7 +72,7 @@ So that **je conduis mes rendez-vous directement depuis Foxeo sans outil externe
 
 ## Story 5.2 : Enregistrement visio, transcription automatique & historique
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **consulter l'historique de mes visios avec MiKL et acceder aux transcriptions**,
 So that **je peux revoir les points discutes et retrouver les decisions prises**.
 
@@ -119,7 +119,7 @@ So that **je peux revoir les points discutes et retrouver les decisions prises**
 
 ## Story 5.3 : Demande de visio, prise de RDV Cal.com & salle d'attente
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **demander une visio avec MiKL et prendre rendez-vous facilement**,
 So that **je peux planifier un echange video quand j'en ai besoin**.
 
@@ -132,7 +132,7 @@ So that **je peux planifier un echange video quand j'en ai besoin**.
 **And** les informations du client (nom, email) sont pre-remplies depuis sa fiche
 
 **Given** un prospect (pas encore client) veut prendre RDV
-**When** il accede au lien Cal.com Foxeo (via QR code, LinkedIn, site web)
+**When** il accede au lien Cal.com MonprojetPro (via QR code, LinkedIn, site web)
 **Then** il voit les creneaux disponibles de MiKL sur la page Cal.com
 **And** il saisit les informations legeres : prenom, nom, email, societe (optionnel)
 **And** il recoit un email de confirmation avec le lien de la visio
@@ -249,7 +249,7 @@ So that **je comprends immediatement comment fonctionne mon espace et par ou com
 
 ## Story 5.6 : Ecran de graduation Lab vers One
 
-As a **client Foxeo qui termine son parcours Lab**,
+As a **client MonprojetPro qui termine son parcours Lab**,
 I want **voir un ecran de celebration avec le recapitulatif de mon parcours Lab lors de ma graduation vers One**,
 So that **je ressens la progression accomplie et je suis motive pour utiliser mon nouvel espace**.
 

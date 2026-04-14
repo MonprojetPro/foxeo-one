@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { EmptyState } from '@foxeo/ui'
-import { discoverModules, getModule } from '@foxeo/utils'
+import { EmptyState } from '@monprojetpro/ui'
+import { discoverModules, getModule } from '@monprojetpro/utils'
 import dynamic from 'next/dynamic'
 
 type ModulePageProps = {
@@ -23,7 +23,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
   // In production, this would use a more sophisticated registry
   const moduleComponents: Record<string, any> = {
     'core-dashboard': dynamic(() =>
-      import('@foxeo/module-core-dashboard').then((mod) => mod.CoreDashboard)
+      import('@monprojetpro/module-core-dashboard').then((mod) => mod.CoreDashboard)
     ),
   }
 

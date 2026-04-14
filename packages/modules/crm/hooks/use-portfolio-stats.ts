@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { PortfolioStats, GraduationRate } from '../types/crm.types'
 import { getPortfolioStats } from '../actions/get-portfolio-stats'
 import { getGraduationRate } from '../actions/get-graduation-rate'

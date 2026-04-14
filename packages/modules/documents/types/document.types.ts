@@ -75,6 +75,7 @@ export type DeleteDocumentInput = z.infer<typeof DeleteDocumentInput>
 
 export const GetDocumentUrlInput = z.object({
   documentId: z.string().uuid(),
+  download: z.boolean().optional(),
 })
 export type GetDocumentUrlInput = z.infer<typeof GetDocumentUrlInput>
 

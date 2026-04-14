@@ -9,7 +9,7 @@ vi.mock('../../parcours/actions/reactivate-parcours', () => ({
   reactivateParcours: (...args: unknown[]) => mockReactivate(...args),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, unknown>
   return {
     ...actual,
@@ -77,7 +77,7 @@ describe('ReactivateParcoursDialog', () => {
   })
 
   it('shows error toast on failure', async () => {
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     mockReactivate.mockResolvedValue({
       data: null,
       error: { message: 'Not found', code: 'NOT_FOUND' },

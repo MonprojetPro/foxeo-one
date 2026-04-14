@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge } from '@foxeo/ui'
+import { Badge } from '@monprojetpro/ui'
 
 export function WebhooksPlaceholder() {
   return (
@@ -11,7 +11,7 @@ export function WebhooksPlaceholder() {
         <Badge variant="outline" className="text-amber-500 border-amber-500">Phase 2</Badge>
       </div>
       <p className="text-sm text-gray-400">
-        Configurez des webhooks sortants pour intégrer Foxeo avec vos outils (Slack, Zapier, Make...).
+        Configurez des webhooks sortants pour intégrer MonprojetPro avec vos outils (Slack, Zapier, Make...).
         Cette fonctionnalité sera disponible en Phase 2.
       </p>
     </div>

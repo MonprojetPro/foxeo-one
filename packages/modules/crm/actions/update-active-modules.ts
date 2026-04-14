@@ -1,8 +1,8 @@
 'use server'
 
 import { z } from 'zod'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse, type ActionResponse } from '@monprojetpro/types'
 
 const LOCKED_MODULES = ['core-dashboard', 'chat', 'documents', 'elio'] as const
 

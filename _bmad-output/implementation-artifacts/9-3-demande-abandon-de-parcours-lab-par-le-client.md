@@ -75,7 +75,7 @@ so that **je peux sortir du parcours proprement sans que mes données soient per
 
 - [x] Créer modale de confirmation abandon (AC: #2)
   - [x] Créer `packages/modules/parcours/components/abandon-parcours-dialog.tsx`
-  - [x] Utiliser Dialog component de @foxeo/ui (Radix UI)
+  - [x] Utiliser Dialog component de @monprojetpro/ui (Radix UI)
   - [x] Header : "Êtes-vous sûr de vouloir quitter votre parcours Lab ?"
   - [x] Afficher progression : "{stepsCompleted}/{totalSteps} étapes complétées"
   - [x] Champ raison : Clickable suggestion buttons + "Autre" avec textarea

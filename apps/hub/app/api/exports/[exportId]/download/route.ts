@@ -8,7 +8,7 @@
 // - Logs download in activity_logs
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 interface ExportRecord {
   id: string
@@ -91,11 +91,12 @@ export async function GET(
         .maybeSingle()
 
       if (operatorRecord) {
+        const opRec = operatorRecord as { id: string }
         const { data: ownedClient } = await supabase
           .from('clients')
           .select('id')
           .eq('id', record.client_id)
-          .eq('operator_id', operatorRecord.id)
+          .eq('operator_id', opRec.id)
           .maybeSingle()
 
         if (ownedClient) {
@@ -112,7 +113,7 @@ export async function GET(
     const { data: signedUrl, error: signedError } = await supabase.storage
       .from('exports')
       .createSignedUrl(record.file_path, 3600, {
-        download: `foxeo-export-${exportId}.zip`,
+        download: `monprojetpro-export-${exportId}.zip`,
       })
 
     if (signedError || !signedUrl?.signedUrl) {
@@ -124,6 +125,7 @@ export async function GET(
     }
 
     // Log download in activity_logs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: logError } = await supabase.from('activity_logs').insert({
       actor_type: clientRecord ? 'client' : 'operator',
       actor_id: user.id,
@@ -131,7 +133,7 @@ export async function GET(
       entity_type: 'data_export',
       entity_id: exportId,
       metadata: { client_id: record.client_id },
-    })
+    } as any)
 
     if (logError) {
       console.error('[EXPORT:DOWNLOAD] Activity log error:', logError)

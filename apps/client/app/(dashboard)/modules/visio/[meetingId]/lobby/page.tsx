@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { MeetingLobby } from '@foxeo/module-visio'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { MeetingLobby } from '@monprojetpro/module-visio'
 
 interface ClientLobbyPageProps {
   params: Promise<{ meetingId: string }>

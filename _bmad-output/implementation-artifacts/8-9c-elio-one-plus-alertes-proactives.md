@@ -22,7 +22,7 @@ So that **je suis informé en temps réel sans avoir à surveiller moi-même tou
 
 - **Alertes basées sur le calendrier** :
   - "Rappel : événement 'Assemblée Générale' dans 2 jours — 12 inscrits"
-  - "Votre abonnement Foxeo est renouvelé dans 7 jours"
+  - "Votre abonnement MonprojetPro est renouvelé dans 7 jours"
 
 - **Alertes basées sur l'activité** :
   - "Vous n'avez pas publié de contenu depuis 2 semaines"
@@ -183,7 +183,7 @@ export const DEFAULT_PROACTIVE_ALERTS: ProactiveAlert[] = [
     id: 'subscription_renewal',
     moduleId: 'facturation',
     condition: "SELECT * FROM subscriptions WHERE renewal_date BETWEEN NOW() AND NOW() + INTERVAL '7 days'",
-    message: 'Votre abonnement Foxeo est renouvelé dans 7 jours',
+    message: 'Votre abonnement MonprojetPro est renouvelé dans 7 jours',
     frequency: 'weekly',
     lastTriggered: null,
     enabled: true,
@@ -402,7 +402,7 @@ export async function disableAlert(
 ### References
 
 - [Source: Epic 8 — Story 8.9c](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-89c)
-- [Source: PRD — FR50](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR50](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 

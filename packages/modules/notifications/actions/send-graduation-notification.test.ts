@@ -4,7 +4,7 @@ const mockClientSingle = vi.fn()
 const mockOperatorSingle = vi.fn()
 const mockFrom = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({ data: { user: { id: 'operator-auth-id' } }, error: null })),

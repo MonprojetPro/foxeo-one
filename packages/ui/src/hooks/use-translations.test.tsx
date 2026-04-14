@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook } from '@testing-library/react'
 import { useTranslations } from './use-translations'
 import { LocaleProvider } from '../providers/locale-provider'
-import { loadMessages } from '@foxeo/utils'
+import { loadMessages } from '@monprojetpro/utils'
 import type { ReactNode } from 'react'
 
 function wrapper({ children }: { children: ReactNode }) {

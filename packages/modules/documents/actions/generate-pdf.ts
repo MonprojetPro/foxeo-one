@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { GeneratePdfInput, type DocumentDB } from '../types/document.types'
 import { toDocument } from '../utils/to-document'
 import { markdownToHtml } from '../utils/markdown-to-html'

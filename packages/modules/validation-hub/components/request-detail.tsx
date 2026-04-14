@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { AlertCircle } from 'lucide-react'
-import { Skeleton } from '@foxeo/ui'
+import { Skeleton } from '@monprojetpro/ui'
 import { useValidationRequest } from '../hooks/use-validation-request'
 import { RequestHeader } from './request-header'
 import { ClientInfoCard } from './client-info-card'

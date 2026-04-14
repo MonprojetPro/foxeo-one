@@ -6,7 +6,7 @@ const mockEq = vi.fn(() => ({ order: mockOrder }))
 const mockSelectAll = vi.fn(() => ({ eq: mockEq }))
 const mockFrom = vi.fn(() => ({ select: mockSelectAll }))
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },

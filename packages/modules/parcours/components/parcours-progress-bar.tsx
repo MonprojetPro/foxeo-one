@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 
 interface ParcoursProgressBarProps {
   completedSteps: number

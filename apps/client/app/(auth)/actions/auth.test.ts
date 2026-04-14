@@ -6,7 +6,7 @@ import { loginSchema, signupSchema } from './schemas'
 describe('loginSchema', () => {
   it('accepts valid email and password', () => {
     const result = loginSchema.safeParse({
-      email: 'user@foxeo.io',
+      email: 'user@monprojet-pro.com',
       password: 'mypassword',
     })
     expect(result.success).toBe(true)
@@ -25,7 +25,7 @@ describe('loginSchema', () => {
 
   it('rejects empty password', () => {
     const result = loginSchema.safeParse({
-      email: 'user@foxeo.io',
+      email: 'user@monprojet-pro.com',
       password: '',
     })
     expect(result.success).toBe(false)
@@ -43,7 +43,7 @@ describe('loginSchema', () => {
 describe('signupSchema', () => {
   it('accepts valid signup data', () => {
     const result = signupSchema.safeParse({
-      email: 'new@foxeo.io',
+      email: 'new@monprojet-pro.com',
       password: 'Password1',
       confirmPassword: 'Password1',
       acceptCgu: true,
@@ -54,7 +54,7 @@ describe('signupSchema', () => {
 
   it('rejects mismatched passwords', () => {
     const result = signupSchema.safeParse({
-      email: 'new@foxeo.io',
+      email: 'new@monprojet-pro.com',
       password: 'Password1',
       confirmPassword: 'Password2',
       acceptCgu: true,
@@ -68,7 +68,7 @@ describe('signupSchema', () => {
 
   it('rejects weak password (no uppercase)', () => {
     const result = signupSchema.safeParse({
-      email: 'new@foxeo.io',
+      email: 'new@monprojet-pro.com',
       password: 'password1',
       confirmPassword: 'password1',
       acceptCgu: true,
@@ -79,7 +79,7 @@ describe('signupSchema', () => {
 
   it('rejects weak password (no digit)', () => {
     const result = signupSchema.safeParse({
-      email: 'new@foxeo.io',
+      email: 'new@monprojet-pro.com',
       password: 'Passwordd',
       confirmPassword: 'Passwordd',
       acceptCgu: true,
@@ -90,7 +90,7 @@ describe('signupSchema', () => {
 
   it('rejects password shorter than 8 characters', () => {
     const result = signupSchema.safeParse({
-      email: 'new@foxeo.io',
+      email: 'new@monprojet-pro.com',
       password: 'Pass1',
       confirmPassword: 'Pass1',
       acceptCgu: true,

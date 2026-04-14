@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { useEmailTemplates } from '../hooks/use-email-templates'
 import { saveEmailTemplate, resetEmailTemplate, type EmailTemplate } from '../actions/save-email-template'
 
@@ -66,10 +66,10 @@ export function EmailTemplateEditor() {
     return escapeForPreview(body)
       .replace(/\n/g, '<br />')
       .replace(/\{prenom\}/g, '<strong>Jean-Pierre</strong>')
-      .replace(/\{entreprise\}/g, '<strong>Foxeo SAS</strong>')
+      .replace(/\{entreprise\}/g, '<strong>MonprojetPro SAS</strong>')
       .replace(/\{titre_brief\}/g, '<em>Stratégie marketing</em>')
       .replace(/\{commentaire\}/g, '<em>Excellent travail !</em>')
-      .replace(/\{lien\}/g, '<a href="#" style="color:#06b6d4;">https://lab.foxeo.io</a>')
+      .replace(/\{lien\}/g, '<a href="#" style="color:#06b6d4;">https://lab.monprojet-pro.com</a>')
       .replace(/\{montant\}/g, '<strong>199 €</strong>')
   }
 

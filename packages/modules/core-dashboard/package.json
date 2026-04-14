@@ -1,5 +1,5 @@
 {
-  "name": "@foxeo/module-core-dashboard",
+  "name": "@monprojetpro/module-core-dashboard",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,6 +7,10 @@
     ".": {
       "types": "./index.ts",
       "default": "./index.ts"
+    },
+    "./manifest": {
+      "types": "./manifest.ts",
+      "default": "./manifest.ts"
     }
   },
   "peerDependencies": {
@@ -14,14 +18,14 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "@foxeo/supabase": "*",
-    "@foxeo/types": "*",
-    "@foxeo/ui": "*",
-    "@foxeo/utils": "*",
+    "@monprojetpro/supabase": "*",
+    "@monprojetpro/types": "*",
+    "@monprojetpro/ui": "*",
+    "@monprojetpro/utils": "*",
     "@tanstack/react-query": "^5.90.0"
   },
   "devDependencies": {
-    "@foxeo/tsconfig": "*",
+    "@monprojetpro/tsconfig": "*",
     "@testing-library/react": "*",
     "@types/react": "^19",
     "@types/react-dom": "^19",

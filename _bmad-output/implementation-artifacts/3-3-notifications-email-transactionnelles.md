@@ -14,7 +14,7 @@ So that **je suis informé même quand je ne suis pas connecté à la plateforme
 
 2. **AC2 — Types email** : Emails envoyés pour (FR99) : validation ("Votre brief a été validé/refusé" → client), message ("Nouveau message de MiKL" → client / "Nouveau message de {client}" → MiKL), alert ("Client Lab inactif" → MiKL), graduation ("Félicitations ! Votre espace One est prêt" → client), payment ("Échec de paiement" → client + MiKL). Envoi < 10 secondes (NFR-I4).
 
-3. **AC3 — Template email** : HTML responsive branding Foxeo. Inclut : logo, titre, corps, bouton CTA (lien plateforme), pied de page avec lien désabonnement. Envoyé depuis noreply@foxeo.io.
+3. **AC3 — Template email** : HTML responsive branding MonprojetPro. Inclut : logo, titre, corps, bouton CTA (lien plateforme), pied de page avec lien désabonnement. Envoyé depuis noreply@monprojet-pro.com.
 
 4. **AC4 — Double delivery** : Notification in-app TOUJOURS créée (Story 3.2). Email EN PLUS si préférences l'autorisent (défaut: oui). In-app ne dépend pas du succès email (envoi asynchrone).
 
@@ -26,7 +26,7 @@ So that **je suis informé même quand je ne suis pas connecté à la plateforme
 
 - [x] Task 1 — Choix et configuration service email (AC: #1)
   - [x] 1.1 Configurer Resend (recommandé pour simplicité) ou Postmark comme provider email
-  - [x] 1.2 Setup variables d'environnement : `RESEND_API_KEY`, `EMAIL_FROM` (noreply@foxeo.io)
+  - [x] 1.2 Setup variables d'environnement : `RESEND_API_KEY`, `EMAIL_FROM` (noreply@monprojet-pro.com)
   - [x] 1.3 Créer helper `supabase/functions/_shared/email-client.ts` — wrapper d'envoi avec retry (3 tentatives, backoff exponentiel)
 
 - [x] Task 2 — Templates email HTML (AC: #3)
@@ -82,7 +82,7 @@ import { Resend } from 'resend'
 const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
 await resend.emails.send({
-  from: 'Foxeo <noreply@foxeo.io>',
+  from: 'MonprojetPro <noreply@monprojet-pro.com>',
   to: recipientEmail,
   subject: title,
   html: renderedTemplate,
@@ -102,12 +102,12 @@ export function baseTemplate(content: { title: string; body: string; ctaUrl?: st
     <head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
     <body style="font-family: 'Inter', sans-serif; background: #f4f4f5; padding: 20px;">
       <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; padding: 32px;">
-        <img src="https://foxeo.io/logo.png" alt="Foxeo" style="height: 32px; margin-bottom: 24px;" />
+        <img src="https://monprojet-pro.com/logo.png" alt="MonprojetPro" style="height: 32px; margin-bottom: 24px;" />
         <h2 style="color: #0a0a0a; font-family: 'Poppins', sans-serif;">${content.title}</h2>
         <div style="color: #3f3f46; line-height: 1.6;">${content.body}</div>
-        ${content.ctaUrl ? `<a href="${content.ctaUrl}" style="display: inline-block; margin-top: 24px; padding: 12px 24px; background: #059669; color: white; border-radius: 6px; text-decoration: none;">${content.ctaText || 'Voir sur Foxeo'}</a>` : ''}
+        ${content.ctaUrl ? `<a href="${content.ctaUrl}" style="display: inline-block; margin-top: 24px; padding: 12px 24px; background: #059669; color: white; border-radius: 6px; text-decoration: none;">${content.ctaText || 'Voir sur MonprojetPro'}</a>` : ''}
         <hr style="margin-top: 32px; border: none; border-top: 1px solid #e4e4e7;" />
-        <p style="font-size: 12px; color: #a1a1aa;">Vous recevez cet email car vous êtes inscrit sur Foxeo. <a href="{{unsubscribe_url}}">Se désabonner</a></p>
+        <p style="font-size: 12px; color: #a1a1aa;">Vous recevez cet email car vous êtes inscrit sur MonprojetPro. <a href="{{unsubscribe_url}}">Se désabonner</a></p>
       </div>
     </body>
     </html>
@@ -202,8 +202,8 @@ claude-opus-4-6 (adversarial code review)
 | 6 | MEDIUM | Hardcoded 'MiKL' sender in new-message template | Fixed: Extract sender name from notification title via regex |
 | 7 | MEDIUM | Placeholder data for inactivity days/dates and payment amounts | Fixed: Extract real values from `notification.body` via regex |
 | 8 | MEDIUM | `supabase/.gitignore` not tracked in File List | Fixed: Added to File List |
-| 9 | LOW | Hardcoded platform URLs (`hub.foxeo.io`, `lab.foxeo.io`) | Accepted: URLs stable per deployment model, no config needed |
-| 10 | LOW | Logo URL `foxeo.io` → `foxeo.biz` | Fixed: Updated to `foxeo.biz/logo.png` |
+| 9 | LOW | Hardcoded platform URLs (`hub.monprojet-pro.com`, `lab.monprojet-pro.com`) | Accepted: URLs stable per deployment model, no config needed |
+| 10 | LOW | Logo URL `monprojet-pro.com` → `monprojetpro.biz` | Fixed: Updated to `monprojetpro.biz/logo.png` |
 
 ### Verdict
 **PASS** — All CRITICAL and HIGH issues fixed. All 34 Edge Function tests pass. Full suite: 1280/1280.

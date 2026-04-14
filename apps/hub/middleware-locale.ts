@@ -11,7 +11,7 @@
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from '@foxeo/utils'
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from '@monprojetpro/utils'
 
 export function detectLocale(request: NextRequest): Locale {
   // 1. Read NEXT_LOCALE cookie (priority)

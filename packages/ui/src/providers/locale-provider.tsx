@@ -8,7 +8,7 @@
 'use client'
 
 import { createContext, useState, useEffect, type ReactNode } from 'react'
-import { DEFAULT_LOCALE, type Locale } from '@foxeo/utils'
+import { DEFAULT_LOCALE, type Locale } from '@monprojetpro/utils'
 
 interface LocaleContextValue {
   locale: Locale

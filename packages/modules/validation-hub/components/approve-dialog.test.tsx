@@ -23,8 +23,8 @@ vi.mock('next/navigation', () => ({
   })),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -113,7 +113,7 @@ describe('ApproveDialog', () => {
   it('should call showSuccess and redirect on success', async () => {
     mockApproveRequest.mockResolvedValue({ data: { id: 'req-uuid' }, error: null })
 
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
     const ApproveDialog = await importComponent()
     render(<ApproveDialog {...defaultProps} />)
 
@@ -137,7 +137,7 @@ describe('ApproveDialog', () => {
       error: { message: 'Error', code: 'DB_ERROR' },
     })
 
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     const ApproveDialog = await importComponent()
     render(<ApproveDialog {...defaultProps} />)
 

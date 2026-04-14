@@ -1,12 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import type { ReactivateClientInput } from '../types/crm.types'
 import { ReactivateClientInput as ReactivateClientInputSchema } from '../types/crm.types'
 
@@ -141,8 +141,8 @@ export async function reactivateClient(
       recipient_type: 'client',
       recipient_id: clientId,
       type: 'system',
-      title: 'Votre compte Foxeo a été réactivé',
-      body: 'Votre accès à votre espace Foxeo a été rétabli. Bienvenue de retour !',
+      title: 'Votre compte MonprojetPro a été réactivé',
+      body: 'Votre accès à votre espace MonprojetPro a été rétabli. Bienvenue de retour !',
       link: null,
     })
 

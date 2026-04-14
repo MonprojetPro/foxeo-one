@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import type { ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import type { ActionResponse } from '@monprojetpro/types'
 
 /**
  * Server Action — Envoie des SMS via le module SMS.

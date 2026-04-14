@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { ValidationRequestDetail } from '../types/validation.types'
 import { getValidationRequest } from '../actions/get-validation-request'
 

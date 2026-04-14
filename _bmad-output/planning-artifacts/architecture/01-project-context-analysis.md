@@ -8,7 +8,7 @@
 
 **Functional Requirements:**
 
-170 FRs couvrant l'écosystème complet Foxeo, organisés en 28 catégories :
+170 FRs couvrant l'écosystème complet MonprojetPro, organisés en 28 catégories :
 
 - **Hub (MiKL)** : Gestion clients (FR1-7), Validation Hub (FR8-14), Élio Hub (FR21-25), Gestion avancée (FR77-81), Administration (FR102-105), Workflow quotidien (FR130-133)
 - **Lab (Clients en création)** : Parcours création (FR26-31), Élio Lab (FR32-37), Onboarding (FR70-73), Facturation forfait Lab (FR169-170)
@@ -16,7 +16,7 @@
 - **Commun** : Auth & Sécurité (FR52-56), Communication (FR57-61), Documents (FR62-65), Profil Communication (FR66-69), Facturation (FR94-98), Notifications (FR99-101), Recherche (FR106-108), Multi-device (FR112-114), Accessibilité (FR117-119), Analytics (FR120-121), Élio UX (FR122-126), Temps réel (FR127-129), Templates (FR137-139), Légal RGPD (FR140-143), Fichiers (FR144-146), Robustesse (FR151-152)
 - **Orchestration** : Graduation Lab→One (FR74-76), Parcours alternatifs (FR88-93), Synchronisation BMAD (FR86-87)
 - **Instance-per-client** : Propriété client (FR153-155), Provisioning (FR156-157), Documentation livrable (FR158-161), Surveillance usage (FR162-165), Graduation provisioning (FR166-168)
-- **Orpheus** : Génération docs sources dans Cursor (FR15-20d) — hors périmètre applicatif Foxeo (9 FRs)
+- **Orpheus** : Génération docs sources dans Cursor (FR15-20d) — hors périmètre applicatif MonprojetPro (9 FRs)
 
 **Implications architecturales :** Dashboard client unifié (Lab+One) avec feature-flagging conditionnel, RBAC à 2 rôles (Admin MiKL / Client), système modulaire de configuration par client.
 

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ModuleToggleList } from './module-toggle-list'
-import type { ModuleManifest } from '@foxeo/types'
+import type { ModuleManifest } from '@monprojetpro/types'
 
 const mockUpdateActiveModules = vi.fn()
 const mockShowSuccess = vi.fn()
@@ -12,8 +12,8 @@ vi.mock('../actions/update-active-modules', () => ({
   updateActiveModules: (...args: unknown[]) => mockUpdateActiveModules(...args),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: (...args: unknown[]) => mockShowSuccess(...args),

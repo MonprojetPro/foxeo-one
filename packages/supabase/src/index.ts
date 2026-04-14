@@ -1,5 +1,5 @@
 /**
- * @foxeo/supabase - Supabase clients, providers et helpers pour Foxeo One
+ * @monprojetpro/supabase - Supabase clients, providers et helpers pour MonprojetPro One
  */
 
 // Clients

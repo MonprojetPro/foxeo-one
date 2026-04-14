@@ -17,8 +17,8 @@ export const FAQ_CATEGORIES: FaqCategory[] = [
     icon: 'rocket',
     questions: [
       {
-        q: 'Comment fonctionne mon espace Foxeo ?',
-        a: 'Votre espace Foxeo est votre tableau de bord personnel. Vous y retrouvez tous vos modules actifs, vos documents et votre messagerie avec MiKL.',
+        q: 'Comment fonctionne mon espace MonprojetPro ?',
+        a: 'Votre espace MonprojetPro est votre tableau de bord personnel. Vous y retrouvez tous vos modules actifs, vos documents et votre messagerie avec MiKL.',
       },
       {
         q: "Qu'est-ce qu'Élio ?",
@@ -41,7 +41,7 @@ export const FAQ_CATEGORIES: FaqCategory[] = [
       },
       {
         q: 'Que se passe-t-il après la validation de mon parcours ?',
-        a: 'Une fois votre parcours Lab terminé, vous passez à Foxeo One — votre espace business personnalisé avec tous les outils pour gérer votre activité.',
+        a: 'Une fois votre parcours Lab terminé, vous passez à MonprojetPro One — votre espace business personnalisé avec tous les outils pour gérer votre activité.',
       },
       {
         q: 'Puis-je revenir sur une étape déjà validée ?',

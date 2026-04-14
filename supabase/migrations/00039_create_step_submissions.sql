@@ -23,7 +23,7 @@ CREATE INDEX idx_step_submissions_client_id_status ON step_submissions(client_id
 -- 3. Trigger updated_at
 CREATE TRIGGER step_submissions_updated_at
   BEFORE UPDATE ON step_submissions
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  FOR EACH ROW EXECUTE FUNCTION fn_update_updated_at();
 
 -- 4. Enable RLS
 ALTER TABLE step_submissions ENABLE ROW LEVEL SECURITY;

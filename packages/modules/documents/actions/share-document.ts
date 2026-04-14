@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { ShareDocumentInput, type Document, type DocumentDB } from '../types/document.types'
 import { toDocument } from '../utils/to-document'
 
@@ -36,6 +36,18 @@ export async function shareDocument(documentId: string): Promise<ActionResponse<
     .single()
 
   if (error || !doc) return errorResponse('Document introuvable', 'NOT_FOUND', error)
+
+  // Log activity — fire-and-forget
+  supabase.from('activity_logs').insert({
+    actor_type: 'operator',
+    actor_id: operator.id,
+    action: 'document_shared',
+    entity_type: 'client',
+    entity_id: (doc as DocumentDB).client_id,
+    metadata: { document_id: doc.id, document_name: (doc as DocumentDB).name },
+  }).then(({ error: logError }) => {
+    if (logError) console.error('[DOCUMENTS:SHARE] Activity log error:', logError)
+  }).catch(() => {})
 
   // Fire-and-forget notification — inter-module via direct DB insert (architecture rule)
   supabase

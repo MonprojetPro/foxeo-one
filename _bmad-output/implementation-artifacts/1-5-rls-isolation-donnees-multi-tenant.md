@@ -323,8 +323,8 @@ CREATE POLICY consents_insert_authenticated ON consents
 - `tests/rls/activity-logs.test.ts` — pattern a SUIVRE pour les nouveaux tests
 
 **Packages disponibles :**
-- `@foxeo/supabase` — `createServerSupabaseClient()`, `createMiddlewareSupabaseClient()`, `createClient()`
-- `@foxeo/types` — `database.types.ts` (a mettre a jour avec les nouvelles fonctions)
+- `@monprojetpro/supabase` — `createServerSupabaseClient()`, `createMiddlewareSupabaseClient()`, `createClient()`
+- `@monprojetpro/types` — `database.types.ts` (a mettre a jour avec les nouvelles fonctions)
 
 ### Pattern de test RLS a suivre
 

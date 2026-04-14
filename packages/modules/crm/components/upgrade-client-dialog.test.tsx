@@ -11,7 +11,7 @@ vi.mock('../actions/upgrade-client', () => ({
   upgradeClient: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
 }))
 
-vi.mock('@foxeo/utils', () => ({
+vi.mock('@monprojetpro/utils', () => ({
   getModulesForTarget: vi.fn(() => [
     {
       id: 'core-dashboard',
@@ -52,7 +52,7 @@ vi.mock('../hooks/use-parcours-templates', () => ({
 // Module-level variable to track active tab (set by Tabs, read by TabsContent)
 let currentTabValue = 'lab'
 
-vi.mock('@foxeo/ui', () => ({
+vi.mock('@monprojetpro/ui', () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div role="dialog">{children}</div> : null,
   DialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

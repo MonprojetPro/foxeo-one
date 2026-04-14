@@ -1,6 +1,6 @@
 'use client'
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@foxeo/ui'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@monprojetpro/ui'
 import { ELIO_MODELS, type ElioModel } from '../types/elio-config.types'
 
 const MODEL_LABELS: Record<ElioModel, { label: string; description: string }> = {

@@ -75,7 +75,7 @@ so that **je decide precisement ce que le client peut voir dans son espace docum
 
 - **MODULE EXISTANT** : Etendre `packages/modules/documents/` — PAS de nouveau module.
 - **Aucune migration DB requise** : La colonne `visibility` et les policies RLS existent depuis la migration 00027 (story 4.1). Ne pas recreer.
-- **Response format** : `{ data, error }` via `ActionResponse<T>`, `successResponse()`, `errorResponse()` de `@foxeo/types` — JAMAIS throw.
+- **Response format** : `{ data, error }` via `ActionResponse<T>`, `successResponse()`, `errorResponse()` de `@monprojetpro/types` — JAMAIS throw.
 - **Logging** : `[DOCUMENTS:SHARE]`, `[DOCUMENTS:UNSHARE]`, `[DOCUMENTS:BATCH_SHARE]`
 - **Auth check** : Utiliser `supabase.auth.getUser()` + verifier le role operator. Un client ne peut pas appeler `shareDocument()` — retourner `errorResponse('Acces refuse', 'FORBIDDEN')`.
 
@@ -84,9 +84,9 @@ so that **je decide precisement ce que le client peut voir dans son espace docum
 ```typescript
 // actions/share-document.ts
 'use server'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse } from '@foxeo/types'
-import type { ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse } from '@monprojetpro/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { Document } from '../types/document.types'
 import { toDocument } from '../utils/to-document'
 
@@ -150,7 +150,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 
 // Rendu conditionnel selon visibility
 if (document.visibility === 'shared') {
@@ -181,7 +181,7 @@ if (document.visibility === 'shared') {
 ### Notification — Integration story 3.2
 
 L'action `createNotification()` est dans `packages/modules/notifications/actions/create-notification.ts`.
-Un module ne peut PAS importer directement un autre module. Utiliser un import depuis `@foxeo/supabase` ou appeler la Server Action via le pattern etabli en 3.2.
+Un module ne peut PAS importer directement un autre module. Utiliser un import depuis `@monprojetpro/supabase` ou appeler la Server Action via le pattern etabli en 3.2.
 
 **Alternative conforme a l'architecture** : Inserer directement dans la table `notifications` via le client Supabase dans la Server Action `shareDocument()` — cela respecte la regle "communication inter-modules via Supabase".
 
@@ -261,8 +261,8 @@ apps/hub/app/(dashboard)/modules/documents/[clientId]/page.tsx  (modifier — sh
 - Types `Document`, `DocumentDB`, `DocumentVisibility` — deja dans `types/document.types.ts`
 - `toDocument()` dans `utils/to-document.ts`
 - `DocumentVisibilityBadge` — deja dans `components/document-visibility-badge.tsx`
-- `@foxeo/types` — `ActionResponse`, `successResponse`, `errorResponse`
-- `@foxeo/supabase` — `createServerSupabaseClient`
+- `@monprojetpro/types` — `ActionResponse`, `successResponse`, `errorResponse`
+- `@monprojetpro/supabase` — `createServerSupabaseClient`
 - Table `notifications` (migration story 3.2) — pour l'insertion de notification inter-module
 
 ### Anti-patterns — Interdit
@@ -285,7 +285,7 @@ const mockUpdate = vi.fn().mockReturnValue({
     })
   })
 })
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn().mockResolvedValue({
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: mockUser } }) },
     from: vi.fn().mockReturnValue({ update: mockUpdate, select: ..., insert: ... }),

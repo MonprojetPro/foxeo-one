@@ -66,7 +66,7 @@ J'ai le plaisir de vous informer que le devis pour l'ajout du module SMS a été
 N'hésitez pas à me contacter si vous avez des questions.
 
 Cordialement,
-MiKL — Foxeo
+MiKL — MonprojetPro
 ---
 
 J'ai utilisé le ton "formel + vouvoiement" du profil de Sandrine. Tu veux modifier quelque chose ?
@@ -190,7 +190,7 @@ ${originalText}
 ### References
 
 - [Source: Epic 8 — Story 8.6](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-86)
-- [Source: PRD — FR24, FR25](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR24, FR25](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 

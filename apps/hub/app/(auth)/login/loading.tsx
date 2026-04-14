@@ -1,4 +1,4 @@
-import { Skeleton } from '@foxeo/ui'
+import { Skeleton } from '@monprojetpro/ui'
 
 export default function LoginLoading() {
   return (

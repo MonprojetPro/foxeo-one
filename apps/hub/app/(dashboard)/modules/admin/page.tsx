@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ActivityLogs, MaintenanceMode, SystemHealth, WebhooksPlaceholder, ApiPlaceholder, InstancesList } from '@foxeo/module-admin'
+import { ActivityLogs, MaintenanceMode, SystemHealth, WebhooksPlaceholder, ApiPlaceholder, InstancesList } from '@monprojetpro/module-admin'
 
 type AdminTab = 'logs' | 'maintenance' | 'backups' | 'webhooks' | 'api' | 'monitoring' | 'instances'
 

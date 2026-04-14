@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react'
 import { Menu } from 'lucide-react'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 import { Button } from '../button'
 import { Sheet, SheetContent, SheetTitle } from '../sheet'
 import { useIsMobile } from '../use-mobile'

@@ -78,7 +78,7 @@ so that **j'ai une vision 360° de chaque client sans naviguer entre plusieurs p
 
 - [x] Créer le système d'onglets (AC: #2)
   - [x] Créer `packages/modules/crm/components/client-tabs.tsx`
-  - [x] Utiliser `Tabs` component de @foxeo/ui (Radix UI)
+  - [x] Utiliser `Tabs` component de @monprojetpro/ui (Radix UI)
   - [x] 4 onglets: Informations, Historique, Documents, Échanges
   - [x] Synchroniser onglet actif avec URL query param `?tab=...` (Next.js useSearchParams + useRouter)
   - [x] Onglet par défaut: "informations" si query param absent
@@ -92,7 +92,7 @@ so that **j'ai une vision 360° de chaque client sans naviguer entre plusieurs p
     - **Parcours Lab**: si applicable, afficher nom du parcours + progression (barre)
     - **Modules One**: si applicable, liste des modules actifs (badges cliquables)
   - [x] Bouton "Modifier" en haut à droite → ouvre dialog `ClientForm` en mode édition (Story 2.2)
-  - [x] Utiliser composants Card, Badge, Separator de @foxeo/ui
+  - [x] Utiliser composants Card, Badge, Separator de @monprojetpro/ui
 
 - [x] Implémenter l'onglet "Historique" (AC: #4)
   - [x] Créer `packages/modules/crm/components/client-timeline.tsx`
@@ -292,7 +292,7 @@ packages/modules/crm/types/crm.types.ts          # ADD: ActivityLog, ClientDocum
 - [Source: _bmad-output/planning-artifacts/epics/epic-2-gestion-de-la-relation-client-crm-hub-stories-detaillees.md#Story-2.3]
 - [Source: _bmad-output/planning-artifacts/architecture/04-implementation-patterns.md#Data-Fetching-Patterns]
 - [Source: _bmad-output/planning-artifacts/architecture/04-implementation-patterns.md#State-Management]
-- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md#FR4]
+- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md#FR4]
 - [Source: CLAUDE.md#Data-Fetching-Server-Component-for-read-data]
 - [Source: CLAUDE.md#State-Management-strict-separation]
 

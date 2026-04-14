@@ -35,7 +35,7 @@ so that **je ne perds jamais mon travail en cours et je peux corriger une erreur
   - [x] 2.2 Tests `components/draft-restore-banner.test.tsx` — rendu sans brouillon (null), rendu avec brouillon, clic Reprendre, clic Recommencer (4 tests)
 
 - [x] Task 3 — Hook useUndoableAction (AC: #3, #4)
-  - [x] 3.1 Creer `hooks/use-undo-action.ts` — `useUndoableAction(options)`. Utilise `toast()` de `@foxeo/ui` avec un bouton "Annuler" dans le contenu du toast. Gere le timer via `setTimeout` (defaut 5000ms). Si "Annuler" clique : appelle `undoAction()`, dismisses le toast. Si timer expire : pas d'action supplementaire.
+  - [x] 3.1 Creer `hooks/use-undo-action.ts` — `useUndoableAction(options)`. Utilise `toast()` de `@monprojetpro/ui` avec un bouton "Annuler" dans le contenu du toast. Gere le timer via `setTimeout` (defaut 5000ms). Si "Annuler" clique : appelle `undoAction()`, dismisses le toast. Si timer expire : pas d'action supplementaire.
   - [x] 3.2 Tests `hooks/use-undo-action.test.ts` — execute action, affiche toast, clic annuler inverse, timer expire sans annulation, undo echoue (erreur toast), action principale echoue (5 tests)
 
 - [x] Task 4 — Integration undo dans les actions existantes (AC: #5)
@@ -50,7 +50,7 @@ so that **je ne perds jamais mon travail en cours et je peux corriger une erreur
   - [~] 5.3 N/A — pas de tests supplementaires necessaires (composants non modifies)
 
 - [~] Task 6 — Composant UndoToast helper (AC: #3)
-  - [~] 6.1 Non necessaire — `useUndoableAction` utilise directement `toast.success()` de sonner/@foxeo/ui avec le pattern `action: { label, onClick }`. Un helper supplementaire n'apporte pas de valeur ajoutee.
+  - [~] 6.1 Non necessaire — `useUndoableAction` utilise directement `toast.success()` de sonner/@monprojetpro/ui avec le pattern `action: { label, onClick }`. Un helper supplementaire n'apporte pas de valeur ajoutee.
   - [~] 6.2 N/A — pas de fichier utilitaire cree
 
 - [x] Task 7 — Migration soft delete (AC: #5)
@@ -149,7 +149,7 @@ export function useDraftForm<T extends FieldValues>(
 
 ```typescript
 // hooks/use-undo-action.ts
-import { toast } from '@foxeo/ui'
+import { toast } from '@monprojetpro/ui'
 import { useRef } from 'react'
 
 interface UseUndoableActionOptions {
@@ -241,7 +241,7 @@ Verifier les migrations existantes avant de creer pour eviter les conflits de nu
 - `FolderTree` (story 4.4) — A MODIFIER pour undo sur suppression dossier
 - `DocumentUpload` — A MODIFIER pour autosave
 - `react-hook-form` ^7.71.x — deja dans le projet
-- Toast system `@foxeo/ui` — deja utilise dans les stories precedentes
+- Toast system `@monprojetpro/ui` — deja utilise dans les stories precedentes
 
 ### Anti-patterns — Interdit
 

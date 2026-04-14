@@ -1,6 +1,6 @@
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { CoreDashboard, getTeasingEligibility } from '@foxeo/module-core-dashboard'
-import type { ClientConfig } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { CoreDashboard, getTeasingEligibility } from '@monprojetpro/module-core-dashboard'
+import type { ClientConfig } from '@monprojetpro/types'
 
 export default async function ClientHomePage() {
   const supabase = await createServerSupabaseClient()

@@ -13,7 +13,7 @@ import {
   Button,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { archiveClient } from '../actions/archive-client'
 import { ArchiveIcon } from 'lucide-react'
 

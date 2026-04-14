@@ -102,7 +102,7 @@ pending ──→ approved
 MiKL clique "Demander des précisions"
     │
     ▼
-ClarificationDialog s'ouvre (modale @foxeo/ui Dialog)
+ClarificationDialog s'ouvre (modale @monprojetpro/ui Dialog)
     │   - Résumé demande (titre + client)
     │   - Champ question obligatoire (min 10 chars)
     │   - 3 suggestions rapides (chips Button outline sm)

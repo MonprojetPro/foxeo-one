@@ -10,9 +10,9 @@ vi.mock('../actions/reset-elio-config', () => ({
   resetElioConfig: vi.fn(),
 }))
 
-// Mock @foxeo/ui
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+// Mock @monprojetpro/ui
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock('@foxeo/ui', async (importOriginal) => {
 import { OrpheusConfigForm } from './orpheus-config-form'
 import { updateElioConfig } from '../actions/update-elio-config'
 import { resetElioConfig } from '../actions/reset-elio-config'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { DEFAULT_ELIO_CONFIG, type ElioConfig } from '../types/elio-config.types'
 
 describe('OrpheusConfigForm', () => {

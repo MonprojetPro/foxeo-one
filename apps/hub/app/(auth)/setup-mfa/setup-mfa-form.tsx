@@ -2,7 +2,7 @@
 
 import { useTransition, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Input, Alert, AlertDescription } from '@foxeo/ui'
+import { Button, Input, Alert, AlertDescription } from '@monprojetpro/ui'
 import { hubSetupMfaAction, hubVerifyMfaSetupAction } from '../actions/auth'
 
 type SetupStep = 'loading' | 'scan' | 'recovery'

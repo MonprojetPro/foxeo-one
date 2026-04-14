@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock types
-vi.mock('@foxeo/types', () => ({
+vi.mock('@monprojetpro/types', () => ({
   successResponse: <T>(data: T) => ({ data, error: null }),
   errorResponse: (message: string, code: string, details?: unknown) => ({
     data: null,

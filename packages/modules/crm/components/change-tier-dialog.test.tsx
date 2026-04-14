@@ -6,8 +6,8 @@ vi.mock('../actions/change-tier', () => ({
   changeClientTier: vi.fn(async () => ({ data: null, error: null })),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -94,7 +94,7 @@ describe('ChangeTierDialog', () => {
   })
 
   it('ferme la modale et affiche un toast success après succès', async () => {
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
     render(<ChangeTierDialog {...defaultProps} currentTier="base" />)
 
     const agentiqueButton = screen.getAllByRole('button').find((b) =>
@@ -117,7 +117,7 @@ describe('ChangeTierDialog', () => {
       error: { message: 'Erreur DB', code: 'DATABASE_ERROR' },
     })
 
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     render(<ChangeTierDialog {...defaultProps} currentTier="base" />)
 
     const agentiqueButton = screen.getAllByRole('button').find((b) =>

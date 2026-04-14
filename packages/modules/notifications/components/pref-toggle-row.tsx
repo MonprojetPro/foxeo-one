@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge, Switch } from '@foxeo/ui'
+import { Badge, Switch } from '@monprojetpro/ui'
 import type { NotificationType } from '../types/notification.types'
 
 interface PrefToggleRowProps {

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 
-const GRADUATION_TOUR_KEY = 'foxeo-graduation-tour-completed'
+const GRADUATION_TOUR_KEY = 'monprojetpro-graduation-tour-completed'
 const TOUR_MAX_STEPS = 5
 
 export interface GraduationTourState {

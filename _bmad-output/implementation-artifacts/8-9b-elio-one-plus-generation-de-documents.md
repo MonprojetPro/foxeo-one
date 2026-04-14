@@ -242,7 +242,7 @@ export function getDocumentQuestions(
 ### References
 
 - [Source: Epic 8 — Story 8.9b](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-89b)
-- [Source: PRD — FR49](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR49](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 

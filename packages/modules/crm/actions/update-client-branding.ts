@@ -1,9 +1,9 @@
 'use server'
 
 import { z } from 'zod'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse, type ActionResponse } from '@foxeo/types'
-import type { CustomBranding } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse, type ActionResponse } from '@monprojetpro/types'
+import type { CustomBranding } from '@monprojetpro/types'
 
 const UpdateBrandingSchema = z.object({
   clientId: z.string().uuid('ID client invalide'),

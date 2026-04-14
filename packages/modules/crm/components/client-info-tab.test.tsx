@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ClientInfoTab } from './client-info-tab'
 
-// Mock @foxeo/module-admin
-vi.mock('@foxeo/module-admin', () => ({
+// Mock @monprojetpro/module-admin
+vi.mock('@monprojetpro/module-admin', () => ({
   exportClientData: vi.fn().mockResolvedValue({ data: { exportId: 'export-123' }, error: null }),
   transferInstanceToClient: vi.fn().mockResolvedValue({ data: { transferId: 'transfer-123' }, error: null }),
 }))

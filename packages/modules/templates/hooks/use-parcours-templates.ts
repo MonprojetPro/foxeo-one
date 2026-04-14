@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 import type { ParcourTemplate } from '../actions/save-parcours-template'
 
 export function useParcourTemplates() {

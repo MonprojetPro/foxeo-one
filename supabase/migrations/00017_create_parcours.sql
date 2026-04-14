@@ -135,14 +135,14 @@ BEGIN
     VALUES (
       v_operator_id,
       'Parcours Complet',
-      'Parcours complet de creation d''entreprise en 5 etapes : de la vision a la graduation vers Foxeo One.',
+      'Parcours complet de creation d''entreprise en 5 etapes : de la vision a la graduation vers MonprojetPro One.',
       'complet',
       '[
         {"key": "vision", "name": "Vision", "description": "Definir la vision business", "order": 1},
         {"key": "positionnement", "name": "Positionnement", "description": "Positionner l''offre sur le marche", "order": 2},
         {"key": "offre", "name": "Offre", "description": "Structurer l''offre commerciale", "order": 3},
         {"key": "identite", "name": "Identite", "description": "Creer l''identite visuelle", "order": 4},
-        {"key": "graduation", "name": "Graduation", "description": "Diplomer vers Foxeo One", "order": 5}
+        {"key": "graduation", "name": "Graduation", "description": "Diplomer vers MonprojetPro One", "order": 5}
       ]'::jsonb
     );
   END IF;

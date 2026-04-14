@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 
-const ONBOARDING_TOUR_KEY = 'foxeo-onboarding-tour-completed'
+const ONBOARDING_TOUR_KEY = 'monprojetpro-onboarding-tour-completed'
 const TOUR_MAX_STEPS = 5
 
 export interface OnboardingTourState {

@@ -3,7 +3,7 @@
 # Version: 6.0.0-alpha.23
 # Date: 2026-01-20T09:54:51.165Z
 
-project_name: foxeo-dash
+project_name: monprojetpro-dash
 user_skill_level: intermediate
 planning_artifacts: "{project-root}/_bmad-output/planning-artifacts"
 implementation_artifacts: "{project-root}/_bmad-output/implementation-artifacts"

@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 import { getCommunicationProfile } from './get-communication-profile'
 import { getProfileLabels } from '../utils/profile-labels'
 import type { CommunicationProfile } from '../types/communication-profile.types'

@@ -143,7 +143,7 @@ apps/client/app/(dashboard)/
 - Le chat MiKL avec message pré-rempli : vérifier si le module `chat` supporte `?message=xxx` comme query param
 
 ### UI Patterns
-- Sections documents : `<Tabs>` de `@foxeo/ui` pour "Briefs Lab" / "Livrables" / "Tous"
+- Sections documents : `<Tabs>` de `@monprojetpro/ui` pour "Briefs Lab" / "Livrables" / "Tous"
 - Badge type document : `<Badge variant="outline">Brief Lab</Badge>` etc.
 - Teasing card : `Card` avec `CardHeader`, `CardContent` + `Button` CTA
 - Historique : liste avec `<ul>` + icônes checklist (modules épiques terminés)

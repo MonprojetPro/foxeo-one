@@ -29,7 +29,7 @@
 
 ### Le Projet
 
-**Nom :** Foxeo
+**Nom :** MonprojetPro
 **Porteur :** MiKL
 **Type :** Écosystème de dashboards modulaires professionnels
 
@@ -41,7 +41,7 @@
 
 ### Positionnement
 
-> **Foxeo n'est pas un simple dashboard. C'est un incubateur personnel qui accompagne de l'idée au business opérationnel, avec les outils intégrés.**
+> **MonprojetPro n'est pas un simple dashboard. C'est un incubateur personnel qui accompagne de l'idée au business opérationnel, avec les outils intégrés.**
 
 ### Le Modèle "Centaure"
 
@@ -100,9 +100,9 @@ Le client ne voit jamais "BMAD" — pour lui, c'est Élio qui l'accompagne.
 
 | # | Titre | Concept |
 |---|-------|---------|
-| 21 | **Deux Portes d'Entrée** | Porte A : Client mûr → Foxeo-One. Porte B : Client en construction → Foxeo-Lab → Foxeo-One. |
+| 21 | **Deux Portes d'Entrée** | Porte A : Client mûr → MonprojetPro-One. Porte B : Client en construction → MonprojetPro-Lab → MonprojetPro-One. |
 | 22 | **La Graduation comme Moment Fort** | Passage Lab → One = événement. "Votre business est structuré, on passe en production." |
-| 23 | **Mémoire Persistante** | Tout ce qui a été créé en Lab reste accessible dans Foxeo-One. |
+| 23 | **Mémoire Persistante** | Tout ce qui a été créé en Lab reste accessible dans MonprojetPro-One. |
 | 24 | **Transparence Temps Réel** | Chat direct = client voit l'avancement au fur et à mesure. |
 | 25 | **Micro-Ajustements vs Grosses Révisions** | Réajustements en continu = jamais de décalage en fin de projet. |
 
@@ -177,9 +177,9 @@ CODE SOURCE UNIQUE (Core)
 
 | Agent | Dashboard | Rôle | Technologie |
 |-------|-----------|------|-------------|
-| **Orpheus** | Foxeo-Hub | Assistant MiKL unique, connaissance complète entreprise | Import projet BMAD existant |
-| **Élio Lab** | Foxeo-Lab | Guide création, challenger, accompagne l'incubation | LLM connecté (Claude API) |
-| **Élio One** | Foxeo-One | Support technique + structuration demandes évolutions | Mode support (pas LLM création) |
+| **Orpheus** | MonprojetPro-Hub | Assistant MiKL unique, connaissance complète entreprise | Import projet BMAD existant |
+| **Élio Lab** | MonprojetPro-Lab | Guide création, challenger, accompagne l'incubation | LLM connecté (Claude API) |
+| **Élio One** | MonprojetPro-One | Support technique + structuration demandes évolutions | Mode support (pas LLM création) |
 
 ### Élio Lab - Fonctions
 
@@ -246,7 +246,7 @@ CLIENT pose une question
    🦊 ÉLIO propose l'escalade :
    "Je ne suis pas sûr... Tu veux que je contacte MiKL ?"
               ↓ (si oui)
-   📨 NOTIFICATION dans Foxeo-Hub
+   📨 NOTIFICATION dans MonprojetPro-Hub
    → MiKL répond via Chat direct
 ```
 
@@ -322,20 +322,20 @@ Prospect découvre MiKL (Site, LinkedIn, Bouche-à-oreille)
          Prise de RDV (lien calendrier)
 ```
 
-### Phase 1 : Qualification (Foxeo-Hub)
+### Phase 1 : Qualification (MonprojetPro-Hub)
 
 ```
-• Visio intégrée dans Foxeo-Hub
+• Visio intégrée dans MonprojetPro-Hub
 • Enregistrement + Transcription auto
 • Création fiche client (CRM auto-rempli)
 • Création dossier BMAD (invisible client)
                     ↓
 🎯 DÉCISION MiKL : Quel parcours ?
-   [A] Direct → Foxeo-One
-   [B] Incubation → Foxeo-Lab
+   [A] Direct → MonprojetPro-One
+   [B] Incubation → MonprojetPro-Lab
 ```
 
-### Parcours A : Direct (Client mûr → Foxeo-One)
+### Parcours A : Direct (Client mûr → MonprojetPro-One)
 
 ```
 PHASE 2: CONFIGURATION
@@ -359,7 +359,7 @@ PHASE 5: ÉVOLUTIONS (Boucle continue)
 ├─→ MiKL évalue (micro-évolution ou devis)
 ```
 
-### Parcours B : Incubation (Client en création → Foxeo-Lab → Foxeo-One)
+### Parcours B : Incubation (Client en création → MonprojetPro-Lab → MonprojetPro-One)
 
 ```
 PHASE 2: ONBOARDING FOXEO-LAB
@@ -381,7 +381,7 @@ PHASE 3: INCUBATION (Boucle répétée)
 PHASE 4: GRADUATION
 ├─→ Toutes les étapes validées
 ├─→ Rituel de passage (célébration)
-├─→ Migration vers Foxeo-One
+├─→ Migration vers MonprojetPro-One
 │   • Mémoire Lab conservée
 │   • Élio Lab désactivé (réactivable)
 
@@ -389,7 +389,7 @@ PHASE 5: CLIENT ÉTABLI
 └─→ (Voir Parcours A - Phase 4+)
 ```
 
-### Journée type MiKL sur Foxeo-Hub
+### Journée type MiKL sur MonprojetPro-Hub
 
 ```
 🌅 MATIN - Prise de poste
@@ -401,7 +401,7 @@ PHASE 5: CLIENT ÉTABLI
 
 📋 MATINÉE - Travail client
 ├─→ Visio planifiée
-│   • Lancer depuis Foxeo-Hub
+│   • Lancer depuis MonprojetPro-Hub
 │   • Enregistrement auto
 │   • Post-visio : fiche client, décision parcours
 ├─→ Validations Validation Hub
@@ -422,7 +422,7 @@ PHASE 5: CLIENT ÉTABLI
 
 ## Fonctionnalités par Dashboard
 
-### Foxeo-Hub (MiKL)
+### MonprojetPro-Hub (MiKL)
 
 | Module | Description | Priorité |
 |--------|-------------|----------|
@@ -440,7 +440,7 @@ PHASE 5: CLIENT ÉTABLI
 | **Audit & Logs** | Historique des actions, debug support client | P1 |
 | **Analytics** | Stats CA, clients actifs, temps passé | P2 |
 
-### Foxeo-Lab (Client en création)
+### MonprojetPro-Lab (Client en création)
 
 | Module | Description | Priorité |
 |--------|-------------|----------|
@@ -453,7 +453,7 @@ PHASE 5: CLIENT ÉTABLI
 | **Validation Hub** | Bouton "Soumettre à MiKL", statut des soumissions | P1 |
 | **Facturation** | Consulter ses factures, historique paiements | P1 |
 
-### Foxeo-One (Client établi)
+### MonprojetPro-One (Client établi)
 
 | Module | Description | Priorité |
 |--------|-------------|----------|
@@ -502,7 +502,7 @@ PHASE 5: CLIENT ÉTABLI
 
 #### Validation Hub
 - Bouton "Soumettre à MiKL"
-- File de validations en attente (Foxeo-Hub)
+- File de validations en attente (MonprojetPro-Hub)
 - Résumé auto par Élio
 - 3 options de verdict (Valider / Commenter / Visio)
 - Notification client du verdict
@@ -762,7 +762,7 @@ Viser ceux qui ont un **panier moyen élevé** et un **besoin de structure** :
 
 ### Le Pitch en Une Phrase
 
-> "Foxeo : Ton compagnon de route pour construire et piloter ton business, avec Élio l'assistant IA et MiKL l'expert qui valide chaque étape."
+> "MonprojetPro : Ton compagnon de route pour construire et piloter ton business, avec Élio l'assistant IA et MiKL l'expert qui valide chaque étape."
 
 ---
 
@@ -787,4 +787,4 @@ Viser ceux qui ont un **panier moyen élevé** et un **besoin de structure** :
 ---
 
 *Document consolidé le 26 Janvier 2026*
-*Remplace : foxeo-one-brainstorming-complet-final.md, foxeo-one-resume-complet.md, brainstorming-session-2026-01-23.md*
+*Remplace : monprojetpro-one-brainstorming-complet-final.md, monprojetpro-one-resume-complet.md, brainstorming-session-2026-01-23.md*

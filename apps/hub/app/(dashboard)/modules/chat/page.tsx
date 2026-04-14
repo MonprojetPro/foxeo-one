@@ -1,4 +1,4 @@
-import { getConversations } from '@foxeo/modules-chat'
+import { getConversations } from '@monprojetpro/modules-chat'
 import { ChatPageClient } from './chat-page-client'
 
 export default async function ChatPage() {

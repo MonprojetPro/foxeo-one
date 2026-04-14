@@ -1,11 +1,11 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp']

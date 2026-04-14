@@ -2,7 +2,7 @@
 
 import { useTransition, useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Input, Alert, AlertDescription } from '@foxeo/ui'
+import { Button, Input, Alert, AlertDescription } from '@monprojetpro/ui'
 import { hubVerifyMfaAction } from '../../actions/auth'
 
 export function MfaForm() {

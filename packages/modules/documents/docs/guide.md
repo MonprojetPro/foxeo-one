@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le module Documents permet aux clients et operateurs de gerer des fichiers sur la plateforme Foxeo. Les fichiers sont stockes dans Supabase Storage avec validation cote client et serveur.
+Le module Documents permet aux clients et operateurs de gerer des fichiers sur la plateforme MonprojetPro. Les fichiers sont stockes dans Supabase Storage avec validation cote client et serveur.
 
 ## Fonctionnalites
 
@@ -12,7 +12,7 @@ Le module Documents permet aux clients et operateurs de gerer des fichiers sur l
 - **Visibilite** : `private` (visible uniquement par l'uploadeur) ou `shared` (visible par client et operateur)
 - **Validation** : Types autorises (PDF, DOCX, XLSX, PNG, JPG, SVG, MD, TXT, CSV), taille max 10 Mo
 - **Viewer de documents** : Visualisation directe dans le dashboard (Markdown en HTML, PDF en iframe, images)
-- **Telechargement PDF** : Telechargement direct ou generation PDF depuis Markdown avec branding Foxeo
+- **Telechargement PDF** : Telechargement direct ou generation PDF depuis Markdown avec branding MonprojetPro
 - **Signed URLs** : Acces securise aux fichiers via URLs temporaires (1h)
 - **Organisation en dossiers** : Arborescence de dossiers pour classer les documents
 - **Recherche** : Filtre en temps reel sur nom, type et tags
@@ -194,7 +194,7 @@ Cliquer sur **"Exporter la liste en JSON"** dans le menu export.
 Cette option n'est disponible que sur la page viewer d'un document individuel.
 
 - **Fichier PDF natif** : telechargement direct via signed URL Supabase Storage
-- **Fichier Markdown** : generation serveur avec branding Foxeo (header logo, footer date) via `generatePdf()` — identique au bouton telechargement de la story 4.2
+- **Fichier Markdown** : generation serveur avec branding MonprojetPro (header logo, footer date) via `generatePdf()` — identique au bouton telechargement de la story 4.2
 
 ### Indicateur de progression
 

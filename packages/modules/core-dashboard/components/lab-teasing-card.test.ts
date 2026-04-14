@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/react'
 import { createElement } from 'react'
 import { LabTeasingCard } from './lab-teasing-card'
 
-vi.mock('@foxeo/ui', () => ({
+vi.mock('@monprojetpro/ui', () => ({
   Card: ({ children, className }: { children: React.ReactNode; className?: string }) =>
     createElement('div', { 'data-testid': 'card', className }, children),
   CardContent: ({ children }: { children: React.ReactNode }) =>

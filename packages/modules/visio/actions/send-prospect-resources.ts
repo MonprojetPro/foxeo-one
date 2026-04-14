@@ -1,16 +1,10 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
-import { z } from 'zod'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { generateResourceLinks } from '../utils/generate-resource-links'
-
-export const SendProspectResourcesInput = z.object({
-  meetingId: z.string().uuid('meetingId invalide'),
-  prospectEmail: z.string().email('Email invalide'),
-  documentIds: z.array(z.string().uuid()).min(1, 'Au moins un document requis'),
-})
-export type SendProspectResourcesInput = z.infer<typeof SendProspectResourcesInput>
+import { SendProspectResourcesInput } from './post-meeting-schemas'
+export type { SendProspectResourcesInput } from './post-meeting-schemas'
 
 export interface ProspectResourcesResult {
   linksSent: number

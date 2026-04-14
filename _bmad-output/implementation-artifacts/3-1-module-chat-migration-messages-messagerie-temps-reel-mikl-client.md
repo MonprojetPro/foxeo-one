@@ -4,7 +4,7 @@ Status: review
 
 ## Story
 
-As a **client Foxeo (Lab ou One)**,
+As a **client MonprojetPro (Lab ou One)**,
 I want **échanger avec MiKL via un chat asynchrone en temps réel depuis mon dashboard**,
 So that **je peux poser mes questions et recevoir des réponses directes de MiKL sans délai**.
 
@@ -134,7 +134,7 @@ CREATE POLICY messages_insert_authenticated ON messages FOR INSERT
 'use client'
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 
 export function useChatRealtime(clientId: string) {
   const queryClient = useQueryClient()
@@ -255,7 +255,7 @@ packages/modules/chat/
 
 - Table `clients` (migration 00002) — FK
 - Table `operators` (migration 00001) — FK
-- `@foxeo/supabase` — createServerSupabaseClient, createBrowserSupabaseClient
+- `@monprojetpro/supabase` — createServerSupabaseClient, createBrowserSupabaseClient
 - `@tanstack/react-query` — cache + optimistic updates
 - Module registry pour auto-découverte
 
@@ -283,7 +283,7 @@ claude-sonnet-4-5-20250929
 
 - Fix mock chain `get-messages.test.ts` : `.eq().order()` vs `.eq().eq().order()` — suppression du deuxième `.eq()` inutile
 - Fix tests composants : remplacement de `vi.mocked(await import(...))` dans les `it()` par des mocks `vi.fn()` déclarés au niveau module
-- `Avatar` et `ScrollArea` absents de `@foxeo/ui` — ajout des composants shadcn + deps radix (`@radix-ui/react-avatar`, `@radix-ui/react-scroll-area`)
+- `Avatar` et `ScrollArea` absents de `@monprojetpro/ui` — ajout des composants shadcn + deps radix (`@radix-ui/react-avatar`, `@radix-ui/react-scroll-area`)
 
 ### Completion Notes List
 
@@ -295,7 +295,7 @@ claude-sonnet-4-5-20250929
 - ✅ Task 6 — Routes Hub (`/modules/chat` + `/modules/chat/[clientId]`) et Client (`/modules/chat`) avec loading.tsx et error.tsx
 - ✅ Task 7 — Realtime : channel `chat:room:{clientId}`, INSERT+UPDATE → invalidateQueries(['messages', clientId]) + invalidateQueries(['conversations'])
 - ✅ Task 8 — 50 tests unitaires, 0 régression sur 1187 tests totaux. Tests RLS `message-isolation.test.ts` créés.
-- ✅ Composants `Avatar` et `ScrollArea` ajoutés à `@foxeo/ui` (shadcn pattern, Radix primitives)
+- ✅ Composants `Avatar` et `ScrollArea` ajoutés à `@monprojetpro/ui` (shadcn pattern, Radix primitives)
 
 ### File List
 
@@ -353,7 +353,7 @@ claude-sonnet-4-5-20250929
 **Nouveau — Tests RLS**
 - `tests/rls/message-isolation.test.ts`
 
-**Modifié — @foxeo/ui (ajout composants)**
+**Modifié — @monprojetpro/ui (ajout composants)**
 - `packages/ui/src/avatar.tsx`
 - `packages/ui/src/scroll-area.tsx`
 - `packages/ui/src/index.ts`

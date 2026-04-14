@@ -6,7 +6,7 @@ const mockEqUserId = vi.fn()
 const mockIn = vi.fn()
 const mockOrder = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } }, error: null })),
@@ -124,7 +124,7 @@ describe('getConversations', () => {
 
   it('retourne AUTH_ERROR si utilisateur non authentifié', async () => {
     vi.mocked(
-      (await import('@foxeo/supabase')).createServerSupabaseClient
+      (await import('@monprojetpro/supabase')).createServerSupabaseClient
     ).mockResolvedValueOnce({
       auth: {
         getUser: vi.fn(async () => ({ data: { user: null }, error: new Error('Not auth') })),

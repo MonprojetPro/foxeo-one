@@ -8,11 +8,11 @@ import {
   pollInstanceHealth,
 } from './provision-instance'
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 // ============================================================
 // Supabase mock factory
@@ -259,7 +259,7 @@ describe('provisionOneInstanceFromHub', () => {
     const result = await provisionOneInstanceFromHub(validInput)
     expect(result.error).toBeNull()
     expect(result.data?.slug).toBe('my-company')
-    expect(result.data?.instanceUrl).toBe('https://my-company.foxeo.io')
+    expect(result.data?.instanceUrl).toBe('https://my-company.monprojet-pro.com')
     expect(result.data?.instanceId).toBe('inst-uuid-1')
   })
 
@@ -305,7 +305,7 @@ describe('provisionOneInstanceFromHub', () => {
 describe('createSupabaseProject', () => {
   it('returns null when API responds with error', async () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 500 }))
-    const result = await createSupabaseProject('token', 'foxeo-one-test')
+    const result = await createSupabaseProject('token', 'monprojetpro-one-test')
     expect(result).toBeNull()
     fetchSpy.mockRestore()
   })
@@ -317,7 +317,7 @@ describe('createSupabaseProject', () => {
         { status: 200 }
       )
     )
-    const result = await createSupabaseProject('token', 'foxeo-one-test')
+    const result = await createSupabaseProject('token', 'monprojetpro-one-test')
     expect(result?.projectId).toBe('proj-abc')
     expect(result?.dbUrl).toContain('db.proj-abc.supabase.co')
     fetchSpy.mockRestore()
@@ -327,7 +327,7 @@ describe('createSupabaseProject', () => {
 describe('createVercelProject', () => {
   it('returns null when project creation fails', async () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 403 }))
-    const result = await createVercelProject('token', 'foxeo-one-test', {}, 'test.foxeo.io')
+    const result = await createVercelProject('token', 'monprojetpro-one-test', {}, 'test.monprojet-pro.com')
     expect(result).toBeNull()
     fetchSpy.mockRestore()
   })
@@ -339,7 +339,7 @@ describe('createVercelProject', () => {
       if (callCount === 1) return new Response(JSON.stringify({ id: 'vcl-1' }), { status: 200 })
       return new Response(null, { status: 422 })
     })
-    const result = await createVercelProject('token', 'foxeo-one-test', { KEY: 'val' }, 'test.foxeo.io')
+    const result = await createVercelProject('token', 'monprojetpro-one-test', { KEY: 'val' }, 'test.monprojet-pro.com')
     expect(result).toBeNull()
     fetchSpy.mockRestore()
   })
@@ -348,14 +348,14 @@ describe('createVercelProject', () => {
 describe('pollInstanceHealth', () => {
   it('returns true when instance responds 200 on first attempt', async () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue(new Response('ok', { status: 200 }))
-    const result = await pollInstanceHealth('https://test.foxeo.io', 1, 0)
+    const result = await pollInstanceHealth('https://test.monprojet-pro.com', 1, 0)
     expect(result).toBe(true)
     fetchSpy.mockRestore()
   })
 
   it('returns false when all attempts fail', async () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockRejectedValue(new Error('ECONNREFUSED'))
-    const result = await pollInstanceHealth('https://test.foxeo.io', 3, 0)
+    const result = await pollInstanceHealth('https://test.monprojet-pro.com', 3, 0)
     expect(result).toBe(false)
     fetchSpy.mockRestore()
   })

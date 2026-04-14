@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getParcours, SubmissionDetailView } from '@foxeo/module-parcours'
-import { getSubmissions } from '@foxeo/module-parcours'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getParcours, SubmissionDetailView } from '@monprojetpro/module-parcours'
+import { getSubmissions } from '@monprojetpro/module-parcours'
 
 interface SubmissionPageProps {
   params: Promise<{ stepNumber: string }>

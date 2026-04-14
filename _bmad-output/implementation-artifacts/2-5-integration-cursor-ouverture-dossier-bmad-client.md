@@ -58,7 +58,7 @@ So that **je peux travailler avec Orpheus sur les documents du client sans quitt
 
 ```typescript
 // packages/modules/crm/utils/cursor-integration.ts
-import { toKebabCase } from '@foxeo/utils' // ou implémentation locale
+import { toKebabCase } from '@monprojetpro/utils' // ou implémentation locale
 
 export const BMAD_BASE_PATH = process.env.NEXT_PUBLIC_BMAD_BASE_PATH || '/Users/mikl/bmad'
 
@@ -76,7 +76,7 @@ export function buildCursorUrl(path: string): string {
 }
 ```
 
-**Attention kebab-case** : Gérer les accents (normalisation NFD + suppression diacritiques), les caractères spéciaux, les espaces multiples. Utiliser `@foxeo/utils` si `toKebabCase` existe, sinon créer dans `packages/modules/crm/utils/`.
+**Attention kebab-case** : Gérer les accents (normalisation NFD + suppression diacritiques), les caractères spéciaux, les espaces multiples. Utiliser `@monprojetpro/utils` si `toKebabCase` existe, sinon créer dans `packages/modules/crm/utils/`.
 
 ### Détection protocole custom
 
@@ -108,7 +108,7 @@ Le protocole `cursor://` n'est pas détectable de manière fiable. Stratégie :
 
 ### Patterns existants à réutiliser
 
-- Toast notifications via `@foxeo/ui`
+- Toast notifications via `@monprojetpro/ui`
 - Palette Hub Cyan/Turquoise
 - Skeleton loaders si nécessaire (ici peu probable)
 - Tests co-localisés `.test.ts(x)` à côté du source
@@ -140,7 +140,7 @@ claude-opus-4-6 (adversarial code review)
 |---|----------|-------|------------|
 | 1 | MEDIUM | Dev Agent Record completely empty — no File List, no Completion Notes | Fixed: Populated record |
 | 2 | LOW | `folderExists` prop defaults to `true` but there's no actual folder detection mechanism | Accepted: Per AC2, this is a prop for the parent to set |
-| 3 | LOW | `toKebabCase` local implementation vs `@foxeo/utils` — minor duplication | Accepted: Module-local to avoid cross-package dependency for simple utility |
+| 3 | LOW | `toKebabCase` local implementation vs `@monprojetpro/utils` — minor duplication | Accepted: Module-local to avoid cross-package dependency for simple utility |
 
 ### Verdict
 **PASS** — Clean implementation, well-tested utilities and component. No security or logic issues.

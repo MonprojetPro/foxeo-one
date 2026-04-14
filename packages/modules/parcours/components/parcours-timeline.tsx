@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 import type { ParcoursStep, ParcoursStepStatus } from '../types/parcours.types'
 import { ParcoursStepCard } from './parcours-step-card'
 

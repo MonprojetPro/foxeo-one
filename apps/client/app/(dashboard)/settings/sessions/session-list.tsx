@@ -2,7 +2,7 @@
 
 import { useTransition, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import type { SessionInfo } from '@foxeo/utils'
+import type { SessionInfo } from '@monprojetpro/utils'
 import { revokeSessionAction, revokeOtherSessionsAction } from './actions'
 import { SessionCard } from './session-card'
 

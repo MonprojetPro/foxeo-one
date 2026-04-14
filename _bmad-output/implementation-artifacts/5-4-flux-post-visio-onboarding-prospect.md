@@ -12,7 +12,7 @@ So that **je peux onboarder efficacement les nouveaux prospects sans friction**.
 
 1. **AC1 — Dialog post-visio** : À la fin d'une visio (quand `endMeeting()` est appelé), si le meeting a un tag `type='prospect'`, afficher automatiquement un dialog "Suite à donner" côté MiKL. Options : (1) Créer parcours Lab, (2) Envoyer ressources, (3) Programmer rappel, (4) Marquer comme "Pas intéressé".
 
-2. **AC2 — Créer parcours Lab** : Option 1 → Formulaire rapide : nom du client, email, parcours template (sélection dropdown depuis `parcours_templates`). Validation → crée `client` (avec `status='prospect'`), crée `parcours` assigné, envoie email de bienvenue (via Edge Function email). Notification client : "Bienvenue dans Foxeo Lab". Redirection MiKL vers fiche client CRM.
+2. **AC2 — Créer parcours Lab** : Option 1 → Formulaire rapide : nom du client, email, parcours template (sélection dropdown depuis `parcours_templates`). Validation → crée `client` (avec `status='prospect'`), crée `parcours` assigné, envoie email de bienvenue (via Edge Function email). Notification client : "Bienvenue dans MonprojetPro Lab". Redirection MiKL vers fiche client CRM.
 
 3. **AC3 — Envoyer ressources** : Option 2 → Formulaire : sélection documents depuis la bibliothèque (`documents` avec `visibility='shared'` et `folder_id` = dossier "Ressources Prospect"). Génère lien de partage temporaire (7 jours). Envoie email au prospect avec liens. Crée tâche rappel MiKL dans 3 jours.
 
@@ -47,7 +47,7 @@ So that **je peux onboarder efficacement les nouveaux prospects sans friction**.
   - [x] 4.2 Hook `use-post-meeting-dialog.ts` — Gère l'état du dialog
 
 - [x] Task 5 — Edge Function email bienvenue (AC: #2)
-  - [x] 5.1 Template email "Bienvenue dans Foxeo Lab"
+  - [x] 5.1 Template email "Bienvenue dans MonprojetPro Lab"
   - [x] 5.2 Inclut lien activation compte + premiers pas
   - [x] 5.3 Réutilise Edge Function `send-email` de Story 3.3
 
@@ -92,9 +92,9 @@ CREATE INDEX idx_meetings_type ON meetings(type);
 ```typescript
 // actions/create-lab-onboarding.ts
 'use server'
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse, errorResponse } from '@monprojetpro/types'
 
 export async function createLabOnboarding(input: {
   meetingId: string
@@ -191,9 +191,9 @@ export async function createLabOnboarding(input: {
 ```typescript
 // actions/send-prospect-resources.ts
 'use server'
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse, errorResponse } from '@monprojetpro/types'
 
 export async function sendProspectResources(input: {
   meetingId: string
@@ -268,8 +268,8 @@ export async function sendProspectResources(input: {
 // components/post-meeting-dialog.tsx
 'use client'
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@foxeo/ui/components/dialog'
-import { Button } from '@foxeo/ui/components/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@monprojetpro/ui/components/dialog'
+import { Button } from '@monprojetpro/ui/components/button'
 import { CreateLabForm } from './create-lab-form'
 import { SendResourcesForm } from './send-resources-form'
 import { ScheduleFollowUpForm } from './schedule-follow-up-form'

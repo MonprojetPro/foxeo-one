@@ -7,7 +7,7 @@ const mockInvoke = vi.fn()
 const mockRpc = vi.fn()
 const mockGetUser = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() =>
     Promise.resolve({
       auth: { getUser: mockGetUser },

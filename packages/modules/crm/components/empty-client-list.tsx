@@ -1,6 +1,6 @@
 'use client'
 
-import { EmptyState, Button } from '@foxeo/ui'
+import { EmptyState, Button } from '@monprojetpro/ui'
 
 interface EmptyClientListProps {
   hasFilters?: boolean

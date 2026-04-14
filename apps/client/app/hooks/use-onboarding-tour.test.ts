@@ -136,7 +136,7 @@ describe('useOnboardingTour', () => {
       result.current.markCompleted()
     })
 
-    expect(localStorageMock.setItem).toHaveBeenCalledWith('foxeo-onboarding-tour-completed', 'true')
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('monprojetpro-onboarding-tour-completed', 'true')
   })
 
   it('hasCompletedTour returns false when not completed', () => {

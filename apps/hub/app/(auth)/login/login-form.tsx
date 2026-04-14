@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button, Input, Alert, AlertDescription } from '@foxeo/ui'
-import { hubLoginAction, hubLoginSchema } from '../actions/auth'
+import { Button, Input, Alert, AlertDescription } from '@monprojetpro/ui'
+import { hubLoginAction } from '../actions/auth'
+import { hubLoginSchema } from '../actions/auth-schemas'
 
 type LoginFormData = z.infer<typeof hubLoginSchema>
 
@@ -72,7 +73,7 @@ export function LoginForm() {
         <Input
           id="email"
           type="email"
-          placeholder="operateur@foxeo.io"
+          placeholder="operateur@monprojet-pro.com"
           autoComplete="email"
           aria-invalid={!!errors.email}
           {...register('email')}

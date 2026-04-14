@@ -63,12 +63,12 @@ so that **la plateforme est prete a evoluer vers les integrations en Phase 2 san
   - [x] Creer `packages/modules/admin/components/webhooks-placeholder.tsx` :
     - Badge "Phase 2" orange/amber
     - Titre "Webhooks sortants"
-    - Description : "Configurez des webhooks sortants pour integrer Foxeo avec vos outils (Slack, Zapier, Make...)"
+    - Description : "Configurez des webhooks sortants pour integrer MonprojetPro avec vos outils (Slack, Zapier, Make...)"
     - Icone webhook + illustration
   - [x] Creer `packages/modules/admin/components/api-placeholder.tsx` :
     - Badge "Phase 2"
     - Titre "API Client"
-    - Description : "Generez des cles API pour permettre a vos clients d'integrer Foxeo dans leurs systemes"
+    - Description : "Generez des cles API pour permettre a vos clients d'integrer MonprojetPro dans leurs systemes"
     - Icone API key + illustration
 
 - [x] Ajouter les onglets P2 dans la page Admin Hub (AC: #1, #2)
@@ -85,7 +85,7 @@ so that **la plateforme est prete a evoluer vers les integrations en Phase 2 san
 
 - **Story minimaliste** : objectif principal = creer les tables et les placeholders UI. Aucune logique metier a implementer.
 - **Tables vides** : les tables `outgoing_webhooks` et `api_keys` restent vides — elles sont creees pour eviter une migration future quand P2 sera developpe.
-- **Badge "Phase 2"** : utiliser `<Badge variant="outline" className="text-amber-500 border-amber-500">Phase 2</Badge>` depuis `@foxeo/ui`.
+- **Badge "Phase 2"** : utiliser `<Badge variant="outline" className="text-amber-500 border-amber-500">Phase 2</Badge>` depuis `@monprojetpro/ui`.
 
 ### Source Tree
 

@@ -11,7 +11,7 @@ import {
   Button,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { reactivateParcours } from '../../parcours/actions/reactivate-parcours'
 
 interface ReactivateParcoursDialogProps {

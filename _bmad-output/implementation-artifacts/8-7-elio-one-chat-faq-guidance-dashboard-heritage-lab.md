@@ -253,7 +253,7 @@ ${parcoursContext}
 // actions/escalate-to-mikl.ts
 'use server'
 
-import { createServerClient } from '@foxeo/supabase/server'
+import { createServerClient } from '@monprojetpro/supabase/server'
 
 export async function escalateToMiKL(
   clientId: string,
@@ -314,7 +314,7 @@ export function detectLowConfidence(response: string): boolean {
 ### References
 
 - [Source: Epic 8 — Story 8.7](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-87)
-- [Source: PRD — FR44, FR45, FR46, FR51](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR44, FR45, FR46, FR51](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 

@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   CheckNotificationAllowedInput,
   CRITICAL_INAPP_TYPES,

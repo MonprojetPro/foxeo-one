@@ -1,7 +1,11 @@
 {
+  "enabledMcpjsonServers": [
+    "playwright"
+  ],
   "disabledMcpjsonServers": [
     "shadcn",
     "supabase",
     "github"
-  ]
+  ],
+  "enableAllProjectMcpServers": true
 }

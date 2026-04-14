@@ -286,7 +286,7 @@ type ActionError = {
 - **DB (snake_case)** : `validation_requests`, `client_id`, `submitted_at`
 - **API/TypeScript (camelCase)** : `validationRequests`, `clientId`, `submittedAt`
 
-**Helper** : Utiliser `toCamelCase()` et `toSnakeCase()` depuis `@foxeo/utils` pour transformer à la frontière DB/API.
+**Helper** : Utiliser `toCamelCase()` et `toSnakeCase()` depuis `@monprojetpro/utils` pour transformer à la frontière DB/API.
 
 #### Pattern Module Structure
 
@@ -320,7 +320,7 @@ packages/modules/[nom]/
 Chaque module DOIT avoir un `loading.tsx` dans la route correspondante :
 - `apps/hub/app/(dashboard)/modules/validation-hub/loading.tsx`
 
-Utiliser les composants skeleton de `@foxeo/ui` :
+Utiliser les composants skeleton de `@monprojetpro/ui` :
 - `ModuleSkeleton` : skeleton générique module
 - `ShellSkeleton` : skeleton shell complet
 
@@ -334,7 +334,7 @@ Le module CRM a été implémenté récemment (commit e9370eb) et suit exactemen
 'use client'
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { ClientListItem } from '../types/crm.types'
 import { getClients } from '../actions/get-clients'
 
@@ -366,8 +366,8 @@ export function useClients(
 ```typescript
 'use client'
 
-import { DataTable, type ColumnDef } from '@foxeo/ui'
-import { Badge } from '@foxeo/ui'
+import { DataTable, type ColumnDef } from '@monprojetpro/ui'
+import { Badge } from '@monprojetpro/ui'
 import type { ClientListItem, ClientType, ClientStatus } from '../types/crm.types'
 
 // Type badge variants and labels
@@ -408,7 +408,7 @@ export function ClientList({ clients, onRowClick, showCreateButton = true }: Cli
 #### Manifest CRM (pattern ModuleManifest)
 
 ```typescript
-import type { ModuleManifest } from '@foxeo/types'
+import type { ModuleManifest } from '@monprojetpro/types'
 
 export const manifest: ModuleManifest = {
   id: 'crm',
@@ -449,14 +449,14 @@ export const manifest: ModuleManifest = {
 | TypeScript | strict mode | Type safety |
 | @tanstack/react-query | ^5.90.x | Data fetching & cache |
 | @supabase/supabase-js | ^2.95.x | Database client |
-| @foxeo/ui | Internal package | Design system (shadcn + Radix) |
-| @foxeo/utils | Internal package | Helpers (toCamelCase, formatRelativeDate) |
-| @foxeo/types | Internal package | Types partagés (ActionResponse, ModuleManifest) |
+| @monprojetpro/ui | Internal package | Design system (shadcn + Radix) |
+| @monprojetpro/utils | Internal package | Helpers (toCamelCase, formatRelativeDate) |
+| @monprojetpro/types | Internal package | Types partagés (ActionResponse, ModuleManifest) |
 | Tailwind CSS | 4.x | Styling |
 | Zod | Latest | Schema validation |
 | React Hook Form | ^7.71.x | Form management |
 
-#### Composants UI disponibles (@foxeo/ui)
+#### Composants UI disponibles (@monprojetpro/ui)
 
 - `DataTable` : Table de données avec tri, pagination, filtres
 - `Badge` : Badge avec variants (default, secondary, outline, destructive)
@@ -467,7 +467,7 @@ export const manifest: ModuleManifest = {
 - `Skeleton` : Skeleton loader
 - `EmptyState` : État vide avec icône + message
 
-#### Helpers disponibles (@foxeo/utils)
+#### Helpers disponibles (@monprojetpro/utils)
 
 - `toCamelCase(obj)` : Transforme snake_case → camelCase
 - `toSnakeCase(obj)` : Transforme camelCase → snake_case
@@ -482,7 +482,7 @@ export const manifest: ModuleManifest = {
 
 | Pattern | Usage | Exemple |
 |---------|-------|---------|
-| **Server Component** | Lecture données | RSC avec `@foxeo/supabase` server client |
+| **Server Component** | Lecture données | RSC avec `@monprojetpro/supabase` server client |
 | **Server Action** | Mutations | `'use server'` fonctions dans `actions/` |
 | **API Route** | Webhooks externes uniquement | `app/api/webhooks/[service]/route.ts` |
 
@@ -665,8 +665,8 @@ Cette story respecte l'architecture définie dans `architecture/05-project-struc
 
 Le Validation Hub est un module **indépendant** du CRM. Ils partagent uniquement :
 - La table `clients` (jointure pour récupérer `ClientSummary`)
-- Le design system (`@foxeo/ui`)
-- Les helpers (`@foxeo/utils`)
+- Le design system (`@monprojetpro/ui`)
+- Les helpers (`@monprojetpro/utils`)
 
 Pas d'import direct entre modules. Communication via Supabase.
 
@@ -700,7 +700,7 @@ Claude Opus 4.6
 - Routes Hub créées : `page.tsx`, `loading.tsx`, `error.tsx`, `[requestId]/page.tsx` (stub Story 7.2).
 - Module enregistré dans `apps/hub/app/(dashboard)/layout.tsx` via `registerModule(validationHubManifest)`.
 - 28 nouveaux tests ajoutés (6 hook + 15 composant + 7 server action). Total : 2451 tests passing.
-- **Code Review fixes** : H1 — supprimé double cast `as unknown as` dans get-validation-requests.ts ; M1 — ajouté `.limit(500)` à la requête Supabase ; M2 — ajouté test server action `get-validation-requests.test.ts` (7 tests) ; M3 — fusionné imports dupliqués `@foxeo/utils`.
+- **Code Review fixes** : H1 — supprimé double cast `as unknown as` dans get-validation-requests.ts ; M1 — ajouté `.limit(500)` à la requête Supabase ; M2 — ajouté test server action `get-validation-requests.test.ts` (7 tests) ; M3 — fusionné imports dupliqués `@monprojetpro/utils`.
 
 ### File List
 
@@ -726,7 +726,7 @@ Claude Opus 4.6
 
 **Modifiés :**
 - `apps/hub/app/(dashboard)/layout.tsx` (import + registerModule validation-hub)
-- `apps/hub/package.json` (ajout @foxeo/modules-validation-hub, @foxeo/modules-notifications)
+- `apps/hub/package.json` (ajout @monprojetpro/modules-validation-hub, @monprojetpro/modules-notifications)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (7-1 → review)
 
 ### Change Log

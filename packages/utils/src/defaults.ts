@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { CommunicationProfile } from '@foxeo/types'
+import type { CommunicationProfile } from '@monprojetpro/types'
 
 // --- Schéma Zod de validation du profil de communication ---
 

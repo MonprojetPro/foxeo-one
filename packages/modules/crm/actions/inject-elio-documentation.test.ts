@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { injectElioDocumentation } from './inject-elio-documentation'
-import type { ElioModuleDoc } from '@foxeo/types'
+import type { ElioModuleDoc } from '@monprojetpro/types'
 
 const CLIENT_ID = '123e4567-e89b-12d3-a456-426614174000'
 const OPERATOR_ID = '223e4567-e89b-12d3-a456-426614174001'
@@ -29,7 +29,7 @@ let insertResult: { error: unknown } = { error: null }
 const mockUpdate = vi.fn()
 const mockInsert = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({

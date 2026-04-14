@@ -12,7 +12,7 @@ Le module Parcours Lab permet aux clients Lab de visualiser et progresser dans l
 - **Complétion automatique** : notification MiKL + client à la fin du parcours
 - **Brief détaillé** : contenu markdown par étape (`brief_content`) avec rendu riche (headings, listes, liens, images)
 - **Galerie assets** : images et vidéos YouTube/Vimeo embarquées via `brief_assets` (JSONB array d'URLs)
-- **Teasing Foxeo One** : message personnalisé par étape dans une card accent violet/vert (`one_teasing_message`)
+- **Teasing MonprojetPro One** : message personnalisé par étape dans une card accent violet/vert (`one_teasing_message`)
 
 ## Statuts des étapes
 
@@ -26,7 +26,7 @@ Le module Parcours Lab permet aux clients Lab de visualiser et progresser dans l
 ## Usage
 
 ```tsx
-import { ParcoursOverview } from '@foxeo/module-parcours'
+import { ParcoursOverview } from '@monprojetpro/module-parcours'
 
 // Page parcours
 <ParcoursOverview clientId={clientId} />
@@ -35,7 +35,7 @@ import { ParcoursOverview } from '@foxeo/module-parcours'
 ## Usage
 
 ```tsx
-import { ParcoursOverview, ParcoursStepDetail } from '@foxeo/module-parcours'
+import { ParcoursOverview, ParcoursStepDetail } from '@monprojetpro/module-parcours'
 
 // Page parcours (liste)
 <ParcoursOverview clientId={clientId} />
@@ -60,19 +60,19 @@ Les étapes avec `validation_required = TRUE` nécessitent une soumission client
 
 ```tsx
 // Client — soumettre son travail
-import { SubmitStepForm } from '@foxeo/module-parcours'
+import { SubmitStepForm } from '@monprojetpro/module-parcours'
 <SubmitStepForm stepId={step.id} />
 
 // Client — voir sa soumission
-import { SubmissionDetailView } from '@foxeo/module-parcours'
+import { SubmissionDetailView } from '@monprojetpro/module-parcours'
 <SubmissionDetailView submissionId={id} clientId={clientId} showValidationForm={false} />
 
 // MiKL — valider une soumission (Hub CRM)
-import { SubmissionDetailView } from '@foxeo/module-parcours'
+import { SubmissionDetailView } from '@monprojetpro/module-parcours'
 <SubmissionDetailView submissionId={id} clientId={clientId} showValidationForm={true} />
 
 // MiKL — liste des soumissions (onglet CRM)
-import { SubmissionsList } from '@foxeo/module-parcours'
+import { SubmissionsList } from '@monprojetpro/module-parcours'
 <SubmissionsList clientId={clientId} />
 ```
 

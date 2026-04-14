@@ -1,7 +1,7 @@
-import { AnalyticsDashboard } from '@foxeo/module-analytics'
+import { AnalyticsDashboard } from '@monprojetpro/module-analytics'
 
 export const metadata = {
-  title: 'Analytics — Foxeo Hub',
+  title: 'Analytics — MonprojetPro Hub',
 }
 
 export default function AnalyticsPage() {

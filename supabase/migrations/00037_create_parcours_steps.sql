@@ -12,7 +12,7 @@ CREATE TABLE parcours_steps (
   status TEXT NOT NULL DEFAULT 'locked' CHECK (status IN ('locked', 'current', 'completed', 'skipped')),
   completed_at TIMESTAMPTZ,
   validation_required BOOLEAN DEFAULT TRUE,
-  validation_id UUID REFERENCES validations(id),
+  validation_id UUID, -- FK added later via migration 44 (validation_requests)
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(parcours_id, step_number)

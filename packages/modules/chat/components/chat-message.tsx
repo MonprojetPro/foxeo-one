@@ -1,7 +1,7 @@
 'use client'
 
-import { Avatar, AvatarFallback } from '@foxeo/ui'
-import { cn } from '@foxeo/utils'
+import { Avatar, AvatarFallback } from '@monprojetpro/ui'
+import { cn } from '@monprojetpro/utils'
 import { Paperclip } from 'lucide-react'
 import type { Message } from '../types/chat.types'
 

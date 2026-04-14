@@ -1,7 +1,7 @@
 'use client'
 
-import { Card, Skeleton } from '@foxeo/ui'
-import { formatRelativeDate } from '@foxeo/utils'
+import { Card, Skeleton } from '@monprojetpro/ui'
+import { formatRelativeDate } from '@monprojetpro/utils'
 import { useSupportTickets } from '../hooks/use-support-tickets'
 import { TicketStatusBadge } from './ticket-status-badge'
 import type { TicketType } from '../types/support.types'

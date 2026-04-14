@@ -16,7 +16,7 @@ import {
   Textarea,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { requestClarification } from '../actions/request-clarification'
 import type { ValidationRequestType } from '../types/validation.types'
 

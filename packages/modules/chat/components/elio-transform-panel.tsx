@@ -8,9 +8,9 @@ import {
   SheetTitle,
   Button,
   Textarea,
-} from '@foxeo/ui'
-import { cn } from '@foxeo/utils'
-import { transformMessageForClient } from '@foxeo/module-elio'
+} from '@monprojetpro/ui'
+import { cn } from '@monprojetpro/utils'
+import { transformMessageForClient } from '@monprojetpro/module-elio'
 import type { TransformMode } from './chat-input'
 
 interface ElioTransformPanelProps {

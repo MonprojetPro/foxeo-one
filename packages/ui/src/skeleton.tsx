@@ -1,4 +1,4 @@
-import { cn } from "@foxeo/utils"
+import { cn } from "@monprojetpro/utils"
 
 function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (

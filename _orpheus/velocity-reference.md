@@ -1,4 +1,4 @@
-# Orpheus — Velocity Reference: Foxeo One
+# Orpheus — Velocity Reference: MonprojetPro One
 
 > Premier projet de reference pour calibrer les estimations de temps Orpheus.
 > Projet: SaaS B2B multi-tenant, stack Next.js 16 + Supabase + Turborepo monorepo.

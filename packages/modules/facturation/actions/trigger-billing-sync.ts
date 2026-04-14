@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import type { ActionResponse, ActionError } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import type { ActionResponse, ActionError } from '@monprojetpro/types'
 
 // ============================================================
 // triggerBillingSync — déclenche un sync immédiat Pennylane

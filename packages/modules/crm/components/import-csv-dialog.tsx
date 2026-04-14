@@ -12,7 +12,7 @@ import {
   Button,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { parseCsv } from '../utils/csv-parser'
 import { validateCsvRows } from '../utils/csv-validator'
 import { useImportCsv } from '../hooks/use-notifications'

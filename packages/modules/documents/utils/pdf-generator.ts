@@ -1,5 +1,5 @@
 /**
- * Lightweight PDF generator that wraps HTML content with Foxeo branding.
+ * Lightweight PDF generator that wraps HTML content with MonprojetPro branding.
  * Returns a complete HTML document ready for PDF conversion.
  *
  * This generates a branded HTML template — the actual PDF conversion
@@ -13,10 +13,10 @@ export interface PdfBrandingOptions {
 }
 
 /**
- * Wraps HTML content in a branded PDF template with Foxeo header and footer.
+ * Wraps HTML content in a branded PDF template with MonprojetPro header and footer.
  */
 export function wrapHtmlForPdf(htmlContent: string, options: PdfBrandingOptions): string {
-  const { documentName, generatedDate, logoText = 'Foxeo' } = options
+  const { documentName, generatedDate, logoText = 'MonprojetPro' } = options
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -78,7 +78,7 @@ export function wrapHtmlForPdf(htmlContent: string, options: PdfBrandingOptions)
     ${htmlContent}
   </div>
   <div class="pdf-footer">
-    <span>Généré depuis Foxeo</span>
+    <span>Généré depuis MonprojetPro</span>
     <span>${escapeHtml(generatedDate)}</span>
   </div>
 </body>

@@ -82,14 +82,12 @@ export function DocumentViewerPageClient({
         markdownHtml={markdownHtml}
         isPending={false}
         onDownload={() => {
-          if (contentUrl) {
-            const link = window.document.createElement('a')
-            link.href = contentUrl
-            link.download = document.name
-            window.document.body.appendChild(link)
-            link.click()
-            window.document.body.removeChild(link)
-          }
+          const link = window.document.createElement('a')
+          link.href = `/api/documents/download/${document.id}`
+          link.style.display = 'none'
+          window.document.body.appendChild(link)
+          link.click()
+          window.document.body.removeChild(link)
         }}
       />
     </div>

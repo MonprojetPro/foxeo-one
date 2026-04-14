@@ -17,7 +17,7 @@ type ThemeContextType = {
   setTheme: (theme: Theme) => void
 }
 
-const STORAGE_KEY = 'foxeo-theme'
+const STORAGE_KEY = 'monprojetpro-theme'
 
 const ThemeContext = createContext<ThemeContextType | null>(null)
 

@@ -1,13 +1,13 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
-import { CURRENT_IA_POLICY_VERSION } from '@foxeo/utils'
+} from '@monprojetpro/types'
+import { CURRENT_IA_POLICY_VERSION } from '@monprojetpro/utils'
 
 export async function updateIaConsentAction(
   accepted: boolean

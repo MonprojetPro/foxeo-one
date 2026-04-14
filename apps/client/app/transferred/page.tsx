@@ -1,5 +1,5 @@
 import { PackageCheck } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@foxeo/ui'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@monprojetpro/ui'
 
 export default function TransferredPage() {
   return (
@@ -11,7 +11,7 @@ export default function TransferredPage() {
           </div>
           <CardTitle className="text-2xl">Votre instance a été transférée</CardTitle>
           <CardDescription className="text-base">
-            Félicitations — vous êtes maintenant propriétaire complet de votre instance Foxeo One.
+            Félicitations — vous êtes maintenant propriétaire complet de votre instance MonprojetPro One.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -28,10 +28,10 @@ export default function TransferredPage() {
               Pour toute question ou assistance technique, contactez notre équipe :
             </p>
             <a
-              href="mailto:support@foxeo.io"
+              href="mailto:support@monprojet-pro.com"
               className="text-sm font-medium text-primary hover:underline mt-1 block"
             >
-              support@foxeo.io
+              support@monprojet-pro.com
             </a>
           </div>
         </CardContent>

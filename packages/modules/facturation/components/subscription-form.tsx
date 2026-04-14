@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { createSubscription } from '../actions/create-subscription'
 import {
   PLAN_MONTHLY_PRICE,

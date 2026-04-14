@@ -11,7 +11,7 @@ vi.mock('../actions/create-subscription', async (importOriginal) => {
   }
 })
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,
@@ -21,7 +21,7 @@ vi.mock('@foxeo/ui', async (importOriginal) => {
 })
 
 import { createSubscription } from '../actions/create-subscription'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { SubscriptionForm } from './subscription-form'
 import type { ClientWithPennylane } from '../types/billing.types'
 

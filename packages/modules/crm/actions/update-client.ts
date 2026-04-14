@@ -1,13 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
-import { updateClientSchema, uuidSchema } from '@foxeo/utils'
+} from '@monprojetpro/types'
+import { updateClientSchema, uuidSchema } from '@monprojetpro/utils'
 import type { Client, UpdateClientInput } from '../types/crm.types'
 
 export async function updateClient(
@@ -81,6 +81,7 @@ export async function updateClient(
 
     // Build snake_case update payload
     const dbUpdate: Record<string, unknown> = {}
+    if (updateData.firstName !== undefined) dbUpdate.first_name = updateData.firstName || null
     if (updateData.name !== undefined) dbUpdate.name = updateData.name
     if (updateData.email !== undefined) dbUpdate.email = updateData.email
     if (updateData.company !== undefined) dbUpdate.company = updateData.company

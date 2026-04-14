@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Card, Button } from '@foxeo/ui'
+import { Card, Button } from '@monprojetpro/ui'
 import { ChevronDown, MessageCircle, AlertTriangle } from 'lucide-react'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 import { FAQ_CATEGORIES, type FaqCategory, type FaqQuestion } from '../data/faq-content'
 import { FaqSearch } from './faq-search'
 

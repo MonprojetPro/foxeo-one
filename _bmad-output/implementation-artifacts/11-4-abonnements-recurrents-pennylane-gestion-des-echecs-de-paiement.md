@@ -53,7 +53,7 @@ so that **les paiements sont automatises et je suis prevenu immediatement si un 
 - [x] Creer la Server Action abonnement (AC: #2)
   - [x] Creer `packages/modules/facturation/actions/create-subscription.ts`
   - [x] Auth check : `is_operator()`
-  - [x] Mapping plan Foxeo → `line_items` Pennylane (1 ligne pour le forfait + 1 ligne par module extra)
+  - [x] Mapping plan MonprojetPro → `line_items` Pennylane (1 ligne pour le forfait + 1 ligne par module extra)
   - [x] `recurring_period` : 'monthly' | 'quarterly' | 'yearly'
   - [x] `triggerBillingSync(clientId)`
   - [x] Activity log 'subscription_created'
@@ -78,7 +78,7 @@ so that **les paiements sont automatises et je suis prevenu immediatement si un 
 
 ### Architecture Patterns
 
-- **`pending_billing_update: false`** : le flag dans `client_configs` est mis a `true` quand le tier change (Story 9.4). La Server Action `createSubscription` le remet a `false` apres la creation reelle dans Pennylane. Cela cree une coherence entre le tier Foxeo et l'abonnement Pennylane.
+- **`pending_billing_update: false`** : le flag dans `client_configs` est mis a `true` quand le tier change (Story 9.4). La Server Action `createSubscription` le remet a `false` apres la creation reelle dans Pennylane. Cela cree une coherence entre le tier MonprojetPro et l'abonnement Pennylane.
 - **Template email `payment-failed.ts`** : existe deja dans `supabase/functions/_shared/email-templates/payment-failed.ts` — invoquer l'Edge Function `send-email` avec `{ template: 'payment-failed', data: { ... } }`.
 - **Detection 3 echecs consecutifs** : stocker `consecutive_unpaid_count` dans `billing_sync.data` (JSONB). Au reset (paiement recu), remettre a 0.
 
@@ -106,8 +106,8 @@ supabase/functions/billing-sync/index.ts  # MODIFIER: ajouter detection overdue
 
 ### Technical Constraints
 
-- **SEPA via Pennylane** : optionnel, Pennylane gere le mandat SEPA — aucune logique Foxeo necessaire. Juste stocker le mode prefere dans les metadonnees.
-- **Paiement CB** : Stripe connecte a Pennylane — Pennylane genere le lien Stripe Checkout sur la facture. Foxeo n'intervient pas dans le flux de paiement.
+- **SEPA via Pennylane** : optionnel, Pennylane gere le mandat SEPA — aucune logique MonprojetPro necessaire. Juste stocker le mode prefere dans les metadonnees.
+- **Paiement CB** : Stripe connecte a Pennylane — Pennylane genere le lien Stripe Checkout sur la facture. MonprojetPro n'intervient pas dans le flux de paiement.
 
 ### References
 

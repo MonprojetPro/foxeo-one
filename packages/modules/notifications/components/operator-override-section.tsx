@@ -1,7 +1,7 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Switch, Skeleton } from '@foxeo/ui'
-import { showSuccess, showError } from '@foxeo/ui'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Switch, Skeleton } from '@monprojetpro/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotificationPrefs } from '../hooks/use-notification-prefs'
 import { setOperatorOverride } from '../actions/set-operator-override'

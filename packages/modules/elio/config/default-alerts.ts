@@ -46,7 +46,7 @@ const CALENDAR_ALERTS: ProactiveAlert[] = [
     id: 'subscription_renewal',
     moduleId: 'facturation',
     condition: "SELECT COUNT(*) AS count FROM subscriptions WHERE renewal_date BETWEEN NOW() AND NOW() + INTERVAL '7 days'",
-    message: 'Votre abonnement Foxeo est renouvelé dans 7 jours',
+    message: 'Votre abonnement MonprojetPro est renouvelé dans 7 jours',
     frequency: 'weekly',
     lastTriggered: null,
     enabled: true,

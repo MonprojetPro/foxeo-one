@@ -1,7 +1,7 @@
 'use server'
 
 import { assertOperator } from './assert-operator'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { ClientWithPennylane } from '../types/billing.types'
 
 // Retourne les clients actifs ayant un pennylane_customer_id (pour le dropdown du formulaire devis)

@@ -6,7 +6,7 @@ Status: review
 
 As a **opérateur ou agent IA**,
 I want **un système de profil de communication par client qui est stocké, affiné par Élio Lab, et transmis à Élio One lors de la graduation**,
-So that **chaque client bénéficie d'une communication adaptée à son style tout au long de son parcours Foxeo**.
+So that **chaque client bénéficie d'une communication adaptée à son style tout au long de son parcours MonprojetPro**.
 
 ## Acceptance Criteria
 
@@ -31,7 +31,7 @@ type CommunicationProfile = {
 ```
 
 **And** un schéma Zod `communicationProfileSchema` valide cette structure
-**And** un profil par défaut existe dans `@foxeo/utils` (DEFAULT_COMMUNICATION_PROFILE)
+**And** un profil par défaut existe dans `@monprojetpro/utils` (DEFAULT_COMMUNICATION_PROFILE)
 
 ### AC2 : Injection du profil par MiKL (FR67)
 
@@ -104,12 +104,12 @@ Adapte TOUTES tes réponses selon ce profil.
 
 - [x] **Task 3** : Ajouter le profil dans `client_configs.elio_config`
   - [x] 3.1 : Modifier la structure `elio_config` (JSONB)
-  - [x] 3.2 : Ajouter `communication_profile` comme sous-objet (via type ElioConfig dans @foxeo/types)
+  - [x] 3.2 : Ajouter `communication_profile` comme sous-objet (via type ElioConfig dans @monprojetpro/types)
   - [x] 3.3 : Migration Supabase non requise — `elio_config` JSONB déjà flexible (migration 00003)
 
 - [x] **Task 4** : Créer le formulaire d'injection profil (AC: #2, FR67 — Story 6.6)
   - [x] 4.1 : Créer `components/communication-profile-form.tsx` (module CRM)
-  - [x] 4.2 : Form avec useState (pattern OrpheusConfigForm, pas react-hook-form — pas de Checkbox/Select disponibles dans @foxeo/ui)
+  - [x] 4.2 : Form avec useState (pattern OrpheusConfigForm, pas react-hook-form — pas de Checkbox/Select disponibles dans @monprojetpro/ui)
   - [x] 4.3 : Champs : tous les champs de `CommunicationProfile`
   - [x] 4.4 : Bouton "Enregistrer le profil"
 
@@ -196,7 +196,7 @@ export const communicationProfileSchema = z.object({
 
 ```typescript
 // packages/utils/src/defaults.ts
-import { CommunicationProfile } from '@foxeo/types'
+import { CommunicationProfile } from '@monprojetpro/types'
 
 export const DEFAULT_COMMUNICATION_PROFILE: CommunicationProfile = {
   levelTechnical: 'intermediaire',
@@ -272,10 +272,10 @@ Ces observations aideront à affiner son profil de communication.
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { communicationProfileSchema, CommunicationProfile } from '@foxeo/types'
-import { Button, Input, Select, Checkbox, Textarea } from '@foxeo/ui'
+import { communicationProfileSchema, CommunicationProfile } from '@monprojetpro/types'
+import { Button, Input, Select, Checkbox, Textarea } from '@monprojetpro/ui'
 import { updateCommunicationProfile } from '../actions/update-communication-profile'
-import { toast } from '@foxeo/ui'
+import { toast } from '@monprojetpro/ui'
 
 interface CommunicationProfileFormProps {
   clientId: string
@@ -394,7 +394,7 @@ export function CommunicationProfileForm({
 ### References
 
 - [Source: Epic 8 — Story 8.4](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-84)
-- [Source: PRD — FR66, FR67, FR68, FR69](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR66, FR67, FR68, FR69](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 
@@ -411,9 +411,9 @@ export function CommunicationProfileForm({
 
 ### Décisions d'implémentation
 
-- `CommunicationProfile` type canonique dans `@foxeo/types` (sans Zod — pas de dépendance zod dans ce package)
-- Schéma Zod `communicationProfileSchema` + `DEFAULT_COMMUNICATION_PROFILE` dans `@foxeo/utils/src/defaults.ts`
-- `CommunicationProfileForm` : pattern `useState` (comme OrpheusConfigForm) — pas de react-hook-form car Checkbox/Select non disponibles dans `@foxeo/ui`
+- `CommunicationProfile` type canonique dans `@monprojetpro/types` (sans Zod — pas de dépendance zod dans ce package)
+- Schéma Zod `communicationProfileSchema` + `DEFAULT_COMMUNICATION_PROFILE` dans `@monprojetpro/utils/src/defaults.ts`
+- `CommunicationProfileForm` : pattern `useState` (comme OrpheusConfigForm) — pas de react-hook-form car Checkbox/Select non disponibles dans `@monprojetpro/ui`
 - Aucune migration DB requise — `client_configs.elio_config` JSONB déjà présent (migration 00003)
 - `compileLabLearnings` dans module `elio` (pas CRM) car c'est une action agent, appelée à la graduation (Epic 9)
 - `getElioObservations` dans module `crm` car affiché dans la fiche client Hub

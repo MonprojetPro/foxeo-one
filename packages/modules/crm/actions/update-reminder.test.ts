@@ -23,7 +23,7 @@ const mockFrom = vi.fn((table: string) => {
 const validAuthUuid = '550e8400-e29b-41d4-a716-446655440099'
 const validOperatorUuid = '550e8400-e29b-41d4-a716-446655440001'
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: {

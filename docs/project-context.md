@@ -1,4 +1,4 @@
-# Project Context — Foxeo Dash
+# Project Context — MonprojetPro Dash
 
 > **Ce fichier est la source de vérité pour tout agent IA qui implémente du code.**
 > Charger ce fichier AVANT chaque story. En cas de conflit avec un autre document, ce fichier prévaut.
@@ -25,14 +25,14 @@
 ### Monorepo Structure
 
 ```
-foxeo-dash/
-├── apps/hub/          # Foxeo-Hub (opérateur MiKL)
-├── apps/client/       # Foxeo-Client (dashboard unifié Lab+One)
-├── packages/ui/       # @foxeo/ui — Design system (shadcn/Radix)
-├── packages/supabase/ # @foxeo/supabase — Client + providers partagés
-├── packages/utils/    # @foxeo/utils — Utilitaires + module-registry
-├── packages/types/    # @foxeo/types — Types partagés + database.types.ts
-├── packages/tsconfig/ # @foxeo/tsconfig — Configs TypeScript
+monprojetpro-dash/
+├── apps/hub/          # MonprojetPro-Hub (opérateur MiKL)
+├── apps/client/       # MonprojetPro-Client (dashboard unifié Lab+One)
+├── packages/ui/       # @monprojetpro/ui — Design system (shadcn/Radix)
+├── packages/supabase/ # @monprojetpro/supabase — Client + providers partagés
+├── packages/utils/    # @monprojetpro/utils — Utilitaires + module-registry
+├── packages/types/    # @monprojetpro/types — Types partagés + database.types.ts
+├── packages/tsconfig/ # @monprojetpro/tsconfig — Configs TypeScript
 ├── packages/modules/  # CATALOGUE DE MODULES (plug & play)
 ├── supabase/          # Migrations + seed + config
 ├── docker/            # Services self-hosted (OpenVidu, Cal.com)
@@ -89,7 +89,7 @@ Aucun cas gris autorisé. Pas de `fetch()` côté client. Pas d'API Route pour d
 ### API / JSON
 - URLs : **kebab-case, pluriel** → `/api/webhooks/cal-com`
 - JSON fields : **camelCase** → `{ clientId, activeModules, dashboardType }`
-- Headers custom : **X-Foxeo-*** → `X-Foxeo-Client-Id`
+- Headers custom : **X-MonprojetPro-*** → `X-MonprojetPro-Client-Id`
 
 ### Code TypeScript / React
 - Composants : **PascalCase** → `ClientDashboard`
@@ -102,7 +102,7 @@ Aucun cas gris autorisé. Pas de `fetch()` côté client. Pas d'API Route pour d
 - Server Actions : **camelCase, verbe d'action** → `createClient()`
 
 ### Transformation DB ↔ API
-Les données DB (snake_case) sont transformées en camelCase à la frontière via `toCamelCase()` / `toSnakeCase()` de `@foxeo/utils`.
+Les données DB (snake_case) sont transformées en camelCase à la frontière via `toCamelCase()` / `toSnakeCase()` de `@monprojetpro/utils`.
 
 ## Module Structure — Contrat obligatoire
 
@@ -155,7 +155,7 @@ Fonctions SQL réutilisables : `is_admin()`, `is_owner()`, `is_operator()`.
 
 1. **Error boundary par module** (`error.tsx`) — si un module crash, les autres restent
 2. **Pattern `{ data, error }`** dans toutes les Server Actions
-3. **Toast notifications** pour les erreurs user-facing via `@foxeo/ui`
+3. **Toast notifications** pour les erreurs user-facing via `@monprojetpro/ui`
 
 Logging : `[MODULE:ACTION] message` (ex: `[CHAT:SEND] Failed to send message`)
 
@@ -197,7 +197,7 @@ Logging : `[MODULE:ACTION] message` (ex: `[CHAT:SEND] Failed to send message`)
 
 ## Themes & Palettes
 
-3 palettes CSS OKLCH dans `@foxeo/ui/src/themes/` :
+3 palettes CSS OKLCH dans `@monprojetpro/ui/src/themes/` :
 - **Hub** : Bordeaux `#6B1B1B` (density: compact)
 - **Lab** : Vert émeraude `#2E8B57` (density: spacious)
 - **One** : Orange `#F7931E` (density: comfortable)
@@ -208,7 +208,7 @@ Pas de code conditionnel pour les couleurs — override CSS variables uniquement
 
 | Service | Usage | Intégration |
 |---------|-------|-------------|
-| Supabase | DB, Auth, Storage, Realtime | Direct via @foxeo/supabase |
+| Supabase | DB, Auth, Storage, Realtime | Direct via @monprojetpro/supabase |
 | OpenVidu | Visio | Server Actions + webhooks |
 | Pennylane | Facturation, devis, abonnements, comptabilité | Server Actions proxy API v2 + Edge Function polling (cron 5min) |
 | Cal.com | Prise de RDV | Webhook entrant |

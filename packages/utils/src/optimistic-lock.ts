@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse, errorResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse, errorResponse } from '@monprojetpro/types'
 
 export async function withOptimisticLock<T>(
   supabase: SupabaseClient,

@@ -7,7 +7,7 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import type { ClientFilters, ClientType, ClientStatus } from '../types/crm.types'
 
 interface ClientFiltersPanelProps {

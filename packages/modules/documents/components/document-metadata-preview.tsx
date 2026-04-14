@@ -1,6 +1,6 @@
 'use client'
 
-import { formatFileSize } from '@foxeo/utils'
+import { formatFileSize } from '@monprojetpro/utils'
 import { DocumentIcon } from './document-icon'
 import type { Document } from '../types/document.types'
 

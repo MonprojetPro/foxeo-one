@@ -10,8 +10,8 @@ vi.mock('../actions/create-quote', () => ({
   createAndSendQuote: vi.fn(),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -20,7 +20,7 @@ vi.mock('@foxeo/ui', async (importOriginal) => {
 })
 
 import { createAndSendQuote } from '../actions/create-quote'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 
 const mockCreateAndSendQuote = vi.mocked(createAndSendQuote)
 const mockShowSuccess = vi.mocked(showSuccess)

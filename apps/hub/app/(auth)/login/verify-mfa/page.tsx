@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Skeleton } from '@foxeo/ui'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Skeleton } from '@monprojetpro/ui'
 import { MfaForm } from './mfa-form'
 
 export default function VerifyMfaPage() {

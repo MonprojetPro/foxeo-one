@@ -1,7 +1,7 @@
 'use client'
 
 import { Moon, Sun } from 'lucide-react'
-import { useTheme } from '@foxeo/supabase/theme'
+import { useTheme } from '@monprojetpro/supabase/theme'
 import { Button } from '../button'
 
 export function ThemeToggle() {

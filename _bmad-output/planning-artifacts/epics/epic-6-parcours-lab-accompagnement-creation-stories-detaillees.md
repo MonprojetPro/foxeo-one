@@ -56,10 +56,10 @@ So that **je sais exactement ou j'en suis et ce qu'il me reste a accomplir**.
 
 ---
 
-## Story 6.2 : Consultation des briefs par etape & teasing Foxeo One
+## Story 6.2 : Consultation des briefs par etape & teasing MonprojetPro One
 
 As a **client Lab**,
-I want **consulter les briefs produits a chaque etape et voir un apercu motivant de Foxeo One**,
+I want **consulter les briefs produits a chaque etape et voir un apercu motivant de MonprojetPro One**,
 So that **je retrouve facilement mes livrables et je suis motive pour avancer vers la graduation**.
 
 **Acceptance Criteria :**
@@ -79,8 +79,8 @@ So that **je retrouve facilement mes livrables et je suis motive pour avancer ve
 **Then** un etat vide s'affiche avec le message "Discutez avec Elio pour commencer cette etape" et un CTA vers le chat Elio Lab
 
 **Given** un client Lab navigue dans son espace
-**When** il consulte la section "Teasing Foxeo One" (FR31)
-**Then** un encart ou une section dediee presente Foxeo One de maniere attractive :
+**When** il consulte la section "Teasing MonprojetPro One" (FR31)
+**Then** un encart ou une section dediee presente MonprojetPro One de maniere attractive :
 - Titre "Votre futur espace professionnel"
 - 3-4 fonctionnalites cles de One (modules, outils metier, autonomie)
 - Visuels teasing (screenshots ou illustrations style One)
@@ -304,7 +304,7 @@ So that **chaque client a un Elio Lab personnalise en fonction de son profil et 
 - Ton professionnel, vouvoiement
 - Reponses de longueur moyenne
 - Questions guidees standard du template de parcours
-**And** la config par defaut est definie dans le code (constante DEFAULT_ELIO_CONFIG dans @foxeo/utils)
+**And** la config par defaut est definie dans le code (constante DEFAULT_ELIO_CONFIG dans @monprojetpro/utils)
 
 **Given** l'historique des configs Elio est necessaire
 **When** MiKL modifie une config

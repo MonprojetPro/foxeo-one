@@ -12,7 +12,7 @@ So that **mon acces administrateur est hautement securise**.
 
 1. **AC1: Login email + mot de passe**
    - **Given** MiKL avec un compte operateur
-   - **When** il accede a hub.foxeo.io/login et saisit email + mot de passe valides
+   - **When** il accede a hub.monprojet-pro.com/login et saisit email + mot de passe valides
    - **Then** il est redirige vers l'ecran de saisie du code 2FA (TOTP)
 
 2. **AC2: Verification 2FA TOTP**
@@ -29,7 +29,7 @@ So that **mon acces administrateur est hautement securise**.
 
 4. **AC4: Middleware Hub — protection admin + 2FA**
    - **Given** un utilisateur non authentifie ou sans role admin
-   - **When** il tente d'acceder a une route hub.foxeo.io/(dashboard)/*
+   - **When** il tente d'acceder a une route hub.monprojet-pro.com/(dashboard)/*
    - **Then** le middleware hub/ verifie admin + 2FA
    - **And** il est redirige vers /login
 
@@ -130,8 +130,8 @@ So that **mon acces administrateur est hautement securise**.
 ```typescript
 // apps/hub/app/(auth)/actions/auth.ts
 'use server'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 // JAMAIS throw dans les Server Actions
 ```
@@ -181,7 +181,7 @@ const { data: verifySetup } = await supabase.auth.mfa.verify({
 
 ```typescript
 // apps/hub/middleware.ts — PATTERN
-import { createMiddlewareSupabaseClient } from '@foxeo/supabase'
+import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
 
 export async function middleware(request: NextRequest) {
   if (isStaticOrApi(request.nextUrl.pathname)) return NextResponse.next()
@@ -244,7 +244,7 @@ export async function middleware(request: NextRequest) {
 **packages/utils/** :
 - `emailSchema` (Zod), `passwordSchema` (Zod)
 
-**Composants @foxeo/ui** :
+**Composants @monprojetpro/ui** :
 - `Button`, `Input`, `Alert`, `AlertDescription`, `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardFooter`, `Skeleton`, `DashboardShell`
 
 **Fonctions SQL existantes** (Story 1.3) :
@@ -311,7 +311,7 @@ Ajouter a `apps/hub/package.json` :
 ### Flow complet login MiKL
 
 ```
-1. MiKL → hub.foxeo.io/login
+1. MiKL → hub.monprojet-pro.com/login
 2. Saisit email + mot de passe
 3. hubLoginAction() :
    a. Validation Zod

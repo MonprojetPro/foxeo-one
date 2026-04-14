@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import type { ParcoursStep } from '../types/parcours.types'
 import { ParcoursStepStatusBadge } from './parcours-step-status-badge'
 import { BriefMarkdownRenderer } from './brief-markdown-renderer'
@@ -80,7 +80,7 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep }: Par
         <BriefAssetsGallery assets={step.briefAssets} />
       )}
 
-      {/* Teasing Foxeo One */}
+      {/* Teasing MonprojetPro One */}
       <OneTeasingCard message={step.oneTeasingMessage} />
 
       {/* CTA */}

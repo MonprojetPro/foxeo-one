@@ -8,7 +8,7 @@ Status: done
 
 As a **MiKL (operateur)**,
 I want **la plateforme structuree pour supporter facilement plusieurs langues a l'avenir**,
-So that **quand je voudrai proposer Foxeo en anglais, il n'y aura pas de refactoring massif**.
+So that **quand je voudrai proposer MonprojetPro en anglais, il n'y aura pas de refactoring massif**.
 
 **FRs couvertes :** FR119 (detection langue middleware)
 
@@ -23,17 +23,17 @@ So that **quand je voudrai proposer Foxeo en anglais, il n'y aura pas de refacto
    - **When** la structure i18n est mise en place
    - **Then** un dossier `messages/` existe dans chaque app avec un fichier `fr.json` contenant les chaines UI principales
    - **And** le dossier `messages/` suit la structure : `messages/fr.json` (francais), `messages/en.json` (reserve pour P3)
-   - **And** les chaines statiques des composants partages (@foxeo/ui) sont extraites dans `packages/ui/src/messages/fr.json`
+   - **And** les chaines statiques des composants partages (@monprojetpro/ui) sont extraites dans `packages/ui/src/messages/fr.json`
 
 2. **AC2: Helper t() ou hook useTranslations()**
    - **Given** la structure messages/ en place
    - **When** un developpeur ajoute un nouveau composant
    - **Then** il utilise `t('cle.sous_cle')` au lieu de chaines en dur
-   - **And** un helper `t()` ou un hook `useTranslations()` est disponible dans @foxeo/utils
+   - **And** un helper `t()` ou un hook `useTranslations()` est disponible dans @monprojetpro/utils
    - **And** le helper/hook retourne la chaine traduite selon la locale active (francais uniquement en P1)
 
 3. **AC3: Composants partages utilisent t()**
-   - **Given** les composants UI partages (@foxeo/ui)
+   - **Given** les composants UI partages (@monprojetpro/ui)
    - **When** la story est completee
    - **Then** les composants suivants utilisent `t()` au lieu de chaines en dur :
      - EmptyState presets (EMPTY_SEARCH, EMPTY_LIST, EMPTY_ERROR)
@@ -55,8 +55,8 @@ So that **quand je voudrai proposer Foxeo en anglais, il n'y aura pas de refacto
    - **Given** la structure i18n en place
    - **When** P3 arrive
    - **Then** le fichier `next.config.js` est pret pour i18n (pas de refactoring majeur)
-   - **And** une constante `SUPPORTED_LOCALES = ['fr']` existe dans @foxeo/utils (sera ['fr', 'en'] en P3)
-   - **And** une constante `DEFAULT_LOCALE = 'fr'` existe dans @foxeo/utils
+   - **And** une constante `SUPPORTED_LOCALES = ['fr']` existe dans @monprojetpro/utils (sera ['fr', 'en'] en P3)
+   - **And** une constante `DEFAULT_LOCALE = 'fr'` existe dans @monprojetpro/utils
 
 6. **AC6: Documentation i18n**
    - **Given** la structure i18n en place
@@ -89,14 +89,14 @@ So that **quand je voudrai proposer Foxeo en anglais, il n'y aura pas de refacto
     - [x] 2.1.1 `export const SUPPORTED_LOCALES = ['fr'] as const`
     - [x] 2.1.2 `export const DEFAULT_LOCALE = 'fr' as const`
     - [x] 2.1.3 `export type Locale = (typeof SUPPORTED_LOCALES)[number]`
-  - [x] 2.2 Exporter depuis `@foxeo/utils` index.ts
+  - [x] 2.2 Exporter depuis `@monprojetpro/utils` index.ts
 
 - [x] Task 3 — Creer le helper t() simple (AC: #2)
   - [x] 3.1 Creer `packages/utils/src/i18n/translate.ts` — fonction `t(key: string, locale: Locale = 'fr'): string`
   - [x] 3.2 La fonction charge le fichier JSON correspondant (fr.json uniquement en P1)
   - [x] 3.3 La fonction retourne la chaine traduite ou la cle si non trouvee (fallback gracieux)
   - [x] 3.4 Supporter la notation pointee : `t('emptyState.search.title')` → `messages.emptyState.search.title`
-  - [x] 3.5 Exporter depuis `@foxeo/utils` index.ts
+  - [x] 3.5 Exporter depuis `@monprojetpro/utils` index.ts
   - [x] 3.6 Creer `packages/utils/src/i18n/translate.test.ts`
 
 - [x] Task 4 — Creer le hook useTranslations() pour les composants client (AC: #2)
@@ -104,7 +104,7 @@ So that **quand je voudrai proposer Foxeo en anglais, il n'y aura pas de refacto
   - [x] 4.2 Le hook retourne une fonction `t(key: string): string` qui utilise le helper translate.ts
   - [x] 4.3 Si un namespace est fourni, le prefixer automatiquement (ex: `useTranslations('emptyState')` → `t('search.title')` = `emptyState.search.title`)
   - [x] 4.4 Le hook detecte la locale depuis un contexte React (LocaleProvider) ou utilise DEFAULT_LOCALE
-  - [x] 4.5 Exporter depuis `@foxeo/ui` index.ts
+  - [x] 4.5 Exporter depuis `@monprojetpro/ui` index.ts
   - [x] 4.6 Creer `packages/ui/src/hooks/use-translations.test.ts`
 
 - [x] Task 5 — Creer le LocaleProvider (AC: #2, #4)
@@ -112,7 +112,7 @@ So that **quand je voudrai proposer Foxeo en anglais, il n'y aura pas de refacto
   - [x] 5.2 Le provider stocke la locale courante (state) et fournit une fonction `setLocale(locale: Locale)`
   - [x] 5.3 Le provider initialise la locale depuis un cookie `NEXT_LOCALE` ou DEFAULT_LOCALE
   - [x] 5.4 Integrer le LocaleProvider dans les root layouts des 2 apps (au-dessus de QueryProvider)
-  - [x] 5.5 Exporter depuis `@foxeo/ui` index.ts
+  - [x] 5.5 Exporter depuis `@monprojetpro/ui` index.ts
   - [x] 5.6 Creer `packages/ui/src/providers/locale-provider.test.ts`
 
 - [x] Task 6 — Creer le middleware detection locale (AC: #4)
@@ -299,7 +299,7 @@ export function t(key: string, locale: Locale = DEFAULT_LOCALE): string {
 'use client'
 
 import { useContext } from 'react'
-import { t as translateFn } from '@foxeo/utils/i18n/translate'
+import { t as translateFn } from '@monprojetpro/utils/i18n/translate'
 import { LocaleContext } from '../providers/locale-provider'
 
 export function useTranslations(namespace?: string) {
@@ -321,7 +321,7 @@ export function useTranslations(namespace?: string) {
 'use client'
 
 import { createContext, useState, useEffect, type ReactNode } from 'react'
-import { DEFAULT_LOCALE, type Locale } from '@foxeo/utils/constants/i18n'
+import { DEFAULT_LOCALE, type Locale } from '@monprojetpro/utils/constants/i18n'
 import Cookies from 'js-cookie'
 
 interface LocaleContextValue {
@@ -369,7 +369,7 @@ cd packages/ui && npm install js-cookie && npm install -D @types/js-cookie
 // apps/client/middleware-locale.ts
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from '@foxeo/utils/constants/i18n'
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from '@monprojetpro/utils/constants/i18n'
 
 export function detectLocale(request: NextRequest): Locale {
   // 1. Lire le cookie NEXT_LOCALE
@@ -441,7 +441,7 @@ export const EMPTY_SEARCH = {
 **APRES (Story 1.10) :**
 ```typescript
 // packages/ui/src/components/empty-state-presets.ts
-import { t } from '@foxeo/utils/i18n/translate'
+import { t } from '@monprojetpro/utils/i18n/translate'
 import { Search, FileText, AlertTriangle } from 'lucide-react'
 
 export const EMPTY_SEARCH = {
@@ -556,7 +556,7 @@ docs/
 - **NE PAS** hardcoder les chaines en dur dans les composants partages — utiliser `t()`
 - **NE PAS** utiliser `t()` pour les props texte des composants (label, title, description) — laisser flexibles
 - **NE PAS** creer un fichier JSON geant — nesting par composant
-- **NE PAS** traduire TOUT en P1 — seulement les composants partages (@foxeo/ui)
+- **NE PAS** traduire TOUT en P1 — seulement les composants partages (@monprojetpro/ui)
 - **NE PAS** bloquer si une cle est absente — fallback gracieux (retourner la cle)
 - **NE PAS** utiliser `react-intl` ou `i18next` — solution custom legere pour P1
 - **NE PAS** oublier d'integrer le LocaleProvider dans les root layouts
@@ -565,7 +565,7 @@ docs/
 ### References
 
 - [Source: _bmad-output/planning-artifacts/epics/epic-1-fondation-plateforme-authentification-stories-detaillees.md — Story 1.10]
-- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md — FR119 (detection langue)]
+- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md — FR119 (detection langue)]
 - [Source: _bmad-output/planning-artifacts/architecture/04-implementation-patterns.md — Code Naming, File Naming]
 - [Source: CLAUDE.md — Naming Conventions, Module System]
 - [Source: Next.js documentation — i18n routing, middleware, App Router]
@@ -581,7 +581,7 @@ docs/
 **Learnings from Story 1.9 :**
 - Structure middleware modulaire : `middleware-consent.ts`, `middleware-locale.ts`
 - Cookies pour persistence (`NEXT_LOCALE`, `NEXT_CONSENT`)
-- Helper dans @foxeo/utils, hook dans @foxeo/ui, provider dans @foxeo/ui
+- Helper dans @monprojetpro/utils, hook dans @monprojetpro/ui, provider dans @monprojetpro/ui
 
 ### Points d'attention critiques
 
@@ -591,7 +591,7 @@ docs/
 
 3. **Fallback gracieux** : Si une cle est absente, retourner la cle elle-meme (pas d'erreur). Cela permet de continuer a developper sans bloquer.
 
-4. **Composants partages uniquement** : En P1, on traduit UNIQUEMENT les composants partages (@foxeo/ui). Les pages et formulaires restent en francais dur.
+4. **Composants partages uniquement** : En P1, on traduit UNIQUEMENT les composants partages (@monprojetpro/ui). Les pages et formulaires restent en francais dur.
 
 5. **Props texte flexibles** : Les composants comme EmptyState, ErrorDisplay gardent leurs props `title`, `description` pour flexibilite. Seuls les presets/defaults utilisent `t()`.
 
@@ -622,7 +622,7 @@ N/A — Implementation proceeded smoothly without blocking issues.
 
 2. **i18n constants:**
    - `packages/utils/src/constants/i18n.ts` with SUPPORTED_LOCALES=['fr'], DEFAULT_LOCALE='fr', Locale type
-   - Exported from @foxeo/utils
+   - Exported from @monprojetpro/utils
 
 3. **Translation helper:**
    - `packages/utils/src/i18n/translate.ts` with t() function, loadMessages() for cache management
@@ -667,7 +667,7 @@ N/A — Implementation proceeded smoothly without blocking issues.
    - locale-provider.test.tsx: 3 tests ✅
    - middleware-locale.test.ts: 9 tests ✅
    - **Total: 28 tests i18n passent ✅**
-   - @testing-library/react installed in @foxeo/ui
+   - @testing-library/react installed in @monprojetpro/ui
    - vitest.config.ts updated: happy-dom environment, setupFiles with jest-dom matchers
    - vitest.setup.ts created for @testing-library/jest-dom matchers + React global for React 19 JSX
    - Build passes without TypeScript errors ✅

@@ -1,4 +1,4 @@
-import { toast } from '@foxeo/ui'
+import { toast } from '@monprojetpro/ui'
 
 interface UseUndoableActionOptions {
   delay?: number

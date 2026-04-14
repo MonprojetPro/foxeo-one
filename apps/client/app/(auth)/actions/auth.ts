@@ -1,13 +1,13 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   type UserSession,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { loginSchema, signupSchema } from './schemas'
 
 // --- Server Actions ---

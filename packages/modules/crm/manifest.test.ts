@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { ModuleManifest } from '@foxeo/types'
+import type { ModuleManifest } from '@monprojetpro/types'
 
 describe('CRM Module Contract Tests', () => {
   it('should have a valid manifest file', async () => {

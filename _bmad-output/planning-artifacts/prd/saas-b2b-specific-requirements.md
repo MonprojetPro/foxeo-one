@@ -78,7 +78,7 @@ DASHBOARD CLIENT UNIFIÉ
 > Continue ton parcours Lab pour débloquer cette partie !"
 
 **Client One qui clique sur LAB :**
-> "🧪 **Découvre le Lab Foxeo !**
+> "🧪 **Découvre le Lab MonprojetPro !**
 > Tu as un nouveau projet en tête ? Une idée à structurer ? Le Lab t'accompagne de l'idée au business avec Élio Lab, ton partenaire de création.
 > Curieux ? Contacte MiKL pour explorer cette aventure."
 
@@ -167,8 +167,8 @@ VALIDATION HUB → MIKL évalue → Devis → Facturation
 
 ## Stratégie d'Intégrations
 
-**Philosophie modulaire Foxeo :**
-> Chaque intégration développée pour un client devient un module réutilisable du catalogue Foxeo.
+**Philosophie modulaire MonprojetPro :**
+> Chaque intégration développée pour un client devient un module réutilisable du catalogue MonprojetPro.
 
 | Intégration | Priorité | Statut |
 |-------------|----------|--------|

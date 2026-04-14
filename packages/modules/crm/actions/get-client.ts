@@ -1,11 +1,11 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { Client as ClientSchema } from '../types/crm.types'
 import type { Client } from '../types/crm.types'
 
@@ -48,6 +48,7 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
         `
         id,
         operator_id,
+        first_name,
         name,
         company,
         email,
@@ -104,6 +105,7 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
     const client: Client = ClientSchema.parse({
       id: data.id,
       operatorId: data.operator_id,
+      firstName: data.first_name ?? undefined,
       name: data.name,
       company: data.company,
       email: data.email,

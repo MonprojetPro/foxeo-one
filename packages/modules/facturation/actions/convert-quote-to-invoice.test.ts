@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
@@ -13,7 +13,7 @@ vi.mock('../config/pennylane', () => ({
   },
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
 import { convertQuoteToInvoice } from './convert-quote-to-invoice'
 

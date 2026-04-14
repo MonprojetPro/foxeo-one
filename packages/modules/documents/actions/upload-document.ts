@@ -1,8 +1,8 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
-import { validateFile } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { validateFile } from '@monprojetpro/utils'
 import { UploadDocumentInput, type Document, type DocumentDB } from '../types/document.types'
 import { toDocument } from '../utils/to-document'
 
@@ -80,8 +80,16 @@ export async function uploadDocument(
       }
     }
 
+    // Sanitize filename — Supabase Storage rejects spaces and special chars
+    const sanitizedName = file.name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')   // remove accents
+      .replace(/[^a-zA-Z0-9._-]/g, '-') // replace special chars with dash
+      .replace(/-{2,}/g, '-')            // collapse consecutive dashes
+      .replace(/^-|-$/g, '')             // trim leading/trailing dashes
+
     // Upload to Supabase Storage
-    const filename = `${crypto.randomUUID()}-${file.name}`
+    const filename = `${crypto.randomUUID()}-${sanitizedName}`
     const storagePath = `${parsed.data.operatorId}/${parsed.data.clientId}/${filename}`
 
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -90,7 +98,7 @@ export async function uploadDocument(
 
     if (uploadError || !uploadData) {
       console.error('[DOCUMENTS:UPLOAD] Storage error:', uploadError)
-      return errorResponse('Échec de l\'upload du fichier', 'STORAGE_ERROR', uploadError)
+      return errorResponse('Échec de l\'upload du fichier', 'STORAGE_ERROR', { message: uploadError?.message })
     }
 
     // Insert DB record — use exclusively Zod-validated values
@@ -114,12 +122,24 @@ export async function uploadDocument(
       console.error('[DOCUMENTS:UPLOAD] DB insert error:', error)
       // Cleanup uploaded file on DB failure
       await supabase.storage.from('documents').remove([storagePath])
-      return errorResponse('Échec de la création du document', 'DB_ERROR', error)
+      return errorResponse('Échec de la création du document', 'DB_ERROR', { message: error?.message })
     }
+
+    // Log activity — fire-and-forget
+    supabase.from('activity_logs').insert({
+      actor_type: uploadedBy === 'operator' ? 'operator' : 'client',
+      actor_id: uploadedBy === 'operator' ? parsed.data.operatorId : parsed.data.clientId,
+      action: 'document_uploaded',
+      entity_type: 'client',
+      entity_id: parsed.data.clientId,
+      metadata: { document_id: data.id, document_name: parsed.data.name, file_type: parsed.data.fileType, visibility: parsed.data.visibility },
+    }).then(({ error: logError }) => {
+      if (logError) console.error('[DOCUMENTS:UPLOAD] Activity log error:', logError)
+    }).catch(() => {})
 
     return successResponse(toDocument(data as DocumentDB))
   } catch (error) {
     console.error('[DOCUMENTS:UPLOAD] Unexpected error:', error)
-    return errorResponse('Une erreur inattendue est survenue', 'INTERNAL_ERROR', error)
+    return errorResponse('Une erreur inattendue est survenue', 'INTERNAL_ERROR', { message: error instanceof Error ? error.message : String(error) })
   }
 }

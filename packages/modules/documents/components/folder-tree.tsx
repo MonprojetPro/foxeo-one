@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@foxeo/ui'
+import { Button, AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@monprojetpro/ui'
 import { Folder, FolderOpen, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 import type { DocumentFolder } from '../types/folder.types'
 import { CreateFolderDialog } from './create-folder-dialog'
 import { useFolderMutations } from '../hooks/use-folder-mutations'

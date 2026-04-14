@@ -31,8 +31,8 @@ vi.mock('./postpone-dialog', () => ({
     open ? <div data-testid="postpone-dialog">PostponeDialog</div> : null,
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -138,7 +138,7 @@ describe('ActionPicker', () => {
   it('should show success toast after successful reactivateLab', async () => {
     mockReactivateLab.mockResolvedValue({ data: { status: 'approved' }, error: null })
     const ActionPicker = await importComponent()
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
     const user = userEvent.setup()
     render(<ActionPicker {...defaultProps} />)
 
@@ -156,7 +156,7 @@ describe('ActionPicker', () => {
       error: { message: 'DB error', code: 'DB_ERROR' },
     })
     const ActionPicker = await importComponent()
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     const user = userEvent.setup()
     render(<ActionPicker {...defaultProps} />)
 
@@ -221,7 +221,7 @@ describe('ActionPicker', () => {
       error: null,
     })
     const ActionPicker = await importComponent()
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
     const user = userEvent.setup()
     vi.spyOn(window, 'open').mockImplementation(() => null)
     render(<ActionPicker {...defaultProps} />)
@@ -240,7 +240,7 @@ describe('ActionPicker', () => {
       error: null,
     })
     const ActionPicker = await importComponent()
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
     const user = userEvent.setup()
     render(<ActionPicker {...defaultProps} />)
 

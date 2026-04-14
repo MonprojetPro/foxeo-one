@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@foxeo/types'
+import type { Database } from '@monprojetpro/types'
 
 export const CHANNEL_PATTERNS = {
   clientNotifications: (clientId: string) =>

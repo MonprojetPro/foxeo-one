@@ -1,13 +1,7 @@
 'use server'
 
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
-
-export interface DocumentEmailDraft {
-  /** Lien mailto: à ouvrir côté client */
-  mailtoUrl: string
-  /** Sujet de l'email pré-rempli */
-  subject: string
-}
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
+import type { DocumentEmailDraft } from '../types/elio.types'
 
 /**
  * Story 8.9b — Task 8

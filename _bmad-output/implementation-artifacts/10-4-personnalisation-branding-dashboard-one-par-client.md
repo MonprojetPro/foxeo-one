@@ -37,8 +37,8 @@ type CustomBranding = {
 **Given** le client One se connecte avec un branding personnalisé
 **When** le dashboard se charge
 **Then** :
-- Le logo personnalisé remplace le logo Foxeo One dans le header et la sidebar
-- Le nom affiché remplace "Foxeo One" dans le header
+- Le logo personnalisé remplace le logo MonprojetPro One dans le header et la sidebar
+- Le nom affiché remplace "MonprojetPro One" dans le header
 - La couleur d'accent est appliquée via des CSS custom properties (override de la variable `--accent`)
 - Le reste du design (typographie, layout, structure) reste standard
 **And** si aucun branding personnalisé n'est défini, le design One par défaut est utilisé
@@ -46,7 +46,7 @@ type CustomBranding = {
 
 ## Tasks / Subtasks
 
-- [x] Mettre à jour le type `CustomBranding` dans `@foxeo/types` (AC: #2)
+- [x] Mettre à jour le type `CustomBranding` dans `@monprojetpro/types` (AC: #2)
   - [x] Modifier `packages/types/src/client-config.types.ts`
   - [x] Remplacer le type existant `CustomBranding` par :
     ```typescript
@@ -97,7 +97,7 @@ type CustomBranding = {
   - [x] Après fetch `client_configs`, extraire `custom_branding`
   - [x] Si `custom_branding.accentColor` → injecter CSS variable via `style` prop sur un wrapper `<div style={{ '--accent': accentColor }}>` autour du `DashboardShell`
   - [x] Passer `custom_branding.logoUrl` et `custom_branding.displayName` au `ClientHeader`
-  - [x] `ClientHeader` : si `logoUrl` → `<img src={logoUrl}>`, sinon logo Foxeo One ; si `displayName` → afficher à la place de "Mon espace"
+  - [x] `ClientHeader` : si `logoUrl` → `<img src={logoUrl}>`, sinon logo MonprojetPro One ; si `displayName` → afficher à la place de "Mon espace"
 
 - [x] Créer bucket Supabase Storage `client-assets` (si inexistant) (AC: #2)
   - [x] Vérifier dans `supabase/config.toml` ou migrations si bucket existe
@@ -170,7 +170,7 @@ apps/client/app/(dashboard)/
 - Color picker : `<input type="color">` natif → compatible tous navigateurs modernes
 - Preview mini-header : `<div style={{ backgroundColor: accentColor, ... }}>` — pas besoin de CSS classes
 - Logo upload aperçu : `URL.createObjectURL(file)` pour preview local avant upload
-- Toast pattern : `showSuccess('Branding mis à jour pour {client}')` depuis `@foxeo/ui`
+- Toast pattern : `showSuccess('Branding mis à jour pour {client}')` depuis `@monprojetpro/ui`
 - Bouton reset destructive : `<Button variant="outline" onClick={handleReset}>Réinitialiser</Button>`
 
 ### Previous Story Learnings
@@ -178,7 +178,7 @@ apps/client/app/(dashboard)/
 - `getPublicUrl()` retourne toujours une URL (même si fichier inexistant) → ne pas utiliser pour vérifier existence
 - Activity logs : pattern établi dans toutes les actions mutations — toujours logger
 - Pattern Zod regex : `z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Couleur hex invalide').nullable()`
-- Tests mock Storage : `vi.mock('@foxeo/supabase', ...)` + mock `.storage.from().upload()` et `.getPublicUrl()`
+- Tests mock Storage : `vi.mock('@monprojetpro/supabase', ...)` + mock `.storage.from().upload()` et `.getPublicUrl()`
 
 ### References
 - [Source: _bmad-output/planning-artifacts/epics/epic-10-dashboard-one-modules-commerciaux-stories-detaillees.md#Story 10.4]

@@ -95,18 +95,18 @@ Orpheus doit pouvoir alimenter la timeline de suivi projet visible par le client
 
 ### Variables d'environnement
 ```
-FOXEO_HUB_API_URL=https://api.foxeo-hub.com
+FOXEO_HUB_API_URL=https://api.monprojetpro-hub.com
 FOXEO_HUB_API_KEY=xxx
-ELIO_HUB_WEBHOOK=https://api.foxeo-hub.com/webhooks/orpheus
+ELIO_HUB_WEBHOOK=https://api.monprojetpro-hub.com/webhooks/orpheus
 ```
 
 ### Commandes Orpheus à implémenter
 | Commande | Description |
 |----------|-------------|
-| `/foxeo-update` | Envoyer mise à jour projet vers Élio Hub |
-| `/foxeo-invoice` | Générer données facturation |
-| `/foxeo-timeline` | Ajouter événement timeline client |
-| `/foxeo-status` | Vérifier statut file d'attente |
+| `/monprojetpro-update` | Envoyer mise à jour projet vers Élio Hub |
+| `/monprojetpro-invoice` | Générer données facturation |
+| `/monprojetpro-timeline` | Ajouter événement timeline client |
+| `/monprojetpro-status` | Vérifier statut file d'attente |
 
 ### Règles de comportement
 1. **Jamais de contact direct client** - Tout passe par Élio Hub

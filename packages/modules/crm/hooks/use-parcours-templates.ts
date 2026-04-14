@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { ParcoursTemplate } from '../types/crm.types'
 import { getParcoursTemplates } from '../actions/get-parcours-templates'
 

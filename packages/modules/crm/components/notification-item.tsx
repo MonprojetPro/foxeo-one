@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { useMarkNotificationRead } from '../hooks/use-notifications'
 import type { Notification } from '../types/crm.types'
 

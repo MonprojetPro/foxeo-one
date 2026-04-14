@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 import type { ParcoursStep } from '../types/parcours.types'
 import { ParcoursStepStatusBadge } from './parcours-step-status-badge'
 

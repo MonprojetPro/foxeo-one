@@ -1,10 +1,10 @@
-# Foxeo One - Vue d'ensemble du projet
+# MonprojetPro One - Vue d'ensemble du projet
 
 > Documentation générée le 2026-01-20 par BMM Document Project Workflow
 
 ## Résumé exécutif
 
-**Foxeo One** est un dashboard professionnel modulaire conçu comme une plateforme "Lego" où chaque module (app) peut être ajouté indépendamment tout en partageant des composants et utilitaires communs.
+**MonprojetPro One** est un dashboard professionnel modulaire conçu comme une plateforme "Lego" où chaque module (app) peut être ajouté indépendamment tout en partageant des composants et utilitaires communs.
 
 ### Caractéristiques principales
 
@@ -26,7 +26,7 @@
 ## Structure du repository
 
 ```
-foxeo-one/
+monprojetpro-one/
 ├── apps/
 │   └── brief/              # 🎯 Module Brief (Next.js 16)
 │       ├── app/            # Routes App Router
@@ -42,11 +42,11 @@ foxeo-one/
 │       └── types/          # Types TypeScript
 │
 ├── packages/
-│   ├── ui/                 # 📦 @foxeo/ui - Design system
+│   ├── ui/                 # 📦 @monprojetpro/ui - Design system
 │   │   └── src/            # 14 composants (shadcn/ui)
-│   ├── utils/              # 📦 @foxeo/utils - Utilitaires
+│   ├── utils/              # 📦 @monprojetpro/utils - Utilitaires
 │   │   └── src/            # cn, formatDate, etc.
-│   └── tsconfig/           # 📦 @foxeo/tsconfig - Configs TS
+│   └── tsconfig/           # 📦 @monprojetpro/tsconfig - Configs TS
 │
 ├── _bmad/                  # Configuration BMad Method
 ├── _bmad-output/           # Artefacts de planification

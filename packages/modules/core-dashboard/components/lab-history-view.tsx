@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle, Badge } from '@foxeo/ui'
+import { Card, CardContent, CardHeader, CardTitle, Badge } from '@monprojetpro/ui'
 
 export interface ParcoursStep {
   id: string

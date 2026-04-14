@@ -23,9 +23,9 @@ describe('OneTeasingCard', () => {
     expect(screen.getByText('Dans One, cette fonctionnalité sera automatisée par Élio+.')).toBeDefined()
   })
 
-  it('renders "Aperçu Foxeo One" heading when message is present', () => {
+  it('renders "Aperçu MonprojetPro One" heading when message is present', () => {
     render(<OneTeasingCard message="Un message de teasing." />)
-    expect(screen.getByText('Aperçu Foxeo One')).toBeDefined()
+    expect(screen.getByText('Aperçu MonprojetPro One')).toBeDefined()
   })
 
   it('renders rocket icon visually (aria label or svg)', () => {

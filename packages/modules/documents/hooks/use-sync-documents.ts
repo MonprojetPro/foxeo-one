@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { syncDocumentsToZip } from '../actions/sync-documents-to-zip'
 import type { SyncDocumentsResult } from '../actions/sync-documents-to-zip'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 
 /**
  * Hook TanStack Query pour la mutation de synchronisation ZIP.

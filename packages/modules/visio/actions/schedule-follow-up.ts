@@ -1,15 +1,9 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
-import { z } from 'zod'
-
-export const ScheduleFollowUpInput = z.object({
-  meetingId: z.string().uuid('meetingId invalide'),
-  dueDate: z.string().datetime({ offset: true, message: 'Date invalide' }),
-  message: z.string().min(1, 'Le message est requis').max(500),
-})
-export type ScheduleFollowUpInput = z.infer<typeof ScheduleFollowUpInput>
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { ScheduleFollowUpInput } from './post-meeting-schemas'
+export type { ScheduleFollowUpInput } from './post-meeting-schemas'
 
 export interface FollowUpResult {
   reminderId: string

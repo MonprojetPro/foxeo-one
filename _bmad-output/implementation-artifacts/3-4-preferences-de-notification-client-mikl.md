@@ -4,7 +4,7 @@ Status: done
 
 ## Story
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **configurer mes préférences de notification pour choisir quels types de notifications je reçois et par quel canal**,
 So that **je ne suis pas submergé par des notifications non pertinentes**.
 
@@ -166,7 +166,7 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 ### Debug Log References
 
 - Migration 00024 déjà prise par `email_notifications.sql` → utilisé 00025
-- `@foxeo/modules/notifications` alias invalide dans CRM → respecté la règle "modules n'importent pas d'autres modules", `OperatorOverrideSection` injectée depuis la route Hub (app level)
+- `@monprojetpro/modules/notifications` alias invalide dans CRM → respecté la règle "modules n'importent pas d'autres modules", `OperatorOverrideSection` injectée depuis la route Hub (app level)
 - Hook TanStack Query : erreur = état `isError`, `data=undefined` (pas `null`) → test ajusté
 
 ### Completion Notes List
@@ -176,7 +176,7 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 - ✅ AC3 : `updateNotificationPrefs()` — sauvegarde immédiate, toast Sonner "Préférences mises à jour", pattern `{ data, error }`
 - ✅ AC4 : `OperatorOverrideSection` dans fiche client Hub (section dédiée sous les onglets, pas onglet CRM — respect règle inter-modules)
 - ✅ AC5 : `checkNotificationAllowed()` intégré dans `createNotification()`, skip silencieux si `inapp=false`
-- ✅ AC6 : 96 tests (19 fichiers) dans `@foxeo/modules-notifications`, 0 régression CRM (573 tests), test RLS co-localisé dans `tests/rls/`
+- ✅ AC6 : 96 tests (19 fichiers) dans `@monprojetpro/modules-notifications`, 0 régression CRM (573 tests), test RLS co-localisé dans `tests/rls/`
 - Décision : `channel_email` sur la future vérification du trigger DB (email trigger de Story 3.3) reste basé sur `email_notifications_enabled` pour cette story; `checkNotificationAllowed` prépare l'infrastructure pour une intégration future plus fine
 
 ### File List
@@ -216,4 +216,4 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 ## Change Log
 
 - 2026-02-18 : Story 3.4 implémentée (Claude Sonnet 4.5) — Préférences de notification client & MiKL, migration 00025, 4 Server Actions, 3 composants, route settings/notifications, intégration create-notification, 94 tests passants
-- 2026-02-18 : Code review adversariale (Claude Sonnet 4.5) — 7 issues corrigées (3 HIGH, 4 MEDIUM) : H1 retiré 'use server' de check-notification-allowed (fuite endpoint), H2 ajout vérification opérateur dans set-operator-override, H3 fix alias import @foxeo/modules-notifications, M1 optimisation getNotificationPrefs (select-first), M2 OperatorOverrideSection refactoré avec useMutation, M3 successResponse(null) au lieu de raw object, M4 extraction PREF_LABELS partagé. 96 tests passants, 0 régression CRM (573 tests).
+- 2026-02-18 : Code review adversariale (Claude Sonnet 4.5) — 7 issues corrigées (3 HIGH, 4 MEDIUM) : H1 retiré 'use server' de check-notification-allowed (fuite endpoint), H2 ajout vérification opérateur dans set-operator-override, H3 fix alias import @monprojetpro/modules-notifications, M1 optimisation getNotificationPrefs (select-first), M2 OperatorOverrideSection refactoré avec useMutation, M3 successResponse(null) au lieu de raw object, M4 extraction PREF_LABELS partagé. 96 tests passants, 0 régression CRM (573 tests).

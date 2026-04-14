@@ -15,7 +15,7 @@ _Mise à jour 08/02/2026 : FR153-170 ajoutées (instance-per-client, Lab 199€)
 
 **Alignement structure :** `packages/supabase/` partagé élimine la duplication. Les routes apps sont des coquilles vides, toute la logique vit dans les modules. Un seul mécanisme de routage (`modules/[moduleId]/`). Les 6 piliers (déploiement dual, catalogue modules, config-driven, communication inter-instances, documentation livrable, surveillance usage) sont cohérents entre eux.
 
-**Modèle de déploiement dual :** Lab (multi-tenant, Foxeo) + One (instance par client, propriété client). Hub communique avec les instances via API REST + webhooks signés HMAC. Pas de DB partagée entre Hub et instances One.
+**Modèle de déploiement dual :** Lab (multi-tenant, MonprojetPro) + One (instance par client, propriété client). Hub communique avec les instances via API REST + webhooks signés HMAC. Pas de DB partagée entre Hub et instances One.
 
 **Aucune contradiction détectée.**
 
@@ -28,7 +28,7 @@ _Mise à jour 08/02/2026 : FR153-170 ajoutées (instance-per-client, Lab 199€)
 | Couvert (initial) | 140 | Mapping explicite vers module + fichier |
 | Gap mineur (résolu) | 7 | Couvert implicitement, résolution documentée ci-dessous |
 | Ajouté post-validation | 18 | FR153-170 (instance-per-client, Lab 199€) — couverts dans Epics 9, 11, 12 |
-| Hors périmètre | 9 | FR15-20d (Orpheus = Cursor/BMAD, hors Foxeo) |
+| Hors périmètre | 9 | FR15-20d (Orpheus = Cursor/BMAD, hors MonprojetPro) |
 
 **Gaps fonctionnels résolus :**
 
@@ -50,7 +50,7 @@ _Mise à jour 08/02/2026 : FR153-170 ajoutées (instance-per-client, Lab 199€)
 |-----|---------------------|
 | NFR-S3 (Argon2) | Supabase Auth utilise bcrypt par défaut. Configurer Argon2 dans GoTrue au setup du projet |
 | NFR-S5 (5 tentatives) | Implémenter table `login_attempts` + policy custom. Rate limiting Supabase natif ne suffit pas |
-| NFR-R6 (Mode dégradé) | Composant `ServiceUnavailable` dans `@foxeo/ui`. TanStack Query `onError` par module pour afficher message explicatif si service externe down |
+| NFR-R6 (Mode dégradé) | Composant `ServiceUnavailable` dans `@monprojetpro/ui`. TanStack Query `onError` par module pour afficher message explicatif si service externe down |
 
 ### Implementation Readiness
 

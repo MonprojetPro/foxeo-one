@@ -1,12 +1,12 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
-import { toCamelCase } from '@foxeo/utils'
+} from '@monprojetpro/types'
+import { toCamelCase } from '@monprojetpro/utils'
 import type { Reminder, UpdateReminderInput, ReminderDB } from '../types/crm.types'
 import { UpdateReminderInput as UpdateReminderSchema } from '../types/crm.types'
 

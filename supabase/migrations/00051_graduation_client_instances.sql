@@ -52,7 +52,7 @@ CREATE TRIGGER trg_client_instances_updated_at
   EXECUTE FUNCTION fn_update_updated_at();
 
 COMMENT ON TABLE client_instances IS 'Instances One dédiées par client — provisionnées lors de la graduation Lab → One';
-COMMENT ON COLUMN client_instances.slug IS 'Sous-domaine unique : {slug}.foxeo.io';
+COMMENT ON COLUMN client_instances.slug IS 'Sous-domaine unique : {slug}.monprojet-pro.com';
 COMMENT ON COLUMN client_instances.tier IS 'base = Ponctuel, essentiel = Élio One (49€/mois), agentique = Élio One+ (99€/mois)';
 COMMENT ON COLUMN client_instances.status IS 'provisioning → active (normal), failed (erreur), suspended, transferred (client sortant)';
 

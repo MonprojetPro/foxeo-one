@@ -1,18 +1,28 @@
 {
-  "name": "@foxeo/module-parcours",
+  "name": "@monprojetpro/module-parcours",
   "version": "1.0.0",
   "private": true,
   "main": "./index.ts",
   "types": "./index.ts",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    },
+    "./manifest": {
+      "types": "./manifest.ts",
+      "default": "./manifest.ts"
+    }
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@foxeo/supabase": "*",
-    "@foxeo/types": "*",
-    "@foxeo/ui": "*",
-    "@foxeo/utils": "*",
+    "@monprojetpro/supabase": "*",
+    "@monprojetpro/types": "*",
+    "@monprojetpro/ui": "*",
+    "@monprojetpro/utils": "*",
     "@hookform/resolvers": "*",
     "@tanstack/react-query": "^5.90.0",
     "date-fns": "^4.1.0",
@@ -23,7 +33,7 @@
     "zod": "*"
   },
   "devDependencies": {
-    "@foxeo/tsconfig": "*",
+    "@monprojetpro/tsconfig": "*",
     "@testing-library/react": "*",
     "vitest": "*"
   }

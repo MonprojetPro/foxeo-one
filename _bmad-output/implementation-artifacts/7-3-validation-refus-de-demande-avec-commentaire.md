@@ -21,7 +21,7 @@ So that **le client sait clairement si son travail est accepté ou ce qu'il doit
 - Champ commentaire optionnel (textarea, placeholder: "Commentaire pour le client (optionnel)")
 - Boutons "Confirmer la validation" / "Annuler"
 
-**And** la modale utilise le composant Dialog de @foxeo/ui
+**And** la modale utilise le composant Dialog de @monprojetpro/ui
 **And** le champ commentaire a une limite de 500 caractères
 
 ### AC 2 : Server Action approveRequest exécutée
@@ -69,7 +69,7 @@ So that **le client sait clairement si son travail est accepté ou ce qu'il doit
 - Boutons "Confirmer le refus" / "Annuler"
 
 **And** le bouton "Confirmer le refus" est désactivé tant que le commentaire n'a pas 10 caractères minimum
-**And** la modale utilise le composant Dialog de @foxeo/ui
+**And** la modale utilise le composant Dialog de @monprojetpro/ui
 
 ### AC 5 : Server Action rejectRequest exécutée
 
@@ -118,7 +118,7 @@ So that **le client sait clairement si son travail est accepté ou ce qu'il doit
   - Champ commentaire obligatoire (min 10 caractères)
   - Validation Zod
   - Boutons Confirmer/Annuler désactivés si invalide
-- [x] Utiliser Dialog, Textarea, Button de @foxeo/ui
+- [x] Utiliser Dialog, Textarea, Button de @monprojetpro/ui
 - [x] Écrire tests `approve-dialog.test.tsx`, `reject-dialog.test.tsx`
 
 ### Task 2 : Créer la Server Action approveRequest (AC: 2)
@@ -347,8 +347,8 @@ export async function approveRequest(
 ```typescript
 'use client'
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@foxeo/ui'
-import { Button, Textarea, Label } from '@foxeo/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@monprojetpro/ui'
+import { Button, Textarea, Label } from '@monprojetpro/ui'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -455,12 +455,12 @@ Le module CRM n'a pas de modales de validation/refus, mais il a des modales de c
 ```typescript
 'use client'
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@foxeo/ui'
-import { Button } from '@foxeo/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@monprojetpro/ui'
+import { Button } from '@monprojetpro/ui'
 import { ClientForm } from './client-form'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { toast } from '@foxeo/ui'
+import { toast } from '@monprojetpro/ui'
 import { createClient } from '../actions/create-client'
 
 export function CreateClientDialog() {
@@ -513,10 +513,10 @@ export function CreateClientDialog() {
 | react-hook-form | ^7.71.x | Form management |
 | @hookform/resolvers | Latest | Zod resolver |
 | zod | Latest | Schema validation |
-| @foxeo/ui | Internal | Dialog, Button, Textarea |
-| @foxeo/utils | Internal | toCamelCase |
+| @monprojetpro/ui | Internal | Dialog, Button, Textarea |
+| @monprojetpro/utils | Internal | toCamelCase |
 
-#### Composants UI disponibles (@foxeo/ui)
+#### Composants UI disponibles (@monprojetpro/ui)
 
 - `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogFooter` : Modale
 - `Button` : Bouton avec variants et loading state
@@ -578,10 +578,10 @@ const { register, handleSubmit, formState: { errors, isValid } } = useForm({
 
 #### Toast Notifications
 
-**Utiliser le toast de @foxeo/ui** :
+**Utiliser le toast de @monprojetpro/ui** :
 
 ```typescript
-import { toast } from '@foxeo/ui'
+import { toast } from '@monprojetpro/ui'
 
 // Success
 toast.success('Demande validée avec succès')
@@ -695,8 +695,8 @@ Claude Sonnet 4.6 (claude-sonnet-4-6)
 
 - Implémentation via RPC Supabase (`approve_validation_request` / `reject_validation_request`) pour atomicité transactionnelle complète côté PostgreSQL.
 - Migration `00045_validation_request_functions.sql` créée avec les deux fonctions PL/pgSQL.
-- `Label` component absent de `@foxeo/ui` → utilisé `<label>` HTML natif (pattern déjà documenté en mémoire).
-- Toast via `showSuccess()`/`showError()` depuis `@foxeo/ui` (non `toast.success`).
+- `Label` component absent de `@monprojetpro/ui` → utilisé `<label>` HTML natif (pattern déjà documenté en mémoire).
+- Toast via `showSuccess()`/`showError()` depuis `@monprojetpro/ui` (non `toast.success`).
 - 52 nouveaux tests ajoutés (2535 → 2587 tests passing).
 - Tous les ACs couverts : modales, Server Actions, feedback utilisateur, gestion erreurs, avancement parcours, notifications.
 

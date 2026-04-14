@@ -19,7 +19,7 @@ COMMENT ON TABLE elio_config_history IS 'Historique des modifications de configu
 COMMENT ON COLUMN elio_config_history.field_changed IS 'Champ modifié (ex: model, temperature, custom_instructions, ou elio_config pour changement complet)';
 COMMENT ON COLUMN elio_config_history.old_value IS 'Valeur JSONB avant modification';
 COMMENT ON COLUMN elio_config_history.new_value IS 'Valeur JSONB après modification';
-COMMENT ON COLUMN elio_config_history.changed_by IS 'UUID auth.users de l'utilisateur ayant fait la modification';
+COMMENT ON COLUMN elio_config_history.changed_by IS 'UUID auth.users de l''utilisateur ayant fait la modification';
 
 -- ============================================================
 -- 2. INDEX

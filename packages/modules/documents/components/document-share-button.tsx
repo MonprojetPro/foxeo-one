@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import type { Document } from '../types/document.types'
 import { useShareDocument } from '../hooks/use-share-document'
 import { useUndoableAction } from '../hooks/use-undo-action'

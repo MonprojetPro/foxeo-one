@@ -5,7 +5,7 @@ Status: done
 ## Story
 
 As a **MiKL (operateur)**,
-I want **provisionner une nouvelle instance Foxeo One dediee (Vercel + Supabase) directement depuis le Hub**,
+I want **provisionner une nouvelle instance MonprojetPro One dediee (Vercel + Supabase) directement depuis le Hub**,
 so that **chaque client One recoit son propre environnement isole avec ses donnees et son code**.
 
 ## Acceptance Criteria
@@ -14,7 +14,7 @@ so that **chaque client One recoit son propre environnement isole avec ses donne
 **When** la modale de provisioning s'ouvre
 **Then** :
 - Slug pre-rempli (kebab-case depuis nom entreprise)
-- URL resultante : `https://{slug}.foxeo.io`
+- URL resultante : `https://{slug}.monprojet-pro.com`
 - Checkboxes modules a activer
 - Tier Elio initial
 - Estimation cout mensuel (~5-7€)
@@ -26,7 +26,7 @@ so that **chaque client One recoit son propre environnement isole avec ses donne
 1. **Validation** : slug unique, format valide (kebab-case, 3-50 chars), client sans instance active
 2. **Supabase** : creation projet via Management API (`POST /v1/projects`), recuperation credentials
 3. **Migrations DB** : execution des migrations template sur le nouveau Supabase
-4. **Vercel** : creation projet, config env vars, domaine `{slug}.foxeo.io`
+4. **Vercel** : creation projet, config env vars, domaine `{slug}.monprojet-pro.com`
 5. **Health check** : ping toutes les 10s pendant 5 min max → `status: 'active'`
 **And** indicateur progression en temps reel (Realtime) : "Creation Supabase..." → "Migrations..." → "Deploiement..." → "Verification..." → "Pret !"
 **And** si echec : rollback (supprimer Supabase/Vercel crees) + `status: 'failed'` + bouton "Reessayer"
@@ -128,7 +128,7 @@ claude-sonnet-4-6
 - Test `/Base/i` ambigu car "Supabase" match → remplacé par `getAllByText`
 
 ### Completion Notes List
-- Nouveau `provisionOneInstanceFromHub` Server Action dans `@foxeo/module-admin` avec les 5 étapes complètes
+- Nouveau `provisionOneInstanceFromHub` Server Action dans `@monprojetpro/module-admin` avec les 5 étapes complètes
 - Stub CRM `provisionOneInstance` conservé (utilisé par `graduateClient`) avec commentaire @deprecated
 - Env vars `SUPABASE_MANAGEMENT_TOKEN` / `VERCEL_TOKEN` : si absentes, les étapes API sont skippées (dev mode)
 - Realtime progress via `supabase.channel('provisioning:{clientId}').send()` depuis le Server Action

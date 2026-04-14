@@ -202,7 +202,7 @@ N/A — Implémentation fluide sans blocage majeur
 **Décisions techniques** :
 - Calendrier custom sans librairie externe (plus léger, contrôle total)
 - Filtres "upcoming/overdue/completed" appliqués côté client après fetch par mois
-- Import unifié `from '@foxeo/ui'` (pas de sous-paths comme `/badge`)
+- Import unifié `from '@monprojetpro/ui'` (pas de sous-paths comme `/badge`)
 - date-fns utilisé pour formatting dates (déjà dans dépendances)
 
 **Fichiers critiques** :

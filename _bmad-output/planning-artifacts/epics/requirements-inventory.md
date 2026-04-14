@@ -2,7 +2,7 @@
 
 ## Functional Requirements
 
-**Total : 170 FRs** couvrant l'ensemble de l'ecosysteme Foxeo (Hub, Lab, One).
+**Total : 170 FRs** couvrant l'ensemble de l'ecosysteme MonprojetPro (Hub, Lab, One).
 > Mis a jour 08/02/2026 : FR153-168 (propriete client, instance dediee, documentation livrable, surveillance usage).
 > Mis a jour 08/02/2026 : FR169-170 (facturation forfait Lab 199€, deduction setup One).
 
@@ -28,7 +28,7 @@
 | FR13 | MiKL peut choisir une action de traitement (Reactiver Lab, Programmer Visio, Dev direct, Reporter) |
 | FR14 | Le client est notifie automatiquement du traitement de sa demande |
 
-### Orpheus — Cerveau Foxeo (Cursor/BMAD) — HORS PERIMETRE APPLICATIF
+### Orpheus — Cerveau MonprojetPro (Cursor/BMAD) — HORS PERIMETRE APPLICATIF
 | ID | Functional Requirement |
 |----|------------------------|
 | FR15 | Orpheus (dans Cursor) peut analyser une transcription de visio client |
@@ -36,7 +36,7 @@
 | FR17 | Orpheus peut detecter le profil de communication d'un client |
 | FR18 | Orpheus peut recommander un type de parcours Lab |
 | FR19 | Orpheus peut generer une config Elio (client_config.yaml) |
-| FR20 | Orpheus accumule les apprentissages metier Foxeo (pricing, patterns, durees) |
+| FR20 | Orpheus accumule les apprentissages metier MonprojetPro (pricing, patterns, durees) |
 | FR20b | Orpheus peut generer des estimations prix |
 | FR20c | Orpheus peut generer des docs techniques |
 | FR20d | Orpheus peut retravailler docs brainstorming Lab |
@@ -58,7 +58,7 @@
 | FR28 | Le client Lab peut consulter les briefs produits a chaque etape |
 | FR29 | Le client Lab peut soumettre un brief pour validation MiKL |
 | FR30 | Le client Lab est notifie quand un brief est valide/refuse |
-| FR31 | Le client Lab peut voir un teasing de Foxeo One (motivation graduation) |
+| FR31 | Le client Lab peut voir un teasing de MonprojetPro One (motivation graduation) |
 
 ### Lab — Elio Lab (Agent Accompagnement)
 | ID | Functional Requirement |
@@ -384,8 +384,8 @@
 
 ### Architecture — Fondation existante et decisions structurantes
 
-- **Starter Template** : Monorepo Turborepo existant avec Next.js 16.1, React 19, Tailwind CSS 4, TypeScript, Vitest. Packages existants : @foxeo/ui, @foxeo/utils, @foxeo/tsconfig. A ajouter : @supabase/supabase-js ^2.95.x, @supabase/ssr, @tanstack/react-query ^5.90.x, zustand ^5.0.x, react-hook-form ^7.71.x
-- **2 applications Next.js** : apps/hub/ (Foxeo-Hub, operateur MiKL) + apps/client/ (dashboard unifie Lab+One). Deploiement independant : hub.foxeo.io / app.foxeo.io
+- **Starter Template** : Monorepo Turborepo existant avec Next.js 16.1, React 19, Tailwind CSS 4, TypeScript, Vitest. Packages existants : @monprojetpro/ui, @monprojetpro/utils, @monprojetpro/tsconfig. A ajouter : @supabase/supabase-js ^2.95.x, @supabase/ssr, @tanstack/react-query ^5.90.x, zustand ^5.0.x, react-hook-form ^7.71.x
+- **2 applications Next.js** : apps/hub/ (MonprojetPro-Hub, operateur MiKL) + apps/client/ (dashboard unifie Lab+One). Deploiement independant : hub.monprojet-pro.com / app.monprojet-pro.com
 - **15 modules plug & play** avec contrat ModuleManifest strict (id, name, version, navigation, routes, apiRoutes, requiredTables, targets, dependencies). Modules : core-dashboard, chat, elio, documents, visio, crm, notifications, facturation, parcours-lab, validation-hub, agenda, analytics, admin, historique-lab, templates
 - **Multi-tenancy natif** : table operators (MiKL = operator_id: 1), RLS par operator_id + client_id, prepare pour commercialisation du Hub
 - **Configuration-driven** via table client_config (active_modules, dashboard_type, theme_variant, custom_branding, elio_config, parcours_config)
@@ -399,7 +399,7 @@
 - **Tests co-localises** : *.test.ts a cote du fichier source, pas de dossier __tests__ separe
 - **Skeleton loaders obligatoires** par module (loading.tsx), jamais de spinners
 - **Conventions nommage** : DB=snake_case, API/JSON=camelCase, fichiers=kebab-case, composants=PascalCase
-- **Transformation snake_case<->camelCase** a la frontiere DB/API via helper @foxeo/utils
+- **Transformation snake_case<->camelCase** a la frontiere DB/API via helper @monprojetpro/utils
 - **Services des le MVP** : OpenVidu self-hosted (visio+enregistrement+transcription), Cal.com self-hosted (prise de RDV), Pennylane SaaS (facturation, devis, abonnements, compta, conformite facturation electronique sept. 2026)
 - **Monitoring** : Vercel Analytics + Supabase Dashboard + Sentry
 - **Premiere priorite implementation** : 1) Setup monorepo (packages/supabase, packages/types, turbo tasks) 2) Migrations Supabase 3) Module core-dashboard + shell 4) Auth flow 5) Premier module metier
@@ -604,6 +604,6 @@
 | FR165 | Epic 12 (Story 12.7) | Initier upgrade tier instance |
 | FR166 | Epic 9 (Story 9.1) | Graduation provisionne instance dediee |
 | FR167 | Epic 9 (Story 9.1) | Graduation migre donnees Lab vers instance One |
-| FR168 | Epic 9 (Story 9.5) | Lab = propriete Foxeo, client recupere documents |
+| FR168 | Epic 9 (Story 9.5) | Lab = propriete MonprojetPro, client recupere documents |
 | FR169 | Epic 11 (Story 11.5) | Paiement forfait Lab 199€ + activation dashboard Lab |
 | FR170 | Epic 11 (Story 11.5) | Deduction Lab 199€ du setup One si graduation |

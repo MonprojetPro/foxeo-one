@@ -7,7 +7,7 @@ import {
   clearRegistry,
   discoverModules,
 } from './module-registry'
-import type { ModuleManifest } from '@foxeo/types'
+import type { ModuleManifest } from '@monprojetpro/types'
 
 const mockManifest: ModuleManifest = {
   id: 'test-module',

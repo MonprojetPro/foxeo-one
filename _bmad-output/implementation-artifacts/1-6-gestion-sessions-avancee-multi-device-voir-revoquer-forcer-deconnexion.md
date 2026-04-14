@@ -4,7 +4,7 @@ Status: done
 
 ## Story
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **pouvoir voir mes sessions actives et en revoquer, et me connecter simultanement sur plusieurs appareils**,
 So that **j'ai le controle total sur la securite de mon compte**.
 
@@ -305,9 +305,9 @@ Pour la confidentialite, masquer partiellement l'IP :
 // apps/client/app/(dashboard)/settings/sessions/actions.ts
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import type { ActionResponse } from '@foxeo/types'
-import { parseUserAgent, maskIpAddress } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import type { ActionResponse } from '@monprojetpro/types'
+import { parseUserAgent, maskIpAddress } from '@monprojetpro/utils'
 
 interface SessionInfo {
   id: string
@@ -389,8 +389,8 @@ export async function revokeOtherSessionsAction(currentSessionId: string): Promi
 // apps/hub/app/(dashboard)/clients/actions.ts
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import type { ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import type { ActionResponse } from '@monprojetpro/types'
 
 export async function forceDisconnectClientAction(clientId: string): Promise<ActionResponse<null>> {
   const supabase = await createServerSupabaseClient()
@@ -437,7 +437,7 @@ export async function forceDisconnectClientAction(clientId: string): Promise<Act
 - Icone device (Lucide icons : `Monitor`, `Smartphone`, `Tablet`)
 - Nom navigateur + OS
 - IP masquee
-- Date relative (via `formatRelativeDate` de `@foxeo/utils`)
+- Date relative (via `formatRelativeDate` de `@monprojetpro/utils`)
 - Badge "Session courante" (vert)
 - Bouton "Revoquer" (disabled + tooltip si session courante)
 
@@ -446,7 +446,7 @@ export async function forceDisconnectClientAction(clientId: string): Promise<Act
 ```typescript
 // sessions/loading.tsx
 // 3-5 rectangles empiles simulant les cartes session
-// Utiliser les composants Skeleton de @foxeo/ui si disponibles
+// Utiliser les composants Skeleton de @monprojetpro/ui si disponibles
 // Sinon, div avec animate-pulse de Tailwind
 ```
 
@@ -475,11 +475,11 @@ apps/client/app/(dashboard)/settings/
 - `fn_get_operator_by_email()` (00011) — pas besoin pour cette story
 
 **Code existant :**
-- `createServerSupabaseClient()` dans `@foxeo/supabase` — utiliser pour les Server Actions
-- `ActionResponse<T>` dans `@foxeo/types` — type de retour standard
-- `formatRelativeDate()` dans `@foxeo/utils` — si elle existe, sinon la creer (verifier d'abord)
+- `createServerSupabaseClient()` dans `@monprojetpro/supabase` — utiliser pour les Server Actions
+- `ActionResponse<T>` dans `@monprojetpro/types` — type de retour standard
+- `formatRelativeDate()` dans `@monprojetpro/utils` — si elle existe, sinon la creer (verifier d'abord)
 - Pattern `{ data, error }` — respecter pour toutes les Server Actions
-- `toCamelCase()` dans `@foxeo/utils` — transformer les reponses DB
+- `toCamelCase()` dans `@monprojetpro/utils` — transformer les reponses DB
 
 **Pattern de tests existant :**
 - `supabase/migrations/migrations.test.ts` — ajouter 00013
@@ -499,7 +499,7 @@ apps/client/app/(dashboard)/settings/
 
 6. **Pas de UI Hub dans cette story** : L'Epic 2 (CRM) amenera la fiche client avec le bouton "Forcer deconnexion". Ici on prepare uniquement le Server Action + SQL.
 
-7. **`formatRelativeDate`** : Verifier si cette fonction existe dans `@foxeo/utils`. Si non, la creer (Story 1.8 la couvre aussi pour l'UX transversale, mais on en a besoin ici pour l'affichage des dates de session).
+7. **`formatRelativeDate`** : Verifier si cette fonction existe dans `@monprojetpro/utils`. Si non, la creer (Story 1.8 la couvre aussi pour l'UX transversale, mais on en a besoin ici pour l'affichage des dates de session).
 
 ### Naming Conventions — RESPECTER
 
@@ -556,7 +556,7 @@ supabase/migrations/migrations.test.ts       # ← MODIFIER (ajouter 00013)
 ### References
 
 - [Source: _bmad-output/planning-artifacts/epics/epic-1-fondation-plateforme-authentification-stories-detaillees.md — Story 1.6]
-- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md — FR112, FR113, FR114]
+- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md — FR112, FR113, FR114]
 - [Source: _bmad-output/planning-artifacts/architecture/03-core-decisions.md — Authentication & Security, Triple couche]
 - [Source: _bmad-output/planning-artifacts/architecture/04-implementation-patterns.md — Naming Patterns, Structure Patterns, API Response Format]
 - [Source: docs/project-context.md — 3 patterns data fetching, ActionResponse, Auth triple couche]
@@ -639,7 +639,7 @@ Claude Opus 4.6
 |----|----------|-------------|--------|
 | H1 | HIGH | `getSession()` used without safety comment — reads JWT from cookies without server validation | FIXED — added safety documentation comment |
 | H2 | HIGH | `revokeSessionAction` and `revokeOtherSessionsAction` missing `getUser()` auth check | FIXED — added `getUser()` validation |
-| H3 | HIGH | `SessionInfo` type in `@foxeo/utils` instead of `@foxeo/types` | FIXED — moved to `@foxeo/types/auth.types.ts`, re-exported from utils |
+| H3 | HIGH | `SessionInfo` type in `@monprojetpro/utils` instead of `@monprojetpro/types` | FIXED — moved to `@monprojetpro/types/auth.types.ts`, re-exported from utils |
 | M1 | MEDIUM | Toast memory leak — `setTimeout` not cleaned up on unmount | FIXED — added `useRef` + `useEffect` cleanup |
 | M2 | MEDIUM | `fn_get_user_sessions` returns JSON instead of SETOF — forces manual casts | DOCUMENTED — acceptable limitation |
 | M3 | MEDIUM | No UI component tests for session-card, session-list | DEFERRED — needs testing-library, AC6 scope is Server Actions |
@@ -650,7 +650,7 @@ Claude Opus 4.6
 
 **Created:**
 - `supabase/migrations/00013_session_management.sql` — 4 SECURITY DEFINER functions for session management
-- `packages/utils/src/parse-user-agent.ts` — parseUserAgent(), maskIpAddress(), re-exports types from @foxeo/types
+- `packages/utils/src/parse-user-agent.ts` — parseUserAgent(), maskIpAddress(), re-exports types from @monprojetpro/types
 - `packages/utils/src/parse-user-agent.test.ts` — 28 tests for UA parsing
 - `apps/client/app/(dashboard)/settings/sessions/actions.ts` — 3 Server Actions (get, revoke, revokeOthers)
 - `apps/client/app/(dashboard)/settings/sessions/jwt-decode.ts` — Minimal JWT payload decoder

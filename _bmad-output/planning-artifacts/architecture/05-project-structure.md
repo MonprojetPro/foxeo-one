@@ -4,12 +4,12 @@
 
 ---
 
-_Structure validée après revue Party Mode (Amelia, Murat, Sally, John) — 06/02/2026. Ajustements intégrés : packages/supabase partagé, actions métier uniquement dans modules, tout passe par le module registry (pas de routes statiques), fixtures de test, themes/assets dans @foxeo/ui._
+_Structure validée après revue Party Mode (Amelia, Murat, Sally, John) — 06/02/2026. Ajustements intégrés : packages/supabase partagé, actions métier uniquement dans modules, tout passe par le module registry (pas de routes statiques), fixtures de test, themes/assets dans @monprojetpro/ui._
 
 ### Complete Project Directory Structure
 
 ```
-foxeo-dash/
+monprojetpro-dash/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml                          # Lint + TypeScript + Tests + Build
@@ -71,8 +71,8 @@ foxeo-dash/
 │   │   └── package.json
 │   │
 │   └── client/                              # FOXEO-CLIENT (template — déployé Lab multi-tenant + One par client)
-│       │                                    # Lab: lab.foxeo.io (1 deployment, DB partagée)
-│       │                                    # One: {slug}.foxeo.io (1 deployment par client, DB dédiée)
+│       │                                    # Lab: lab.monprojet-pro.com (1 deployment, DB partagée)
+│       │                                    # One: {slug}.monprojet-pro.com (1 deployment par client, DB dédiée)
 │       ├── app/
 │       │   ├── (auth)/
 │       │   │   ├── login/
@@ -107,7 +107,7 @@ foxeo-dash/
 │       └── package.json
 │
 ├── packages/
-│   ├── ui/                                   # @foxeo/ui — Design system partagé
+│   ├── ui/                                   # @monprojetpro/ui — Design system partagé
 │   │   ├── src/
 │   │   │   ├── index.ts                      # Barrel export
 │   │   │   ├── globals.css                   # Variables CSS base + imports themes
@@ -146,7 +146,7 @@ foxeo-dash/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   ├── supabase/                             # @foxeo/supabase — Client + helpers partagés (Party Mode — Amelia)
+│   ├── supabase/                             # @monprojetpro/supabase — Client + helpers partagés (Party Mode — Amelia)
 │   │   ├── src/
 │   │   │   ├── index.ts                      # Barrel export
 │   │   │   ├── client.ts                     # createBrowserClient()
@@ -161,7 +161,7 @@ foxeo-dash/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   ├── utils/                                # @foxeo/utils — Utilitaires partagés
+│   ├── utils/                                # @monprojetpro/utils — Utilitaires partagés
 │   │   ├── src/
 │   │   │   ├── index.ts
 │   │   │   ├── cn.ts                         # Existant (classnames)
@@ -174,13 +174,13 @@ foxeo-dash/
 │   │   ├── package.json
 │   │   └── tsconfig.json
 │   │
-│   ├── tsconfig/                             # @foxeo/tsconfig — Configs TypeScript
+│   ├── tsconfig/                             # @monprojetpro/tsconfig — Configs TypeScript
 │   │   ├── base.json                         # Existant
 │   │   ├── nextjs.json                       # Existant
 │   │   ├── react-library.json                # Existant
 │   │   └── package.json
 │   │
-│   ├── types/                                # @foxeo/types — Types partagés
+│   ├── types/                                # @monprojetpro/types — Types partagés
 │   │   ├── src/
 │   │   │   ├── index.ts
 │   │   │   ├── database.types.ts             # Généré par `turbo gen:types` (jamais édité à la main)
@@ -344,7 +344,7 @@ foxeo-dash/
 │       │   │   ├── parcours-progress.tsx
 │       │   │   ├── etape-detail.tsx
 │       │   │   ├── brief-submit.tsx
-│       │   │   └── one-teasing.tsx           # Teasing Foxeo One (FR31)
+│       │   │   └── one-teasing.tsx           # Teasing MonprojetPro One (FR31)
 │       │   ├── hooks/
 │       │   │   └── use-parcours.ts
 │       │   ├── actions/
@@ -532,9 +532,9 @@ foxeo-dash/
 
 | Frontière | Direction | Mécanisme |
 |-----------|-----------|-----------|
-| Hub ↔ Supabase Hub | Direct via `@foxeo/supabase` | RLS par operator_id |
-| Lab ↔ Supabase Lab | Direct via `@foxeo/supabase` | RLS par client_id (multi-tenant) |
-| One ↔ Supabase One | Direct via `@foxeo/supabase` | Single-tenant (DB dédiée client) |
+| Hub ↔ Supabase Hub | Direct via `@monprojetpro/supabase` | RLS par operator_id |
+| Lab ↔ Supabase Lab | Direct via `@monprojetpro/supabase` | RLS par client_id (multi-tenant) |
+| One ↔ Supabase One | Direct via `@monprojetpro/supabase` | Single-tenant (DB dédiée client) |
 | **Hub ↔ Instance One** | **API REST + webhooks signés (HMAC)** | **Pas de DB partagée — communication API uniquement** |
 | **Hub ↔ Lab** | **API REST + webhooks signés (HMAC)** | **Même pattern que One pour cohérence** |
 | Hub ↔ Pennylane | Proxy via Server Actions (dans module facturation) + Edge Function polling (sync cron 5min) | Bearer token dans Supabase Vault |
@@ -625,7 +625,7 @@ Elles ne contiennent AUCUNE logique métier.
 │              │     Server Action          │              │
 │              │ ──────────────────────── ► │  (modules/)  │
 │              │                           │              │
-│  TanStack    │     Realtime (WS)         │  @foxeo/     │
+│  TanStack    │     Realtime (WS)         │  @monprojetpro/     │
 │  Query Cache │ ◄──────────────────────── │  supabase    │
 │              │                           │              │
 │  Zustand     │     (UI state only)       │              │
@@ -658,12 +658,12 @@ Inter-instances (API REST signées HMAC):
 
 ```
 apps/hub ──────┐
-               ├──► @foxeo/supabase ──► @supabase/supabase-js, @supabase/ssr
+               ├──► @monprojetpro/supabase ──► @supabase/supabase-js, @supabase/ssr
 apps/client ───┤                        @tanstack/react-query
-               ├──► @foxeo/ui ─────────► tailwindcss, @radix-ui/*
-               ├──► @foxeo/utils ──────► zod
-               ├──► @foxeo/types ──────► (types purs, pas de runtime)
-               └──► @foxeo/modules/* ──► (chaque module importe ui, utils, types, supabase)
+               ├──► @monprojetpro/ui ─────────► tailwindcss, @radix-ui/*
+               ├──► @monprojetpro/utils ──────► zod
+               ├──► @monprojetpro/types ──────► (types purs, pas de runtime)
+               └──► @monprojetpro/modules/* ──► (chaque module importe ui, utils, types, supabase)
 
-@foxeo/tsconfig ──► (extend par tous les packages)
+@monprojetpro/tsconfig ──► (extend par tous les packages)
 ```

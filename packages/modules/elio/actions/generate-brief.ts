@@ -1,8 +1,8 @@
 'use server'
 
 import Anthropic from '@anthropic-ai/sdk'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { toCommunicationProfile, type CommunicationProfileDB } from '../types/communication-profile.types'
 import { getElioConfig } from './get-elio-config'
 import { DEFAULT_ELIO_CONFIG } from '../types/elio-config.types'
@@ -165,7 +165,7 @@ function buildGenerateBriefPrompt(input: BuildPromptInput): string {
     ? `**Extrait de la conversation avec le client :**\n${conversationContext}`
     : '**Contexte :** Aucune conversation disponible — génère un brief basé sur le template et la description de l\'étape.'
 
-  return `Tu es Élio, l'assistant IA personnel du client dans son parcours Foxeo Lab.
+  return `Tu es Élio, l'assistant IA personnel du client dans son parcours MonprojetPro Lab.
 
 Le client est à l'étape ${stepNumber} : "${stepTitle}".
 Description de l'étape : ${stepDescription}

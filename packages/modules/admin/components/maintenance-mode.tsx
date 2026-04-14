@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { useMaintenanceConfig } from '../hooks/use-maintenance'
 import { toggleMaintenanceMode } from '../actions/toggle-maintenance'
 

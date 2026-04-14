@@ -13,7 +13,7 @@ import {
   Checkbox,
   Alert,
   AlertDescription,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { updateIaConsentAction } from './actions'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'

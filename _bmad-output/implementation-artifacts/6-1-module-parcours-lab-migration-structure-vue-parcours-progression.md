@@ -163,9 +163,9 @@ CREATE POLICY parcours_steps_select_operator ON parcours_steps FOR SELECT
 ```typescript
 // actions/complete-step.ts
 'use server'
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse, errorResponse } from '@monprojetpro/types'
 
 export async function completeStep(stepId: string): Promise<ActionResponse<{ nextStepUnlocked: boolean }>> {
   const supabase = await createServerSupabaseClient()
@@ -252,7 +252,7 @@ export async function completeStep(stepId: string): Promise<ActionResponse<{ nex
 // components/parcours-timeline.tsx
 'use client'
 import { ParcoursStepCard } from './parcours-step-card'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 
 export function ParcoursTimeline({ steps }: { steps: ParcoursStep[] }) {
   return (
@@ -359,7 +359,7 @@ Claude Opus 4.6
 
 - Migration : fichier `00037` (00034-00036 déjà pris par stories précédentes). Trigger `fn_update_updated_at()` utilisé (pas `update_updated_at_column`).
 - `completeStep` : mock Supabase complexe — le test "allows completing when validation_required is false" retourne une erreur INTERNAL_ERROR (mock incomplet du chaînage) mais le comportement attendu (pas VALIDATION_REQUIRED) est bien vérifié. Test passe.
-- Composants `ParcoursStepCard` et `ParcoursTimeline` : mock `next/navigation` requis pour `useRouter()` dans les tests unitaires (pattern Foxeo standard).
+- Composants `ParcoursStepCard` et `ParcoursTimeline` : mock `next/navigation` requis pour `useRouter()` dans les tests unitaires (pattern MonprojetPro standard).
 
 ### Completion Notes List
 
@@ -373,7 +373,7 @@ Claude Opus 4.6
 - [LOW] Progress bar 100% sans feedback visuel — cosmétique, reporté
 
 - **Migration 00037** : Table `parcours_steps` créée avec tous les champs requis, 2 index, trigger `fn_update_updated_at`, 4 policies RLS (select + update pour owner et operator), fonction PLPGSQL `create_parcours_steps_from_template()`.
-- **Module parcours** : Nouveau module `@foxeo/module-parcours` complet — manifest, index barrel, types Zod + interfaces, 4 server actions, 2 hooks TanStack Query, 5 composants UI avec skeleton loaders, 3 docs.
+- **Module parcours** : Nouveau module `@monprojetpro/module-parcours` complet — manifest, index barrel, types Zod + interfaces, 4 server actions, 2 hooks TanStack Query, 5 composants UI avec skeleton loaders, 3 docs.
 - **Progression calculée** : `getParcours` retourne `ParcoursWithSteps` avec `totalSteps`, `completedSteps`, `progressPercent` calculés côté serveur.
 - **Navigation AC4** : `ParcoursStepCard` gère les 3 comportements (clic current → redirect, locked → title tooltip, completed → redirect lecture seule).
 - **Logique AC5** : `completeStep` vérifie `validation_required`, marque `completed`, unlock suivante (`current`). Si dernière étape → `parcours.completed_at` + notifications client + opérateur.

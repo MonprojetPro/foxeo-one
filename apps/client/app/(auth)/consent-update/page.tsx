@@ -1,6 +1,6 @@
 'use client'
 
-import { Button, Alert, AlertDescription } from '@foxeo/ui'
+import { Button, Alert, AlertDescription } from '@monprojetpro/ui'
 import { useState } from 'react'
 import { updateCguConsentAction } from './actions'
 import { toast } from 'sonner'
@@ -34,7 +34,7 @@ export default function ConsentUpdatePage() {
             Mise à jour de nos Conditions Générales d'Utilisation
           </h1>
           <p className="text-muted-foreground">
-            Pour continuer à utiliser Foxeo, veuillez accepter la nouvelle
+            Pour continuer à utiliser MonprojetPro, veuillez accepter la nouvelle
             version de nos CGU.
           </p>
         </div>

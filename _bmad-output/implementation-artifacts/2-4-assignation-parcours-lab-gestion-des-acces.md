@@ -182,8 +182,8 @@ const parcours = {
 **Server Action pattern** (copier depuis `get-clients.ts`) :
 ```typescript
 'use server'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 
 export async function assignParcours(input: AssignParcoursInput): Promise<ActionResponse<Parcours>> {
   try {
@@ -203,7 +203,7 @@ export async function assignParcours(input: AssignParcoursInput): Promise<Action
 ```typescript
 'use client'
 import { useQuery } from '@tanstack/react-query'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 
 export function useClientParcours(clientId: string) {
   return useQuery({
@@ -282,7 +282,7 @@ Référence : `_bmad-output/planning-artifacts/prd/systme-de-parcours-flexibles.
 - **Dialog** : Utiliser `<Dialog>` de shadcn/ui pour AssignParcoursDialog
 - **Toggle** : Utiliser `<Switch>` de shadcn/ui pour accès Lab/One
 - **Badge** : Utiliser `<Badge>` pour statut parcours avec couleurs contextuelles
-- **Toast** : Via le système toast existant de `@foxeo/ui`
+- **Toast** : Via le système toast existant de `@monprojetpro/ui`
 
 ### Dépendances avec autres stories
 

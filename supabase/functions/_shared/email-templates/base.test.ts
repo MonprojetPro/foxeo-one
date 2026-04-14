@@ -17,10 +17,10 @@ describe('baseTemplate', () => {
     const html = baseTemplate({
       title: 'T',
       body: 'B',
-      ctaUrl: 'https://foxeo.io/dashboard',
+      ctaUrl: 'https://monprojet-pro.com/dashboard',
       ctaText: 'Voir le tableau de bord',
     })
-    expect(html).toContain('https://foxeo.io/dashboard')
+    expect(html).toContain('https://monprojet-pro.com/dashboard')
     expect(html).toContain('Voir le tableau de bord')
     expect(html).toContain('<a href=')
   })
@@ -37,9 +37,9 @@ describe('baseTemplate', () => {
     expect(html).toContain('Se désabonner')
   })
 
-  it('should include Foxeo logo', () => {
+  it('should include MonprojetPro logo', () => {
     const html = baseTemplate({ title: 'T', body: 'B' })
-    expect(html).toContain('foxeo.biz/logo.png')
+    expect(html).toContain('monprojetpro.biz/logo.png')
   })
 
   it('should escape HTML in title to prevent XSS', () => {

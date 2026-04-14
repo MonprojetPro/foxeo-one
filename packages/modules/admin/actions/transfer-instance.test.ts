@@ -66,7 +66,7 @@ const mockFrom = vi.fn((table: string) => {
 const mockGetUser = vi.fn()
 const mockFunctionsInvoke = vi.fn().mockResolvedValue({ error: null })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },

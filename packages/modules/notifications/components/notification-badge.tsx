@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Bell } from 'lucide-react'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { useUnreadCount } from '../hooks/use-unread-count'
 import { useNotificationsRealtime } from '../hooks/use-notifications-realtime'
 import { NotificationCenter } from './notification-center'

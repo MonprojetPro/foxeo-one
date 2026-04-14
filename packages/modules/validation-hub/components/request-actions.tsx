@@ -1,7 +1,7 @@
 'use client'
 
 import { CheckCircle, XCircle, HelpCircle, ChevronDown } from 'lucide-react'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import type { ValidationRequestStatus } from '../types/validation.types'
 
 type RequestActionsProps = {

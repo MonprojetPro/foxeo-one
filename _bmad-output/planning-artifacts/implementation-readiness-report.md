@@ -10,7 +10,7 @@ documentsUsed:
       - "prd/index.md"
       - "prd/executive-summary.md"
       - "prd/product-scope.md"
-      - "prd/functional-requirements-foxeo-plateforme.md"
+      - "prd/functional-requirements-monprojetpro-plateforme.md"
       - "prd/non-functional-requirements.md"
       - "prd/domain-specific-requirements.md"
       - "prd/saas-b2b-specific-requirements.md"
@@ -52,19 +52,19 @@ documentsUsed:
     type: "whole"
     path: "ux-design-specification.md"
   supplementary:
-    - "foxeo-modules-commerciaux.md"
+    - "monprojetpro-modules-commerciaux.md"
     - "modules-et-stack-technique.md"
     - "orpheus-integration-notes.md"
     - "ui-resources.md"
-    - "foxeo-identite-strategie.md"
-    - "foxeo-identite-strategie-retour.md"
+    - "monprojetpro-identite-strategie.md"
+    - "monprojetpro-identite-strategie-retour.md"
   majorUpdate: "2026-02-08 — Passage architecture instance par client (One), 16 nouveaux FRs (FR153-168), nomenclature offres mise a jour"
 ---
 
 # Implementation Readiness Assessment Report
 
 **Date:** 2026-02-08
-**Project:** foxeo-dash
+**Project:** monprojetpro-dash
 
 ## Step 1: Document Discovery
 
@@ -96,7 +96,7 @@ documentsUsed:
 |-----------|-----|-------|
 | Hub — Gestion Clients | FR1-FR7 | 7 |
 | Hub — Validation Hub | FR8-FR14 | 7 |
-| Orpheus — Cerveau Foxeo | FR15-FR20d | 9 |
+| Orpheus — Cerveau MonprojetPro | FR15-FR20d | 9 |
 | Hub — Elio Hub | FR21-FR25 | 5 |
 | Lab — Parcours Creation | FR26-FR31 | 6 |
 | Lab — Elio Lab | FR32-FR37 | 6 |
@@ -135,10 +135,10 @@ documentsUsed:
 | Documentation comme Livrable | FR158-FR161 | 4 |
 | Surveillance Usage & Upgrade | FR162-FR165 | 4 |
 | Graduation Instance Dediee | FR166-FR167 | 2 |
-| Lab — Propriete Foxeo | FR168 | 1 |
+| Lab — Propriete MonprojetPro | FR168 | 1 |
 | **TOTAL** | **FR1-FR168** | **168** |
 
-Source: `prd/functional-requirements-foxeo-plateforme.md`
+Source: `prd/functional-requirements-monprojetpro-plateforme.md`
 
 ### Non-Functional Requirements (39 NFRs)
 
@@ -182,7 +182,7 @@ Source: `prd/non-functional-requirements.md`
 - Conformite RGPD complete (minimisation, acces, effacement, portabilite, notification breach 72h)
 
 **Contraintes techniques LLM** (source: `prd/stack-llm-cots-ia.md`):
-- Orpheus : Claude (via BMAD dans Cursor) — hors perimetre Foxeo
+- Orpheus : Claude (via BMAD dans Cursor) — hors perimetre MonprojetPro
 - Elio Hub/Lab/One : DeepSeek V3.2 via Supabase Edge Functions
 - Cout IA estimes : ~2.30eur/mois (MVP) a ~30eur/mois (50 clients)
 
@@ -229,9 +229,9 @@ Source: `prd/non-functional-requirements.md`
 | Epic 12 | Administration, Analytics, Templates & Monitoring | FR102-FR105, FR115-FR116, FR120-FR121, FR137-FR138, FR147-FR148, FR156, FR158, FR162-FR165 | 18 |
 | **TOTAL en epics** | | | **162** |
 
-### FRs hors perimetre Foxeo (Orpheus — Cursor/BMAD)
+### FRs hors perimetre MonprojetPro (Orpheus — Cursor/BMAD)
 
-Le PRD note explicitement : *"Orpheus n'est PAS dans Foxeo. Il travaille avec MiKL dans Cursor et genere des documents sources pour alimenter les Elio."*
+Le PRD note explicitement : *"Orpheus n'est PAS dans MonprojetPro. Il travaille avec MiKL dans Cursor et genere des documents sources pour alimenter les Elio."*
 
 | FR | Description | Statut |
 |----|-------------|--------|
@@ -240,14 +240,14 @@ Le PRD note explicitement : *"Orpheus n'est PAS dans Foxeo. Il travaille avec Mi
 | FR17 | Orpheus peut detecter le profil de communication | Hors perimetre |
 | FR18 | Orpheus peut recommander un type de parcours Lab | Hors perimetre |
 | FR19 | Orpheus peut generer une config Elio (client_config.yaml) | Hors perimetre |
-| FR20 | Orpheus accumule les apprentissages metier Foxeo | Hors perimetre |
+| FR20 | Orpheus accumule les apprentissages metier MonprojetPro | Hors perimetre |
 | FR20b | Orpheus peut generer des estimations prix | Hors perimetre |
 | FR20c | Orpheus peut generer des docs techniques | Hors perimetre |
 | FR20d | Orpheus peut retravailler docs brainstorming Lab | Hors perimetre |
 
 ### FRs manquants dans les epics
 
-**Aucun FR manquant.** Tous les 146 FRs dans le perimetre Foxeo sont couverts par au moins un epic.
+**Aucun FR manquant.** Tous les 146 FRs dans le perimetre MonprojetPro sont couverts par au moins un epic.
 
 ### Doublons de couverture
 
@@ -259,12 +259,12 @@ Aucun FR n'apparait dans plusieurs epics — chaque FR est assigne a exactement 
 |----------|--------|
 | Total FRs dans le PRD | 168 (incluant FR20b/c/d) |
 | FRs Orpheus (hors perimetre) | 9 |
-| FRs in-scope Foxeo | 162 |
+| FRs in-scope MonprojetPro | 162 |
 | FRs couverts dans epics | 162 |
 | FRs manquants | 0 |
 | **Couverture** | **100%** |
 
-**Evaluation : COUVERTURE COMPLETE** — Tous les 162 FRs dans le perimetre de Foxeo (dont les 16 nouveaux FR153-168 pour la propriete client, documentation livrable et surveillance usage) sont traces vers un epic. Les 9 FRs Orpheus sont legitimement exclus car ils operent dans Cursor/BMAD, pas dans la plateforme Foxeo.
+**Evaluation : COUVERTURE COMPLETE** — Tous les 162 FRs dans le perimetre de MonprojetPro (dont les 16 nouveaux FR153-168 pour la propriete client, documentation livrable et surveillance usage) sont traces vers un epic. Les 9 FRs Orpheus sont legitimement exclus car ils operent dans Cursor/BMAD, pas dans la plateforme MonprojetPro.
 
 ---
 
@@ -306,7 +306,7 @@ Aucun FR n'apparait dans plusieurs epics — chaque FR est assigne a exactement 
 
 | # | Ecart | Severite | Recommandation |
 |---|-------|----------|----------------|
-| W1 | **Nomenclature residuelle** : UX utilise encore "Foxeo-Outil" dans la section "Core User Experience" (lignes 89-91) | Faible | Corriger les references obsoletes dans le doc UX |
+| W1 | **Nomenclature residuelle** : UX utilise encore "MonprojetPro-Outil" dans la section "Core User Experience" (lignes 89-91) | Faible | Corriger les references obsoletes dans le doc UX |
 | W2 | **Visio : outil divergent** : UX mentionne "Daily.co/Whereby" (ligne 177) mais Architecture confirme **OpenVidu** (self-hosted). Le flux onboarding (ligne 521) utilise bien OpenVidu | Faible | Mettre a jour la reference dans le Communication Kit du UX |
 | W3 | **Stockage fichiers** : UX mentionne "Google Drive Workspace" (ligne 506) — en realite les deux solutions coexistent : Supabase Storage pour les fichiers clients (RLS) et Google Drive Workspace pour le backup BMAD/Cursor de MiKL | Resolu | Pas d'ecart — les deux usages sont complementaires et documentes dans l'architecture |
 | ~~W4~~ | ~~**Wireframes manquants**~~ | ~~Resolu~~ | 21 wireframes Excalidraw existent deja (9 Hub + 7 Lab + 5 One). Le TODO dans le doc UX n'avait pas ete mis a jour |
@@ -433,14 +433,14 @@ Les 12 epics et 79 stories respectent les standards de qualite du workflow creat
 
 | # | Action | Priorite | Qui |
 |---|--------|----------|-----|
-| 1 | **Corriger 2 references UX obsoletes** : "Foxeo-Outil" → "Foxeo-One" (ligne 91) et "Daily.co/Whereby" → "OpenVidu" (ligne 177) | Faible | Peut etre fait en sprint |
+| 1 | **Corriger 2 references UX obsoletes** : "MonprojetPro-Outil" → "MonprojetPro-One" (ligne 91) et "Daily.co/Whereby" → "OpenVidu" (ligne 177) | Faible | Peut etre fait en sprint |
 | 2 | **Confirmer palettes couleurs finales** : Le design-system-themes.css existe, affiner si besoin pour le style Minimal Futuriste | Faible | A confirmer |
 
 ### Points forts identifies
 
 - **PRD extremement detaille** : 168 FRs numerotes avec categorisation claire, 39 NFRs avec seuils mesurables
 - **Architecture solide** : Stack technique bien definie (Next.js, Supabase, Turborepo), modele dual (Lab multi-tenant + One instance par client), patterns architecturaux documentes
-- **Modele de propriete client clair** : Le client One possede son outil — code, donnees, documentation. Foxeo conserve le droit de reutiliser les patterns.
+- **Modele de propriete client clair** : Le client One possede son outil — code, donnees, documentation. MonprojetPro conserve le droit de reutiliser les patterns.
 - **Stories implementation-ready** : Acceptance criteria au format Given/When/Then avec types TypeScript, structures de fichiers et patterns specifiques — les agents dev peuvent implementer directement
 - **Tracabilite complete** : Chaque FR est assigne a exactement 1 epic, chaque story reference ses FRs sources
 - **Contraintes de qualite integrees** : Tests unitaires, nettoyage code, revue qualite, documentation obligatoire par module inclus dans les contraintes de dev
@@ -451,7 +451,7 @@ Les 12 epics et 79 stories respectent les standards de qualite du workflow creat
 |--------|-----------|
 | Epic 8 (Agents IA Elio) est le plus gros (25 FRs, 9 stories) | Decouvrir des sous-stories si necessaire pendant le sprint |
 | Integration services (OpenVidu, Cal.com self-hosted + Pennylane SaaS) | VPS Docker Compose (OpenVidu, Cal.com) + Pennylane API v2 config a preparer en parallele du dev |
-| Graduation (Epic 9) necessite provisioning d'instance (Supabase + Vercel) | Script foxeo-cli provision a developper et tester tot |
+| Graduation (Epic 9) necessite provisioning d'instance (Supabase + Vercel) | Script monprojetpro-cli provision a developper et tester tot |
 | Communication Hub↔Instances via API REST | Definir le contrat API HMAC tot (Epic 1) pour que les epics suivants puissent l'utiliser |
 | Cout par client One sur tiers gratuits (~5-7eur/mois) | Monitoring seuils (FR162-165) et workflow upgrade planifie |
 | Stories existantes (9.1, 9.5, 12.1, 12.4) impactees par le changement architectural | Notes d'impact ajoutees dans epics.md — adapter les ACs lors du sprint planning |
@@ -462,7 +462,7 @@ Cette evaluation a analyse **6 documents de planification** (PRD sharde 25 fichi
 
 **Mise a jour majeure du 08/02/2026** : Passage du modele multi-tenant pur vers un modele dual (Lab multi-tenant + One instance par client). 16 nouveaux FRs (FR153-168), nomenclature offres mise a jour (Ponctuel/Lab/Essentiel/Agentique), nommage Elio mis a jour (One/One+). Architecture, PRD, epics et identite/strategie tous mis a jour pour refleter ce changement.
 
-**Le projet foxeo-dash est pret pour l'implementation (Phase 4).** Les artefacts de planification sont complets, alignes et conformes aux best practices. Les observations mineures sont toutes documentaires et ne bloquent pas le demarrage du developpement. Les 21 wireframes Excalidraw, le design-system-themes.css et les 79+ stories avec ACs detailles sont prets pour l'implementation.
+**Le projet monprojetpro-dash est pret pour l'implementation (Phase 4).** Les artefacts de planification sont complets, alignes et conformes aux best practices. Les observations mineures sont toutes documentaires et ne bloquent pas le demarrage du developpement. Les 21 wireframes Excalidraw, le design-system-themes.css et les 79+ stories avec ACs detailles sont prets pour l'implementation.
 
 **Prochaine action recommandee** : Lancer le workflow `sprint-planning` pour generer le fichier sprint-status.yaml et commencer l'implementation de l'Epic 1. Porter une attention particuliere aux notes d'impact dans le document epics.md pour les stories impactees par le changement architectural.
 

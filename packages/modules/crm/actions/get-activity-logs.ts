@@ -1,17 +1,49 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { ActivityLog as ActivityLogSchema } from '../types/crm.types'
 import type { ActivityLog } from '../types/crm.types'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const PAGE_SIZE = 20
+
+const ACTION_DESCRIPTIONS: Record<string, string> = {
+  client_created: 'Client créé dans le CRM',
+  document_uploaded: 'Document importé',
+  client_graduated: 'Graduation vers le dashboard One',
+  client_archived: 'Client archivé',
+  client_suspended: 'Client suspendu',
+  client_reactivated: 'Client réactivé',
+  client_closed: 'Client clôturé',
+  client_upgraded: 'Type de client mis à jour',
+  parcours_assigned: 'Parcours Lab assigné',
+  parcours_suspended: 'Parcours suspendu',
+  parcours_reactivated: 'Parcours réactivé',
+  module_toggled: 'Module activé ou désactivé',
+  tier_changed: 'Tier d\'abonnement modifié',
+  branding_updated: 'Branding One personnalisé',
+  elio_doc_injected: 'Documentation injectée dans Élio',
+  documents_synced: 'Documents synchronisés (ZIP)',
+  csv_import: 'Import CSV effectué',
+  quote_created: 'Devis créé',
+  quote_converted: 'Devis converti en facture',
+  subscription_created: 'Abonnement créé',
+  credit_note_created: 'Avoir créé',
+  lab_invoice_sent: 'Facture Lab envoyée',
+}
+
+function deriveDescription(action: string, metadata: Record<string, unknown> | null): string {
+  if (metadata?.description && typeof metadata.description === 'string') {
+    return metadata.description
+  }
+  return ACTION_DESCRIPTIONS[action] ?? action
+}
 
 export async function getActivityLogs(
   clientId: string,
@@ -39,14 +71,17 @@ export async function getActivityLogs(
       .select(
         `
         id,
-        client_id,
-        event_type,
-        event_data,
-        description,
+        actor_type,
+        actor_id,
+        action,
+        entity_type,
+        entity_id,
+        metadata,
         created_at
       `
       )
-      .eq('client_id', clientId)
+      .eq('entity_id', clientId)
+      .eq('entity_type', 'client')
       .order('created_at', { ascending: false })
       .range(offset, offset + PAGE_SIZE)
 
@@ -63,14 +98,14 @@ export async function getActivityLogs(
       return successResponse([])
     }
 
-    // Transform snake_case DB fields to camelCase with Zod validation
+    // Transform DB columns to ActivityLog shape
     const logs: ActivityLog[] = data.map((log) =>
       ActivityLogSchema.parse({
         id: log.id,
-        clientId: log.client_id,
-        eventType: log.event_type,
-        eventData: log.event_data ?? undefined,
-        description: log.description,
+        clientId: clientId,
+        eventType: log.action,
+        eventData: (log.metadata as Record<string, unknown>) ?? undefined,
+        description: deriveDescription(log.action, log.metadata as Record<string, unknown> | null),
         createdAt: log.created_at,
       })
     )

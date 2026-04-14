@@ -13,7 +13,7 @@
 'use client'
 
 import { useContext } from 'react'
-import { t as translateFn } from '@foxeo/utils'
+import { t as translateFn } from '@monprojetpro/utils'
 import { LocaleContext } from '../providers/locale-provider'
 
 export function useTranslations(namespace?: string) {

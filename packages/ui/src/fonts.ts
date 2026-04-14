@@ -1,5 +1,5 @@
 /**
- * @foxeo/ui - Font configuration constants
+ * @monprojetpro/ui - Font configuration constants
  *
  * next/font/google can only be initialized in Next.js app code.
  * This file exports font variable names and config for consistency

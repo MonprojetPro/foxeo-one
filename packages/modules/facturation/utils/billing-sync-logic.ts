@@ -154,7 +154,7 @@ export const LAB_INVOICE_TAG = '[FOXEO_LAB]'
 export const LAB_AMOUNT_CENTS = 19900
 
 /**
- * Retourne true si la facture est identifiée comme une facture Lab Foxeo.
+ * Retourne true si la facture est identifiée comme une facture Lab MonprojetPro.
  */
 export function isLabInvoice(pdfFreeText: string | null | undefined): boolean {
   return typeof pdfFreeText === 'string' && pdfFreeText.includes(LAB_INVOICE_TAG)

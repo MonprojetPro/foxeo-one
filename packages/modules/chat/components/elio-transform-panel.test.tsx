@@ -2,12 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { ElioTransformPanel } from './elio-transform-panel'
 
-vi.mock('@foxeo/module-elio', () => ({
+vi.mock('@monprojetpro/module-elio', () => ({
   transformMessageForClient: vi.fn(),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     Sheet: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
@@ -19,7 +19,7 @@ vi.mock('@foxeo/ui', async (importOriginal) => {
   }
 })
 
-import { transformMessageForClient } from '@foxeo/module-elio'
+import { transformMessageForClient } from '@monprojetpro/module-elio'
 const mockTransform = vi.mocked(transformMessageForClient)
 
 const defaultProps = {

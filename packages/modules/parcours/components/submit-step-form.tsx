@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
-import { Button, Textarea, showSuccess, showError } from '@foxeo/ui'
+import { Button, Textarea, showSuccess, showError } from '@monprojetpro/ui'
 import { SubmissionFileUpload } from './submission-file-upload'
 import { submitStep } from '../actions/submit-step'
 

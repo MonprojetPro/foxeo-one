@@ -5,7 +5,7 @@ const mockSingle = vi.fn()
 const mockFrom = vi.fn()
 const mockInvoke = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({ data: { user: { id: 'op-id' } }, error: null })),
@@ -22,15 +22,15 @@ const CLIENT_STUB = {
   created_at: '2026-01-15T10:00:00Z',
   graduated_at: '2026-03-01T10:00:00Z',
   client_configs: [{ dashboard_type: 'one', active_modules: ['core-dashboard'] }],
-  client_instances: [{ instance_url: 'https://jean.foxeo.io', active_modules: ['core-dashboard', 'chat'], tier: 'essentiel' }],
+  client_instances: [{ instance_url: 'https://jean.monprojet-pro.com', active_modules: ['core-dashboard', 'chat'], tier: 'essentiel' }],
   step_submissions: [{ id: 'sub-1' }, { id: 'sub-2' }, { id: 'sub-3' }],
 }
 
 describe('interpolateTemplate', () => {
   it('remplace les variables {{key}} par leurs valeurs', () => {
     const template = 'Bonjour {{clientName}}, bienvenue dans {{product}} !'
-    const result = interpolateTemplate(template, { clientName: 'Marie', product: 'Foxeo One' })
-    expect(result).toBe('Bonjour Marie, bienvenue dans Foxeo One !')
+    const result = interpolateTemplate(template, { clientName: 'Marie', product: 'MonprojetPro One' })
+    expect(result).toBe('Bonjour Marie, bienvenue dans MonprojetPro One !')
   })
 
   it('préserve {{key}} si la variable est absente', () => {

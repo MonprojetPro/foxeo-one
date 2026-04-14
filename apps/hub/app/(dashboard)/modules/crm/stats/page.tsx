@@ -1,4 +1,4 @@
-import { getPortfolioStats, getGraduationRate, getTimePerClient } from '@foxeo/modules-crm'
+import { getPortfolioStats, getGraduationRate, getTimePerClient } from '@monprojetpro/modules-crm'
 import { StatsPageClient } from './stats-page-client'
 
 export default async function StatsPage() {

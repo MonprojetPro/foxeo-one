@@ -2,7 +2,7 @@
 
 ## Vue d'Ensemble
 
-Ce document décrit le flux complet depuis le premier contact avec un prospect jusqu'à son accès au dashboard Foxeo.
+Ce document décrit le flux complet depuis le premier contact avec un prospect jusqu'à son accès au dashboard MonprojetPro.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -65,10 +65,10 @@ Ce document décrit le flux complet depuis le premier contact avec un prospect j
 
 | Canal | Destination | Comportement |
 |-------|-------------|--------------|
-| QR Code carte de visite | Cal.com Foxeo | Scan → Page RDV |
-| Lien LinkedIn | Cal.com Foxeo | Clic → Page RDV |
-| Bouton site internet | Cal.com Foxeo | Clic → Page RDV |
-| MiKL sur mobile | Hub Foxeo | Création manuelle RDV |
+| QR Code carte de visite | Cal.com MonprojetPro | Scan → Page RDV |
+| Lien LinkedIn | Cal.com MonprojetPro | Clic → Page RDV |
+| Bouton site internet | Cal.com MonprojetPro | Clic → Page RDV |
+| MiKL sur mobile | Hub MonprojetPro | Création manuelle RDV |
 
 ### Outil : Cal.com (Self-hosted)
 
@@ -78,7 +78,7 @@ Ce document décrit le flux complet depuis le premier contact avec un prospect j
 - Synchro bidirectionnelle Google Calendar
 - Formulaires personnalisables
 - API pour création de RDV depuis mobile
-- Possibilité de définir un lien de visio custom (notre lien Foxeo/OpenVidu)
+- Possibilité de définir un lien de visio custom (notre lien MonprojetPro/OpenVidu)
 
 **Informations collectées à la prise de RDV :**
 
@@ -91,13 +91,13 @@ Ce document décrit le flux complet depuis le premier contact avec un prospect j
 
 **Après la réservation :**
 - Email de confirmation envoyé au prospect
-- Contient : date/heure, lien visio `visio.foxeo.io/rdv/{room-id}`
-- Webhook Cal.com → Backend Foxeo :
+- Contient : date/heure, lien visio `visio.monprojet-pro.com/rdv/{room-id}`
+- Webhook Cal.com → Backend MonprojetPro :
   - Création fiche prospect dans Supabase
   - Création room OpenVidu unique
   - Génération du lien personnalisé
 
-### Flux Technique Cal.com → Foxeo
+### Flux Technique Cal.com → MonprojetPro
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -116,7 +116,7 @@ Ce document décrit le flux complet depuis le premier contact avec un prospect j
 │                                              │                           │
 │                                              ▼                           │
 │                                       Générer lien                       │
-│                                       visio.foxeo.io/rdv/{id}            │
+│                                       visio.monprojet-pro.com/rdv/{id}            │
 │                                              │                           │
 │  Email confirmation ◀────────────────────────┘                           │
 │  avec lien visio                                                         │
@@ -428,12 +428,12 @@ VISIO TERMINÉE (OpenVidu)
 │                                                                          │
 │  EMAIL REÇU PAR LE CLIENT                                                │
 │  ─────────────────────────                                               │
-│  "Bonjour {Prénom}, [...] Cliquez ici pour créer votre espace Foxeo"    │
+│  "Bonjour {Prénom}, [...] Cliquez ici pour créer votre espace MonprojetPro"    │
 │                         │                                                │
 │                         ▼                                                │
 │              ┌─────────────────────┐                                     │
 │              │  PAGE CRÉATION MDP  │                                     │
-│              │  app.foxeo.io/      │                                     │
+│              │  app.monprojet-pro.com/      │                                     │
 │              │  create-account     │                                     │
 │              │  ?token={token}     │                                     │
 │              └──────────┬──────────┘                                     │

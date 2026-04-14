@@ -13,7 +13,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
 }))
 
-vi.mock('@foxeo/ui', () => ({
+vi.mock('@monprojetpro/ui', () => ({
   showSuccess: vi.fn(),
   showError: vi.fn(),
 }))
@@ -30,7 +30,7 @@ vi.mock('../actions/save-parcours-template', () => ({
 
 import { useParcourTemplates } from '../hooks/use-parcours-templates'
 import { saveParcourTemplate, duplicateParcourTemplate, archiveParcourTemplate } from '../actions/save-parcours-template'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 
 const MOCK_TEMPLATES = [
   {

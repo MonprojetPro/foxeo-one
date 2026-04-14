@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, Badge, Button } from '@foxeo/ui'
+import { Card, CardContent, CardHeader, CardTitle, Badge, Button } from '@monprojetpro/ui'
 import { ArrowUpDown } from 'lucide-react'
 import type { ClientTimeEstimate, ClientType } from '../types/crm.types'
 

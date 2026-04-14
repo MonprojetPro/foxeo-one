@@ -2,7 +2,7 @@
 
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '../button'
-import { t } from '@foxeo/utils'
+import { t } from '@monprojetpro/utils'
 // Ensure messages are loaded
 import '../messages/init'
 

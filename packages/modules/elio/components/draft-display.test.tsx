@@ -4,8 +4,8 @@ import { DraftDisplay } from './draft-display'
 
 const mockClipboardWrite = vi.fn().mockResolvedValue(undefined)
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),

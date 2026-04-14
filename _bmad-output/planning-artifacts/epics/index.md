@@ -1,14 +1,14 @@
-# foxeo-dash - Epic Breakdown
+# monprojetpro-dash - Epic Breakdown
 
 ## Table of Contents
 
-- [foxeo-dash - Epic Breakdown](#table-of-contents)
+- [monprojetpro-dash - Epic Breakdown](#table-of-contents)
   - [Overview](./overview.md)
   - [Requirements Inventory](./requirements-inventory.md)
     - [Functional Requirements](./requirements-inventory.md#functional-requirements)
       - [Hub — Gestion Clients](./requirements-inventory.md#hub-gestion-clients)
       - [Hub — Validation Hub](./requirements-inventory.md#hub-validation-hub)
-      - [Orpheus — Cerveau Foxeo (Cursor/BMAD) — HORS PERIMETRE APPLICATIF](./requirements-inventory.md#orpheus-cerveau-foxeo-cursorbmad-hors-perimetre-applicatif)
+      - [Orpheus — Cerveau MonprojetPro (Cursor/BMAD) — HORS PERIMETRE APPLICATIF](./requirements-inventory.md#orpheus-cerveau-monprojetpro-cursorbmad-hors-perimetre-applicatif)
       - [Hub — Elio Hub (Assistant MiKL)](./requirements-inventory.md#hub-elio-hub-assistant-mikl)
       - [Lab — Parcours Creation](./requirements-inventory.md#lab-parcours-creation)
       - [Lab — Elio Lab (Agent Accompagnement)](./requirements-inventory.md#lab-elio-lab-agent-accompagnement)
@@ -127,7 +127,7 @@
     - [Resume Epic 5 — Couverture FRs](./epic-5-visioconference-onboarding-prospect-stories-detaillees.md#resume-epic-5-couverture-frs)
   - [Epic 6 : Parcours Lab — Accompagnement Creation — Stories detaillees](./epic-6-parcours-lab-accompagnement-creation-stories-detaillees.md)
     - [Story 6.1 : Module Parcours Lab — Migration, structure, vue parcours & progression](./epic-6-parcours-lab-accompagnement-creation-stories-detaillees.md#story-61-module-parcours-lab-migration-structure-vue-parcours-progression)
-    - [Story 6.2 : Consultation des briefs par etape & teasing Foxeo One](./epic-6-parcours-lab-accompagnement-creation-stories-detaillees.md#story-62-consultation-des-briefs-par-etape-teasing-foxeo-one)
+    - [Story 6.2 : Consultation des briefs par etape & teasing MonprojetPro One](./epic-6-parcours-lab-accompagnement-creation-stories-detaillees.md#story-62-consultation-des-briefs-par-etape-teasing-monprojetpro-one)
     - [Story 6.3 : Soumission de brief pour validation & notifications](./epic-6-parcours-lab-accompagnement-creation-stories-detaillees.md#story-63-soumission-de-brief-pour-validation-notifications)
     - [Story 6.4 : Elio Lab — Conversation guidee & adaptation au profil communication](./epic-6-parcours-lab-accompagnement-creation-stories-detaillees.md#story-64-elio-lab-conversation-guidee-adaptation-au-profil-communication)
     - [Story 6.5 : Elio Lab — Generation de briefs & soumission automatique au Validation Hub](./epic-6-parcours-lab-accompagnement-creation-stories-detaillees.md#story-65-elio-lab-generation-de-briefs-soumission-automatique-au-validation-hub)

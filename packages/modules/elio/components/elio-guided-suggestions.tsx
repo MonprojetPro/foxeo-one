@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { ELIO_SUGGESTIONS_BY_STEP } from '../data/elio-suggestions'
 
 interface ElioGuidedSuggestionsProps {

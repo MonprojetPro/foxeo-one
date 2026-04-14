@@ -26,7 +26,7 @@ so that **la plateforme est conforme RGPD et les obligations comptables sont res
 **When** un processus de nettoyage s'exécute (Supabase Edge Function, cron hebdomadaire)
 **Then** les données du client sont anonymisées :
 1. `clients.name` → 'Client supprimé #{id_court}'
-2. `clients.email` → 'deleted_{uuid}@anonymized.foxeo.io'
+2. `clients.email` → 'deleted_{uuid}@anonymized.monprojet-pro.com'
 3. `clients.company` → null
 4. Les `elio_conversations` et `elio_messages` sont supprimées
 5. Les `messages` (chat MiKL) sont anonymisés (contenu → 'Message supprimé')
@@ -53,7 +53,7 @@ so that **la plateforme est conforme RGPD et les obligations comptables sont res
 **Then** `clients.status` → le statut précédent ('lab' ou 'one')
 **And** `clients.archived_at` → null, `clients.retention_until` → null
 **And** le client retrouve l'accès à son dashboard avec toutes ses données intactes
-**And** une notification est envoyée au client : "Votre compte Foxeo a été réactivé"
+**And** une notification est envoyée au client : "Votre compte MonprojetPro a été réactivé"
 
 ## Tasks / Subtasks
 
@@ -79,7 +79,7 @@ so that **la plateforme est conforme RGPD et les obligations comptables sont res
   - [x] Modifier `apps/client/middleware.ts`
   - [x] Après auth success, vérifier `clients.status`
   - [x] Si status = 'archived' : bloquer accès, afficher page "Compte archivé"
-  - [x] Page archivé : "Votre compte Foxeo a été archivé. Contactez MiKL pour plus d'informations."
+  - [x] Page archivé : "Votre compte MonprojetPro a été archivé. Contactez MiKL pour plus d'informations."
 
 - [x] Créer filtre "Archivés" dans liste clients (AC: #3)
   - [x] Modifier `packages/modules/crm/components/client-list.tsx`
@@ -97,7 +97,7 @@ so that **la plateforme est conforme RGPD et les obligations comptables sont res
   - [x] Fetch `clients.previous_status` pour restaurer ancien status ('lab' ou 'one')
   - [x] UPDATE `clients` SET status=previous_status, archived_at=null, retention_until=null
   - [x] INSERT `activity_logs` : type 'client_reactivated'
-  - [x] Créer notification client : "Votre compte Foxeo a été réactivé"
+  - [x] Créer notification client : "Votre compte MonprojetPro a été réactivé"
   - [x] Retourner format `{ data: null, error }` standard
 
 - [x] Créer Edge Function nettoyage périodique (AC: #2)
@@ -193,7 +193,7 @@ supabase/migrations/
 
 **3. Anonymisation irréversible**
 - Name : 'Client supprimé #{last 8 char id}' (traçabilité)
-- Email : 'deleted_{uuid}@anonymized.foxeo.io' (unique, invalide)
+- Email : 'deleted_{uuid}@anonymized.monprojet-pro.com' (unique, invalide)
 - Company : null
 - Conversations Elio : supprimées (RGPD droit à l'oubli)
 - Messages MiKL : contenu anonymisé, metadata préservé (stats)

@@ -26,8 +26,8 @@ vi.mock('../hooks/use-client-activity-logs', () => ({
           {
             id: '550e8400-e29b-41d4-a716-446655440011',
             clientId: '550e8400-e29b-41d4-a716-446655440001',
-            eventType: 'status_changed',
-            description: 'Statut passe a Lab actif',
+            eventType: 'client_graduated',
+            description: 'Graduation vers le dashboard One',
             createdAt: '2024-01-16T14:00:00Z',
           },
         ],
@@ -55,15 +55,23 @@ describe('ClientTimeline', () => {
   it('should render activity log entries', () => {
     renderWithQueryClient(<ClientTimeline clientId="550e8400-e29b-41d4-a716-446655440001" />)
 
-    expect(screen.getByText('Client cree')).toBeInTheDocument()
-    expect(screen.getByText('Statut modifie')).toBeInTheDocument()
+    expect(screen.getByText('Client créé')).toBeInTheDocument()
+    expect(screen.getByText('Graduation vers One')).toBeInTheDocument()
   })
 
   it('should render descriptions', () => {
     renderWithQueryClient(<ClientTimeline clientId="550e8400-e29b-41d4-a716-446655440001" />)
 
     expect(screen.getByText('Client cree dans le CRM')).toBeInTheDocument()
-    expect(screen.getByText('Statut passe a Lab actif')).toBeInTheDocument()
+    expect(screen.getByText('Graduation vers le dashboard One')).toBeInTheDocument()
+  })
+
+  it('should render navigation shortcuts', () => {
+    renderWithQueryClient(<ClientTimeline clientId="550e8400-e29b-41d4-a716-446655440001" />)
+
+    // Both client_created and client_graduated link to 'informations' → "Voir le profil"
+    const profileLinks = screen.getAllByText('Voir le profil')
+    expect(profileLinks).toHaveLength(2)
   })
 
   it('should render empty state when no logs', async () => {
@@ -96,8 +104,8 @@ describe('ClientTimeline', () => {
     renderWithQueryClient(<ClientTimeline clientId="550e8400-e29b-41d4-a716-446655440001" />)
 
     // Timeline entries should not be present during loading
-    expect(screen.queryByText('Client cree')).not.toBeInTheDocument()
-    expect(screen.queryByText('Statut modifie')).not.toBeInTheDocument()
+    expect(screen.queryByText('Client créé')).not.toBeInTheDocument()
+    expect(screen.queryByText('Graduation vers One')).not.toBeInTheDocument()
   })
 
   it('should show load more button when hasNextPage is true', async () => {

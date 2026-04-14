@@ -3,7 +3,7 @@
 // Story 12.7 — Task 4: Tableau de bord instances One avec monitoring
 
 import { useState } from 'react'
-import { Badge } from '@foxeo/ui'
+import { Badge } from '@monprojetpro/ui'
 import {
   useInstancesMonitoring,
   computeInstanceStats,

@@ -42,13 +42,13 @@ export async function handleDirectEmail(
   switch (input.template) {
     case 'welcome-lab': {
       const d = input.data as { clientName: string; parcoursName: string; activationLink: string }
-      subject = 'Bienvenue dans Foxeo Lab !'
+      subject = 'Bienvenue dans MonprojetPro Lab !'
       html = welcomeLabEmailTemplate(d)
       break
     }
     case 'prospect-resources': {
       const d = input.data as { links: Array<{ name: string; url: string }> }
-      subject = 'Vos ressources Foxeo'
+      subject = 'Vos ressources MonprojetPro'
       html = prospectResourcesEmailTemplate(d)
       break
     }
@@ -99,8 +99,8 @@ interface RecipientRow {
 
 function buildPlatformUrl(notification: NotificationRow): string {
   const base = notification.recipient_type === 'operator'
-    ? 'https://hub.foxeo.io'
-    : 'https://lab.foxeo.io'
+    ? 'https://hub.monprojet-pro.com'
+    : 'https://lab.monprojet-pro.com'
   return notification.link ? `${base}${notification.link}` : base
 }
 
@@ -179,7 +179,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
   switch (notification.type) {
     case 'validation':
       return {
-        subject: `Votre brief a été traité — Foxeo`,
+        subject: `Votre brief a été traité — MonprojetPro`,
         html: validationEmailTemplate({
           clientName: recipient.name,
           briefTitle: notification.title,
@@ -225,7 +225,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
 
     case 'graduation':
       return {
-        subject: 'Félicitations ! Votre espace One est prêt — Foxeo',
+        subject: 'Félicitations ! Votre espace One est prêt — MonprojetPro',
         html: graduationEmailTemplate({
           clientName: recipient.name,
           oneUrl: platformUrl,
@@ -236,7 +236,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
       // Extraire le montant depuis le body (format: "X,XX EUR" ou "X.XX EUR")
       const amountMatch = notification.body?.match(/([\d.,]+)\s*(EUR|€)/)
       return {
-        subject: 'Échec de paiement — Foxeo',
+        subject: 'Échec de paiement — MonprojetPro',
         html: paymentFailedEmailTemplate({
           recipientName: recipient.name,
           amount: amountMatch?.[1] ?? '—',

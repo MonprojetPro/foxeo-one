@@ -5,8 +5,8 @@ import { createElement } from 'react'
 import { FolderTree } from './folder-tree'
 import type { DocumentFolder } from '../types/folder.types'
 
-// Mock @foxeo/ui
-vi.mock('@foxeo/ui', () => ({
+// Mock @monprojetpro/ui
+vi.mock('@monprojetpro/ui', () => ({
   Button: ({ children, onClick, ...props }: React.ComponentProps<'button'>) => (
     <button onClick={onClick} {...props}>{children}</button>
   ),
@@ -46,7 +46,7 @@ vi.mock('lucide-react', () => ({
   Trash2: () => <span>Delete</span>,
 }))
 
-vi.mock('@foxeo/utils', () => ({ cn: (...args: string[]) => args.filter(Boolean).join(' ') }))
+vi.mock('@monprojetpro/utils', () => ({ cn: (...args: string[]) => args.filter(Boolean).join(' ') }))
 
 const mockCreateFolder = vi.fn()
 const mockRenameFolder = vi.fn()

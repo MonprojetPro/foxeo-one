@@ -12,8 +12,8 @@ type ColDef = {
   cell?: (item: Document) => React.ReactNode
 }
 
-// Mock @foxeo/ui
-vi.mock('@foxeo/ui', () => ({
+// Mock @monprojetpro/ui
+vi.mock('@monprojetpro/ui', () => ({
   DataTable: ({ data, columns, emptyMessage }: { data: Document[]; columns: ColDef[]; emptyMessage: string }) => (
     <div data-testid="data-table">
       {data.length === 0 ? (
@@ -58,8 +58,8 @@ vi.mock('@foxeo/ui', () => ({
   ),
 }))
 
-// Mock @foxeo/utils
-vi.mock('@foxeo/utils', () => ({
+// Mock @monprojetpro/utils
+vi.mock('@monprojetpro/utils', () => ({
   formatFileSize: (bytes: number) => `${(bytes / 1024).toFixed(1)} Ko`,
 }))
 

@@ -12,7 +12,7 @@ export function GraduationTourSkip() {
   useEffect(() => {
     startTransition(async () => {
       await markGraduationScreenShown()
-      toast.success('Bienvenue dans Foxeo One 🚀')
+      toast.success('Bienvenue dans MonprojetPro One 🚀')
       router.push('/')
     })
   }, [router, startTransition])

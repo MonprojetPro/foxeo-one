@@ -100,7 +100,7 @@ Deno.serve(async (req: Request) => {
       .map((m: string) => `- ${m}`)
       .join('\n')
 
-    const guide = `# Guide d'Autonomie — Instance Foxeo One
+    const guide = `# Guide d'Autonomie — Instance MonprojetPro One
 
 **Client** : ${client.name}
 **Entreprise** : ${client.company}
@@ -109,7 +109,7 @@ Deno.serve(async (req: Request) => {
 
 ## 1. Architecture Technique
 
-Votre instance Foxeo One est construite sur les technologies suivantes :
+Votre instance MonprojetPro One est construite sur les technologies suivantes :
 - **Framework** : Next.js 16.1 (App Router)
 - **UI** : React 19, Tailwind CSS 4
 - **Backend** : Supabase (PostgreSQL, Auth, Storage, Realtime)
@@ -155,8 +155,8 @@ ${instance.supabase_project_id
 
 ## 5. Support Technique
 
-Foxeo propose un support technique optionnel (payant) :
-- **Email** : support@foxeo.io
+MonprojetPro propose un support technique optionnel (payant) :
+- **Email** : support@monprojet-pro.com
 - **Tarif** : 150€/h (interventions ponctuelles)
 - **Abonnement** : 300€/mois (support continu)
 
@@ -168,7 +168,7 @@ Foxeo propose un support technique optionnel (payant) :
     // Step 4: Create transfer package (MVP: guide only as text file)
     // In production: ZIP with code source + DB dump + docs + guide PDF
     const packageContent = new TextEncoder().encode(guide)
-    const fileName = `foxeo-instance-${instance.slug}-${new Date().toISOString().split('T')[0]}.txt`
+    const fileName = `monprojetpro-instance-${instance.slug}-${new Date().toISOString().split('T')[0]}.txt`
     const filePath = `${clientId}/${transferId}/${fileName}`
 
     // Step 5: Upload to Storage
@@ -228,13 +228,13 @@ Foxeo propose un support technique optionnel (payant) :
     await supabase.functions.invoke('send-email', {
       body: {
         to: recipientEmail,
-        subject: 'Votre instance Foxeo One vous est transférée',
+        subject: 'Votre instance MonprojetPro One vous est transférée',
         html: `<h2>Bonjour ${safeClientName},</h2>
-<p>Votre instance Foxeo One a été transférée avec succès.</p>
+<p>Votre instance MonprojetPro One a été transférée avec succès.</p>
 <p>Vous trouverez en pièce jointe votre guide d'autonomie.</p>
-<p>Pour toute question, contactez notre support : <a href="mailto:support@foxeo.io">support@foxeo.io</a></p>
-<p><em>L'équipe Foxeo</em></p>`,
-        text: `Bonjour ${safeClientName},\n\nVotre instance Foxeo One a été transférée avec succès.\n\nPour toute question : support@foxeo.io\n\nL'équipe Foxeo`,
+<p>Pour toute question, contactez notre support : <a href="mailto:support@monprojet-pro.com">support@monprojet-pro.com</a></p>
+<p><em>L'équipe MonprojetPro</em></p>`,
+        text: `Bonjour ${safeClientName},\n\nVotre instance MonprojetPro One a été transférée avec succès.\n\nPour toute question : support@monprojet-pro.com\n\nL'équipe MonprojetPro`,
       },
     })
 

@@ -65,7 +65,7 @@ So that **je sais si je peux attendre une réponse rapide ou non**.
 // hooks/use-chat-presence.ts
 'use client'
 import { useEffect, useState } from 'react'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 
 export function useChatPresence(operatorId: string, userId: string, userType: 'client' | 'operator') {
   useEffect(() => {
@@ -153,7 +153,7 @@ Le timeout est géré automatiquement par Supabase — quand la connexion WebSoc
 ### Dépendances
 
 - **Story 3.1** : Module Chat existant
-- `@foxeo/supabase` — Realtime browser client
+- `@monprojetpro/supabase` — Realtime browser client
 - Aucune migration nécessaire
 
 ### Anti-patterns — Interdit
@@ -173,8 +173,8 @@ Le timeout est géré automatiquement par Supabase — quand la connexion WebSoc
 claude-sonnet-4-5-20250929 (Amelia — Dev Agent)
 
 ### Debug Log References
-- `createBrowserSupabaseClient` n'existe pas dans `@foxeo/supabase` — le bon export est `createClient`. Corrigé dans tous les nouveaux fichiers.
-- Module isolation respectée : CRM ne peut pas importer depuis `@foxeo/modules-chat`. Solution : composant `PresenceDot` local + prop `onlineUserIds` passée par le parent.
+- `createBrowserSupabaseClient` n'existe pas dans `@monprojetpro/supabase` — le bon export est `createClient`. Corrigé dans tous les nouveaux fichiers.
+- Module isolation respectée : CRM ne peut pas importer depuis `@monprojetpro/modules-chat`. Solution : composant `PresenceDot` local + prop `onlineUserIds` passée par le parent.
 - Le module chat n'avait pas de `vitest.config.ts` — créé pour l'exécution locale des tests.
 
 ### Completion Notes List

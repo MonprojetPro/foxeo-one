@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Textarea, Separator, showSuccess, showError } from '@foxeo/ui'
+import { Button, Textarea, Separator, showSuccess, showError } from '@monprojetpro/ui'
 import { validateSubmission } from '../actions/validate-submission'
 import type { ValidateDecision } from '../types/parcours.types'
 

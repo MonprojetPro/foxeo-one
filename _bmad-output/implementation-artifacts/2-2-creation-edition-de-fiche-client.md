@@ -17,7 +17,7 @@ so that **chaque nouveau client est enregistré dans mon portefeuille avec les d
 **Then** un formulaire de création s'affiche (dialog modal ou page dédiée)
 **And** le formulaire contient les champs : nom (obligatoire), email (obligatoire, unique par opérateur), entreprise, téléphone, secteur d'activité, type de client (Complet / Direct One / Ponctuel, obligatoire, défaut: Ponctuel) (FR1, FR2)
 **And** le formulaire utilise react-hook-form avec validation Zod
-**And** les schemas de validation sont dans @foxeo/utils/validation-schemas.ts
+**And** les schemas de validation sont dans @monprojetpro/utils/validation-schemas.ts
 
 **Given** MiKL remplit le formulaire de création
 **When** il soumet le formulaire avec des données valides
@@ -52,7 +52,7 @@ so that **chaque nouveau client est enregistré dans mon portefeuille avec les d
 ## Tasks / Subtasks
 
 - [x] Définir le schema de validation Zod (AC: #1)
-  - [x] Ajouter `createClientSchema` dans `@foxeo/utils/validation-schemas.ts`
+  - [x] Ajouter `createClientSchema` dans `@monprojetpro/utils/validation-schemas.ts`
   - [x] Champs: `name` (string, min 2, max 100), `email` (email format, unique par operator), `company` (string, optionnel), `phone` (string, optionnel), `sector` (string, optionnel), `clientType` (enum: 'complet', 'direct-one', 'ponctuel', défaut: 'ponctuel')
   - [x] Ajouter `updateClientSchema` (même structure, tous champs optionnels sauf id)
   - [x] Messages d'erreur français personnalisés
@@ -74,7 +74,7 @@ so that **chaque nouveau client est enregistré dans mon portefeuille avec les d
 
 - [x] Créer le dialog modal de création (AC: #1)
   - [x] Créer `packages/modules/crm/components/create-client-dialog.tsx`
-  - [x] Utiliser `Dialog` de @foxeo/ui avec trigger bouton "Créer un client"
+  - [x] Utiliser `Dialog` de @monprojetpro/ui avec trigger bouton "Créer un client"
   - [x] Intégrer `ClientForm` en mode création
   - [x] Fermer dialog après création réussie
   - [x] Gérer état `isPending` du formulaire (disabled pendant submit)
@@ -114,7 +114,7 @@ so that **chaque nouveau client est enregistré dans mon portefeuille avec les d
 
 - [x] Implémenter la gestion des erreurs (AC: #5, #6)
   - [x] Dans `ClientForm`: afficher erreurs de validation inline sous champs
-  - [x] Toast d'erreur via `showError()` de @foxeo/ui si erreur serveur
+  - [x] Toast d'erreur via `showError()` de @monprojetpro/ui si erreur serveur
   - [x] Message spécifique pour email dupliqué: afficher à côté du champ email
   - [x] Conserver état formulaire en cas d'erreur (pas de reset)
   - [x] Log errors côté serveur avec format `[CRM:CREATE]` / `[CRM:UPDATE]`
@@ -158,7 +158,7 @@ so that **chaque nouveau client est enregistré dans mon portefeuille avec les d
 
 **Form Management:**
 - **react-hook-form** avec `zodResolver` pour validation côté client
-- **Zod schemas** centralisés dans `@foxeo/utils/validation-schemas.ts`
+- **Zod schemas** centralisés dans `@monprojetpro/utils/validation-schemas.ts`
 - Validation double couche: client (UX rapide) + serveur (sécurité)
 
 **State Management:**
@@ -237,7 +237,7 @@ packages/modules/crm/package.json         # ADD: @hookform/resolvers dependency
 
 **Alignement avec structure unifiée:**
 - Actions dans `packages/modules/crm/actions/` avec format `{ data, error }` ✓
-- Validation schemas centralisés dans `@foxeo/utils/validation-schemas.ts` ✓
+- Validation schemas centralisés dans `@monprojetpro/utils/validation-schemas.ts` ✓
 - Tests co-localisés: `*.test.ts` à côté des sources ✓
 - Composants dans `packages/modules/crm/components/` ✓
 
@@ -261,7 +261,7 @@ packages/modules/crm/package.json         # ADD: @hookform/resolvers dependency
 - [Source: _bmad-output/planning-artifacts/epics/epic-2-gestion-de-la-relation-client-crm-hub-stories-detaillees.md#Story-2.2]
 - [Source: _bmad-output/planning-artifacts/architecture/04-implementation-patterns.md#API-Response-Format]
 - [Source: _bmad-output/planning-artifacts/architecture/04-implementation-patterns.md#Error-Handling]
-- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md#FR1-FR2]
+- [Source: _bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md#FR1-FR2]
 - [Source: CLAUDE.md#Data-Fetching-Server-Action-for-mutations]
 - [Source: CLAUDE.md#API-Response-Format-always-data-error]
 
@@ -280,7 +280,7 @@ Claude Opus 4.6
 
 ### Completion Notes List
 
-- ✅ Task 1: `createClientSchema` + `updateClientSchema` added to `@foxeo/utils/validation-schemas.ts` with 17 tests
+- ✅ Task 1: `createClientSchema` + `updateClientSchema` added to `@monprojetpro/utils/validation-schemas.ts` with 17 tests
 - ✅ Task 2: `CreateClientInput`, `UpdateClientInput` types added to CRM types (Zod infer)
 - ✅ Task 3: `ClientForm` component with react-hook-form + zodResolver, create/edit modes, 11 tests
 - ✅ Task 4: `CreateClientDialog` with Radix Dialog, TanStack Query cache invalidation, 2 tests

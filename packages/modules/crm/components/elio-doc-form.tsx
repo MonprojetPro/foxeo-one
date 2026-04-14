@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { showSuccess, showError, Button } from '@foxeo/ui'
+import { showSuccess, showError, Button } from '@monprojetpro/ui'
 import { injectElioDocumentation } from '../actions/inject-elio-documentation'
-import type { ElioModuleDoc } from '@foxeo/types'
+import type { ElioModuleDoc } from '@monprojetpro/types'
 
 const FaqItemSchema = z.object({
   question: z.string().min(1, 'Question requise'),

@@ -1,6 +1,6 @@
 'use client'
 
-import { ChatWindow, type Message } from '@foxeo/modules-chat'
+import { ChatWindow, type Message } from '@monprojetpro/modules-chat'
 
 interface ChatClientPageClientProps {
   clientId: string

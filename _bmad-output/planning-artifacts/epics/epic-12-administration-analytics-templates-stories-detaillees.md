@@ -70,7 +70,7 @@ modules/admin/
 1. Un flag `system_config.maintenance_mode` est positionne a `true` dans une table `system_config` (ou dans Supabase Vault)
 2. Le message est stocke dans `system_config.maintenance_message`
 3. Les middlewares des apps client (hub et client-one/lab) detectent le flag et affichent une page de maintenance au lieu du dashboard :
-   - Page epuree avec le logo Foxeo
+   - Page epuree avec le logo MonprojetPro
    - Message personnalise de MiKL
    - Duree estimee (si fournie)
    - "Revenez dans quelques instants"
@@ -290,13 +290,13 @@ So that **la plateforme est prete a evoluer vers les integrations en Phase 2 san
 - Une page "Webhooks" dans le module Admin affiche : "Fonctionnalite disponible en Phase 2"
 - La table `outgoing_webhooks` est creee (en migration) avec : id, url, events (TEXT[]), secret, active, created_at
 - Aucune logique d'envoi n'est implementee (P2)
-- La UI affiche un placeholder avec description : "Configurez des webhooks sortants pour integrer Foxeo avec vos outils externes"
+- La UI affiche un placeholder avec description : "Configurez des webhooks sortants pour integrer MonprojetPro avec vos outils externes"
 
 **API Client (FR116) — Structure P2 :**
 - Une page "API" dans le module Admin affiche : "Fonctionnalite disponible en Phase 2"
 - La table `api_keys` est creee (en migration) avec : id, client_id, key_hash, name, permissions (TEXT[]), last_used_at, created_at, revoked_at
 - Aucune logique d'authentification API n'est implementee (P2)
-- La UI affiche un placeholder avec description : "Generez des cles API pour permettre a vos clients d'integrer Foxeo dans leurs systemes"
+- La UI affiche un placeholder avec description : "Generez des cles API pour permettre a vos clients d'integrer MonprojetPro dans leurs systemes"
 **And** les tables sont creees pour eviter une migration future, mais restent vides
 **And** la mention "Phase 2" est clairement visible sur ces fonctionnalites
 
@@ -305,7 +305,7 @@ So that **la plateforme est prete a evoluer vers les integrations en Phase 2 san
 ## Story 12.6 : Provisioning instance One depuis le Hub
 
 As a **MiKL (operateur)**,
-I want **provisionner une nouvelle instance Foxeo One dediee (Vercel + Supabase) directement depuis le Hub**,
+I want **provisionner une nouvelle instance MonprojetPro One dediee (Vercel + Supabase) directement depuis le Hub**,
 So that **chaque client One recoit son propre environnement isole avec ses donnees et son code**.
 
 **Acceptance Criteria:**
@@ -314,7 +314,7 @@ So that **chaque client One recoit son propre environnement isole avec ses donne
 **When** il accede a la fiche client et clique "Provisionner instance One"
 **Then** une modale de provisioning s'affiche avec :
 - Slug de l'instance : champ texte pre-rempli avec le nom de l'entreprise en kebab-case (ex: "association-sport-plus")
-- URL resultante : `https://{slug}.foxeo.io`
+- URL resultante : `https://{slug}.monprojet-pro.com`
 - Modules a activer (checkboxes)
 - Tier Elio initial (Essentiel / Agentique)
 - Estimation du cout mensuel infrastructure (~5-7€ sur tiers gratuits)
@@ -330,7 +330,7 @@ So that **chaque client One recoit son propre environnement isole avec ses donne
    - Validation du format du slug (kebab-case, 3-50 caracteres, pas de mots reserves)
 
 2. **Creation projet Supabase (via Supabase Management API) :**
-   - Nom du projet : `foxeo-one-{slug}`
+   - Nom du projet : `monprojetpro-one-{slug}`
    - Region : eu-west-1 (Paris)
    - Plan : Free (upgrade ulterieur si necessaire)
    - Recuperation des credentials (URL, anon key, service role key)
@@ -349,11 +349,11 @@ So that **chaque client One recoit son propre environnement isole avec ses donne
      | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cle publique Supabase |
      | `SUPABASE_SERVICE_ROLE_KEY` | Cle service (server-side uniquement) |
      | `INSTANCE_SECRET` | Secret HMAC genere (UUID v4) |
-     | `HUB_API_URL` | `https://hub.foxeo.io/api` |
+     | `HUB_API_URL` | `https://hub.monprojet-pro.com/api` |
      | `ACTIVE_MODULES` | Liste JSON des modules actives |
      | `ELIO_TIER` | 'one' ou 'one_plus' |
      | `CLIENT_SLUG` | Slug du client |
-   - Configuration du domaine : `{slug}.foxeo.io`
+   - Configuration du domaine : `{slug}.monprojet-pro.com`
    - Declenchement du premier deploiement
 
 5. **Enregistrement dans le Hub :**
@@ -361,10 +361,10 @@ So that **chaque client One recoit son propre environnement isole avec ses donne
    - `instance_url`, `supabase_url`, `vercel_project_id`, `instance_secret`
 
 6. **Health check :**
-   - Le Hub ping `GET https://{slug}.foxeo.io/api/hub/health` toutes les 10 secondes (max 5 minutes)
+   - Le Hub ping `GET https://{slug}.monprojet-pro.com/api/hub/health` toutes les 10 secondes (max 5 minutes)
    - Quand l'instance repond `{ status: 'ok' }` :
      - `client_instances.status` → 'active'
-     - Notification a MiKL : "Instance {slug}.foxeo.io prete !"
+     - Notification a MiKL : "Instance {slug}.monprojet-pro.com prete !"
    - Si timeout (5 min) : `status` → 'failed', alerte MiKL avec log d'erreur
 
 **And** l'ensemble du provisioning prend moins de 5 minutes
@@ -389,7 +389,7 @@ So that **chaque client One recoit son propre environnement isole avec ses donne
 | Colonne | Description |
 |---------|-------------|
 | Client | Nom + entreprise |
-| Slug | `{slug}.foxeo.io` (lien cliquable) |
+| Slug | `{slug}.monprojet-pro.com` (lien cliquable) |
 | Statut | Provisioning / Active / Suspended / Archived / Failed |
 | Tier | Essentiel / Agentique |
 | Modules | Liste des modules actives |
@@ -410,7 +410,7 @@ So that **je peux anticiper les depassements de capacite et proposer un upgrade 
 **Given** le systeme doit surveiller l'usage de chaque instance One (FR162)
 **When** un cron quotidien s'execute (Edge Function Supabase, 6h00)
 **Then** pour chaque instance One avec `status='active'` :
-1. Le Hub appelle `GET https://{slug}.foxeo.io/api/hub/health` qui retourne :
+1. Le Hub appelle `GET https://{slug}.monprojet-pro.com/api/hub/health` qui retourne :
 ```typescript
 type UsageMetrics = {
   dbRows: number          // Nombre total de lignes en DB
@@ -477,7 +477,7 @@ type UsageMetrics = {
 - Note : "Le client sera informe du changement et du nouveau cout"
 - Boutons "Confirmer l'upgrade" / "Contacter le client d'abord"
 **And** "Contacter le client d'abord" ouvre le chat MiKL pre-rempli avec un message type :
-  "Bonjour {prenom}, votre espace Foxeo One grandit ! Nous approchons des limites de votre formule actuelle. Je vous propose un upgrade pour assurer la continuite du service. Voulez-vous qu'on en discute ?"
+  "Bonjour {prenom}, votre espace MonprojetPro One grandit ! Nous approchons des limites de votre formule actuelle. Je vous propose un upgrade pour assurer la continuite du service. Voulez-vous qu'on en discute ?"
 **And** pour le MVP, l'upgrade reel des tiers Supabase/Vercel est effectue manuellement par MiKL (via les dashboards Supabase/Vercel). Le Hub enregistre l'intention et le statut.
 
 ---
@@ -535,7 +535,7 @@ export interface ModuleManifest {
 **And** pour les modules avec beaucoup de documentation, seuls les fichiers du module concerne sont injectes (pas toute la doc de tous les modules a chaque conversation)
 
 **Given** la documentation est incluse dans l'export client (FR161)
-**When** un client One quitte Foxeo (Story 9.5 — procedure de sortie)
+**When** un client One quitte MonprojetPro (Story 9.5 — procedure de sortie)
 **Then** l'export inclut :
 - Un dossier `documentation/` avec un sous-dossier par module actif
 - Chaque sous-dossier contient : guide.md, faq.md, flows.md

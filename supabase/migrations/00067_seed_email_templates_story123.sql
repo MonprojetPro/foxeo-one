@@ -4,10 +4,10 @@
 INSERT INTO public.email_templates (template_key, subject, body, variables) VALUES
   (
     'bienvenue_lab',
-    'Bienvenue dans votre espace Lab Foxeo',
+    'Bienvenue dans votre espace Lab MonprojetPro',
     'Bonjour {prenom},
 
-Bienvenue dans votre espace Lab Foxeo. Votre parcours d''accompagnement commence aujourd''hui.
+Bienvenue dans votre espace Lab MonprojetPro. Votre parcours d''accompagnement commence aujourd''hui.
 
 Votre Centaure,
 MiKL',
@@ -15,7 +15,7 @@ MiKL',
   ),
   (
     'brief_valide',
-    'Votre brief a été validé — Foxeo',
+    'Votre brief a été validé — MonprojetPro',
     'Bonjour {prenom},
 
 Bonne nouvelle ! Votre brief "{titre_brief}" a été validé par votre accompagnateur.
@@ -30,7 +30,7 @@ MiKL',
   ),
   (
     'brief_refuse',
-    'Votre brief nécessite des ajustements — Foxeo',
+    'Votre brief nécessite des ajustements — MonprojetPro',
     'Bonjour {prenom},
 
 Votre brief "{titre_brief}" a été retourné avec des commentaires de votre accompagnateur.
@@ -45,10 +45,10 @@ MiKL',
   ),
   (
     'graduation',
-    'Félicitations ! Votre espace One est prêt — Foxeo',
+    'Félicitations ! Votre espace One est prêt — MonprojetPro',
     'Bonjour {prenom},
 
-Félicitations pour l''obtention de votre graduation ! Votre dashboard One Foxeo est maintenant accessible : {lien}
+Félicitations pour l''obtention de votre graduation ! Votre dashboard One MonprojetPro est maintenant accessible : {lien}
 
 Votre Centaure,
 MiKL',
@@ -56,10 +56,10 @@ MiKL',
   ),
   (
     'facture_envoyee',
-    'Votre facture Foxeo est disponible',
+    'Votre facture MonprojetPro est disponible',
     'Bonjour {prenom},
 
-Votre facture d''un montant de {montant} est disponible sur votre espace Foxeo : {lien}
+Votre facture d''un montant de {montant} est disponible sur votre espace MonprojetPro : {lien}
 
 Votre Centaure,
 MiKL',
@@ -67,7 +67,7 @@ MiKL',
   ),
   (
     'echec_paiement',
-    'Échec de paiement — Foxeo',
+    'Échec de paiement — MonprojetPro',
     'Bonjour {prenom},
 
 Nous n''avons pas pu traiter votre paiement de {montant}. Veuillez mettre à jour vos informations de paiement en vous connectant à votre espace : {lien}
@@ -78,7 +78,7 @@ MiKL',
   ),
   (
     'rappel_parcours',
-    'Votre parcours Lab vous attend — Foxeo',
+    'Votre parcours Lab vous attend — MonprojetPro',
     'Bonjour {prenom},
 
 Votre accompagnateur a remarqué que vous n''avez pas visité votre espace Lab depuis quelques jours. Ne laissez pas votre projet en pause — continuez votre aventure : {lien}

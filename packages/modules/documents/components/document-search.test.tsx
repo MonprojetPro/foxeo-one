@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
-vi.mock('@foxeo/ui', () => ({
+vi.mock('@monprojetpro/ui', () => ({
   Input: ({ onChange, defaultValue, ...props }: React.ComponentProps<'input'>) => (
     <input defaultValue={defaultValue} onChange={onChange} {...props} />
   ),

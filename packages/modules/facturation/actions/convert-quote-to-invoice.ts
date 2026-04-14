@@ -3,7 +3,7 @@
 import { pennylaneClient } from '../config/pennylane'
 import { fromPennylaneInvoice } from '../utils/billing-mappers'
 import { assertOperator } from './assert-operator'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { Invoice, PennylaneQuote, PennylaneCustomerInvoice } from '../types/billing.types'
 
 // ============================================================

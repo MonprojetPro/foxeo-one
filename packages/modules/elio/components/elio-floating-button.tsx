@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 
 /**
  * ElioFloatingButton — Bouton d'accès rapide à Élio.

@@ -7,13 +7,13 @@ describe('paymentFailedEmailTemplate', () => {
       recipientName: 'Alice Dupont',
       amount: '199,00',
       currency: 'EUR',
-      platformUrl: 'https://alice.foxeo.io/billing',
+      platformUrl: 'https://alice.monprojet-pro.com/billing',
       recipientType: 'client',
     })
     expect(html).toContain('Alice Dupont')
     expect(html).toContain('199,00')
     expect(html).toContain('EUR')
-    expect(html).toContain('https://alice.foxeo.io/billing')
+    expect(html).toContain('https://alice.monprojet-pro.com/billing')
     expect(html).toContain('<!DOCTYPE html>')
   })
 
@@ -23,7 +23,7 @@ describe('paymentFailedEmailTemplate', () => {
       clientName: 'Alice Dupont',
       amount: '199,00',
       currency: 'EUR',
-      platformUrl: 'https://hub.foxeo.io/clients/123/billing',
+      platformUrl: 'https://hub.monprojet-pro.com/clients/123/billing',
       recipientType: 'operator',
     })
     expect(html).toContain('MiKL')
@@ -36,7 +36,7 @@ describe('paymentFailedEmailTemplate', () => {
       recipientName: 'Alice',
       amount: '99,00',
       currency: 'EUR',
-      platformUrl: 'https://alice.foxeo.io',
+      platformUrl: 'https://alice.monprojet-pro.com',
       recipientType: 'client',
     })
     expect(html).toContain('paiement')

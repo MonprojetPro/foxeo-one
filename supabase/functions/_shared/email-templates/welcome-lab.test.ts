@@ -5,7 +5,7 @@ describe('welcomeLabEmailTemplate', () => {
   const data = {
     clientName: 'Alice Dupont',
     parcoursName: 'Parcours Complet',
-    activationLink: 'https://lab.foxeo.io/activate?client_id=123',
+    activationLink: 'https://lab.monprojet-pro.com/activate?client_id=123',
   }
 
   it('includes client name', () => {
@@ -20,7 +20,7 @@ describe('welcomeLabEmailTemplate', () => {
 
   it('includes activation link', () => {
     const html = welcomeLabEmailTemplate(data)
-    expect(html).toContain('https://lab.foxeo.io/activate?client_id=123')
+    expect(html).toContain('https://lab.monprojet-pro.com/activate?client_id=123')
   })
 
   it('contains CTA button text', () => {

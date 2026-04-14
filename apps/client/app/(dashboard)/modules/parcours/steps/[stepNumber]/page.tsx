@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { getParcours } from '@foxeo/module-parcours'
-import { ParcoursStepDetail } from '@foxeo/module-parcours'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getParcours } from '@monprojetpro/module-parcours'
+import { ParcoursStepDetail } from '@monprojetpro/module-parcours'
 
 interface ParcoursStepDetailPageProps {
   params: Promise<{ stepNumber: string }>

@@ -2,7 +2,7 @@
 
 ## Innovation Systémique
 
-L'innovation Foxeo ne réside pas dans les briques individuelles — chacune existe ailleurs. Elle réside dans **l'intégration systémique** de ces éléments au sein d'un modèle opérationnel cohérent pour le métier d'accompagnement/coaching/agence digitale.
+L'innovation MonprojetPro ne réside pas dans les briques individuelles — chacune existe ailleurs. Elle réside dans **l'intégration systémique** de ces éléments au sein d'un modèle opérationnel cohérent pour le métier d'accompagnement/coaching/agence digitale.
 
 **Aucune agence digitale, coach ou chef de projet n'utilise aujourd'hui un tel processus intégré.**
 
@@ -23,7 +23,7 @@ L'innovation Foxeo ne réside pas dans les briques individuelles — chacune exi
 
 ## Narrative de Transformation
 
-Le parcours Foxeo n'est pas un simple outil SaaS. C'est un **journey de transformation** :
+Le parcours MonprojetPro n'est pas un simple outil SaaS. C'est un **journey de transformation** :
 
 1. **Le client arrive perdu** → Élio Lab le guide (renardeau curieux qui pose des questions)
 2. **Le client progresse** → Documents structurés lui montrent son avancement

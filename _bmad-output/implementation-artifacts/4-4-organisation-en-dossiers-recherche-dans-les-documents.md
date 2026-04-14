@@ -6,7 +6,7 @@ Status: done
 
 ## Story
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **organiser mes documents en dossiers et rechercher rapidement dans mes documents**,
 so that **je retrouve facilement un document specifique meme avec beaucoup de fichiers**.
 
@@ -208,8 +208,8 @@ const filteredDocuments = useMemo(() => {
 - Module `packages/modules/documents/` — toutes les stories 4.1, 4.2, 4.3
 - Types `Document`, `DocumentDB` — deja dans `types/document.types.ts`
 - `toDocument()` dans `utils/to-document.ts` — ajouter `toDocumentFolder()` dans `utils/to-document-folder.ts`
-- `@foxeo/types` — `ActionResponse`, `successResponse`, `errorResponse`
-- `@foxeo/supabase` — `createServerSupabaseClient`
+- `@monprojetpro/types` — `ActionResponse`, `successResponse`, `errorResponse`
+- `@monprojetpro/supabase` — `createServerSupabaseClient`
 
 ### Verification migration existante
 

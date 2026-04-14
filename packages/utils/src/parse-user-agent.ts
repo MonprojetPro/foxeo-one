@@ -5,10 +5,10 @@
  * Extracts browser, OS, and device type from user-agent strings.
  */
 
-import type { DeviceType } from '@foxeo/types'
+import type { DeviceType } from '@monprojetpro/types'
 
-export type { DeviceType } from '@foxeo/types'
-export type { SessionInfo } from '@foxeo/types'
+export type { DeviceType } from '@monprojetpro/types'
+export type { SessionInfo } from '@monprojetpro/types'
 
 export interface ParsedUserAgent {
   browser: string

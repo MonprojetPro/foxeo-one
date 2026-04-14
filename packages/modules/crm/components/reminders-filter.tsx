@@ -1,6 +1,6 @@
 'use client'
 
-import { Tabs, TabsList, TabsTrigger } from '@foxeo/ui'
+import { Tabs, TabsList, TabsTrigger } from '@monprojetpro/ui'
 import type { ReminderFilter } from '../types/crm.types'
 
 interface RemindersFilterProps {

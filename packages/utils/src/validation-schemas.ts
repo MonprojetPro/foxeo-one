@@ -26,6 +26,7 @@ export const clientTypeSchema = z.enum(['complet', 'direct_one', 'ponctuel'])
 
 // Schema for creating a new client
 export const createClientSchema = z.object({
+  firstName: z.string().max(100, 'Le prénom ne doit pas dépasser 100 caractères').optional().or(z.literal('')),
   name: z.string()
     .min(2, 'Le nom doit contenir au moins 2 caracteres')
     .max(100, 'Le nom ne doit pas depasser 100 caracteres'),
@@ -38,6 +39,7 @@ export const createClientSchema = z.object({
 
 // Schema for updating a client (all fields optional)
 export const updateClientSchema = z.object({
+  firstName: z.string().max(100).optional().or(z.literal('')),
   name: z.string()
     .min(2, 'Le nom doit contenir au moins 2 caracteres')
     .max(100, 'Le nom ne doit pas depasser 100 caracteres')

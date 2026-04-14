@@ -9,8 +9,8 @@ import {
   CardHeader,
   Separator,
   Skeleton,
-} from '@foxeo/ui'
-import { cn, formatRelativeDate, truncate } from '@foxeo/utils'
+} from '@monprojetpro/ui'
+import { cn, formatRelativeDate, truncate } from '@monprojetpro/utils'
 import type {
   ValidationRequestSummary,
   MessageSummary,

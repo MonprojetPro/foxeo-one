@@ -12,7 +12,7 @@ const mockInstances: ClientInstance[] = [
     clientId: 'client-uuid-1',
     clientName: 'Acme Corp',
     slug: 'acme-corp',
-    instanceUrl: 'https://acme-corp.foxeo.io',
+    instanceUrl: 'https://acme-corp.monprojet-pro.com',
     status: 'active',
     tier: 'essentiel',
     activeModules: ['core-dashboard', 'elio'],
@@ -26,7 +26,7 @@ const mockInstances: ClientInstance[] = [
     clientId: 'client-uuid-2',
     clientName: 'Beta SAS',
     slug: 'beta-sas',
-    instanceUrl: 'https://beta-sas.foxeo.io',
+    instanceUrl: 'https://beta-sas.monprojet-pro.com',
     status: 'provisioning',
     tier: 'base',
     activeModules: ['core-dashboard'],
@@ -40,7 +40,7 @@ const mockInstances: ClientInstance[] = [
     clientId: 'client-uuid-3',
     clientName: 'Gamma Ltd',
     slug: 'gamma-ltd',
-    instanceUrl: 'https://gamma-ltd.foxeo.io',
+    instanceUrl: 'https://gamma-ltd.monprojet-pro.com',
     status: 'suspended',
     tier: 'agentique',
     activeModules: ['core-dashboard', 'elio', 'crm'],
@@ -91,7 +91,7 @@ describe('InstancesList', () => {
 
     render(<InstancesList />)
     const link = screen.getByRole('link', { name: /acme-corp/ }) as HTMLAnchorElement
-    expect(link.href).toBe('https://acme-corp.foxeo.io/')
+    expect(link.href).toBe('https://acme-corp.monprojet-pro.com/')
     expect(link.target).toBe('_blank')
   })
 

@@ -178,7 +178,7 @@ Si on te demande une action, réponds : "Cette fonctionnalité fait partie de l'
 ### References
 
 - [Source: Epic 8 — Story 8.9a](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-89a)
-- [Source: PRD — FR48](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR48](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 
@@ -213,7 +213,7 @@ Story 8.9a implémentée — Système de tiers Élio One vs One+ avec actions mo
 
 **Code Review fixes :**
 - HIGH: Server Actions (send-reminders, create-event, send-sms) — ajout check erreur activity_logs insert + console.error logging
-- HIGH: Documentation type ElioTier dans elio.types.ts pour distinguer du ElioTier de @foxeo/types
+- HIGH: Documentation type ElioTier dans elio.types.ts pour distinguer du ElioTier de @monprojetpro/types
 - MEDIUM: buildModuleNotActiveMessage utilise MODULE_DISPLAY_LABELS (Adhésions, Agenda, SMS, Facturation) au lieu du raw module ID
 - MEDIUM: Ajout test buildModuleNotActiveMessage avec labels lisibles + fallback
 - MEDIUM: Ajout test detectIntent pour verb "update" (Modifie) — couverture 4/4 verbs

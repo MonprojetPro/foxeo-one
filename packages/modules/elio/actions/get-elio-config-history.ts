@@ -1,18 +1,9 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
-import { toCamelCase } from '@foxeo/utils'
-
-export interface ElioConfigHistoryEntry {
-  id: string
-  clientId: string
-  fieldChanged: string
-  oldValue: Record<string, unknown> | null
-  newValue: Record<string, unknown> | null
-  changedAt: string
-  changedBy: string | null
-}
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
+import { toCamelCase } from '@monprojetpro/utils'
+import type { ElioConfigHistoryEntry } from '../types/elio.types'
 
 /**
  * Server Action — Récupère l'historique des configurations Élio d'un client.

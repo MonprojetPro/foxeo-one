@@ -1,8 +1,8 @@
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Politique de Traitement IA — Foxeo',
+  title: 'Politique de Traitement IA — MonprojetPro',
   description: 'Politique de traitement des données par l\'intelligence artificielle Élio',
 }
 
@@ -32,7 +32,7 @@ export default function IaProcessingPage() {
           <section className="space-y-3">
             <h2 className="text-2xl font-semibold">1. Qu'est-ce qu'Élio ?</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Élio est un agent d'intelligence artificielle conversationnel intégré à la plateforme Foxeo. Il vous accompagne dans votre parcours entrepreneurial en vous aidant à :
+              Élio est un agent d'intelligence artificielle conversationnel intégré à la plateforme MonprojetPro. Il vous accompagne dans votre parcours entrepreneurial en vous aidant à :
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground ml-4">
               <li>Élaborer vos briefs et documents stratégiques</li>
@@ -169,7 +169,7 @@ export default function IaProcessingPage() {
               <li><strong>Droit de limitation :</strong> Limiter le traitement dans certaines conditions</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
-              Pour exercer ces droits, contactez-nous à : dpo@foxeo.io
+              Pour exercer ces droits, contactez-nous à : dpo@monprojet-pro.com
             </p>
           </section>
 
@@ -180,8 +180,8 @@ export default function IaProcessingPage() {
               Pour toute question relative au traitement de vos données par intelligence artificielle, contactez notre Délégué à la Protection des Données (DPO) :
             </p>
             <ul className="list-none space-y-1 text-muted-foreground ml-4">
-              <li><strong>Email :</strong> dpo@foxeo.io</li>
-              <li><strong>Courrier :</strong> Foxeo — Service DPO, [Adresse à compléter]</li>
+              <li><strong>Email :</strong> dpo@monprojet-pro.com</li>
+              <li><strong>Courrier :</strong> MonprojetPro — Service DPO, [Adresse à compléter]</li>
             </ul>
           </section>
         </div>

@@ -1,4 +1,4 @@
-# Ressources UI - foxeo-one
+# Ressources UI - monprojetpro-one
 
 > Ce fichier répertorie les ressources UI à utiliser lors de la phase d'implémentation.
 

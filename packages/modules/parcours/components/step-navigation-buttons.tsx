@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 import type { ParcoursStepStatus } from '../types/parcours.types'
 
 interface AdjacentStep {

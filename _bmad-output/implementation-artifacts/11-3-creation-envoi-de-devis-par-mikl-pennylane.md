@@ -62,7 +62,7 @@ so that **je peux proposer des prestations de maniere professionnelle et suivre 
   - [x] Creer `packages/modules/facturation/actions/create-quote.ts` :
     - `createAndSendQuote(clientId, lineItems, options)` → `POST /quotes` Pennylane
     - Auth check : `is_operator()`
-    - Mapping Foxeo LineItem → PennylaneLineItem (label, quantity, currency_amount, vat_rate, unit, description)
+    - Mapping MonprojetPro LineItem → PennylaneLineItem (label, quantity, currency_amount, vat_rate, unit, description)
     - `deadline` = date + 30 jours
     - Si `sendNow` : finaliser dans Pennylane (status → 'pending')
     - Notification in-app client
@@ -118,7 +118,7 @@ packages/modules/facturation/
 - **`billing-proxy.ts`** (Story 11.1) : `listQuotes()` deja implemente — utiliser pour alimenter la liste.
 - **`use-billing.ts`** (Story 11.1) : `useBillingQuotes()` deja cree — utiliser dans `quotes-list.tsx`.
 - **Pattern `useFieldArray`** : react-hook-form supporte nativement les tableaux de champs — pas besoin d'etat useState pour les lignes.
-- **`showSuccess/showError`** : depuis `@foxeo/ui` — pattern etabli dans toutes les stories precedentes.
+- **`showSuccess/showError`** : depuis `@monprojetpro/ui` — pattern etabli dans toutes les stories precedentes.
 - **Notification in-app** : pattern depuis modules chat/notifications — `supabase.from('notifications').insert(...)`.
 
 ### Technical Constraints
@@ -179,5 +179,5 @@ claude-sonnet-4-6
 - apps/hub/app/(dashboard)/modules/facturation/page.tsx (CRÉE)
 - apps/hub/app/(dashboard)/modules/facturation/loading.tsx (CRÉE)
 - apps/hub/app/(dashboard)/modules/facturation/error.tsx (CRÉE)
-- apps/hub/package.json (MODIFIÉ — +@foxeo/modules-facturation)
+- apps/hub/package.json (MODIFIÉ — +@monprojetpro/modules-facturation)
 - _bmad-output/implementation-artifacts/sprint-status.yaml (MODIFIÉ — 11-3 → done)

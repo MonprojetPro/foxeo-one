@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
-import { showSuccess, showError } from '@foxeo/ui'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { provisionOneInstanceFromHub } from '../actions/provision-instance'
 import { SLUG_REGEX, toSlug } from '../utils/slug-validation'
 import type { ProvisionStep } from '../actions/provision-instance'
@@ -57,7 +57,7 @@ export function ProvisionInstanceModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const instanceUrl = `https://${slug || '...'}.foxeo.io`
+  const instanceUrl = `https://${slug || '...'}.monprojet-pro.com`
   const isRunning = status === 'running'
 
   // Realtime subscription for progress
@@ -126,7 +126,7 @@ export function ProvisionInstanceModal({
 
     setStatus('success')
     setCurrentStep('ready')
-    showSuccess(`Instance ${slug}.foxeo.io provisionnée avec succès !`)
+    showSuccess(`Instance ${slug}.monprojet-pro.com provisionnée avec succès !`)
     onSuccess?.(result.data.instanceUrl)
   }
 

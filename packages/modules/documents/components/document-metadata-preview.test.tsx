@@ -3,8 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { DocumentMetadataPreview } from './document-metadata-preview'
 import type { Document } from '../types/document.types'
 
-vi.mock('@foxeo/utils', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/utils')>()
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/utils')>()
   return {
     ...actual,
     formatFileSize: vi.fn((bytes: number) => `${(bytes / 1024).toFixed(0)} Ko`),

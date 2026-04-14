@@ -6,7 +6,7 @@ PDF, DOCX, XLSX, PNG, JPG, JPEG, SVG, MD, TXT, CSV. La validation se fait sur l'
 
 ## Quelle est la taille maximale ?
 
-10 Mo par fichier. Cette constante (`MAX_FILE_SIZE`) est definie dans `@foxeo/utils`.
+10 Mo par fichier. Cette constante (`MAX_FILE_SIZE`) est definie dans `@monprojetpro/utils`.
 
 ## Ou sont stockes les fichiers ?
 
@@ -39,7 +39,7 @@ Le fichier uploade est supprime automatiquement du Storage (cleanup). L'erreur D
 ## Comment fonctionne le telechargement PDF ?
 
 - Si le document est deja un PDF, il est telecharge directement via signed URL Supabase Storage
-- Si le document est un Markdown, un PDF est genere cote serveur avec le branding Foxeo (header logo, footer date)
+- Si le document est un Markdown, un PDF est genere cote serveur avec le branding MonprojetPro (header logo, footer date)
 
 ## Qu'est-ce qu'un signed URL ?
 

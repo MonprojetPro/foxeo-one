@@ -261,7 +261,7 @@ ${data.example ? `- **Exemple concret** : ${data.example}` : ''}
 // actions/submit-evolution-request.ts
 'use server'
 
-import { createServerClient } from '@foxeo/supabase/server'
+import { createServerClient } from '@monprojetpro/supabase/server'
 
 export async function submitEvolutionRequest(
   clientId: string,
@@ -364,7 +364,7 @@ export function checkIfFeatureExists(
 ### References
 
 - [Source: Epic 8 — Story 8.8](file:///_bmad-output/planning-artifacts/epics/epic-8-agents-ia-elio-hub-lab-one-stories-detaillees.md#story-88)
-- [Source: PRD — FR47](file:///_bmad-output/planning-artifacts/prd/functional-requirements-foxeo-plateforme.md)
+- [Source: PRD — FR47](file:///_bmad-output/planning-artifacts/prd/functional-requirements-monprojetpro-plateforme.md)
 
 ---
 

@@ -8,8 +8,8 @@ import {
   CardContent,
   CardHeader,
   Separator,
-} from '@foxeo/ui'
-import { formatFileSize } from '@foxeo/utils'
+} from '@monprojetpro/ui'
+import { formatFileSize } from '@monprojetpro/utils'
 import type { DocumentSummary } from '../types/validation.types'
 
 type RequestContentProps = {

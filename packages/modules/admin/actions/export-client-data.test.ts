@@ -78,7 +78,7 @@ const mockFrom = vi.fn((table: string) => {
 const mockGetUser = vi.fn()
 const mockFunctionsInvoke = vi.fn().mockResolvedValue({ error: null })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },
@@ -257,7 +257,7 @@ describe('exportClientData Server Action', () => {
       const callArgs = mockFunctionsInvoke.mock.calls[0][1]
       const docFiles = callArgs?.body?.documentationFiles as Record<string, string>
       expect(docFiles).toBeDefined()
-      expect(docFiles['documentation/README.md']).toContain('Documentation Foxeo')
+      expect(docFiles['documentation/README.md']).toContain('Documentation MonprojetPro')
     })
 
     it('sends empty documentationFiles when active_modules is empty', async () => {

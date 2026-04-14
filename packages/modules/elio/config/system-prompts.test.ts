@@ -58,7 +58,7 @@ describe('buildSystemPrompt', () => {
     it('contient le contexte One dans le prompt', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
       expect(prompt).toContain('Dashboard One')
-      expect(prompt).toContain('outil Foxeo One')
+      expect(prompt).toContain('outil MonprojetPro One')
     })
 
     it('mentionne les capacités One+ pour tier=one_plus', () => {

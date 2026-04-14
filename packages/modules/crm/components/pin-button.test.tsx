@@ -10,8 +10,8 @@ vi.mock('../actions/toggle-pin-client', () => ({
 }))
 
 // Mock toast functions
-vi.mock('@foxeo/ui', async () => {
-  const actual = await vi.importActual('@foxeo/ui')
+vi.mock('@monprojetpro/ui', async () => {
+  const actual = await vi.importActual('@monprojetpro/ui')
   return {
     ...actual,
     showSuccess: vi.fn(),

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Skeleton, showError } from '@foxeo/ui'
-import type { CustomBranding } from '@foxeo/types'
+import { Skeleton, showError } from '@monprojetpro/ui'
+import type { CustomBranding } from '@monprojetpro/types'
 import { getClientBranding } from '../actions/get-client-branding'
 import { ClientBrandingForm } from './client-branding-form'
 

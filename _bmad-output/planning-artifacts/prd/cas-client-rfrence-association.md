@@ -195,7 +195,7 @@ UTILISATRICE
 | Livrable | Description |
 |----------|-------------|
 | **Site public** | Vitrine moderne + espace adhérent |
-| **Foxeo One** | Dashboard admin complet |
+| **MonprojetPro One** | Dashboard admin complet |
 | **CRM** | Gestion adhérents centralisée |
 | **Module Formations** | Catalogue, inscriptions, Qualiopi |
 | **Module Événements** | Création, inscriptions, facturation |

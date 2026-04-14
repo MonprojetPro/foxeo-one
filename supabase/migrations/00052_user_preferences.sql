@@ -21,7 +21,7 @@ CREATE TRIGGER trg_user_preferences_updated_at
   EXECUTE FUNCTION fn_update_updated_at();
 
 COMMENT ON TABLE user_preferences IS 'Préférences locales client — show_graduation_screen, etc.';
-COMMENT ON COLUMN user_preferences.show_graduation_screen IS 'Afficher l'écran de graduation au prochain chargement (Story 9.2)';
+COMMENT ON COLUMN user_preferences.show_graduation_screen IS 'Afficher l''ecran de graduation au prochain chargement (Story 9.2)';
 
 -- ============================================================
 -- 2. RLS policies for user_preferences

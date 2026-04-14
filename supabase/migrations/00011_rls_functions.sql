@@ -62,6 +62,23 @@ $$;
 
 COMMENT ON FUNCTION is_operator(UUID) IS 'RLS helper: true si utilisateur courant est l operateur specifie';
 
+-- is_operator(): true si l'utilisateur courant est un operateur (sans argument)
+CREATE OR REPLACE FUNCTION is_operator()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER STABLE
+SET search_path = public
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM operators
+    WHERE auth_user_id = auth.uid()
+  );
+END;
+$$;
+
+COMMENT ON FUNCTION is_operator() IS 'RLS helper: true si utilisateur courant est un operateur';
+
 -- ============================================================
 -- SECURITY DEFINER UTILITY FUNCTIONS (bypass RLS)
 -- ============================================================
@@ -144,5 +161,6 @@ COMMENT ON FUNCTION fn_link_operator_auth_user(UUID, TEXT) IS 'SECURITY DEFINER:
 GRANT EXECUTE ON FUNCTION is_admin() TO authenticated;
 GRANT EXECUTE ON FUNCTION is_owner(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION is_operator(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION is_operator() TO authenticated;
 GRANT EXECUTE ON FUNCTION fn_get_operator_by_email(TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION fn_link_operator_auth_user(UUID, TEXT) TO authenticated;

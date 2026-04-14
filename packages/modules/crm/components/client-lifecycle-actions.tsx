@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, showSuccess, showError } from '@foxeo/ui'
+import { Button, showSuccess, showError } from '@monprojetpro/ui'
 import { Pause, Play, Lock, ArrowUpCircle } from 'lucide-react'
 import type { Client } from '../types/crm.types'
 import { SuspendClientDialog } from './suspend-client-dialog'

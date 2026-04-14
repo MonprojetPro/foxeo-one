@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { markGraduationScreenShown } from '../../graduation/actions/mark-graduation-screen-shown'
 import { useGraduationTour } from '../../hooks/use-graduation-tour'
 
@@ -16,7 +16,7 @@ interface TourStep {
 const ONE_TOUR_STEPS: TourStep[] = [
   {
     title: 'Votre dashboard One',
-    description: 'Bienvenue dans votre espace professionnel Foxeo One. Toutes vos ressources business sont ici.',
+    description: 'Bienvenue dans votre espace professionnel MonprojetPro One. Toutes vos ressources business sont ici.',
     targetId: 'sidebar-navigation',
   },
   {
@@ -35,7 +35,7 @@ const ONE_TOUR_STEPS: TourStep[] = [
     targetId: 'elio-chat-button',
   },
   {
-    title: 'Bienvenue dans Foxeo One !',
+    title: 'Bienvenue dans MonprojetPro One !',
     description: 'Vous êtes prêt à démarrer votre aventure entrepreneuriale. Bonne réussite !',
   },
 ]
@@ -85,7 +85,7 @@ export function GraduationTour({ activeModuleIds }: GraduationTourProps) {
     startTransition(async () => {
       await markGraduationScreenShown()
       stopTour()
-      toast.success('Bienvenue dans Foxeo One 🚀')
+      toast.success('Bienvenue dans MonprojetPro One 🚀')
       router.push('/')
     })
   }

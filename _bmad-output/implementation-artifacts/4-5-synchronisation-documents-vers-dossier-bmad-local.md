@@ -166,8 +166,8 @@ await supabase.from('activity_logs').insert({
 - Table `activity_logs` — verifier l'existence et la structure avant insertion
 - `getDocumentUrl()` / signed URLs pattern (story 4.2)
 - Module `packages/modules/documents/` — stories 4.1, 4.2, 4.3, 4.4
-- `@foxeo/types` — `ActionResponse`, `successResponse`, `errorResponse`
-- `@foxeo/supabase` — `createServerSupabaseClient`
+- `@monprojetpro/types` — `ActionResponse`, `successResponse`, `errorResponse`
+- `@monprojetpro/supabase` — `createServerSupabaseClient`
 
 ### Verification table activity_logs
 

@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { Button } from '@foxeo/ui'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { Button } from '@monprojetpro/ui'
 import { OneModuleCard, type OneModule } from '../../components/graduation/one-module-card'
 
 export const metadata = {
-  title: 'Bienvenue dans Foxeo One',
+  title: 'Bienvenue dans MonprojetPro One',
   description: 'Découvrez les modules disponibles dans votre espace professionnel.',
 }
 
@@ -80,7 +80,7 @@ export default async function DiscoverOnePage() {
       <div className="max-w-5xl w-full space-y-12">
         <div className="text-center space-y-4">
           <div className="text-6xl">🚀</div>
-          <h1 className="text-5xl font-bold tracking-tight">Bienvenue dans Foxeo One</h1>
+          <h1 className="text-5xl font-bold tracking-tight">Bienvenue dans MonprojetPro One</h1>
           <p className="text-xl text-green-200">
             Votre espace professionnel tout-en-un pour gérer et développer votre activité
           </p>

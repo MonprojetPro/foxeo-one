@@ -5,7 +5,7 @@ const mockSupabase = {
   from: vi.fn(),
 }
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => Promise.resolve(mockSupabase)),
 }))
 

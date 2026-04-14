@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useParcours, AbandonParcoursDialog } from '@foxeo/module-parcours'
+import { useParcours, AbandonParcoursDialog } from '@monprojetpro/module-parcours'
 
 interface ParcoursSettingsSectionProps {
   clientId?: string

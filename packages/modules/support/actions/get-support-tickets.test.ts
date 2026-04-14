@@ -28,7 +28,7 @@ const mockGetUser = vi.fn()
 
 let currentQueryResult: unknown = { data: [], error: null }
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({

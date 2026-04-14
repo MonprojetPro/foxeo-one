@@ -89,12 +89,12 @@ so that **mes messages sont toujours bien rédigés, adaptés au client, et je p
 ## Dev Notes
 
 ### Architecture patterns MUST follow
-- **Server Actions** : pattern `{ data, error }`, jamais `throw`, import `successResponse`/`errorResponse` de `@foxeo/types`
+- **Server Actions** : pattern `{ data, error }`, jamais `throw`, import `successResponse`/`errorResponse` de `@monprojetpro/types`
 - **Upload** : même pattern que `packages/modules/documents/actions/upload-document.ts` — `FormData`, `supabase.storage.from('chat-attachments').upload(path, file)`
 - **Transformation Élio** : même pattern que `correct-and-adapt-text.ts` — `supabase.functions.invoke('elio-chat', { body: {...}, signal })` avec timeout 30s
-- **Communication profile** : utiliser `getCommunicationProfile({ clientId })` depuis `@foxeo/modules-elio` — retourne `CommunicationProfile | null`
+- **Communication profile** : utiliser `getCommunicationProfile({ clientId })` depuis `@monprojetpro/modules-elio` — retourne `CommunicationProfile | null`
 - **Pas de framer-motion** : utiliser CSS transitions pour animations du panneau
-- **Pas de `Dialog`/`Drawer` manquant** : vérifier ce qui existe dans `@foxeo/ui` avant d'importer. Si manquant → composant custom avec `position: fixed` + backdrop
+- **Pas de `Dialog`/`Drawer` manquant** : vérifier ce qui existe dans `@monprojetpro/ui` avant d'importer. Si manquant → composant custom avec `position: fixed` + backdrop
 
 ### Fichiers à créer
 - `supabase/migrations/00076_add_chat_attachments.sql`
@@ -128,12 +128,12 @@ Même pattern que bucket `documents`.
 - `detailed` → messages complets, explicatifs
 - `balanced` → longueur intermédiaire
 
-### Pas de `RadioGroup` dans @foxeo/ui
+### Pas de `RadioGroup` dans @monprojetpro/ui
 → Utiliser toggle buttons custom (pattern déjà établi en Story 8.4)
 
 ### Mock Supabase storage dans les tests
 ```typescript
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null }) },
     from: vi.fn().mockReturnThis(),
@@ -148,7 +148,7 @@ vi.mock('@foxeo/supabase', () => ({
 - [Source: packages/modules/elio/actions/correct-and-adapt-text.ts] — pattern appel Élio Edge Function + prompt profil communication
 - [Source: packages/modules/elio/actions/get-communication-profile.ts] — récupération profil par clientId
 - [Source: packages/modules/elio/types/communication-profile.types.ts] — types CommunicationProfile
-- [Source: _bmad-output/excalidraw-diagrams/hub/wireframe-foxeo-hub-messages.excalidraw] — maquette UI complète
+- [Source: _bmad-output/excalidraw-diagrams/hub/wireframe-monprojetpro-hub-messages.excalidraw] — maquette UI complète
 
 ## Dev Agent Record
 

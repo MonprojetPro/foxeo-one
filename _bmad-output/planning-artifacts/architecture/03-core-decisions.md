@@ -59,7 +59,7 @@ Aucun cas gris autorisé.
 | **Formulaires** | React Hook Form + Zod resolver | react-hook-form ^7.71.x | Standard industrie, performant, intégration shadcn/ui |
 | **Module loading** | `next/dynamic` avec lazy loading | — | Chaque module importé dynamiquement selon config client |
 | **Module registry** | Auto-découvert, pas hardcodé | — | Registry centralisé qui scanne les manifests des modules |
-| **Layout** | Dashboard shell partagé (`@foxeo/ui`) + slot de contenu | — | Sidebar, header, notifications dans le shell. Chaque module remplit le slot |
+| **Layout** | Dashboard shell partagé (`@monprojetpro/ui`) + slot de contenu | — | Sidebar, header, notifications dans le shell. Chaque module remplit le slot |
 | **Thématisation** | CSS variables OKLCH + Tailwind v4 `@theme` | — | 3 palettes (Hub/Lab/One) = overrides CSS, pas de code conditionnel |
 
 **Règles Party Mode :**
@@ -74,9 +74,9 @@ Aucun cas gris autorisé.
 |----------|-------|-----------|
 | **CI/CD frontend** | Vercel (auto-deploy Git) + GitHub Actions (lint, tests) | Push → checks → deploy auto |
 | **Environnements** | 3 : development (local), preview (Vercel PR), production | Supabase : 1 projet dev + N projets prod (1 Lab + 1 par client One) |
-| **Déploiement Lab** | Instance unique Vercel → `lab.foxeo.io` | Multi-tenant, DB partagée, RLS inter-client |
-| **Déploiement One** | Instance Vercel par client → `{slug}.foxeo.io` | Instance dédiée, DB propre, propriété client |
-| **Déploiement Hub** | Instance unique Vercel → `hub.foxeo.io` | Communique avec Lab et instances One via API/webhooks |
+| **Déploiement Lab** | Instance unique Vercel → `lab.monprojet-pro.com` | Multi-tenant, DB partagée, RLS inter-client |
+| **Déploiement One** | Instance Vercel par client → `{slug}.monprojet-pro.com` | Instance dédiée, DB propre, propriété client |
+| **Déploiement Hub** | Instance unique Vercel → `hub.monprojet-pro.com` | Communique avec Lab et instances One via API/webhooks |
 | **VPS services** | Docker Compose sur VPS unique (Scaleway/OVH) | OpenVidu + Cal.com. Intégrés dès le MVP |
 | **Facturation SaaS** | Pennylane API v2 (Cloud) | Facturation, devis, abonnements, comptabilité, conformité facturation électronique sept. 2026. Synchronisation par polling (Edge Function cron 5min) — pas de webhooks publics disponibles |
 | **Monitoring usage** | Supabase Edge Function (cron) + alertes seuils | Surveillance capacité par instance One (60%/80%/95%) |
@@ -87,7 +87,7 @@ Aucun cas gris autorisé.
 
 | Décision | Choix | Rationale |
 |----------|-------|-----------|
-| **Provisioning** | Script CLI (`foxeo-cli provision`) | Création Supabase + Vercel + env vars + migrations automatisées |
+| **Provisioning** | Script CLI (`monprojetpro-cli provision`) | Création Supabase + Vercel + env vars + migrations automatisées |
 | **Supabase par client** | 1 projet Supabase Free/Pro | Isolation complète, pas de RLS inter-client, le client possède ses données |
 | **Vercel par client** | 1 projet Vercel Hobby/Pro | Déploiement indépendant, domaine personnalisable |
 | **Communication Hub↔One** | API REST + webhooks mutuels | Le Hub n'accède pas directement aux DB clients |

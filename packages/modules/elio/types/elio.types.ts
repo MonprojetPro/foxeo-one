@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ActionError } from '@foxeo/types'
+import type { ActionError } from '@monprojetpro/types'
 
 // --- Dashboard Types ---
 
@@ -68,7 +68,7 @@ export interface ElioConfigHistoryEntry {
 
 /**
  * Tier Élio pour le dashboard One uniquement ('one' | 'one_plus').
- * Note : distinct de ElioTier dans @foxeo/types qui inclut aussi 'lab' et les anciens noms avec tirets.
+ * Note : distinct de ElioTier dans @monprojetpro/types qui inclut aussi 'lab' et les anciens noms avec tirets.
  * Les valeurs ici correspondent aux valeurs DB (colonne client_configs.elio_tier).
  */
 export type ElioTier = 'one' | 'one_plus'

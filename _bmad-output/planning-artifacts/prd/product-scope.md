@@ -4,7 +4,7 @@
 
 Le MVP est défini par le premier cas client réel : une association avec une assistante de direction qui gère tout (admin, formations, événements, adhésions).
 
-**Objectif :** Démontrer tout le savoir-faire Foxeo sur un cas complet.
+**Objectif :** Démontrer tout le savoir-faire MonprojetPro sur un cas complet.
 
 | Module | Contenu MVP | Priorité |
 |--------|-------------|----------|

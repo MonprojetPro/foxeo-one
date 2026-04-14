@@ -1,8 +1,8 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse, type ActionResponse } from '@foxeo/types'
-import type { CustomBranding } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse, type ActionResponse } from '@monprojetpro/types'
+import type { CustomBranding } from '@monprojetpro/types'
 
 export async function getClientBranding(
   clientId: string,

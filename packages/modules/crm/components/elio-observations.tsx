@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Button, Badge, showSuccess, showError } from '@foxeo/ui'
+import { Button, Badge, showSuccess, showError } from '@monprojetpro/ui'
 import type { ElioObservation } from '../actions/get-elio-observations'
 import { integrateObservation, type ObservationTarget } from '../actions/integrate-observation'
-import { formatRelativeDate } from '@foxeo/utils'
+import { formatRelativeDate } from '@monprojetpro/utils'
 
 interface ElioObservationsProps {
   clientId: string

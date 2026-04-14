@@ -14,7 +14,7 @@ import {
   Input,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { closeClient } from '../actions/close-client'
 import { AlertTriangle, Lock } from 'lucide-react'
 

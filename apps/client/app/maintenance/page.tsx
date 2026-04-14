@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 async function getMaintenanceInfo(): Promise<{ active: boolean; message: string; estimatedDuration: string | null }> {
   try {

@@ -1,6 +1,6 @@
 'use client'
 
-import { Skeleton } from '@foxeo/ui'
+import { Skeleton } from '@monprojetpro/ui'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import type { BillingSyncRow } from '../types/billing.types'
 

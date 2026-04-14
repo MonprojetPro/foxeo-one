@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { ProvisionInstanceModal } from './provision-instance-modal'
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock('../actions/provision-instance', async (importOriginal) => {
   }
 })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createBrowserSupabaseClient: vi.fn(() => ({
     channel: vi.fn().mockReturnValue({
       on: vi.fn().mockReturnThis(),
@@ -30,7 +30,7 @@ vi.mock('@foxeo/supabase', () => ({
 }))
 
 import { provisionOneInstanceFromHub } from '../actions/provision-instance'
-import { showError, showSuccess } from '@foxeo/ui'
+import { showError, showSuccess } from '@monprojetpro/ui'
 
 const defaultProps = {
   clientId: '11111111-1111-1111-1111-111111111111',
@@ -87,7 +87,7 @@ describe('ProvisionInstanceModal', () => {
       data: {
         instanceId: 'inst-1',
         slug: 'acme-corp',
-        instanceUrl: 'https://acme-corp.foxeo.io',
+        instanceUrl: 'https://acme-corp.monprojet-pro.com',
         supabaseProjectId: '',
         vercelProjectId: '',
       },
@@ -143,7 +143,7 @@ describe('ProvisionInstanceModal', () => {
       data: {
         instanceId: 'inst-1',
         slug: 'acme-corp',
-        instanceUrl: 'https://acme-corp.foxeo.io',
+        instanceUrl: 'https://acme-corp.monprojet-pro.com',
         supabaseProjectId: '',
         vercelProjectId: '',
       },
@@ -155,7 +155,7 @@ describe('ProvisionInstanceModal', () => {
 
     await waitFor(() => {
       expect(vi.mocked(showSuccess)).toHaveBeenCalled()
-      expect(defaultProps.onSuccess).toHaveBeenCalledWith('https://acme-corp.foxeo.io')
+      expect(defaultProps.onSuccess).toHaveBeenCalledWith('https://acme-corp.monprojet-pro.com')
     })
   })
 })

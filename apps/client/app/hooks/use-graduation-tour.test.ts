@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useGraduationTour } from './use-graduation-tour'
 
-const GRADUATION_TOUR_KEY = 'foxeo-graduation-tour-completed'
+const GRADUATION_TOUR_KEY = 'monprojetpro-graduation-tour-completed'
 
 describe('useGraduationTour', () => {
   beforeEach(() => {

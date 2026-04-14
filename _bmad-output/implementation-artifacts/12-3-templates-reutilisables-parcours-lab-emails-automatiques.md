@@ -143,7 +143,7 @@ claude-sonnet-4-6
 - `parcours_templates.is_active` (bool) = colonne d'archivage (pas is_archived comme dit en story).
 
 ### Completion Notes List
-- Module `@foxeo/module-templates` cree : manifest, index, docs (guide/faq/flows), hooks, actions, composants
+- Module `@monprojetpro/module-templates` cree : manifest, index, docs (guide/faq/flows), hooks, actions, composants
 - `ParcourTemplateEditor` : liste + CRUD complet (create/edit/duplicate/archive) avec reordonnancement up/down
 - `EmailTemplateEditor` : liste 7+ templates, editeur textarea, boutons variables, preview, save/reset
 - Actions server : `saveParcourTemplate` (UPSERT), `duplicateParcourTemplate`, `archiveParcourTemplate`, `saveEmailTemplate`, `resetEmailTemplate`

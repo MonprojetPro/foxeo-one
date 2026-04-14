@@ -1,9 +1,9 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { type ActionResponse, successResponse, errorResponse } from '@foxeo/types'
-import type { CommunicationProfile } from '@foxeo/types'
-import { DEFAULT_COMMUNICATION_PROFILE } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import type { CommunicationProfile } from '@monprojetpro/types'
+import { DEFAULT_COMMUNICATION_PROFILE } from '@monprojetpro/utils'
 
 export type ObservationTarget = 'avoid' | 'privilege' | 'styleNotes'
 

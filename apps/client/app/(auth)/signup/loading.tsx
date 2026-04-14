@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, Skeleton } from '@foxeo/ui'
+import { Card, CardContent, CardHeader, Skeleton } from '@monprojetpro/ui'
 
 export default function SignupLoading() {
   return (

@@ -1,7 +1,7 @@
 'use client'
 
 import { FileText, Download, ExternalLink, Image, File, Save, Mail } from 'lucide-react'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { useRouter } from 'next/navigation'
 
 export type DocumentType = 'pdf' | 'doc' | 'image' | 'markdown'

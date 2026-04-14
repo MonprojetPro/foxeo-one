@@ -26,7 +26,7 @@ So that **je peux obtenir les informations manquantes sans bloquer le processus*
   - "Quel est le budget envisagé ?"
 - Boutons "Envoyer la question" / "Annuler"
 
-**And** la modale utilise le composant Dialog de @foxeo/ui
+**And** la modale utilise le composant Dialog de @monprojetpro/ui
 **And** cliquer sur une suggestion remplit le champ avec le texte de la suggestion
 
 ### AC 2 : Server Action requestClarification exécutée
@@ -405,9 +405,9 @@ function getActionLabel(action: Exchange['action']): string {
 | @supabase/supabase-js | ^2.95.x | Database client |
 | react-hook-form | ^7.71.x | Form management |
 | zod | Latest | Schema validation |
-| @foxeo/ui | Internal | Dialog, Button, Textarea |
+| @monprojetpro/ui | Internal | Dialog, Button, Textarea |
 
-#### Composants UI disponibles (@foxeo/ui)
+#### Composants UI disponibles (@monprojetpro/ui)
 
 - `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogFooter`
 - `Button` : Bouton avec variants et size (sm pour les chips)

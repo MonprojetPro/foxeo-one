@@ -1,4 +1,4 @@
-import type { ModuleManifest } from '@foxeo/types'
+import type { ModuleManifest } from '@monprojetpro/types'
 
 export const manifest: ModuleManifest = {
   id: 'analytics',

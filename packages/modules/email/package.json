@@ -1,0 +1,32 @@
+{
+  "name": "@monprojetpro/modules-email",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@monprojetpro/supabase": "*",
+    "@monprojetpro/types": "*",
+    "@monprojetpro/ui": "*",
+    "@monprojetpro/utils": "*",
+    "@monprojetpro/module-elio": "*",
+    "@tanstack/react-query": "^5.90.0",
+    "react": "^19.0.0",
+    "lucide-react": "^0.562.0",
+    "zod": "*"
+  },
+  "devDependencies": {
+    "@monprojetpro/tsconfig": "*",
+    "vitest": "*"
+  }
+}

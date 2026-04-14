@@ -1,7 +1,7 @@
 'use client'
 
 import { Archive } from 'lucide-react'
-import { Button, toast } from '@foxeo/ui'
+import { Button, toast } from '@monprojetpro/ui'
 import { useSyncDocuments } from '../hooks/use-sync-documents'
 
 interface SyncToZipButtonProps {

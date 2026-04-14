@@ -1,5 +1,5 @@
 import { AlertTriangle } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@foxeo/ui'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@monprojetpro/ui'
 
 export default function SuspendedPage() {
   return (

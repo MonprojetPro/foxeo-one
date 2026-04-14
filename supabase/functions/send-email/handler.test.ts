@@ -70,7 +70,7 @@ describe('handleSendEmail', () => {
     const { handleSendEmail } = await import('./handler')
     const result = await handleSendEmail(
       { notificationId: 'n-1' },
-      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@foxeo.io' }
+      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@monprojet-pro.com' }
     )
 
     expect(result.success).toBe(true)
@@ -111,7 +111,7 @@ describe('handleSendEmail', () => {
     const { handleSendEmail } = await import('./handler')
     const result = await handleSendEmail(
       { notificationId: 'n-2' },
-      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@foxeo.io' }
+      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@monprojet-pro.com' }
     )
 
     expect(result.success).toBe(true)
@@ -132,7 +132,7 @@ describe('handleSendEmail', () => {
     const { handleSendEmail } = await import('./handler')
     const result = await handleSendEmail(
       { notificationId: 'bad-id' },
-      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@foxeo.io' }
+      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@monprojet-pro.com' }
     )
 
     expect(result.success).toBe(false)
@@ -176,7 +176,7 @@ describe('handleSendEmail', () => {
     const { handleSendEmail } = await import('./handler')
     const result = await handleSendEmail(
       { notificationId: 'n-3' },
-      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@foxeo.io' }
+      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@monprojet-pro.com' }
     )
 
     // Should succeed with degraded mode (in-app OK, email failed)
@@ -197,7 +197,7 @@ describe('handleDirectEmail', () => {
     supabaseUrl: 'https://test.supabase.co',
     serviceRoleKey: 'test-key',
     resendApiKey: 'resend-key',
-    emailFrom: 'noreply@foxeo.io',
+    emailFrom: 'noreply@monprojet-pro.com',
   }
 
   it('sends welcome-lab email successfully', async () => {
@@ -207,7 +207,7 @@ describe('handleDirectEmail', () => {
       {
         to: 'prospect@example.com',
         template: 'welcome-lab',
-        data: { clientName: 'Alice', parcoursName: 'Parcours Complet', activationLink: 'https://lab.foxeo.io/activate' },
+        data: { clientName: 'Alice', parcoursName: 'Parcours Complet', activationLink: 'https://lab.monprojet-pro.com/activate' },
       },
       config
     )

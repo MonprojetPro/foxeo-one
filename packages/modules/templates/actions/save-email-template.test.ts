@@ -5,11 +5,11 @@ import { saveEmailTemplate, resetEmailTemplate } from './save-email-template'
 // Mocks
 // ============================================================
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 
 const VALID_UUID_OPERATOR = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'
 
@@ -128,7 +128,7 @@ describe('resetEmailTemplate', () => {
   })
 
   it('réinitialise le template au défaut avec succès', async () => {
-    const resetRow = { ...MOCK_EMAIL_ROW, subject: 'Votre brief a été validé — Foxeo' }
+    const resetRow = { ...MOCK_EMAIL_ROW, subject: 'Votre brief a été validé — MonprojetPro' }
     vi.mocked(createServerSupabaseClient).mockResolvedValue(
       makeSupabase({ emailUpdateResult: { data: resetRow, error: null } }) as never
     )

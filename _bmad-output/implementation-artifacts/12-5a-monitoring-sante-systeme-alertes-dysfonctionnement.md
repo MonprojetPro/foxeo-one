@@ -73,7 +73,7 @@ so that **je sais que tout fonctionne et je suis informe immediatement en cas de
   }
   ```
 - **Check Pennylane** : utiliser `GET /me` (endpoint de verification auth) plutot que `/customers?page_size=1` pour minimiser les credits API.
-- **Mode degrade** : si un service externe (Pennylane, Cal.com) est en erreur, le systeme Foxeo reste fonctionnel — les fonctionnalites dependantes affichent "Service temporairement indisponible".
+- **Mode degrade** : si un service externe (Pennylane, Cal.com) est en erreur, le systeme MonprojetPro reste fonctionnel — les fonctionnalites dependantes affichent "Service temporairement indisponible".
 - **Debounce alerte** : stocker `system_config.last_alert_{service}_at` pour tracker le dernier envoi d'alerte par service.
 
 ### Source Tree

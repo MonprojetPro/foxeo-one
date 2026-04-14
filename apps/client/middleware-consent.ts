@@ -1,5 +1,5 @@
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { CURRENT_CGU_VERSION } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { CURRENT_CGU_VERSION } from '@monprojetpro/utils'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 

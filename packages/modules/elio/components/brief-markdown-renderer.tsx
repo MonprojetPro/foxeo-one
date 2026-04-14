@@ -2,7 +2,7 @@
 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { cn } from '@foxeo/utils'
+import { cn } from '@monprojetpro/utils'
 
 interface BriefMarkdownRendererProps {
   content: string

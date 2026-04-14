@@ -4,7 +4,7 @@ Status: done
 
 ## Story
 
-As a **client Foxeo**,
+As a **client MonprojetPro**,
 I want **demander un RDV visio avec MiKL via un système de calendrier intégré et attendre dans une salle d'attente virtuelle**,
 So that **je peux prendre rendez-vous facilement et MiKL contrôle l'entrée dans la visio**.
 
@@ -12,7 +12,7 @@ So that **je peux prendre rendez-vous facilement et MiKL contrôle l'entrée dan
 
 1. **AC1 — Migration DB** : Table `meeting_requests` créée avec : id (UUID PK), client_id (FK clients NOT NULL), operator_id (FK operators NOT NULL), requested_slots (JSONB NOT NULL — array de timestamps proposés par le client), selected_slot (TIMESTAMPTZ nullable), status (TEXT CHECK 'pending'/'accepted'/'rejected'/'completed' DEFAULT 'pending'), message (TEXT nullable), meeting_id (FK meetings nullable), created_at, updated_at. RLS : `meeting_requests_select_owner`, `meeting_requests_select_operator`, `meeting_requests_insert_client`, `meeting_requests_update_operator`.
 
-2. **AC2 — Intégration Cal.com** : Composant `calcom-booking-widget.tsx` embarque l'iframe Cal.com (self-hosted Docker). URL : `https://cal.foxeo.io/mikl/consultation`. Webhook Cal.com → Edge Function `calcom-webhook` crée automatiquement `meeting` + `meeting_request` avec `status='accepted'`.
+2. **AC2 — Intégration Cal.com** : Composant `calcom-booking-widget.tsx` embarque l'iframe Cal.com (self-hosted Docker). URL : `https://cal.monprojet-pro.com/mikl/consultation`. Webhook Cal.com → Edge Function `calcom-webhook` crée automatiquement `meeting` + `meeting_request` avec `status='accepted'`.
 
 3. **AC3 — Demande client sans Cal.com** : Formulaire alternatif : client propose 3 créneaux horaires + message optionnel. Server Action `requestMeeting()` crée `meeting_request` + notification MiKL. MiKL voit demandes dans `/modules/visio/requests` et peut accepter (sélectionne un créneau) ou refuser. Acceptation → crée `meeting` + notification client.
 
@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
 // hooks/use-meeting-realtime.ts
 'use client'
 import { useEffect, useState } from 'react'
-import { createBrowserSupabaseClient } from '@foxeo/supabase/client'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase/client'
 
 export function useMeetingRealtime(meetingId: string) {
   const [operatorJoined, setOperatorJoined] = useState(false)
@@ -389,7 +389,7 @@ Claude Opus 4.6
 
 ### Debug Log References
 - Migration renommée 00030→00033 car 00030 (documents_soft_delete) et 00031/00032 (meetings/recordings) déjà existants
-- Import `@foxeo/supabase/client` corrigé en `@foxeo/supabase` (pas de subpath export)
+- Import `@monprojetpro/supabase/client` corrigé en `@monprojetpro/supabase` (pas de subpath export)
 - Tests composants React corrigés pour utiliser `@testing-library/react` (render/screen) au lieu d'appels directs
 
 ### Completion Notes List

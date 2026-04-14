@@ -15,8 +15,8 @@ vi.mock('../actions/postpone-request', () => ({
   postponeRequest: (...args: unknown[]) => mockPostponeRequest(...args),
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@foxeo/ui')>()
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return {
     ...actual,
     showSuccess: vi.fn(),
@@ -120,7 +120,7 @@ describe('PostponeDialog', () => {
   it('should show success toast and redirect on success', async () => {
     mockPostponeRequest.mockResolvedValue({ data: { status: 'pending' }, error: null })
     const PostponeDialog = await importComponent()
-    const { showSuccess } = await import('@foxeo/ui')
+    const { showSuccess } = await import('@monprojetpro/ui')
     const user = userEvent.setup()
     render(<PostponeDialog {...defaultProps} />)
 
@@ -137,7 +137,7 @@ describe('PostponeDialog', () => {
       error: { message: 'DB error', code: 'DB_ERROR' },
     })
     const PostponeDialog = await importComponent()
-    const { showError } = await import('@foxeo/ui')
+    const { showError } = await import('@monprojetpro/ui')
     const user = userEvent.setup()
     render(<PostponeDialog {...defaultProps} />)
 

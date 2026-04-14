@@ -87,14 +87,14 @@ CREATE POLICY "exports_select_owner"
       -- Client: folder name matches their client record id
       EXISTS (
         SELECT 1 FROM clients
-        WHERE clients.id::text = (storage.foldername(name))[1]
+        WHERE clients.id::text = (storage.foldername(storage.objects.name))[1]
           AND clients.auth_user_id = auth.uid()
       )
       -- Operator: folder name matches a client they own
       OR EXISTS (
         SELECT 1 FROM clients
         JOIN operators ON operators.id = clients.operator_id
-        WHERE clients.id::text = (storage.foldername(name))[1]
+        WHERE clients.id::text = (storage.foldername(storage.objects.name))[1]
           AND operators.auth_user_id = auth.uid()
       )
       OR is_admin()

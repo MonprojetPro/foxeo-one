@@ -122,14 +122,14 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
-- Module `@foxeo/module-analytics` créé avec manifest, index, docs (guide/faq/flows)
+- Module `@monprojetpro/module-analytics` créé avec manifest, index, docs (guide/faq/flows)
 - 5 Server Actions dans `get-analytics.ts` : `getOverviewStats`, `getModuleUsageStats`, `getElioStats`, `getEngagementStats`, `getMrrStats`
 - Auth via `assertOperator()` local (duplication intentionnelle — modules ne peuvent pas importer d'autres modules)
-- Tremor non installé (`@foxeo/ui/package.json` ne le contient pas) → charts CSS/SVG natifs
+- Tremor non installé (`@monprojetpro/ui/package.json` ne le contient pas) → charts CSS/SVG natifs
 - Agrégation JS côté serveur (pas de RPC SQL) : simple, testable, sans migrations supplémentaires
 - `getMrrStats()` gracieux si `billing_sync` absent (retourne `{ mrr: 0, activeSubscriptions: 0 }`)
 - `avgLabDurationDays` retourne 0 (données graduation cross-table complexes — hors scope MVP)
-- `apps/hub/package.json` mis à jour avec `@foxeo/module-analytics: *`
+- `apps/hub/package.json` mis à jour avec `@monprojetpro/module-analytics: *`
 - 20 tests : 12 actions + 8 dashboard — tous passing
 
 #### Code Review Fixes (Opus 4.6)
@@ -160,5 +160,5 @@ claude-sonnet-4-6
 - `packages/modules/analytics/hooks/use-analytics.ts` (créé)
 - `apps/hub/app/(dashboard)/modules/analytics/page.tsx` (créé)
 - `apps/hub/app/(dashboard)/modules/analytics/loading.tsx` (créé)
-- `apps/hub/package.json` (modifié — ajout @foxeo/module-analytics)
+- `apps/hub/package.json` (modifié — ajout @monprojetpro/module-analytics)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (modifié — in-progress → review)

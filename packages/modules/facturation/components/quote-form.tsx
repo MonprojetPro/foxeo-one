@@ -4,7 +4,7 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useState } from 'react'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { createAndSendQuote } from '../actions/create-quote'
 import type { ClientWithPennylane } from '../types/billing.types'
 

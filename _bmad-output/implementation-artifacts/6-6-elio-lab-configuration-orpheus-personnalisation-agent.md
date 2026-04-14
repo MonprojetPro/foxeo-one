@@ -115,9 +115,9 @@ CREATE POLICY elio_configs_delete_owner ON elio_configs FOR DELETE
 ```typescript
 // actions/get-elio-config.ts
 'use server'
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
-import type { ActionResponse } from '@foxeo/types'
-import { successResponse, errorResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
+import type { ActionResponse } from '@monprojetpro/types'
+import { successResponse, errorResponse } from '@monprojetpro/types'
 
 const DEFAULT_CONFIG = {
   model: 'claude-sonnet-4-20250514',
@@ -198,9 +198,9 @@ export async function generateBrief(stepId: string): Promise<ActionResponse<{ br
 
 ```typescript
 // apps/client/app/(dashboard)/settings/elio/advanced/page.tsx
-import { createServerSupabaseClient } from '@foxeo/supabase/server'
+import { createServerSupabaseClient } from '@monprojetpro/supabase/server'
 import { OrpheusConfigForm } from '@/components/orpheus-config-form'
-import { Alert, AlertDescription, AlertTitle } from '@foxeo/ui/components/alert'
+import { Alert, AlertDescription, AlertTitle } from '@monprojetpro/ui/components/alert'
 import { AlertTriangle } from 'lucide-react'
 
 export default async function ElioAdvancedSettingsPage() {
@@ -259,14 +259,14 @@ export default async function ElioAdvancedSettingsPage() {
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button } from '@foxeo/ui/components/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@foxeo/ui/components/select'
-import { Slider } from '@foxeo/ui/components/slider'
-import { Textarea } from '@foxeo/ui/components/textarea'
-import { Input } from '@foxeo/ui/components/input'
-import { Label } from '@foxeo/ui/components/label'
+import { Button } from '@monprojetpro/ui/components/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@monprojetpro/ui/components/select'
+import { Slider } from '@monprojetpro/ui/components/slider'
+import { Textarea } from '@monprojetpro/ui/components/textarea'
+import { Input } from '@monprojetpro/ui/components/input'
+import { Label } from '@monprojetpro/ui/components/label'
 import { updateElioConfig, resetElioConfig } from '../actions'
-import { toast } from '@foxeo/ui/components/use-toast'
+import { toast } from '@monprojetpro/ui/components/use-toast'
 
 const schema = z.object({
   model: z.enum(['claude-haiku-4-20250122', 'claude-sonnet-4-20250514', 'claude-opus-4-20250514']),
@@ -426,8 +426,8 @@ claude-sonnet-4-6
 ### Debug Log References
 
 - Migration numéro : 00038 déjà utilisé → migration créée en 00043
-- `@foxeo/ui` : pas de Slider Radix → slider natif HTML `<input type="range">`
-- `@foxeo/ui` : pas de `Label` → utilisation de `<label>` HTML avec Tailwind
+- `@monprojetpro/ui` : pas de Slider Radix → slider natif HTML `<input type="range">`
+- `@monprojetpro/ui` : pas de `Label` → utilisation de `<label>` HTML avec Tailwind
 - `Alert` : variant `warning` inexistant → utilisation du variant `default` avec AlertTriangle icon
 - `getElioConfig()` en Server Action est appelable depuis Server Component (page)
 - Les tests RLS sont skip par défaut (nécessitent `RUN_RLS_TESTS=1` + Supabase local)

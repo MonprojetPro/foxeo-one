@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 import { DOCUMENT_TEMPLATES, buildDocumentPrompt, type DocumentTemplateKey } from '../config/document-templates'
 
 const ELIO_TIMEOUT_MS = 60_000

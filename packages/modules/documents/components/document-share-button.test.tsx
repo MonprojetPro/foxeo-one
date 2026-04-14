@@ -16,7 +16,7 @@ vi.mock('../hooks/use-share-document', () => ({
   })),
 }))
 
-vi.mock('@foxeo/ui', () => ({
+vi.mock('@monprojetpro/ui', () => ({
   Button: ({ children, onClick, disabled, ...props }: React.ComponentProps<'button'>) => (
     <button onClick={onClick} disabled={disabled} {...props}>{children}</button>
   ),

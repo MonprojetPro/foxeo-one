@@ -10,7 +10,7 @@ export function graduationEmailTemplate(data: GraduationEmailData): string {
   const body = `
     <p>Bonjour <strong>${data.clientName}</strong>,</p>
     <p>🎉 <strong>Félicitations !</strong> Vous avez terminé votre parcours Lab avec succès.</p>
-    <p>Votre espace <strong>Foxeo One</strong> est maintenant prêt. C'est votre tableau de bord professionnel personnalisé.</p>
+    <p>Votre espace <strong>MonprojetPro One</strong> est maintenant prêt. C'est votre tableau de bord professionnel personnalisé.</p>
     <p>Tout ce que vous avez créé durant votre parcours Lab est disponible dans votre espace One.</p>
     <p>Bienvenue dans votre nouvelle aventure entrepreneuriale !</p>
   `

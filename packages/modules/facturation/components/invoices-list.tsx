@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
-import { Skeleton, showSuccess, showError } from '@foxeo/ui'
+import { Skeleton, showSuccess, showError } from '@monprojetpro/ui'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import { triggerClientBillingSync } from '../actions/trigger-client-billing-sync'
 import type { BillingSyncRow } from '../types/billing.types'

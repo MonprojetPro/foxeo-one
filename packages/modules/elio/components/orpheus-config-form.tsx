@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Button, Input, Textarea, showSuccess, showError } from '@foxeo/ui'
+import { Button, Input, Textarea, showSuccess, showError } from '@monprojetpro/ui'
 import { ElioModelSelector } from './elio-model-selector'
 import { ElioTemperatureSlider } from './elio-temperature-slider'
 import { ElioFeatureToggles } from './elio-feature-toggles'

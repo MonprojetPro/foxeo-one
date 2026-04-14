@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { ClientTimeEstimate } from '../types/crm.types'
 import { TIME_ESTIMATES } from '../utils/time-estimates'
 
@@ -10,7 +10,7 @@ const validAuthUuid = '550e8400-e29b-41d4-a716-446655440099'
 const mockGetUser = vi.fn()
 const mockFrom = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },

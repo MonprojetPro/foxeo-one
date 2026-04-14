@@ -1,5 +1,5 @@
 /**
- * @foxeo/utils - Utilitaires partages pour Foxeo One
+ * @monprojetpro/utils - Utilitaires partages pour MonprojetPro One
  */
 
 export { cn } from './cn'
@@ -62,3 +62,4 @@ export {
   DEFAULT_COMMUNICATION_PROFILE,
   type CommunicationProfileInput,
 } from './defaults'
+export { readFileContent } from './read-file-content'

@@ -12,7 +12,7 @@ const mockChannel = {
   send: mockSend,
 }
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createBrowserSupabaseClient: vi.fn(() => ({
     channel: vi.fn(() => mockChannel),
     removeChannel: mockRemoveChannel,

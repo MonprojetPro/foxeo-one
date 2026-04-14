@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { showSuccess, showError } from '@foxeo/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { updateActiveModules } from '../actions/update-active-modules'
-import type { ModuleManifest } from '@foxeo/types'
+import type { ModuleManifest } from '@monprojetpro/types'
 
 const LOCKED_MODULES = ['core-dashboard', 'chat', 'documents', 'elio'] as const
 

@@ -1,5 +1,5 @@
 {
-  "extends": "@foxeo/tsconfig/react-library.json",
+  "extends": "@monprojetpro/tsconfig/react-library.json",
   "compilerOptions": {
     "outDir": "./dist"
   },

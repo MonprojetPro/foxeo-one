@@ -6,7 +6,7 @@ describe('migrateLabDataToOne (MVP stub)', () => {
 
     const result = await migrateLabDataToOne(
       '550e8400-e29b-41d4-a716-446655440000',
-      'https://acme-corp.foxeo.io'
+      'https://acme-corp.monprojet-pro.com'
     )
 
     expect(result.error).toBeNull()
@@ -23,7 +23,7 @@ describe('migrateLabDataToOne (MVP stub)', () => {
 
     const result = await migrateLabDataToOne(
       '550e8400-e29b-41d4-a716-446655440001',
-      'https://test-client.foxeo.io'
+      'https://test-client.monprojet-pro.com'
     )
 
     expect(result.error).toBeNull()

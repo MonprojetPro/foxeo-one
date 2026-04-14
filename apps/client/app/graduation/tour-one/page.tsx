@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { GraduationTour } from '../../components/graduation/graduation-tour'
 import { GraduationTourSkip } from '../../components/graduation/graduation-tour-skip'
 
 export const metadata = {
-  title: 'Tutoriel Foxeo One',
-  description: 'Découvrez les fonctionnalités de votre espace Foxeo One.',
+  title: 'Tutoriel MonprojetPro One',
+  description: 'Découvrez les fonctionnalités de votre espace MonprojetPro One.',
 }
 
 interface PageProps {

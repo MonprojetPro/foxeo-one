@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@foxeo/ui'
+import { Button } from '@monprojetpro/ui'
 import { Plus } from 'lucide-react'
-import { MyTicketsList, ReportIssueDialog } from '@foxeo/modules-support'
+import { MyTicketsList, ReportIssueDialog } from '@monprojetpro/modules-support'
 
 export default function SupportPage() {
   const [reportOpen, setReportOpen] = useState(false)

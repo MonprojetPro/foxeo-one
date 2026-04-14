@@ -1,13 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
-import { createClientSchema } from '@foxeo/utils'
+} from '@monprojetpro/types'
+import { createClientSchema } from '@monprojetpro/utils'
 import type { Client, CreateClientInput } from '../types/crm.types'
 
 export async function createClient(
@@ -46,7 +46,7 @@ export async function createClient(
       return errorResponse(firstError, 'VALIDATION_ERROR', parsed.error.issues)
     }
 
-    const { name, email, company, phone, sector, clientType } = parsed.data
+    const { firstName, name, email, company, phone, sector, clientType } = parsed.data
 
     // Check email uniqueness per operator
     const { data: existing, error: emailCheckError } = await supabase
@@ -73,6 +73,7 @@ export async function createClient(
       .from('clients')
       .insert({
         operator_id: operatorId,
+        first_name: firstName || null,
         name,
         email,
         company: company || name,
@@ -111,6 +112,7 @@ export async function createClient(
     const client: Client = {
       id: clientData.id,
       operatorId: clientData.operator_id,
+      firstName: clientData.first_name ?? undefined,
       name: clientData.name,
       company: clientData.company,
       email: clientData.email,
@@ -123,6 +125,18 @@ export async function createClient(
       createdAt: clientData.created_at,
       updatedAt: clientData.updated_at,
     }
+
+    // Log activity — fire-and-forget
+    supabase.from('activity_logs').insert({
+      actor_type: 'operator',
+      actor_id: operatorId,
+      action: 'client_created',
+      entity_type: 'client',
+      entity_id: clientData.id,
+      metadata: { client_type: clientType, name, company },
+    }).then(({ error: logError }) => {
+      if (logError) console.error('[CRM:CREATE] Activity log error:', logError)
+    }).catch(() => {})
 
     // Invalidate Next.js RSC cache for CRM routes
     revalidatePath('/modules/crm')

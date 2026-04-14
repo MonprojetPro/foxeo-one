@@ -11,7 +11,7 @@ Aujourd'hui nous allons discuter
 
 3
 00:01:10,000 --> 00:01:15,300
-Du projet Foxeo`
+Du projet MonprojetPro`
 
 describe('parseSrt', () => {
   it('parses valid SRT content', () => {
@@ -40,7 +40,7 @@ describe('parseSrt', () => {
     const entries = parseSrt(SAMPLE_SRT)
     expect(entries[0].text).toBe('Bonjour et bienvenue')
     expect(entries[1].text).toBe("Aujourd'hui nous allons discuter")
-    expect(entries[2].text).toBe('Du projet Foxeo')
+    expect(entries[2].text).toBe('Du projet MonprojetPro')
   })
 
   it('handles empty content', () => {

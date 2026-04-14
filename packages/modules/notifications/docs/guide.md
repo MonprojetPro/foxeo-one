@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Le module Notifications fournit l'infrastructure de notifications in-app temps réel pour tous les dashboards Foxeo (Hub, Lab, One).
+Le module Notifications fournit l'infrastructure de notifications in-app temps réel pour tous les dashboards MonprojetPro (Hub, Lab, One).
 
 ## Architecture
 

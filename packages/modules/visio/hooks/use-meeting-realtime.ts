@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { createBrowserSupabaseClient } from '@foxeo/supabase'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 export function useMeetingRealtime(meetingId: string) {

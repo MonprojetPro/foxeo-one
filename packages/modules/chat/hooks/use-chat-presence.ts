@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@foxeo/supabase'
+import { createClient } from '@monprojetpro/supabase'
 import type { PresenceEntry, PresenceStateMap } from '../types/presence.types'
 
 /**

@@ -60,7 +60,15 @@ ALTER TABLE notifications ADD CONSTRAINT notifications_type_check
   CHECK (type IN ('message', 'validation', 'alert', 'system', 'graduation', 'payment', 'inactivity_alert', 'csv_import_complete'));
 
 -- ============================================================
--- 4. DROP old columns
+-- 4. DROP old RLS policies (must happen before dropping columns they reference)
+-- ============================================================
+
+DROP POLICY IF EXISTS notifications_select_operator ON notifications;
+DROP POLICY IF EXISTS notifications_update_operator ON notifications;
+DROP POLICY IF EXISTS notifications_insert_operator ON notifications;
+
+-- ============================================================
+-- 5. DROP old columns
 -- ============================================================
 
 ALTER TABLE notifications DROP COLUMN operator_id;
@@ -70,7 +78,7 @@ ALTER TABLE notifications DROP COLUMN entity_type;
 ALTER TABLE notifications DROP COLUMN entity_id;
 
 -- ============================================================
--- 5. DROP old indexes and create new ones
+-- 6. DROP old indexes and create new ones
 -- ============================================================
 
 DROP INDEX IF EXISTS idx_notifications_operator_unread;
@@ -81,14 +89,6 @@ CREATE INDEX idx_notifications_recipient_created_at
 
 CREATE INDEX idx_notifications_unread
   ON notifications(recipient_id, read_at) WHERE read_at IS NULL;
-
--- ============================================================
--- 6. DROP old RLS policies and create new ones
--- ============================================================
-
-DROP POLICY IF EXISTS notifications_select_operator ON notifications;
-DROP POLICY IF EXISTS notifications_update_operator ON notifications;
-DROP POLICY IF EXISTS notifications_insert_operator ON notifications;
 
 CREATE POLICY notifications_select_owner ON notifications
   FOR SELECT

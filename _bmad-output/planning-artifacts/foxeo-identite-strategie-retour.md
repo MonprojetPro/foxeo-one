@@ -2,7 +2,7 @@
 
 > Document de référence pour la communication, le site internet et la configuration de l'agent Orpheus.
 > Dernière mise à jour : 8 février 2026
-> Aligné avec : foxeo-identite-offre-v4-2026-02-08.md
+> Aligné avec : monprojetpro-identite-offre-v4-2026-02-08.md
 
 ---
 
@@ -12,20 +12,20 @@
 
 | Élément | Valeur |
 |---|---|
-| **Marque** | Foxeo |
-| **Baseline** | **"Soyez rusé, pensez Foxeo."** |
-| **Signature** | *Foxeo — Stratégie digitale & accompagnement de projets* |
+| **Marque** | MonprojetPro |
+| **Baseline** | **"Soyez rusé, pensez MonprojetPro."** |
+| **Signature** | *MonprojetPro — Stratégie digitale & accompagnement de projets* |
 | **Titre professionnel** | Stratège & Coach de Transformation \| Formateur • Conférencier |
 | **Méthode** | Les 3C : Comprendre (+ Former). Créer. Concrétiser. |
 | **Essence** | Le renard digital — agile, à l'affût, précis |
 
 ### Vision
 
-Foxeo accompagne les entrepreneurs, associations et TPE/PME dans leur transformation numérique. Pas un simple prestataire web — un **partenaire de croissance** qui reste après la livraison.
+MonprojetPro accompagne les entrepreneurs, associations et TPE/PME dans leur transformation numérique. Pas un simple prestataire web — un **partenaire de croissance** qui reste après la livraison.
 
 ### Le Modèle Centaure
 
-Le coeur de Foxeo repose sur le **modèle Centaure** : la combinaison d'une **intelligence artificielle disponible 24h/24** et d'un **expert humain** (MiKL) qui valide, ajuste et personnalise chaque décision.
+Le coeur de MonprojetPro repose sur le **modèle Centaure** : la combinaison d'une **intelligence artificielle disponible 24h/24** et d'un **expert humain** (MiKL) qui valide, ajuste et personnalise chaque décision.
 
 > "L'IA fait le travail répétitif, l'humain apporte le jugement. Le client bénéficie des deux sans payer le prix des deux."
 
@@ -37,7 +37,7 @@ Le coeur de Foxeo repose sur le **modèle Centaure** : la combinaison d'une **in
 
 ### Positionnement
 
-| Ce que Foxeo N'EST PAS | Ce que Foxeo EST |
+| Ce que MonprojetPro N'EST PAS | Ce que MonprojetPro EST |
 |---|---|
 | Une agence web classique | Un accompagnement IA + Humain |
 | Un freelance qui livre et disparaît | Un partenaire avec suivi permanent |
@@ -46,7 +46,7 @@ Le coeur de Foxeo repose sur le **modèle Centaure** : la combinaison d'une **in
 
 ### Le Profil MiKL — Développeur & Product Builder
 
-MiKL n'est pas un consultant no-code ou un intégrateur d'outils existants. C'est un **développeur full-stack** et **product builder** qui conçoit et développe réellement les produits Foxeo.
+MiKL n'est pas un consultant no-code ou un intégrateur d'outils existants. C'est un **développeur full-stack** et **product builder** qui conçoit et développe réellement les produits MonprojetPro.
 
 | Compétence | Détail |
 |---|---|
@@ -65,13 +65,13 @@ MiKL n'est pas un consultant no-code ou un intégrateur d'outils existants. C'es
 
 ## 2. L'ÉCOSYSTÈME DES 3 DASHBOARDS
 
-L'accompagnement humain avec visio et suivi de projet reste le coeur de Foxeo. Les dashboards sont des **outils au service de cet accompagnement**, rendus possibles par les évolutions de l'IA agentique.
+L'accompagnement humain avec visio et suivi de projet reste le coeur de MonprojetPro. Les dashboards sont des **outils au service de cet accompagnement**, rendus possibles par les évolutions de l'IA agentique.
 
 ### 2.1 FOXEO-HUB — Le Cockpit Central
 
 | | |
 |---|---|
-| **Utilisateur** | MiKL (opérateur Foxeo) |
+| **Utilisateur** | MiKL (opérateur MonprojetPro) |
 | **Couleur accent** | Cyan/Turquoise (style Minimal Futuriste dark mode — cf. UX spec) |
 | **Agent IA** | Élio Hub |
 | **Rôle** | Pilotage de tous les clients, validation, facturation |
@@ -101,7 +101,7 @@ L'accompagnement humain avec visio et suivi de projet reste le coeur de Foxeo. L
 - Gestion documentaire : Livrables, Ressources, Devoirs
 - Chat avec Élio Lab (compagnon en off pour avancer dans ses réflexions)
 - Communication directe avec MiKL
-- Graduation : migration vers Foxeo-One quand le projet est prêt
+- Graduation : migration vers MonprojetPro-One quand le projet est prêt
 
 **Ce qu'Élio Lab apporte :**
 > Entre les visios avec MiKL, le client n'est plus seul. Élio Lab l'aide à structurer ses idées, à réfléchir à son projet, à préparer les prochaines étapes. Le client avance même quand MiKL n'est pas disponible.
@@ -130,15 +130,15 @@ L'accompagnement humain avec visio et suivi de projet reste le coeur de Foxeo. L
 
 ### Qu'est-ce qu'Élio ?
 
-Élio est l'**assistant IA intégré** à chaque dashboard Foxeo. Ce n'est pas un chatbot générique — c'est un agent **configuré spécifiquement pour chaque client**, qui connaît son projet, son historique et ses préférences.
+Élio est l'**assistant IA intégré** à chaque dashboard MonprojetPro. Ce n'est pas un chatbot générique — c'est un agent **configuré spécifiquement pour chaque client**, qui connaît son projet, son historique et ses préférences.
 
 ### Les 3 agents Élio
 
 | Agent | Dashboard | Ce qu'il fait | Pour qui |
 |---|---|---|---|
-| **Élio Lab** | Foxeo-Lab | Accompagne le client en off pour avancer dans ses réflexions entre les visios | Clients Lab |
-| **Élio One** | Foxeo-One | Assistance technique modernisée : FAQ, recherche documentaire, guidance | Abonnés Essentiel |
-| **Élio One+** | Foxeo-One | Agent IA qui exécute des tâches liées aux outils développés — change l'expérience utilisateur | Abonnés Agentique |
+| **Élio Lab** | MonprojetPro-Lab | Accompagne le client en off pour avancer dans ses réflexions entre les visios | Clients Lab |
+| **Élio One** | MonprojetPro-One | Assistance technique modernisée : FAQ, recherche documentaire, guidance | Abonnés Essentiel |
+| **Élio One+** | MonprojetPro-One | Agent IA qui exécute des tâches liées aux outils développés — change l'expérience utilisateur | Abonnés Agentique |
 
 ### Élio One vs Élio One+
 
@@ -188,7 +188,7 @@ L'accompagnement humain avec visio et suivi de projet reste le coeur de Foxeo. L
 
 ### Rôle
 
-Orpheus est le **cerveau invisible** de Foxeo. Il travaille en coulisses, dans l'environnement de développement (Cursor/BMAD), et ne communique **jamais directement** avec les clients.
+Orpheus est le **cerveau invisible** de MonprojetPro. Il travaille en coulisses, dans l'environnement de développement (Cursor/BMAD), et ne communique **jamais directement** avec les clients.
 
 ### Ce qu'Orpheus fait
 
@@ -226,7 +226,7 @@ Orpheus (coulisses)
 
 Le premier rendez-vous avec MiKL est **gratuit**. C'est un échange humain, sans engagement, qui permet de comprendre le besoin, qualifier le projet et orienter vers la bonne offre.
 
-### Les 4 Offres Foxeo
+### Les 4 Offres MonprojetPro
 
 | | **Ponctuel** | **Lab** | **Essentiel** | **Agentique** |
 |---|---|---|---|---|
@@ -266,7 +266,7 @@ Tout Essentiel + Élio One+ (agent IA qui agit) + actions sur les modules + gén
 
 ### Tarification Setup — Le "Devis Juste"
 
-Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argumenté et transparent**, calculé après une analyse précise du projet.
+Le devis MonprojetPro n'est **pas un forfait générique**. C'est un **prix juste, argumenté et transparent**, calculé après une analyse précise du projet.
 
 **Le processus :**
 1. **Analyse** — MiKL étudie le besoin en profondeur (1er RDV offert + échanges)
@@ -330,7 +330,7 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 
 ## 6. PARCOURS CLIENT DÉTAILLÉ
 
-### Le Funnel Foxeo
+### Le Funnel MonprojetPro
 
 ```
 1er RDV OFFERT (qualification par MiKL)
@@ -356,8 +356,8 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 ```
 
 ### Étape 1 — Découverte
-- **Canaux :** QR code, LinkedIn, site vitrine Foxeo, bouche-à-oreille
-- **Action :** Le prospect découvre Foxeo et ses services
+- **Canaux :** QR code, LinkedIn, site vitrine MonprojetPro, bouche-à-oreille
+- **Action :** Le prospect découvre MonprojetPro et ses services
 
 ### Étape 2 — Prise de contact
 - **Outil :** Cal.com (réservation en ligne)
@@ -373,7 +373,7 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 - **MiKL qualifie** et oriente vers la bonne offre (Ponctuel, Lab ou One)
 
 ### Étape 4 — Engagement (le "Devis Juste")
-- **Lab :** Le client paie 199€ et reçoit ses accès Foxeo-Lab
+- **Lab :** Le client paie 199€ et reçoit ses accès MonprojetPro-Lab
 - **One :** MiKL présente un **devis juste** — détaillé module par module, transparent sur le TJM et les coefficients. Le client comprend chaque ligne avant de s'engager. Puis abonnement Essentiel ou Agentique.
 - **Ponctuel :** Devis juste au TJM, projet classique livré et terminé
 
@@ -433,8 +433,8 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 - **RGPD** : Données hébergées en France
 
 ### Hébergement
-- **Hub** : 1 instance Vercel + 1 projet Supabase (Foxeo)
-- **Lab** : 1 instance Vercel + 1 projet Supabase partagé (multi-tenant Foxeo)
+- **Hub** : 1 instance Vercel + 1 projet Supabase (MonprojetPro)
+- **Lab** : 1 instance Vercel + 1 projet Supabase partagé (multi-tenant MonprojetPro)
 - **One** : 1 instance Vercel + 1 projet Supabase **par client** (propriété client)
 - **Services** : VPS avec Docker Compose (OpenVidu, Cal.com)
 - **Coût par client One** : ~5-7€/mois sur tiers gratuits
@@ -469,7 +469,7 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 ## 9. LES 25 PRINCIPES FONDATEURS
 
 ### Nature du produit (1-4)
-1. **Le temps est la monnaie ultime** — Foxeo fait gagner du temps au client ET à MiKL
+1. **Le temps est la monnaie ultime** — MonprojetPro fait gagner du temps au client ET à MiKL
 2. **Simplification cognitive** — Réduire la charge mentale, pas l'ajouter
 3. **Consolidation économique** — Un écosystème qui remplace 10 outils
 4. **Assistant vs Outil** — Élio est un assistant qui guide, pas un outil qu'on subit
@@ -494,7 +494,7 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 17. **Workflow d'évolution visible** — Le client voit que son projet peut grandir
 18. **Lock-in positif & propriété client** — Le client reste parce que c'est utile, pas parce qu'il est piégé. Son outil lui appartient, il peut partir avec.
 19. **Écosystème front + back** — Le client voit One, MiKL voit Hub, les deux sont connectés
-20. **Hub d'intégration** — Foxeo connecte les outils existants du client
+20. **Hub d'intégration** — MonprojetPro connecte les outils existants du client
 
 ### Parcours client (21-25)
 21. **Deux portes d'entrée** — Lab (création) ou One (direct), adapté à chaque situation
@@ -510,7 +510,7 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 ### Pour le site internet & la communication
 
 #### Argument 1 : "Votre 1er rendez-vous est offert"
-> On se parle, on fait connaissance, on comprend votre besoin. Sans engagement, sans frais. C'est le point de départ de toute collaboration Foxeo.
+> On se parle, on fait connaissance, on comprend votre besoin. Sans engagement, sans frais. C'est le point de départ de toute collaboration MonprojetPro.
 
 #### Argument 2 : "199€ pour construire votre projet avec l'IA"
 > Le Lab, c'est votre espace de création. Un dashboard dédié, un assistant IA qui vous accompagne, et MiKL qui valide et coache. Pour 199€, vous structurez votre projet à votre rythme. Et si vous passez sur un développement ensuite, c'est déduit.
@@ -568,7 +568,7 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 
 ### Ce qu'Orpheus doit savoir pour être cohérent
 
-**Foxeo = Accompagnement humain + IA (modèle Centaure) pour la transformation digitale des entrepreneurs.**
+**MonprojetPro = Accompagnement humain + IA (modèle Centaure) pour la transformation digitale des entrepreneurs.**
 
 - **MiKL** : Développeur full-stack & product builder, code les produits, automatise les process métier, augmenté par Cursor/BMAD
 - **3 dashboards** : Hub (MiKL), Lab (création), One (quotidien)
@@ -578,7 +578,7 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 - **4 offres** : Ponctuel (TJM), Lab (199€), Essentiel (49€/mois), Agentique (99€/mois)
 - **Devis juste** : Prix calculé après analyse précise, détaillé module par module, transparent et argumenté
 - **Lab 199€ déduit** si le client passe sur One
-- **Propriété client** : Le code One appartient au client, pas à Foxeo. Le Lab reste propriété Foxeo.
+- **Propriété client** : Le code One appartient au client, pas à MonprojetPro. Le Lab reste propriété MonprojetPro.
 - **Déploiement** : Hub unique + Lab multi-tenant + One instance par client (~5-7€/mois)
 - **Stack** : Next.js 16, Supabase, DeepSeek V3.2, OpenVidu, Pennylane, Cal.com, Deepgram
 - **Couleurs** : Minimal Futuriste dark mode — Hub=Cyan/Turquoise, Lab=Violet/Purple, One=Vert ou Orange
@@ -587,7 +587,7 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 - **Promesse** : Gagner du temps, simplifier le quotidien, accompagner la croissance
 - **Différenciation** : L'IA ne remplace pas l'humain, elle amplifie l'humain
 
-### Tonalité de communication Foxeo
+### Tonalité de communication MonprojetPro
 
 | | À faire | À éviter |
 |---|---|---|
@@ -617,7 +617,7 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 ## 15. ROADMAP RÉSUMÉE
 
 ### Phase 1 — MVP (En cours)
-- Foxeo-Hub core + Lab pour cas d'étude association
+- MonprojetPro-Hub core + Lab pour cas d'étude association
 - Élio Lab configuré pour le premier client
 - Visio + transcription + brief automatique
 - Facturation Pennylane intégrée
@@ -630,10 +630,10 @@ Le devis Foxeo n'est **pas un forfait générique**. C'est un **prix juste, argu
 
 ### Phase 3 — Vision
 - Multi-utilisateurs par dashboard client
-- API publique Foxeo
+- API publique MonprojetPro
 - Gamification du parcours Lab
 - Multi-langue (FR/EN minimum)
 
 ---
 
-*Ce document est la source de vérité pour l'identité Foxeo. Toute communication, page web ou configuration d'agent doit être cohérente avec les éléments décrits ici.*
+*Ce document est la source de vérité pour l'identité MonprojetPro. Toute communication, page web ou configuration d'agent doit être cohérente avec les éléments décrits ici.*

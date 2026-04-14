@@ -13,7 +13,7 @@ So that **j'ai une experience visuelle coherente, agreable et utilisable sur tou
 ## Acceptance Criteria
 
 1. **AC1: 3 fichiers CSS OKLCH avec palettes "Minimal Futuriste" correctes**
-   - **Given** le package @foxeo/ui existant avec les fichiers themes actuels (palettes tweakcn.com initiales)
+   - **Given** le package @monprojetpro/ui existant avec les fichiers themes actuels (palettes tweakcn.com initiales)
    - **When** les themes sont mis a jour
    - **Then** 3 fichiers CSS OKLCH existent dans `packages/ui/src/themes/` :
      - `hub.css` — palette Cyan/Turquoise sur fond #020402
@@ -254,7 +254,7 @@ Il faut que `body` utilise `font-family: var(--font-sans)` par defaut (Poppins).
 'use client'
 
 import { Moon, Sun } from 'lucide-react'
-import { useTheme } from '@foxeo/supabase'
+import { useTheme } from '@monprojetpro/supabase'
 import { Button } from '../button'
 
 export function ThemeToggle() {
@@ -296,7 +296,7 @@ Si les valeurs ne sont pas suffisamment differenciees, ajouter des CSS custom pr
 
 ### Responsive — Ce qui existe deja
 
-Le composant `Sidebar` de @foxeo/ui utilise deja :
+Le composant `Sidebar` de @monprojetpro/ui utilise deja :
 - `useIsMobile()` hook pour detecter le viewport mobile
 - `Sheet` (drawer) comme fallback sur mobile
 - Cookie-based state persistence pour l'etat collapse/expand
@@ -494,7 +494,7 @@ d165ddf feat: Story 1.1 — Setup monorepo, shared packages & dashboard shell
 
 1. **Ne pas casser les composants existants** : Les 19 composants shadcn/ui utilisent les CSS variables (`bg-primary`, `text-foreground`, etc.). Changer les valeurs OKLCH dans les themes les affectera automatiquement. Verifier visuellement que tous les composants restent lisibles apres changement de palette.
 
-2. **next/font dans un monorepo** : `next/font/google` fonctionne uniquement dans les apps Next.js, pas dans les packages. Les fonts doivent etre initialisees dans les layouts root de chaque app, pas dans @foxeo/ui.
+2. **next/font dans un monorepo** : `next/font/google` fonctionne uniquement dans les apps Next.js, pas dans les packages. Les fonts doivent etre initialisees dans les layouts root de chaque app, pas dans @monprojetpro/ui.
 
 3. **Mode light secondaire** : Le dark mode est le defaut, mais le light mode doit etre coherent. Ne pas negliger les valeurs light — elles seront utilisees par les utilisateurs qui preferent le mode clair.
 
@@ -519,7 +519,7 @@ Claude Opus 4.6
 
 ### Debug Log References
 - Contrast test initial: 6/270 failures → fixed OKLCH lightness values for primary-foreground, muted-foreground, secondary
-- Build barrel import error: ThemeToggle imported `@foxeo/supabase` barrel → server.ts → next/headers. Fixed by adding `./theme` subpath export
+- Build barrel import error: ThemeToggle imported `@monprojetpro/supabase` barrel → server.ts → next/headers. Fixed by adding `./theme` subpath export
 - Build type errors pre-existing: `clients/actions.ts:38` type 'never' and `auth.ts:25` async refine — NOT regressions
 
 ### Completion Notes List
@@ -528,7 +528,7 @@ Claude Opus 4.6
 - 3 palettes "Minimal Futuriste" OKLCH on #020402 dark background
 - ThemeProvider now persists to localStorage, listens for system preference changes
 - DashboardShell upgraded: mobile Sheet drawer + hamburger button, ARIA roles
-- `@foxeo/supabase` now has `./theme` subpath export for tree-shake-safe client imports
+- `@monprojetpro/supabase` now has `./theme` subpath export for tree-shake-safe client imports
 - Pre-existing build errors documented (NOT from this story)
 
 ### File List

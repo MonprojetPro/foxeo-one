@@ -14,8 +14,8 @@ vi.mock('next/link', () => ({
   ),
 }))
 
-// Mock @foxeo/utils
-vi.mock('@foxeo/utils', () => ({
+// Mock @monprojetpro/utils
+vi.mock('@monprojetpro/utils', () => ({
   cn: (...args: (string | boolean | undefined)[]) => args.filter(Boolean).join(' '),
 }))
 

@@ -7,7 +7,7 @@ vi.mock('next/link', () => ({
     <a href={href}>{children}</a>,
 }))
 
-vi.mock('@foxeo/utils', async (importOriginal) => {
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
   const actual = await importOriginal()
   return {
     ...actual,

@@ -27,7 +27,7 @@ describe('buildElioSystemPrompt', () => {
   it('generates a system prompt that contains Élio identity', () => {
     const prompt = buildElioSystemPrompt(baseProfile)
     expect(prompt).toContain('Élio')
-    expect(prompt).toContain('Foxeo Lab')
+    expect(prompt).toContain('MonprojetPro Lab')
   })
 
   it('includes tone instruction for friendly profile', () => {

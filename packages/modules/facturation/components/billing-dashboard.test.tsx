@@ -29,7 +29,7 @@ vi.mock('./subscriptions-list', () => ({
   SubscriptionsList: () => <div data-testid="subscriptions-list" />,
 }))
 
-vi.mock('@foxeo/ui', async (importOriginal) => {
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
   return {
     ...actual,

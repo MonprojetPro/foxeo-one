@@ -20,7 +20,7 @@ let insertResult: { error: unknown } = { error: null }
 const mockUpdate = vi.fn()
 const mockInsert = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({
@@ -209,7 +209,7 @@ describe('updateActiveModules', () => {
   describe('Erreurs auth', () => {
     it('retourne UNAUTHORIZED si pas d\'utilisateur connecté', async () => {
       vi.mocked(
-        (await import('@foxeo/supabase')).createServerSupabaseClient
+        (await import('@monprojetpro/supabase')).createServerSupabaseClient
       ).mockResolvedValueOnce({
         auth: {
           getUser: vi.fn(async () => ({ data: { user: null }, error: null })),

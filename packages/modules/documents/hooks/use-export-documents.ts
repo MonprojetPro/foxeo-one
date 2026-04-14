@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
-import { toast } from '@foxeo/ui'
+import { toast } from '@monprojetpro/ui'
 import { exportDocumentsCSV } from '../actions/export-documents-csv'
 import { exportDocumentsJSON } from '../actions/export-documents-json'
 import type { DocumentFilters } from '../types/document.types'

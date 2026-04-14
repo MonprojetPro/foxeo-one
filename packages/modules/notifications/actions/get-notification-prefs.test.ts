@@ -4,7 +4,7 @@ import { PREFERENCE_NOTIFICATION_TYPES } from '../types/notification-prefs.types
 const mockFrom = vi.fn()
 const mockGetUser = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },
