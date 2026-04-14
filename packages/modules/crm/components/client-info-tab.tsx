@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, Badge, Separator, Button, Skeleton, showSuccess, showError } from '@foxeo/ui'
-import { exportClientData } from '@foxeo/module-admin'
+import { Card, CardContent, CardHeader, CardTitle, Badge, Separator, Button, Skeleton, showSuccess, showError } from '@monprojetpro/ui'
+import { exportClientData } from '@monprojetpro/module-admin'
 import { useClient } from '../hooks/use-client'
 import { useClientParcours } from '../hooks/use-client-parcours'
 import { useClientPendingValidations } from '../hooks/use-client-pending-validations'
@@ -25,6 +25,14 @@ interface ClientInfoTabProps {
   clientId: string
   onEdit?: () => void
 }
+
+/**
+ * @deprecated ADR-01 Révision 2 — Feature flag pour masquer l'ancien flow
+ * "Transférer l'instance" (Story 9.5b). Remplacé par le Kit de sortie client
+ * (Story 13.1). À retirer complètement (avec TransferInstanceDialog et la
+ * Server Action transferInstanceToClient) après merge de la Story 13.1.
+ */
+const ENABLE_LEGACY_TRANSFER = false
 
 const clientTypeLabels: Record<string, string> = {
   'complet': 'Complet',
@@ -120,16 +128,17 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
     <div className="space-y-6 mt-6">
       {/* Coordonnées */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle>Coordonnées</CardTitle>
-          {onEdit && (
-            <Button onClick={onEdit} variant="outline" size="sm">
-              Modifier
-            </Button>
-          )}
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-4">
+            {client.firstName && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Prénom</p>
+                <p className="text-base">{client.firstName}</p>
+              </div>
+            )}
             <div>
               <p className="text-sm font-medium text-muted-foreground">Nom</p>
               <p className="text-base">{client.name}</p>
@@ -284,7 +293,7 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
       {isLabClient && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Graduation vers Foxeo One</CardTitle>
+            <CardTitle>Graduation vers MonprojetPro One</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -300,7 +309,7 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
                     title={graduationTooltip}
                     aria-disabled="true"
                   >
-                    Graduer vers Foxeo One
+                    Graduer vers MonprojetPro One
                   </Button>
                   <span className="text-xs text-muted-foreground">{graduationTooltip}</span>
                 </div>
@@ -310,7 +319,7 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
                   onClick={() => setGraduationDialogOpen(true)}
                   data-testid="graduation-button"
                 >
-                  Graduer vers Foxeo One
+                  Graduer vers MonprojetPro One
                 </Button>
               )}
             </div>
@@ -444,8 +453,8 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
         />
       )}
 
-      {/* Story 9.5b — Dialog transfert instance */}
-      {isOneClient && (
+      {/* Story 9.5b — Dialog transfert instance (@deprecated — voir ENABLE_LEGACY_TRANSFER) */}
+      {ENABLE_LEGACY_TRANSFER && isOneClient && (
         <TransferInstanceDialog
           clientId={clientId}
           clientName={client.name}
@@ -510,7 +519,13 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
               </Button>
             )}
             {/* Story 9.5b — Transfert instance One */}
-            {isOneClient && clientInstance?.status === 'active' && (
+            {/*
+              @deprecated ADR-01 Révision 2 — Remplacé par Story 13.1 (Kit de sortie client).
+              Bouton masqué pour éviter tout clic accidentel de MiKL sur l'ancien flow.
+              Le composant TransferInstanceDialog et la Server Action transferInstanceToClient
+              restent en code (marqués @deprecated) — ils seront retirés après merge de la Story 13.1.
+            */}
+            {ENABLE_LEGACY_TRANSFER && isOneClient && clientInstance?.status === 'active' && (
               <>
                 <Separator />
                 <div className="space-y-2">

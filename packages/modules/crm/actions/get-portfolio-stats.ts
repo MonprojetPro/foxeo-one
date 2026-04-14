@@ -1,11 +1,11 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { PortfolioStats as PortfolioStatsSchema } from '../types/crm.types'
 import type { PortfolioStats } from '../types/crm.types'
 
@@ -68,7 +68,8 @@ export async function getPortfolioStats(): Promise<ActionResponse<PortfolioStats
       }
     }
 
-    // Aggregate by type
+    // Aggregate by client_type — HISTORICAL label (commercial origin).
+    // Kept for backwards compatibility with existing Hub widgets (ADR-01 Rev 2).
     const byType = {
       complet: 0,
       directOne: 0,
@@ -85,21 +86,45 @@ export async function getPortfolioStats(): Promise<ActionResponse<PortfolioStats
       }
     }
 
-    // Lab / One active counts (based on dashboard_type from client_configs)
-    const clientConfigs = clients as Array<typeof clients[number] & { client_configs: { dashboard_type: string } | null }>
+    // Aggregate by client_configs.dashboard_type — SOURCE OF TRUTH for
+    // current dashboard state (lab vs one). Supabase returns the joined
+    // `client_configs` relation as either an object, an array, or null.
+    type ClientConfigJoin = { dashboard_type: string | null } | null
+    type ClientRow = typeof clients[number] & {
+      client_configs: ClientConfigJoin | ClientConfigJoin[]
+    }
 
-    const labActive = clientConfigs.filter(
-      (c) => c.status === 'active' && c.client_configs?.dashboard_type === 'lab'
-    ).length
+    const resolveDashboardType = (row: ClientRow): string | null => {
+      const rel = row.client_configs
+      if (!rel) return null
+      if (Array.isArray(rel)) return rel[0]?.dashboard_type ?? null
+      return rel.dashboard_type ?? null
+    }
 
-    const oneActive = clientConfigs.filter(
-      (c) => c.status === 'active' && c.client_configs?.dashboard_type === 'one'
-    ).length
+    const byDashboardType = {
+      lab: 0,
+      one: 0,
+    }
+
+    let labActive = 0
+    let oneActive = 0
+
+    for (const client of clients as ClientRow[]) {
+      const dashboardType = resolveDashboardType(client)
+      if (dashboardType === 'lab') {
+        byDashboardType.lab++
+        if (client.status === 'active') labActive++
+      } else if (dashboardType === 'one') {
+        byDashboardType.one++
+        if (client.status === 'active') oneActive++
+      }
+    }
 
     const stats = PortfolioStatsSchema.parse({
       totalClients: clients.length,
       byStatus,
       byType,
+      byDashboardType,
       labActive,
       oneActive,
       mrr: { available: false, message: 'Module Facturation requis' },

@@ -20,7 +20,7 @@ function makeEqChain(): {
   return chain
 }
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } }, error: null })),
@@ -202,6 +202,42 @@ describe('sendToElio', () => {
     const result = await sendToElio('hub', 'Comment je crée un client ?')
     expect(result.error).toBeNull()
     expect(result.data?.content).toBeTruthy()
+  })
+
+  it('retourne ELIO_LAB_DISABLED si elio_lab_enabled=false pour un message Lab', async () => {
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
+    vi.mocked(createServerSupabaseClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } }, error: null })),
+      },
+      from: vi.fn((table: string) => {
+        if (table === 'client_configs') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn(async () => ({
+                  data: { elio_lab_enabled: false },
+                  error: null,
+                })),
+              })),
+            })),
+          }
+        }
+        return {
+          select: vi.fn(() => ({
+            ...makeEqChain(),
+            or: vi.fn(() => ({
+              limit: vi.fn(async () => ({ data: [], error: null })),
+            })),
+          })),
+        }
+      }),
+      functions: { invoke: mockInvoke },
+    } as never)
+
+    const result = await sendToElio('lab', 'Bonjour Élio', 'client-1')
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('ELIO_LAB_DISABLED')
   })
 
   it('retourne une erreur si l\'Edge Function retourne une erreur', async () => {

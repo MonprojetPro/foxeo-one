@@ -57,7 +57,7 @@ const mockFrom = vi.fn((table: string) => {
   return {}
 })
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() =>
     Promise.resolve({
       auth: { getUser: mockGetUser },
@@ -66,7 +66,7 @@ vi.mock('@foxeo/supabase', () => ({
   ),
 }))
 
-vi.mock('@foxeo/types', () => ({
+vi.mock('@monprojetpro/types', () => ({
   successResponse: (data: unknown) => ({ data, error: null }),
   errorResponse: (message: string, code: string, details?: unknown) => ({
     data: null,
@@ -95,9 +95,15 @@ describe('upgradeClient Server Action', () => {
     // Default: operator found
     mockOperatorSingle.mockResolvedValue({ data: { id: OPERATOR_ID }, error: null })
 
-    // Default: ponctuel active client found
+    // Default: ponctuel active client found (ADR-01 Rev 2: eligible = one + !lab_mode_available)
     mockClientSingle.mockResolvedValue({
-      data: { id: CLIENT_ID, client_type: 'ponctuel', status: 'active', operator_id: OPERATOR_ID },
+      data: {
+        id: CLIENT_ID,
+        client_type: 'ponctuel',
+        status: 'active',
+        operator_id: OPERATOR_ID,
+        client_configs: { dashboard_type: 'one', lab_mode_available: false },
+      },
       error: null,
     })
 
@@ -175,9 +181,15 @@ describe('upgradeClient Server Action', () => {
     expect(result.error?.code).toBe('NOT_FOUND')
   })
 
-  it('should return VALIDATION_ERROR if client is not ponctuel', async () => {
+  it('should return VALIDATION_ERROR if client is not ponctuel (lab_mode_available=true)', async () => {
     mockClientSingle.mockResolvedValue({
-      data: { id: CLIENT_ID, client_type: 'complet', status: 'active', operator_id: OPERATOR_ID },
+      data: {
+        id: CLIENT_ID,
+        client_type: 'complet',
+        status: 'active',
+        operator_id: OPERATOR_ID,
+        client_configs: { dashboard_type: 'lab', lab_mode_available: true },
+      },
       error: null,
     })
 
@@ -193,7 +205,13 @@ describe('upgradeClient Server Action', () => {
 
   it('should return VALIDATION_ERROR if client is not active', async () => {
     mockClientSingle.mockResolvedValue({
-      data: { id: CLIENT_ID, client_type: 'ponctuel', status: 'suspended', operator_id: OPERATOR_ID },
+      data: {
+        id: CLIENT_ID,
+        client_type: 'ponctuel',
+        status: 'suspended',
+        operator_id: OPERATOR_ID,
+        client_configs: { dashboard_type: 'one', lab_mode_available: false },
+      },
       error: null,
     })
 

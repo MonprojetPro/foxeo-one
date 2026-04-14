@@ -1,12 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { ImportCsvInput } from '../types/crm.types'
 import type { CsvImportRow, CsvImportResult } from '../types/crm.types'
 
@@ -115,16 +115,31 @@ export async function importClientsCsv(
       )
     }
 
-    // Create client_configs for each inserted client
+    // Create client_configs for each inserted client.
+    //
+    // ADR-01 Rev 2: `client_type` from the CSV is a HISTORICAL commercial
+    // label; it determines the INITIAL `dashboard_type` and the lab/elio
+    // flags at creation time, but subsequent dashboard behavior is driven
+    // by `client_configs` (source of truth), not by `client_type`.
+    //
+    // Mapping:
+    //   - 'complet'    → starts in Lab (dashboard_type=lab, lab/elio enabled)
+    //   - 'direct_one' → starts on One (never had Lab)
+    //   - 'ponctuel'   → starts on One (never had Lab)
     const { error: configError } = await supabase
       .from('client_configs')
       .insert(
-        insertedClients.map((c) => ({
-          client_id: c.id,
-          operator_id: operatorId,
-          active_modules: ['core-dashboard'],
-          dashboard_type: c.client_type === 'direct_one' ? 'one' : 'lab',
-        }))
+        insertedClients.map((c) => {
+          const isLabClient = c.client_type === 'complet'
+          return {
+            client_id: c.id,
+            operator_id: operatorId,
+            active_modules: ['core-dashboard'],
+            dashboard_type: isLabClient ? 'lab' : 'one',
+            lab_mode_available: isLabClient,
+            elio_lab_enabled: isLabClient,
+          }
+        })
       )
 
     if (configError) {

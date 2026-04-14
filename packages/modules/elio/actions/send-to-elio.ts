@@ -1,9 +1,10 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 import { buildSystemPrompt, UPSELL_ONE_PLUS_MESSAGE } from '../config/system-prompts'
 import { getElioConfig } from './get-elio-config'
+import { DEFAULT_ELIO_CONFIG } from '../types/elio-config.types'
 import { searchClientInfo } from './search-client-info'
 import { correctAndAdaptText } from './correct-and-adapt-text'
 import { generateDraft } from './generate-draft'
@@ -14,9 +15,9 @@ import { checkIfFeatureExists } from '../utils/detect-existing-feature'
 import { checkModuleActive, buildModuleNotActiveMessage } from '../utils/check-module-active'
 import { getCollectionStatus } from '../utils/document-collection'
 import { generateDocument } from './generate-document'
-import type { DashboardType, ElioMessage, CommunicationProfileFR66 } from '../types/elio.types'
+import type { DashboardType, ElioMessage, CommunicationProfileFR66, DraftContext } from '../types/elio.types'
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
-import type { ElioModuleDoc } from '@foxeo/types'
+import type { ElioModuleDoc } from '@monprojetpro/types'
 import { loadModuleDocumentation } from './load-module-documentation'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
@@ -52,13 +53,6 @@ function buildElioModuleDocsPrompt(elioModuleDocs: unknown): string | null {
   })
 
   return sections.join('\n\n')
-}
-
-export interface DraftContext {
-  previousDraft: string
-  clientName: string
-  draftType: 'email' | 'validation_hub' | 'chat'
-  currentVersion?: number
 }
 
 function makeMessageId(): string {
@@ -107,7 +101,7 @@ function handleElioError(err: unknown): { message: string; code: string; details
 
   console.error(`[ELIO:ERROR] UNKNOWN: ${String(err)}`)
   return {
-    message: 'Une erreur inattendue est survenue.',
+    message: `Erreur: ${String(err)}`,
     code: 'UNKNOWN',
     details: err,
   }
@@ -132,12 +126,14 @@ export async function sendToElio(
   const supabase = await createServerSupabaseClient()
 
   // 1. Charger la config Élio
-  const { data: elioConfig, error: configError } = await getElioConfig(
-    dashboardType === 'hub' ? undefined : clientId
-  )
-
-  if (configError) {
-    return errorResponse('Erreur de configuration Élio', 'CONFIG_ERROR', configError)
+  // Hub : MiKL est opérateur (pas client) → pas de config client, on utilise les defaults
+  let elioConfig = DEFAULT_ELIO_CONFIG
+  if (dashboardType !== 'hub') {
+    const { data: cfg, error: configError } = await getElioConfig(clientId)
+    if (configError) {
+      return errorResponse('Erreur de configuration Élio', 'CONFIG_ERROR', configError)
+    }
+    if (cfg) elioConfig = cfg
   }
 
   // 2. Hub uniquement : détecter l'intention et router vers la Server Action appropriée
@@ -469,6 +465,23 @@ export async function sendToElio(
     return response
   }
 
+  // 3bis. Guard Élio Lab — MiKL peut désactiver elio_lab_enabled après graduation (ADR-01 Révision 2)
+  if (dashboardType === 'lab' && clientId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: labConfig } = await (supabase as any)
+      .from('client_configs')
+      .select('elio_lab_enabled')
+      .eq('client_id', clientId)
+      .maybeSingle() as { data: { elio_lab_enabled: boolean | null } | null }
+
+    if (labConfig && labConfig.elio_lab_enabled === false) {
+      return errorResponse(
+        'Élio Lab est désactivé pour ce client. Contactez MiKL pour le réactiver.',
+        'ELIO_LAB_DISABLED'
+      )
+    }
+  }
+
   // 4. Cas général (Lab, Hub sans intent spécifique) : construire le system prompt et appeler le LLM
   const systemPrompt = buildSystemPrompt({
     dashboardType,
@@ -498,7 +511,7 @@ async function callLLM(
         message,
         dashboardType,
         model: elioConfig?.model ?? 'claude-sonnet-4-20250514',
-        maxTokens: elioConfig?.maxTokens ?? 1500,
+        maxTokens: elioConfig?.maxTokens ?? 8192,
         temperature: elioConfig?.temperature ?? 1.0,
       },
       signal: controller.signal,
@@ -507,6 +520,15 @@ async function callLLM(
     clearTimeout(timeoutId)
 
     if (fnError) {
+      // Extraire le body réel de l'Edge Function pour debug
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ctx = (fnError as any).context
+        if (ctx && typeof ctx.json === 'function') {
+          const body = await ctx.json()
+          console.error('[ELIO] Edge Function error body:', JSON.stringify(body))
+        }
+      } catch (_) { /* ignore */ }
       const errorInfo = handleElioError(fnError)
       return errorResponse(errorInfo.message, errorInfo.code, errorInfo.details)
     }

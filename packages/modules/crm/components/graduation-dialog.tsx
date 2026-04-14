@@ -13,7 +13,7 @@ import {
   Separator,
   showSuccess,
   showError,
-} from '@foxeo/ui'
+} from '@monprojetpro/ui'
 import { graduateClient } from '../actions/graduate-client'
 import type { GraduationTier } from '../types/graduation.types'
 import type { Parcours } from '../types/crm.types'
@@ -106,7 +106,9 @@ export function GraduationDialog({
         return
       }
 
-      showSuccess(`Graduation lancée — provisioning en cours pour ${clientName}`)
+      showSuccess(
+        `Graduation réussie — ${clientName} a désormais accès au mode One. Le toggle Lab/One est visible dans son dashboard.`
+      )
       await queryClient.invalidateQueries({ queryKey: ['clients', clientId] })
       await queryClient.invalidateQueries({ queryKey: ['parcours', clientId] })
       onOpenChange(false)
@@ -118,7 +120,7 @@ export function GraduationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Graduer vers Foxeo One</DialogTitle>
+          <DialogTitle>Graduer vers MonprojetPro One</DialogTitle>
           <DialogDescription>
             Confirmez la graduation de ce client vers son espace professionnel One.
           </DialogDescription>

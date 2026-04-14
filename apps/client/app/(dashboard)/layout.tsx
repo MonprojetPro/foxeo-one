@@ -13,6 +13,7 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { NotificationBadge } from '@monprojetpro/modules-notifications'
 import { PresenceProvider } from '@monprojetpro/modules-chat'
 import { LogoutButton } from './logout-button'
+import { ThemeClassSetter } from './theme-class-setter'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
 async function ClientSidebar({
@@ -146,6 +147,7 @@ export default async function DashboardLayout({
 
   return (
     <div style={accentStyle}>
+      <ThemeClassSetter activeMode={activeMode} />
       <DashboardShell
         density={density}
         sidebar={

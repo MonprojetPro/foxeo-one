@@ -9,6 +9,7 @@ const mockClientMaybeSingle = vi.fn()
 const mockConvCount = vi.fn()
 const mockProfileMaybeSingle = vi.fn()
 const mockMsgInsert = vi.fn()
+const mockClientConfigMaybeSingle = vi.fn()
 
 const CONV_DATA = {
   id: 'conv-new',
@@ -19,7 +20,7 @@ const CONV_DATA = {
   updated_at: '2026-03-02T10:00:00Z',
 }
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } }, error: null })),
@@ -39,6 +40,13 @@ vi.mock('@foxeo/supabase', () => ({
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({ maybeSingle: mockClientMaybeSingle })),
+          })),
+        }
+      }
+      if (table === 'client_configs') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({ maybeSingle: mockClientConfigMaybeSingle })),
           })),
         }
       }
@@ -66,6 +74,8 @@ describe('newConversation', () => {
     mockConvCount.mockResolvedValue({ count: 1, error: null })
     mockProfileMaybeSingle.mockResolvedValue({ data: null, error: null })
     mockMsgInsert.mockResolvedValue({ error: null })
+    // Par défaut : pas de client_config (guard ne bloque pas)
+    mockClientConfigMaybeSingle.mockResolvedValue({ data: null, error: null })
   })
 
   it('crée une conversation et retourne { data, error: null }', async () => {
@@ -82,7 +92,7 @@ describe('newConversation', () => {
 
   it('retourne AUTH_ERROR si utilisateur non authentifié', async () => {
     vi.mocked(
-      (await import('@foxeo/supabase')).createServerSupabaseClient
+      (await import('@monprojetpro/supabase')).createServerSupabaseClient
     ).mockResolvedValueOnce({
       auth: {
         getUser: vi.fn(async () => ({ data: { user: null }, error: new Error('Not authenticated') })),
@@ -179,6 +189,35 @@ describe('newConversation', () => {
 
     expect(result.error).toBeNull()
     expect(mockMsgInsert).not.toHaveBeenCalled()
+  })
+
+  it('retourne ELIO_LAB_DISABLED si elio_lab_enabled=false pour une conv Lab', async () => {
+    mockClientMaybeSingle.mockResolvedValueOnce({ data: { id: 'client-1' }, error: null })
+    mockClientConfigMaybeSingle.mockResolvedValueOnce({
+      data: { elio_lab_enabled: false },
+      error: null,
+    })
+
+    const { newConversation } = await import('./new-conversation')
+    const result = await newConversation('lab')
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('ELIO_LAB_DISABLED')
+  })
+
+  it('autorise la conv Lab si elio_lab_enabled=true', async () => {
+    mockClientMaybeSingle.mockResolvedValueOnce({ data: { id: 'client-1' }, error: null })
+    mockClientConfigMaybeSingle.mockResolvedValueOnce({
+      data: { elio_lab_enabled: true },
+      error: null,
+    })
+    mockConvSingle.mockResolvedValueOnce({ data: { ...CONV_DATA, dashboard_type: 'lab' }, error: null })
+
+    const { newConversation } = await import('./new-conversation')
+    const result = await newConversation('lab')
+
+    expect(result.error).toBeNull()
+    expect(result.data?.id).toBe('conv-new')
   })
 
   it('n\'insère pas de message welcome si ce n\'est pas la première conv One', async () => {

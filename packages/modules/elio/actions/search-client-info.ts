@@ -1,7 +1,7 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { errorResponse, successResponse, type ActionResponse } from '@foxeo/types'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { errorResponse, successResponse, type ActionResponse } from '@monprojetpro/types'
 
 interface ClientSummary {
   name: string
@@ -96,9 +96,22 @@ export async function searchClientInfo(query: string): Promise<ActionResponse<Cl
 
   const client = clients[0]!
 
-  // 2. Fetch parcours si Lab
+  // 2. Fetch parcours si le client a accès au mode Lab
+  // Utilise client_configs.dashboard_type (source de vérité depuis ADR-01 Révision 2)
+  // plutôt que clients.client_type (informatif uniquement).
+  // Parcours existe pour les clients Lab ET pour les gradués avec lab_mode_available = true
+  // (ils peuvent revisiter leur parcours passé).
   let parcours = null
-  if (client.client_type === 'lab') {
+  const { data: clientConfig } = await supabase
+    .from('client_configs')
+    .select('dashboard_type, lab_mode_available')
+    .eq('client_id', client.id)
+    .maybeSingle()
+
+  const hasLabAccess =
+    clientConfig?.dashboard_type === 'lab' || clientConfig?.lab_mode_available === true
+
+  if (hasLabAccess) {
     const { data } = await supabase
       .from('parcours')
       .select('*')

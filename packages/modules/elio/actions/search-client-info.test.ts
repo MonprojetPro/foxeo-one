@@ -11,13 +11,21 @@ const mockValidationLimit = vi.fn()
 const mockMessagesLimit = vi.fn()
 const mockMessagesOrder = vi.fn(() => ({ limit: mockMessagesLimit }))
 const mockMessagesEq = vi.fn(() => ({ order: mockMessagesOrder }))
+const mockClientConfigMaybeSingle = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn((table: string) => {
       if (table === 'clients') {
         return {
           select: vi.fn(() => ({ or: mockClientsOr })),
+        }
+      }
+      if (table === 'client_configs') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({ maybeSingle: mockClientConfigMaybeSingle })),
+          })),
         }
       }
       if (table === 'parcours') {
@@ -68,6 +76,8 @@ describe('searchClientInfo (Story 8.5 — Task 5)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockClientsOr.mockReturnValue({ limit: mockClientsLimit })
+    // Default: no client_config (hasLabAccess = false)
+    mockClientConfigMaybeSingle.mockResolvedValue({ data: null, error: null })
   })
 
   it('Task 5.2 — retourne VALIDATION_ERROR si query vide', async () => {
@@ -79,6 +89,10 @@ describe('searchClientInfo (Story 8.5 — Task 5)', () => {
   it('Task 5.5 — retourne { data: clientInfo, error: null } pour un client trouvé (Lab)', async () => {
     const client = makeClient()
     mockClientsLimit.mockResolvedValueOnce({ data: [client], error: null })
+    mockClientConfigMaybeSingle.mockResolvedValueOnce({
+      data: { dashboard_type: 'lab', lab_mode_available: false },
+      error: null,
+    })
     mockParcoursEqSingle.mockResolvedValueOnce({
       data: { id: 'parc-1', current_step: 2, total_steps: 6, status: 'in_progress' },
       error: null,
@@ -128,7 +142,7 @@ describe('searchClientInfo (Story 8.5 — Task 5)', () => {
   it('Task 5.4 — respecte RLS (requête via createServerSupabaseClient)', async () => {
     mockClientsLimit.mockResolvedValueOnce({ data: [], error: null })
 
-    const { createServerSupabaseClient } = await import('@foxeo/supabase')
+    const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     await searchClientInfo('test')
 
     expect(createServerSupabaseClient).toHaveBeenCalled()
@@ -144,9 +158,13 @@ describe('searchClientInfo (Story 8.5 — Task 5)', () => {
     expect(mockClientsOr).toHaveBeenCalled()
   })
 
-  it('Task 5.3 — client unique (non Lab) ne fetch pas le parcours', async () => {
+  it('Task 5.3 — client One sans accès Lab ne fetch pas le parcours', async () => {
     const client = makeClient({ client_type: 'one' })
     mockClientsLimit.mockResolvedValueOnce({ data: [client], error: null })
+    mockClientConfigMaybeSingle.mockResolvedValueOnce({
+      data: { dashboard_type: 'one', lab_mode_available: false },
+      error: null,
+    })
     mockValidationLimit.mockResolvedValueOnce({ data: [], error: null })
     mockMessagesLimit.mockResolvedValueOnce({ data: [], error: null })
 
@@ -155,5 +173,26 @@ describe('searchClientInfo (Story 8.5 — Task 5)', () => {
     expect(result.error).toBeNull()
     expect((result.data as { parcours: unknown })?.parcours).toBeNull()
     expect(mockParcoursEqSingle).not.toHaveBeenCalled()
+  })
+
+  it('Fix 2026-04-14 — client gradué avec lab_mode_available=true fetch le parcours', async () => {
+    const client = makeClient({ client_type: 'one' })
+    mockClientsLimit.mockResolvedValueOnce({ data: [client], error: null })
+    mockClientConfigMaybeSingle.mockResolvedValueOnce({
+      data: { dashboard_type: 'one', lab_mode_available: true },
+      error: null,
+    })
+    mockParcoursEqSingle.mockResolvedValueOnce({
+      data: { id: 'parc-1', current_step: 6, total_steps: 6, status: 'completed' },
+      error: null,
+    })
+    mockValidationLimit.mockResolvedValueOnce({ data: [], error: null })
+    mockMessagesLimit.mockResolvedValueOnce({ data: [], error: null })
+
+    const result = await searchClientInfo('Sandrine')
+
+    expect(result.error).toBeNull()
+    expect((result.data as { parcours: unknown })?.parcours).toBeDefined()
+    expect(mockParcoursEqSingle).toHaveBeenCalled()
   })
 })

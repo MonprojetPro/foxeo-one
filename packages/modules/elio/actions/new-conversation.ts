@@ -1,8 +1,8 @@
 'use server'
 
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { successResponse, errorResponse, type ActionResponse } from '@foxeo/types'
-import { toCamelCase } from '@foxeo/utils'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
+import { toCamelCase } from '@monprojetpro/utils'
 import type { DashboardType, ElioConversation } from '../types/elio.types'
 
 const GRADUATION_WELCOME_DAYS = 7
@@ -43,6 +43,32 @@ export async function newConversation(
     return errorResponse('Utilisateur non authentifié', 'AUTH_ERROR')
   }
 
+  // Guard : Élio Lab doit être activé (ADR-01 Révision 2)
+  // MiKL peut désactiver elio_lab_enabled après graduation — dans ce cas,
+  // le client ne peut plus créer de nouvelle conversation Lab.
+  if (dashboardType === 'lab') {
+    const { data: clientRow } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('auth_user_id', user.user.id)
+      .maybeSingle()
+
+    if (clientRow) {
+      const { data: config } = await supabase
+        .from('client_configs')
+        .select('elio_lab_enabled')
+        .eq('client_id', clientRow.id)
+        .maybeSingle()
+
+      if (config && config.elio_lab_enabled === false) {
+        return errorResponse(
+          'Élio Lab est désactivé pour ce client. Contactez MiKL pour le réactiver.',
+          'ELIO_LAB_DISABLED'
+        )
+      }
+    }
+  }
+
   const { data, error } = await supabase
     .from('elio_conversations')
     .insert({
@@ -73,7 +99,7 @@ export async function newConversation(
  * - C'est sa première conversation One
  */
 async function insertGraduationWelcomeIfNeeded(
-  supabase: Awaited<ReturnType<typeof import('@foxeo/supabase').createServerSupabaseClient>>,
+  supabase: Awaited<ReturnType<typeof import('@monprojetpro/supabase').createServerSupabaseClient>>,
   authUserId: string,
   conversationId: string
 ): Promise<void> {

@@ -395,6 +395,14 @@ export const TypeCounts = z.object({
 
 export type TypeCounts = z.infer<typeof TypeCounts>
 
+// Dashboard-type counts (source of truth post ADR-01 Rev 2)
+export const DashboardTypeCounts = z.object({
+  lab: z.number().int().nonnegative(),
+  one: z.number().int().nonnegative(),
+})
+
+export type DashboardTypeCounts = z.infer<typeof DashboardTypeCounts>
+
 // MRR info (conditional on billing module)
 export const MrrInfo = z.discriminatedUnion('available', [
   z.object({ available: z.literal(false), message: z.string() }),
@@ -404,10 +412,14 @@ export const MrrInfo = z.discriminatedUnion('available', [
 export type MrrInfo = z.infer<typeof MrrInfo>
 
 // Portfolio stats (AC1)
+// NOTE (ADR-01 Rev 2): `byType` is a HISTORICAL label (commercial origin).
+// The source of truth for current dashboard behavior is `byDashboardType`,
+// which reflects `client_configs.dashboard_type` (lab/one).
 export const PortfolioStats = z.object({
   totalClients: z.number().int().nonnegative(),
   byStatus: StatusCounts,
   byType: TypeCounts,
+  byDashboardType: DashboardTypeCounts,
   labActive: z.number().int().nonnegative(),
   oneActive: z.number().int().nonnegative(),
   mrr: MrrInfo,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { ActionResponse } from '@foxeo/types'
+import type { ActionResponse } from '@monprojetpro/types'
 import type { PortfolioStats } from '../types/crm.types'
 
 const validOperatorUuid = '550e8400-e29b-41d4-a716-446655440000'
@@ -20,7 +20,7 @@ const mockFrom = vi.fn((table: string) => {
 })
 const mockGetUser = vi.fn()
 
-vi.mock('@foxeo/supabase', () => ({
+vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },
@@ -77,10 +77,14 @@ describe('getPortfolioStats Server Action', () => {
     expect(stats.byStatus.archived).toBe(1)
     expect(stats.byStatus.suspended).toBe(1)
 
-    // Type counts
+    // Type counts (historical label, commercial origin)
     expect(stats.byType.complet).toBe(3)
     expect(stats.byType.directOne).toBe(1)
     expect(stats.byType.ponctuel).toBe(1)
+
+    // Dashboard-type counts (source of truth — ADR-01 Rev 2)
+    expect(stats.byDashboardType.lab).toBe(1)
+    expect(stats.byDashboardType.one).toBe(2)
 
     // Lab/One active (based on client_configs.dashboard_type)
     expect(stats.labActive).toBe(1)
@@ -109,6 +113,8 @@ describe('getPortfolioStats Server Action', () => {
     expect(stats.totalClients).toBe(0)
     expect(stats.byStatus.active).toBe(0)
     expect(stats.byType.complet).toBe(0)
+    expect(stats.byDashboardType.lab).toBe(0)
+    expect(stats.byDashboardType.one).toBe(0)
     expect(stats.labActive).toBe(0)
     expect(stats.oneActive).toBe(0)
   })
@@ -151,6 +157,7 @@ describe('getPortfolioStats Server Action', () => {
     expect(stats).toHaveProperty('totalClients')
     expect(stats).toHaveProperty('byStatus')
     expect(stats).toHaveProperty('byType')
+    expect(stats).toHaveProperty('byDashboardType')
     expect(stats).toHaveProperty('labActive')
     expect(stats).toHaveProperty('oneActive')
     expect(stats).toHaveProperty('mrr')

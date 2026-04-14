@@ -1,15 +1,31 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@foxeo/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
   errorResponse,
-} from '@foxeo/types'
+} from '@monprojetpro/types'
 import { UpgradeClientInput as UpgradeClientInputSchema } from '../types/crm.types'
 import type { UpgradeClientInput } from '../types/crm.types'
 
+/**
+ * @deprecated Since ADR-01 Revision 2 (2026-04-14), `client_type` is a
+ * historical commercial label — the source of truth for dashboard behavior
+ * is `client_configs.dashboard_type` combined with the `lab_mode_available`
+ * / `elio_lab_enabled` flags.
+ *
+ * For transitions between dashboards, prefer:
+ *   - `graduateClient()` (`./graduate-client.ts`) — Lab → One graduation.
+ *   - Module activation/deactivation (Story 13.5 Catalogue) — adjust modules
+ *     for a `one` client instead of "upgrading" to a different tier.
+ *
+ * This function remains for backward compatibility with the old `ponctuel →
+ * complet/direct_one` commercial upgrade flow. The guard now uses
+ * `client_configs.dashboard_type` as the authoritative check rather than
+ * `clients.client_type`.
+ */
 export async function upgradeClient(
   input: UpgradeClientInput
 ): Promise<ActionResponse<{ success: true }>> {
@@ -48,10 +64,13 @@ export async function upgradeClient(
 
     const operatorId = operator.id
 
-    // Load client and verify ownership
+    // Load client and verify ownership.
+    // ADR-01 Rev 2: we still read `client_type` for backward-compat logging,
+    // but the operational guard below checks `client_configs.dashboard_type`
+    // + `lab_mode_available` (source of truth).
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, client_type, status, operator_id')
+      .select('id, client_type, status, operator_id, client_configs(dashboard_type, lab_mode_available)')
       .eq('id', clientId)
       .eq('operator_id', operatorId)
       .single()
@@ -61,8 +80,19 @@ export async function upgradeClient(
       return errorResponse('Client introuvable', 'NOT_FOUND')
     }
 
-    // Only ponctuel clients can be upgraded
-    if (client.client_type !== 'ponctuel') {
+    // ADR-01 Rev 2 — Only clients currently on the `one` dashboard WITHOUT
+    // Lab access (historical "ponctuel" profile) are eligible for this
+    // legacy upgrade flow. Clients already in Lab should go through the
+    // graduation flow (`graduateClient`) instead.
+    type ClientConfigJoin = { dashboard_type: string | null; lab_mode_available: boolean | null } | null
+    const rawConfig = (client as unknown as { client_configs: ClientConfigJoin | ClientConfigJoin[] }).client_configs
+    const config: ClientConfigJoin = Array.isArray(rawConfig) ? (rawConfig[0] ?? null) : rawConfig
+    const dashboardType = config?.dashboard_type ?? null
+    const labModeAvailable = config?.lab_mode_available ?? false
+
+    const isEligible = dashboardType === 'one' && labModeAvailable !== true
+
+    if (!isEligible) {
       return errorResponse(
         'Seuls les clients Ponctuel peuvent être upgradés',
         'VALIDATION_ERROR'
@@ -94,7 +124,7 @@ export async function upgradeClient(
 
 // ─── Internal helpers ──────────────────────────────────────────────────────
 
-type SupabaseClient = Awaited<ReturnType<typeof import('@foxeo/supabase').createServerSupabaseClient>>
+type SupabaseClient = Awaited<ReturnType<typeof import('@monprojetpro/supabase').createServerSupabaseClient>>
 
 async function upgradeToLab({
   supabase,
