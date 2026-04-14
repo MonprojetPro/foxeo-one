@@ -98,13 +98,38 @@ export default async function DashboardLayout({
 
   // Single query: fetch client record with joined client_configs (including custom_branding)
   // ADR-01 Révision 2 — `lab_mode_available` ajouté pour piloter la visibilité du toggle Mode Lab/One.
-  const { data: clientRecord } = user
-    ? await supabase
-        .from('clients')
-        .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, density, custom_branding, lab_mode_available)')
-        .eq('auth_user_id', user.id)
-        .maybeSingle()
-    : { data: null }
+  type ClientRecord = {
+    id: string
+    first_name: string | null
+    name: string | null
+    operator_id: string | null
+    client_configs:
+      | {
+          dashboard_type: string
+          active_modules: string[] | null
+          density: string | null
+          custom_branding: CustomBranding | null
+          lab_mode_available: boolean | null
+        }
+      | Array<{
+          dashboard_type: string
+          active_modules: string[] | null
+          density: string | null
+          custom_branding: CustomBranding | null
+          lab_mode_available: boolean | null
+        }>
+      | null
+  }
+
+  let clientRecord: ClientRecord | null = null
+  if (user) {
+    const { data } = await supabase
+      .from('clients')
+      .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, density, custom_branding, lab_mode_available)')
+      .eq('auth_user_id', user.id)
+      .maybeSingle()
+    clientRecord = (data as ClientRecord | null) ?? null
+  }
 
   const clientId = clientRecord?.id ?? ''
   const operatorId = clientRecord?.operator_id ?? ''

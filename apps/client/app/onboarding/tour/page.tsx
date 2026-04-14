@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { OnboardingTour } from '../../../components/onboarding/onboarding-tour'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { OnboardingTour } from '../../components/onboarding/onboarding-tour'
 
 export const metadata = {
-  title: 'Tutoriel — Foxeo Lab',
+  title: 'Tutoriel — MonprojetPro Lab',
   description: 'Découvrez votre espace Lab avec un tutoriel interactif.',
 }
 

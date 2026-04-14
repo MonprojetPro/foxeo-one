@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
-import { createServerSupabaseClient } from '@foxeo/supabase'
-import { WelcomeScreen } from '../../../components/onboarding/welcome-screen'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { WelcomeScreen } from '../../components/onboarding/welcome-screen'
 
 export const metadata = {
-  title: 'Bienvenue sur Foxeo Lab',
+  title: 'Bienvenue sur MonprojetPro Lab',
   description: 'Découvrez votre espace Lab et commencez votre parcours.',
 }
 
