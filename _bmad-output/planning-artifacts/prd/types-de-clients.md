@@ -1,8 +1,10 @@
 # Types de Clients
 
+> **Mise à jour 2026-04-14 — Simplification** : Suite à la décision de MiKL, les 3 types de clients (`complet`, `direct_one`, `ponctuel`) deviennent des étiquettes **informationnelles historiques**. La logique technique est désormais pilotée par `client_configs` (`dashboard_type`, `active_modules`, `lab_mode_available`, `elio_lab_enabled`) et non plus par `clients.client_type`. Voir le document `../onboarding-flow-unifie.md` pour le flow complet à jour (ADR-01 Révision 2 + Stories Epic 13). Le contenu ci-dessous est conservé à titre de référence historique.
+
 ## Classification des Clients
 
-Tous les clients ne passent pas par le parcours complet. Foxeo Hub gère 3 types de clients :
+Tous les clients ne passent pas par le parcours complet. MonprojetPro Hub gère 3 types de clients :
 
 | Type | Parcours | Ce qu'il a | Cas d'usage |
 |------|----------|------------|-------------|
