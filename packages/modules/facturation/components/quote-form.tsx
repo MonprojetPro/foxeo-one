@@ -4,6 +4,7 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { createAndSendQuote } from '../actions/create-quote'
 import type { ClientWithPennylane, QuoteType } from '../types/billing.types'
@@ -63,6 +64,7 @@ type QuoteFormProps = {
 
 export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const queryClient = useQueryClient()
 
   const {
     register,
@@ -128,6 +130,11 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
 
       const clientName = clients.find((c) => c.id === values.clientId)?.name ?? 'le client'
       showSuccess(sendNow ? `Devis envoyé à ${clientName}` : 'Devis enregistré comme brouillon')
+
+      // Patch — invalider les caches de la liste devis pour rafraichir l affichage
+      // sans attendre le polling Edge Function billing-sync.
+      await queryClient.invalidateQueries({ queryKey: ['billing'] })
+
       reset()
       onSuccess?.()
     } finally {
