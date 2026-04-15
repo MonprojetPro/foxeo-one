@@ -7,7 +7,8 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { createAndSendQuote } from '../actions/create-quote'
-import type { ClientWithPennylane, QuoteType } from '../types/billing.types'
+import { updateQuote } from '../actions/update-quote'
+import type { ClientWithPennylane, QuoteType, LineItem } from '../types/billing.types'
 import { QUOTE_TYPE_LABELS } from '../types/billing.types'
 
 // ── Schema Zod ────────────────────────────────────────────────────────────────
@@ -55,14 +56,25 @@ function vatRateToMultiplier(rate: string): number {
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
+export interface QuoteFormInitialValues {
+  pennylaneQuoteId: string
+  clientId: string
+  quoteType: QuoteType
+  lineItems: LineItem[]
+  publicNotes?: string | null
+}
+
 type QuoteFormProps = {
   clients: ClientWithPennylane[]
   onSuccess?: () => void
+  /** Story 13.4 patch — si fourni, le formulaire passe en mode edition */
+  initialValues?: QuoteFormInitialValues
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
+export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps) {
+  const isEditMode = Boolean(initialValues)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const queryClient = useQueryClient()
 
@@ -74,13 +86,28 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
     formState: { errors },
   } = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteFormSchema),
-    defaultValues: {
-      clientId: '',
-      quoteType: 'one_direct_deposit',
-      lineItems: [{ label: '', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u' }],
-      publicNotes: null,
-      privateNotes: null,
-    },
+    defaultValues: initialValues
+      ? {
+          clientId: initialValues.clientId,
+          quoteType: initialValues.quoteType,
+          lineItems: initialValues.lineItems.map((li) => ({
+            label: li.label,
+            description: li.description,
+            quantity: li.quantity,
+            unitPrice: li.unitPrice,
+            vatRate: li.vatRate,
+            unit: li.unit,
+          })),
+          publicNotes: initialValues.publicNotes ?? null,
+          privateNotes: null,
+        }
+      : {
+          clientId: '',
+          quoteType: 'one_direct_deposit',
+          lineItems: [{ label: '', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u' }],
+          publicNotes: null,
+          privateNotes: null,
+        },
   })
 
   const { fields, append, remove } = useFieldArray({ control, name: 'lineItems' })
@@ -116,6 +143,22 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
         total: Number(item.quantity) * Number(item.unitPrice),
       }))
 
+      // Mode edition — appel updateQuote au lieu de createAndSendQuote
+      if (isEditMode && initialValues) {
+        const editResult = await updateQuote(initialValues.pennylaneQuoteId, {
+          lineItems,
+          publicNotes: values.publicNotes ?? null,
+        })
+        if (editResult.error) {
+          showError(editResult.error.message)
+          return
+        }
+        showSuccess('Devis modifié')
+        await queryClient.invalidateQueries({ queryKey: ['billing'] })
+        onSuccess?.()
+        return
+      }
+
       const result = await createAndSendQuote(values.clientId, lineItems, {
         sendNow,
         publicNotes: values.publicNotes ?? null,
@@ -129,7 +172,7 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
       }
 
       const clientName = clients.find((c) => c.id === values.clientId)?.name ?? 'le client'
-      showSuccess(sendNow ? `Devis envoyé à ${clientName}` : 'Devis enregistré comme brouillon')
+      showSuccess(sendNow ? `Devis envoyé à ${clientName}` : 'Devis créé sans envoi')
 
       // Patch — invalider les caches de la liste devis pour rafraichir l affichage
       // sans attendre le polling Edge Function billing-sync.
@@ -144,15 +187,16 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
 
   return (
     <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
-      {/* Client selector */}
+      {/* Client selector — verrouille en mode edition */}
       <div className="flex flex-col gap-1">
         <label htmlFor="clientId" className="text-sm font-medium">
-          Client
+          Client {isEditMode && <span className="text-xs text-muted-foreground">(non modifiable)</span>}
         </label>
         <select
           id="clientId"
+          disabled={isEditMode}
           {...register('clientId')}
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
         >
           <option value="">Sélectionner un client...</option>
           {clients.map((c) => (
@@ -186,8 +230,9 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
         </label>
         <select
           id="quoteType"
+          disabled={isEditMode}
           {...register('quoteType')}
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          className="rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
           data-testid="quote-type-select"
         >
           {QUOTE_TYPE_VALUES.map((value) => (
@@ -349,22 +394,35 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
-        <button
-          type="button"
-          disabled={isSubmitting}
-          onClick={handleSubmit((values) => onSubmit(values, false))}
-          className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent disabled:opacity-50"
-        >
-          Enregistrer (brouillon)
-        </button>
-        <button
-          type="button"
-          disabled={isSubmitting}
-          onClick={handleSubmit((values) => onSubmit(values, true))}
-          className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-        >
-          Envoyer au client
-        </button>
+        {isEditMode ? (
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={handleSubmit((values) => onSubmit(values, false))}
+            className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSubmit((values) => onSubmit(values, false))}
+              className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent disabled:opacity-50"
+            >
+              Créer sans envoyer
+            </button>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSubmit((values) => onSubmit(values, true))}
+              className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              Créer et envoyer au client
+            </button>
+          </>
+        )}
       </div>
     </form>
   )

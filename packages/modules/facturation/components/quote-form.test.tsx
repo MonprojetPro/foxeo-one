@@ -71,8 +71,8 @@ describe('QuoteForm', () => {
 
     expect(screen.getByLabelText(/client/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/désignation/i)).toBeInTheDocument()
-    expect(screen.getByText(/enregistrer/i)).toBeInTheDocument()
-    expect(screen.getByText(/envoyer au client/i)).toBeInTheDocument()
+    expect(screen.getByText(/créer sans envoyer/i)).toBeInTheDocument()
+    expect(screen.getByText(/créer et envoyer au client/i)).toBeInTheDocument()
   })
 
   it('shows client options in dropdown', async () => {
@@ -145,7 +145,7 @@ describe('QuoteForm', () => {
   it('shows validation error when clientId is missing on submit', async () => {
     render(<QuoteForm clients={mockClients} />)
 
-    const saveButton = screen.getByText(/enregistrer/i)
+    const saveButton = screen.getByText(/créer sans envoyer/i)
     await userEvent.click(saveButton)
 
     await waitFor(() => {
@@ -163,7 +163,7 @@ describe('QuoteForm', () => {
     const labelInput = screen.getByPlaceholderText(/désignation/i)
     await userEvent.type(labelInput, 'Prestation conseil')
 
-    const saveButton = screen.getByText(/enregistrer/i)
+    const saveButton = screen.getByText(/créer sans envoyer/i)
     await userEvent.click(saveButton)
 
     await waitFor(() => {

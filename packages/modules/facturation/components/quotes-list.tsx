@@ -2,12 +2,26 @@
 
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Skeleton, showSuccess, showError } from '@monprojetpro/ui'
+import {
+  Skeleton,
+  showSuccess,
+  showError,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@monprojetpro/ui'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import { convertQuoteToInvoice } from '../actions/convert-quote-to-invoice'
 import { sendQuoteByEmail } from '../actions/send-quote-by-email'
 import { cancelQuote } from '../actions/cancel-quote'
-import type { BillingSyncRow, ClientWithPennylane } from '../types/billing.types'
+import { QuoteForm, type QuoteFormInitialValues } from './quote-form'
+import type {
+  BillingSyncRow,
+  ClientWithPennylane,
+  LineItem,
+  QuoteType,
+} from '../types/billing.types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -65,6 +79,62 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
   const [converting, setConverting] = useState<string | null>(null)
   const [sending, setSending] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState<string | null>(null)
+  const [editingQuote, setEditingQuote] = useState<QuoteFormInitialValues | null>(null)
+
+  function buildEditInitialValues(row: BillingSyncRow): QuoteFormInitialValues | null {
+    if (!row.client_id) return null
+    const data = row.data as {
+      invoice_lines?: unknown
+      pdf_invoice_free_text?: string | null
+    }
+    // Pennylane V2 retourne invoice_lines en lazy (juste { url }) → on ne peut pas les
+    // recuperer ici sans fetch additionnel. Pour MVP, on recharge depuis billing_sync
+    // qui contient les lignes mappees a la creation, ou on affiche un message vide.
+    const lineItemsRaw = Array.isArray(data.invoice_lines) ? data.invoice_lines : []
+    const lineItems: LineItem[] = (lineItemsRaw as Record<string, unknown>[]).map((li) => ({
+      label: String(li.label ?? ''),
+      description: (li.description as string | null) ?? null,
+      quantity: Number(li.quantity ?? 1),
+      unit: String(li.unit ?? 'piece'),
+      unitPrice: Number(li.raw_currency_unit_price ?? li.unit_price ?? 0),
+      vatRate: String(li.vat_rate ?? 'FR_200'),
+      total: Number(li.quantity ?? 1) * Number(li.raw_currency_unit_price ?? li.unit_price ?? 0),
+    }))
+
+    const fallbackLineItems: LineItem[] =
+      lineItems.length > 0
+        ? lineItems
+        : [
+            {
+              label: 'Ligne devis',
+              description: null,
+              quantity: 1,
+              unit: 'piece',
+              unitPrice: row.amount ? row.amount / 100 : 0,
+              vatRate: 'FR_200',
+              total: row.amount ? row.amount / 100 : 0,
+            },
+          ]
+
+    const quoteType = ((row.data as { quote_type?: QuoteType })?.quote_type ?? 'one_direct_deposit') as QuoteType
+
+    return {
+      pennylaneQuoteId: row.pennylane_id,
+      clientId: row.client_id,
+      quoteType,
+      lineItems: fallbackLineItems,
+      publicNotes: data.pdf_invoice_free_text ?? null,
+    }
+  }
+
+  function handleEdit(row: BillingSyncRow) {
+    const initial = buildEditInitialValues(row)
+    if (!initial) {
+      showError('Impossible de modifier ce devis (client introuvable)')
+      return
+    }
+    setEditingQuote(initial)
+  }
 
   if (isPending) {
     return (
@@ -241,6 +311,15 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
                     {(row.status === 'draft' || row.status === 'pending') && (
                       <button
                         type="button"
+                        onClick={() => handleEdit(row)}
+                        className="rounded-md bg-muted px-2.5 py-1 text-xs text-foreground hover:bg-muted/70"
+                      >
+                        Modifier
+                      </button>
+                    )}
+                    {(row.status === 'draft' || row.status === 'pending') && (
+                      <button
+                        type="button"
                         disabled={sending === row.pennylane_id}
                         onClick={() => handleRelancer(row)}
                         className="rounded-md bg-blue-500/10 px-2.5 py-1 text-xs text-blue-500 hover:bg-blue-500/20 disabled:opacity-50"
@@ -275,6 +354,22 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
           })}
         </div>
       )}
+
+      {/* Story 13.4 patch — Modale d'edition de devis (mode update) */}
+      <Dialog open={editingQuote !== null} onOpenChange={(open) => !open && setEditingQuote(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier le devis</DialogTitle>
+          </DialogHeader>
+          {editingQuote && (
+            <QuoteForm
+              clients={clients ?? []}
+              initialValues={editingQuote}
+              onSuccess={() => setEditingQuote(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
