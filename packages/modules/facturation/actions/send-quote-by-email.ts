@@ -1,6 +1,6 @@
 'use server'
 
-import { pennylaneClient } from '../config/pennylane'
+import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { assertOperator } from './assert-operator'
 import type { ActionResponse } from '@monprojetpro/types'
 
@@ -27,25 +27,23 @@ export async function sendQuoteByEmail(
     }
   }
 
-  const result = await pennylaneClient.post<unknown>(
-    `/quotes/${pennylaneQuoteId}/send_by_email`,
-    {}
-  )
+  // Helper avec retry pour gerer les 409 PDF_NOT_READY (Pennylane prend ~5s
+  // a generer le PDF apres POST /quotes)
+  const result = await sendByEmailWithRetry(pennylaneQuoteId)
 
-  if (result.error) {
-    // 409 = PDF pas encore genere → message specifique
-    if (result.error.code === 'PENNYLANE_409') {
+  if (!result.sent) {
+    if (result.lastError?.code === 'PENNYLANE_409') {
       return {
         data: null,
         error: {
           message:
-            'Le PDF du devis n est pas encore pret cote Pennylane. Reessayez dans quelques secondes.',
+            `Le PDF du devis n est toujours pas pret apres ${result.attempts} tentatives. Reessayez dans 30 secondes.`,
           code: 'PDF_NOT_READY',
-          details: result.error,
+          details: result.lastError,
         },
       }
     }
-    return { data: null, error: result.error }
+    return { data: null, error: result.lastError ?? { message: 'Echec envoi', code: 'UNKNOWN' } }
   }
 
   // Story 13.4 — Marquer le devis comme envoye dans quote_metadata pour

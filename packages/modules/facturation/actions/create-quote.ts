@@ -2,6 +2,7 @@
 
 import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
+import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
 import type { ActionResponse } from '@monprojetpro/types'
@@ -175,21 +176,12 @@ export async function createAndSendQuote(
   }
 
   // Patch 2026-04-15 — Si sendNow=true, declencher l envoi par email cote Pennylane
-  // Avant ce patch, le bouton "Envoyer au client" creait juste le devis sans
-  // jamais l envoyer. POST /quotes/{id}/send_by_email peut renvoyer 409 si le
-  // PDF Pennylane n est pas encore genere → on log mais on ne bloque pas.
+  // Le helper sendByEmailWithRetry retry jusqu a 5x avec delai croissant pour
+  // gerer le 409 PDF_NOT_READY (Pennylane prend ~5s a generer le PDF).
   let emailSent = false
   if (options.sendNow === true) {
-    const sendResult = await pennylaneClient.post<unknown>(
-      `/quotes/${createdQuote.id}/send_by_email`,
-      {}
-    )
-    if (sendResult.error) {
-      console.warn(
-        '[FACTURATION:CREATE_QUOTE] send_by_email failed (devis cree mais pas envoye):',
-        sendResult.error
-      )
-    } else {
+    const sendResult = await sendByEmailWithRetry(String(createdQuote.id))
+    if (sendResult.sent) {
       emailSent = true
       // Tracer sent_at dans quote_metadata pour le workflow de modification
       const { error: sentAtError } = await supabase
@@ -199,6 +191,11 @@ export async function createAndSendQuote(
       if (sentAtError) {
         console.warn('[FACTURATION:CREATE_QUOTE] quote_metadata.sent_at update failed:', sentAtError)
       }
+    } else {
+      console.warn(
+        `[FACTURATION:CREATE_QUOTE] send_by_email failed apres ${sendResult.attempts} tentatives:`,
+        sendResult.lastError
+      )
     }
   }
 

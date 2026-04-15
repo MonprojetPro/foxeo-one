@@ -6,15 +6,20 @@ vi.mock('@monprojetpro/supabase', () => ({
 vi.mock('../config/pennylane', () => ({
   pennylaneClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), del: vi.fn() },
 }))
+vi.mock('../utils/send-by-email-with-retry', () => ({
+  sendByEmailWithRetry: vi.fn(),
+}))
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
+import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { updateQuote } from './update-quote'
 import type { LineItem, PennylaneQuote } from '../types/billing.types'
 
 const mockCreateServerSupabaseClient = vi.mocked(createServerSupabaseClient)
 const mockPost = vi.mocked(pennylaneClient.post)
 const mockPut = vi.mocked(pennylaneClient.put)
+const mockRetry = vi.mocked(sendByEmailWithRetry)
 
 const sampleLineItems: LineItem[] = [
   { label: 'Setup', description: null, quantity: 1, unitPrice: 1500, vatRate: 'FR_200', unit: 'piece', total: 1500 },
@@ -172,26 +177,24 @@ describe('updateQuote (cancel + recreate workflow)', () => {
     })
   })
 
-  it('also calls send_by_email when wasOriginallySent && autoResend=true', async () => {
+  it('calls sendByEmailWithRetry when autoResend=true (via helper)', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(
       makeSupabase({
         metadata: { client_id: 'client-uuid-1', quote_type: 'one_direct_deposit', sent_at: '2026-04-15T10:00:00Z' },
       }) as never
     )
     mockPut.mockResolvedValue({ data: null, error: null })
-    mockPost
-      .mockResolvedValueOnce({ data: newPennylaneQuote, error: null }) // create
-      .mockResolvedValueOnce({ data: null, error: null }) // send_by_email
+    mockPost.mockResolvedValue({ data: newPennylaneQuote, error: null })
+    mockRetry.mockResolvedValue({ sent: true, attempts: 1, lastError: null })
 
     const res = await updateQuote('PL-OLD', { lineItems: sampleLineItems, autoResend: true })
 
-    expect(mockPost).toHaveBeenCalledTimes(2)
-    expect(mockPost).toHaveBeenLastCalledWith('/quotes/999999/send_by_email', {})
+    expect(mockRetry).toHaveBeenCalledWith('999999')
     expect(res.data?.wasOriginallySent).toBe(true)
     expect(res.data?.resent).toBe(true)
   })
 
-  it('does NOT call send_by_email when autoResend=false even if originally sent', async () => {
+  it('does NOT call sendByEmailWithRetry when autoResend=false', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(
       makeSupabase({
         metadata: { client_id: 'client-uuid-1', quote_type: 'one_direct_deposit', sent_at: '2026-04-15T10:00:00Z' },
@@ -202,7 +205,7 @@ describe('updateQuote (cancel + recreate workflow)', () => {
 
     const res = await updateQuote('PL-OLD', { lineItems: sampleLineItems, autoResend: false })
 
-    expect(mockPost).toHaveBeenCalledTimes(1)
+    expect(mockRetry).not.toHaveBeenCalled()
     expect(res.data?.wasOriginallySent).toBe(true)
     expect(res.data?.resent).toBe(false)
   })

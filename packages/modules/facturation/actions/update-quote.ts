@@ -2,6 +2,7 @@
 
 import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
+import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { assertOperator } from './assert-operator'
 import type { ActionResponse } from '@monprojetpro/types'
 import type { LineItem, PennylaneQuote, QuoteType } from '../types/billing.types'
@@ -197,22 +198,22 @@ export async function updateQuote(
     { onConflict: 'entity_type,pennylane_id' }
   )
 
-  // 7. Si le devis original etait deja envoye au client ET autoResend demande
-  // → renvoyer automatiquement le nouveau via send_by_email
+  // 7. Si autoResend demande → envoyer automatiquement le nouveau devis
+  // (avec retry car Pennylane prend ~5s a generer le PDF apres POST /quotes)
   let resent = false
-  if (wasOriginallySent && payload.autoResend === true) {
-    const sendResult = await pennylaneClient.post<unknown>(
-      `/quotes/${newPennylaneId}/send_by_email`,
-      {}
-    )
-    if (!sendResult.error) {
+  if (payload.autoResend === true) {
+    const sendResult = await sendByEmailWithRetry(newPennylaneId)
+    if (sendResult.sent) {
       resent = true
       await supabase
         .from('quote_metadata')
         .update({ sent_at: nowIso })
         .eq('pennylane_quote_id', newPennylaneId)
     } else {
-      console.warn('[FACTURATION:UPDATE_QUOTE] Renvoi auto echec:', sendResult.error)
+      console.warn(
+        `[FACTURATION:UPDATE_QUOTE] Envoi auto echec apres ${sendResult.attempts} tentatives:`,
+        sendResult.lastError
+      )
     }
   }
 

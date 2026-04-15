@@ -5,6 +5,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(),
 }))
+vi.mock('../utils/send-by-email-with-retry', () => ({
+  sendByEmailWithRetry: vi.fn().mockResolvedValue({ sent: true, attempts: 1, lastError: null }),
+}))
 
 vi.mock('../config/pennylane', () => ({
   pennylaneClient: {
@@ -163,19 +166,18 @@ describe('createAndSendQuote', () => {
     expect(postBody.date).toBeDefined() // date obligatoire V2
   })
 
-  it('appelle send_by_email apres creation quand sendNow=true (patch 2026-04-15)', async () => {
+  it('appelle sendByEmailWithRetry apres creation quand sendNow=true (patch 2026-04-15)', async () => {
+    const { sendByEmailWithRetry } = await import('../utils/send-by-email-with-retry')
+    const mockRetry = vi.mocked(sendByEmailWithRetry)
     const supabase = makeSupabaseMock()
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
     mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
 
     await createAndSendQuote('client-1', mockLineItems, { sendNow: true })
 
-    // 2 POSTs : creation + send_by_email
-    expect(mockPennylane.post).toHaveBeenCalledTimes(2)
-    expect(mockPennylane.post).toHaveBeenLastCalledWith(
-      `/quotes/${mockPennylaneQuote.id}/send_by_email`,
-      {}
-    )
+    // 1 POST (creation) + 1 appel helper (avec retry interne)
+    expect(mockPennylane.post).toHaveBeenCalledTimes(1)
+    expect(mockRetry).toHaveBeenCalledWith(String(mockPennylaneQuote.id))
   })
 
   it('ne declenche PAS send_by_email quand sendNow=false (brouillon)', async () => {

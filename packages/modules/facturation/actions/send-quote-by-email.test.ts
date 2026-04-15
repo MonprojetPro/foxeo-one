@@ -6,13 +6,19 @@ vi.mock('@monprojetpro/supabase', () => ({
 vi.mock('../config/pennylane', () => ({
   pennylaneClient: { post: vi.fn(), get: vi.fn(), put: vi.fn(), del: vi.fn() },
 }))
+// Mock du helper retry pour eviter d attendre 10s en test
+vi.mock('../utils/send-by-email-with-retry', () => ({
+  sendByEmailWithRetry: vi.fn(),
+}))
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
+import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { sendQuoteByEmail } from './send-quote-by-email'
 
 const mockCreateServerSupabaseClient = vi.mocked(createServerSupabaseClient)
 const mockPost = vi.mocked(pennylaneClient.post)
+const mockRetry = vi.mocked(sendByEmailWithRetry)
 
 function makeSupabase(opts: { isOperator?: boolean } = {}) {
   const insertMock = vi.fn().mockResolvedValue({ error: null })
@@ -56,22 +62,23 @@ describe('sendQuoteByEmail', () => {
     expect(res.error?.code).toBe('VALIDATION_ERROR')
   })
 
-  it('calls the right Pennylane endpoint and returns sent: true', async () => {
+  it('calls the helper and returns sent: true on success', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
-    mockPost.mockResolvedValue({ data: null, error: null })
+    mockRetry.mockResolvedValue({ sent: true, attempts: 1, lastError: null })
 
     const res = await sendQuoteByEmail('PL-Q-42')
 
-    expect(mockPost).toHaveBeenCalledWith('/quotes/PL-Q-42/send_by_email', {})
+    expect(mockRetry).toHaveBeenCalledWith('PL-Q-42')
     expect(res.error).toBeNull()
     expect(res.data).toEqual({ sent: true })
   })
 
-  it('translates a Pennylane 409 into PDF_NOT_READY', async () => {
+  it('translates a 409 (apres retries epuises) into PDF_NOT_READY', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
-    mockPost.mockResolvedValue({
-      data: null,
-      error: { message: 'PDF not ready', code: 'PENNYLANE_409' },
+    mockRetry.mockResolvedValue({
+      sent: false,
+      attempts: 5,
+      lastError: { message: 'PDF not ready', code: 'PENNYLANE_409' },
     })
 
     const res = await sendQuoteByEmail('PL-Q-42')
@@ -81,9 +88,10 @@ describe('sendQuoteByEmail', () => {
 
   it('passes through other Pennylane errors as-is', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
-    mockPost.mockResolvedValue({
-      data: null,
-      error: { message: 'server error', code: 'PENNYLANE_500' },
+    mockRetry.mockResolvedValue({
+      sent: false,
+      attempts: 1,
+      lastError: { message: 'server error', code: 'PENNYLANE_500' },
     })
 
     const res = await sendQuoteByEmail('PL-Q-42')
