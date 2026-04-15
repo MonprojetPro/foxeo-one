@@ -160,9 +160,19 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
         }
         const newNumber = editResult.data?.newQuoteNumber ?? ''
         if (editResult.data?.resent) {
-          showSuccess(`Devis remplacé par ${newNumber} et renvoyé au client`)
+          // sendNow=true ET autoResend a reussi
+          showSuccess(
+            editResult.data?.wasOriginallySent
+              ? `Devis remplacé par ${newNumber} et renvoyé au client`
+              : `Devis modifié et envoyé au client (${newNumber})`
+          )
+        } else if (sendNow) {
+          // sendNow=true mais l envoi auto a echoue (PDF pas encore pret)
+          showSuccess(
+            `Devis modifié (${newNumber}) — l'email automatique a échoué, utilise "Envoyer par email" depuis la liste`
+          )
         } else if (editResult.data?.wasOriginallySent) {
-          showSuccess(`Devis remplacé par ${newNumber} (non renvoyé)`)
+          showSuccess(`Devis remplacé par ${newNumber} (non renvoyé au client)`)
         } else {
           showSuccess(`Devis modifié — nouveau numéro : ${newNumber}`)
         }
@@ -433,35 +443,28 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
       {/* Actions */}
       <div className="flex items-center gap-3">
         {isEditMode ? (
-          initialValues?.wasOriginallySent ? (
-            <>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleSubmit((values) => onSubmit(values, false))}
-                className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent disabled:opacity-50"
-              >
-                {isSubmitting ? '…' : 'Modifier sans renvoyer'}
-              </button>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={handleSubmit((values) => onSubmit(values, true))}
-                className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {isSubmitting ? 'Modification…' : 'Modifier et renvoyer au client'}
-              </button>
-            </>
-          ) : (
+          <>
             <button
               type="button"
               disabled={isSubmitting}
               onClick={handleSubmit((values) => onSubmit(values, false))}
+              className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent disabled:opacity-50"
+            >
+              {isSubmitting ? '…' : 'Modifier sans envoyer'}
+            </button>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSubmit((values) => onSubmit(values, true))}
               className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
+              {isSubmitting
+                ? 'Modification…'
+                : initialValues?.wasOriginallySent
+                  ? 'Modifier et renvoyer au client'
+                  : 'Modifier et envoyer au client'}
             </button>
-          )
+          </>
         ) : (
           <>
             <button
