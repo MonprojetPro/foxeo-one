@@ -45,25 +45,9 @@ export {
 } from './utils/billing-mappers'
 
 // Story 13.4 — Tunnel paiement Pennylane
-export { verifyPennylaneHmac } from './utils/verify-pennylane-hmac'
-export {
-  generateSecureTemporaryPassword,
-  TEMP_PASSWORD_LENGTH,
-} from './utils/generate-temp-password'
-export { createClientAuthUser } from './utils/create-client-auth-user'
-export type {
-  CreateClientAuthUserResult,
-  CreateClientAuthUserOptions,
-} from './utils/create-client-auth-user'
-export { matchQuoteFromInvoice } from './actions/match-quote-from-invoice'
-export type { MatchQuoteInput } from './actions/match-quote-from-invoice'
-export {
-  dispatchPaidQuote,
-  handleLabOnboardingPaid,
-  handleOneDepositPaid,
-  handleFinalPaymentPaid,
-} from './actions/pennylane-paid-handlers'
-export type { HandlerDeps, HandlerResult } from './actions/pennylane-paid-handlers'
+// IMPORTANT: les helpers serveur (HMAC, password gen, handlers, admin user) utilisent
+// node:crypto et l'admin Supabase API. Ils sont exposes via le subpath `./server` pour
+// eviter de polluer le bundle webpack des composants client. Voir package.json exports.
 
 // Types
 export type {

@@ -8,6 +8,10 @@
       "types": "./index.ts",
       "default": "./index.ts"
     },
+    "./server": {
+      "types": "./index.server.ts",
+      "default": "./index.server.ts"
+    },
     "./manifest": {
       "types": "./manifest.ts",
       "default": "./manifest.ts"

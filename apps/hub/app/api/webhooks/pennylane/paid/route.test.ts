@@ -7,7 +7,7 @@ const mockVerify = vi.fn()
 const mockMatch = vi.fn()
 const mockDispatch = vi.fn()
 
-vi.mock('@monprojetpro/modules-facturation', () => ({
+vi.mock('@monprojetpro/modules-facturation/server', () => ({
   verifyPennylaneHmac: mockVerify,
   matchQuoteFromInvoice: mockMatch,
   dispatchPaidQuote: mockDispatch,

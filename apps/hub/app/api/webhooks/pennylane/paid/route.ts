@@ -14,7 +14,7 @@ import {
   verifyPennylaneHmac,
   matchQuoteFromInvoice,
   dispatchPaidQuote,
-} from '@monprojetpro/modules-facturation'
+} from '@monprojetpro/modules-facturation/server'
 
 export const runtime = 'nodejs'
 
