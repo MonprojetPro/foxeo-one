@@ -54,8 +54,9 @@ export async function updateQuote(
   )
 
   if (result.error) {
+    console.error('[FACTURATION:UPDATE_QUOTE] Pennylane PUT error:', result.error)
     // Pennylane verrouille les devis accepted/denied/invoiced/expired
-    if (result.error.code === 'PENNYLANE_409' || result.error.code === 'PENNYLANE_422') {
+    if (result.error.code === 'PENNYLANE_409') {
       return {
         data: null,
         error: {
@@ -66,7 +67,22 @@ export async function updateQuote(
         },
       }
     }
-    return { data: null, error: result.error }
+    // Extraction du detail Pennylane pour aider au debug
+    const pennylaneDetails = result.error.details as
+      | { error?: string; errors?: unknown }
+      | undefined
+    const pennylaneMsg =
+      pennylaneDetails?.error ||
+      (pennylaneDetails?.errors ? JSON.stringify(pennylaneDetails.errors) : null) ||
+      result.error.message
+    return {
+      data: null,
+      error: {
+        message: `Pennylane a refuse la modification : ${pennylaneMsg}`,
+        code: result.error.code,
+        details: result.error.details,
+      },
+    }
   }
 
   // Sync miroir billing_sync local (preserve cancelled_by_operator / autres flags)

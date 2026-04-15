@@ -127,15 +127,20 @@ describe('updateQuote', () => {
     expect(res.error?.code).toBe('QUOTE_LOCKED')
   })
 
-  it('translates Pennylane 422 into QUOTE_LOCKED', async () => {
+  it('forwards Pennylane 422 with verbose message extraction', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
     mockPut.mockResolvedValue({
       data: null,
-      error: { message: 'unprocessable', code: 'PENNYLANE_422' },
+      error: {
+        message: 'unprocessable',
+        code: 'PENNYLANE_422',
+        details: { error: 'invoice_lines: invalid format' },
+      },
     })
 
     const res = await updateQuote('PL-1', { lineItems: sampleLineItems })
-    expect(res.error?.code).toBe('QUOTE_LOCKED')
+    expect(res.error?.code).toBe('PENNYLANE_422')
+    expect(res.error?.message).toContain('invoice_lines: invalid format')
   })
 
   it('preserves existing flags (e.g. cancelled_by_operator) when merging billing_sync data', async () => {

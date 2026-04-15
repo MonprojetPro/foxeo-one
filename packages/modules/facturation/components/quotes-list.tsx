@@ -15,11 +15,11 @@ import { useBillingSyncRows } from '../hooks/use-billing'
 import { convertQuoteToInvoice } from '../actions/convert-quote-to-invoice'
 import { sendQuoteByEmail } from '../actions/send-quote-by-email'
 import { cancelQuote } from '../actions/cancel-quote'
+import { getQuoteWithLines } from '../actions/get-quote-with-lines'
 import { QuoteForm, type QuoteFormInitialValues } from './quote-form'
 import type {
   BillingSyncRow,
   ClientWithPennylane,
-  LineItem,
   QuoteType,
 } from '../types/billing.types'
 
@@ -80,60 +80,44 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
   const [sending, setSending] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState<string | null>(null)
   const [editingQuote, setEditingQuote] = useState<QuoteFormInitialValues | null>(null)
+  const [loadingEdit, setLoadingEdit] = useState<string | null>(null)
 
-  function buildEditInitialValues(row: BillingSyncRow): QuoteFormInitialValues | null {
-    if (!row.client_id) return null
-    const data = row.data as {
-      invoice_lines?: unknown
-      pdf_invoice_free_text?: string | null
-    }
-    // Pennylane V2 retourne invoice_lines en lazy (juste { url }) → on ne peut pas les
-    // recuperer ici sans fetch additionnel. Pour MVP, on recharge depuis billing_sync
-    // qui contient les lignes mappees a la creation, ou on affiche un message vide.
-    const lineItemsRaw = Array.isArray(data.invoice_lines) ? data.invoice_lines : []
-    const lineItems: LineItem[] = (lineItemsRaw as Record<string, unknown>[]).map((li) => ({
-      label: String(li.label ?? ''),
-      description: (li.description as string | null) ?? null,
-      quantity: Number(li.quantity ?? 1),
-      unit: String(li.unit ?? 'piece'),
-      unitPrice: Number(li.raw_currency_unit_price ?? li.unit_price ?? 0),
-      vatRate: String(li.vat_rate ?? 'FR_200'),
-      total: Number(li.quantity ?? 1) * Number(li.raw_currency_unit_price ?? li.unit_price ?? 0),
-    }))
-
-    const fallbackLineItems: LineItem[] =
-      lineItems.length > 0
-        ? lineItems
-        : [
-            {
-              label: 'Ligne devis',
-              description: null,
-              quantity: 1,
-              unit: 'piece',
-              unitPrice: row.amount ? row.amount / 100 : 0,
-              vatRate: 'FR_200',
-              total: row.amount ? row.amount / 100 : 0,
-            },
-          ]
-
-    const quoteType = ((row.data as { quote_type?: QuoteType })?.quote_type ?? 'one_direct_deposit') as QuoteType
-
-    return {
-      pennylaneQuoteId: row.pennylane_id,
-      clientId: row.client_id,
-      quoteType,
-      lineItems: fallbackLineItems,
-      publicNotes: data.pdf_invoice_free_text ?? null,
-    }
-  }
-
-  function handleEdit(row: BillingSyncRow) {
-    const initial = buildEditInitialValues(row)
-    if (!initial) {
+  async function handleEdit(row: BillingSyncRow) {
+    if (!row.client_id) {
       showError('Impossible de modifier ce devis (client introuvable)')
       return
     }
-    setEditingQuote(initial)
+    setLoadingEdit(row.pennylane_id)
+    try {
+      // Pennylane V2 retourne invoice_lines en lazy URL → on les recupere live
+      const result = await getQuoteWithLines(row.pennylane_id)
+      if (result.error || !result.data) {
+        showError(result.error?.message ?? 'Impossible de charger le devis')
+        return
+      }
+      const quoteType = ((row.data as { quote_type?: QuoteType })?.quote_type ?? 'one_direct_deposit') as QuoteType
+      setEditingQuote({
+        pennylaneQuoteId: row.pennylane_id,
+        clientId: row.client_id,
+        quoteType,
+        lineItems: result.data.lineItems.length > 0
+          ? result.data.lineItems
+          : [
+              {
+                label: 'Ligne devis',
+                description: null,
+                quantity: 1,
+                unit: 'piece',
+                unitPrice: row.amount ? row.amount / 100 : 0,
+                vatRate: 'FR_200',
+                total: row.amount ? row.amount / 100 : 0,
+              },
+            ],
+        publicNotes: result.data.publicNotes,
+      })
+    } finally {
+      setLoadingEdit(null)
+    }
   }
 
   if (isPending) {
@@ -311,10 +295,11 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
                     {(row.status === 'draft' || row.status === 'pending') && (
                       <button
                         type="button"
+                        disabled={loadingEdit === row.pennylane_id}
                         onClick={() => handleEdit(row)}
-                        className="rounded-md bg-muted px-2.5 py-1 text-xs text-foreground hover:bg-muted/70"
+                        className="rounded-md bg-muted px-2.5 py-1 text-xs text-foreground hover:bg-muted/70 disabled:opacity-50"
                       >
-                        Modifier
+                        {loadingEdit === row.pennylane_id ? 'Chargement…' : 'Modifier'}
                       </button>
                     )}
                     {(row.status === 'draft' || row.status === 'pending') && (
@@ -357,7 +342,7 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
 
       {/* Story 13.4 patch — Modale d'edition de devis (mode update) */}
       <Dialog open={editingQuote !== null} onOpenChange={(open) => !open && setEditingQuote(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="!max-w-5xl w-[95vw] max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Modifier le devis</DialogTitle>
           </DialogHeader>
