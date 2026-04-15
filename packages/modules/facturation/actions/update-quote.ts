@@ -40,17 +40,16 @@ export async function updateQuote(
     }
   }
 
-  // Pennylane V2 PUT /quotes/{id} attend invoice_lines en OBJET (Rails nested
-  // attributes), pas un array. Format : { "0": {...}, "1": {...}, ... }
-  // Erreur Pennylane confirmee : "invoice_lines's value should be a object"
+  // Pennylane V2 PUT /quotes/{id} attend invoice_lines en OBJET avec des cles
+  // nommees specifiques. Doc : "Add, update, delete invoice lines".
+  // Tentative : { add: [...] } pour remplacer toutes les lignes en mode "ajout".
+  // (Erreur testee : "additional properties are not supported: 0, 1" sur format hash indexe)
   const pennylaneLineItems = payload.lineItems.map(toPennylaneLineItem)
-  const invoiceLinesHash: Record<string, unknown> = {}
-  pennylaneLineItems.forEach((line, index) => {
-    invoiceLinesHash[String(index)] = line
-  })
 
   const body: Record<string, unknown> = {
-    invoice_lines: invoiceLinesHash,
+    invoice_lines: {
+      add: pennylaneLineItems,
+    },
     pdf_invoice_free_text: payload.publicNotes ?? null,
   }
   if (payload.deadline) body.deadline = payload.deadline

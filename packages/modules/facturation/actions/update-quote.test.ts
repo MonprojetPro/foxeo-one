@@ -99,7 +99,7 @@ describe('updateQuote', () => {
     expect(res.error?.code).toBe('VALIDATION_ERROR')
   })
 
-  it('calls PUT /quotes/{id} with invoice_lines as Rails-style indexed object', async () => {
+  it('calls PUT /quotes/{id} with invoice_lines.add operation (Pennylane V2 schema)', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
     mockPut.mockResolvedValue({ data: samplePennylaneQuote, error: null })
 
@@ -110,11 +110,10 @@ describe('updateQuote', () => {
     expect(path).toBe('/quotes/PL-1')
     const sentBody = body as Record<string, unknown>
     expect(sentBody.pdf_invoice_free_text).toBe('hello')
-    // invoice_lines doit etre un objet (pas un array) pour respecter Pennylane PUT
-    expect(sentBody.invoice_lines).toBeTypeOf('object')
-    expect(Array.isArray(sentBody.invoice_lines)).toBe(false)
-    const lines = sentBody.invoice_lines as Record<string, unknown>
-    expect(Object.keys(lines)).toEqual(['0'])
+    const invoiceLines = sentBody.invoice_lines as { add?: unknown[] }
+    expect(invoiceLines).toBeTypeOf('object')
+    expect(Array.isArray(invoiceLines.add)).toBe(true)
+    expect(invoiceLines.add).toHaveLength(1)
     expect(res.data).toEqual({ updated: true })
   })
 
