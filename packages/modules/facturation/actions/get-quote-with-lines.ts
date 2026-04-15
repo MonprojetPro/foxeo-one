@@ -1,5 +1,6 @@
 'use server'
 
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
 import { assertOperator } from './assert-operator'
 import type { ActionResponse } from '@monprojetpro/types'
@@ -47,6 +48,8 @@ export interface QuoteWithLines {
   publicNotes: string | null
   status: string
   lineItems: LineItem[]
+  /** Story 13.4 — true si quote_metadata.sent_at != null (devis envoye au client) */
+  wasOriginallySent: boolean
 }
 
 export async function getQuoteWithLines(
@@ -81,12 +84,23 @@ export async function getQuoteWithLines(
     ? linesResult.data
     : linesResult.data?.invoice_lines ?? []
 
+  // 3. Lire quote_metadata.sent_at pour savoir si deja envoye
+  const supabase = await createServerSupabaseClient()
+  const { data: metadata } = await supabase
+    .from('quote_metadata')
+    .select('sent_at')
+    .eq('pennylane_quote_id', pennylaneQuoteId)
+    .maybeSingle()
+
+  const wasOriginallySent = metadata?.sent_at != null
+
   return {
     data: {
       pennylaneQuoteId,
       publicNotes: quoteResult.data.pdf_invoice_free_text ?? null,
       status: quoteResult.data.status,
       lineItems: rawLines.map(pennylaneLineToLocal),
+      wasOriginallySent,
     },
     error: null,
   }

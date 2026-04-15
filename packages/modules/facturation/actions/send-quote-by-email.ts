@@ -48,6 +48,17 @@ export async function sendQuoteByEmail(
     return { data: null, error: result.error }
   }
 
+  // Story 13.4 — Marquer le devis comme envoye dans quote_metadata pour
+  // que le workflow de modification (cancel+recreate) puisse decider
+  // s il faut renvoyer automatiquement le nouveau devis.
+  const { error: metadataError } = await supabase
+    .from('quote_metadata')
+    .update({ sent_at: new Date().toISOString() })
+    .eq('pennylane_quote_id', pennylaneQuoteId)
+  if (metadataError) {
+    console.warn('[FACTURATION:SEND_QUOTE] quote_metadata.sent_at update failed:', metadataError)
+  }
+
   // Activity log
   const { error: logError } = await supabase.from('activity_logs').insert({
     actor_type: 'operator',

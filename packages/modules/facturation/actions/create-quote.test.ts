@@ -49,11 +49,15 @@ function makeSupabaseMock(opts: {
     rpc: vi.fn().mockResolvedValue({ data: isOperator }),
     from: vi.fn((table: string) => {
       if (table === 'clients') {
-        return { select: vi.fn().mockReturnValue(eqChain) }
+        return {
+          select: vi.fn().mockReturnValue(eqChain),
+          update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+        }
       }
       return {
         insert: vi.fn().mockReturnValue(makeInsertChain()),
         upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+        update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
       }
     }),
   }
@@ -191,7 +195,11 @@ describe('createAndSendQuote', () => {
       if (table === 'clients') {
         return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-user-1', pennylane_customer_id: '275890907' }, error: null }) }) }
       }
-      return { insert: insertMock, upsert: vi.fn().mockResolvedValue({ data: null, error: null }) }
+      return {
+        insert: insertMock,
+        upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+        update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+      }
     })
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
     mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
@@ -222,7 +230,11 @@ describe('createAndSendQuote', () => {
       if (table === 'clients') {
         return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-user-1', pennylane_customer_id: '275890907' }, error: null }) }) }
       }
-      return { insert: insertMock, upsert: vi.fn().mockResolvedValue({ data: null, error: null }) }
+      return {
+        insert: insertMock,
+        upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+        update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+      }
     })
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
     mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })

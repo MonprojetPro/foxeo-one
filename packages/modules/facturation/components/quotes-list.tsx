@@ -114,6 +114,7 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
               },
             ],
         publicNotes: result.data.publicNotes,
+        wasOriginallySent: result.data.wasOriginallySent,
       })
     } finally {
       setLoadingEdit(null)

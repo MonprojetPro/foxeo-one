@@ -16,6 +16,8 @@ const mockPost = vi.mocked(pennylaneClient.post)
 
 function makeSupabase(opts: { isOperator?: boolean } = {}) {
   const insertMock = vi.fn().mockResolvedValue({ error: null })
+  const updateEqMock = vi.fn().mockResolvedValue({ error: null })
+  const updateMock = vi.fn(() => ({ eq: updateEqMock }))
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({
@@ -24,7 +26,7 @@ function makeSupabase(opts: { isOperator?: boolean } = {}) {
       }),
     },
     rpc: vi.fn().mockResolvedValue({ data: opts.isOperator ?? true }),
-    from: vi.fn(() => ({ insert: insertMock })),
+    from: vi.fn(() => ({ insert: insertMock, update: updateMock })),
   }
 }
 

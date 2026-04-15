@@ -191,6 +191,14 @@ export async function createAndSendQuote(
       )
     } else {
       emailSent = true
+      // Tracer sent_at dans quote_metadata pour le workflow de modification
+      const { error: sentAtError } = await supabase
+        .from('quote_metadata')
+        .update({ sent_at: new Date().toISOString() })
+        .eq('pennylane_quote_id', String(createdQuote.id))
+      if (sentAtError) {
+        console.warn('[FACTURATION:CREATE_QUOTE] quote_metadata.sent_at update failed:', sentAtError)
+      }
     }
   }
 

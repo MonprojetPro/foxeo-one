@@ -13,16 +13,17 @@ import { updateQuote } from './update-quote'
 import type { LineItem, PennylaneQuote } from '../types/billing.types'
 
 const mockCreateServerSupabaseClient = vi.mocked(createServerSupabaseClient)
+const mockPost = vi.mocked(pennylaneClient.post)
 const mockPut = vi.mocked(pennylaneClient.put)
 
 const sampleLineItems: LineItem[] = [
   { label: 'Setup', description: null, quantity: 1, unitPrice: 1500, vatRate: 'FR_200', unit: 'piece', total: 1500 },
 ]
 
-const samplePennylaneQuote: PennylaneQuote = {
-  id: 4807770486,
+const newPennylaneQuote: PennylaneQuote = {
+  id: 999999,
   customer: { id: 275890907, url: '' },
-  quote_number: 'D-2026-001',
+  quote_number: 'D-2026-999',
   status: 'pending',
   date: '2026-04-15',
   deadline: '2026-05-15',
@@ -37,42 +38,86 @@ const samplePennylaneQuote: PennylaneQuote = {
   updated_at: '2026-04-15T00:00:00Z',
 }
 
-function makeSupabase(opts: { isOperator?: boolean; existingData?: Record<string, unknown> | null } = {}) {
+interface MockOpts {
+  isOperator?: boolean
+  metadata?: { client_id: string; quote_type: string; sent_at: string | null } | null
+  metadataError?: { message: string } | null
+  pennylaneCustomerId?: string | null
+}
+
+function makeSupabase(opts: MockOpts = {}) {
   const insertMock = vi.fn().mockResolvedValue({ error: null })
 
-  const updateChainEq2 = vi.fn().mockResolvedValue({ error: null })
-  const updateChainEq1 = vi.fn(() => ({ eq: updateChainEq2 }))
-  const updateMock = vi.fn(() => ({ eq: updateChainEq1 }))
+  // quote_metadata SELECT
+  const metadataSingle = vi.fn().mockResolvedValue({
+    data: opts.metadata === undefined
+      ? { client_id: 'client-uuid-1', quote_type: 'one_direct_deposit', sent_at: null }
+      : opts.metadata,
+    error: opts.metadataError ?? null,
+  })
+  const metadataEq = vi.fn(() => ({ maybeSingle: metadataSingle }))
+  const metadataSelect = vi.fn(() => ({ eq: metadataEq }))
 
-  const selectMaybeSingle = vi.fn().mockResolvedValue({
-    data: { data: opts.existingData ?? { quote_number: 'D-2026-001' } },
+  // quote_metadata INSERT/UPDATE/DELETE
+  const metadataUpdateEq = vi.fn().mockResolvedValue({ error: null })
+  const metadataUpdate = vi.fn(() => ({ eq: metadataUpdateEq }))
+  const metadataDeleteEq = vi.fn().mockResolvedValue({ error: null })
+  const metadataDelete = vi.fn(() => ({ eq: metadataDeleteEq }))
+
+  // clients SELECT
+  const clientsSingle = vi.fn().mockResolvedValue({
+    data: { pennylane_customer_id: opts.pennylaneCustomerId ?? '275890907' },
     error: null,
   })
-  const selectEq2 = vi.fn(() => ({ maybeSingle: selectMaybeSingle }))
-  const selectEq1 = vi.fn(() => ({ eq: selectEq2 }))
-  const selectMock = vi.fn(() => ({ eq: selectEq1 }))
+  const clientsEq = vi.fn(() => ({ single: clientsSingle }))
+  const clientsSelect = vi.fn(() => ({ eq: clientsEq }))
+
+  // billing_sync SELECT (pour merger old data)
+  const billingSelectMaybeSingle = vi.fn().mockResolvedValue({
+    data: { data: { quote_number: 'D-2026-001' } },
+    error: null,
+  })
+  const billingSelectEq2 = vi.fn(() => ({ maybeSingle: billingSelectMaybeSingle }))
+  const billingSelectEq1 = vi.fn(() => ({ eq: billingSelectEq2 }))
+  const billingSelect = vi.fn(() => ({ eq: billingSelectEq1 }))
+
+  // billing_sync UPDATE
+  const billingUpdateEq2 = vi.fn().mockResolvedValue({ error: null })
+  const billingUpdateEq1 = vi.fn(() => ({ eq: billingUpdateEq2 }))
+  const billingUpdate = vi.fn(() => ({ eq: billingUpdateEq1 }))
+
+  // billing_sync UPSERT (nouveau devis)
+  const billingUpsert = vi.fn().mockResolvedValue({ error: null })
 
   return {
     auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'op-1' } },
-        error: null,
-      }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'op-1' } }, error: null }),
     },
     rpc: vi.fn().mockResolvedValue({ data: opts.isOperator ?? true }),
     from: vi.fn((table: string) => {
-      if (table === 'billing_sync') return { update: updateMock, select: selectMock }
-      return { insert: insertMock }
+      if (table === 'quote_metadata') {
+        return {
+          select: metadataSelect,
+          update: metadataUpdate,
+          delete: metadataDelete,
+          insert: insertMock,
+        }
+      }
+      if (table === 'clients') return { select: clientsSelect }
+      if (table === 'billing_sync') {
+        return { select: billingSelect, update: billingUpdate, upsert: billingUpsert }
+      }
+      return { insert: insertMock, update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })) }
     }),
   }
 }
 
-describe('updateQuote', () => {
+describe('updateQuote (cancel + recreate workflow)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('returns UNAUTHORIZED when no session', async () => {
+  it('returns UNAUTHORIZED when not authenticated', async () => {
     const supabase = makeSupabase()
     supabase.auth.getUser = vi.fn().mockResolvedValue({ data: { user: null }, error: null })
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as never)
@@ -99,59 +144,92 @@ describe('updateQuote', () => {
     expect(res.error?.code).toBe('VALIDATION_ERROR')
   })
 
-  it('calls PUT /quotes/{id} with invoice_lines.add operation (Pennylane V2 schema)', async () => {
-    mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
-    mockPut.mockResolvedValue({ data: samplePennylaneQuote, error: null })
-
-    const res = await updateQuote('PL-1', { lineItems: sampleLineItems, publicNotes: 'hello' })
-
-    expect(mockPut).toHaveBeenCalledTimes(1)
-    const [path, body] = mockPut.mock.calls[0]
-    expect(path).toBe('/quotes/PL-1')
-    const sentBody = body as Record<string, unknown>
-    expect(sentBody.pdf_invoice_free_text).toBe('hello')
-    const invoiceLines = sentBody.invoice_lines as { add?: unknown[] }
-    expect(invoiceLines).toBeTypeOf('object')
-    expect(Array.isArray(invoiceLines.add)).toBe(true)
-    expect(invoiceLines.add).toHaveLength(1)
-    expect(res.data).toEqual({ updated: true })
+  it('returns METADATA_NOT_FOUND when quote_metadata row absent', async () => {
+    mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase({ metadata: null }) as never)
+    const res = await updateQuote('PL-1', { lineItems: sampleLineItems })
+    expect(res.error?.code).toBe('METADATA_NOT_FOUND')
   })
 
-  it('translates Pennylane 409 into QUOTE_LOCKED', async () => {
+  it('cancels old quote and creates new one (unsent quote, no resend)', async () => {
+    mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
+    mockPut.mockResolvedValue({ data: null, error: null }) // cancel OK
+    mockPost.mockResolvedValue({ data: newPennylaneQuote, error: null }) // create OK
+
+    const res = await updateQuote('PL-OLD', { lineItems: sampleLineItems })
+
+    expect(mockPut).toHaveBeenCalledWith('/quotes/PL-OLD/update_status', { status: 'denied' })
+    expect(mockPost).toHaveBeenCalledTimes(1) // create only, no resend
+    expect(mockPost).toHaveBeenCalledWith('/quotes', expect.objectContaining({
+      customer_id: 275890907,
+      invoice_lines: expect.any(Array),
+    }))
+    expect(res.data).toMatchObject({
+      oldPennylaneQuoteId: 'PL-OLD',
+      newPennylaneQuoteId: '999999',
+      newQuoteNumber: 'D-2026-999',
+      wasOriginallySent: false,
+      resent: false,
+    })
+  })
+
+  it('also calls send_by_email when wasOriginallySent && autoResend=true', async () => {
+    mockCreateServerSupabaseClient.mockResolvedValue(
+      makeSupabase({
+        metadata: { client_id: 'client-uuid-1', quote_type: 'one_direct_deposit', sent_at: '2026-04-15T10:00:00Z' },
+      }) as never
+    )
+    mockPut.mockResolvedValue({ data: null, error: null })
+    mockPost
+      .mockResolvedValueOnce({ data: newPennylaneQuote, error: null }) // create
+      .mockResolvedValueOnce({ data: null, error: null }) // send_by_email
+
+    const res = await updateQuote('PL-OLD', { lineItems: sampleLineItems, autoResend: true })
+
+    expect(mockPost).toHaveBeenCalledTimes(2)
+    expect(mockPost).toHaveBeenLastCalledWith('/quotes/999999/send_by_email', {})
+    expect(res.data?.wasOriginallySent).toBe(true)
+    expect(res.data?.resent).toBe(true)
+  })
+
+  it('does NOT call send_by_email when autoResend=false even if originally sent', async () => {
+    mockCreateServerSupabaseClient.mockResolvedValue(
+      makeSupabase({
+        metadata: { client_id: 'client-uuid-1', quote_type: 'one_direct_deposit', sent_at: '2026-04-15T10:00:00Z' },
+      }) as never
+    )
+    mockPut.mockResolvedValue({ data: null, error: null })
+    mockPost.mockResolvedValue({ data: newPennylaneQuote, error: null })
+
+    const res = await updateQuote('PL-OLD', { lineItems: sampleLineItems, autoResend: false })
+
+    expect(mockPost).toHaveBeenCalledTimes(1)
+    expect(res.data?.wasOriginallySent).toBe(true)
+    expect(res.data?.resent).toBe(false)
+  })
+
+  it('returns error when cancel old quote fails', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
     mockPut.mockResolvedValue({
       data: null,
-      error: { message: 'conflict', code: 'PENNYLANE_409' },
+      error: { message: 'forbidden', code: 'PENNYLANE_403' },
     })
 
-    const res = await updateQuote('PL-1', { lineItems: sampleLineItems })
-    expect(res.error?.code).toBe('QUOTE_LOCKED')
+    const res = await updateQuote('PL-OLD', { lineItems: sampleLineItems })
+    expect(res.data).toBeNull()
+    expect(res.error?.message).toContain('Impossible d annuler')
+    expect(mockPost).not.toHaveBeenCalled()
   })
 
-  it('forwards Pennylane 422 with verbose message extraction', async () => {
+  it('returns error when create new quote fails', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
-    mockPut.mockResolvedValue({
+    mockPut.mockResolvedValue({ data: null, error: null })
+    mockPost.mockResolvedValue({
       data: null,
-      error: {
-        message: 'unprocessable',
-        code: 'PENNYLANE_422',
-        details: { error: 'invoice_lines: invalid format' },
-      },
+      error: { message: 'bad request', code: 'PENNYLANE_400' },
     })
 
-    const res = await updateQuote('PL-1', { lineItems: sampleLineItems })
-    expect(res.error?.code).toBe('PENNYLANE_422')
-    expect(res.error?.message).toContain('invoice_lines: invalid format')
-  })
-
-  it('preserves existing flags (e.g. cancelled_by_operator) when merging billing_sync data', async () => {
-    const supabase = makeSupabase({
-      existingData: { quote_number: 'D-2026-001', cancelled_by_operator: false, custom_flag: 'keep-me' },
-    })
-    mockCreateServerSupabaseClient.mockResolvedValue(supabase as never)
-    mockPut.mockResolvedValue({ data: samplePennylaneQuote, error: null })
-
-    const res = await updateQuote('PL-1', { lineItems: sampleLineItems })
-    expect(res.error).toBeNull()
+    const res = await updateQuote('PL-OLD', { lineItems: sampleLineItems })
+    expect(res.data).toBeNull()
+    expect(res.error?.code).toBe('PENNYLANE_400')
   })
 })

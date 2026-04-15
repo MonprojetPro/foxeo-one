@@ -62,6 +62,8 @@ export interface QuoteFormInitialValues {
   quoteType: QuoteType
   lineItems: LineItem[]
   publicNotes?: string | null
+  /** Story 13.4 — true si ce devis a deja ete envoye par email au client */
+  wasOriginallySent?: boolean
 }
 
 type QuoteFormProps = {
@@ -143,17 +145,27 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
         total: Number(item.quantity) * Number(item.unitPrice),
       }))
 
-      // Mode edition — appel updateQuote au lieu de createAndSendQuote
+      // Mode edition — workflow cancel+recreate via updateQuote
+      // sendNow ici est detourne pour signifier "renvoyer auto au client"
+      // dans le cas ou le devis original avait deja ete envoye.
       if (isEditMode && initialValues) {
         const editResult = await updateQuote(initialValues.pennylaneQuoteId, {
           lineItems,
           publicNotes: values.publicNotes ?? null,
+          autoResend: sendNow,
         })
         if (editResult.error) {
           showError(editResult.error.message)
           return
         }
-        showSuccess('Devis modifié')
+        const newNumber = editResult.data?.newQuoteNumber ?? ''
+        if (editResult.data?.resent) {
+          showSuccess(`Devis remplacé par ${newNumber} et renvoyé au client`)
+        } else if (editResult.data?.wasOriginallySent) {
+          showSuccess(`Devis remplacé par ${newNumber} (non renvoyé)`)
+        } else {
+          showSuccess(`Devis modifié — nouveau numéro : ${newNumber}`)
+        }
         await queryClient.invalidateQueries({ queryKey: ['billing'] })
         onSuccess?.()
         return
@@ -187,6 +199,32 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
 
   return (
     <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
+      {/* Story 13.4 — Warning Pennylane numbering quand on edite un devis */}
+      {isEditMode && (
+        <div className="rounded-md border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-xs">
+          {initialValues?.wasOriginallySent ? (
+            <>
+              <strong className="text-orange-400">⚠️ Devis déjà envoyé au client</strong>
+              <p className="mt-1 text-orange-300/90">
+                Pennylane interdit la modification d'un devis envoyé. Tes changements vont créer un{' '}
+                <strong>nouveau devis</strong> avec un numéro différent. L'ancien sera annulé. Choisis
+                ci-dessous si tu veux <strong>renvoyer automatiquement</strong> le nouveau devis au client
+                ou non.
+              </p>
+            </>
+          ) : (
+            <>
+              <strong className="text-orange-400">ℹ️ Numéro de devis</strong>
+              <p className="mt-1 text-orange-300/90">
+                Pennylane impose une numérotation séquentielle immutable. Tes modifications vont créer un{' '}
+                <strong>nouveau devis</strong> (ex: D-2026-XXX → D-2026-XXY). L'ancien sera annulé
+                automatiquement. Le client n'a jamais reçu l'ancien donc c'est invisible pour lui.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Client selector — verrouille en mode edition */}
       <div className="flex flex-col gap-1">
         <label htmlFor="clientId" className="text-sm font-medium">
@@ -395,14 +433,35 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
       {/* Actions */}
       <div className="flex items-center gap-3">
         {isEditMode ? (
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={handleSubmit((values) => onSubmit(values, false))}
-            className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
-          </button>
+          initialValues?.wasOriginallySent ? (
+            <>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleSubmit((values) => onSubmit(values, false))}
+                className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent disabled:opacity-50"
+              >
+                {isSubmitting ? '…' : 'Modifier sans renvoyer'}
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleSubmit((values) => onSubmit(values, true))}
+                className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {isSubmitting ? 'Modification…' : 'Modifier et renvoyer au client'}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleSubmit((values) => onSubmit(values, false))}
+              className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isSubmitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
+            </button>
+          )
         ) : (
           <>
             <button
