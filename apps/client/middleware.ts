@@ -123,7 +123,7 @@ export async function middleware(request: NextRequest) {
     // client_instances(status) conservé pour Story 9.5b transferred check uniquement.
     const { data: client } = await supabase
       .from('clients')
-      .select('id, status, first_login_at, onboarding_completed, graduated_at, graduation_screen_shown, client_configs(dashboard_type), client_instances(status)')
+      .select('id, status, first_login_at, onboarding_completed, password_change_required, graduated_at, graduation_screen_shown, client_configs(dashboard_type), client_instances(status)')
       .eq('auth_user_id', user.id)
       .maybeSingle()
 
@@ -157,6 +157,18 @@ export async function middleware(request: NextRequest) {
           setLocaleCookie(transferredResponse, locale)
           return transferredResponse
         }
+      }
+
+      // Story 13.4 — Premier login avec mot de passe temporaire : forcer le changement
+      if (
+        client.password_change_required &&
+        request.nextUrl.pathname !== '/onboarding/password-change'
+      ) {
+        const pwdUrl = request.nextUrl.clone()
+        pwdUrl.pathname = '/onboarding/password-change'
+        const pwdResponse = NextResponse.redirect(pwdUrl)
+        setLocaleCookie(pwdResponse, locale)
+        return pwdResponse
       }
 
       // Check consent version

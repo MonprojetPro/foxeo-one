@@ -6,7 +6,8 @@ import { z } from 'zod'
 import { useState } from 'react'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { createAndSendQuote } from '../actions/create-quote'
-import type { ClientWithPennylane } from '../types/billing.types'
+import type { ClientWithPennylane, QuoteType } from '../types/billing.types'
+import { QUOTE_TYPE_LABELS } from '../types/billing.types'
 
 // ── Schema Zod ────────────────────────────────────────────────────────────────
 
@@ -19,8 +20,17 @@ const lineItemSchema = z.object({
   unit: z.string().default('u'),
 })
 
+const QUOTE_TYPE_VALUES = [
+  'lab_onboarding',
+  'one_direct_deposit',
+  'one_direct_final',
+  'ponctuel_deposit',
+  'ponctuel_final',
+] as const satisfies readonly QuoteType[]
+
 const quoteFormSchema = z.object({
   clientId: z.string().uuid('Client requis'),
+  quoteType: z.enum(QUOTE_TYPE_VALUES, { message: 'Type de devis requis' }),
   lineItems: z.array(lineItemSchema).min(1, 'Au moins une ligne requise'),
   publicNotes: z.string().nullable().optional(),
   privateNotes: z.string().nullable().optional(),
@@ -64,6 +74,7 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
     resolver: zodResolver(quoteFormSchema),
     defaultValues: {
       clientId: '',
+      quoteType: 'one_direct_deposit',
       lineItems: [{ label: '', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u' }],
       publicNotes: null,
       privateNotes: null,
@@ -107,6 +118,7 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
         sendNow,
         publicNotes: values.publicNotes ?? null,
         privateNotes: values.privateNotes ?? null,
+        quoteType: values.quoteType,
       })
 
       if (result.error) {
@@ -157,6 +169,31 @@ export function QuoteForm({ clients, onSuccess }: QuoteFormProps) {
               Ce client a payé le Lab (199€) — déduction auto appliquée sur les devis setup One
             </span>
           </div>
+        )}
+      </div>
+
+      {/* Story 13.4 — Type de devis (pilote le tunnel paiement Pennylane) */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="quoteType" className="text-sm font-medium">
+          Type de devis
+        </label>
+        <select
+          id="quoteType"
+          {...register('quoteType')}
+          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          data-testid="quote-type-select"
+        >
+          {QUOTE_TYPE_VALUES.map((value) => (
+            <option key={value} value={value}>
+              {QUOTE_TYPE_LABELS[value]}
+            </option>
+          ))}
+        </select>
+        <span className="text-xs text-muted-foreground">
+          Le webhook Pennylane utilisera ce type pour créer le compte ou débloquer la livraison.
+        </span>
+        {errors.quoteType && (
+          <span className="text-xs text-destructive">{errors.quoteType.message}</span>
         )}
       </div>
 

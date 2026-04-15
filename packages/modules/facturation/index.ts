@@ -44,6 +44,27 @@ export {
   toPennylaneLineItem,
 } from './utils/billing-mappers'
 
+// Story 13.4 — Tunnel paiement Pennylane
+export { verifyPennylaneHmac } from './utils/verify-pennylane-hmac'
+export {
+  generateSecureTemporaryPassword,
+  TEMP_PASSWORD_LENGTH,
+} from './utils/generate-temp-password'
+export { createClientAuthUser } from './utils/create-client-auth-user'
+export type {
+  CreateClientAuthUserResult,
+  CreateClientAuthUserOptions,
+} from './utils/create-client-auth-user'
+export { matchQuoteFromInvoice } from './actions/match-quote-from-invoice'
+export type { MatchQuoteInput } from './actions/match-quote-from-invoice'
+export {
+  dispatchPaidQuote,
+  handleLabOnboardingPaid,
+  handleOneDepositPaid,
+  handleFinalPaymentPaid,
+} from './actions/pennylane-paid-handlers'
+export type { HandlerDeps, HandlerResult } from './actions/pennylane-paid-handlers'
+
 // Types
 export type {
   PennylaneQuote,
@@ -63,4 +84,8 @@ export type {
   CreateQuoteOptions,
   ClientWithPennylane,
   BillingSyncRow,
+  QuoteType,
+  QuoteMetadataRow,
 } from './types/billing.types'
+
+export { QUOTE_TYPE_LABELS } from './types/billing.types'

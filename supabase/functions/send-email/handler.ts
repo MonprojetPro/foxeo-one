@@ -9,6 +9,8 @@ import { alertInactivityEmailTemplate } from '../_shared/email-templates/alert-i
 import { graduationEmailTemplate } from '../_shared/email-templates/graduation.ts'
 import { paymentFailedEmailTemplate } from '../_shared/email-templates/payment-failed.ts'
 import { welcomeLabEmailTemplate } from '../_shared/email-templates/welcome-lab.ts'
+import { welcomeOneEmailTemplate } from '../_shared/email-templates/welcome-one.ts'
+import { finalPaymentConfirmationEmailTemplate } from '../_shared/email-templates/final-payment-confirmation.ts'
 import { prospectResourcesEmailTemplate } from '../_shared/email-templates/prospect-resources.ts'
 import { escapeHtml } from '../_shared/email-templates/base.ts'
 
@@ -16,8 +18,12 @@ export interface SendEmailInput {
   notificationId: string
 }
 
-// Direct email send (prospects without auth account)
-export type DirectEmailTemplate = 'welcome-lab' | 'prospect-resources'
+// Direct email send (prospects / new clients without in-app notification)
+export type DirectEmailTemplate =
+  | 'welcome-lab'
+  | 'welcome-one'
+  | 'final-payment-confirmation'
+  | 'prospect-resources'
 
 export interface DirectEmailInput {
   to: string
@@ -44,6 +50,18 @@ export async function handleDirectEmail(
       const d = input.data as { clientName: string; parcoursName: string; activationLink: string }
       subject = 'Bienvenue dans MonprojetPro Lab !'
       html = welcomeLabEmailTemplate(d)
+      break
+    }
+    case 'welcome-one': {
+      const d = input.data as { clientName: string; activationLink: string; temporaryPassword: string | null }
+      subject = 'Votre espace MonprojetPro One est prêt'
+      html = welcomeOneEmailTemplate(d)
+      break
+    }
+    case 'final-payment-confirmation': {
+      const d = input.data as { clientName: string }
+      subject = 'Projet livré — MonprojetPro'
+      html = finalPaymentConfirmationEmailTemplate(d)
       break
     }
     case 'prospect-resources': {

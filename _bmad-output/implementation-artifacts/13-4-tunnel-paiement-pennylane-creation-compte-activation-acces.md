@@ -1,6 +1,6 @@
 # Story 13.4: Tunnel paiement Pennylane — création compte + activation accès
 
-Status: ready-for-dev
+Status: done
 Priority: critical (bloque l'automatisation commerciale)
 Estimate: large (~4-5 jours)
 
@@ -311,12 +311,66 @@ ALTER TABLE clients ADD COLUMN password_change_required BOOLEAN DEFAULT false;
 
 ### Agent Model Used
 
+Claude Opus 4.6 (pipeline MPP — 2026-04-14)
+
 ### Debug Log References
 
 ### Completion Notes List
 
+**Décision architecture — Option C : table `quote_metadata`**
+
+La story supposait une table `quotes` qui n'existait pas (codebase utilise `billing_sync`
+comme miroir Pennylane passif). Décision : créer une table légère `quote_metadata`
+(pennylane_quote_id PK, client_id FK, quote_type, paid_at, processed_at) dédiée aux
+métadonnées business MPP. Elle ne duplique pas `billing_sync`, garantit l'idempotence
+atomique du webhook et reste typée côté TypeScript.
+
+**Scope implémenté**
+- Migration 00083 — `quote_metadata` + extensions `clients.password_change_required`/`project_status` + `client_configs.deposit_paid_at`/`final_payment_at`
+- 3 helpers utils : `verify-pennylane-hmac`, `generate-temp-password`, `create-client-auth-user`
+- 3 handlers + dispatcher idempotents : `lab_onboarding`, `one/ponctuel_deposit`, `one/ponctuel_final`
+- Webhook endpoint `/api/webhooks/pennylane/paid/route.ts` avec HMAC SHA-256 + service-role + dispatch
+- Extension `create-quote.ts` + `quote-form.tsx` : sélecteur `quote_type` + persist `quote_metadata`
+- 2 nouveaux templates email (`welcome-one`, `final-payment-confirmation`) + extension handler send-email
+- Middleware client : check `password_change_required` avant consent/onboarding
+- Page `/onboarding/password-change` + form + action `changeTemporaryPassword`
+- Notifications MiKL in-app à chaque paiement + alerte en cas d'échec handler
+
+**Tests : 69 verts**
+- verify-pennylane-hmac : 9
+- generate-temp-password : 4
+- create-client-auth-user : 5
+- pennylane-paid-handlers : 16 (Lab + deposit + final + dispatcher)
+- webhook route : 8 (HMAC, matching, dispatch, error fallback)
+- change-temporary-password : 5
+- create-quote : 14 (non-régression)
+- quote-form : 8 (non-régression)
+
 ### File List
+
+**Nouveaux fichiers**
+- supabase/migrations/00083_pennylane_tunnel.sql
+- packages/modules/facturation/utils/verify-pennylane-hmac.ts + .test.ts
+- packages/modules/facturation/utils/generate-temp-password.ts + .test.ts
+- packages/modules/facturation/utils/create-client-auth-user.ts + .test.ts
+- packages/modules/facturation/actions/match-quote-from-invoice.ts
+- packages/modules/facturation/actions/pennylane-paid-handlers.ts + .test.ts
+- apps/hub/app/api/webhooks/pennylane/paid/route.ts + route.test.ts
+- apps/client/app/onboarding/password-change/page.tsx
+- apps/client/app/onboarding/actions/change-temporary-password.ts + .test.ts
+- apps/client/app/components/onboarding/password-change-form.tsx
+- supabase/functions/_shared/email-templates/welcome-one.ts
+- supabase/functions/_shared/email-templates/final-payment-confirmation.ts
+
+**Fichiers modifiés**
+- packages/modules/facturation/types/billing.types.ts (QuoteType, QuoteMetadataRow, QUOTE_TYPE_LABELS, CreateQuoteOptions.quoteType)
+- packages/modules/facturation/actions/create-quote.ts (persist quote_metadata)
+- packages/modules/facturation/components/quote-form.tsx (sélecteur quote_type)
+- packages/modules/facturation/index.ts (exports story 13.4)
+- supabase/functions/send-email/handler.ts (welcome-one + final-payment-confirmation)
+- apps/client/middleware.ts (redirect si password_change_required)
 
 ### Change Log
 
 - Story 13.4 créée — tunnel paiement Pennylane automatisé (création compte + activation accès) (2026-04-14)
+- Story 13.4 implémentée — pipeline MPP complet, 69 tests verts (2026-04-14)

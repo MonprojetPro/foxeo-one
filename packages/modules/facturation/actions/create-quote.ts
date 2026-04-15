@@ -130,6 +130,21 @@ export async function createAndSendQuote(
     }
   }
 
+  // Story 13.4 — Persist quote metadata (quote_type, idempotence anchor for webhook)
+  if (options.quoteType) {
+    const totalHtNumeric = Number(createdQuote.currency_amount_before_tax ?? 0) || setupTotalHt
+    const { error: metadataError } = await supabase.from('quote_metadata').insert({
+      pennylane_quote_id: String(createdQuote.id),
+      client_id: clientId,
+      quote_type: options.quoteType,
+      total_amount_ht: totalHtNumeric,
+    })
+    if (metadataError) {
+      // Non-bloquant : le devis est deja cree cote Pennylane. On log et on alerte.
+      console.error('[FACTURATION:CREATE_QUOTE] quote_metadata insert failed:', metadataError)
+    }
+  }
+
   // Sync immédiat billing_sync
   await triggerBillingSync(clientId)
 
@@ -143,6 +158,7 @@ export async function createAndSendQuote(
       pennylane_quote_id: createdQuote.id,
       quote_number: createdQuote.quote_number,
       client_id: clientId,
+      quote_type: options.quoteType ?? null,
       send_now: options.sendNow ?? false,
     },
   })
@@ -150,5 +166,5 @@ export async function createAndSendQuote(
     console.warn('[FACTURATION:CREATE_QUOTE] Activity log insert failed:', logError)
   }
 
-  return { data: createdQuote.id, error: null }
+  return { data: String(createdQuote.id), error: null }
 }

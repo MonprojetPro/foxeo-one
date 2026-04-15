@@ -175,12 +175,46 @@ export type ListSubscriptionsFilters = {
 // Types Story 11.3 — Création de devis
 // ============================================================
 
+// ============================================================
+// Types Story 13.4 — Typologie de devis (tunnel paiement)
+// ============================================================
+
+export type QuoteType =
+  | 'lab_onboarding'
+  | 'one_direct_deposit'
+  | 'one_direct_final'
+  | 'ponctuel_deposit'
+  | 'ponctuel_final'
+
+export const QUOTE_TYPE_LABELS: Record<QuoteType, string> = {
+  lab_onboarding: 'Lab — 199€ 100% upfront',
+  one_direct_deposit: 'One direct — acompte 30%',
+  one_direct_final: 'One direct — solde 70%',
+  ponctuel_deposit: 'Ponctuel — acompte 30%',
+  ponctuel_final: 'Ponctuel — solde 70%',
+}
+
+export type QuoteMetadataRow = {
+  pennylane_quote_id: string
+  pennylane_invoice_id: string | null
+  client_id: string
+  quote_type: QuoteType
+  total_amount_ht: number | null
+  signed_at: string | null
+  paid_at: string | null
+  processed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type CreateQuoteOptions = {
   sendNow?: boolean
   publicNotes?: string | null
   privateNotes?: string | null
   /** Story 11.6 — Si true et client.lab_paid=true, ajoute automatiquement la déduction 199€ */
   labDeduction?: boolean
+  /** Story 13.4 — Typologie du devis (utilise par le webhook paiement) */
+  quoteType?: QuoteType
 }
 
 export type ClientWithPennylane = {
