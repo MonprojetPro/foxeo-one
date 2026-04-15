@@ -20,6 +20,12 @@ function makeSupabase(opts: { isOperator?: boolean } = {}) {
   const updateMock = vi.fn(() => ({ eq: updateChainEq1 }))
   const insertMock = vi.fn().mockResolvedValue({ error: null })
 
+  // Pre-cancel SELECT pour preserver le data JSON existant
+  const selectMaybeSingle = vi.fn().mockResolvedValue({ data: { data: { quote_number: 'DEV-001' } }, error: null })
+  const selectEq2 = vi.fn(() => ({ maybeSingle: selectMaybeSingle }))
+  const selectEq1 = vi.fn(() => ({ eq: selectEq2 }))
+  const selectMock = vi.fn(() => ({ eq: selectEq1 }))
+
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({
@@ -29,7 +35,7 @@ function makeSupabase(opts: { isOperator?: boolean } = {}) {
     },
     rpc: vi.fn().mockResolvedValue({ data: opts.isOperator ?? true }),
     from: vi.fn((table: string) => {
-      if (table === 'billing_sync') return { update: updateMock }
+      if (table === 'billing_sync') return { update: updateMock, select: selectMock }
       return { insert: insertMock }
     }),
   }

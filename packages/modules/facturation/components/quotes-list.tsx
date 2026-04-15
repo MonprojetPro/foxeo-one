@@ -16,6 +16,7 @@ const STATUS_LABELS: Record<string, string> = {
   pending: 'En attente',
   accepted: 'Accepté',
   denied: 'Refusé',
+  cancelled: 'Annulé',
 }
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -23,6 +24,17 @@ const STATUS_CLASSES: Record<string, string> = {
   pending: 'bg-blue-500/10 text-blue-500',
   accepted: 'bg-green-500/10 text-green-500',
   denied: 'bg-destructive/10 text-destructive',
+  cancelled: 'bg-orange-500/10 text-orange-500',
+}
+
+// Story 13.4 patch — distinction visuelle entre "denied" (refus client)
+// et "cancelled" (annulation MiKL). Pennylane n a qu un seul statut natif
+// (denied), mais billing_sync.data.cancelled_by_operator nous permet de
+// faire la distinction cote UI.
+function deriveDisplayStatus(row: BillingSyncRow): string {
+  if (row.status !== 'denied') return row.status
+  const cancelledByOperator = (row.data as { cancelled_by_operator?: boolean })?.cancelled_by_operator
+  return cancelledByOperator ? 'cancelled' : 'denied'
 }
 
 function formatAmount(cents: number | null): string {
@@ -177,21 +189,46 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map((row) => {
-            const quoteData = row.data as { quote_number?: string; date?: string; deadline?: string }
+            const quoteData = row.data as {
+              quote_number?: string
+              date?: string
+              deadline?: string
+              public_file_url?: string | null
+            }
+            const clientName = clients?.find((c) => c.id === row.client_id)?.name ?? null
+            const displayStatus = deriveDisplayStatus(row)
+            const pdfUrl = quoteData.public_file_url ?? null
             return (
               <div
                 key={row.id}
                 className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-accent/30 transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{quoteData.quote_number ?? row.pennylane_id}</span>
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-2">
+                      {pdfUrl ? (
+                        <a
+                          href={pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-primary hover:underline truncate"
+                          title="Consulter le devis (PDF Pennylane)"
+                        >
+                          {quoteData.quote_number ?? row.pennylane_id}
+                        </a>
+                      ) : (
+                        <span className="text-sm font-medium truncate">{quoteData.quote_number ?? row.pennylane_id}</span>
+                      )}
+                      {clientName && (
+                        <span className="text-xs text-muted-foreground truncate">— {clientName}</span>
+                      )}
+                    </div>
                     <span className="text-xs text-muted-foreground">{formatDate(quoteData.date)}</span>
                   </div>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[row.status] ?? STATUS_CLASSES.draft}`}
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[displayStatus] ?? STATUS_CLASSES.draft}`}
                   >
-                    {STATUS_LABELS[row.status] ?? row.status}
+                    {STATUS_LABELS[displayStatus] ?? displayStatus}
                   </span>
                 </div>
 

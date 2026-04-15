@@ -37,10 +37,29 @@ export async function cancelQuote(
 
   if (result.error) return { data: null, error: result.error }
 
-  // Synchroniser le statut local dans billing_sync (sans attendre le polling)
+  // Synchroniser le statut local dans billing_sync ET marquer cancelled_by_operator
+  // pour distinguer cote UI une annulation MiKL d un refus client.
+  // Lecture-modify-write sur le champ data pour preserver le reste du JSON.
+  const { data: existing } = await supabase
+    .from('billing_sync')
+    .select('data')
+    .eq('entity_type', 'quote')
+    .eq('pennylane_id', pennylaneQuoteId)
+    .maybeSingle()
+
+  const mergedData = {
+    ...((existing?.data as Record<string, unknown> | null) ?? {}),
+    cancelled_by_operator: true,
+    cancelled_at: new Date().toISOString(),
+  }
+
   const { error: syncError } = await supabase
     .from('billing_sync')
-    .update({ status: 'denied', last_synced_at: new Date().toISOString() })
+    .update({
+      status: 'denied',
+      data: mergedData,
+      last_synced_at: new Date().toISOString(),
+    })
     .eq('entity_type', 'quote')
     .eq('pennylane_id', pennylaneQuoteId)
 
