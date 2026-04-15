@@ -145,8 +145,34 @@ export async function createAndSendQuote(
     }
   }
 
-  // Sync immédiat billing_sync
-  await triggerBillingSync(clientId)
+  // Patch 2026-04-15 — INSERT direct dans billing_sync pour visibilite immediate
+  // dans la liste des devis du Hub. L Edge Function billing-sync (cron) ne sync que
+  // les invoices/customers cote Pennylane et de toute facon n etait pas deployee :
+  // les devis n apparaissaient JAMAIS dans le Hub. Fix : on miroir le devis
+  // immediatement a la creation pour que la liste se rafraichisse sans Edge Function.
+  const amountCents = Math.round(parseFloat(String(createdQuote.amount ?? '0')) * 100)
+  const { error: billingSyncError } = await supabase.from('billing_sync').upsert(
+    {
+      entity_type: 'quote',
+      pennylane_id: String(createdQuote.id),
+      client_id: clientId,
+      status: createdQuote.status ?? 'draft',
+      data: createdQuote as unknown as Record<string, unknown>,
+      amount: Number.isFinite(amountCents) ? amountCents : null,
+      last_synced_at: new Date().toISOString(),
+    },
+    { onConflict: 'entity_type,pennylane_id' }
+  )
+  if (billingSyncError) {
+    console.warn('[FACTURATION:CREATE_QUOTE] billing_sync upsert failed:', billingSyncError)
+  }
+
+  // Sync Edge Function (best effort, ne bloque pas si non deployee)
+  try {
+    await triggerBillingSync(clientId)
+  } catch (syncErr) {
+    console.warn('[FACTURATION:CREATE_QUOTE] triggerBillingSync skipped:', syncErr)
+  }
 
   // Activity log
   const { error: logError } = await supabase.from('activity_logs').insert({

@@ -53,6 +53,7 @@ function makeSupabaseMock(opts: {
       }
       return {
         insert: vi.fn().mockReturnValue(makeInsertChain()),
+        upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
       }
     }),
   }
@@ -176,7 +177,7 @@ describe('createAndSendQuote', () => {
       if (table === 'clients') {
         return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-user-1', pennylane_customer_id: '275890907' }, error: null }) }) }
       }
-      return { insert: insertMock }
+      return { insert: insertMock, upsert: vi.fn().mockResolvedValue({ data: null, error: null }) }
     })
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
     mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
@@ -207,7 +208,7 @@ describe('createAndSendQuote', () => {
       if (table === 'clients') {
         return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-user-1', pennylane_customer_id: '275890907' }, error: null }) }) }
       }
-      return { insert: insertMock }
+      return { insert: insertMock, upsert: vi.fn().mockResolvedValue({ data: null, error: null }) }
     })
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
     mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
