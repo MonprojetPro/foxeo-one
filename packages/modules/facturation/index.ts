@@ -26,6 +26,8 @@ export { useBillingQuotes, useBillingInvoices, useBillingSubscriptions, useBilli
 export { createPennylaneCustomer, getPennylaneCustomer, listQuotes, listInvoices, listSubscriptions } from './actions/billing-proxy'
 export { createAndSendQuote } from './actions/create-quote'
 export { convertQuoteToInvoice } from './actions/convert-quote-to-invoice'
+export { sendQuoteByEmail } from './actions/send-quote-by-email'
+export { cancelQuote } from './actions/cancel-quote'
 export { getClientsWithPennylane } from './actions/get-clients'
 export { createCreditNote } from './actions/create-credit-note'
 export { triggerClientBillingSync } from './actions/trigger-client-billing-sync'

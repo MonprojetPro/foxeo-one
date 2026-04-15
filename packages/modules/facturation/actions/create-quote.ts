@@ -174,6 +174,26 @@ export async function createAndSendQuote(
     console.warn('[FACTURATION:CREATE_QUOTE] triggerBillingSync skipped:', syncErr)
   }
 
+  // Patch 2026-04-15 — Si sendNow=true, declencher l envoi par email cote Pennylane
+  // Avant ce patch, le bouton "Envoyer au client" creait juste le devis sans
+  // jamais l envoyer. POST /quotes/{id}/send_by_email peut renvoyer 409 si le
+  // PDF Pennylane n est pas encore genere → on log mais on ne bloque pas.
+  let emailSent = false
+  if (options.sendNow === true) {
+    const sendResult = await pennylaneClient.post<unknown>(
+      `/quotes/${createdQuote.id}/send_by_email`,
+      {}
+    )
+    if (sendResult.error) {
+      console.warn(
+        '[FACTURATION:CREATE_QUOTE] send_by_email failed (devis cree mais pas envoye):',
+        sendResult.error
+      )
+    } else {
+      emailSent = true
+    }
+  }
+
   // Activity log
   const { error: logError } = await supabase.from('activity_logs').insert({
     actor_type: 'operator',
@@ -186,6 +206,7 @@ export async function createAndSendQuote(
       client_id: clientId,
       quote_type: options.quoteType ?? null,
       send_now: options.sendNow ?? false,
+      email_sent: emailSent,
     },
   })
   if (logError) {

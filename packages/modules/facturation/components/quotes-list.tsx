@@ -1,9 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Skeleton, showSuccess, showError } from '@monprojetpro/ui'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import { convertQuoteToInvoice } from '../actions/convert-quote-to-invoice'
+import { sendQuoteByEmail } from '../actions/send-quote-by-email'
+import { cancelQuote } from '../actions/cancel-quote'
 import type { BillingSyncRow, ClientWithPennylane } from '../types/billing.types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -42,11 +45,14 @@ type QuotesListProps = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function QuotesList({ clientId, clients }: QuotesListProps) {
+  const queryClient = useQueryClient()
   const { data: rows, isPending, isError } = useBillingSyncRows('quote', clientId)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [clientFilter, setClientFilter] = useState<string>('all')
   const [periodFilter, setPeriodFilter] = useState<string>('all')
   const [converting, setConverting] = useState<string | null>(null)
+  const [sending, setSending] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState<string | null>(null)
 
   if (isPending) {
     return (
@@ -117,14 +123,39 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
     }
   }
 
-  function handleRelancer(row: BillingSyncRow) {
-    // Relance = renvoyer l'email de rappel via Pennylane (stub — nécessite endpoint Pennylane supplémentaire)
-    showSuccess(`Relance envoyée pour le devis ${(row.data as { quote_number?: string }).quote_number ?? row.pennylane_id}`)
+  async function handleRelancer(row: BillingSyncRow) {
+    setSending(row.pennylane_id)
+    try {
+      const result = await sendQuoteByEmail(row.pennylane_id)
+      if (result.error) {
+        showError(result.error.message)
+        return
+      }
+      const number = (row.data as { quote_number?: string }).quote_number ?? row.pennylane_id
+      showSuccess(`Email envoyé pour le devis ${number}`)
+    } finally {
+      setSending(null)
+    }
   }
 
-  function handleAnnuler(row: BillingSyncRow) {
-    // Annuler = marquer le devis comme annulé (stub — nécessite endpoint Pennylane DELETE/PATCH)
-    showSuccess(`Devis ${(row.data as { quote_number?: string }).quote_number ?? row.pennylane_id} annulé`)
+  async function handleAnnuler(row: BillingSyncRow) {
+    if (!confirm('Annuler ce devis ? Le statut sera passé à "denied" côté Pennylane.')) {
+      return
+    }
+    setCancelling(row.pennylane_id)
+    try {
+      const result = await cancelQuote(row.pennylane_id)
+      if (result.error) {
+        showError(result.error.message)
+        return
+      }
+      const number = (row.data as { quote_number?: string }).quote_number ?? row.pennylane_id
+      showSuccess(`Devis ${number} annulé`)
+      // Rafraichir la liste pour afficher le nouveau statut
+      await queryClient.invalidateQueries({ queryKey: ['billing'] })
+    } finally {
+      setCancelling(null)
+    }
   }
 
   return (
@@ -170,13 +201,14 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
                   </span>
 
                   <div className="flex items-center gap-2">
-                    {row.status === 'pending' && (
+                    {(row.status === 'draft' || row.status === 'pending') && (
                       <button
                         type="button"
+                        disabled={sending === row.pennylane_id}
                         onClick={() => handleRelancer(row)}
-                        className="rounded-md bg-blue-500/10 px-2.5 py-1 text-xs text-blue-500 hover:bg-blue-500/20"
+                        className="rounded-md bg-blue-500/10 px-2.5 py-1 text-xs text-blue-500 hover:bg-blue-500/20 disabled:opacity-50"
                       >
-                        Relancer
+                        {sending === row.pennylane_id ? 'Envoi...' : 'Envoyer par email'}
                       </button>
                     )}
                     {row.status === 'accepted' && row.client_id && (
@@ -192,10 +224,11 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
                     {(row.status === 'draft' || row.status === 'pending') && (
                       <button
                         type="button"
+                        disabled={cancelling === row.pennylane_id}
                         onClick={() => handleAnnuler(row)}
-                        className="rounded-md bg-destructive/10 px-2.5 py-1 text-xs text-destructive hover:bg-destructive/20"
+                        className="rounded-md bg-destructive/10 px-2.5 py-1 text-xs text-destructive hover:bg-destructive/20 disabled:opacity-50"
                       >
-                        Annuler
+                        {cancelling === row.pennylane_id ? 'Annulation...' : 'Annuler'}
                       </button>
                     )}
                   </div>

@@ -11,6 +11,9 @@ vi.mock('@monprojetpro/supabase', () => ({
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
+  useQueryClient: vi.fn(() => ({
+    invalidateQueries: vi.fn().mockResolvedValue(undefined),
+  })),
 }))
 
 vi.mock('../actions/create-quote', () => ({
@@ -19,6 +22,14 @@ vi.mock('../actions/create-quote', () => ({
 
 vi.mock('../actions/convert-quote-to-invoice', () => ({
   convertQuoteToInvoice: vi.fn(),
+}))
+
+vi.mock('../actions/send-quote-by-email', () => ({
+  sendQuoteByEmail: vi.fn().mockResolvedValue({ data: { sent: true }, error: null }),
+}))
+
+vi.mock('../actions/cancel-quote', () => ({
+  cancelQuote: vi.fn().mockResolvedValue({ data: { status: 'denied' }, error: null }),
 }))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
@@ -121,12 +132,12 @@ describe('QuotesList', () => {
     expect(screen.getByText(/erreur/i)).toBeInTheDocument()
   })
 
-  it('shows Relancer button for pending quotes', () => {
+  it('shows Envoyer par email button for pending quotes', () => {
     mockUseQuery.mockReturnValue({ data: mockSyncRows, isPending: false, isError: false } as ReturnType<typeof useQuery>)
 
     render(<QuotesList />)
 
-    expect(screen.getByText('Relancer')).toBeInTheDocument()
+    expect(screen.getByText('Envoyer par email')).toBeInTheDocument()
   })
 
   it('shows Annuler button for pending quotes', () => {
@@ -161,13 +172,13 @@ describe('QuotesList', () => {
     expect(screen.getByLabelText(/filtrer par période/i)).toBeInTheDocument()
   })
 
-  it('calls showSuccess when Relancer is clicked', async () => {
+  it('calls sendQuoteByEmail and shows success when Envoyer par email is clicked', async () => {
     mockUseQuery.mockReturnValue({ data: mockSyncRows, isPending: false, isError: false } as ReturnType<typeof useQuery>)
 
     render(<QuotesList />)
 
-    await userEvent.click(screen.getByText('Relancer'))
+    await userEvent.click(screen.getByText('Envoyer par email'))
 
-    expect(mockShowSuccess).toHaveBeenCalledWith(expect.stringContaining('Relance envoyée'))
+    expect(mockShowSuccess).toHaveBeenCalledWith(expect.stringContaining('Email envoyé'))
   })
 })

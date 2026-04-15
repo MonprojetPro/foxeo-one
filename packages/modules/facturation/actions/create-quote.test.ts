@@ -159,14 +159,28 @@ describe('createAndSendQuote', () => {
     expect(postBody.date).toBeDefined() // date obligatoire V2
   })
 
-  it('ne tente pas de finaliser le devis (V2 : status pending par défaut)', async () => {
+  it('appelle send_by_email apres creation quand sendNow=true (patch 2026-04-15)', async () => {
     const supabase = makeSupabaseMock()
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
     mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
 
     await createAndSendQuote('client-1', mockLineItems, { sendNow: true })
 
-    // Un seul POST (création) — plus de finalize
+    // 2 POSTs : creation + send_by_email
+    expect(mockPennylane.post).toHaveBeenCalledTimes(2)
+    expect(mockPennylane.post).toHaveBeenLastCalledWith(
+      `/quotes/${mockPennylaneQuote.id}/send_by_email`,
+      {}
+    )
+  })
+
+  it('ne declenche PAS send_by_email quand sendNow=false (brouillon)', async () => {
+    const supabase = makeSupabaseMock()
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
+
+    await createAndSendQuote('client-1', mockLineItems, { sendNow: false })
+
     expect(mockPennylane.post).toHaveBeenCalledTimes(1)
   })
 
