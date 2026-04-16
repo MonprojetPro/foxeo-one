@@ -20,6 +20,7 @@ import { QuoteForm, type QuoteFormInitialValues } from './quote-form'
 import type {
   BillingSyncRow,
   ClientWithPennylane,
+  LineItem,
   QuoteType,
 } from '../types/billing.types'
 
@@ -96,23 +97,47 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
         return
       }
       const quoteType = ((row.data as { quote_type?: QuoteType })?.quote_type ?? 'one_direct_deposit') as QuoteType
+
+      // Determiner les lignes du devis : API Pennylane > stockage local > fallback vide
+      let lineItems = result.data.lineItems
+      if (lineItems.length === 0) {
+        // Pennylane n a pas retourne les lignes (lazy URL V2) → utiliser les lignes
+        // sauvegardees dans billing_sync.data.original_line_items
+        const rowData = row.data as { original_line_items?: LineItem[]; currency_amount_before_tax?: string }
+        if (Array.isArray(rowData.original_line_items) && rowData.original_line_items.length > 0) {
+          lineItems = rowData.original_line_items.map((li) => ({
+            label: li.label ?? '',
+            description: li.description ?? null,
+            quantity: Number(li.quantity) || 1,
+            unit: li.unit ?? 'piece',
+            unitPrice: Number(li.unitPrice) || 0,
+            vatRate: li.vatRate ?? 'FR_200',
+            total: (Number(li.quantity) || 1) * (Number(li.unitPrice) || 0),
+          }))
+        } else {
+          // Dernier recours : une seule ligne avec le montant HT (pas TTC)
+          const htAmount = rowData.currency_amount_before_tax
+            ? Number(rowData.currency_amount_before_tax)
+            : 0
+          lineItems = [
+            {
+              label: 'Ligne devis',
+              description: null,
+              quantity: 1,
+              unit: 'piece',
+              unitPrice: htAmount,
+              vatRate: 'FR_200',
+              total: htAmount,
+            },
+          ]
+        }
+      }
+
       setEditingQuote({
         pennylaneQuoteId: row.pennylane_id,
         clientId: row.client_id,
         quoteType,
-        lineItems: result.data.lineItems.length > 0
-          ? result.data.lineItems
-          : [
-              {
-                label: 'Ligne devis',
-                description: null,
-                quantity: 1,
-                unit: 'piece',
-                unitPrice: row.amount ? row.amount / 100 : 0,
-                vatRate: 'FR_200',
-                total: row.amount ? row.amount / 100 : 0,
-              },
-            ],
+        lineItems,
         publicNotes: result.data.publicNotes,
         wasOriginallySent: result.data.wasOriginallySent,
       })

@@ -158,7 +158,10 @@ export async function createAndSendQuote(
       pennylane_id: String(createdQuote.id),
       client_id: clientId,
       status: createdQuote.status ?? 'draft',
-      data: createdQuote as unknown as Record<string, unknown>,
+      data: {
+        ...(createdQuote as unknown as Record<string, unknown>),
+        original_line_items: allLineItems,
+      },
       amount: Number.isFinite(amountCents) ? amountCents : null,
       last_synced_at: new Date().toISOString(),
     },

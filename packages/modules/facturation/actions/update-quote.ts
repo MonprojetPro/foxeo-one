@@ -191,7 +191,11 @@ export async function updateQuote(
       pennylane_id: newPennylaneId,
       client_id: clientId,
       status: newQuote.status ?? 'pending',
-      data: { ...(newQuote as unknown as Record<string, unknown>), replaces: pennylaneQuoteId },
+      data: {
+        ...(newQuote as unknown as Record<string, unknown>),
+        replaces: pennylaneQuoteId,
+        original_line_items: payload.lineItems,
+      },
       amount: Number.isFinite(amountCents) ? amountCents : null,
       last_synced_at: nowIso,
     },

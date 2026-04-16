@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm, useFieldArray, useWatch } from 'react-hook-form'
+import { useForm, useFieldArray, useWatch, type UseFormSetValue } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useState } from 'react'
@@ -73,6 +73,16 @@ type QuoteFormProps = {
   initialValues?: QuoteFormInitialValues
 }
 
+// ── Presets par type de devis ─────────────────────────────────────────────────
+
+type LineItemPreset = { label: string; description: string | null; quantity: number; unitPrice: number; vatRate: string; unit: string }
+
+const QUOTE_TYPE_PRESETS: Partial<Record<QuoteType, LineItemPreset[]>> = {
+  lab_onboarding: [
+    { label: 'Forfait Lab MonprojetPro', description: 'Parcours d\'incubation Lab — accompagnement complet', quantity: 1, unitPrice: 199, vatRate: 'FR_200', unit: 'u' },
+  ],
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps) {
@@ -85,6 +95,7 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteFormSchema),
@@ -112,9 +123,19 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
         },
   })
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'lineItems' })
+  const { fields, append, remove, replace } = useFieldArray({ control, name: 'lineItems' })
   const watchedItems = useWatch({ control, name: 'lineItems' })
   const watchedClientId = useWatch({ control, name: 'clientId' })
+
+  // Auto-remplissage des lignes quand le type de devis change (creation uniquement)
+  function handleQuoteTypeChange(newType: string) {
+    setValue('quoteType', newType as QuoteType)
+    if (isEditMode) return
+    const preset = QUOTE_TYPE_PRESETS[newType as QuoteType]
+    if (preset) {
+      replace(preset)
+    }
+  }
 
   // Story 11.6 — Déduction Lab indicator
   const selectedClient = clients.find((c) => c.id === watchedClientId)
@@ -279,7 +300,9 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
         <select
           id="quoteType"
           disabled={isEditMode}
-          {...register('quoteType')}
+          {...register('quoteType', {
+            onChange: (e) => handleQuoteTypeChange(e.target.value),
+          })}
           className="rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-60"
           data-testid="quote-type-select"
         >
