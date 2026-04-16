@@ -123,7 +123,6 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
     <ClientDetailContent
       client={client}
       extraTabs={extraTabs}
-      labActive={labActive}
       dashboardType={client.config?.dashboardType}
       hasActiveParcours={labActive}
     />

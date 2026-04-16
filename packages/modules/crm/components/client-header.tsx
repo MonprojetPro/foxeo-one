@@ -13,7 +13,6 @@ import { toggleAccess } from '../actions/toggle-access'
 interface ClientHeaderProps {
   client: Client
   onEdit?: () => void
-  labActive?: boolean
   dashboardType?: string
   hasActiveParcours?: boolean
 }
@@ -33,7 +32,7 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function ClientHeader({ client, onEdit, labActive, dashboardType, hasActiveParcours = false }: ClientHeaderProps) {
+export function ClientHeader({ client, onEdit, dashboardType, hasActiveParcours = false }: ClientHeaderProps) {
   const fullName = client.firstName ? `${client.firstName} ${client.name}` : client.name
   const creationDate = format(new Date(client.createdAt), 'd MMMM yyyy', { locale: fr })
   const initials = getInitials(fullName)
@@ -82,7 +81,7 @@ export function ClientHeader({ client, onEdit, labActive, dashboardType, hasActi
               suspendedAt={client.suspendedAt}
               archivedAt={client.archivedAt}
             />
-            {labActive && (
+            {labEnabled && (
               <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-0.5 text-xs font-medium text-green-400 border border-green-500/30">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
                 Lab actif

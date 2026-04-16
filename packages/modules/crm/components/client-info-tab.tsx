@@ -117,8 +117,8 @@ export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
           </CardContent>
         </Card>
 
-        {/* Parcours Lab — résumé compact avec lien */}
-        {isLabClient && parcours && (
+        {/* Parcours Lab — résumé compact avec lien (visible tant qu'un parcours existe) */}
+        {parcours && (
           <Card
             className="cursor-pointer hover:border-primary/50 transition-colors"
             onClick={() => navigateToTab('lab-billing')}
@@ -129,7 +129,14 @@ export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <ParcoursStatusBadge status={parcours.status} />
+                <div className="flex items-center gap-2">
+                  <ParcoursStatusBadge status={parcours.status} />
+                  {!isLabClient && (
+                    <Badge variant="outline" className="text-xs text-orange-400 border-orange-400/30">
+                      Lab désactivé
+                    </Badge>
+                  )}
+                </div>
                 <span className="text-sm font-medium">
                   {completedStages.length}/{activeStages.length}
                 </span>
