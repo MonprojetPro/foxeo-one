@@ -73,7 +73,7 @@ export async function getClientsBreakdown(operatorId: string): Promise<ClientsBr
     .from('billing_sync')
     .select('pennylane_id, amount, data')
     .eq('entity_type', 'invoice')
-    .eq('status', 'unpaid')
+    .in('status', ['unpaid', 'pending'])
 
   const unpaidRows = (rawUnpaid ?? []) as BillingSyncRow[]
 

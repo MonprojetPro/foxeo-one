@@ -152,9 +152,17 @@ async function getHubStats(operatorId: string) {
     .from('billing_sync')
     .select('amount')
     .eq('entity_type', 'invoice')
-    .eq('status', 'unpaid')
+    .in('status', ['unpaid', 'pending'])
   const unpaidInvoices = (rawUnpaid ?? []) as { amount: number | null }[]
+  const unpaidCount = unpaidInvoices.length
   const unpaidAmount = unpaidInvoices.reduce((sum, inv) => sum + ((inv.amount ?? 0) / 100), 0)
+
+  const { data: rawQuotes } = await supabase
+    .from('billing_sync')
+    .select('id')
+    .eq('entity_type', 'quote')
+    .eq('status', 'pending')
+  const pendingQuotesCount = rawQuotes?.length ?? 0
 
   return {
     totalClients: clients?.length ?? 0,
@@ -165,6 +173,8 @@ async function getHubStats(operatorId: string) {
     recentMessages,
     mrr,
     unpaidAmount,
+    unpaidCount,
+    pendingQuotesCount,
   }
 }
 
@@ -190,7 +200,7 @@ export default async function HubHomePage() {
 
   const operatorId = (operator as { id: string } | null)?.id ?? ''
   const [
-    { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, mrr, unpaidAmount },
+    { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, mrr, unpaidAmount, unpaidCount, pendingQuotesCount },
     breakdown,
     newProspects,
   ] = await Promise.all([
@@ -224,7 +234,7 @@ export default async function HubHomePage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
         <MetricCard
           title="Total clients"
           value={String(totalClients)}
@@ -272,10 +282,16 @@ export default async function HubHomePage() {
           subtitle="Abonnements actifs"
           accentColor={mrr > 0 ? 'primary' : 'muted'}
         />
+        <MetricCard
+          title="Devis en cours"
+          value={String(pendingQuotesCount)}
+          subtitle="devis en attente"
+          accentColor={pendingQuotesCount > 0 ? 'primary' : 'muted'}
+        />
         <InteractiveMetricCard
           title="Impayés"
           value={unpaidDisplay}
-          subtitle={`${breakdown.unpaidInvoices.length} facture${breakdown.unpaidInvoices.length > 1 ? 's' : ''} en retard`}
+          subtitle={`${breakdown.unpaidInvoices.length} facture${breakdown.unpaidInvoices.length > 1 ? 's' : ''} en attente`}
           accentColor={unpaidAmount > 0 ? 'destructive' : 'muted'}
           sections={[
             {
