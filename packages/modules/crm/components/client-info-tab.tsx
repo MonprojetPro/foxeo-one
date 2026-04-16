@@ -10,7 +10,7 @@ import type { SubscriptionTier } from '../types/subscription.types'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { FlaskConical, Zap, Settings, Mail, Globe, Phone, Building2, Briefcase } from 'lucide-react'
+import { FlaskConical, Zap, Settings, Mail, Globe, Phone, Building2, Briefcase, CreditCard } from 'lucide-react'
 
 interface ClientInfoTabProps {
   clientId: string
@@ -25,6 +25,12 @@ const statusLabels: Record<string, string> = {
   'handed_off': 'Transféré',
   'archived_lab': 'Archivé Lab',
   'prospect': 'Prospect',
+}
+
+const dashboardLabels: Record<string, string> = {
+  'lab': 'Lab (incubation)',
+  'one': 'One (business)',
+  'hub': 'Hub (opérateur)',
 }
 
 export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
@@ -58,8 +64,10 @@ export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
     return <div className="p-4">Erreur de chargement</div>
   }
 
-  const isLabClient = client.config?.dashboardType === 'lab'
-  const isOneClient = client.config?.dashboardType === 'one'
+  const dashboardType = client.config?.dashboardType ?? 'one'
+  const isLabClient = dashboardType === 'lab'
+  const isOneClient = dashboardType === 'one'
+  const hasGraduated = !!client.config?.graduationSource
   const lastUpdate = format(new Date(client.updatedAt), 'd MMMM yyyy à HH:mm', { locale: fr })
 
   // Parcours progress
@@ -69,18 +77,19 @@ export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
     ? Math.round((completedStages.length / activeStages.length) * 100)
     : 0
 
-  // Tier info
+  // Tier info (pertinent uniquement pour les clients One qui ont gradué ou sont direct_one)
   const currentTier: SubscriptionTier = (client.config?.subscriptionTier as SubscriptionTier) ?? 'base'
   const tierInfo = TIER_INFO[currentTier]
   const tierBadgeClass = TIER_BADGE_CLASSES[currentTier]
+  const showAbonnement = isOneClient && (hasGraduated || client.clientType === 'direct_one')
 
   return (
     <div className="space-y-4 mt-6">
       {/* Grille résumé */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-        {/* Coordonnées */}
-        <Card className="md:col-span-2 lg:col-span-1">
+        {/* Contact */}
+        <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Contact</CardTitle>
           </CardHeader>
@@ -111,13 +120,13 @@ export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
             )}
             <Separator />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Dernière activité</span>
+              <span>Dernière modification</span>
               <span>{lastUpdate}</span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Parcours Lab — résumé compact avec lien (visible tant qu'un parcours existe) */}
+        {/* Parcours Lab — visible tant qu'un parcours existe */}
         {parcours && (
           <Card
             className="cursor-pointer hover:border-primary/50 transition-colors"
@@ -154,15 +163,15 @@ export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
           </Card>
         )}
 
-        {/* Abonnement One — résumé compact */}
-        {isOneClient && client.config && (
+        {/* Abonnement — uniquement pour les vrais clients One (gradués ou direct_one) */}
+        {showAbonnement && (
           <Card
             className="cursor-pointer hover:border-primary/50 transition-colors"
-            onClick={() => navigateToTab('modules')}
+            onClick={() => navigateToTab('administration')}
           >
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Abonnement One</CardTitle>
-              <Zap className="h-4 w-4 text-blue-400" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Abonnement</CardTitle>
+              <CreditCard className="h-4 w-4 text-blue-400" />
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between">
@@ -179,7 +188,7 @@ export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
           </Card>
         )}
 
-        {/* Modules actifs — résumé compact */}
+        {/* Modules actifs */}
         {client.config && client.config.activeModules.length > 0 && (
           <Card
             className="cursor-pointer hover:border-primary/50 transition-colors"
@@ -204,31 +213,31 @@ export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
           </Card>
         )}
 
-        {/* Statut — résumé compact */}
+        {/* Résumé statut */}
         <Card
           className="cursor-pointer hover:border-primary/50 transition-colors"
           onClick={() => navigateToTab('administration')}
         >
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Administration</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Statut</CardTitle>
             <Settings className="h-4 w-4 text-slate-400" />
           </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Statut</span>
+              <span className="text-sm text-muted-foreground">État</span>
               <Badge variant="outline" className="text-xs">
                 {statusLabels[client.status] || client.status}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Dashboard</span>
-              <span className="text-sm font-medium capitalize">{client.config?.dashboardType ?? '—'}</span>
+              <span className="text-sm text-muted-foreground">Mode</span>
+              <span className="text-sm font-medium">{dashboardLabels[dashboardType] ?? dashboardType}</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Notes privées — reste sur la page Info */}
+      {/* Notes privées */}
       <ClientNotesSection clientId={clientId} />
     </div>
   )
