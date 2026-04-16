@@ -1,6 +1,6 @@
 'use client'
 
-import { ClientDetailContent, type ExtraTab, ClientBrandingTab, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions } from '@monprojetpro/modules-crm'
+import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions } from '@monprojetpro/modules-crm'
 import { ClientSupportTab } from '@monprojetpro/modules-support'
 import { SubmissionsList } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
@@ -89,22 +89,29 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         value: 'lab-billing',
         label: 'Lab',
         icon: FlaskConical, color: '#22d3ee',
-        content: <LabBillingTab clientId={client.id} clientName={client.name} />,
+        content: (
+          <div className="space-y-6">
+            <ClientLabTabContent clientId={client.id} />
+            <LabBillingTab clientId={client.id} clientName={client.name} />
+          </div>
+        ),
       },
       {
         value: 'administration',
-        label: 'Admin',
+        label: 'Paramètres',
         icon: Settings, color: '#94a3b8',
         content: (
-          <div className="space-y-6 p-4">
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Cycle de vie</h3>
-              <div className="flex flex-wrap gap-2">
-                <ClientLifecycleActions client={client} />
+          <div className="space-y-6">
+            <ClientAdminTabContent clientId={client.id} />
+            <div className="space-y-6 p-4">
+              <div className="flex flex-col gap-2">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Cycle de vie</h3>
+                <div className="flex flex-wrap gap-2">
+                  <ClientLifecycleActions client={client} />
+                </div>
               </div>
+              <OperatorOverrideSection clientId={client.id} />
             </div>
-            <ClientExportButton clientId={client.id} />
-            <OperatorOverrideSection clientId={client.id} />
           </div>
         ),
       },
@@ -112,5 +119,13 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
     [client.id, client.company, client.name, client.email]
   )
 
-  return <ClientDetailContent client={client} extraTabs={extraTabs} labActive={labActive} />
+  return (
+    <ClientDetailContent
+      client={client}
+      extraTabs={extraTabs}
+      labActive={labActive}
+      dashboardType={client.config?.dashboardType}
+      hasActiveParcours={labActive}
+    />
+  )
 }

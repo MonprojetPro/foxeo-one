@@ -52,6 +52,8 @@ export { CommunicationProfileForm } from './components/communication-profile-for
 export { ElioObservations } from './components/elio-observations'
 export { ClientBrandingForm } from './components/client-branding-form'
 export { ClientBrandingTab } from './components/client-branding-tab'
+export { ClientLabTabContent } from './components/client-lab-tab-content'
+export { ClientAdminTabContent } from './components/client-admin-tab-content'
 
 // Hooks
 export { useClients } from './hooks/use-clients'

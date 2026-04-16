@@ -234,8 +234,17 @@ Le pipeline s'exécute **entièrement en autonome** jusqu'au HALT final (Gate Mi
 | **9** | ATLAS | Enregistrer leçons dans `docs/08-lessons-learned.md` si problèmes rencontrés | Skip si story sans embûche |
 | **⛔ HALT** | MiKL | Afficher résumé → attendre validation sur preview | Gate obligatoire |
 
-**Message HALT :**
+**Message HALT — format obligatoire :**
 > **Pipeline terminé — Story X.Y.** Tests : ✅ N passing. Commit : `[hash]` pushé.
+>
+> **Ce que tu peux tester :**
+> - [Liste concrète des éléments testables visuellement ou fonctionnellement]
+> - [Page/URL à ouvrir, bouton à cliquer, comportement attendu]
+> - [Cas limites vérifiables : état vide, erreur, condition spéciale]
+>
+> **Non testable pour l'instant :**
+> - [Ce qui nécessite des tokens/API/données réelles pas encore en place]
+>
 > **MiKL** : valide sur la preview pour confirmer.
 
 ### Règles projet spécifiques
