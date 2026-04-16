@@ -1,0 +1,20 @@
+{
+  "name": "@monprojetpro/handoff",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@monprojetpro/supabase": "workspace:*",
+    "@monprojetpro/types": "workspace:*",
+    "@monprojetpro/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.1"
+  }
+}

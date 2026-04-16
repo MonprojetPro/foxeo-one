@@ -14,6 +14,7 @@ import { GraduationDialog } from './graduation-dialog'
 import { ReactivateParcoursDialog } from './reactivate-parcours-dialog'
 import { ChangeTierDialog } from './change-tier-dialog'
 import { TransferInstanceDialog } from './transfer-instance-dialog'
+import { HandoffDialog } from './handoff-dialog'
 import { ArchiveClientDialog } from './archive-client-dialog'
 import { useClientInstance } from '../hooks/use-client-instance'
 import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
@@ -44,6 +45,9 @@ const statusLabels: Record<string, string> = {
   'active': 'Actif',
   'suspended': 'Suspendu',
   'archived': 'Archivé',
+  'subscription_cancelled': 'Résilié',
+  'handed_off': 'Transféré',
+  'prospect': 'Prospect',
 }
 
 export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
@@ -55,6 +59,7 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
   const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false)
   const [changeTierDialogOpen, setChangeTierDialogOpen] = useState(false)
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
+  const [handoffDialogOpen, setHandoffDialogOpen] = useState(false)
   const [exportConfirmOpen, setExportConfirmOpen] = useState(false)
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false)
   const [isExporting, startExportTransition] = useTransition()
@@ -543,6 +548,36 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
                 </div>
               </>
             )}
+            {/* Story 13.1 — Kit de sortie client */}
+            {client.status !== 'archived' && client.status !== 'deleted' && client.status !== 'handed_off' && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Lancez le kit de sortie pour livrer au client un déploiement standalone (Vercel + GitHub + Supabase).
+                  </p>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setHandoffDialogOpen(true)}
+                    data-testid="start-handoff-button"
+                  >
+                    Lancer le kit de sortie
+                  </Button>
+                </div>
+              </>
+            )}
+            {client.status === 'handed_off' && (
+              <>
+                <Separator />
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">Transféré</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    Le kit de sortie a été exécuté — le client a reçu son déploiement standalone.
+                  </span>
+                </div>
+              </>
+            )}
             {/* Story 9.5c — Archivage client (RGPD) */}
             {client.status !== 'archived' && client.status !== 'deleted' && (
               <>
@@ -573,6 +608,19 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
           clientName={client.name}
           open={archiveDialogOpen}
           onOpenChange={setArchiveDialogOpen}
+        />
+      )}
+
+      {/* Story 13.1 — Dialog kit de sortie */}
+      {client.status !== 'archived' && client.status !== 'deleted' && client.status !== 'handed_off' && (
+        <HandoffDialog
+          clientId={clientId}
+          clientName={client.name}
+          clientCompany={client.company}
+          clientStatus={client.status}
+          activeModules={client.config?.activeModules ?? []}
+          open={handoffDialogOpen}
+          onOpenChange={setHandoffDialogOpen}
         />
       )}
 
