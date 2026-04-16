@@ -29,6 +29,30 @@ export { ApiPlaceholder } from './components/api-placeholder'
 export { useSystemHealth } from './hooks/use-system-health'
 export type { HealthCheckData, ServiceCheck, GlobalStatus, ServiceStatus } from './hooks/use-system-health'
 
+// Module Catalog — Components (Story 13.5)
+export { CatalogList } from './components/catalog-list'
+export { CatalogFilters } from './components/catalog-filters'
+export { ModuleEditModal } from './components/module-edit-modal'
+export { GenerateQuoteFromModulesModal } from './components/generate-quote-from-modules-modal'
+export { CatalogAnalyticsWidgets } from './components/catalog-analytics-widgets'
+
+// Module Catalog — Actions (Story 13.5)
+export { listModuleCatalog } from './actions/list-module-catalog'
+export type { ModuleCatalogEntry, ListModuleCatalogFilters } from './actions/list-module-catalog'
+export { upsertModuleCatalog } from './actions/upsert-module-catalog'
+export type { UpsertModuleCatalogInput } from './actions/upsert-module-catalog'
+export { deleteModuleCatalog } from './actions/delete-module-catalog'
+export { syncModuleCatalogFromManifests } from './actions/sync-module-catalog-from-manifests'
+export type { SyncResult } from './actions/sync-module-catalog-from-manifests'
+export { toggleClientModule } from './actions/toggle-client-module'
+export type { ToggleClientModuleResult } from './actions/toggle-client-module'
+export { applyClientModuleConfig } from './actions/apply-client-module-config'
+export type { ApplyConfigResult } from './actions/apply-client-module-config'
+export { useModuleCatalog, useUpsertModuleCatalog, useDeleteModuleCatalog, useSyncModuleCatalog } from './hooks/use-module-catalog'
+export { useClientModules, useToggleClientModule, useApplyClientModuleConfig } from './hooks/use-client-modules'
+export { useCatalogAnalytics } from './hooks/use-catalog-analytics'
+export type { CatalogAnalyticsEntry } from './hooks/use-catalog-analytics'
+
 // Impersonation (Story 13.3)
 export { startImpersonation } from './actions/start-impersonation'
 export type { ImpersonationResult } from './actions/start-impersonation'

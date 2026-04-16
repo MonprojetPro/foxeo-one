@@ -184,7 +184,7 @@ development_status:
   13-2-kit-de-sortie-lab-export-documents-client-arret: done
   13-3-impersonation-mikl-acces-compte-client-support-debug: done
   13-4-tunnel-paiement-pennylane-creation-compte-activation-acces: done
-  13-5-catalogue-modules-hub-activation-par-client-tarification: ready-for-dev
+  13-5-catalogue-modules-hub-activation-par-client-tarification: done
   13-6-vue-comptabilite-client-lab-one-devis-factures-abonnement: done
   13-7-justificatifs-google-drive-upload-depuis-hub: ready-for-dev
   13-8-relances-impayes-intelligentes-elio-mikl-valide-multicanal: ready-for-dev

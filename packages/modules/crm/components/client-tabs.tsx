@@ -16,6 +16,7 @@ import { ClientDocumentsTab } from './client-documents-tab'
 import { ClientExchangesTab } from './client-exchanges-tab'
 import { ModuleToggleList } from './module-toggle-list'
 import { ElioDocForm } from './elio-doc-form'
+import { ClientModulesTab } from './client-modules-tab'
 import { SuspendClientDialog } from './suspend-client-dialog'
 import { CloseClientDialog } from './close-client-dialog'
 import { buildClientSlug, buildBmadPath, buildCursorUrl } from '../utils/cursor-integration'
@@ -232,8 +233,13 @@ export function ClientTabs({
         {activeTab === 'modules' && (
           <div className="space-y-8">
             <section>
-              <h3 className="text-lg font-semibold mb-4">Modules actifs</h3>
-              <ModuleToggleList clientId={client.id} activeModules={activeModules} allModules={allModules} />
+              <h3 className="text-lg font-semibold mb-4">Modules actifs — Catalogue</h3>
+              <ClientModulesTab
+                clientId={client.id}
+                clientName={client.name}
+                dashboardType={(client as Record<string, unknown>).dashboard_type as string | undefined}
+                labPaid={(client as Record<string, unknown>).lab_paid as boolean | undefined}
+              />
             </section>
             <section>
               <h3 className="text-lg font-semibold mb-4">Documentation Élio</h3>
