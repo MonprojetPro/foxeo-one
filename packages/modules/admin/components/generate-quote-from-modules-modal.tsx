@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, showSuccess, showError } from '@monprojetpro/ui'
-import { createAndSendQuote } from '@monprojetpro/module-facturation'
-import type { LineItem, QuoteType } from '@monprojetpro/module-facturation'
-import { QUOTE_TYPE_LABELS } from '@monprojetpro/module-facturation'
+import { createAndSendQuote } from '@monprojetpro/modules-facturation'
+import type { LineItem, QuoteType } from '@monprojetpro/modules-facturation'
+import { QUOTE_TYPE_LABELS } from '@monprojetpro/modules-facturation'
 import { type ModuleCatalogEntry } from '../actions/list-module-catalog'
 
 interface GenerateQuoteFromModulesModalProps {
