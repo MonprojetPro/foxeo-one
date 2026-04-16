@@ -10,7 +10,8 @@ import type { SubscriptionTier } from '../types/subscription.types'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { FlaskConical, Zap, Settings, Mail, Globe, Phone, Building2, Briefcase, CreditCard } from 'lucide-react'
+import { FlaskConical, Zap, Settings, Mail, Globe, Phone, Building2, Briefcase, CreditCard, Shield } from 'lucide-react'
+import { ImpersonationButton } from '@monprojetpro/module-admin'
 
 interface ClientInfoTabProps {
   clientId: string
@@ -83,8 +84,17 @@ export function ClientInfoTab({ clientId }: ClientInfoTabProps) {
   const tierBadgeClass = TIER_BADGE_CLASSES[currentTier]
   const showAbonnement = isOneClient && (hasGraduated || client.clientType === 'direct_one')
 
+  const clientDisplayName = `${client.firstName ?? ''} ${client.name ?? ''}`.trim() || 'Client'
+
   return (
     <div className="space-y-4 mt-6">
+      {/* Bouton impersonation */}
+      {client.status === 'active' && (
+        <div className="flex justify-end">
+          <ImpersonationButton clientId={clientId} clientName={clientDisplayName} />
+        </div>
+      )}
+
       {/* Grille résumé */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 

@@ -57,6 +57,20 @@ export default async function SettingsPage() {
         <RestartTourButton />
       </div>
 
+      {/* Story 13.3 — Historique support */}
+      <Link
+        href="/settings/support-history"
+        className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+      >
+        <div>
+          <h2 className="text-base font-medium text-foreground">Historique support</h2>
+          <p className="text-sm text-muted-foreground">
+            Consultez les sessions de support technique effectuées sur votre compte
+          </p>
+        </div>
+        <span className="text-muted-foreground">&rarr;</span>
+      </Link>
+
       {/* Story 9.3 — Section Mon parcours Lab */}
       <ParcoursSettingsSection clientId={clientId ?? undefined} />
 

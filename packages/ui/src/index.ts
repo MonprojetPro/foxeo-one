@@ -72,3 +72,6 @@ export { ConsentCheckbox } from './components/consent-checkbox'
 
 // Conflict
 export { ConflictDialog, type ConflictDialogProps } from './components/conflict-dialog'
+
+// Impersonation
+export { ImpersonationBanner } from './components/impersonation-banner'

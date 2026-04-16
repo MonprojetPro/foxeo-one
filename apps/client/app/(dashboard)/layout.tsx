@@ -14,6 +14,7 @@ import { NotificationBadge } from '@monprojetpro/modules-notifications'
 import { PresenceProvider } from '@monprojetpro/modules-chat'
 import { LogoutButton } from './logout-button'
 import { ThemeClassSetter } from './theme-class-setter'
+import { ImpersonationWrapper } from './impersonation-wrapper'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
 async function ClientSidebar({
@@ -188,9 +189,11 @@ export default async function DashboardLayout({
           />
         }
       >
-        <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
-          {children}
-        </PresenceProvider>
+        <ImpersonationWrapper>
+          <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
+            {children}
+          </PresenceProvider>
+        </ImpersonationWrapper>
       </DashboardShell>
     </div>
   )

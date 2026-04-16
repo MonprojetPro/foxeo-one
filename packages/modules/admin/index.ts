@@ -28,3 +28,18 @@ export { WebhooksPlaceholder } from './components/webhooks-placeholder'
 export { ApiPlaceholder } from './components/api-placeholder'
 export { useSystemHealth } from './hooks/use-system-health'
 export type { HealthCheckData, ServiceCheck, GlobalStatus, ServiceStatus } from './hooks/use-system-health'
+
+// Impersonation (Story 13.3)
+export { startImpersonation } from './actions/start-impersonation'
+export type { ImpersonationResult } from './actions/start-impersonation'
+export { endImpersonation } from './actions/end-impersonation'
+export type { EndImpersonationResult } from './actions/end-impersonation'
+export { ImpersonationButton } from './components/impersonation-button'
+export {
+  IMPERSONATION_BLOCKED_ACTIONS,
+  IMPERSONATION_COOKIE_NAME,
+  IMPERSONATION_MAX_DURATION_MS,
+  isBlockedInImpersonation,
+  type BlockedAction,
+  type ImpersonationSessionData,
+} from './utils/impersonation-guards'

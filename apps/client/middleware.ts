@@ -47,6 +47,25 @@ export function isMaintenanceExcluded(pathname: string): boolean {
   )
 }
 
+// Story 13.3 — Impersonation detection
+const IMPERSONATION_COOKIE = 'mpro-impersonation-session'
+
+function getImpersonationSession(request: NextRequest): { sessionId: string; expiresAt: string } | null {
+  const cookie = request.cookies.get(IMPERSONATION_COOKIE)?.value
+  if (!cookie) return null
+  try {
+    const data = JSON.parse(decodeURIComponent(cookie))
+    if (data.sessionId && data.expiresAt) {
+      // Check expiration
+      if (new Date(data.expiresAt) <= new Date()) return null
+      return data
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 export async function middleware(request: NextRequest) {
   // Skip static assets and webhook routes
   if (isStaticOrApi(request.nextUrl.pathname)) {
@@ -57,6 +76,12 @@ export async function middleware(request: NextRequest) {
   const locale = detectLocale(request)
 
   const { user, response, supabase } = await createMiddlewareSupabaseClient(request)
+
+  // Story 13.3 — Impersonation: set header for downstream detection
+  const impersonationSession = getImpersonationSession(request)
+  if (impersonationSession) {
+    response.headers.set('x-impersonation-session', impersonationSession.sessionId)
+  }
 
   // Set locale cookie on response
   setLocaleCookie(response, locale)
