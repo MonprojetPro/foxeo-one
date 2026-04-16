@@ -10,11 +10,11 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@monprojetpro/supabase": "workspace:*",
-    "@monprojetpro/types": "workspace:*",
-    "@monprojetpro/utils": "workspace:*"
+    "@monprojetpro/supabase": "*",
+    "@monprojetpro/types": "*",
+    "@monprojetpro/utils": "*"
   },
   "devDependencies": {
-    "vitest": "^3.2.1"
+    "vitest": "*"
   }
 }

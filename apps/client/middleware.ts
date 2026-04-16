@@ -136,8 +136,8 @@ export async function middleware(request: NextRequest) {
         return suspendedResponse
       }
 
-      // Story 9.5c — Check if client is archived or deleted (accès bloqué)
-      if ((client.status === 'archived' || client.status === 'deleted') && request.nextUrl.pathname !== '/archived') {
+      // Story 9.5c + 13.2 — Check if client is archived, deleted, or archived_lab (accès bloqué)
+      if ((client.status === 'archived' || client.status === 'deleted' || client.status === 'archived_lab') && request.nextUrl.pathname !== '/archived') {
         const archivedUrl = new URL('/archived', request.url)
         const archivedResponse = NextResponse.redirect(archivedUrl)
         setLocaleCookie(archivedResponse, locale)

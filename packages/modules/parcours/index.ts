@@ -40,6 +40,8 @@ export { getSubmissions } from './actions/get-submissions'
 export { getSubmissionById } from './actions/get-submission-by-id'
 export { requestParcoursAbandonment } from './actions/request-abandonment'
 export { reactivateParcours } from './actions/reactivate-parcours'
+export { startLabExitKit } from './actions/start-lab-exit-kit'
+export type { StartLabExitKitInput } from './actions/start-lab-exit-kit'
 
 // Types
 export type {

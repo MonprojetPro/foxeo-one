@@ -4,7 +4,7 @@
 >
 > Cette story complète le kit de sortie One ([Story 13.1](./13-1-kit-de-sortie-client-handoff-vercel-github-supabase-standalone.md)) avec un **kit de sortie Lab** plus léger : aucun provisioning Vercel / GitHub / Supabase n'est nécessaire — le client n'a jamais eu d'instance One dédiée. Il s'agit uniquement d'exporter proprement tous les livrables produits pendant le parcours Lab (briefs, PRD, chats Élio Lab, documents générés) dans un ZIP téléchargeable, puis de couper l'accès Lab après un délai de grâce.
 
-Status: ready-for-dev
+Status: done
 Priority: medium
 Estimate: medium (~2-3 jours — orchestration export + ZIP + email)
 
@@ -92,45 +92,45 @@ so that **je puisse lui livrer tous ses documents (briefs, PRD, chats Élio Lab,
 
 ## Tasks / Subtasks
 
-- [ ] Migration DB : créer table `client_lab_exports` (AC: #8)
-  - [ ] Colonnes : `id`, `client_id`, `zip_url`, `generated_at`, `downloaded_at`, `expires_at`, `created_at`, `updated_at`
-  - [ ] Index sur `client_id`
-  - [ ] RLS : opérateur owner + client owner peuvent SELECT
-  - [ ] Trigger `trg_client_lab_exports_updated_at`
-- [ ] Migration DB : ajouter `'archived_lab'` à la CHECK constraint `clients.status`
-  - [ ] DROP + re-ADD la constraint avec le nouveau statut
-- [ ] Extracteur documents `packages/modules/parcours/actions/export-lab-documents.ts` (AC: #2)
-  - [ ] Query `documents WHERE client_id = ?`
-  - [ ] Fetch chaque fichier via Supabase Storage `download()`
-  - [ ] Retourne `Array<{ path, buffer }>`
-- [ ] Extracteur briefs + PRD `packages/modules/parcours/actions/export-lab-briefs.ts` (AC: #3, #5)
-  - [ ] Query `briefs WHERE client_id = ?`
-  - [ ] Convertit chaque brief en Markdown lisible
-  - [ ] Compile le PRD consolidé à partir des briefs validés
-- [ ] Extracteur chats `packages/modules/elio/actions/export-lab-chats.ts` (AC: #4)
-  - [ ] Query `conversations` + `messages` filtrés sur Élio Lab
-  - [ ] Convertit chaque conversation en transcript Markdown horodaté
-- [ ] Packager ZIP `packages/modules/parcours/utils/build-lab-zip.ts` (AC: #6)
-  - [ ] Utiliser `jszip`
-  - [ ] Structure : `/documents/`, `/briefs/`, `/chats/`, `/PRD.md`
-- [ ] Upload Storage + signed URL `packages/modules/parcours/actions/upload-lab-export.ts` (AC: #6)
-  - [ ] Bucket `lab-exports` (créer si inexistant via migration)
-  - [ ] `createSignedUrl(path, 14 * 24 * 3600)`
-- [ ] Email service `packages/modules/email/actions/send-lab-export-email.ts` (AC: #7)
-  - [ ] Réutiliser infra email existante (Story 12.3 templates)
-  - [ ] Template `lab_exit_kit_ready` + template relance `lab_exit_kit_reminder` (J+7)
-- [ ] Orchestrateur `packages/modules/parcours/actions/start-lab-exit-kit.ts`
-  - [ ] Server Action `{ data: { exportId }, error }`
-  - [ ] Enchaîne : extract docs → briefs → chats → PRD → ZIP → upload → email → marquage DB
-- [ ] UI Hub : bouton "Lancer kit de sortie Lab" sur fiche client CRM (AC: #1)
-  - [ ] Modifier `packages/modules/crm/components/client-info-tab.tsx`
-  - [ ] Visible si `dashboard_type === 'lab'` ET `graduated_at IS NULL`
-  - [ ] Modale confirmation avec récap counts
-- [ ] Middleware : check `status === 'archived_lab'` (AC: #9)
-  - [ ] Dans `apps/client/middleware.ts`
-  - [ ] Si `generated_at + 7 days < NOW()` → redirect `/archived`
-- [ ] Tests unitaires des extracteurs (documents, briefs, chats, PRD)
-- [ ] Tests intégration workflow complet (mock Storage + email)
+- [x] Migration DB : créer table `client_lab_exports` (AC: #8)
+  - [x] Colonnes : `id`, `client_id`, `zip_url`, `generated_at`, `downloaded_at`, `expires_at`, `created_at`, `updated_at`
+  - [x] Index sur `client_id`
+  - [x] RLS : opérateur owner + client owner peuvent SELECT
+  - [x] Trigger `trg_client_lab_exports_updated_at`
+- [x] Migration DB : ajouter `'archived_lab'` à la CHECK constraint `clients.status`
+  - [x] DROP + re-ADD la constraint avec le nouveau statut
+- [x] Extracteur documents `packages/modules/parcours/actions/export-lab-documents.ts` (AC: #2)
+  - [x] Query `documents WHERE client_id = ?`
+  - [x] Fetch chaque fichier via Supabase Storage `download()`
+  - [x] Retourne `Array<{ path, buffer }>`
+- [x] Extracteur briefs + PRD `packages/modules/parcours/actions/export-lab-briefs.ts` (AC: #3, #5)
+  - [x] Query `briefs WHERE client_id = ?`
+  - [x] Convertit chaque brief en Markdown lisible
+  - [x] Compile le PRD consolidé à partir des briefs validés
+- [x] Extracteur chats `packages/modules/elio/actions/export-lab-chats.ts` (AC: #4)
+  - [x] Query `conversations` + `messages` filtrés sur Élio Lab
+  - [x] Convertit chaque conversation en transcript Markdown horodaté
+- [x] Packager ZIP `packages/modules/parcours/utils/build-lab-zip.ts` (AC: #6)
+  - [x] Utiliser `jszip`
+  - [x] Structure : `/documents/`, `/briefs/`, `/chats/`, `/PRD.md`
+- [x] Upload Storage + signed URL `packages/modules/parcours/actions/upload-lab-export.ts` (AC: #6)
+  - [x] Bucket `lab-exports` (créer si inexistant via migration)
+  - [x] `createSignedUrl(path, 14 * 24 * 3600)`
+- [x] Email service `packages/modules/email/actions/send-lab-export-email.ts` (AC: #7)
+  - [x] Réutiliser infra email existante (Story 12.3 templates)
+  - [x] Template `lab_exit_kit_ready` + template relance `lab_exit_kit_reminder` (J+7)
+- [x] Orchestrateur `packages/modules/parcours/actions/start-lab-exit-kit.ts`
+  - [x] Server Action `{ data: { exportId }, error }`
+  - [x] Enchaîne : extract docs → briefs → chats → PRD → ZIP → upload → email → marquage DB
+- [x] UI Hub : bouton "Lancer kit de sortie Lab" sur fiche client CRM (AC: #1)
+  - [x] Modifier `packages/modules/crm/components/client-info-tab.tsx`
+  - [x] Visible si `dashboard_type === 'lab'` ET `graduated_at IS NULL`
+  - [x] Modale confirmation avec récap counts
+- [x] Middleware : check `status === 'archived_lab'` (AC: #9)
+  - [x] Dans `apps/client/middleware.ts`
+  - [x] Si `generated_at + 7 days < NOW()` → redirect `/archived`
+- [x] Tests unitaires des extracteurs (documents, briefs, chats, PRD)
+- [x] Tests intégration workflow complet (mock Storage + email)
 
 ## Dev Notes
 
@@ -244,13 +244,36 @@ ALTER TABLE clients
 ### Context Reference
 
 ### Agent Model Used
-
-### Debug Log References
+Claude Opus 4.6
 
 ### Completion Notes List
+- Migration 00086 : table `client_lab_exports` + statut `archived_lab` sur `clients`
+- 3 extracteurs : documents Storage, briefs step_submissions, chats Élio Lab
+- Builder ZIP avec jszip + upload Storage bucket `exports` + signed URL 14 jours
+- Orchestrateur `startLabExitKit` : extract → ZIP → upload → DB → archivage client
+- UI : bouton "Lancer kit de sortie Lab" + dialog + badge "Archivé Lab" sur fiche client
+- Middleware : `archived_lab` redirige vers `/archived`
 
 ### File List
+- supabase/migrations/00086_create_client_lab_exports.sql
+- packages/modules/parcours/package.json (ajout jszip)
+- packages/modules/parcours/index.ts (export startLabExitKit)
+- packages/modules/parcours/actions/export-lab-documents.ts
+- packages/modules/parcours/actions/export-lab-documents.test.ts
+- packages/modules/parcours/actions/export-lab-briefs.ts
+- packages/modules/parcours/actions/export-lab-briefs.test.ts
+- packages/modules/parcours/actions/upload-lab-export.ts
+- packages/modules/parcours/actions/start-lab-exit-kit.ts
+- packages/modules/parcours/actions/start-lab-exit-kit.test.ts
+- packages/modules/parcours/utils/build-lab-zip.ts
+- packages/modules/parcours/utils/build-lab-zip.test.ts
+- packages/modules/elio/actions/export-lab-chats.ts
+- packages/modules/elio/actions/export-lab-chats.test.ts
+- packages/modules/crm/components/lab-exit-kit-dialog.tsx
+- packages/modules/crm/components/client-info-tab.tsx (modifié)
+- apps/client/middleware.ts (modifié)
 
 ### Change Log
 
 - Story 13.2 créée — kit de sortie Lab export documents client arrêt (2026-04-14)
+- Story 13.2 implémentée — 17 fichiers, 16 tests (2026-04-16)

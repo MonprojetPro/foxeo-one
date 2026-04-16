@@ -15,6 +15,7 @@ import { ReactivateParcoursDialog } from './reactivate-parcours-dialog'
 import { ChangeTierDialog } from './change-tier-dialog'
 import { TransferInstanceDialog } from './transfer-instance-dialog'
 import { HandoffDialog } from './handoff-dialog'
+import { LabExitKitDialog } from './lab-exit-kit-dialog'
 import { ArchiveClientDialog } from './archive-client-dialog'
 import { useClientInstance } from '../hooks/use-client-instance'
 import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
@@ -47,6 +48,7 @@ const statusLabels: Record<string, string> = {
   'archived': 'Archivé',
   'subscription_cancelled': 'Résilié',
   'handed_off': 'Transféré',
+  'archived_lab': 'Archivé Lab',
   'prospect': 'Prospect',
 }
 
@@ -60,6 +62,7 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
   const [changeTierDialogOpen, setChangeTierDialogOpen] = useState(false)
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [handoffDialogOpen, setHandoffDialogOpen] = useState(false)
+  const [labExitKitDialogOpen, setLabExitKitDialogOpen] = useState(false)
   const [exportConfirmOpen, setExportConfirmOpen] = useState(false)
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false)
   const [isExporting, startExportTransition] = useTransition()
@@ -578,6 +581,36 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
                 </div>
               </>
             )}
+            {/* Story 13.2 — Kit de sortie Lab */}
+            {isLabClient && client.status !== 'archived_lab' && client.status !== 'archived' && client.status !== 'deleted' && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Exportez les documents, briefs et conversations Élio Lab du client dans un ZIP téléchargeable.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setLabExitKitDialogOpen(true)}
+                    data-testid="start-lab-exit-kit-button"
+                  >
+                    Lancer le kit de sortie Lab
+                  </Button>
+                </div>
+              </>
+            )}
+            {client.status === 'archived_lab' && (
+              <>
+                <Separator />
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">Archivé Lab</Badge>
+                  <span className="text-xs text-muted-foreground">
+                    Le kit de sortie Lab a été généré — le client peut télécharger ses documents pendant 14 jours.
+                  </span>
+                </div>
+              </>
+            )}
             {/* Story 9.5c — Archivage client (RGPD) */}
             {client.status !== 'archived' && client.status !== 'deleted' && (
               <>
@@ -608,6 +641,17 @@ export function ClientInfoTab({ clientId, onEdit }: ClientInfoTabProps) {
           clientName={client.name}
           open={archiveDialogOpen}
           onOpenChange={setArchiveDialogOpen}
+        />
+      )}
+
+      {/* Story 13.2 — Dialog kit de sortie Lab */}
+      {isLabClient && client.status !== 'archived_lab' && (
+        <LabExitKitDialog
+          clientId={clientId}
+          clientName={client.name}
+          clientCompany={client.company}
+          open={labExitKitDialogOpen}
+          onOpenChange={setLabExitKitDialogOpen}
         />
       )}
 
