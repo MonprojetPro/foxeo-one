@@ -141,7 +141,7 @@ export function GenerateQuoteFromModulesModal({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Générer un devis — {clientName}</DialogTitle>
         </DialogHeader>

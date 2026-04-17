@@ -50,7 +50,7 @@ export function ModuleEditModal({ module, onClose }: ModuleEditModalProps) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? `Éditer — ${module.name}` : 'Nouveau module'}</DialogTitle>
         </DialogHeader>
