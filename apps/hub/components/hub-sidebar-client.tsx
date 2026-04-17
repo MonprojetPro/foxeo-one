@@ -6,6 +6,7 @@ import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculat
 import { Badge } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
 import { useValidationBadge } from '@monprojetpro/modules-validation-hub'
+import { usePendingRemindersCount } from '@monprojetpro/modules-facturation'
 import { ElioQueryBox } from './elio-query-box'
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
 export function HubSidebarClient({ operatorId, userId }: { operatorId: string; userId: string }) {
   const pathname = usePathname()
   const { pendingCount } = useValidationBadge(operatorId)
+  const { pendingCount: reminderCount } = usePendingRemindersCount()
 
   return (
     <aside className="w-64 shrink-0 border-r border-sidebar-border bg-sidebar flex flex-col">
@@ -30,7 +32,10 @@ export function HubSidebarClient({ operatorId, userId }: { operatorId: string; u
           const isActive = item.href === '/'
             ? pathname === '/'
             : pathname?.startsWith(item.href)
-          const badge = item.href === '/modules/validation-hub' ? pendingCount : undefined
+          const badge =
+            item.href === '/modules/validation-hub' ? pendingCount
+            : item.href === '/modules/facturation' ? reminderCount
+            : undefined
 
           return (
             <Link

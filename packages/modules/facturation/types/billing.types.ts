@@ -240,3 +240,33 @@ export type BillingSyncRow = {
   created_at: string
   updated_at: string
 }
+
+// ============================================================
+// Types Story 13-8 — Relances impayées
+// ============================================================
+
+export type ReminderLevel = 1 | 2 | 3
+export type ReminderStatus = 'pending' | 'sent' | 'cancelled'
+export type ReminderChannel = 'email' | 'chat' | 'both'
+
+export type CollectionReminder = {
+  id: string
+  client_id: string
+  invoice_id: string
+  invoice_number: string
+  invoice_amount: number
+  invoice_date: string
+  reminder_level: ReminderLevel
+  status: ReminderStatus
+  generated_body: string | null
+  sent_at: string | null
+  channel: ReminderChannel | null
+  created_at: string
+  updated_at: string
+}
+
+export type CollectionReminderWithClient = CollectionReminder & {
+  client_email: string
+  client_name: string
+  has_communication_profile: boolean
+}

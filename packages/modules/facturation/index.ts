@@ -50,6 +50,14 @@ export {
   toPennylaneLineItem,
 } from './utils/billing-mappers'
 
+// Story 13-8 — Relances impayées
+export { PendingReminders } from './components/pending-reminders'
+export { ReminderModal } from './components/reminder-modal'
+export { usePendingRemindersCount } from './hooks/use-pending-reminders-count'
+export { sendReminder } from './actions/send-reminder'
+export { cancelReminder } from './actions/cancel-reminder'
+export { getPendingReminders, getReminderHistory } from './actions/get-pending-reminders'
+
 // Story 13.4 — Tunnel paiement Pennylane
 // IMPORTANT: les helpers serveur (HMAC, password gen, handlers, admin user) utilisent
 // node:crypto et l'admin Supabase API. Ils sont exposes via le subpath `./server` pour
@@ -76,6 +84,11 @@ export type {
   BillingSyncRow,
   QuoteType,
   QuoteMetadataRow,
+  CollectionReminder,
+  CollectionReminderWithClient,
+  ReminderLevel,
+  ReminderStatus,
+  ReminderChannel,
 } from './types/billing.types'
 
 export { QUOTE_TYPE_LABELS } from './types/billing.types'

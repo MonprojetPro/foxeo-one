@@ -1,0 +1,2 @@
+[functions.detect-overdue-invoices]
+verify_jwt = false
