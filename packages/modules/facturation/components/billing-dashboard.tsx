@@ -169,7 +169,7 @@ export function BillingDashboard() {
           />
         )}
 
-        {activeTab === 'factures' && <InvoicesList />}
+        {activeTab === 'factures' && <InvoicesList clients={clients} />}
 
         {activeTab === 'abonnements' && <SubscriptionsList />}
 

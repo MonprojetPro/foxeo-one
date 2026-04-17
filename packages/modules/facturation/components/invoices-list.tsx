@@ -4,7 +4,7 @@ import { useTransition } from 'react'
 import { Skeleton, showSuccess, showError } from '@monprojetpro/ui'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import { triggerClientBillingSync } from '../actions/trigger-client-billing-sync'
-import type { BillingSyncRow } from '../types/billing.types'
+import type { BillingSyncRow, ClientWithPennylane } from '../types/billing.types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -45,11 +45,12 @@ function formatDate(dateStr: string | null | undefined): string {
 type InvoicesListProps = {
   clientId?: string
   showRefreshButton?: boolean
+  clients?: ClientWithPennylane[]
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function InvoicesList({ clientId, showRefreshButton = false }: InvoicesListProps) {
+export function InvoicesList({ clientId, showRefreshButton = false, clients }: InvoicesListProps) {
   const { data: rows, isPending, isError, refetch } = useBillingSyncRows('invoice', clientId)
   const [isSyncing, startTransition] = useTransition()
 
@@ -102,7 +103,7 @@ export function InvoicesList({ clientId, showRefreshButton = false }: InvoicesLi
 
       <div className="flex flex-col gap-2">
         {allRows.map((row) => (
-          <InvoiceRow key={row.id} row={row} />
+          <InvoiceRow key={row.id} row={row} clients={clients} />
         ))}
       </div>
     </div>
@@ -111,22 +112,41 @@ export function InvoicesList({ clientId, showRefreshButton = false }: InvoicesLi
 
 // ── Invoice Row ───────────────────────────────────────────────────────────────
 
-function InvoiceRow({ row }: { row: BillingSyncRow }) {
+function InvoiceRow({ row, clients }: { row: BillingSyncRow; clients?: ClientWithPennylane[] }) {
   const invoiceData = row.data as {
     invoice_number?: string
     date?: string
     file_url?: string
+    public_file_url?: string
     payment_url?: string
     lab_deduction_applied?: boolean
   }
   const isLab = isLabInvoiceRow(row)
+  const clientName = clients?.find((c) => c.id === row.client_id)?.name ?? null
+  const pdfUrl = invoiceData.file_url ?? invoiceData.public_file_url ?? null
+  const invoiceNumber = invoiceData.invoice_number ?? row.pennylane_id
 
   return (
     <div className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-accent/30 transition-colors">
-      <div className="flex items-center gap-4">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{invoiceData.invoice_number ?? row.pennylane_id}</span>
+      <div className="flex items-center gap-4 min-w-0 flex-1">
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            {pdfUrl ? (
+              <a
+                href={pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-primary hover:underline truncate"
+                title="Consulter la facture (PDF)"
+              >
+                {invoiceNumber}
+              </a>
+            ) : (
+              <span className="text-sm font-medium truncate">{invoiceNumber}</span>
+            )}
+            {clientName && (
+              <span className="text-xs text-muted-foreground truncate">— {clientName}</span>
+            )}
             {isLab && (
               <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-400">
                 Lab
@@ -139,7 +159,7 @@ function InvoiceRow({ row }: { row: BillingSyncRow }) {
           )}
         </div>
         <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[row.status] ?? STATUS_CLASSES.draft}`}
+          className={`rounded-full px-2 py-0.5 text-xs font-medium shrink-0 ${STATUS_CLASSES[row.status] ?? STATUS_CLASSES.draft}`}
         >
           {STATUS_LABELS[row.status] ?? row.status}
         </span>
