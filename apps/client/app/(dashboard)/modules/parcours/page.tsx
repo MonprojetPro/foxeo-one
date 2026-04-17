@@ -4,12 +4,12 @@ import { ParcoursOverview } from '@monprojetpro/module-parcours'
 
 export default async function ClientParcoursPage() {
   const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) notFound()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) notFound()
 
   const { data: client } = await supabase
     .from('clients')
-    .select('id')
+    .select('id, first_name')
     .eq('auth_user_id', user.id)
     .single()
 
@@ -17,7 +17,7 @@ export default async function ClientParcoursPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <ParcoursOverview clientId={client.id} />
+      <ParcoursOverview clientId={client.id} clientFirstName={client.first_name} />
     </div>
   )
 }

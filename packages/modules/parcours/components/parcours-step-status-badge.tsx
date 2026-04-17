@@ -13,7 +13,7 @@ const statusConfig: Record<ParcoursStepStatus, { label: string; className: strin
     className: 'bg-purple-600/20 text-purple-400 border border-purple-500/30',
   },
   completed: {
-    label: 'Complétée',
+    label: 'Validée',
     className: 'bg-green-500/20 text-green-400 border border-green-500/30',
   },
   skipped: {

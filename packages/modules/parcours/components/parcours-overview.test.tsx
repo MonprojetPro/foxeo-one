@@ -127,10 +127,10 @@ describe('ParcoursOverview', () => {
     mockUseParcours.mockReturnValue({ data: mockParcours, isPending: false, error: null })
 
     render(<ParcoursOverview clientId={CLIENT_ID} />)
-    expect(screen.getByText(/1\/2 étapes · 50%/i)).toBeDefined()
+    expect(screen.getByText(/50% complété/i)).toBeDefined()
   })
 
-  it('renders all step titles via timeline', () => {
+  it('renders all step titles in grid', () => {
     mockUseParcours.mockReturnValue({ data: mockParcours, isPending: false, error: null })
 
     render(<ParcoursOverview clientId={CLIENT_ID} />)

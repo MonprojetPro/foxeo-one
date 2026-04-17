@@ -72,9 +72,11 @@ describe('ParcoursTimeline', () => {
 
   it('renders all step titles', () => {
     render(<ParcoursTimeline steps={mockSteps} />)
-    expect(screen.getByText('Étape 1 — Idée')).toBeDefined()
-    expect(screen.getByText('Étape 2 — Validation')).toBeDefined()
-    expect(screen.getByText('Étape 3 — Lancement')).toBeDefined()
+    const headings = screen.getAllByRole('heading')
+    const texts = headings.map((h) => h.textContent ?? '')
+    expect(texts.some((t) => t.includes('Idée'))).toBe(true)
+    expect(texts.some((t) => t.includes('Validation'))).toBe(true)
+    expect(texts.some((t) => t.includes('Lancement'))).toBe(true)
   })
 
   it('renders step descriptions', () => {
@@ -84,7 +86,7 @@ describe('ParcoursTimeline', () => {
 
   it('renders status badges for each step', () => {
     render(<ParcoursTimeline steps={mockSteps} />)
-    expect(screen.getByText('Complétée')).toBeDefined()
+    expect(screen.getByText('Validée')).toBeDefined()
     expect(screen.getByText('En cours')).toBeDefined()
     expect(screen.getByText('Verrouillée')).toBeDefined()
   })
@@ -103,7 +105,7 @@ describe('ParcoursStepStatusBadge', () => {
     u2()
 
     const { unmount: u3 } = render(<ParcoursStepStatusBadge status="completed" />)
-    expect(screen.getByText('Complétée')).toBeDefined()
+    expect(screen.getByText('Validée')).toBeDefined()
     u3()
 
     const { unmount: u4 } = render(<ParcoursStepStatusBadge status="skipped" />)
