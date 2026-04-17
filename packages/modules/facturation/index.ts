@@ -50,6 +50,13 @@ export {
   toPennylaneLineItem,
 } from './utils/billing-mappers'
 
+// Story 13-9 — Notifications comptable
+export { AccountantNotifications } from './components/accountant-notifications'
+export { AccountantConfigPanel } from './components/accountant-config-panel'
+export { updateAccountantConfig, getAccountantConfig } from './actions/update-accountant-config'
+export { resolveAccountantNotification, getAccountantNotifications } from './actions/resolve-accountant-notification'
+export type { AccountantNotificationRow } from './actions/resolve-accountant-notification'
+
 // Story 13-8 — Relances impayées
 export { PendingReminders } from './components/pending-reminders'
 export { ReminderModal } from './components/reminder-modal'

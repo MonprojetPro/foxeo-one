@@ -13,6 +13,7 @@ import { InvoicesList } from './invoices-list'
 import { SubscriptionsList } from './subscriptions-list'
 import { JustificatifsSection } from './justificatifs-section'
 import { PendingReminders } from './pending-reminders'
+import { AccountantNotifications } from './accountant-notifications'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import type { ClientWithPennylane } from '../types/billing.types'
 
@@ -136,6 +137,9 @@ export function BillingDashboard() {
 
       {/* Relances impayées en attente (Story 13-8) */}
       <PendingReminders />
+
+      {/* Notifications comptable (Story 13-9) */}
+      <AccountantNotifications />
 
       {/* Métriques financières (AC #4) */}
       <BillingMetricsSection />
