@@ -1,6 +1,6 @@
 # Story 13.5: Shell notifications comptable — infrastructure prête, parsing Gmail à configurer
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -169,12 +169,28 @@ apps/hub/app/(dashboard)/modules/facturation/
 
 ### Agent Model Used
 
-_à remplir_
+claude-sonnet-4-6
 
 ### Completion Notes List
 
-_à remplir_
+- Migration 00094 (pas 00071 comme prévu — les stories intermédiaires avaient déjà utilisé 00072–00093)
+- Edge Function `sync-accountant-emails` créée et DÉSACTIVÉE par défaut (`accountant_email_sync_enabled = false`)
+- email-parser.ts = stub uniquement — à enrichir avec patterns réels après 1er email Pennylane comptable
+- Test email-parser co-localisé dans `supabase/functions/sync-accountant-emails/` (vitest scanne `supabase/**/*.test.ts`)
+- `AccountantConfigPanel` utilise `useEffect` pour synchroniser l'état local depuis TanStack Query (évite l'anti-pattern render-time setState)
 
 ### File List
 
-_à remplir_
+- supabase/migrations/00094_create_accountant_notifications.sql (CRÉÉ)
+- supabase/functions/sync-accountant-emails/index.ts (CRÉÉ)
+- supabase/functions/sync-accountant-emails/email-parser.ts (CRÉÉ)
+- supabase/functions/sync-accountant-emails/email-parser.test.ts (CRÉÉ)
+- packages/modules/facturation/actions/update-accountant-config.ts (CRÉÉ)
+- packages/modules/facturation/actions/update-accountant-config.test.ts (CRÉÉ)
+- packages/modules/facturation/actions/resolve-accountant-notification.ts (CRÉÉ)
+- packages/modules/facturation/actions/resolve-accountant-notification.test.ts (CRÉÉ)
+- packages/modules/facturation/components/accountant-notifications.tsx (CRÉÉ)
+- packages/modules/facturation/components/accountant-notifications.test.tsx (CRÉÉ)
+- packages/modules/facturation/components/accountant-config-panel.tsx (CRÉÉ)
+- packages/modules/facturation/components/billing-dashboard.tsx (MODIFIÉ)
+- packages/modules/facturation/index.ts (MODIFIÉ)

@@ -199,7 +199,7 @@ export function ChatWindow({
           </Button>
         </div>
       ) : currentUserType === 'client' ? (
-        <div className="flex items-center gap-2 border-b px-4 py-2 text-sm text-muted-foreground shrink-0">
+        <div className="flex items-center gap-2 border-b px-4 py-2 text-sm text-muted-foreground shrink-0" data-testid="operator-presence-header">
           <PresenceIndicator status={operatorStatus} />
           {operatorStatus === 'online'
             ? <span>Votre conseiller est en ligne</span>
