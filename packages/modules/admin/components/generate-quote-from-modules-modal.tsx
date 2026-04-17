@@ -112,7 +112,7 @@ export function GenerateQuoteFromModulesModal({
           quantity: l.type === 'monthly' && billingPeriod === 'annual' ? 12 : 1,
           unit: l.type === 'monthly' ? 'mois' : 'unité',
           unitPrice: l.unitPrice,
-          vatRate: '20',
+          vatRate: 'FR_200',
           total: l.unitPrice * (l.type === 'monthly' && billingPeriod === 'annual' ? 12 : 1),
         }))
 
