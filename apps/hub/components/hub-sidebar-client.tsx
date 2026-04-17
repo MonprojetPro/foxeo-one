@@ -16,7 +16,7 @@ const navItems = [
   { icon: MessageSquare, label: 'Chat',            href: '/modules/chat' },
   { icon: FolderOpen,    label: 'Documents',      href: '/modules/documents' },
   { icon: Calculator,    label: 'Comptabilité',   href: '/modules/facturation' },
-  { icon: Settings,      label: 'Admin',           href: '/modules/admin' },
+  { icon: Settings,      label: 'One',              href: '/modules/admin' },
 ]
 
 export function HubSidebarClient({ operatorId, userId }: { operatorId: string; userId: string }) {
