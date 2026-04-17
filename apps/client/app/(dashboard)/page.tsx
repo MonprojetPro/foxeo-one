@@ -14,9 +14,10 @@ export default async function ClientHomePage() {
   }
 
   // Single query: client + config joined
+  // Note: client_configs PK is client_id (no id column), density column doesn't exist
   const { data: clientRecord } = await supabase
     .from('clients')
-    .select('id, first_name, name, client_configs(id, client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, density, show_lab_teasing, created_at, updated_at)')
+    .select('id, first_name, name, client_configs(client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, show_lab_teasing, created_at, updated_at)')
     .eq('auth_user_id', user.id)
     .maybeSingle()
 
@@ -29,7 +30,7 @@ export default async function ClientHomePage() {
 
   const clientConfig: ClientConfig = configData
     ? {
-        id: configData.id,
+        id: configData.client_id,
         clientId: configData.client_id,
         dashboardType: configData.dashboard_type as ClientConfig['dashboardType'],
         activeModules: configData.active_modules ?? ['core-dashboard'],
