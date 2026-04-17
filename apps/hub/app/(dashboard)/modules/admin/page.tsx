@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { ActivityLogs, MaintenanceMode, SystemHealth, WebhooksPlaceholder, ApiPlaceholder, InstancesList } from '@monprojetpro/module-admin'
+import { ActivityLogs, MaintenanceMode, SystemHealth, WebhooksPlaceholder, ApiPlaceholder, InstancesList, CatalogList, CatalogAnalyticsWidgets } from '@monprojetpro/module-admin'
 
-type AdminTab = 'logs' | 'maintenance' | 'backups' | 'webhooks' | 'api' | 'monitoring' | 'instances'
+type AdminTab = 'catalog' | 'catalog-analytics' | 'logs' | 'maintenance' | 'backups' | 'webhooks' | 'api' | 'monitoring' | 'instances'
 
 const TABS: { id: AdminTab; label: string }[] = [
+  { id: 'catalog', label: 'Catalogue modules' },
+  { id: 'catalog-analytics', label: 'Analytics catalogue' },
   { id: 'logs', label: "Logs d'activité" },
   { id: 'maintenance', label: 'Maintenance' },
   { id: 'backups', label: 'Backups' },
@@ -16,7 +18,7 @@ const TABS: { id: AdminTab; label: string }[] = [
 ]
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<AdminTab>('logs')
+  const [activeTab, setActiveTab] = useState<AdminTab>('catalog')
 
   return (
     <div className="space-y-6">
@@ -45,6 +47,8 @@ export default function AdminPage() {
 
       {/* Tab content */}
       <div>
+        {activeTab === 'catalog' && <CatalogList />}
+        {activeTab === 'catalog-analytics' && <CatalogAnalyticsWidgets />}
         {activeTab === 'logs' && <ActivityLogs />}
         {activeTab === 'maintenance' && <MaintenanceMode />}
         {activeTab === 'backups' && (
