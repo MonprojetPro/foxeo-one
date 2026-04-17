@@ -1,6 +1,6 @@
 # Story 13.3: Justificatifs Google Drive — upload depuis le Hub
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -39,42 +39,49 @@ so that **Pennylane les lit automatiquement depuis Drive et je n'ai plus à le f
 
 ## Tasks / Subtasks
 
-- [ ] Créer la migration `00069_create_justificatif_uploads.sql`
-  - [ ] Table `justificatif_uploads` : `id UUID PK`, `file_name TEXT`, `file_size INTEGER`, `drive_file_id TEXT`, `status TEXT CHECK ('sent','error')`, `error_message TEXT`, `created_at TIMESTAMPTZ DEFAULT now()`
-  - [ ] RLS : SELECT/INSERT uniquement `is_operator()`
-  - [ ] Index sur `created_at DESC`
+- [x] Créer la migration `00091_create_justificatif_uploads.sql`
+  - [x] Table `justificatif_uploads` : `id UUID PK`, `uploaded_by UUID FK`, `file_name TEXT`, `file_size INTEGER`, `mime_type TEXT`, `drive_file_id TEXT`, `status TEXT CHECK ('sent','error')`, `error_message TEXT`, `created_at`, `updated_at`
+  - [x] RLS : SELECT/INSERT/DELETE uniquement `is_operator()`
+  - [x] Index sur `created_at DESC`
+  - [x] Trigger `trg_justificatif_uploads_updated_at`
 
-- [ ] Créer la Server Action `uploadJustificatif`
-  - [ ] `packages/modules/facturation/actions/upload-justificatif.ts`
-  - [ ] Auth check : `is_operator()`
-  - [ ] Validation : type fichier (PDF/JPG/PNG), taille max 10 Mo
-  - [ ] Lire `google_drive_access_token` et `google_drive_folder_id` depuis `system_config`
-  - [ ] `POST https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart` avec `Authorization: Bearer {token}`
-  - [ ] Si 401 → refresh token → réessayer
-  - [ ] Insert dans `justificatif_uploads` (statut 'sent' ou 'error')
-  - [ ] Retourner `{ data, error }` pattern standard
+- [x] Créer la Server Action `uploadJustificatif`
+  - [x] `packages/modules/facturation/actions/upload-justificatif.ts`
+  - [x] Auth check : `is_operator()` + `uploaded_by` audit trail
+  - [x] Validation : type fichier (PDF/JPG/PNG), taille max 10 Mo
+  - [x] Sanitisation noms de fichiers (leçon DL-002)
+  - [x] Lire `google_drive_access_token` et `google_drive_folder_id` depuis `system_config`
+  - [x] `POST https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart` avec `Authorization: Bearer {token}`
+  - [x] Si 401 → refresh token → réessayer
+  - [x] Insert dans `justificatif_uploads` (statut 'sent' ou 'error')
+  - [x] Retourner `{ data, error }` pattern standard
 
-- [ ] Créer la Server Action `configureGoogleDrive`
-  - [ ] `packages/modules/facturation/actions/configure-google-drive.ts`
-  - [ ] Upsert dans `system_config` : `google_drive_access_token`, `google_drive_refresh_token`, `google_drive_folder_id`
-  - [ ] Auth check : `is_operator()`
+- [x] Créer la Server Action `configureGoogleDrive` + `updateGoogleDriveFolderId` + `getGoogleDriveStatus`
+  - [x] `packages/modules/facturation/actions/configure-google-drive.ts`
+  - [x] Upsert atomique (batch) dans `system_config`
+  - [x] Auth check : `is_operator()`
+  - [x] `getGoogleDriveStatus` : ne retourne JAMAIS les tokens côté client (seulement isConfigured + folderId)
 
-- [ ] Créer le composant section Justificatifs Hub
-  - [ ] `packages/modules/facturation/components/justificatifs-section.tsx`
-  - [ ] Sous-section dans la page Hub Comptabilité existante
-  - [ ] Zone drag & drop + bouton "Sélectionner un fichier" (`<input type="file">`)
-  - [ ] Indicateur de progression (upload en cours)
-  - [ ] Liste uploads récents depuis `justificatif_uploads`
+- [x] Créer le composant section Justificatifs Hub
+  - [x] `packages/modules/facturation/components/justificatifs-section.tsx`
+  - [x] Onglet "Justificatifs" dans le billing-dashboard existant
+  - [x] Zone drag & drop + bouton "Sélectionner un fichier"
+  - [x] Validation client-side (type + taille) avant envoi serveur
+  - [x] Indicateur de progression (upload en cours)
+  - [x] Liste uploads récents depuis `justificatif_uploads`
 
-- [ ] Créer le composant configuration Drive
-  - [ ] `packages/modules/facturation/components/google-drive-config.tsx`
-  - [ ] Bandeau "Connecter" si non configuré / "Connecté ✓" si configuré
-  - [ ] Champ ID dossier Drive (configurable)
-  - [ ] Note UI : "Pennylane lira automatiquement les fichiers dans ce dossier"
+- [x] Créer le composant configuration Drive
+  - [x] `packages/modules/facturation/components/google-drive-config.tsx`
+  - [x] Bandeau "Connecter" si non configuré / "Connecté ✓" si configuré
+  - [x] Champ ID dossier Drive (configurable)
+  - [x] Mode édition : update folder ID seul (sans re-saisir tokens)
+  - [x] Mode reconfiguration : re-saisie complète des tokens
 
-- [ ] Créer les tests
-  - [ ] Test `upload-justificatif.ts` : auth, validation type/taille, appel Drive API, refresh token, insert DB (8 tests)
-  - [ ] Test `justificatifs-section.tsx` : rendu état vide, liste uploads, bouton (5 tests)
+- [x] Créer les tests (28 tests)
+  - [x] Test `upload-justificatif.ts` : auth, validation type/taille, appel Drive API, refresh token, insert DB payload, sanitization (9 tests)
+  - [x] Test `configure-google-drive.ts` : auth, validation, batch upsert, status sans tokens, folder update (10 tests)
+  - [x] Test `google-drive-config.tsx` : états connecté/non-connecté, pas de tokens affichés (4 tests)
+  - [x] Test `justificatifs-section.tsx` : rendu état vide, liste uploads, formats (5 tests)
 
 ## Dev Notes
 
@@ -164,12 +171,28 @@ apps/hub/app/(dashboard)/modules/facturation/
 
 ### Agent Model Used
 
-_à remplir_
+Claude Opus 4.6
 
 ### Completion Notes List
 
-_à remplir_
+- Migration 00091 avec `uploaded_by UUID FK` (audit trail) + DELETE policy pour nettoyage erreurs
+- Tokens Google jamais exposés côté client — `getGoogleDriveStatus()` retourne seulement `isConfigured` + `folderId`
+- Upsert atomique (batch) pour éviter état incohérent en cas d'erreur partielle
+- Validation client-side (type MIME + taille) en plus de la validation serveur
+- Sanitisation noms de fichiers appliquée (leçon DL-002)
+- Refresh token auto sur 401 avec retry unique
+- 28 tests couvrant auth, validation, payload DB, sanitisation, sécurité tokens
 
 ### File List
 
-_à remplir_
+- `supabase/migrations/00091_create_justificatif_uploads.sql` — CRÉÉ
+- `packages/modules/facturation/actions/upload-justificatif.ts` — CRÉÉ
+- `packages/modules/facturation/actions/upload-justificatif.test.ts` — CRÉÉ
+- `packages/modules/facturation/actions/configure-google-drive.ts` — CRÉÉ
+- `packages/modules/facturation/actions/configure-google-drive.test.ts` — CRÉÉ
+- `packages/modules/facturation/components/justificatifs-section.tsx` — CRÉÉ
+- `packages/modules/facturation/components/justificatifs-section.test.tsx` — CRÉÉ
+- `packages/modules/facturation/components/google-drive-config.tsx` — CRÉÉ
+- `packages/modules/facturation/components/google-drive-config.test.tsx` — CRÉÉ
+- `packages/modules/facturation/components/billing-dashboard.tsx` — MODIFIÉ (ajout onglet Justificatifs)
+- `.env.example` — MODIFIÉ (ajout GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET)

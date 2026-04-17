@@ -11,18 +11,20 @@ import { QuoteForm } from './quote-form'
 import { QuotesList } from './quotes-list'
 import { InvoicesList } from './invoices-list'
 import { SubscriptionsList } from './subscriptions-list'
+import { JustificatifsSection } from './justificatifs-section'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import type { ClientWithPennylane } from '../types/billing.types'
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 
-type Tab = 'devis' | 'nouveau-devis' | 'factures' | 'abonnements'
+type Tab = 'devis' | 'nouveau-devis' | 'factures' | 'abonnements' | 'justificatifs'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'devis', label: 'Devis' },
   { id: 'nouveau-devis', label: '+ Nouveau devis' },
   { id: 'factures', label: 'Factures' },
   { id: 'abonnements', label: 'Abonnements' },
+  { id: 'justificatifs', label: 'Justificatifs' },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -166,6 +168,8 @@ export function BillingDashboard() {
         {activeTab === 'factures' && <InvoicesList />}
 
         {activeTab === 'abonnements' && <SubscriptionsList />}
+
+        {activeTab === 'justificatifs' && <JustificatifsSection />}
       </div>
     </div>
   )
