@@ -171,14 +171,14 @@ serve(async (_req) => {
         body: JSON.stringify({
           systemPrompt,
           message,
-          maxTokens: 500,
+          maxTokens: 2000,
           temperature: 0.7,
         }),
       })
 
       if (elioResponse.ok) {
-        const elioData = await elioResponse.json() as { text?: string; error?: string }
-        generatedBody = elioData.text ?? null
+        const elioData = await elioResponse.json() as { content?: string; text?: string; error?: string }
+        generatedBody = elioData.content ?? elioData.text ?? null
       } else {
         console.warn(`[DETECT-OVERDUE] Élio KO pour ${invoiceNumber}:`, await elioResponse.text())
       }

@@ -1,6 +1,6 @@
 # Story 13.4: Relances impayées intelligentes — Élio génère, MiKL valide, multicanal
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
