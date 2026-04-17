@@ -1,5 +1,8 @@
+import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { CoreDashboard, getTeasingEligibility } from '@monprojetpro/module-core-dashboard'
+import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
 import type { ClientConfig } from '@monprojetpro/types'
 
 export default async function ClientHomePage() {
@@ -49,6 +52,17 @@ export default async function ClientHomePage() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
+
+  // Mode Lab → rediriger vers Mon Parcours (accueil Lab)
+  const cookieStore = await cookies()
+  const cookieMode = cookieStore.get(MODE_TOGGLE_COOKIE)?.value
+  const effectiveMode = cookieMode === 'lab' || cookieMode === 'one'
+    ? cookieMode
+    : clientConfig.dashboardType
+
+  if (effectiveMode === 'lab') {
+    redirect('/modules/parcours')
+  }
 
   // Fetch teasing eligibility server-side (avoids flash UI côté client)
   const teasingResult = clientId ? await getTeasingEligibility(clientId) : null
