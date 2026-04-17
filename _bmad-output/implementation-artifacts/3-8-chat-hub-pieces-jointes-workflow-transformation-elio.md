@@ -1,6 +1,6 @@
 # Story 3.8: Chat Hub — Pièces jointes & Workflow Transformation Élio
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -159,4 +159,23 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+- Implémentation majoritairement déjà présente (session précédente) — session 2026-04-17 : fix data-testid manquant sur operator-presence-header dans chat-window.tsx
+- 53 tests passent — tous les AC couverts
+
 ### File List
+
+- supabase/migrations/00076_add_chat_attachments.sql (CRÉÉ)
+- packages/modules/chat/actions/upload-message-attachment.ts (CRÉÉ)
+- packages/modules/chat/actions/upload-message-attachment.test.ts (CRÉÉ)
+- packages/modules/elio/actions/transform-message-for-client.ts (CRÉÉ)
+- packages/modules/elio/actions/transform-message-for-client.test.ts (CRÉÉ)
+- packages/modules/chat/components/elio-transform-panel.tsx (CRÉÉ)
+- packages/modules/chat/components/elio-transform-panel.test.tsx (CRÉÉ)
+- packages/modules/chat/components/chat-input.tsx (MODIFIÉ)
+- packages/modules/chat/components/chat-input.test.tsx (MODIFIÉ)
+- packages/modules/chat/components/chat-window.tsx (MODIFIÉ)
+- packages/modules/chat/components/chat-window.test.tsx (MODIFIÉ)
+- packages/modules/chat/components/chat-message.tsx (MODIFIÉ)
+- packages/modules/chat/components/chat-message.test.tsx (MODIFIÉ)
+- packages/modules/chat/index.ts (MODIFIÉ)
+- packages/modules/elio/index.ts (MODIFIÉ)
