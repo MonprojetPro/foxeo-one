@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@monprojetpro/utils'
@@ -12,49 +11,40 @@ type ModuleSidebarProps = {
   modules: ModuleManifest[]
 }
 
+function toIconKey(icon: string): string {
+  return icon.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join('')
+}
+
 export function ModuleSidebar({ target, modules }: ModuleSidebarProps) {
   const pathname = usePathname()
+  const isLab = target === 'client-lab'
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-sidebar-border">
-        <h2 className="text-lg font-semibold text-sidebar-foreground">
-          {target === 'hub' ? 'MonprojetPro Hub' : 'MonprojetPro Client'}
-        </h2>
-      </div>
+    <nav className="flex flex-col gap-1 py-4">
+      {modules.map((module) => {
+        const isActive = Boolean(pathname?.startsWith(`/modules/${module.id}`))
+        const IconComponent = (LucideIcons as any)[toIconKey(module.navigation.icon)] || LucideIcons.Box
 
-      <nav className="flex-1 p-2 overflow-y-auto">
-        <ul className="space-y-1">
-          {modules.map((module) => {
-            const isActive = pathname?.startsWith(`/modules/${module.id}`)
-            const IconComponent = (LucideIcons as any)[module.navigation.icon] || LucideIcons.Box
-
-            return (
-              <li key={module.id}>
-                <Link
-                  href={`/modules/${module.id}`}
-                  className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                    'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                    isActive
-                      ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                      : 'text-sidebar-foreground'
-                  )}
-                >
-                  <IconComponent className="h-5 w-5 shrink-0" />
-                  <span>{module.navigation.label}</span>
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
-
-      <div className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-muted-foreground">
-          {modules.length} module{modules.length > 1 ? 's' : ''} actif{modules.length > 1 ? 's' : ''}
-        </p>
-      </div>
-    </div>
+        return (
+          <div key={module.id} className="relative mx-2">
+            {isActive && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-[#7c3aed] rounded-full" />
+            )}
+            <Link
+              href={`/modules/${module.id}`}
+              className={cn(
+                'flex items-center gap-3 h-[40px] rounded-lg px-3 text-[13px] font-medium transition-colors',
+                isActive
+                  ? 'bg-[#1e1557] border border-[#7c3aed] text-[#a78bfa]'
+                  : 'text-[#9ca3af] hover:bg-[#1a1a1a] hover:text-[#f9fafb]'
+              )}
+            >
+              <IconComponent size={16} />
+              <span>{module.navigation.label}</span>
+            </Link>
+          </div>
+        )
+      })}
+    </nav>
   )
 }

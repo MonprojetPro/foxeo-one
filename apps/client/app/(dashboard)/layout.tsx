@@ -108,14 +108,12 @@ export default async function DashboardLayout({
       | {
           dashboard_type: string
           active_modules: string[] | null
-          density: string | null
           custom_branding: CustomBranding | null
           lab_mode_available: boolean | null
         }
       | Array<{
           dashboard_type: string
           active_modules: string[] | null
-          density: string | null
           custom_branding: CustomBranding | null
           lab_mode_available: boolean | null
         }>
@@ -126,7 +124,7 @@ export default async function DashboardLayout({
   if (user) {
     const { data } = await supabase
       .from('clients')
-      .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, density, custom_branding, lab_mode_available)')
+      .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, custom_branding, lab_mode_available)')
       .eq('auth_user_id', user.id)
       .maybeSingle()
     clientRecord = (data as ClientRecord | null) ?? null
