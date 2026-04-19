@@ -37,26 +37,26 @@ export function ModuleSidebar({ target, modules }: ModuleSidebarProps) {
   const pathname = usePathname()
 
   return (
-    <nav className="flex flex-col gap-1 py-4">
+    <nav className="flex flex-col gap-1 px-3 py-4">
       {modules.map((module) => {
         const isActive = Boolean(pathname?.startsWith(`/modules/${module.id}`))
         const IconComponent = ICON_MAP[module.navigation.icon] ?? Box
 
         return (
-          <div key={module.id} className="relative mx-2">
+          <div key={module.id} className="relative">
             {isActive && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 bg-[#7c3aed] rounded-full" />
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-[#7c3aed] rounded-full" />
             )}
             <Link
               href={`/modules/${module.id}`}
               className={cn(
-                'flex items-center gap-3 h-[40px] rounded-lg px-3 text-[13px] font-medium transition-colors',
+                'flex items-center gap-3 h-11 rounded-lg px-3 text-sm font-medium transition-colors',
                 isActive
                   ? 'bg-[#1e1557] border border-[#7c3aed] text-[#a78bfa]'
                   : 'text-[#9ca3af] hover:bg-[#1a1a1a] hover:text-[#f9fafb]'
               )}
             >
-              <IconComponent size={16} />
+              <IconComponent size={18} className="shrink-0" />
               <span>{module.navigation.label}</span>
             </Link>
           </div>

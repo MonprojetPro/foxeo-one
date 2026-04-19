@@ -69,7 +69,7 @@ export function DashboardShell({
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {header && (
-          <header className="flex h-14 items-center border-b border-border px-4 bg-card">
+          <header className="flex h-16 items-center border-b border-border px-6 bg-card">
             {/* Mobile hamburger */}
             {sidebar && (
               <Button

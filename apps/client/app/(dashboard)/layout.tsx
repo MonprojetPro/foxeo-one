@@ -57,13 +57,17 @@ function ClientSidebar({
   }
 
   return (
-    <div>
-      {logoUrl && (
-        <div className="px-4 py-3">
-          <img src={logoUrl} alt="Logo" className="h-8 w-auto" />
-        </div>
-      )}
-      <ModuleSidebar target={target} modules={modules} />
+    <div className="flex flex-col h-full">
+      {/* Zone logo — alignée avec h-16 du header */}
+      <div className="flex items-center h-16 px-5 border-b border-sidebar-border shrink-0">
+        {logoUrl
+          ? <img src={logoUrl} alt="Logo" className="h-7 w-auto" />
+          : <span className="text-[#a78bfa] font-semibold text-sm tracking-wide">MonprojetPro</span>
+        }
+      </div>
+      <div className="flex-1 overflow-y-auto pt-2">
+        <ModuleSidebar target={target} modules={modules} />
+      </div>
     </div>
   )
 }

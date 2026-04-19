@@ -53,7 +53,7 @@ export function ModeToggle({
     <div
       role="group"
       aria-label="Bascule Mode Lab / Mode One"
-      className="inline-flex items-center rounded-md border border-border bg-background p-0.5 text-xs"
+      className="bg-[#0f0f0f] rounded-full border border-[#3d3d3d] flex h-9 w-[200px]"
     >
       <button
         type="button"
@@ -61,13 +61,13 @@ export function ModeToggle({
         disabled={isPending}
         aria-pressed={mode === 'lab'}
         className={cn(
-          'rounded-sm px-3 py-1 font-medium transition-colors',
+          'flex-1 rounded-full text-sm transition-all font-medium',
           mode === 'lab'
-            ? 'bg-violet-600 text-white shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
+            ? 'bg-[#7c3aed] text-white'
+            : 'text-[#6b7280] hover:text-white'
         )}
       >
-        Mode Lab
+        Lab
       </button>
       <button
         type="button"
@@ -75,13 +75,13 @@ export function ModeToggle({
         disabled={isPending}
         aria-pressed={mode === 'one'}
         className={cn(
-          'rounded-sm px-3 py-1 font-medium transition-colors',
+          'flex-1 rounded-full text-sm transition-all font-medium',
           mode === 'one'
-            ? 'bg-emerald-600 text-white shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
+            ? 'bg-[#7c3aed] text-white'
+            : 'text-[#6b7280] hover:text-white'
         )}
       >
-        Mode One
+        One
       </button>
     </div>
   )
