@@ -12,7 +12,7 @@ import { manifest as parcoursMani } from '@monprojetpro/module-parcours/manifest
 import { manifest as elioMani } from '@monprojetpro/module-elio/manifest'
 import { manifest as chatMani } from '@monprojetpro/modules-chat/manifest'
 import { manifest as docsMani } from '@monprojetpro/module-documents/manifest'
-import { manifest as coreMani } from '@monprojetpro/module-core-dashboard/manifest'
+import { coreDashboardManifest as coreMani } from '@monprojetpro/module-core-dashboard/manifest'
 import type { ModuleManifest } from '@monprojetpro/types'
 
 const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
