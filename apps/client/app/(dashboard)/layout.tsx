@@ -8,7 +8,20 @@ import {
   ModuleSidebar,
   Button,
 } from '@monprojetpro/ui'
-import { discoverModules, getModulesForTarget } from '@monprojetpro/utils'
+import { manifest as parcoursMani } from '@monprojetpro/module-parcours/manifest'
+import { manifest as elioMani } from '@monprojetpro/module-elio/manifest'
+import { manifest as chatMani } from '@monprojetpro/modules-chat/manifest'
+import { manifest as docsMani } from '@monprojetpro/module-documents/manifest'
+import { manifest as coreMani } from '@monprojetpro/module-core-dashboard/manifest'
+import type { ModuleManifest } from '@monprojetpro/types'
+
+const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
+  parcoursMani,
+  elioMani,
+  chatMani,
+  docsMani,
+  coreMani,
+]
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { NotificationBadge } from '@monprojetpro/modules-notifications'
 import { PresenceProvider } from '@monprojetpro/modules-chat'
@@ -17,7 +30,7 @@ import { ThemeClassSetter } from './theme-class-setter'
 import { ImpersonationWrapper } from './impersonation-wrapper'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
-async function ClientSidebar({
+function ClientSidebar({
   dashboardType,
   activeModules,
   logoUrl,
@@ -26,13 +39,12 @@ async function ClientSidebar({
   activeModules: string[]
   logoUrl?: string | null
 }) {
-  await discoverModules()
   const target: ModuleTarget =
     dashboardType === 'one' ? 'client-one' : 'client-lab'
 
-  const modules = activeModules.length > 0
-    ? getModulesForTarget(target).filter((m) => activeModules.includes(m.id))
-    : []
+  const modules = ALL_CLIENT_MANIFESTS
+    .filter((m) => m.targets.includes(target) && activeModules.includes(m.id))
+    .sort((a, b) => a.navigation.position - b.navigation.position)
 
   if (modules.length === 0) {
     return (
