@@ -47,7 +47,7 @@ export function DashboardShell({
       {/* Desktop sidebar */}
       {sidebar && (
         <aside
-          className="hidden md:flex md:flex-col md:w-64 border-r border-sidebar-border bg-sidebar"
+          className="hidden md:flex md:flex-col md:w-[240px] border-r border-[#2d2d2d] bg-[#141414]"
           role="navigation"
           aria-label="Menu principal"
         >
@@ -58,7 +58,7 @@ export function DashboardShell({
       {/* Mobile sidebar (Sheet drawer) */}
       {sidebar && isMobile && (
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar">
+          <SheetContent side="left" className="w-[240px] p-0 bg-[#141414]">
             <SheetTitle className="sr-only">Menu de navigation</SheetTitle>
             <nav role="navigation" aria-label="Menu principal">
               {sidebar}
@@ -69,7 +69,7 @@ export function DashboardShell({
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {header && (
-          <header className="flex h-16 items-center border-b border-border px-6 bg-card">
+          <header className="flex h-[60px] items-center border-b border-[#2d2d2d] px-4 bg-[#141414]">
             {/* Mobile hamburger */}
             {sidebar && (
               <Button

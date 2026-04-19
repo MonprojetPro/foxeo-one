@@ -57,18 +57,7 @@ function ClientSidebar({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Zone logo — alignée avec h-16 du header */}
-      <div className="flex items-center h-16 px-5 border-b border-sidebar-border shrink-0">
-        {logoUrl
-          ? <img src={logoUrl} alt="Logo" className="h-7 w-auto" />
-          : <span className="text-[#a78bfa] font-semibold text-sm tracking-wide">MonprojetPro</span>
-        }
-      </div>
-      <div className="flex-1 overflow-y-auto pt-2">
-        <ModuleSidebar target={target} modules={modules} />
-      </div>
-    </div>
+    <ModuleSidebar target={target} modules={modules} />
   )
 }
 
@@ -91,7 +80,11 @@ function ClientHeader({
       <div className="flex items-center gap-2 min-w-[160px]">
         {logoUrl
           ? <img src={logoUrl} alt="Logo" className="h-6 w-auto" />
-          : <span className="text-[#a78bfa] font-medium text-sm">MonprojetPro</span>
+          : (
+            <div className="bg-[#1e1e1e] border border-[#3d3d3d] rounded-lg px-3 py-1.5">
+              <span className="text-[#a78bfa] font-medium text-sm">MonprojetPro</span>
+            </div>
+          )
         }
       </div>
 

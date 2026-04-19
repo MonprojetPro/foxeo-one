@@ -53,7 +53,7 @@ export function ModeToggle({
     <div
       role="group"
       aria-label="Bascule Mode Lab / Mode One"
-      className="bg-[#0f0f0f] rounded-full border border-[#3d3d3d] flex h-9 w-[200px]"
+      className="bg-[#0f0f0f] rounded-full border border-[#3d3d3d] flex h-8 w-[280px]"
     >
       <button
         type="button"
