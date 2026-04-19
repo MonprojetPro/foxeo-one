@@ -1,45 +1,32 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Alert, AlertDescription } from '@monprojetpro/ui'
+import { LogOut } from 'lucide-react'
 import { logoutAction } from '../(auth)/actions/auth'
 
 export function LogoutButton() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
 
   function handleLogout() {
-    setError(null)
     startTransition(async () => {
       const result = await logoutAction()
-
-      if (result.error) {
-        setError(result.error.message)
-        return
+      if (!result.error) {
+        router.push('/login')
+        router.refresh()
       }
-
-      router.push('/login')
-      router.refresh()
     })
   }
 
   return (
-    <div>
-      {error && (
-        <Alert variant="destructive" className="mb-2">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={handleLogout}
-        disabled={isPending}
-      >
-        {isPending ? 'Deconnexion...' : 'Se deconnecter'}
-      </Button>
-    </div>
+    <button
+      onClick={handleLogout}
+      disabled={isPending}
+      title="Se déconnecter"
+      className="w-8 h-8 rounded-full flex items-center justify-center text-[#6b7280] hover:text-[#f9fafb] hover:bg-[#1a1a1a] transition-colors disabled:opacity-50"
+    >
+      <LogOut size={16} />
+    </button>
   )
 }
