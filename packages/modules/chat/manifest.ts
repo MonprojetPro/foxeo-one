@@ -7,7 +7,7 @@ export const manifest: ModuleManifest = {
   version: '1.0.0',
   targets: ['hub', 'client-lab', 'client-one'],
   navigation: {
-    label: 'Chat',
+    label: 'Chat MiKL',
     icon: 'message-circle',
     position: 20,
   },

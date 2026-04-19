@@ -7,7 +7,7 @@ export const manifest: ModuleManifest = {
   version: '1.0.0',
   targets: ['hub', 'client-lab', 'client-one'],
   navigation: {
-    label: 'Élio',
+    label: 'Chat Élio',
     icon: 'bot',
     position: 99,
   },
