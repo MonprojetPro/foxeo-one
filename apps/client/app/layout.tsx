@@ -37,9 +37,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Client dashboard = dark uniquement. Pas de lecture localStorage theme. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('monprojetpro-theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light')}else if(t==='system'&&window.matchMedia('(prefers-color-scheme:light)').matches){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light')}}catch(e){}})()`,
+            __html: `(function(){try{localStorage.removeItem('monprojetpro-theme')}catch(e){}})()`,
           }}
         />
       </head>
