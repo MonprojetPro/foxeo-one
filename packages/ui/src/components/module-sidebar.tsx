@@ -2,28 +2,45 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import {
+  Map, MessageCircle, Users, FileText, Send, Bot,
+  LayoutDashboard, Settings, BarChart2, Video,
+  Bell, HelpCircle, CheckCircle2, Calculator, Box,
+} from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import type { ModuleManifest, ModuleTarget } from '@monprojetpro/types'
-import * as LucideIcons from 'lucide-react'
 
 type ModuleSidebarProps = {
   target: ModuleTarget
   modules: ModuleManifest[]
 }
 
-function toIconKey(icon: string): string {
-  return icon.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join('')
+const ICON_MAP: Record<string, React.ElementType> = {
+  'map': Map,
+  'message-circle': MessageCircle,
+  'users': Users,
+  'file-text': FileText,
+  'send': Send,
+  'bot': Bot,
+  'LayoutDashboard': LayoutDashboard,
+  'layout-dashboard': LayoutDashboard,
+  'settings': Settings,
+  'bar-chart': BarChart2,
+  'video': Video,
+  'bell': Bell,
+  'help-circle': HelpCircle,
+  'check-circle-2': CheckCircle2,
+  'calculator': Calculator,
 }
 
 export function ModuleSidebar({ target, modules }: ModuleSidebarProps) {
   const pathname = usePathname()
-  const isLab = target === 'client-lab'
 
   return (
     <nav className="flex flex-col gap-1 py-4">
       {modules.map((module) => {
         const isActive = Boolean(pathname?.startsWith(`/modules/${module.id}`))
-        const IconComponent = (LucideIcons as any)[toIconKey(module.navigation.icon)] || LucideIcons.Box
+        const IconComponent = ICON_MAP[module.navigation.icon] ?? Box
 
         return (
           <div key={module.id} className="relative mx-2">

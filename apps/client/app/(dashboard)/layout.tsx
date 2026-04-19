@@ -80,19 +80,22 @@ function ClientHeader({
   labModeAvailable: boolean
 }) {
   return (
-    <div className="flex w-full items-center justify-between">
-      <div className="flex items-center gap-2">
-        {logoUrl && <img src={logoUrl} alt="Logo" className="h-6 w-auto" />}
-        <span className="text-sm font-medium">{displayName || 'Mon espace'}</span>
+    <div className="flex w-full items-center justify-between relative">
+      {/* Gauche — logo / brand */}
+      <div className="flex items-center gap-2 min-w-[160px]">
+        {logoUrl
+          ? <img src={logoUrl} alt="Logo" className="h-6 w-auto" />
+          : <span className="text-[#a78bfa] font-medium text-sm">MonprojetPro</span>
+        }
       </div>
-      <div className="flex items-center gap-2">
+
+      {/* Centre — toggle Lab / One */}
+      <div className="absolute left-1/2 -translate-x-1/2">
         <ModeToggle currentMode={activeMode} labModeAvailable={labModeAvailable} />
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/help">Aide</Link>
-        </Button>
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/support">Signaler</Link>
-        </Button>
+      </div>
+
+      {/* Droite — actions + avatar */}
+      <div className="flex items-center gap-1 min-w-[160px] justify-end">
         {authUserId && <NotificationBadge recipientId={authUserId} />}
         <ThemeToggle />
         <LogoutButton />
