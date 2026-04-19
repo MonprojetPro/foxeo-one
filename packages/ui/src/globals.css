@@ -1,9 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@source "../../../packages/modules/**/*.{tsx,ts}";
-@source "../../../apps/client/**/*.{tsx,ts}";
-@source "../../../apps/hub/**/*.{tsx,ts}";
+@source "../../../packages/**/*.{tsx,ts}";
+@source "../../../apps/**/*.{tsx,ts}";
 
 @custom-variant dark (&:is(.dark *));
 
