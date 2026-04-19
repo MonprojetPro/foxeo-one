@@ -15,6 +15,8 @@ import { useEffect } from 'react'
 export function ThemeClassSetter({ activeMode }: { activeMode: 'lab' | 'one' }) {
   useEffect(() => {
     const root = document.documentElement
+    // Lab/One = dark uniquement (pas de toggle thème côté client)
+    root.classList.add('dark')
     root.classList.remove('theme-hub', 'theme-lab', 'theme-one')
     root.classList.add(`theme-${activeMode}`)
     root.dataset.theme = activeMode

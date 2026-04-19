@@ -94,9 +94,8 @@ function ClientHeader({
       </div>
 
       {/* Droite — actions + avatar */}
-      <div className="flex items-center gap-1 min-w-[160px] justify-end">
+      <div className="flex items-center gap-2 min-w-[160px] justify-end">
         {authUserId && <NotificationBadge recipientId={authUserId} />}
-        <ThemeToggle />
         <LogoutButton />
       </div>
     </div>
