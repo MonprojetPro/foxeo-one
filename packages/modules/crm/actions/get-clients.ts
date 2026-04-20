@@ -125,8 +125,9 @@ export async function getClients(
     }
 
     // Transform snake_case DB fields to camelCase with Zod validation at boundary
-    const clients: ClientListItem[] = data.map((client) =>
-      ClientListItemSchema.parse({
+    const clients: ClientListItem[] = []
+    for (const client of data) {
+      const parsed = ClientListItemSchema.safeParse({
         id: client.id,
         firstName: client.first_name ?? undefined,
         name: client.name,
@@ -145,7 +146,12 @@ export async function getClients(
         projectType: ('project_type' in client ? client.project_type : null) ?? null,
         leadMessage: ('lead_message' in client ? client.lead_message : null) ?? null,
       })
-    )
+      if (parsed.success) {
+        clients.push(parsed.data)
+      } else {
+        console.error('[CRM:GET_CLIENTS] Invalid client data — skipped:', client.id, parsed.error.issues)
+      }
+    }
 
     return successResponse(clients)
   } catch (error) {
