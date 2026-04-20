@@ -30,6 +30,10 @@ export { useStepSubmissions } from './hooks/use-step-submissions'
 // Components — Abandonment (Story 9.3)
 export { AbandonParcoursDialog } from './components/abandon-parcours-dialog'
 
+// Components — Elio Step Config (Story 14.1)
+export { StepElioConfigPanel } from './components/step-elio-config-panel'
+export { ParcoursHubTab } from './components/parcours-hub-tab'
+
 // Actions
 export { getParcours } from './actions/get-parcours'
 export { updateStepStatus } from './actions/update-step-status'
@@ -43,6 +47,9 @@ export { requestParcoursAbandonment } from './actions/request-abandonment'
 export { reactivateParcours } from './actions/reactivate-parcours'
 export { startLabExitKit } from './actions/start-lab-exit-kit'
 export type { StartLabExitKitInput } from './actions/start-lab-exit-kit'
+export { getStepElioConfig } from './actions/get-step-elio-config'
+export { upsertStepElioConfig } from './actions/upsert-step-elio-config'
+export { getEffectiveElioConfig } from './actions/get-effective-elio-config'
 
 // Types
 export type {
@@ -57,6 +64,10 @@ export type {
   UpdateStepStatusInput,
   CompleteStepInput,
   SkipStepInput,
+  ElioStepConfig,
+  ElioStepConfigDB,
+  EffectiveElioConfig,
+  UpsertElioStepConfigInput,
   // Submission types
   StepSubmission,
   StepSubmissionDB,
@@ -70,7 +81,7 @@ export type {
   ValidateSubmissionResult,
 } from './types/parcours.types'
 
-export { ParcoursStepStatusValues, SubmissionStatusValues, ValidateDecisionValues, ParcoursStatusValues, ABANDONMENT_REASONS } from './types/parcours.types'
+export { ParcoursStepStatusValues, SubmissionStatusValues, ValidateDecisionValues, ParcoursStatusValues, ABANDONMENT_REASONS, ALLOWED_ELIO_MODELS, DEFAULT_ELIO_MODEL, DEFAULT_ELIO_TEMPERATURE, DEFAULT_ELIO_MAX_TOKENS } from './types/parcours.types'
 
 export type {
   ParcoursStatus,

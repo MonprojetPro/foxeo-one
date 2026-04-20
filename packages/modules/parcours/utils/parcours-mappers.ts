@@ -1,4 +1,4 @@
-import type { ParcoursDB, ParcoursStepDB, Parcours, ParcoursStep } from '../types/parcours.types'
+import type { ParcoursDB, ParcoursStepDB, Parcours, ParcoursStep, ElioStepConfigDB, ElioStepConfig } from '../types/parcours.types'
 
 export function toParcours(db: ParcoursDB): Parcours {
   return {
@@ -30,6 +30,22 @@ export function toParcoursStep(db: ParcoursStepDB): ParcoursStep {
     completedAt: db.completed_at,
     validationRequired: db.validation_required,
     validationId: db.validation_id,
+    createdAt: db.created_at,
+    updatedAt: db.updated_at,
+  }
+}
+
+export function toElioStepConfig(db: ElioStepConfigDB): ElioStepConfig {
+  return {
+    id: db.id,
+    stepId: db.step_id,
+    personaName: db.persona_name,
+    personaDescription: db.persona_description,
+    systemPromptOverride: db.system_prompt_override,
+    model: db.model,
+    temperature: db.temperature,
+    maxTokens: db.max_tokens,
+    customInstructions: db.custom_instructions,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
   }

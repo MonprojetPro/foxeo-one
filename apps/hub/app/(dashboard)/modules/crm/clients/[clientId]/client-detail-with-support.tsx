@@ -2,7 +2,7 @@
 
 import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions } from '@monprojetpro/modules-crm'
 import { ClientSupportTab } from '@monprojetpro/modules-support'
-import { SubmissionsList } from '@monprojetpro/module-parcours'
+import { SubmissionsList, ParcoursHubTab } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
 import { LabBillingTab, getClientLabStatus } from '@monprojetpro/modules-facturation'
 import { ClientExportButton } from '@monprojetpro/module-admin'
@@ -11,7 +11,7 @@ import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
 import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings } from 'lucide-react'
+import { Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings, GitBranch } from 'lucide-react'
 
 interface ClientDetailWithSupportProps {
   client: Client
@@ -65,6 +65,12 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         label: 'Soumissions',
         icon: ClipboardList, color: '#34d399',
         content: <SubmissionsList clientId={client.id} />,
+      },
+      {
+        value: 'parcours',
+        label: 'Parcours',
+        icon: GitBranch, color: '#a78bfa',
+        content: <ParcoursHubTab clientId={client.id} />,
       },
       {
         value: 'elio-config',

@@ -184,6 +184,70 @@ export interface ValidateSubmissionResult {
   stepCompleted: boolean
 }
 
+// --- Elio Step Config (Story 14.1) ---
+
+export const ALLOWED_ELIO_MODELS = [
+  'claude-haiku-4-5-20251001',
+  'claude-sonnet-4-6',
+  'claude-opus-4-6',
+] as const
+export type AllowedElioModel = typeof ALLOWED_ELIO_MODELS[number]
+
+export const DEFAULT_ELIO_MODEL: AllowedElioModel = 'claude-sonnet-4-6'
+export const DEFAULT_ELIO_TEMPERATURE = 1.0
+export const DEFAULT_ELIO_MAX_TOKENS = 2000
+
+export interface ElioStepConfigDB {
+  id: string
+  step_id: string
+  persona_name: string
+  persona_description: string | null
+  system_prompt_override: string | null
+  model: string
+  temperature: number
+  max_tokens: number
+  custom_instructions: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ElioStepConfig {
+  id: string
+  stepId: string
+  personaName: string
+  personaDescription: string | null
+  systemPromptOverride: string | null
+  model: string
+  temperature: number
+  maxTokens: number
+  customInstructions: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EffectiveElioConfig {
+  personaName: string
+  personaDescription: string | null
+  systemPromptOverride: string | null
+  model: string
+  temperature: number
+  maxTokens: number
+  customInstructions: string | null
+  source: 'step' | 'global'
+}
+
+export const UpsertElioStepConfigInput = z.object({
+  stepId: z.string().uuid('stepId invalide'),
+  personaName: z.string().min(1, 'Le nom du persona est requis').max(100),
+  personaDescription: z.string().max(500).nullable().optional(),
+  systemPromptOverride: z.string().max(4000).nullable().optional(),
+  model: z.enum(ALLOWED_ELIO_MODELS, { errorMap: () => ({ message: 'Modèle non autorisé' }) }),
+  temperature: z.number().min(0).max(2),
+  maxTokens: z.number().int().min(100).max(8000),
+  customInstructions: z.string().max(2000).nullable().optional(),
+})
+export type UpsertElioStepConfigInput = z.infer<typeof UpsertElioStepConfigInput>
+
 // --- Parcours Abandonment (Story 9.3) ---
 
 export const ParcoursStatusValues = ['en_cours', 'suspendu', 'termine', 'abandoned'] as const
