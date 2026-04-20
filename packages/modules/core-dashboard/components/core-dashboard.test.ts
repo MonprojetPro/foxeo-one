@@ -132,22 +132,25 @@ describe('CoreDashboard', () => {
       expect(container.textContent).toContain('Contactez MiKL')
     })
 
-    it('renders MonprojetPro One fallback when no custom branding', () => {
+    it('renders without logo when no custom branding', () => {
       const { container } = render(
         CoreDashboard({
           clientConfig: makeConfig({ customBranding: undefined }),
           clientName: 'Test',
         })
       )
-      expect(container.textContent).toContain('MonprojetPro One')
+      // Le nouveau design n'affiche pas le nom de marque sans logo — vérifier l'absence d'img
+      expect(container.querySelector('img')).toBeNull()
     })
 
-    it('renders activity skeleton sections', () => {
+    it('renders activity feed when modules are active', () => {
       const { container } = render(
         CoreDashboard({ clientConfig: makeConfig(), clientName: 'Test' })
       )
-      expect(container.textContent).toContain('Derniers messages MiKL')
-      expect(container.textContent).toContain('Documents récents')
+      expect(container.textContent).toContain('Activité récente')
+      // L'ActivityFeed affiche les raccourcis vers modules actifs (pas de données fictives)
+      expect(container.textContent).toContain('Chat')
+      expect(container.textContent).toContain('Documents')
     })
 
     it('renders Elio access when elio is in active modules', () => {
