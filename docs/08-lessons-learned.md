@@ -157,6 +157,7 @@
   errorResponse('msg', 'CODE', { message: err instanceof Error ? err.message : String(err) })
   ```
 - **Prevention** : Ne jamais passer d'objet `Error` ou d'objet Supabase brut en `details` d'une `errorResponse`. Toujours extraire `.message` en string.
+- **Extension (2026-04-20)** : même pattern avec `ZodError` — `.parse()` lève une ZodError (objet complexe non-sérialisable) attrapée dans le `catch` et passée en `details`. RSC crash silencieux : l'UI affiche vide. **Règle dérivée** : dans les Server Actions listant des entités (map/transform), toujours utiliser `.safeParse()` (jamais `.parse()`) pour ne jamais lever d'exception Zod attrapée par le catch global.
 - **Agents impliques** : SPARK (dev), ATLAS (documentation)
 
 ---
