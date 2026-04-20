@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Input, Textarea, showSuccess, showError } from '@monprojetpro/ui'
 import { getStepElioConfig } from '../actions/get-step-elio-config'
@@ -51,7 +51,7 @@ export function StepElioConfigPanel({ stepId, stepTitle, stepNumber, onClose }: 
   const [form, setForm] = useState<FormState | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
-  const { isLoading, error: loadError } = useQuery({
+  const { data: queryData, isLoading, error: loadError } = useQuery({
     queryKey: ['elio-step-config', stepId],
     queryFn: async () => {
       const result = await getStepElioConfig({ stepId })
@@ -59,26 +59,27 @@ export function StepElioConfigPanel({ stepId, stepTitle, stepNumber, onClose }: 
       return result.data
     },
     staleTime: 2 * 60 * 1_000,
-    onSuccess: (data) => {
-      if (form === null) {
-        setForm(
-          data
-            ? {
-                personaName: data.personaName,
-                personaDescription: data.personaDescription ?? '',
-                systemPromptOverride: data.systemPromptOverride ?? '',
-                model: (ALLOWED_ELIO_MODELS as readonly string[]).includes(data.model)
-                  ? (data.model as typeof ALLOWED_ELIO_MODELS[number])
-                  : DEFAULT_ELIO_MODEL,
-                temperature: data.temperature,
-                maxTokens: data.maxTokens,
-                customInstructions: data.customInstructions ?? '',
-              }
-            : DEFAULT_FORM
-        )
-      }
-    },
-  } as Parameters<typeof useQuery>[0])
+  })
+
+  // Pré-remplir le formulaire quand les données sont chargées (TanStack v5 — pas de onSuccess)
+  useEffect(() => {
+    if (isLoading || form !== null) return
+    setForm(
+      queryData
+        ? {
+            personaName: queryData.personaName,
+            personaDescription: queryData.personaDescription ?? '',
+            systemPromptOverride: queryData.systemPromptOverride ?? '',
+            model: (ALLOWED_ELIO_MODELS as readonly string[]).includes(queryData.model)
+              ? (queryData.model as typeof ALLOWED_ELIO_MODELS[number])
+              : DEFAULT_ELIO_MODEL,
+            temperature: queryData.temperature,
+            maxTokens: queryData.maxTokens,
+            customInstructions: queryData.customInstructions ?? '',
+          }
+        : DEFAULT_FORM
+    )
+  }, [isLoading, queryData, form])
 
   const currentForm = form ?? DEFAULT_FORM
 
