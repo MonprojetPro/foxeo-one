@@ -92,13 +92,13 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         content: (
           <div className="space-y-6">
             <ClientLabTabContent clientId={client.id} />
-            <LabBillingTab clientId={client.id} clientName={client.name} />
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
                 Configuration Élio par étape
               </h3>
               <ParcoursHubTab clientId={client.id} />
             </div>
+            <LabBillingTab clientId={client.id} clientName={client.name} />
           </div>
         ),
       },
