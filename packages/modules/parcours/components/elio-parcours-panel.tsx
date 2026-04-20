@@ -44,7 +44,7 @@ export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted }
         className="inline-flex items-center mt-3 border border-[#a78bfa] text-[#a78bfa] hover:bg-[#1e1557] text-sm px-4 py-2 rounded-lg transition-colors"
         aria-label="Ouvrir le chat Élio"
       >
-        Parler à Élio →
+        Continuer avec Élio →
       </Link>
     </div>
   )

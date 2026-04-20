@@ -5,7 +5,7 @@ export const manifest: ModuleManifest = {
   name: 'Élio — Assistant IA',
   description: 'Assistant IA personnel pour le parcours Lab et le dashboard One',
   version: '1.0.0',
-  targets: ['hub', 'client-lab', 'client-one'],
+  targets: ['hub', 'client-one'],
   navigation: {
     label: 'Chat Élio',
     icon: 'bot',

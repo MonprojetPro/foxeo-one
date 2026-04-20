@@ -13,6 +13,7 @@ import { manifest as elioMani } from '@monprojetpro/module-elio/manifest'
 import { manifest as chatMani } from '@monprojetpro/modules-chat/manifest'
 import { manifest as docsMani } from '@monprojetpro/module-documents/manifest'
 import { manifest as validationMani } from '@monprojetpro/modules-validation-hub/manifest'
+import { manifest as visioMani } from '@monprojetpro/module-visio/manifest'
 import { coreDashboardManifest as coreMani } from '@monprojetpro/module-core-dashboard/manifest'
 import type { ModuleManifest } from '@monprojetpro/types'
 
@@ -21,6 +22,7 @@ const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
   chatMani,
   docsMani,
   elioMani,
+  visioMani,
   validationMani,
   coreMani,
 ]
