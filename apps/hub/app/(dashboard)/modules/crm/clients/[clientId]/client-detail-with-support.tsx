@@ -11,7 +11,7 @@ import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
 import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings, GitBranch } from 'lucide-react'
+import { Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings } from 'lucide-react'
 
 interface ClientDetailWithSupportProps {
   client: Client
@@ -67,12 +67,6 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         content: <SubmissionsList clientId={client.id} />,
       },
       {
-        value: 'parcours',
-        label: 'Parcours',
-        icon: GitBranch, color: '#a78bfa',
-        content: <ParcoursHubTab clientId={client.id} />,
-      },
-      {
         value: 'elio-config',
         label: 'Élio',
         icon: Bot, color: '#f59e0b',
@@ -99,6 +93,12 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
           <div className="space-y-6">
             <ClientLabTabContent clientId={client.id} />
             <LabBillingTab clientId={client.id} clientName={client.name} />
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                Configuration Élio par étape
+              </h3>
+              <ParcoursHubTab clientId={client.id} />
+            </div>
           </div>
         ),
       },
