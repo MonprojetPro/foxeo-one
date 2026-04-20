@@ -115,27 +115,39 @@ describe('ParcoursOverview', () => {
     expect(screen.getByText(/impossible de charger votre parcours/i)).toBeDefined()
   })
 
-  it('renders parcours name and description', () => {
+  it('renders greeting and current step subtitle', () => {
     mockUseParcours.mockReturnValue({ data: mockParcours, isPending: false, error: null })
 
-    render(<ParcoursOverview clientId={CLIENT_ID} />)
-    expect(screen.getByText('Mon Parcours Lab')).toBeDefined()
-    expect(screen.getByText('Votre parcours de création.')).toBeDefined()
+    const { container } = render(<ParcoursOverview clientId={CLIENT_ID} />)
+    // Greeting header
+    expect(container.textContent).toContain('Bonjour')
+    // Current step shown as subtitle (step 2 in mock)
+    expect(container.textContent).toContain('Étape en cours')
+    expect(container.textContent).toContain('Étape 2')
+  })
+
+  it('renders greeting with first name when provided', () => {
+    mockUseParcours.mockReturnValue({ data: mockParcours, isPending: false, error: null })
+
+    const { container } = render(<ParcoursOverview clientId={CLIENT_ID} clientFirstName="Sophie" />)
+    expect(container.textContent).toContain('Bonjour, Sophie')
   })
 
   it('renders progress information', () => {
     mockUseParcours.mockReturnValue({ data: mockParcours, isPending: false, error: null })
 
-    render(<ParcoursOverview clientId={CLIENT_ID} />)
-    expect(screen.getByText(/50% complété/i)).toBeDefined()
+    const { container } = render(<ParcoursOverview clientId={CLIENT_ID} />)
+    expect(container.textContent).toContain('50%')
+    expect(container.textContent).toContain('Progression globale')
   })
 
   it('renders all step titles in grid', () => {
     mockUseParcours.mockReturnValue({ data: mockParcours, isPending: false, error: null })
 
-    render(<ParcoursOverview clientId={CLIENT_ID} />)
-    expect(screen.getByText('Étape 1')).toBeDefined()
-    expect(screen.getByText('Étape 2')).toBeDefined()
+    const { container } = render(<ParcoursOverview clientId={CLIENT_ID} />)
+    // Step titles appear in cards (multiple occurrences possible due to subtitle/step labels)
+    expect(container.textContent).toContain('Étape 1')
+    expect(container.textContent).toContain('Étape 2')
   })
 
   it('calls useParcours with clientId', () => {

@@ -47,20 +47,25 @@ export function ParcoursOverview({ clientId, clientFirstName }: ParcoursOverview
         </div>
       )}
 
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-[#f9fafb]">{parcours.name}</h1>
-        {parcours.description && (
-          <p className="text-sm text-[#9ca3af]">{parcours.description}</p>
-        )}
+      {/* Header — Claude Design : greeting + étape en cours */}
+      <div>
+        <h1 className="text-[24px] font-bold text-[#f9fafb] tracking-[-0.02em]">
+          Bonjour{clientFirstName ? `, ${clientFirstName}` : ''} ! 👋
+        </h1>
+        <p className="text-[13px] text-[#9ca3af] mt-1.5">
+          {currentStep
+            ? `Étape en cours : ${currentStep.title}`
+            : allCompleted
+              ? 'Toutes les étapes sont complètes — graduation proche !'
+              : (parcours.description ?? 'Mon Parcours d\'incubation')}
+        </p>
       </div>
 
-      {/* Progress bar — design Lovable */}
+      {/* Progress bar — Claude Design */}
       <ParcoursProgressBar
         completedSteps={parcours.completedSteps}
         totalSteps={parcours.totalSteps}
         progressPercent={parcours.progressPercent}
-        className="max-w-[900px]"
       />
 
       {/* Grille 3 colonnes — design Lovable (remplace la timeline verticale) */}
