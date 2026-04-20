@@ -43,7 +43,6 @@ export function ModeToggle({
   const handleToggle = (newMode: 'lab' | 'one') => {
     if (newMode === mode) return
     setMode(newMode)
-    // Cookie un an, scoped à toute l'app
     document.cookie = `${MODE_TOGGLE_COOKIE}=${newMode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
     onToggle?.(newMode)
     startTransition(() => router.refresh())
@@ -53,7 +52,7 @@ export function ModeToggle({
     <div
       role="group"
       aria-label="Bascule Mode Lab / Mode One"
-      className="bg-[#0f0f0f] rounded-full border border-[#3d3d3d] flex h-8 w-[280px]"
+      className="bg-[#0f0f0f] border border-[#3d3d3d] rounded-full flex h-8 w-[288px] p-[3px]"
     >
       <button
         type="button"
@@ -61,13 +60,13 @@ export function ModeToggle({
         disabled={isPending}
         aria-pressed={mode === 'lab'}
         className={cn(
-          'flex-1 rounded-full text-sm transition-all font-medium',
+          'flex-1 rounded-full text-[12px] font-semibold tracking-[0.04em] uppercase transition-all duration-200',
           mode === 'lab'
             ? 'bg-[#7c3aed] text-white'
             : 'text-[#6b7280] hover:text-white'
         )}
       >
-        Lab
+        Mode Lab
       </button>
       <button
         type="button"
@@ -75,13 +74,13 @@ export function ModeToggle({
         disabled={isPending}
         aria-pressed={mode === 'one'}
         className={cn(
-          'flex-1 rounded-full text-sm transition-all font-medium',
+          'flex-1 rounded-full text-[12px] font-semibold tracking-[0.04em] uppercase transition-all duration-200',
           mode === 'one'
-            ? 'bg-[#7c3aed] text-white'
+            ? 'bg-[#16a34a] text-white'
             : 'text-[#6b7280] hover:text-white'
         )}
       >
-        One
+        Mode One
       </button>
     </div>
   )

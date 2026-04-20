@@ -63,29 +63,42 @@ function ClientSidebar({
 
 function ClientHeader({
   authUserId,
-  displayName,
   logoUrl,
   activeMode,
   labModeAvailable,
+  userInitials,
 }: {
   authUserId: string
-  displayName?: string | null
   logoUrl?: string | null
   activeMode: 'lab' | 'one'
   labModeAvailable: boolean
+  userInitials: string
 }) {
+  const accentFrom = activeMode === 'lab' ? '#7c3aed' : '#16a34a'
+  const accentTo   = activeMode === 'lab' ? '#a78bfa' : '#4ade80'
+  const accentText = activeMode === 'lab' ? '#a78bfa' : '#4ade80'
+
   return (
     <div className="flex w-full items-center justify-between relative">
-      {/* Gauche — logo / brand */}
-      <div className="flex items-center gap-2 min-w-[160px]">
-        {logoUrl
-          ? <img src={logoUrl} alt="Logo" className="h-6 w-auto" />
-          : (
-            <div className="bg-[#1e1e1e] border border-[#3d3d3d] rounded-lg px-3 py-1.5">
-              <span className="text-[#a78bfa] font-medium text-sm">MonprojetPro</span>
+      {/* Gauche — logo MonprojetPro */}
+      <div className="flex items-center gap-2.5" style={{ width: 220 }}>
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="Logo" className="h-7 w-auto object-contain" />
+        ) : (
+          <>
+            <div
+              className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-white font-extrabold text-[14px] tracking-[-0.04em] shrink-0"
+              style={{ background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})` }}
+            >
+              M
             </div>
-          )
-        }
+            <div className="text-[15px] font-bold leading-none tracking-[-0.01em]">
+              <span style={{ color: accentText }}>Monprojet</span>
+              <span className="text-[#f9fafb]">Pro</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Centre — toggle Lab / One */}
@@ -93,9 +106,17 @@ function ClientHeader({
         <ModeToggle currentMode={activeMode} labModeAvailable={labModeAvailable} />
       </div>
 
-      {/* Droite — actions + avatar */}
-      <div className="flex items-center gap-2 min-w-[160px] justify-end">
+      {/* Droite — cloche + avatar */}
+      <div className="flex items-center gap-3.5" style={{ width: 220, justifyContent: 'flex-end' }}>
         {authUserId && <NotificationBadge recipientId={authUserId} />}
+        <div
+          className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white font-bold text-[12px] tracking-[0.5px] shrink-0 cursor-default"
+          style={{ background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})` }}
+          title="Compte"
+          aria-label="Avatar utilisateur"
+        >
+          {userInitials}
+        </div>
         <LogoutButton />
       </div>
     </div>
@@ -146,6 +167,11 @@ export default async function DashboardLayout({
   const clientId = clientRecord?.id ?? ''
   const operatorId = clientRecord?.operator_id ?? ''
 
+  // Calcul des initiales pour l'avatar header
+  const firstName = clientRecord?.first_name ?? ''
+  const lastName  = clientRecord?.name ?? ''
+  const userInitials = ((firstName[0] ?? '') + (lastName[0] ?? '')).toUpperCase() || 'CL'
+
   // Normalize joined relation (array or object)
   const configRelation = clientRecord?.client_configs
   const clientConfig = Array.isArray(configRelation) ? configRelation[0] : configRelation
@@ -175,7 +201,6 @@ export default async function DashboardLayout({
   const customBranding = (clientConfig?.custom_branding ?? null) as CustomBranding | null
   const accentColor = customBranding?.accentColor ?? null
   const logoUrl = customBranding?.logoUrl ?? null
-  const displayName = customBranding?.displayName ?? null
 
   // Build accent color CSS override style
   const accentStyle: React.CSSProperties = accentColor
@@ -193,10 +218,10 @@ export default async function DashboardLayout({
         header={
           <ClientHeader
             authUserId={user?.id ?? ''}
-            displayName={displayName}
             logoUrl={logoUrl}
             activeMode={activeMode}
             labModeAvailable={labModeAvailable}
+            userInitials={userInitials}
           />
         }
       >
