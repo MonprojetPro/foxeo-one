@@ -33,7 +33,7 @@ export function DashboardShell({
 
   return (
     <div
-      className="flex h-screen overflow-hidden bg-background text-foreground"
+      className="flex flex-col h-screen overflow-hidden bg-background text-foreground"
       data-density={density}
     >
       {/* Skip to content — WCAG 2.4.1 */}
@@ -44,47 +44,51 @@ export function DashboardShell({
         Aller au contenu principal
       </a>
 
-      {/* Desktop sidebar */}
-      {sidebar && (
-        <aside
-          className="hidden md:flex md:flex-col md:w-[240px] border-r border-[#2d2d2d] bg-[#141414]"
-          role="navigation"
-          aria-label="Menu principal"
-        >
-          {sidebar}
-        </aside>
+      {/* Header — pleine largeur, au-dessus de tout */}
+      {header && (
+        <header className="flex h-[60px] shrink-0 items-center border-b border-[#2d2d2d] px-5 bg-[#141414] z-10">
+          {/* Mobile hamburger */}
+          {sidebar && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden mr-2"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Ouvrir le menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          {header}
+        </header>
       )}
 
-      {/* Mobile sidebar (Sheet drawer) */}
-      {sidebar && isMobile && (
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent side="left" className="w-[240px] p-0 bg-[#141414]">
-            <SheetTitle className="sr-only">Menu de navigation</SheetTitle>
-            <nav role="navigation" aria-label="Menu principal">
-              {sidebar}
-            </nav>
-          </SheetContent>
-        </Sheet>
-      )}
-
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {header && (
-          <header className="flex h-[60px] items-center border-b border-[#2d2d2d] px-4 bg-[#141414]">
-            {/* Mobile hamburger */}
-            {sidebar && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden mr-2"
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Ouvrir le menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            )}
-            {header}
-          </header>
+      {/* Corps — sidebar + contenu */}
+      <div className="flex flex-1 min-h-0">
+        {/* Desktop sidebar */}
+        {sidebar && (
+          <aside
+            className="hidden md:flex md:flex-col md:w-[240px] shrink-0 border-r border-[#2d2d2d] bg-[#141414]"
+            role="navigation"
+            aria-label="Menu principal"
+          >
+            {sidebar}
+          </aside>
         )}
+
+        {/* Mobile sidebar (Sheet drawer) */}
+        {sidebar && isMobile && (
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetContent side="left" className="w-[240px] p-0 bg-[#141414]">
+              <SheetTitle className="sr-only">Menu de navigation</SheetTitle>
+              <nav role="navigation" aria-label="Menu principal">
+                {sidebar}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        )}
+
+        {/* Contenu principal */}
         <main
           id="main-content"
           className={cn('flex-1 overflow-y-auto', densityClasses[density])}
