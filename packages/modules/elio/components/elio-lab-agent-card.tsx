@@ -1,15 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Archive, Copy, Bot } from 'lucide-react'
+import { Bot } from 'lucide-react'
 import type { ElioLabAgent } from '../actions/sync-elio-lab-agents'
-
-
 
 interface ElioLabAgentCardProps {
   agent: ElioLabAgent
-  onArchive: (agentId: string) => Promise<void>
-  onDuplicate: (agentId: string) => Promise<void>
+  onDeactivate: (agentId: string) => Promise<void>
+  onActivate: (agentId: string) => Promise<void>
 }
 
 const MODEL_LABELS: Record<string, string> = {
@@ -18,32 +16,20 @@ const MODEL_LABELS: Record<string, string> = {
   'claude-opus-4-6': 'Opus',
 }
 
-export function ElioLabAgentCard({ agent, onArchive, onDuplicate }: ElioLabAgentCardProps) {
-  const [confirmArchive, setConfirmArchive] = useState(false)
-  const [loadingArchive, setLoadingArchive] = useState(false)
-  const [loadingDuplicate, setLoadingDuplicate] = useState(false)
+export function ElioLabAgentCard({ agent, onDeactivate, onActivate }: ElioLabAgentCardProps) {
+  const [loading, setLoading] = useState(false)
   const [imgError, setImgError] = useState(false)
 
-  async function handleArchive() {
-    if (!confirmArchive) {
-      setConfirmArchive(true)
-      return
-    }
-    setLoadingArchive(true)
+  async function handleToggle() {
+    setLoading(true)
     try {
-      await onArchive(agent.id)
+      if (agent.archived) {
+        await onActivate(agent.id)
+      } else {
+        await onDeactivate(agent.id)
+      }
     } finally {
-      setLoadingArchive(false)
-      setConfirmArchive(false)
-    }
-  }
-
-  async function handleDuplicate() {
-    setLoadingDuplicate(true)
-    try {
-      await onDuplicate(agent.id)
-    } finally {
-      setLoadingDuplicate(false)
+      setLoading(false)
     }
   }
 
@@ -53,7 +39,7 @@ export function ElioLabAgentCard({ agent, onArchive, onDuplicate }: ElioLabAgent
     <div
       className={`relative flex flex-col gap-4 rounded-xl border p-5 transition-colors ${
         agent.archived
-          ? 'border-border/40 bg-card/40 opacity-60'
+          ? 'border-border/30 bg-card/20 opacity-50'
           : 'border-border/60 bg-card hover:border-cyan-500/40'
       }`}
     >
@@ -61,7 +47,7 @@ export function ElioLabAgentCard({ agent, onArchive, onDuplicate }: ElioLabAgent
       <div className="absolute right-4 top-4">
         {agent.archived ? (
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            Archivé
+            Inactif
           </span>
         ) : (
           <span className="rounded-full bg-cyan-500/10 px-2 py-0.5 text-xs font-medium text-cyan-400">
@@ -108,45 +94,15 @@ export function ElioLabAgentCard({ agent, onArchive, onDuplicate }: ElioLabAgent
       )}
 
       {/* Actions */}
-      {!agent.archived && (
-        <div className="flex items-center gap-2 pt-1">
-          <button
-            onClick={handleDuplicate}
-            disabled={loadingDuplicate}
-            className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-          >
-            <Copy className="h-3.5 w-3.5" />
-            {loadingDuplicate ? 'Copie…' : 'Dupliquer'}
-          </button>
-
-          {confirmArchive ? (
-            <div className="ml-auto flex items-center gap-1.5">
-              <span className="text-xs text-amber-400">Confirmer ?</span>
-              <button
-                onClick={handleArchive}
-                disabled={loadingArchive}
-                className="rounded-md bg-amber-500/10 px-2 py-1 text-xs text-amber-400 transition-colors hover:bg-amber-500/20 disabled:opacity-50"
-              >
-                {loadingArchive ? '…' : 'Oui'}
-              </button>
-              <button
-                onClick={() => setConfirmArchive(false)}
-                className="rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
-              >
-                Non
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleArchive}
-              className="ml-auto flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <Archive className="h-3.5 w-3.5" />
-              Archiver
-            </button>
-          )}
-        </div>
-      )}
+      <div className="flex items-center justify-end pt-1">
+        <button
+          onClick={handleToggle}
+          disabled={loading}
+          className="rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+        >
+          {loading ? '…' : agent.archived ? 'Activer' : 'Désactiver'}
+        </button>
+      </div>
     </div>
   )
 }

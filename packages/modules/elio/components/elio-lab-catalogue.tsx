@@ -7,7 +7,7 @@ import { ElioLabAgentCard } from './elio-lab-agent-card'
 import { getElioLabAgents } from '../actions/get-elio-lab-agents'
 import { syncElioLabAgents } from '../actions/sync-elio-lab-agents'
 import { archiveElioLabAgent } from '../actions/archive-elio-lab-agent'
-import { duplicateElioLabAgent } from '../actions/duplicate-elio-lab-agent'
+import { activateElioLabAgent } from '../actions/activate-elio-lab-agent'
 import type { ElioLabAgent } from '../actions/sync-elio-lab-agents'
 
 interface ElioLabCatalogueProps {
@@ -18,12 +18,12 @@ export function ElioLabCatalogue({ initialAgents }: ElioLabCatalogueProps) {
   const queryClient = useQueryClient()
   const [syncing, setSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
-  const [showArchived, setShowArchived] = useState(false)
 
+  // Toujours afficher tous les agents (actifs + inactifs) — les inactifs sont grisés
   const { data: agents = initialAgents, isLoading } = useQuery({
-    queryKey: ['elio-lab-agents', showArchived],
+    queryKey: ['elio-lab-agents'],
     queryFn: async () => {
-      const res = await getElioLabAgents({ includeArchived: showArchived })
+      const res = await getElioLabAgents({ includeArchived: true })
       if (res.error) throw new Error(res.error.message)
       return res.data ?? []
     },
@@ -48,7 +48,7 @@ export function ElioLabCatalogue({ initialAgents }: ElioLabCatalogueProps) {
     }
   }, [queryClient])
 
-  const handleArchive = useCallback(
+  const handleDeactivate = useCallback(
     async (agentId: string) => {
       const res = await archiveElioLabAgent(agentId)
       if (res.error) throw new Error(res.error.message)
@@ -57,18 +57,17 @@ export function ElioLabCatalogue({ initialAgents }: ElioLabCatalogueProps) {
     [queryClient]
   )
 
-  const handleDuplicate = useCallback(
+  const handleActivate = useCallback(
     async (agentId: string) => {
-      const res = await duplicateElioLabAgent(agentId)
+      const res = await activateElioLabAgent(agentId)
       if (res.error) throw new Error(res.error.message)
       await queryClient.invalidateQueries({ queryKey: ['elio-lab-agents'] })
     },
     [queryClient]
   )
 
-  // La DB filtre déjà les archivés selon showArchived — pas de double-filtre côté client
-  const visibleAgents = agents
-  const archivedCount = agents.filter((a) => a.archived).length
+  const activeCount = agents.filter((a) => !a.archived).length
+  const inactiveCount = agents.filter((a) => a.archived).length
 
   return (
     <div className="p-6 space-y-6">
@@ -77,29 +76,19 @@ export function ElioLabCatalogue({ initialAgents }: ElioLabCatalogueProps) {
         <div>
           <h2 className="text-base font-semibold text-foreground">Catalogue d'agents Élio Lab</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {agents.filter((a) => !a.archived).length} agent{agents.filter((a) => !a.archived).length !== 1 ? 's' : ''} actif{agents.filter((a) => !a.archived).length !== 1 ? 's' : ''}
-            {archivedCount > 0 && ` · ${archivedCount} archivé${archivedCount !== 1 ? 's' : ''}`}
+            {activeCount} agent{activeCount !== 1 ? 's' : ''} actif{activeCount !== 1 ? 's' : ''}
+            {inactiveCount > 0 && ` · ${inactiveCount} inactif${inactiveCount !== 1 ? 's' : ''}`}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {archivedCount > 0 && (
-            <button
-              onClick={() => setShowArchived((v) => !v)}
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {showArchived ? 'Masquer archivés' : 'Voir archivés'}
-            </button>
-          )}
-          <button
-            onClick={handleSync}
-            disabled={syncing || isLoading}
-            className="flex items-center gap-2 rounded-lg bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Synchronisation…' : 'Synchroniser les agents'}
-          </button>
-        </div>
+        <button
+          onClick={handleSync}
+          disabled={syncing || isLoading}
+          className="flex items-center gap-2 rounded-lg bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+          {syncing ? 'Synchronisation…' : 'Synchroniser les agents'}
+        </button>
       </div>
 
       {/* Erreur sync */}
@@ -117,16 +106,16 @@ export function ElioLabCatalogue({ initialAgents }: ElioLabCatalogueProps) {
             <div key={i} className="h-48 animate-pulse rounded-xl border border-border/40 bg-card/40" />
           ))}
         </div>
-      ) : visibleAgents.length === 0 ? (
+      ) : agents.length === 0 ? (
         <ElioLabEmptyState />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleAgents.map((agent) => (
+          {agents.map((agent) => (
             <ElioLabAgentCard
               key={agent.id}
               agent={agent}
-              onArchive={handleArchive}
-              onDuplicate={handleDuplicate}
+              onDeactivate={handleDeactivate}
+              onActivate={handleActivate}
             />
           ))}
         </div>
