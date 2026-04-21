@@ -174,19 +174,42 @@
 
 > `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumules ~4,222+.
 
+### Epic 14 — Élio contextuel par étape (Lab avancé)
+
+| # | Story | Date commit | Delta vs précédent | Fichiers | Insertions | Suppressions | Net | Tests |
+|---|-------|-------------|-------------------|----------|------------|-------------|-----|-------|
+| 91 | 14.1 — Config Élio par étape, table elio_step_configs & CRUD Hub | 2026-04-20 | — | 14 | +1,313 | -4 | +1,309 | 30† |
+| 92 | 14.1b — Onglet Élio sidebar Hub + routes Lab/One/Hub | 2026-04-21 | — | 8 | +142 | -1 | +141 | 15† |
+| 93 | 14.2 — Catalogue agents Élio Lab — page Hub + sync + CRUD | 2026-04-21 | — | 23 | +1,252 | -57 | +1,195 | 27† |
+
+> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,294+.
+
+### Claude Design Integration (hors epic — refonte visuelle)
+
+| # | Tache | Date commit | Hash | Fichiers | Insertions | Suppressions | Net | Tests |
+|---|-------|-------------|------|----------|------------|-------------|-----|-------|
+| — | Claude Design — Lab Etape Detail 2-col + One Accueil redesign | 2026-04-19 | ee7d8ef | 3 | +258 | -168 | +90 | 25 |
+
+> Commit: `ee7d8ef` — `ui: Claude Design integration — parcours step detail 2-col + One dashboard redesign`
+> Fichiers: `parcours-step-detail.tsx`, `core-dashboard.tsx`, `core-dashboard.test.ts`
+> Design implémenté: layout 2 colonnes (contenu + chat Élio) pour Lab étape détail, refonte One Accueil (modules grid, suggestion Élio, ActivityFeed réel)
+
+---
+
 ## Totaux du projet
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **90** (88 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **92** (90 commits, dont 2 doubles et 1 triple) |
+| Integrations design (hors epic) | **1** (Claude Design — Lab+One visual refonte) |
 | Commits de correction post-story | **1** (code review retroactif + bug systemic) |
-| Fichiers totaux modifies | **2,323** |
-| Lignes inserees | **+175,297** |
-| Lignes supprimees | **-15,293** |
-| Lignes nettes ajoutees | **+160,004** |
-| Tests finaux | **~4,222+** |
-| Duree calendaire | **31 jours** (8 fev — 10 mars) |
-| Jours effectifs de dev | **~23 jours** |
+| Fichiers totaux modifies | **2,348** |
+| Lignes inserees | **+177,010** |
+| Lignes supprimees | **-15,466** |
+| Lignes nettes ajoutees | **+161,544** |
+| Tests finaux | **~4,267+** |
+| Duree calendaire | **73 jours** (8 fev — 21 avr) |
+| Jours effectifs de dev | **~26 jours** |
 
 ### Totaux par epic
 
