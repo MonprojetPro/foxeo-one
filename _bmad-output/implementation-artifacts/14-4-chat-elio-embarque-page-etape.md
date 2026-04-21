@@ -1,4 +1,4 @@
-# Story 14.2: Chat Élio embarqué dans la page étape
+# Story 14.4 : Chat Élio embarqué dans la page étape
 
 Status: ready-for-dev
 

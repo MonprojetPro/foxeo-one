@@ -1,6 +1,6 @@
 # Story 14.1 : Onglet "Élio" dans la sidebar Hub
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -55,4 +55,17 @@ afin d'**accéder à tout ce qui concerne les agents Élio (Lab, One, Hub) depui
 
 ## File List
 
-*(auto-généré à la complétion)*
+- `apps/hub/components/hub-sidebar-client.tsx` (modifié — icône Bot + item Élio)
+- `apps/hub/components/hub-sidebar-client.test.tsx` (modifié — mock facturation + tests Élio)
+- `apps/hub/app/(dashboard)/elio/page.tsx`
+- `apps/hub/app/(dashboard)/elio/layout.tsx`
+- `apps/hub/app/(dashboard)/elio/layout.test.tsx`
+- `apps/hub/app/(dashboard)/elio/lab/page.tsx`
+- `apps/hub/app/(dashboard)/elio/one/page.tsx`
+- `apps/hub/app/(dashboard)/elio/hub/page.tsx`
+
+## Completion Notes
+
+Commit: `639da86` — 2026-04-21.
+15 tests (11 sidebar + 4 layout), 8 fichiers, +141 lignes nettes.
+Fix collatéral : mock manquant `usePendingRemindersCount` dans le test sidebar existant (pre-existing failure).

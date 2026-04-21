@@ -1,4 +1,4 @@
-# Story 14.4: Panneau droit historique de l'étape
+# Story 14.8 : Panneau droit historique de l'étape
 
 Status: ready-for-dev
 

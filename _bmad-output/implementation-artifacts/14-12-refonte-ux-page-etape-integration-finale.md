@@ -1,4 +1,4 @@
-# Story 14.7: Refonte UX page étape — intégration finale
+# Story 14.12 : Refonte UX page étape — intégration finale
 
 Status: ready-for-dev
 

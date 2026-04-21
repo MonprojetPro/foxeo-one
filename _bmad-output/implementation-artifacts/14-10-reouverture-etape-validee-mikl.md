@@ -1,4 +1,4 @@
-# Story 14.6: Réouverture d'étape validée par MiKL
+# Story 14.10 : Réouverture d'étape validée par MiKL
 
 Status: ready-for-dev
 

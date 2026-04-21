@@ -1,6 +1,6 @@
 # Story 14.1: Config Élio par étape (table & CRUD Hub)
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -32,30 +32,30 @@ so that **chaque étape bénéficie d'un agent Élio spécialisé dans la théma
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Migration SQL `elio_step_configs` (AC: #1, #4, #5)
-  - [ ] 1.1 Créer migration `00096_create_elio_step_configs.sql`
-  - [ ] 1.2 Table avec colonnes : id (UUID PK DEFAULT gen_random_uuid()), step_id (UUID FK parcours_steps UNIQUE NOT NULL), persona_name (TEXT DEFAULT 'Élio'), persona_description (TEXT), system_prompt_override (TEXT), model (TEXT DEFAULT 'claude-sonnet-4-6'), temperature (NUMERIC DEFAULT 1.0 CHECK 0-2), max_tokens (INTEGER DEFAULT 2000 CHECK 100-8000), custom_instructions (TEXT), created_at, updated_at
-  - [ ] 1.3 RLS policies : `elio_step_configs_select_operator` (SELECT, is_operator()), `elio_step_configs_insert_operator` (INSERT, is_operator()), `elio_step_configs_update_operator` (UPDATE, is_operator()), `elio_step_configs_delete_operator` (DELETE, is_operator())
-  - [ ] 1.4 Trigger `trg_elio_step_configs_updated_at` sur `fn_update_updated_at()`
-  - [ ] 1.5 Index : `idx_elio_step_configs_step_id` sur step_id (déjà UNIQUE mais explicite)
+- [x] Task 1 — Migration SQL `elio_step_configs` (AC: #1, #4, #5)
+  - [x] 1.1 Créer migration `00096_create_elio_step_configs.sql`
+  - [x] 1.2 Table avec colonnes : id (UUID PK DEFAULT gen_random_uuid()), step_id (UUID FK parcours_steps UNIQUE NOT NULL), persona_name (TEXT DEFAULT 'Élio'), persona_description (TEXT), system_prompt_override (TEXT), model (TEXT DEFAULT 'claude-sonnet-4-6'), temperature (NUMERIC DEFAULT 1.0 CHECK 0-2), max_tokens (INTEGER DEFAULT 2000 CHECK 100-8000), custom_instructions (TEXT), created_at, updated_at
+  - [x] 1.3 RLS policies : `elio_step_configs_select_operator` (SELECT, is_operator()), `elio_step_configs_insert_operator` (INSERT, is_operator()), `elio_step_configs_update_operator` (UPDATE, is_operator()), `elio_step_configs_delete_operator` (DELETE, is_operator())
+  - [x] 1.4 Trigger `trg_elio_step_configs_updated_at` sur `fn_update_updated_at()`
+  - [x] 1.5 Index : `idx_elio_step_configs_step_id` sur step_id (déjà UNIQUE mais explicite)
 
-- [ ] Task 2 — Types TypeScript (AC: #1, #4)
-  - [ ] 2.1 Ajouter `ElioStepConfigDB` et `ElioStepConfig` dans `packages/modules/parcours/types/parcours.types.ts`
-  - [ ] 2.2 Ajouter schéma Zod `UpsertElioStepConfigInput`
+- [x] Task 2 — Types TypeScript (AC: #1, #4)
+  - [x] 2.1 Ajouter `ElioStepConfigDB` et `ElioStepConfig` dans `packages/modules/parcours/types/parcours.types.ts`
+  - [x] 2.2 Ajouter schéma Zod `UpsertElioStepConfigInput`
 
-- [ ] Task 3 — Server Actions Hub (AC: #2, #3, #4)
-  - [ ] 3.1 Créer `packages/modules/parcours/actions/get-step-elio-config.ts` — SELECT elio_step_configs WHERE step_id
-  - [ ] 3.2 Créer `packages/modules/parcours/actions/upsert-step-elio-config.ts` — UPSERT (INSERT ON CONFLICT step_id DO UPDATE)
-  - [ ] 3.3 Tests co-localisés pour les 2 actions
+- [x] Task 3 — Server Actions Hub (AC: #2, #3, #4)
+  - [x] 3.1 Créer `packages/modules/parcours/actions/get-step-elio-config.ts` — SELECT elio_step_configs WHERE step_id
+  - [x] 3.2 Créer `packages/modules/parcours/actions/upsert-step-elio-config.ts` — UPSERT (INSERT ON CONFLICT step_id DO UPDATE)
+  - [x] 3.3 Tests co-localisés pour les 2 actions
 
-- [ ] Task 4 — Composant UI Hub (AC: #1, #2, #3)
-  - [ ] 4.1 Créer `packages/modules/parcours/components/step-elio-config-panel.tsx` — formulaire complet avec tous les champs
-  - [ ] 4.2 Intégrer dans la page parcours Hub (bouton "Configurer Élio" par étape)
-  - [ ] 4.3 Test du composant panel
+- [x] Task 4 — Composant UI Hub (AC: #1, #2, #3)
+  - [x] 4.1 Créer `packages/modules/parcours/components/step-elio-config-panel.tsx` — formulaire complet avec tous les champs
+  - [x] 4.2 Intégrer dans la page parcours Hub (bouton "Configurer Élio" par étape)
+  - [x] 4.3 Test du composant panel
 
-- [ ] Task 5 — Helper fallback (AC: #4)
-  - [ ] 5.1 Créer `packages/modules/parcours/actions/get-effective-elio-config.ts` — retourne elio_step_configs si existe, sinon elio_configs global
-  - [ ] 5.2 Test du fallback
+- [x] Task 5 — Helper fallback (AC: #4)
+  - [x] 5.1 Créer `packages/modules/parcours/actions/get-effective-elio-config.ts` — retourne elio_step_configs si existe, sinon elio_configs global
+  - [x] 5.2 Test du fallback
 
 ## Dev Notes
 
@@ -122,4 +122,24 @@ packages/modules/parcours/components/step-elio-config-panel.test.tsx # CRÉER
 
 ## File List (auto-generated at completion)
 
+- `supabase/migrations/00096_create_elio_step_configs.sql`
+- `packages/modules/parcours/types/parcours.types.ts` (modifié)
+- `packages/modules/parcours/utils/parcours-mappers.ts` (modifié)
+- `packages/modules/parcours/actions/get-step-elio-config.ts`
+- `packages/modules/parcours/actions/get-step-elio-config.test.ts`
+- `packages/modules/parcours/actions/upsert-step-elio-config.ts`
+- `packages/modules/parcours/actions/upsert-step-elio-config.test.ts`
+- `packages/modules/parcours/actions/get-effective-elio-config.ts`
+- `packages/modules/parcours/actions/get-effective-elio-config.test.ts`
+- `packages/modules/parcours/components/step-elio-config-panel.tsx`
+- `packages/modules/parcours/components/step-elio-config-panel.test.tsx`
+- `packages/modules/parcours/components/parcours-hub-tab.tsx`
+- `packages/modules/parcours/index.ts` (modifié)
+- `apps/hub/app/(dashboard)/modules/crm/clients/[clientId]/client-detail-with-support.tsx` (modifié)
+
 ## Completion Notes
+
+Commit: `b9d55f5` — 2026-04-20.
+30 tests, 14 fichiers, +1,313 lignes nettes.
+SCAN issues corrigées: validation inputs stepId/clientId, enum modèles (ALLOWED_ELIO_MODELS), gestion erreur chargement panel, migration vers TanStack Query dans le composant.
+Ajout contraint CHECK DB sur le champ model.

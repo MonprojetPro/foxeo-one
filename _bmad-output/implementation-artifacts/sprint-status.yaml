@@ -191,3 +191,20 @@ development_status:
   13-9-shell-notifications-comptable-infrastructure-gmail: done
   13-10-renommage-factures-vers-comptabilite-hub-lab-one: done
   epic-13-retrospective: optional
+
+  # Epic 14: Élio contextuel par étape — Parcours Lab avancé (12 stories)
+  epic-14: in-progress
+  14-1-config-elio-par-etape: done
+  14-1b-onglet-elio-sidebar-hub: done
+  14-2-catalogue-agents-elio-lab: done
+  14-3-assemblage-parcours-client: ready-for-dev
+  14-4-chat-elio-embarque-page-etape: ready-for-dev
+  14-5-chat-elio-lab-cable: ready-for-dev
+  14-6-nourrir-elio-etape: ready-for-dev
+  14-7-bouton-generer-document-soumission: ready-for-dev
+  14-8-panneau-droit-historique-etape: ready-for-dev
+  14-9-feedback-mikl-injection-questions-elio: ready-for-dev
+  14-10-reouverture-etape-validee-mikl: ready-for-dev
+  14-11-dashboard-tokens-cout: ready-for-dev
+  14-12-refonte-ux-page-etape-integration-finale: ready-for-dev
+  epic-14-retrospective: optional

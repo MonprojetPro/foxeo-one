@@ -1,4 +1,4 @@
-# Story 14.3: Bouton "Générer mon document" + soumission
+# Story 14.7 : Bouton "Générer mon document" + soumission
 
 Status: ready-for-dev
 
