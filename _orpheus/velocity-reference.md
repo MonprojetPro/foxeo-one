@@ -180,7 +180,7 @@
 |---|-------|-------------|-------------------|----------|------------|-------------|-----|-------|
 | 91 | 14.1 — Config Élio par étape, table elio_step_configs & CRUD Hub | 2026-04-20 | — | 14 | +1,313 | -4 | +1,309 | 30† |
 | 92 | 14.1b — Onglet Élio sidebar Hub + routes Lab/One/Hub | 2026-04-21 | — | 8 | +142 | -1 | +141 | 15† |
-| 93 | 14.2 — Catalogue agents Élio Lab — page Hub + sync + CRUD | 2026-04-21 | — | 23 | +1,252 | -57 | +1,195 | 27† |
+| 93 | 14.2 — Catalogue agents Élio Lab — page Hub + sync + CRUD | 2026-04-21 | — | 23 | +1,252 | -57 | +1,195 | 23✅ |
 
 > `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,294+.
 

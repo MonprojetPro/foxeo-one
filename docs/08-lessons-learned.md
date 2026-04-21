@@ -9,7 +9,7 @@
 
 | Code | Categorie | Nb lecons |
 |------|-----------|-----------|
-| CFG | Configuration | 2 |
+| CFG | Configuration | 3 |
 | DL | Téléchargement / Storage | 3 |
 | API | Intégration API externe | 3 |
 | RSC | Next.js Server/Client | 2 |
@@ -21,6 +21,19 @@
 ---
 
 ## Lecons
+
+### [CFG-003] vi.mock('fs/promises') ne fonctionne pas — utiliser vi.mock('fs') + méthodes sync
+- **Date** : 2026-04-21
+- **Projet** : MonprojetPro One
+- **Phase** : Story 14.2 — Catalogue agents Élio Lab
+- **Categorie** : Configuration (CFG)
+- **Symptome** : `vi.mock('fs/promises', async (importOriginal) => { ... readdir: vi.fn() })` ne mock pas réellement `readdir` dans l'environnement `happy-dom` de Vitest. Les tests retournaient toujours `NOT_FOUND` malgré `vi.mocked(readdir).mockResolvedValue(...)`. La fonction réelle était appelée → ENOENT → catch → NOT_FOUND.
+- **Cause racine** : Le pattern `vi.mock('fs/promises')` avec `importOriginal` ne fonctionne pas de façon fiable dans Vitest avec `environment: 'happy-dom'`. C'est un module natif Node.js ESM — l'interception Vitest n'est pas garantie.
+- **Solution** : Utiliser `readdirSync`/`readFileSync` depuis `'fs'` (sync) + `vi.mock('fs')` dans les tests. Ce pattern est éprouvé dans tout le projet (`check-module-docs.test.ts`, `export-client-data.test.ts`, `load-module-documentation.test.ts`).
+- **Impact** : 3 tests bloqués, 1 fix commit supplémentaire.
+- **Regle a suivre** : Dans ce projet, pour toute Server Action qui lit des fichiers, utiliser les méthodes sync de `'fs'` et mocker `'fs'` dans les tests — jamais `'fs/promises'`.
+
+---
 
 ### [CFG-001] Supabase Edge Function echoue depuis Next.js mais marche depuis le dashboard
 - **Date** : 2026-03-25
