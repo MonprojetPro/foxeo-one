@@ -23,6 +23,12 @@ vi.mock('@monprojetpro/modules-validation-hub', () => ({
   useValidationBadge: (...args: unknown[]) => mockUseValidationBadge(...args),
 }))
 
+// Mock facturation hook
+const mockUsePendingRemindersCount = vi.fn(() => ({ pendingCount: 0 }))
+vi.mock('@monprojetpro/modules-facturation', () => ({
+  usePendingRemindersCount: () => mockUsePendingRemindersCount(),
+}))
+
 // Mock ElioQueryBox to avoid loading @monprojetpro/module-elio
 vi.mock('./elio-query-box', () => ({
   ElioQueryBox: () => null,
@@ -55,6 +61,8 @@ vi.mock('lucide-react', async (importOriginal) => {
     FolderOpen: MockIcon,
     Calculator: MockIcon,
     Receipt: MockIcon,
+    Bot: MockIcon,
+    Settings: MockIcon,
   }
 })
 
@@ -125,5 +133,20 @@ describe('HubSidebarClient', () => {
   it('does NOT render "Factures" nav label (Story 13.1)', () => {
     render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
     expect(screen.queryByText('Factures')).not.toBeInTheDocument()
+  })
+
+  // Story 14.1 — Onglet Élio sidebar
+  it('renders "Élio" nav item linking to /elio (Story 14.1)', () => {
+    render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
+    const link = screen.getByRole('link', { name: /Élio/i })
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute('href', '/elio')
+  })
+
+  it('renders /elio link in nav hrefs (Story 14.1)', () => {
+    render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
+    const links = screen.getAllByRole('link')
+    const hrefs = links.map((l) => l.getAttribute('href'))
+    expect(hrefs).toContain('/elio')
   })
 })

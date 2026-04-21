@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings } from 'lucide-react'
+import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot } from 'lucide-react'
 import { Badge } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
 import { useValidationBadge } from '@monprojetpro/modules-validation-hub'
@@ -17,6 +17,7 @@ const navItems = [
   { icon: MessageSquare, label: 'Chat',            href: '/modules/chat' },
   { icon: FolderOpen,    label: 'Documents',      href: '/modules/documents' },
   { icon: Calculator,    label: 'Comptabilité',   href: '/modules/facturation' },
+  { icon: Bot,           label: 'Élio',            href: '/elio' },
   { icon: Settings,      label: 'One',              href: '/modules/admin' },
 ]
 
