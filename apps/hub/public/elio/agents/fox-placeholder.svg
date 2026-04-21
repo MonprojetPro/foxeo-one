@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <circle cx="32" cy="32" r="32" fill="#1a1a2e"/>
+  <!-- Corps renard stylisé -->
+  <ellipse cx="32" cy="38" rx="14" ry="12" fill="#e8a87c"/>
+  <!-- Tête -->
+  <ellipse cx="32" cy="24" rx="12" ry="11" fill="#e8a87c"/>
+  <!-- Oreilles -->
+  <polygon points="20,18 16,6 26,14" fill="#e8a87c"/>
+  <polygon points="44,18 48,6 38,14" fill="#e8a87c"/>
+  <polygon points="21,17 17.5,8 25,14" fill="#c0392b"/>
+  <polygon points="43,17 46.5,8 39,14" fill="#c0392b"/>
+  <!-- Museau -->
+  <ellipse cx="32" cy="27" rx="5" ry="4" fill="#f5cba7"/>
+  <!-- Yeux -->
+  <circle cx="27" cy="22" r="2.5" fill="#2c3e50"/>
+  <circle cx="37" cy="22" r="2.5" fill="#2c3e50"/>
+  <circle cx="27.8" cy="21.2" r="0.8" fill="white"/>
+  <circle cx="37.8" cy="21.2" r="0.8" fill="white"/>
+  <!-- Nez -->
+  <ellipse cx="32" cy="27" rx="1.5" ry="1" fill="#2c3e50"/>
+  <!-- Cyan accent -->
+  <circle cx="32" cy="32" r="31" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.4"/>
+</svg>

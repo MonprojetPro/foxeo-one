@@ -199,3 +199,15 @@ export {
 
 // Components — Story 10.1
 export { ElioFloatingButton } from './components/elio-floating-button'
+
+// Components — Story 14.2 (Catalogue agents Élio Lab)
+export { ElioLabAgentCard } from './components/elio-lab-agent-card'
+export { ElioLabCatalogue } from './components/elio-lab-catalogue'
+
+// Actions — Story 14.2
+export { syncElioLabAgents } from './actions/sync-elio-lab-agents'
+export { getElioLabAgents } from './actions/get-elio-lab-agents'
+export { archiveElioLabAgent } from './actions/archive-elio-lab-agent'
+export { duplicateElioLabAgent } from './actions/duplicate-elio-lab-agent'
+export type { ElioLabAgent, SyncResult } from './actions/sync-elio-lab-agents'
+export type { GetElioLabAgentsOptions } from './actions/get-elio-lab-agents'

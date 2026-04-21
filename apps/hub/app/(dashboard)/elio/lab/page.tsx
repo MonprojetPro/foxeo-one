@@ -1,8 +1,9 @@
-export default function ElioLabPage() {
-  return (
-    <div className="p-6">
-      <h2 className="text-lg font-semibold text-foreground mb-2">Élio Lab</h2>
-      <p className="text-muted-foreground text-sm">Catalogue d'agents — Story 14.2</p>
-    </div>
-  )
+import { getElioLabAgents } from '@monprojetpro/module-elio'
+import { ElioLabCatalogue } from '@monprojetpro/module-elio'
+
+export default async function ElioLabPage() {
+  // Charge uniquement les agents actifs pour le SSR — le toggle archived re-fetche via TanStack Query
+  const { data: agents } = await getElioLabAgents({ includeArchived: false })
+
+  return <ElioLabCatalogue initialAgents={agents ?? []} />
 }

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@monprojetpro/module-admin": "*",
+    "@monprojetpro/module-elio": "*",
     "@monprojetpro/module-analytics": "*",
     "@monprojetpro/module-templates": "*",
     "@monprojetpro/modules-chat": "*",
