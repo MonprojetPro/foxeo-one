@@ -1,6 +1,6 @@
 'use server'
 
-import { readdir, readFile } from 'fs/promises'
+import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { z } from 'zod'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
@@ -70,11 +70,13 @@ function parseFrontmatter(content: string): { data: Record<string, string | numb
  * et effectue un UPSERT dans `elio_lab_agents`.
  */
 export async function syncElioLabAgents(): Promise<ActionResponse<SyncResult>> {
-  const agentsDir = join(process.cwd(), 'packages', 'modules', 'elio', 'agents', 'lab')
+  // process.cwd() = apps/hub/ dans Next.js — remonter à la racine du monorepo
+  const monorepoRoot = join(process.cwd(), '..', '..')
+  const agentsDir = join(monorepoRoot, 'packages', 'modules', 'elio', 'agents', 'lab')
 
   let files: string[]
   try {
-    files = await readdir(agentsDir)
+    files = readdirSync(agentsDir)
   } catch {
     return errorResponse('Dossier agents introuvable', 'NOT_FOUND')
   }
@@ -100,7 +102,7 @@ export async function syncElioLabAgents(): Promise<ActionResponse<SyncResult>> {
     const filePath = join(agentsDir, file)
     let content: string
     try {
-      content = await readFile(filePath, 'utf-8')
+      content = readFileSync(filePath, 'utf-8')
     } catch {
       continue
     }
