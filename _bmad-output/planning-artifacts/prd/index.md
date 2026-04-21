@@ -31,6 +31,13 @@
       - [[C] Parcours Ponctuel — "Mission"](./systme-de-parcours-flexibles.md#c-parcours-ponctuel-mission)
       - [[D] Direct One — "Client Mûr"](./systme-de-parcours-flexibles.md#d-direct-one-client-mr)
   - [Architecture PRD Consolidée](./architecture-prd-consolidee/index.md) *(agents IA, docs, infrastructure, onboarding, modèle données)*
+  - [**Élio Lab — Catalogue d'Agents & Parcours Personnalisé**](./elio-lab-catalogue-agents.md) *(Avril 2026 — remplace elio_step_configs)*
+    - [Vision & Catalogue](./elio-lab-catalogue-agents.md#1-catalogue-dagents-élio-lab)
+    - [Onglet Élio sidebar Hub](./elio-lab-catalogue-agents.md#2-onglet-élio-dans-la-sidebar-hub)
+    - [Parcours client personnalisé](./elio-lab-catalogue-agents.md#3-parcours-client-personnalisé)
+    - [Nourrir l'Élio d'une étape](./elio-lab-catalogue-agents.md#4-nourrir-lélio-dune-étape-contexte-client)
+    - [Chat câblé sur l'agent](./elio-lab-catalogue-agents.md#5-chat-élio-lab-câblé)
+    - [Dashboard tokens & coûts](./elio-lab-catalogue-agents.md#6-dashboard-tokens--coûts)
   - [Continuité Élio Lab → Élio One](./continuit-lio-lab-lio-one.md)
     - [Mémoire Persistante](./continuit-lio-lab-lio-one.md#mmoire-persistante)
     - [Format : client_profile.yaml (évolutif)](./continuit-lio-lab-lio-one.md#format-clientprofileyaml-volutif)
