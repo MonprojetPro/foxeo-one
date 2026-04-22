@@ -1,9 +1,24 @@
-import { getElioLabAgents } from '@monprojetpro/module-elio'
+import { getElioLabAgents, getTokenUsageSummary, getTokenBudgetAlert } from '@monprojetpro/module-elio'
 import { ElioLabCatalogue } from '@monprojetpro/module-elio'
+import { ElioLabTokenDashboard } from './elio-lab-token-dashboard'
 
 export default async function ElioLabPage() {
-  // Charge uniquement les agents actifs pour le SSR — le toggle archived re-fetche via TanStack Query
-  const { data: agents } = await getElioLabAgents({ includeArchived: false })
+  const [agentsResult, summaryResult, budgetResult] = await Promise.all([
+    getElioLabAgents({ includeArchived: false }),
+    getTokenUsageSummary(),
+    getTokenBudgetAlert(),
+  ])
 
-  return <ElioLabCatalogue initialAgents={agents ?? []} />
+  return (
+    <div className="p-6 space-y-8">
+      <ElioLabCatalogue initialAgents={agentsResult.data ?? []} />
+
+      <div className="border-t border-border/40 pt-8">
+        <ElioLabTokenDashboard
+          initialSummary={summaryResult.data}
+          initialBudget={budgetResult.data?.budgetEur ?? null}
+        />
+      </div>
+    </div>
+  )
 }

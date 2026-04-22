@@ -1,17 +1,7 @@
-import { ElioHubDashboard } from './elio-hub-dashboard'
-import { getTokenUsageSummary } from '@monprojetpro/module-elio'
-import { getTokenBudgetAlert } from '@monprojetpro/module-elio'
-
-export default async function ElioHubTabPage() {
-  const [summaryResult, budgetResult] = await Promise.all([
-    getTokenUsageSummary(),
-    getTokenBudgetAlert(),
-  ])
-
+export default function ElioHubTabPage() {
   return (
-    <ElioHubDashboard
-      initialSummary={summaryResult.data}
-      initialBudget={budgetResult.data?.budgetEur ?? null}
-    />
+    <div className="p-6 flex items-center justify-center min-h-[200px]">
+      <p className="text-muted-foreground italic">À venir</p>
+    </div>
   )
 }

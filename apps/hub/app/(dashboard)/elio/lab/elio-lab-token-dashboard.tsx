@@ -15,12 +15,12 @@ import {
 import type { TokenUsageSummary } from '@monprojetpro/module-elio'
 import { showSuccess, showError } from '@monprojetpro/ui'
 
-interface ElioHubDashboardProps {
+interface ElioLabTokenDashboardProps {
   initialSummary: TokenUsageSummary | null
   initialBudget: number | null
 }
 
-export function ElioHubDashboard({ initialSummary, initialBudget }: ElioHubDashboardProps) {
+export function ElioLabTokenDashboard({ initialSummary, initialBudget }: ElioLabTokenDashboardProps) {
   const queryClient = useQueryClient()
   const [showBudgetModal, setShowBudgetModal] = useState(false)
   const [budgetInput, setBudgetInput] = useState(String(initialBudget ?? ''))
@@ -53,7 +53,6 @@ export function ElioHubDashboard({ initialSummary, initialBudget }: ElioHubDashb
   const budget = budgetData?.budgetEur ?? currentBudget
   const summary = summaryData
 
-  // Alerte 80% du budget
   const isNearBudget =
     budget != null && summary != null && summary.totalCostEur >= budget * 0.8
 
@@ -81,11 +80,11 @@ export function ElioHubDashboard({ initialSummary, initialBudget }: ElioHubDashb
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Dashboard Tokens & Coûts IA</h2>
-          <p className="text-sm text-muted-foreground">Consommation du mois en cours</p>
+          <h3 className="text-base font-semibold text-foreground">Tokens & Coûts IA</h3>
+          <p className="text-xs text-muted-foreground">Consommation clients Lab — mois en cours</p>
         </div>
         <button
           onClick={() => {
@@ -98,7 +97,6 @@ export function ElioHubDashboard({ initialSummary, initialBudget }: ElioHubDashb
         </button>
       </div>
 
-      {/* Alerte budget */}
       {isNearBudget && (
         <div className="rounded-xl border border-yellow-500/40 bg-yellow-950/30 p-4 flex items-center gap-3">
           <span className="text-yellow-400 text-xl">⚠️</span>
@@ -109,7 +107,6 @@ export function ElioHubDashboard({ initialSummary, initialBudget }: ElioHubDashb
         </div>
       )}
 
-      {/* Grille principale — 2 colonnes sur desktop */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <TokenUsageCard
           totalTokens={summary?.totalTokens ?? 0}
@@ -139,13 +136,11 @@ export function ElioHubDashboard({ initialSummary, initialBudget }: ElioHubDashb
         />
       </div>
 
-      {/* Carte par agent — pleine largeur */}
       <TokenByAgentCard
         byAgent={summary?.byAgent ?? []}
         isLoading={isLoading}
       />
 
-      {/* Modal configuration budget */}
       {showBudgetModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"

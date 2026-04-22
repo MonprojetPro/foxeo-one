@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getTokenUsageSummary } from '@monprojetpro/module-elio'
 import { MetricCard } from '../../components/dashboard/metric-card'
 import { InteractiveMetricCard } from '../../components/dashboard/interactive-metric-card'
 import { AgendaItem } from '../../components/dashboard/agenda-item'
@@ -203,11 +204,15 @@ export default async function HubHomePage() {
     { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, mrr, unpaidAmount, unpaidCount, pendingQuotesCount },
     breakdown,
     newProspects,
+    tokenSummaryResult,
   ] = await Promise.all([
     getHubStats(operatorId),
     getClientsBreakdown(operatorId),
     getNewProspects(operatorId),
+    getTokenUsageSummary(),
   ])
+
+  const tokenSummary = tokenSummaryResult.data
 
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -232,6 +237,39 @@ export default async function HubHomePage() {
           En ligne
         </span>
       </div>
+
+      {/* Encart Coût IA */}
+      {tokenSummary && (
+        <a
+          href="/elio/lab"
+          className="flex items-center justify-between rounded-xl border border-cyan-900/30 bg-cyan-950/10 px-5 py-3.5 hover:bg-cyan-950/20 transition-colors group"
+        >
+          <div className="flex items-center gap-4">
+            <span className="text-cyan-400 text-lg">🤖</span>
+            <div>
+              <p className="text-xs text-muted-foreground">Coût IA ce mois</p>
+              <p className="text-lg font-bold text-cyan-400 leading-tight">
+                {tokenSummary.totalCostEur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+              </p>
+            </div>
+            <div className="hidden sm:block border-l border-cyan-900/40 pl-4">
+              <p className="text-xs text-muted-foreground">Tokens</p>
+              <p className="text-sm font-medium text-foreground">
+                {tokenSummary.totalTokens.toLocaleString('fr-FR')}
+              </p>
+            </div>
+            <div className="hidden md:block border-l border-cyan-900/40 pl-4">
+              <p className="text-xs text-muted-foreground">Agents actifs</p>
+              <p className="text-sm font-medium text-foreground">
+                {tokenSummary.byAgent.length}
+              </p>
+            </div>
+          </div>
+          <span className="text-xs text-cyan-400/60 group-hover:text-cyan-400 transition-colors">
+            Voir le détail →
+          </span>
+        </a>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
