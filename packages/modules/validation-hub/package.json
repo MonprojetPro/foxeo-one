@@ -26,6 +26,7 @@
     "@monprojetpro/ui": "*",
     "@monprojetpro/utils": "*",
     "@monprojetpro/supabase": "*",
+    "@monprojetpro/module-parcours": "*",
     "@tanstack/react-query": "^5.90.0"
   },
   "devDependencies": {

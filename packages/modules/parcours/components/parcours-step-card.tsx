@@ -7,9 +7,10 @@ import type { ParcoursStep } from '../types/parcours.types'
 interface ParcoursStepCardProps {
   step: ParcoursStep
   className?: string
+  unreadCount?: number
 }
 
-export function ParcoursStepCard({ step, className }: ParcoursStepCardProps) {
+export function ParcoursStepCard({ step, className, unreadCount = 0 }: ParcoursStepCardProps) {
   const router = useRouter()
 
   function handleClick() {
@@ -40,7 +41,17 @@ export function ParcoursStepCard({ step, className }: ParcoursStepCardProps) {
             </svg>
             Complétée
           </span>
-          <span className="text-[11px] text-[#6b7280]">Étape {step.stepNumber}</span>
+          <div className="flex items-center gap-1.5">
+            {unreadCount > 0 && (
+              <span
+                className="w-5 h-5 rounded-full bg-[#fb923c] text-white text-[9px] font-bold flex items-center justify-center"
+                aria-label={`${unreadCount} question(s) de MiKL non lue(s)`}
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+            <span className="text-[11px] text-[#6b7280]">Étape {step.stepNumber}</span>
+          </div>
         </div>
         <div className="mt-3.5 text-[16px] font-semibold text-[#f9fafb] leading-snug">{step.title}</div>
         <div className="text-[12px] text-[#9ca3af] mt-1 line-clamp-2">{step.description}</div>
@@ -73,7 +84,17 @@ export function ParcoursStepCard({ step, className }: ParcoursStepCardProps) {
           <span className="inline-flex items-center bg-[#7c3aed] text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
             En cours
           </span>
-          <span className="text-[11px] text-[#a78bfa]">Étape {step.stepNumber}</span>
+          <div className="flex items-center gap-1.5">
+            {unreadCount > 0 && (
+              <span
+                className="w-5 h-5 rounded-full bg-[#fb923c] text-white text-[9px] font-bold flex items-center justify-center"
+                aria-label={`${unreadCount} question(s) de MiKL non lue(s)`}
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+            <span className="text-[11px] text-[#a78bfa]">Étape {step.stepNumber}</span>
+          </div>
         </div>
         <div className="mt-3.5 text-[16px] font-semibold text-[#f9fafb] leading-snug">{step.title}</div>
         <div className="text-[12px] text-[#9ca3af] mt-1 line-clamp-2">{step.description}</div>

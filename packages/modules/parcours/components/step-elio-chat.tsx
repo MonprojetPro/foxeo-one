@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bot } from 'lucide-react'
 import { getOrCreateStepConversation } from '../actions/get-or-create-step-conversation'
+import { markInjectionsRead } from '../actions/mark-injections-read'
 import {
   getMessages,
   saveElioMessage,
@@ -131,6 +132,9 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       }
 
       setChatStatus('ready')
+
+      // Marquer les injections non lues comme lues (non-bloquant)
+      void markInjectionsRead(stepId)
     }
 
     init()
@@ -278,29 +282,41 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
           </div>
         )}
 
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex gap-2.5 items-end ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-          >
-            {msg.role === 'assistant' && (
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7c3aed] to-[#a78bfa] flex items-center justify-center text-white font-bold text-[10px] shrink-0">
-                E
-              </div>
-            )}
+        {messages.map((msg) => {
+          const meta = msg.metadata as Record<string, unknown> | null | undefined
+          const isOperatorInjection = meta?.source === 'operator_injection' || meta?.injectedByMikl === true
+
+          return (
             <div
-              className={`rounded-xl px-3 py-2.5 text-sm leading-relaxed max-w-[85%] ${
-                msg.role === 'user'
-                  ? 'bg-[#7c3aed] text-white rounded-br-[4px]'
-                  : msg.metadata && (msg.metadata as Record<string, unknown>).injectedByMikl
-                    ? 'bg-[#7c2d12] border border-[#ea580c] text-[#fed7aa] rounded-tl-[4px]'
-                    : 'bg-[#1e1557] border border-[#3d2d6d] text-[#e5e7eb] rounded-tl-[4px]'
-              }`}
+              key={msg.id}
+              className={`flex gap-2.5 items-end ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
             >
-              {msg.content}
+              {msg.role === 'assistant' && (
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7c3aed] to-[#a78bfa] flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+                  E
+                </div>
+              )}
+              <div className={`max-w-[85%] flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                {isOperatorInjection && msg.role === 'assistant' && (
+                  <span className="text-[10px] font-semibold text-[#fb923c] uppercase tracking-wide px-1">
+                    MiKL vous pose des questions
+                  </span>
+                )}
+                <div
+                  className={`rounded-xl px-3 py-2.5 text-sm leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-[#7c3aed] text-white rounded-br-[4px]'
+                      : isOperatorInjection
+                        ? 'bg-[rgba(251,146,60,0.1)] border border-[rgba(251,146,60,0.3)] text-[#fed7aa] rounded-tl-[4px]'
+                        : 'bg-[#1e1557] border border-[#3d2d6d] text-[#e5e7eb] rounded-tl-[4px]'
+                  }`}
+                >
+                  {msg.content}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {isSending && (
           <div className="flex gap-2.5 items-end">

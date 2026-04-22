@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { StepElioChat } from './step-elio-chat'
 
+vi.mock('../actions/mark-injections-read', () => ({
+  markInjectionsRead: vi.fn().mockResolvedValue({ data: { updatedCount: 0 }, error: null }),
+}))
+
 vi.mock('../actions/get-or-create-step-conversation', () => ({
   getOrCreateStepConversation: vi.fn().mockResolvedValue({
     data: {

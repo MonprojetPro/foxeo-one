@@ -15,6 +15,7 @@ import { RejectDialog } from './reject-dialog'
 import { ClarificationDialog } from './clarification-dialog'
 import { ActionPicker } from './action-picker'
 import type { ExchangeEntry } from './request-exchanges'
+import { FeedbackInjectionForm } from '@monprojetpro/module-parcours'
 
 type RequestDetailProps = {
   requestId: string
@@ -110,6 +111,22 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
             {/* Section Échanges (précisions demandées / re-soumissions) */}
             {exchanges.length > 0 && (
               <RequestExchanges exchanges={exchanges} />
+            )}
+
+            {/* Section Injection MiKL — disponible si step_id présent et demande non approuvée */}
+            {request.stepId && request.status !== 'approved' && (
+              <div className="rounded-xl border border-[#2d2d2d] bg-[#0f0f0f] p-5">
+                <h3 className="text-sm font-semibold text-[#f9fafb] mb-1">
+                  Envoyer un message à Élio
+                </h3>
+                <p className="text-xs text-[#9ca3af] mb-4">
+                  Envoyez un feedback texte ou injectez des questions directement dans le chat Élio du client.
+                </p>
+                <FeedbackInjectionForm
+                  stepId={request.stepId}
+                  clientId={request.clientId}
+                />
+              </div>
             )}
           </div>
 

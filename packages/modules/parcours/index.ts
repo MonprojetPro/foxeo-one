@@ -36,6 +36,9 @@ export { StepElioConfigPanel } from './components/step-elio-config-panel'
 // Components — Générer document (Story 14.7)
 export { GenerateDocumentButton } from './components/generate-document-button'
 
+// Components — Feedback Injection MiKL (Story 14.9)
+export { FeedbackInjectionForm } from './components/feedback-injection-form'
+
 // Components — Assemblage Parcours Client (Story 14.3)
 export { ClientParcoursAgentsList } from './components/client-parcours-agents-list'
 export { LaunchParcoursModal } from './components/launch-parcours-modal'
@@ -48,6 +51,13 @@ export { addParcoursStep } from './actions/add-parcours-step'
 
 // Actions — Nourrir Élio (Story 14.6)
 export { getStepContextCounts } from './actions/get-step-context-counts'
+
+// Actions — Feedback Injection MiKL (Story 14.9)
+export { createFeedbackInjection } from './actions/create-feedback-injection'
+export { markInjectionsRead } from './actions/mark-injections-read'
+
+// Hooks — Feedback Injection (Story 14.9)
+export { useUnreadInjections } from './hooks/use-unread-injections'
 
 // Actions — Générer document (Story 14.7)
 export { generateDocumentFromConversation } from './actions/generate-and-submit-step'
@@ -124,3 +134,12 @@ export type {
 } from './types/parcours.types'
 
 export { ClientParcoursAgentStatusValues } from './types/parcours.types'
+
+export type {
+  StepFeedbackInjection,
+  StepFeedbackInjectionDB,
+  FeedbackInjectionType,
+  CreateFeedbackInjectionInput,
+} from './types/parcours.types'
+
+export { FeedbackInjectionTypeValues } from './types/parcours.types'

@@ -331,6 +331,43 @@ export interface ElioLabAgent {
   updatedAt: string
 }
 
+// --- Step Feedback Injections (Story 14.9) ---
+
+export const FeedbackInjectionTypeValues = ['text_feedback', 'elio_questions'] as const
+export type FeedbackInjectionType = typeof FeedbackInjectionTypeValues[number]
+
+export interface StepFeedbackInjectionDB {
+  id: string
+  step_id: string
+  operator_id: string
+  client_id: string
+  content: string
+  type: FeedbackInjectionType
+  injected_at: string
+  read_at: string | null
+  created_at: string
+}
+
+export interface StepFeedbackInjection {
+  id: string
+  stepId: string
+  operatorId: string
+  clientId: string
+  content: string
+  type: FeedbackInjectionType
+  injectedAt: string
+  readAt: string | null
+  createdAt: string
+}
+
+export const CreateFeedbackInjectionInput = z.object({
+  stepId: z.string().uuid('stepId invalide'),
+  clientId: z.string().uuid('clientId invalide'),
+  content: z.string().min(1, 'Le contenu est requis').max(4000, 'Maximum 4000 caractères'),
+  type: z.enum(FeedbackInjectionTypeValues),
+})
+export type CreateFeedbackInjectionInput = z.infer<typeof CreateFeedbackInjectionInput>
+
 // Zod schemas
 
 export const LaunchClientParcoursInput = z.object({
