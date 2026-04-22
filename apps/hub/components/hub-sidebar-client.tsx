@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot } from 'lucide-react'
+import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video } from 'lucide-react'
 import { Badge } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
 import { useValidationBadge } from '@monprojetpro/modules-validation-hub'
@@ -15,6 +15,7 @@ const navItems = [
   { icon: CheckCircle,   label: 'Validation Hub', href: '/modules/validation-hub' },
   { icon: Calendar,      label: 'Agenda',         href: '/modules/agenda' },
   { icon: MessageSquare, label: 'Chat',            href: '/modules/chat' },
+  { icon: Video,         label: 'Visio',           href: '/modules/visio' },
   { icon: FolderOpen,    label: 'Documents',      href: '/modules/documents' },
   { icon: Calculator,    label: 'Comptabilité',   href: '/modules/facturation' },
   { icon: Bot,           label: 'Élio',            href: '/elio' },

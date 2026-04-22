@@ -205,13 +205,20 @@
 > Fichiers: `parcours-step-detail.tsx`, `core-dashboard.tsx`, `core-dashboard.test.ts`
 > Design implémenté: layout 2 colonnes (contenu + chat Élio) pour Lab étape détail, refonte One Accueil (modules grid, suggestion Élio, ActivityFeed réel)
 
+### Epic 15 — Migration Visio : OpenVidu → Google Meet
+
+| # | Story | Date commit | Delta vs precedent | Fichiers | Insertions | Suppressions | Net | Tests |
+|---|-------|-------------|-------------------|----------|------------|-------------|-----|-------|
+| 1 | 15.1 — Auth Google Meet API — client OAuth2 | 22/04 18:31 | — | 5 | +523 | -11 | +512 | 4 |
+| 2 | 15.2 — Migration OpenVidu → Google Meet + Refonte UX | 22/04 19:00 | ~0h35 | 66 | +524 | -3304 | -2780 | 65 |
+
 ---
 
 ## Totaux du projet
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **103** (101 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **105** (103 commits, dont 2 doubles et 1 triple) |
 | Integrations design (hors epic) | **1** (Claude Design — Lab+One visual refonte) |
 | Commits de correction post-story | **2** (code review retroactif + 14.11 relocalisation dashboard) |
 | Fichiers totaux modifies | **2,410** |

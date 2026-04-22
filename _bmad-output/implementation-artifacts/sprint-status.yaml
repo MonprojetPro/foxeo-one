@@ -208,3 +208,10 @@ development_status:
   14-11-dashboard-tokens-cout: ready-for-dev
   14-12-refonte-ux-page-etape-integration-finale: ready-for-dev
   epic-14-retrospective: optional
+
+  # Epic 15: Migration Visio — OpenVidu → Google Meet (3 stories)
+  epic-15: in-progress
+  15-1-auth-google-meet-api: done
+  15-2-migration-openvidu-google-meet: done
+  15-3-post-meeting-recordings-transcriptions-nettoyage: ready-for-dev
+  epic-15-retrospective: optional

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
-import { getMeetings, MeetingList } from '@monprojetpro/module-visio'
+import { getMeetings } from '@monprojetpro/module-visio'
+import { HubVisioClient } from './hub-visio-client'
 
 export default async function HubVisioPage() {
   const supabase = await createServerSupabaseClient()
@@ -11,10 +12,7 @@ export default async function HubVisioPage() {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Meetings — Vue globale</h1>
-      </div>
-      <MeetingList meetings={meetings ?? []} basePath="/modules/visio" />
+      <HubVisioClient meetings={meetings ?? []} operatorId={user.id} />
     </div>
   )
 }

@@ -99,7 +99,7 @@ export async function createClient(
       .from('client_configs')
       .insert({
         client_id: clientData.id,
-        active_modules: ['core-dashboard'],
+        active_modules: ['core-dashboard', 'chat', 'documents', 'visio'],
         dashboard_type: 'one',
       })
 

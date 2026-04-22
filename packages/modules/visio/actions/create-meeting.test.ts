@@ -44,8 +44,11 @@ const mockMeetingDB = {
   started_at: null,
   ended_at: null,
   duration_seconds: null,
-  session_id: null,
+  meet_space_name: null,
+  meet_uri: null,
   status: 'scheduled',
+  type: 'standard',
+  metadata: {},
   recording_url: null,
   transcript_url: null,
   created_at: '2026-03-01T10:00:00.000Z',
@@ -109,8 +112,25 @@ describe('createMeeting Server Action', () => {
     expect(result.error).toBeNull()
     expect(result.data?.id).toBe(MEETING_ID)
     expect(result.data?.clientId).toBe(CLIENT_ID)
+    expect(result.data?.operatorId).toBe(OPERATOR_ID)
     expect(result.data?.title).toBe('Test Meeting')
     expect(result.data?.status).toBe('scheduled')
+  })
+
+  it('creates meeting without clientId (Hub-originated)', async () => {
+    mockInsertSingle.mockResolvedValue({
+      data: { ...mockMeetingDB, client_id: null, clientId: null },
+      error: null,
+    })
+
+    const { createMeeting } = await import('./create-meeting')
+    const result = await createMeeting({
+      operatorId: OPERATOR_ID,
+      title: 'Hub Meeting sans client',
+    })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.title).toBe('Test Meeting') // from mockMeetingDB
   })
 
   it('returns DB_ERROR on insert failure', async () => {

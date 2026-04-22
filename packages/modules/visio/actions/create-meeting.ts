@@ -6,7 +6,15 @@ import { type Meeting, type MeetingDB, CreateMeetingInput } from '../types/meeti
 import { toMeeting } from '../utils/to-meeting'
 
 export async function createMeeting(
-  input: { clientId: string; operatorId: string; title: string; description?: string; scheduledAt?: string }
+  input: {
+    clientId: string
+    operatorId: string
+    title: string
+    description?: string
+    scheduledAt?: string
+    meetSpaceName?: string
+    meetUri?: string
+  }
 ): Promise<ActionResponse<Meeting>> {
   try {
     const supabase = await createServerSupabaseClient()
@@ -25,11 +33,13 @@ export async function createMeeting(
     const { data, error } = await supabase
       .from('meetings')
       .insert({
-        client_id: parsed.data.clientId,
+        client_id: parsed.data.clientId ?? null,
         operator_id: parsed.data.operatorId,
         title: parsed.data.title,
         description: parsed.data.description ?? null,
         scheduled_at: parsed.data.scheduledAt ?? null,
+        meet_space_name: parsed.data.meetSpaceName ?? null,
+        meet_uri: parsed.data.meetUri ?? null,
       })
       .select()
       .single()

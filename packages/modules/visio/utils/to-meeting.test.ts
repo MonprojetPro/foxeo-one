@@ -16,7 +16,8 @@ const mockDB: MeetingDB = {
   started_at: null,
   ended_at: null,
   duration_seconds: null,
-  session_id: null,
+  meet_space_name: null,
+  meet_uri: null,
   status: 'scheduled',
   type: 'standard',
   metadata: {},
@@ -38,7 +39,8 @@ describe('toMeeting', () => {
     expect(meeting.startedAt).toBeNull()
     expect(meeting.endedAt).toBeNull()
     expect(meeting.durationSeconds).toBeNull()
-    expect(meeting.sessionId).toBeNull()
+    expect(meeting.meetSpaceName).toBeNull()
+    expect(meeting.meetUri).toBeNull()
     expect(meeting.status).toBe('scheduled')
     expect(meeting.type).toBe('standard')
     expect(meeting.metadata).toEqual({})
@@ -55,7 +57,8 @@ describe('toMeeting', () => {
       started_at: '2026-03-01T10:00:00.000Z',
       ended_at: '2026-03-01T11:00:00.000Z',
       duration_seconds: 3600,
-      session_id: 'session-abc123',
+      meet_space_name: 'spaces/abc123',
+      meet_uri: 'https://meet.google.com/abc-def-ghi',
       recording_url: 'https://storage/recording.mp4',
       transcript_url: 'https://storage/transcript.txt',
     }
@@ -64,7 +67,8 @@ describe('toMeeting', () => {
     expect(meeting.startedAt).toBe('2026-03-01T10:00:00.000Z')
     expect(meeting.endedAt).toBe('2026-03-01T11:00:00.000Z')
     expect(meeting.durationSeconds).toBe(3600)
-    expect(meeting.sessionId).toBe('session-abc123')
+    expect(meeting.meetSpaceName).toBe('spaces/abc123')
+    expect(meeting.meetUri).toBe('https://meet.google.com/abc-def-ghi')
     expect(meeting.recordingUrl).toBe('https://storage/recording.mp4')
     expect(meeting.transcriptUrl).toBe('https://storage/transcript.txt')
   })

@@ -36,7 +36,8 @@ const mockInProgressMeeting = {
   type: 'standard',
   metadata: {},
   started_at: '2026-03-01T10:00:00.000Z',
-  session_id: 'session-123',
+  meet_space_name: 'spaces/abc123',
+  meet_uri: 'https://meet.google.com/abc-def-ghi',
 }
 
 const mockEndedMeetingDB = {
@@ -49,7 +50,8 @@ const mockEndedMeetingDB = {
   started_at: '2026-03-01T10:00:00.000Z',
   ended_at: '2026-03-01T11:00:00.000Z',
   duration_seconds: 3600,
-  session_id: 'session-123',
+  meet_space_name: 'spaces/abc123',
+  meet_uri: 'https://meet.google.com/abc-def-ghi',
   status: 'completed',
   type: 'standard',
   metadata: {},

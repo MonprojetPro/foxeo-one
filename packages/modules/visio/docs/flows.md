@@ -1,159 +1,119 @@
 # Flows — Module Visio
 
-## Flow 1 : Planification d'un meeting (MiKL)
+## Flow 1 : Création d'un meeting (MiKL — Hub)
 
 ```
 MiKL (Hub)
   │
-  ├─ Ouvre le dialog "Planifier un meeting"
-  │   └─ MeetingScheduleDialog
+  ├─ Onglet Visio → clique "Nouveau meeting"
+  │   └─ MeetingScheduleDialog s'ouvre
   │
-  ├─ Renseigne titre, description, date/heure
+  ├─ Renseigne : titre, client, date/heure
   │
   ├─ Soumet → createMeeting() [Server Action]
   │   ├─ Valide les données (Zod)
-  │   ├─ Insère en DB (status = 'scheduled')
-  │   └─ Envoie notification au client
+  │   ├─ googleMeetClient.spaces.create({ config: { accessType: 'TRUSTED' } })
+  │   ├─ Récupère meetingUri + meet_space_name
+  │   ├─ INSERT meetings (status='scheduled', meet_uri, meet_space_name)
+  │   └─ Notification client (type='meeting_scheduled')
   │
   └─ Liste se rafraîchit (TanStack Query invalidation)
 ```
 
-## Flow 2 : Démarrage d'un meeting (MiKL)
+## Flow 2 : Rejoindre un meeting
 
 ```
-MiKL (Hub) — Meeting planifié
+MiKL ou Client
   │
-  ├─ Clique "Démarrer le meeting"
+  ├─ Voit le meeting dans la liste (statut 'scheduled' ou 'in_progress')
+  │
+  ├─ Clique "Rejoindre" (ou "Rejoindre sur Google Meet")
+  │   └─ Ouvre meet_uri dans un NOUVEL ONGLET navigateur
+  │
+  └─ Google Meet gère la session (vidéo, audio, partage d'écran)
+```
+
+## Flow 3 : Démarrer officiellement un meeting (MiKL — Hub)
+
+```
+MiKL (Hub)
+  │
+  ├─ Clique "Démarrer" sur un meeting planifié
   │
   ├─ startMeeting() [Server Action]
-  │   ├─ Vérifie que le meeting est 'scheduled'
-  │   ├─ Appelle getOpenViduToken() (Edge Function)
-  │   │   ├─ Crée session OpenVidu (customSessionId)
-  │   │   └─ Retourne { token, sessionId }
-  │   ├─ Met à jour DB: status='in_progress', started_at, session_id
-  │   └─ Retourne meeting mis à jour
+  │   ├─ UPDATE meetings SET status='in_progress', started_at=NOW()
+  │   └─ Notification client "Meeting démarré"
   │
-  └─ Redirige vers /modules/visio/[meetingId]
+  └─ Liste se rafraîchit
 ```
 
-## Flow 3 : Rejoindre une salle de visio
+## Flow 4 : Terminer un meeting (MiKL — Hub)
 
 ```
-Utilisateur (MiKL ou Client)
+MiKL (Hub) — après la visio Google Meet
   │
-  ├─ Navigue vers /modules/visio/[meetingId]
+  ├─ Clique "Terminer" sur le meeting in_progress
   │
-  ├─ MeetingRoom monte → useOpenVidu(meetingId)
-  │   ├─ connect() appelé au mount
-  │   ├─ getOpenViduToken() [Server Action]
-  │   │   └─ Edge Function → token OpenVidu
-  │   ├─ OV.initSession()
-  │   ├─ session.connect(token)
-  │   ├─ OV.initPublisherAsync() → caméra locale
-  │   └─ status: 'connecting' → 'connected'
+  ├─ endMeeting() [Server Action]
+  │   ├─ googleMeetClient.spaces.endActiveConference({ name: meet_space_name })
+  │   ├─ UPDATE meetings SET status='completed', ended_at=NOW(), duration_seconds
+  │   └─ Lance syncMeetingResults() en arrière-plan (non-bloquant)
   │
-  ├─ Vidéo locale affichée
-  ├─ Autres participants arrivent → streamCreated event
-  └─ Participants distants affichés
+  └─ Meeting passe dans l'onglet "Historique"
 ```
 
-## Flow 4 : Fin de meeting
+## Flow 5 : Récupération enregistrement + transcription Gemini
 
 ```
-MiKL (Hub) — Meeting en cours
+(Déclenché automatiquement après endMeeting, quelques minutes de délai Google)
   │
-  ├─ Clique "Quitter" (MeetingControls)
+  ├─ syncMeetingResults() [Server Action]
+  │   ├─ googleMeetClient.conferenceRecords.list(filter: space.name=meet_space_name)
+  │   ├─ conferenceRecords.recordings.list(parent: conferenceRecordName)
+  │   │   └─ Récupère driveDestination.exportUri → lien Google Drive
+  │   ├─ conferenceRecords.transcripts.list(parent: conferenceRecordName)
+  │   │   └─ Récupère docsDestination.exportUri → lien Google Docs
+  │   │   └─ Récupère state → 'FILE_GENERATED' = completed
+  │   └─ UPSERT meeting_recordings (recording_url, transcript_url, transcription_status)
   │
-  ├─ handleLeave()
-  │   ├─ session.disconnect() → WebRTC fermé
-  │   └─ endMeeting() [Server Action]
-  │       ├─ Vérifie status = 'in_progress'
-  │       ├─ Calcule durée (ended_at - started_at)
-  │       ├─ Met à jour DB: status='completed', ended_at, duration_seconds
-  │       └─ Retourne meeting mis à jour
-  │
-  └─ Redirige vers /modules/visio
+  └─ Liens disponibles dans l'historique Hub + Client
 ```
 
-## Flow 5 : Enregistrement automatique (Story 5.2)
+## Flow 6 : Prise de RDV côté client — Cal.com
 
 ```
-Meeting démarré (startMeeting)
+Client (Lab ou One)
   │
-  ├─ Appel OpenVidu API: POST /recordings/start
-  │   └─ session, outputMode=COMPOSED, hasAudio=true, hasVideo=true
+  ├─ Onglet Visio → widget Cal.com intégré
   │
-  ├─ Meeting en cours (audio/vidéo enregistrés par OpenVidu)
+  ├─ Sélectionne un créneau dans l'agenda MiKL
   │
-  ├─ Meeting terminé (endMeeting)
-  │   └─ Appel OpenVidu API: POST /recordings/stop/{sessionId}
+  ├─ Cal.com envoie webhook → calcom-webhook [Edge Function]
+  │   ├─ createMeeting() avec les données Cal.com
+  │   └─ Notification client + MiKL
   │
-  ├─ OpenVidu envoie webhook: recordingStatusChanged (status=ready)
-  │   └─ Edge Function: openvidu-webhook
-  │       ├─ Vérifie signature webhook
-  │       ├─ Télécharge recording depuis OpenVidu
-  │       ├─ Upload vers Supabase Storage (bucket: recordings)
-  │       ├─ Insert dans meeting_recordings (status=pending)
-  │       └─ Trigger Edge Function: transcribe-recording (fire-and-forget)
-  │
-  └─ Edge Function: transcribe-recording
-      ├─ Download recording depuis Storage
-      ├─ Appel API Whisper (OpenAI) → format SRT
-      ├─ Upload SRT vers Storage (bucket: transcripts)
-      └─ Update meeting_recordings: transcript_url, status=completed
+  └─ Meeting apparaît dans "Prochain meeting" côté client
 ```
 
-## Flow 6 : Consultation des enregistrements
+## Flow 7 : Prise de RDV côté client — Pas de créneau disponible
 
 ```
-Utilisateur (MiKL ou Client)
+Client (Lab ou One)
   │
-  ├─ Navigue vers /modules/visio/[meetingId]/recordings
+  ├─ Onglet Visio → Cal.com complet (aucun créneau)
   │
-  ├─ Server Component charge les recordings via getMeetingRecordings()
-  │   └─ RLS filtre automatiquement (owner/operator)
+  ├─ Clique "Pas de créneau ? Contactez MiKL via le Chat"
+  │   └─ Redirige vers /modules/chat
   │
-  ├─ Liste affichée: durée, taille, date, statut transcription
+  ├─ Écrit à MiKL : "Je suis dispo lundi 14h ou mardi 10h"
   │
-  ├─ Actions disponibles:
-  │   ├─ "Lire" → ouvre RecordingPlayer (vidéo + transcription synchronisée)
-  │   ├─ "Vidéo" → downloadRecording() → signed URL → téléchargement
-  │   └─ "Transcription" → downloadTranscript() → signed URL → téléchargement
-  │
-  └─ RecordingPlayer
-      ├─ <video> HTML5 natif avec contrôles
-      ├─ TranscriptViewer charge le SRT via signed URL
-      ├─ Parse SRT → affiche lignes avec timestamps
-      └─ Clic sur ligne → seek vidéo au timestamp correspondant
+  └─ MiKL crée le meeting manuellement depuis le Hub (Flow 1)
 ```
 
-## Flow 7 : Isolation des recordings (RLS)
+## Actions disponibles pour Élio (One+)
 
-```
-Client A (authentifié)
-  │
-  ├─ Tente de lire recordings du Client B
-  │   └─ SELECT * FROM meeting_recordings WHERE meeting_id = <meeting_client_b>
-  │
-  ├─ RLS policy "meeting_recordings_select_owner" évalue:
-  │   WHERE meeting_id IN (SELECT id FROM meetings
-  │     WHERE client_id IN (SELECT id FROM clients WHERE auth_user_id = auth.uid()))
-  │   → auth.uid() ≠ client_b.auth_user_id → AUCUN résultat
-  │
-  └─ Retourne [] — isolation garantie pour les recordings aussi
-```
-
-## Flow 8 : Isolation des données (RLS)
-
-```
-Client A (authentifié)
-  │
-  ├─ Tente de lire meetings du Client B
-  │   └─ SELECT * FROM meetings WHERE client_id = <client_b_id>
-  │
-  ├─ RLS policy "meetings_select_owner" évalue:
-  │   WHERE client_id IN (SELECT id FROM clients WHERE auth_user_id = auth.uid())
-  │   → auth.uid() ≠ client_b.auth_user_id → AUCUN résultat
-  │
-  └─ Retourne [] — isolation garantie
-```
+| Action | Paramètres | Description |
+|--------|-----------|-------------|
+| `listUpcomingMeetings` | `clientId` | Retourne les meetings planifiés du client |
+| `getNextMeeting` | `clientId` | Retourne le prochain meeting (le plus proche) |
+| `getMeetingRecordings` | `meetingId` | Retourne les liens enregistrement + transcription |

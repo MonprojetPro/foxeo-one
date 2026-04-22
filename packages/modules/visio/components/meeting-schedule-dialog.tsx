@@ -2,21 +2,33 @@
 
 import { useState, useTransition } from 'react'
 import { createMeeting } from '../actions/create-meeting'
+import type { ActionResponse } from '@monprojetpro/types'
+import type { Meeting } from '../types/meeting.types'
+
+type CreateMeetingFn = (input: {
+  clientId: string
+  operatorId: string
+  title: string
+  description?: string
+  scheduledAt?: string
+}) => Promise<ActionResponse<Meeting>>
 
 interface MeetingScheduleDialogProps {
-  clientId: string
+  clientId?: string
   operatorId: string
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
+  createMeetingAction?: CreateMeetingFn
 }
 
 export function MeetingScheduleDialog({
-  clientId,
+  clientId = '',
   operatorId,
   open,
   onOpenChange,
   onSuccess,
+  createMeetingAction = createMeeting,
 }: MeetingScheduleDialogProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -31,8 +43,8 @@ export function MeetingScheduleDialog({
     setError(null)
 
     startTransition(async () => {
-      const result = await createMeeting({
-        clientId,
+      const result = await createMeetingAction({
+        ...(clientId ? { clientId } : {}),
         operatorId,
         title,
         description: description || undefined,

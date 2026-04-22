@@ -25,13 +25,6 @@ vi.mock('@monprojetpro/supabase', () => ({
   })),
 }))
 
-vi.mock('./get-openvidu-token', () => ({
-  getOpenViduToken: vi.fn().mockResolvedValue({
-    data: { token: 'test-token', sessionId: 'session-123' },
-    error: null,
-  }),
-}))
-
 const CLIENT_ID = '00000000-0000-0000-0000-000000000001'
 const OPERATOR_ID = '00000000-0000-0000-0000-000000000002'
 const MEETING_ID = '00000000-0000-0000-0000-000000000003'
@@ -46,8 +39,11 @@ const mockMeetingDB = {
   started_at: '2026-03-01T10:00:00.000Z',
   ended_at: null,
   duration_seconds: null,
-  session_id: 'session-123',
+  meet_space_name: 'spaces/abc123',
+  meet_uri: 'https://meet.google.com/abc-def-ghi',
   status: 'in_progress',
+  type: 'standard',
+  metadata: {},
   recording_url: null,
   transcript_url: null,
   created_at: '2026-03-01T09:00:00.000Z',
@@ -58,7 +54,7 @@ describe('startMeeting Server Action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetUser.mockResolvedValue({ data: { user: { id: OPERATOR_ID } }, error: null })
-    mockSelectSingle.mockResolvedValue({ data: { id: MEETING_ID, status: 'scheduled', session_id: null }, error: null })
+    mockSelectSingle.mockResolvedValue({ data: { id: MEETING_ID, status: 'scheduled' }, error: null })
     mockUpdateSingle.mockResolvedValue({ data: mockMeetingDB, error: null })
   })
 
@@ -91,7 +87,7 @@ describe('startMeeting Server Action', () => {
   })
 
   it('returns CONFLICT when meeting is already in_progress', async () => {
-    mockSelectSingle.mockResolvedValue({ data: { id: MEETING_ID, status: 'in_progress', session_id: 'session-abc' }, error: null })
+    mockSelectSingle.mockResolvedValue({ data: { id: MEETING_ID, status: 'in_progress' }, error: null })
 
     const { startMeeting } = await import('./start-meeting')
     const result = await startMeeting({ meetingId: MEETING_ID })
@@ -100,12 +96,13 @@ describe('startMeeting Server Action', () => {
     expect(result.error?.code).toBe('CONFLICT')
   })
 
-  it('starts meeting and returns updated data', async () => {
+  it('starts meeting and returns updated data with Google Meet link', async () => {
     const { startMeeting } = await import('./start-meeting')
     const result = await startMeeting({ meetingId: MEETING_ID })
 
     expect(result.error).toBeNull()
     expect(result.data?.status).toBe('in_progress')
-    expect(result.data?.sessionId).toBe('session-123')
+    expect(result.data?.meetSpaceName).toBe('spaces/abc123')
+    expect(result.data?.meetUri).toBe('https://meet.google.com/abc-def-ghi')
   })
 })

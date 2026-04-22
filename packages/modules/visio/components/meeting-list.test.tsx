@@ -15,8 +15,11 @@ const mockMeeting: Meeting = {
   startedAt: null,
   endedAt: null,
   durationSeconds: null,
-  sessionId: null,
+  meetSpaceName: null,
+  meetUri: null,
   status: 'scheduled',
+  type: 'standard',
+  metadata: {},
   recordingUrl: null,
   transcriptUrl: null,
   createdAt: '2026-02-20T10:00:00.000Z',
@@ -29,7 +32,7 @@ const mockInProgressMeeting: Meeting = {
   title: 'Meeting en cours',
   status: 'in_progress',
   startedAt: '2026-03-01T10:00:00.000Z',
-  sessionId: 'session-abc',
+  meetUri: 'https://meet.google.com/abc-def-ghi',
 }
 
 describe('MeetingList', () => {

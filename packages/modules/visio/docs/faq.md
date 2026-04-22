@@ -1,55 +1,39 @@
 # FAQ — Module Visio
 
-## Q: Pourquoi est-ce que je vois "Erreur de connexion" dans la salle de visio ?
+## Q: Pourquoi le meeting s'ouvre dans un nouvel onglet et pas dans l'app ?
 
-**A:** Vérifiez que :
-1. OpenVidu est démarré (`docker compose up -d` dans `docker/openvidu/`)
-2. La variable `OPENVIDU_URL` pointe vers le bon serveur
-3. Le `OPENVIDU_SECRET` dans `.env.local` correspond à celui du Docker Compose
-4. Votre navigateur a les permissions caméra/micro accordées
+**A:** Google Meet n'autorise pas l'intégration dans une iframe pour des raisons de sécurité (politique X-Frame-Options). Ouvrir dans un nouvel onglet est la solution standard — Google Meet dispose de toutes les fonctionnalités natives (qualité vidéo, partage d'écran, mobile, etc.).
 
-## Q: Comment tester localement sans OpenVidu ?
+## Q: Est-ce que MiKL peut voir le bouton "Rejoindre" avant la date du meeting ?
 
-**A:** En mode test, le hook `useOpenVidu` et le SDK `openvidu-browser` sont mockés via Vitest. Vous n'avez pas besoin d'OpenVidu pour lancer les tests unitaires.
+**A:** Oui. Le lien Google Meet est généré à la création du meeting (pas au démarrage). MiKL et le client peuvent rejoindre à tout moment — Google Meet gèrera l'admission selon la config d'accès (`TRUSTED`).
 
-Pour tester la visio réelle localement :
-```bash
-cd docker/openvidu
-docker compose up -d
-```
+## Q: Élio peut-il me rappeler mes prochains meetings ?
 
-## Q: Le token OpenVidu est-il sécurisé ?
+**A:** Oui. Élio Hub et Élio One/Lab peuvent consulter la liste des meetings via le module Visio et rappeler les prochains RDV programmés.
 
-**A:** Oui. Le secret OpenVidu (`OPENVIDU_SECRET`) n'est jamais envoyé au navigateur. Il est uniquement utilisé dans la Supabase Edge Function `get-openvidu-token`, qui s'exécute côté serveur. Le navigateur ne reçoit qu'un token éphémère.
+## Q: Comment un client prend-il RDV ?
 
-## Q: Combien de participants par visio ?
-
-**A:** OpenVidu CE supporte techniquement jusqu'à plusieurs dizaines de participants. Dans le contexte MonprojetPro (MiKL + un client), 2-4 participants est la cible.
-
-## Q: Les meetings sont-ils enregistrés automatiquement ?
-
-**A:** Oui (depuis Story 5.2). L'enregistrement démarre automatiquement avec `startMeeting()` et s'arrête avec `endMeeting()`. Le webhook OpenVidu notifie la plateforme quand l'enregistrement est prêt, puis la transcription est générée automatiquement via Whisper (OpenAI).
-
-## Q: Comment configurer la transcription automatique ?
-
-**A:** Ajoutez la variable `OPENAI_API_KEY` dans les secrets de la Edge Function `transcribe-recording`. La transcription utilise le modèle `whisper-1` et produit un fichier SRT. La langue par défaut est `fr` (configurable dans `meeting_recordings.transcription_language`).
+**A:** Deux façons :
+1. Via le widget **Cal.com** dans l'onglet Visio — il choisit un créneau disponible dans l'agenda MiKL
+2. Via le **Chat** — il écrit à MiKL pour proposer des horaires alternatifs si aucun créneau Cal.com ne lui convient
 
 ## Q: Où sont stockés les enregistrements ?
 
-**A:** Dans deux buckets Supabase Storage privés :
-- `recordings` — fichiers vidéo (MP4/WebM)
-- `transcripts` — fichiers SRT de transcription
+**A:** Dans **Google Drive** du compte Workspace MiKL. MonprojetPro ne stocke pas les vidéos — il affiche un lien vers Google Drive. Les transcriptions sont dans **Google Docs**.
 
-L'accès se fait uniquement via signed URLs (validité 1h), jamais par URL publique.
+## Q: La transcription Gemini est-elle automatique ?
 
-## Q: Que se passe-t-il si la transcription échoue ?
+**A:** Oui, si la transcription automatique est activée dans les paramètres de ton compte Google Workspace. Elle apparaît dans MonprojetPro quelques minutes après la fin du meeting (état "En cours de traitement" puis "Disponible").
 
-**A:** Le statut passe à `failed` dans `meeting_recordings.transcription_status`. L'enregistrement vidéo reste disponible. La transcription peut être relancée manuellement en appelant la Edge Function `transcribe-recording` avec le `meetingId`.
+## Q: Que se passe-t-il si je ferme l'onglet Google Meet sans cliquer "Terminer" dans MonprojetPro ?
 
-## Q: Que se passe-t-il si la connexion est coupée ?
+**A:** Le meeting reste en statut `in_progress` dans MonprojetPro. Il faut cliquer "Terminer" dans l'interface Hub pour marquer officiellement la fin et déclencher la récupération des enregistrements.
 
-**A:** Le hook `useOpenVidu` écoute les événements `streamDestroyed`. L'utilisateur peut relancer `connect()` pour se reconnecter. Le meeting reste `in_progress` en DB jusqu'à ce que `endMeeting()` soit appelé explicitement.
+## Q: Le client peut-il rejoindre sans compte Google ?
 
-## Q: Comment accéder à un meeting si je n'ai pas été invité ?
+**A:** Oui, selon la configuration d'accès. Avec `accessType: 'TRUSTED'`, les participants sans compte Google peuvent rejoindre en tant qu'invités (le host MiKL doit les admettre depuis Google Meet).
 
-**A:** Les RLS Supabase bloquent l'accès. Un client ne peut voir que ses propres meetings (via `meetings_select_owner`). Un opérateur voit tous les meetings de ses clients (via `meetings_select_operator`).
+## Q: Comment configurer les enregistrements automatiques ?
+
+**A:** Dans les paramètres Google Workspace Admin (`admin.google.com`) → Applications → Google Workspace → Meet → Paramètres vidéo → activer "Enregistrement automatique". Ou dans les paramètres de chaque meeting individuellement.

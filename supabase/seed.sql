@@ -28,7 +28,7 @@ INSERT INTO client_configs (client_id, operator_id, active_modules, dashboard_ty
 VALUES (
   '00000000-0000-0000-0000-000000000010',
   '00000000-0000-0000-0000-000000000001',
-  ARRAY['core-dashboard'],
+  ARRAY['core-dashboard', 'chat', 'documents', 'visio'],
   'lab',
   'lab'
 );

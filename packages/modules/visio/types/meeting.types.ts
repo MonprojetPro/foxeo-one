@@ -12,7 +12,7 @@ export type MeetingType = typeof MeetingTypeValues[number]
 
 export interface Meeting {
   id: string
-  clientId: string
+  clientId: string | null
   operatorId: string
   title: string
   description: string | null
@@ -20,7 +20,8 @@ export interface Meeting {
   startedAt: string | null
   endedAt: string | null
   durationSeconds: number | null
-  sessionId: string | null
+  meetSpaceName: string | null
+  meetUri: string | null
   status: MeetingStatus
   type: MeetingType
   metadata: Record<string, unknown>
@@ -36,7 +37,7 @@ export interface Meeting {
 
 export interface MeetingDB {
   id: string
-  client_id: string
+  client_id: string | null
   operator_id: string
   title: string
   description: string | null
@@ -44,7 +45,8 @@ export interface MeetingDB {
   started_at: string | null
   ended_at: string | null
   duration_seconds: number | null
-  session_id: string | null
+  meet_space_name: string | null
+  meet_uri: string | null
   status: MeetingStatus
   type: MeetingType
   metadata: Record<string, unknown>
@@ -59,11 +61,13 @@ export interface MeetingDB {
 // ============================================================
 
 export const CreateMeetingInput = z.object({
-  clientId: z.string().uuid('clientId invalide'),
+  clientId: z.string().uuid('clientId invalide').optional(),
   operatorId: z.string().uuid('operatorId invalide'),
   title: z.string().min(1, 'Le titre est requis'),
   description: z.string().optional(),
   scheduledAt: z.string().datetime({ offset: true }).optional(),
+  meetSpaceName: z.string().optional(),
+  meetUri: z.string().url().optional(),
 })
 export type CreateMeetingInput = z.infer<typeof CreateMeetingInput>
 
@@ -82,13 +86,3 @@ export const GetMeetingsInput = z.object({
   status: z.enum(['scheduled', 'in_progress', 'completed', 'cancelled']).optional(),
 })
 export type GetMeetingsInput = z.infer<typeof GetMeetingsInput>
-
-export const GetOpenViduTokenInput = z.object({
-  meetingId: z.string().uuid('meetingId invalide'),
-})
-export type GetOpenViduTokenInput = z.infer<typeof GetOpenViduTokenInput>
-
-export interface OpenViduTokenResult {
-  token: string
-  sessionId: string
-}
