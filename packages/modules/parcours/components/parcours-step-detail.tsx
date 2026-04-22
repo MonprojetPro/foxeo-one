@@ -11,6 +11,7 @@ import { OneTeasingCard } from './one-teasing-card'
 import { StepNavigationButtons } from './step-navigation-buttons'
 import { StepElioChat } from './step-elio-chat'
 import { GenerateDocumentButton } from './generate-document-button'
+import { StepHistoryPanel } from './step-history-panel'
 
 interface AdjacentStep {
   stepNumber: number
@@ -145,50 +146,8 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
         <div className="h-10" />
       </div>
 
-      {/* Right column — Élio chat panel (hidden on small screens) */}
-      <div className="hidden lg:flex w-[420px] shrink-0 flex-col bg-[#141414] border-l border-[#2d2d2d] overflow-hidden">
-        {/* Panel header */}
-        <div className="h-[52px] shrink-0 bg-[#1a1033] border-b border-[#2d2d2d] px-5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-[26px] h-[26px] rounded-full bg-gradient-to-br from-[#7c3aed] to-[#a78bfa] flex items-center justify-center text-white font-bold text-[11px] shrink-0">
-              E
-            </div>
-            <span className="text-[#a78bfa] font-semibold text-sm">
-              Chat Élio — Étape {step.stepNumber}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-[#9ca3af]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] inline-block" aria-hidden="true" />
-            En ligne
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-[18px] flex flex-col gap-3.5">
-          <div className="flex gap-2.5 items-start">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7c3aed] to-[#a78bfa] flex items-center justify-center text-white font-bold text-[11px] shrink-0">
-              E
-            </div>
-            <div className="bg-[#1e1557] border border-[#3d2d6d] rounded-xl rounded-tl-[4px] px-3 py-2.5 text-sm text-[#e5e7eb] leading-relaxed max-w-[310px]">
-              {step.status === 'locked' && "Cette étape n'est pas encore accessible. Je serai là dès que vous serez prêt."}
-              {step.status === 'current' && "Bonjour ! Je suis là pour vous accompagner sur cette étape. Ouvrez le chat complet pour que je vous guide pas à pas."}
-              {step.status === 'completed' && "Bravo pour cette étape ! Ouvrez le chat si vous avez des questions sur votre soumission."}
-              {step.status === 'skipped' && "Cette étape a été passée. Ouvrez le chat si vous souhaitez y revenir."}
-            </div>
-          </div>
-        </div>
-
-        {/* CTA vers chat complet */}
-        <div className="shrink-0 border-t border-[#2d2d2d] p-3.5">
-          <Link
-            href="/modules/elio"
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#7c3aed] text-[#a78bfa] hover:bg-[#1e1557] text-sm font-semibold py-2.5 transition-colors"
-            aria-label="Ouvrir le chat Élio complet"
-          >
-            Ouvrir le chat Élio complet →
-          </Link>
-        </div>
-      </div>
+      {/* Right column — Historique de l'étape (Story 14.8) */}
+      <StepHistoryPanel stepId={step.id} stepNumber={step.stepNumber} />
     </div>
   )
 }
