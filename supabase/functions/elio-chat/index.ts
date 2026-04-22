@@ -77,7 +77,7 @@ serve(async (req) => {
     console.log(`[ELIO] in=${inputTokens} out=${outputTokens}`)
 
     return new Response(
-      JSON.stringify({ content, model: GEMINI_MODEL }),
+      JSON.stringify({ content, model: GEMINI_MODEL, inputTokens, outputTokens }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 

@@ -19,6 +19,7 @@ import type { DashboardType, ElioMessage, CommunicationProfileFR66, DraftContext
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
 import type { ElioModuleDoc } from '@monprojetpro/types'
 import { loadModuleDocumentation } from './load-module-documentation'
+import { logTokenUsage } from './log-token-usage'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
 
@@ -112,6 +113,10 @@ function handleElioError(err: unknown): { message: string; code: string; details
  * Gère le timeout à 60s (NFR-I2), les erreurs réseau, LLM et inattendues.
  * Pour le Hub, supporte aussi : correction texte, génération brouillon, ajustement brouillon.
  * Retourne toujours { data, error } — jamais throw.
+ *
+ * @param clientId — ID du client (utilisé pour le tracking tokens)
+ * @param agentOverrides.agentId — ID de l'agent Élio Lab (pour le tracking tokens)
+ * @param agentOverrides.conversationId — ID de la conversation (pour le tracking tokens)
  */
 export async function sendToElio(
   dashboardType: DashboardType,
@@ -119,7 +124,7 @@ export async function sendToElio(
   clientId?: string,
   draftContext?: DraftContext,
   systemPromptOverride?: string,
-  agentOverrides?: { model?: string; temperature?: number },
+  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string },
 ): Promise<ActionResponse<ElioMessage>> {
   if (!message.trim()) {
     return errorResponse('Le message ne peut pas être vide', 'VALIDATION_ERROR')
@@ -225,7 +230,7 @@ export async function sendToElio(
         buildSystemPrompt({ dashboardType, customInstructions: elioConfig?.customInstructions }) +
         `\n\n# Résultats de recherche client\n${JSON.stringify(clientInfo, null, 2)}\n\nFormule une réponse claire avec ces informations.`
 
-      return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig)
+      return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
     }
   }
 
@@ -396,7 +401,7 @@ export async function sendToElio(
         parcoursContext,
       }) + (actionMarkdownDocs ? `\n\n${actionMarkdownDocs}` : '')
 
-      const actionResponse = await callLLM(supabase, actionSystemPrompt, message, dashboardType, elioConfig)
+      const actionResponse = await callLLM(supabase, actionSystemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
 
       if (actionResponse.data) {
         actionResponse.data.metadata = {
@@ -457,7 +462,7 @@ export async function sendToElio(
       parcoursContext,
     }) + (markdownDocs ? `\n\n${markdownDocs}` : '')
 
-    const response = await callLLM(supabase, systemPrompt, message, dashboardType, elioConfig)
+    const response = await callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
 
     // Task 10 — Détecter la faible confiance et signaler pour escalade MiKL
     if (response.data && detectLowConfidence(response.data.content)) {
@@ -491,11 +496,12 @@ export async function sendToElio(
     customInstructions: elioConfig?.customInstructions,
   })
 
-  return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides)
+  return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
 }
 
 /**
  * Appelle la Supabase Edge Function avec timeout et gestion d'erreurs.
+ * Enregistre la consommation tokens en fire-and-forget après chaque réponse réussie.
  */
 async function callLLM(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -503,7 +509,8 @@ async function callLLM(
   message: string,
   dashboardType: DashboardType,
   elioConfig: { model?: string; maxTokens?: number; temperature?: number } | null,
-  agentOverrides?: { model?: string; temperature?: number },
+  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string },
+  clientId?: string,
 ): Promise<ActionResponse<ElioMessage>> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
@@ -537,10 +544,28 @@ async function callLLM(
       return errorResponse(errorInfo.message, errorInfo.code, errorInfo.details)
     }
 
+    const responseData = data as { content?: string; model?: string; inputTokens?: number; outputTokens?: number }
+
+    // Fire-and-forget : tracking tokens (ne bloque jamais le chat)
+    const inputTokens = responseData?.inputTokens ?? 0
+    const outputTokens = responseData?.outputTokens ?? 0
+    const model = responseData?.model ?? agentOverrides?.model ?? elioConfig?.model ?? 'gemini-2.5-flash'
+
+    if (inputTokens > 0 || outputTokens > 0) {
+      logTokenUsage({
+        clientId: clientId ?? null,
+        elioLabAgentId: agentOverrides?.agentId ?? null,
+        conversationId: agentOverrides?.conversationId ?? null,
+        inputTokens,
+        outputTokens,
+        model,
+      }).catch(() => { /* fire-and-forget : échec silencieux */ })
+    }
+
     const elioMessage: ElioMessage = {
       id: makeMessageId(),
       role: 'assistant',
-      content: (data as { content?: string })?.content ?? '',
+      content: responseData?.content ?? '',
       createdAt: new Date().toISOString(),
       dashboardType,
     }

@@ -6,6 +6,7 @@
 export { createClient } from './client'
 export { createClient as createBrowserSupabaseClient } from './client'
 export { createServerSupabaseClient } from './server'
+export { createServiceRoleSupabaseClient } from './service-role'
 export { createMiddlewareSupabaseClient } from './middleware'
 
 // Realtime

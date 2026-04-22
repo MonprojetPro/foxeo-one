@@ -229,3 +229,22 @@ export { InjectStepContextPanel } from './components/inject-step-context-panel'
 // Utils — Story 14.6
 export { composeStepContextMessage } from './utils/compose-step-context-message'
 export type { StepContextForMessage } from './utils/compose-step-context-message'
+
+// Actions — Story 14.11 (Dashboard Tokens & Coûts IA)
+export { logTokenUsage } from './actions/log-token-usage'
+export { getTokenUsageSummary } from './actions/get-token-usage-summary'
+export type { TokenUsageSummary } from './actions/get-token-usage-summary'
+export { getTokenUsageByAgent } from './actions/get-token-usage-by-agent'
+export type { AgentTokenDetail } from './actions/get-token-usage-by-agent'
+export { setTokenBudgetAlert, getTokenBudgetAlert, BUDGET_ALERT_KEY } from './actions/set-token-budget-alert'
+export type { BudgetAlertConfig } from './actions/set-token-budget-alert'
+
+// Components — Story 14.11
+export { TokenUsageCard } from './components/token-usage-card'
+export { TokenCostCard } from './components/token-cost-card'
+export { TokenByAgentCard } from './components/token-by-agent-card'
+export { TokenByClientCard } from './components/token-by-client-card'
+export { TokenTrendChart } from './components/token-trend-chart'
+
+// Utils — Story 14.11
+export { calculateCostEur, getModelPricing, formatCostEur } from './utils/token-cost-calculator'
