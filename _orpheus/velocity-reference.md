@@ -190,6 +190,7 @@
 | 100 | 14.9 — Feedback MiKL injection questions Élio | 2026-04-22 | 4741755 | 18 | +1,066 | -28 | +1,038 | 37✅ |
 | 101 | 14.10 — Réouverture d'étape validée par MiKL | 2026-04-22 | 13770ed | 7 | +807 | -25 | +782 | 27✅ |
 | 102 | 14.11 — Dashboard Tokens & Coûts IA | 2026-04-22 | 8dc50f5 | 23 | +1,559 | -13 | +1,546 | 30✅ |
+| — | 14.11 refactor — Dashboard déplacé vers Élio Lab + encart accueil | 2026-04-22 | 580e790 | 4 | +66 | -28 | +38 | — |
 
 > `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,521+.
 
@@ -209,13 +210,13 @@
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **101** (99 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **102** (100 commits, dont 2 doubles et 1 triple) |
 | Integrations design (hors epic) | **1** (Claude Design — Lab+One visual refonte) |
-| Commits de correction post-story | **1** (code review retroactif + bug systemic) |
-| Fichiers totaux modifies | **2,406** |
-| Lignes inserees | **+181,815** |
-| Lignes supprimees | **-15,639** |
-| Lignes nettes ajoutees | **+166,176** |
+| Commits de correction post-story | **2** (code review retroactif + 14.11 relocalisation dashboard) |
+| Fichiers totaux modifies | **2,410** |
+| Lignes inserees | **+181,881** |
+| Lignes supprimees | **-15,667** |
+| Lignes nettes ajoutees | **+166,214** |
 | Tests finaux | **~4,491+** |
 | Duree calendaire | **74 jours** (8 fev — 22 avr) |
 | Jours effectifs de dev | **~26 jours** |
