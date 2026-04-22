@@ -211,3 +211,8 @@ export { archiveElioLabAgent } from './actions/archive-elio-lab-agent'
 export { activateElioLabAgent } from './actions/activate-elio-lab-agent'
 export type { ElioLabAgent, SyncResult } from './actions/sync-elio-lab-agents'
 export type { GetElioLabAgentsOptions } from './actions/get-elio-lab-agents'
+
+// Actions — Story 14.5
+export { getEffectiveStepConfig } from './actions/get-effective-step-config'
+export { consumeStepContext } from './actions/consume-step-context'
+export type { EffectiveStepConfig } from './actions/get-effective-step-config'

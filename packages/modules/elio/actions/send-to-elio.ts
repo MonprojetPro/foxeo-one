@@ -119,6 +119,7 @@ export async function sendToElio(
   clientId?: string,
   draftContext?: DraftContext,
   systemPromptOverride?: string,
+  agentOverrides?: { model?: string; temperature?: number },
 ): Promise<ActionResponse<ElioMessage>> {
   if (!message.trim()) {
     return errorResponse('Le message ne peut pas être vide', 'VALIDATION_ERROR')
@@ -490,7 +491,7 @@ export async function sendToElio(
     customInstructions: elioConfig?.customInstructions,
   })
 
-  return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig)
+  return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides)
 }
 
 /**
@@ -502,6 +503,7 @@ async function callLLM(
   message: string,
   dashboardType: DashboardType,
   elioConfig: { model?: string; maxTokens?: number; temperature?: number } | null,
+  agentOverrides?: { model?: string; temperature?: number },
 ): Promise<ActionResponse<ElioMessage>> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
@@ -512,9 +514,9 @@ async function callLLM(
         systemPrompt,
         message,
         dashboardType,
-        model: elioConfig?.model ?? 'claude-sonnet-4-20250514',
+        model: agentOverrides?.model ?? elioConfig?.model ?? 'claude-sonnet-4-20250514',
         maxTokens: elioConfig?.maxTokens ?? 8192,
-        temperature: elioConfig?.temperature ?? 1.0,
+        temperature: agentOverrides?.temperature ?? elioConfig?.temperature ?? 1.0,
       },
       signal: controller.signal,
     })

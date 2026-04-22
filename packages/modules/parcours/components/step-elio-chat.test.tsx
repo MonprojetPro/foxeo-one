@@ -12,13 +12,6 @@ vi.mock('../actions/get-or-create-step-conversation', () => ({
   }),
 }))
 
-vi.mock('../actions/get-effective-elio-config', () => ({
-  getEffectiveElioConfig: vi.fn().mockResolvedValue({
-    data: { personaName: 'Élio Test', systemPromptOverride: null, source: 'global' },
-    error: null,
-  }),
-}))
-
 vi.mock('@monprojetpro/module-elio', () => ({
   getMessages: vi.fn().mockResolvedValue({ data: [], error: null }),
   saveElioMessage: vi.fn().mockResolvedValue({ data: {}, error: null }),
@@ -32,6 +25,20 @@ vi.mock('@monprojetpro/module-elio', () => ({
     },
     error: null,
   }),
+  getEffectiveStepConfig: vi.fn().mockResolvedValue({
+    data: {
+      agentName: 'Élio Branding',
+      agentImagePath: null,
+      systemPrompt: 'Tu es un expert en branding.',
+      model: 'claude-opus-4-6',
+      temperature: 0.8,
+      announcementMessage: null,
+      contextId: null,
+      source: 'agent',
+    },
+    error: null,
+  }),
+  consumeStepContext: vi.fn().mockResolvedValue({ data: { consumed: true }, error: null }),
 }))
 
 const STEP_ID = '00000000-0000-0000-0000-000000000001'
@@ -42,7 +49,9 @@ describe('StepElioChat', () => {
     vi.clearAllMocks()
   })
 
-  it('affiche le header avec le nom du persona', async () => {
+  // ── Tests existants (Story 14.4) ────────────────────────────────────────────
+
+  it('affiche le nom de l\'agent dans le header (AC#1)', async () => {
     render(
       <StepElioChat
         stepId={STEP_ID}
@@ -53,7 +62,7 @@ describe('StepElioChat', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Élio Test')).toBeDefined()
+      expect(screen.getByText('Élio Branding')).toBeDefined()
     })
   })
 
@@ -208,6 +217,158 @@ describe('StepElioChat', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Impossible de charger le chat Élio')).toBeDefined()
+    })
+  })
+
+  // ── Nouveaux tests Story 14.5 ────────────────────────────────────────────────
+
+  it('affiche le nom du persona depuis getEffectiveStepConfig (AC#1)', async () => {
+    const { getEffectiveStepConfig } = await import('@monprojetpro/module-elio')
+    vi.mocked(getEffectiveStepConfig).mockResolvedValueOnce({
+      data: {
+        agentName: 'Élio Vision',
+        agentImagePath: null,
+        systemPrompt: null,
+        model: 'claude-sonnet-4-6',
+        temperature: 1.0,
+        announcementMessage: null,
+        contextId: null,
+        source: 'agent',
+      },
+      error: null,
+    })
+
+    render(
+      <StepElioChat
+        stepId={STEP_ID}
+        stepStatus="current"
+        stepNumber={1}
+        clientId={CLIENT_ID}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Élio Vision')).toBeDefined()
+    })
+  })
+
+  it('injecte le message d\'annonce MiKL si contexte non-consommé et aucun historique (AC#3)', async () => {
+    const { getEffectiveStepConfig, consumeStepContext } = await import('@monprojetpro/module-elio')
+    const CONTEXT_ID = '00000000-0000-0000-0000-000000000010'
+
+    vi.mocked(getEffectiveStepConfig).mockResolvedValueOnce({
+      data: {
+        agentName: 'Élio Branding',
+        agentImagePath: null,
+        systemPrompt: null,
+        model: 'claude-sonnet-4-6',
+        temperature: 1.0,
+        announcementMessage: 'MiKL a préparé un contexte pour vous : Votre cliente aime le minimalisme.',
+        contextId: CONTEXT_ID,
+        source: 'agent',
+      },
+      error: null,
+    })
+
+    render(
+      <StepElioChat
+        stepId={STEP_ID}
+        stepStatus="current"
+        stepNumber={2}
+        clientId={CLIENT_ID}
+      />
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('MiKL a préparé un contexte pour vous : Votre cliente aime le minimalisme.')
+      ).toBeDefined()
+    })
+
+    // consumeStepContext doit être appelé pour marquer le contexte consommé
+    await waitFor(() => {
+      expect(vi.mocked(consumeStepContext)).toHaveBeenCalledWith(CONTEXT_ID)
+    })
+  })
+
+  it('ne pas injecter le message d\'annonce si l\'historique contient déjà des messages (AC#4)', async () => {
+    const { getMessages, getEffectiveStepConfig, consumeStepContext } = await import('@monprojetpro/module-elio')
+    const CONTEXT_ID = '00000000-0000-0000-0000-000000000011'
+
+    // Historique existant
+    vi.mocked(getMessages).mockResolvedValueOnce({
+      data: [
+        {
+          id: 'msg-existing',
+          conversationId: '00000000-0000-0000-0000-000000000003',
+          role: 'user',
+          content: 'Bonjour',
+          metadata: {},
+          createdAt: '2026-01-01T00:00:00Z',
+        },
+      ],
+      error: null,
+    })
+
+    vi.mocked(getEffectiveStepConfig).mockResolvedValueOnce({
+      data: {
+        agentName: 'Élio Branding',
+        agentImagePath: null,
+        systemPrompt: null,
+        model: 'claude-sonnet-4-6',
+        temperature: 1.0,
+        announcementMessage: 'Message MiKL',
+        contextId: CONTEXT_ID,
+        source: 'agent',
+      },
+      error: null,
+    })
+
+    render(
+      <StepElioChat
+        stepId={STEP_ID}
+        stepStatus="current"
+        stepNumber={2}
+        clientId={CLIENT_ID}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Bonjour')).toBeDefined()
+    })
+
+    // Message MiKL ne doit PAS être injecté (historique non vide)
+    expect(screen.queryByText('Message MiKL')).toBeNull()
+    expect(vi.mocked(consumeStepContext)).not.toHaveBeenCalled()
+  })
+
+  it('utilise le fallback global (source: global) quand aucun agent n\'est assigné (AC#5)', async () => {
+    const { getEffectiveStepConfig } = await import('@monprojetpro/module-elio')
+    vi.mocked(getEffectiveStepConfig).mockResolvedValueOnce({
+      data: {
+        agentName: 'Élio',
+        agentImagePath: null,
+        systemPrompt: null,
+        model: 'claude-sonnet-4-6',
+        temperature: 1.0,
+        announcementMessage: null,
+        contextId: null,
+        source: 'global',
+      },
+      error: null,
+    })
+
+    render(
+      <StepElioChat
+        stepId={STEP_ID}
+        stepStatus="current"
+        stepNumber={5}
+        clientId={CLIENT_ID}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Élio')).toBeDefined()
     })
   })
 })

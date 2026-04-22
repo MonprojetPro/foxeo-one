@@ -1,9 +1,15 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { Bot } from 'lucide-react'
 import { getOrCreateStepConversation } from '../actions/get-or-create-step-conversation'
-import { getEffectiveElioConfig } from '../actions/get-effective-elio-config'
-import { getMessages, saveElioMessage, sendToElio } from '@monprojetpro/module-elio'
+import {
+  getMessages,
+  saveElioMessage,
+  sendToElio,
+  getEffectiveStepConfig,
+  consumeStepContext,
+} from '@monprojetpro/module-elio'
 import type { ElioMessagePersisted } from '@monprojetpro/module-elio'
 import type { ParcoursStepStatus } from '../types/parcours.types'
 
@@ -36,16 +42,21 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId }: StepE
   const [chatStatus, setChatStatus] = useState<ChatStatus>('idle')
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ElioMessagePersisted[]>([])
-  const [personaName, setPersonaName] = useState<string>('Élio')
+
+  // Config agent (Story 14.5)
+  const [agentName, setAgentName] = useState<string>('Élio')
+  const [agentImagePath, setAgentImagePath] = useState<string | null>(null)
+  const [agentImgError, setAgentImgError] = useState(false)
   const [systemPromptOverride, setSystemPromptOverride] = useState<string | null>(null)
+  const [agentModel, setAgentModel] = useState<string | undefined>(undefined)
+  const [agentTemperature, setAgentTemperature] = useState<number | undefined>(undefined)
+
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Désactivé visuellement si locked
   const isDisabled = stepStatus === 'locked'
-  // Input désactivé si lecture seule ou envoi en cours
   const isInputDisabled = isReadonly(stepStatus) || stepStatus === 'locked' || isSending
 
   const scrollToBottom = useCallback(() => {
@@ -56,7 +67,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId }: StepE
     if (messages.length > 0) scrollToBottom()
   }, [messages, scrollToBottom])
 
-  // Init : trouver/créer la conversation + charger l'historique + config Élio
+  // Init : trouver/créer la conversation + charger l'historique + config agent Élio
   useEffect(() => {
     if (!stepId || !clientId) return
 
@@ -75,21 +86,40 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId }: StepE
       const { conversationId: convId } = convResult.data
       setConversationId(convId)
 
-      // Charger l'historique
+      // Charger l'historique + config agent en parallèle
       const [messagesResult, configResult] = await Promise.all([
         getMessages(convId),
-        getEffectiveElioConfig({ stepId, clientId }),
+        getEffectiveStepConfig({ stepId, stepNumber, clientId }),
       ])
 
       if (cancelled) return
 
-      if (messagesResult.data) {
-        setMessages(messagesResult.data)
-      }
+      const existingMessages = messagesResult.data ?? []
+      setMessages(existingMessages)
 
       if (configResult.data) {
-        setPersonaName(configResult.data.personaName ?? 'Élio')
-        setSystemPromptOverride(configResult.data.systemPromptOverride ?? null)
+        const cfg = configResult.data
+        setAgentName(cfg.agentName)
+        setAgentImagePath(cfg.agentImagePath)
+        setSystemPromptOverride(cfg.systemPrompt)
+        setAgentModel(cfg.model)
+        setAgentTemperature(cfg.temperature)
+
+        // Injecter le message d'annonce MiKL si contexte non-consommé + aucun historique
+        if (cfg.announcementMessage && cfg.contextId && existingMessages.length === 0) {
+          const announcementMsg: ElioMessagePersisted = {
+            id: `announcement-${cfg.contextId}`,
+            conversationId: convId,
+            role: 'assistant',
+            content: cfg.announcementMessage,
+            metadata: { injectedByMikl: true },
+            createdAt: new Date().toISOString(),
+          }
+          setMessages([announcementMsg])
+          // Persister + marquer consommé (non-bloquant)
+          void saveElioMessage(convId, 'assistant', cfg.announcementMessage, { injected_by_mikl: true })
+          void consumeStepContext(cfg.contextId)
+        }
       }
 
       setChatStatus('ready')
@@ -97,7 +127,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId }: StepE
 
     init()
     return () => { cancelled = true }
-  }, [stepId, clientId])
+  }, [stepId, stepNumber, clientId])
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || !conversationId || isSending) return
@@ -124,18 +154,23 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId }: StepE
     if (saveUserError) {
       setSendError('Impossible de sauvegarder votre message')
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
-      setInput(content) // restituer le message pour réessai
+      setInput(content)
       setIsSending(false)
       return
     }
 
-    // Appeler Élio
+    // Appeler Élio avec system prompt + modèle/température de l'agent
+    const overrides = (agentModel !== undefined || agentTemperature !== undefined)
+      ? { model: agentModel, temperature: agentTemperature }
+      : undefined
+
     const { data: reply, error: elioError } = await sendToElio(
       'lab',
       content,
       clientId,
       undefined,
-      systemPromptOverride ?? undefined
+      systemPromptOverride ?? undefined,
+      overrides
     )
 
     if (elioError || !reply) {
@@ -157,7 +192,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId }: StepE
     }
     setMessages((prev) => [...prev, assistantMsg])
     setIsSending(false)
-  }, [input, conversationId, isSending, clientId, systemPromptOverride])
+  }, [input, conversationId, isSending, clientId, systemPromptOverride, agentModel, agentTemperature])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -176,12 +211,22 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId }: StepE
       className={`mt-6 rounded-xl border border-[#2d2d2d] overflow-hidden transition-opacity ${isDisabled ? 'opacity-50' : ''}`}
       aria-label={`Chat Élio — Étape ${stepNumber}`}
     >
-      {/* Header */}
+      {/* Header — avatar agent + nom agent */}
       <div className="bg-[#1a1033] border-b border-[#2d2d2d] px-4 py-2.5 flex items-center gap-2.5">
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#7c3aed] to-[#a78bfa] flex items-center justify-center text-white font-bold text-[10px] shrink-0">
-          E
+        <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-gradient-to-br from-[#7c3aed] to-[#a78bfa]">
+          {agentImagePath && !agentImgError ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={agentImagePath}
+              alt={agentName}
+              className="w-full h-full object-cover"
+              onError={() => setAgentImgError(true)}
+            />
+          ) : (
+            <Bot className="w-3.5 h-3.5 text-white" aria-hidden="true" />
+          )}
         </div>
-        <span className="text-sm font-semibold text-[#a78bfa]">{personaName}</span>
+        <span className="text-sm font-semibold text-[#a78bfa]">{agentName}</span>
         {chatStatus === 'ready' && (
           <span className="ml-auto flex items-center gap-1 text-xs text-[#9ca3af]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] inline-block" aria-hidden="true" />
