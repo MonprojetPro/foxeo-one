@@ -31,7 +31,7 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
   return (
     <div className="-m-6 flex overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
       {/* Left column — step content */}
-      <div className="flex-1 min-w-0 overflow-y-auto p-7">
+      <div className="flex-1 min-w-0 overflow-y-auto p-7 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#3d2d6d] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7c3aed]">
         {/* Breadcrumb */}
         <nav className="text-xs text-[#6b7280] mb-3">
           <Link href="/modules/parcours" className="hover:text-[#f9fafb] transition-colors">

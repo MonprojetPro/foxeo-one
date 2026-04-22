@@ -89,7 +89,7 @@ export function StepHistoryPanel({ stepId, stepNumber }: StepHistoryPanelProps) 
       </div>
 
       {/* Sections scrollables */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#3d2d6d] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7c3aed]">
         <CollapsibleSection title="Soumissions" count={submissions.length} defaultOpen>
           {isLoadingSubmissions ? (
             <div className="flex flex-col gap-2 animate-pulse">
