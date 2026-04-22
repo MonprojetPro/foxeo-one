@@ -183,8 +183,9 @@
 | 93 | 14.2 — Catalogue agents Élio Lab — page Hub + sync + CRUD | 2026-04-21 | — | 23 | +1,252 | -57 | +1,195 | 23✅ |
 | 94 | 14.3 — Assemblage parcours client depuis catalogue | 2026-04-21 | — | 25 | +1,468 | -5 | +1,463 | 25✅ |
 | 95 | 14.4 — Chat Élio embarqué dans la page étape | 2026-04-22 | c355c4f | 10 | +788 | -2 | +786 | 26✅ |
+| 96 | 14.5 — Chat Élio Lab câblé sur l'agent assigné | 2026-04-22 | 115c45e | 9 | +816 | -34 | +782 | 25✅ |
 
-> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,320+.
+> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,345+.
 
 ### Claude Design Integration (hors epic — refonte visuelle)
 

@@ -1,6 +1,6 @@
 # Story 14.5 : Chat Élio Lab Câblé sur l'Agent Assigné
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -74,4 +74,22 @@ L'Edge Function existante accepte déjà `model` et `systemPrompt` en paramètre
 
 ## File List
 
-*(auto-généré à la complétion)*
+**Created:**
+- `supabase/migrations/00100_create_client_step_contexts.sql`
+- `packages/modules/elio/actions/get-effective-step-config.ts`
+- `packages/modules/elio/actions/get-effective-step-config.test.ts`
+- `packages/modules/elio/actions/consume-step-context.ts`
+- `packages/modules/elio/actions/consume-step-context.test.ts`
+
+**Modified:**
+- `packages/modules/elio/actions/send-to-elio.ts` — ajout `agentOverrides?: { model?, temperature? }` + propagation à `callLLM`
+- `packages/modules/elio/index.ts` — export `getEffectiveStepConfig`, `consumeStepContext`, `EffectiveStepConfig`
+- `packages/modules/parcours/components/step-elio-chat.tsx` — câblage agent assigné, header image, injection message d'annonce MiKL
+- `packages/modules/parcours/components/step-elio-chat.test.tsx` — 4 nouveaux tests Story 14.5 (13 tests total)
+
+## Completion Notes
+
+- Migration 00100 crée `client_step_contexts` + SELECT/UPDATE client + policies client sur `elio_lab_agents` et `client_parcours_agents`
+- `getEffectiveStepConfig` résout l'agent par `step_order = stepNumber` (correspondance avec `parcours_steps.step_number`)
+- `agentOverrides` ignoré pour dashboards `one`/`hub` — dette technique documentée (scope story = `lab` uniquement)
+- Fix SCAN : RLS UPDATE WITH CHECK (empêche dé-consommation), logging contextError non-bloquant, condition agentOverrides corrigée
