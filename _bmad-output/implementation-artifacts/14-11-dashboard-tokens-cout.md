@@ -1,6 +1,6 @@
 # Story 14.11 : Dashboard Tokens & Coûts IA
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -80,6 +80,34 @@ Taux de conversion USD → EUR : utiliser 0.92 (fixe pour l'affichage — pas be
 ### Graphique tendance
 Utiliser des CSS bars simples plutôt qu'une librairie Recharts pour rester léger. Si Recharts est déjà dans le projet, l'utiliser.
 
+## Completion Notes
+
+- Migration `00104_create_elio_token_usage.sql` appliquée en prod (supabase db push)
+- Edge Function `elio-chat` modifiée pour retourner `inputTokens` / `outputTokens` dans la réponse
+- Provider LLM = Gemini 2.5 Flash (pas Anthropic) — calculateur adapté en conséquence ($0.15/$0.60 per 1M)
+- `logTokenUsage` utilise `createServiceRoleSupabaseClient` (bypass RLS) — nécessaire car les clients Lab/One doivent aussi être trackés
+- Table `elio_token_usage` immuable par RLS (policies NO_UPDATE + NO_DELETE explicites)
+- Tracking fire-and-forget dans `callLLM` de `send-to-elio.ts`
+- 9 issues SCAN — 8 fixées (HIGH+MEDIUM), 1 LOW reportée (issue #5 semaines tronquées)
+- 30 tests ✅ | commit `8dc50f5`
+
 ## File List
 
-*(auto-généré à la complétion)*
+- `supabase/migrations/00104_create_elio_token_usage.sql`
+- `supabase/functions/elio-chat/index.ts` (modifié)
+- `packages/supabase/src/service-role.ts` (nouveau)
+- `packages/supabase/src/index.ts` (modifié)
+- `packages/modules/elio/utils/token-cost-calculator.ts` + `.test.ts`
+- `packages/modules/elio/actions/log-token-usage.ts` + `.test.ts`
+- `packages/modules/elio/actions/get-token-usage-summary.ts` + `.test.ts`
+- `packages/modules/elio/actions/get-token-usage-by-agent.ts` + `.test.ts`
+- `packages/modules/elio/actions/set-token-budget-alert.ts` + `.test.ts`
+- `packages/modules/elio/actions/send-to-elio.ts` (modifié)
+- `packages/modules/elio/components/token-usage-card.tsx`
+- `packages/modules/elio/components/token-cost-card.tsx`
+- `packages/modules/elio/components/token-by-agent-card.tsx`
+- `packages/modules/elio/components/token-by-client-card.tsx`
+- `packages/modules/elio/components/token-trend-chart.tsx`
+- `packages/modules/elio/index.ts` (modifié)
+- `apps/hub/app/(dashboard)/elio/hub/page.tsx` (modifié)
+- `apps/hub/app/(dashboard)/elio/hub/elio-hub-dashboard.tsx` (nouveau)

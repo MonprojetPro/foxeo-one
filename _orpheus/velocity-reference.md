@@ -189,8 +189,9 @@
 | 99 | 14.8 — Panneau droit historique de l'étape | 2026-04-22 | 0bb831c | 13 | +1,061 | -44 | +1,017 | 28✅ |
 | 100 | 14.9 — Feedback MiKL injection questions Élio | 2026-04-22 | 4741755 | 18 | +1,066 | -28 | +1,038 | 37✅ |
 | 101 | 14.10 — Réouverture d'étape validée par MiKL | 2026-04-22 | 13770ed | 7 | +807 | -25 | +782 | 27✅ |
+| 102 | 14.11 — Dashboard Tokens & Coûts IA | 2026-04-22 | 8dc50f5 | 23 | +1,559 | -13 | +1,546 | 30✅ |
 
-> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,491+.
+> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,521+.
 
 ### Claude Design Integration (hors epic — refonte visuelle)
 
@@ -208,7 +209,7 @@
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **100** (98 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **101** (99 commits, dont 2 doubles et 1 triple) |
 | Integrations design (hors epic) | **1** (Claude Design — Lab+One visual refonte) |
 | Commits de correction post-story | **1** (code review retroactif + bug systemic) |
 | Fichiers totaux modifies | **2,406** |
