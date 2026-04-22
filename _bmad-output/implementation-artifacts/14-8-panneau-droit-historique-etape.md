@@ -1,6 +1,6 @@
 # Story 14.8 : Panneau droit historique de l'étape
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -40,45 +40,45 @@ so that **j'ai une vision globale de mes échanges et progressions sur cette ét
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Hook useStepHistory (AC: #1, #2, #3, #4, #5, #6)
-  - [ ] 1.1 Créer `packages/modules/parcours/hooks/use-step-history.ts`
-  - [ ] 1.2 TanStack Query : fetch step_submissions WHERE parcours_step_id = stepId
-  - [ ] 1.3 TanStack Query : fetch step_feedback_injections WHERE step_id = stepId (prépare 14.5 — retourne [] si table n'existe pas encore)
-  - [ ] 1.4 Realtime subscription sur step_submissions filtré par step_id → invalidateQueries
-  - [ ] 1.5 Test du hook
+- [x] Task 1 — Hook useStepHistory (AC: #1, #2, #3, #4, #5, #6)
+  - [x] 1.1 Créer `packages/modules/parcours/hooks/use-step-history.ts`
+  - [x] 1.2 TanStack Query : fetch step_submissions WHERE parcours_step_id = stepId
+  - [x] 1.3 TanStack Query : fetch step_feedback_injections WHERE step_id = stepId (prépare 14.5 — retourne [] si table n'existe pas encore)
+  - [x] 1.4 Realtime subscription sur step_submissions filtré par step_id → invalidateQueries
+  - [x] 1.5 Test du hook
 
-- [ ] Task 2 — Composant StepHistoryPanel (AC: #1, #7)
-  - [ ] 2.1 Créer `packages/modules/parcours/components/step-history-panel.tsx`
-  - [ ] 2.2 Layout : 3 sections collapsibles avec header + nombre d'items
-  - [ ] 2.3 Scroll vertical si contenu dépasse la hauteur disponible
+- [x] Task 2 — Composant StepHistoryPanel (AC: #1, #7)
+  - [x] 2.1 Créer `packages/modules/parcours/components/step-history-panel.tsx`
+  - [x] 2.2 Layout : 3 sections collapsibles avec header + nombre d'items
+  - [x] 2.3 Scroll vertical si contenu dépasse la hauteur disponible
 
-- [ ] Task 3 — Sous-composant SubmissionsList (AC: #2, #3)
-  - [ ] 3.1 Créer `packages/modules/parcours/components/step-submissions-list.tsx`
-  - [ ] 3.2 Badge statut coloré (mapping couleurs)
-  - [ ] 3.3 Date relative (intl RelativeTimeFormat ou helper existant)
-  - [ ] 3.4 Aperçu tronqué + onClick ouvre modal contenu complet
-  - [ ] 3.5 État vide
+- [x] Task 3 — Sous-composant SubmissionsList (AC: #2, #3)
+  - [x] 3.1 Créer `packages/modules/parcours/components/step-submissions-list.tsx`
+  - [x] 3.2 Badge statut coloré (mapping couleurs)
+  - [x] 3.3 Date relative (intl RelativeTimeFormat ou helper existant)
+  - [x] 3.4 Aperçu tronqué + onClick ouvre modal contenu complet
+  - [x] 3.5 État vide
 
-- [ ] Task 4 — Sous-composant DocumentsList (AC: #4)
-  - [ ] 4.1 Créer `packages/modules/parcours/components/step-documents-list.tsx`
-  - [ ] 4.2 Liste des documents (extraits de step_submissions.submission_content pour les soumissions)
-  - [ ] 4.3 Bouton copier markdown dans clipboard
+- [x] Task 4 — Sous-composant DocumentsList (AC: #4)
+  - [x] 4.1 Créer `packages/modules/parcours/components/step-documents-list.tsx`
+  - [x] 4.2 Liste des documents (extraits de step_submissions.submission_content pour les soumissions)
+  - [x] 4.3 Bouton copier markdown dans clipboard
 
-- [ ] Task 5 — Sous-composant FeedbackList (AC: #5)
-  - [ ] 5.1 Créer `packages/modules/parcours/components/step-feedback-list.tsx`
-  - [ ] 5.2 Style orange MiKL
-  - [ ] 5.3 Point bleu non-lu (basé sur read_at NULL — prépare 14.5)
-  - [ ] 5.4 État vide ("Aucun feedback pour le moment")
+- [x] Task 5 — Sous-composant FeedbackList (AC: #5)
+  - [x] 5.1 Créer `packages/modules/parcours/components/step-feedback-list.tsx`
+  - [x] 5.2 Style orange MiKL
+  - [x] 5.3 Point bleu non-lu (basé sur read_at NULL — prépare 14.5)
+  - [x] 5.4 État vide ("Aucun feedback pour le moment")
 
-- [ ] Task 6 — Modal soumission détaillée (AC: #2)
-  - [ ] 6.1 Créer `packages/modules/parcours/components/submission-detail-modal.tsx`
-  - [ ] 6.2 Affiche le contenu complet markdown + feedback si présent
+- [x] Task 6 — Modal soumission détaillée (AC: #2)
+  - [x] 6.1 Créer `packages/modules/parcours/components/submission-detail-modal.tsx`
+  - [x] 6.2 Affiche le contenu complet markdown + feedback si présent
 
-- [ ] Task 7 — Tests (AC: tous)
-  - [ ] 7.1 Test StepHistoryPanel (rendu des 3 sections)
-  - [ ] 7.2 Test SubmissionsList (badges, états vides, click)
-  - [ ] 7.3 Test StepDocumentsList (copie clipboard)
-  - [ ] 7.4 Test FeedbackList (style orange, non-lu)
+- [x] Task 7 — Tests (AC: tous)
+  - [x] 7.1 Test StepHistoryPanel (rendu des 3 sections)
+  - [x] 7.2 Test SubmissionsList (badges, états vides, click)
+  - [x] 7.3 Test StepDocumentsList (copie clipboard)
+  - [x] 7.4 Test FeedbackList (style orange, non-lu)
 
 ## Dev Notes
 
@@ -110,4 +110,25 @@ packages/modules/parcours/components/parcours-step-detail.tsx            # MODIF
 
 ## File List (auto-generated at completion)
 
+```
+packages/modules/parcours/hooks/use-step-history.ts                     CRÉÉ
+packages/modules/parcours/hooks/use-step-history.test.ts                CRÉÉ
+packages/modules/parcours/components/step-history-panel.tsx              CRÉÉ
+packages/modules/parcours/components/step-history-panel.test.tsx         CRÉÉ
+packages/modules/parcours/components/step-submissions-list.tsx           CRÉÉ
+packages/modules/parcours/components/step-submissions-list.test.tsx      CRÉÉ
+packages/modules/parcours/components/step-documents-list.tsx             CRÉÉ
+packages/modules/parcours/components/step-documents-list.test.tsx        CRÉÉ
+packages/modules/parcours/components/step-feedback-list.tsx              CRÉÉ
+packages/modules/parcours/components/step-feedback-list.test.tsx         CRÉÉ
+packages/modules/parcours/components/submission-detail-modal.tsx         CRÉÉ
+packages/modules/parcours/components/parcours-step-detail.tsx            MODIFIÉ — faux chat remplacé par StepHistoryPanel
+docs/client-release-notes.md                                             MODIFIÉ — release note Story 14.8
+```
+
 ## Completion Notes
+
+Story implémentée le 2026-04-22. Commit : 0bb831c.
+28 tests passants. Score SCAN : 41/50 — A.
+Pas de migration nécessaire (utilise les tables existantes step_submissions + graceful fallback step_feedback_injections).
+Pas de leçon enregistrée — story sans embûche.
