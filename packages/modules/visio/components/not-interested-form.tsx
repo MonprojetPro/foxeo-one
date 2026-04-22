@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { markProspectNotInterested, NotInterestedReasonValues } from '../actions/mark-prospect-not-interested'
+import { markProspectNotInterested } from '../actions/mark-prospect-not-interested'
 import type { NotInterestedReason } from '../actions/mark-prospect-not-interested'
+import { NotInterestedReasonValues } from '../actions/post-meeting-schemas'
 
 const reasonLabels: Record<NotInterestedReason, string> = {
   budget: 'Budget insuffisant',
