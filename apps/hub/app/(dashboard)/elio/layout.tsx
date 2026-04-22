@@ -15,7 +15,7 @@ export default function ElioLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex flex-col h-full">
-      <div className="border-b border-border px-6 pt-6">
+      <div className="border-b border-border px-8 pt-6">
         <h1 className="text-xl font-bold text-foreground mb-4">Élio — Agents</h1>
         <nav aria-label="Navigation Élio" className="flex gap-1">
           {tabs.map((tab) => {
@@ -37,7 +37,7 @@ export default function ElioLayout({ children }: { children: React.ReactNode }) 
           })}
         </nav>
       </div>
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto">
         {children}
       </div>
     </div>
