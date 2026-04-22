@@ -236,7 +236,7 @@ export { getTokenUsageSummary } from './actions/get-token-usage-summary'
 export type { TokenUsageSummary } from './actions/get-token-usage-summary'
 export { getTokenUsageByAgent } from './actions/get-token-usage-by-agent'
 export type { AgentTokenDetail } from './actions/get-token-usage-by-agent'
-export { setTokenBudgetAlert, getTokenBudgetAlert, BUDGET_ALERT_KEY } from './actions/set-token-budget-alert'
+export { setTokenBudgetAlert, getTokenBudgetAlert } from './actions/set-token-budget-alert'
 export type { BudgetAlertConfig } from './actions/set-token-budget-alert'
 
 // Components — Story 14.11

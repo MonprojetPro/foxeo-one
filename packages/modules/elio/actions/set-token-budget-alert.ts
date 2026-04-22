@@ -12,8 +12,8 @@ export interface BudgetAlertConfig {
   budgetEur: number
 }
 
-/** Clé system_config pour le seuil de budget IA mensuel */
-export const BUDGET_ALERT_KEY = 'elio_monthly_budget_eur'
+/** Clé system_config pour le seuil de budget IA mensuel (interne — non exportée depuis 'use server') */
+const BUDGET_ALERT_KEY = 'elio_monthly_budget_eur'
 
 /**
  * Sauvegarde le seuil de budget IA mensuel dans system_config.

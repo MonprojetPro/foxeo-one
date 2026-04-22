@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { setTokenBudgetAlert, getTokenBudgetAlert, BUDGET_ALERT_KEY } from './set-token-budget-alert'
+import { setTokenBudgetAlert, getTokenBudgetAlert } from './set-token-budget-alert'
+
+const BUDGET_ALERT_KEY = 'elio_monthly_budget_eur' // constante locale pour les tests
 
 const mockUpsert = vi.fn().mockResolvedValue({ error: null })
 const mockMaybeSingle = vi.fn()
