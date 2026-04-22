@@ -181,8 +181,10 @@
 | 91 | 14.1 — Config Élio par étape, table elio_step_configs & CRUD Hub | 2026-04-20 | — | 14 | +1,313 | -4 | +1,309 | 30† |
 | 92 | 14.1b — Onglet Élio sidebar Hub + routes Lab/One/Hub | 2026-04-21 | — | 8 | +142 | -1 | +141 | 15† |
 | 93 | 14.2 — Catalogue agents Élio Lab — page Hub + sync + CRUD | 2026-04-21 | — | 23 | +1,252 | -57 | +1,195 | 23✅ |
+| 94 | 14.3 — Assemblage parcours client depuis catalogue | 2026-04-21 | — | 25 | +1,468 | -5 | +1,463 | 25✅ |
+| 95 | 14.4 — Chat Élio embarqué dans la page étape | 2026-04-22 | c355c4f | 10 | +788 | -2 | +786 | 26✅ |
 
-> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,294+.
+> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,320+.
 
 ### Claude Design Integration (hors epic — refonte visuelle)
 
@@ -200,7 +202,7 @@
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **92** (90 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **95** (93 commits, dont 2 doubles et 1 triple) |
 | Integrations design (hors epic) | **1** (Claude Design — Lab+One visual refonte) |
 | Commits de correction post-story | **1** (code review retroactif + bug systemic) |
 | Fichiers totaux modifies | **2,348** |
