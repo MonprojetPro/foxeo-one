@@ -40,6 +40,7 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
       totalSteps={parcours.totalSteps}
       prevStep={prevStep ? { stepNumber: prevStep.stepNumber, status: prevStep.status } : null}
       nextStep={nextStep ? { stepNumber: nextStep.stepNumber, status: nextStep.status } : null}
+      clientId={client.id}
     />
   )
 }

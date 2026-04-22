@@ -133,6 +133,8 @@ export interface ElioMessageMetadata {
   documentCollecting?: boolean       // en cours de collecte d'infos pour un document
   missingFields?: string[]           // champs manquants à collecter
   generatedDocument?: boolean        // document généré par Élio dans ce message
+  // Story 14.5: message injecté par MiKL dans le contexte de l'étape (fond orange)
+  injectedByMikl?: boolean
 }
 
 // Story 8.7 — Task 3.1 : Structure documentation module actif (injectée par MiKL, Story 10.3)

@@ -118,6 +118,7 @@ export async function sendToElio(
   message: string,
   clientId?: string,
   draftContext?: DraftContext,
+  systemPromptOverride?: string,
 ): Promise<ActionResponse<ElioMessage>> {
   if (!message.trim()) {
     return errorResponse('Le message ne peut pas être vide', 'VALIDATION_ERROR')
@@ -483,7 +484,8 @@ export async function sendToElio(
   }
 
   // 4. Cas général (Lab, Hub sans intent spécifique) : construire le system prompt et appeler le LLM
-  const systemPrompt = buildSystemPrompt({
+  // Un systemPromptOverride peut être fourni pour les chats spécifiques (ex: StepElioChat, Story 14.4)
+  const systemPrompt = systemPromptOverride ?? buildSystemPrompt({
     dashboardType,
     customInstructions: elioConfig?.customInstructions,
   })

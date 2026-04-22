@@ -8,6 +8,7 @@ import { BriefMarkdownRenderer } from './brief-markdown-renderer'
 import { BriefAssetsGallery } from './brief-assets-gallery'
 import { OneTeasingCard } from './one-teasing-card'
 import { StepNavigationButtons } from './step-navigation-buttons'
+import { StepElioChat } from './step-elio-chat'
 
 interface AdjacentStep {
   stepNumber: number
@@ -19,9 +20,10 @@ interface ParcoursStepDetailProps {
   totalSteps: number
   prevStep?: AdjacentStep | null
   nextStep?: AdjacentStep | null
+  clientId?: string
 }
 
-export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep }: ParcoursStepDetailProps) {
+export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId }: ParcoursStepDetailProps) {
   return (
     <div className="-m-6 flex overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
       {/* Left column — step content */}
@@ -51,6 +53,16 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep }: Par
           <h2 className="text-base font-semibold text-[#f9fafb] mb-2">Pourquoi cette étape ?</h2>
           <p className="text-sm text-[#9ca3af] leading-relaxed">{step.description}</p>
         </section>
+
+        {/* Chat Élio embarqué — Story 14.4 */}
+        {clientId && (
+          <StepElioChat
+            stepId={step.id}
+            stepStatus={step.status}
+            stepNumber={step.stepNumber}
+            clientId={clientId}
+          />
+        )}
 
         {/* Brief content (markdown) */}
         {step.briefContent && (

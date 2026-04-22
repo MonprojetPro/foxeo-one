@@ -3,6 +3,9 @@ import { render, screen } from '@testing-library/react'
 import { ParcoursStepDetail } from './parcours-step-detail'
 import type { ParcoursStep } from '../types/parcours.types'
 
+vi.mock('./step-elio-chat', () => ({
+  StepElioChat: () => <div data-testid="step-elio-chat">StepElioChat</div>,
+}))
 vi.mock('react-markdown', () => ({
   default: ({ children }: { children: string }) => <div data-testid="markdown-content">{children}</div>,
 }))
