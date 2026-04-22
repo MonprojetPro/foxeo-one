@@ -269,3 +269,89 @@ export const ABANDONMENT_REASONS = [
   'Le parcours ne correspond pas à mes attentes',
   "J'ai trouvé une autre solution",
 ] as const
+
+// --- Client Parcours Agents (Story 14.3) ---
+
+export const ClientParcoursAgentStatusValues = ['pending', 'active', 'completed', 'skipped'] as const
+export type ClientParcoursAgentStatus = typeof ClientParcoursAgentStatusValues[number]
+
+export interface ClientParcoursAgentDB {
+  id: string
+  client_id: string
+  elio_lab_agent_id: string
+  step_order: number
+  step_label: string
+  status: ClientParcoursAgentStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface ClientParcoursAgent {
+  id: string
+  clientId: string
+  elioLabAgentId: string
+  stepOrder: number
+  stepLabel: string
+  status: ClientParcoursAgentStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ClientParcoursAgentWithDetails extends ClientParcoursAgent {
+  agentName: string
+  agentDescription: string | null
+  agentImagePath: string | null
+}
+
+export interface ElioLabAgentDB {
+  id: string
+  name: string
+  description: string | null
+  model: string
+  temperature: number
+  image_path: string | null
+  file_path: string
+  system_prompt: string | null
+  archived: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ElioLabAgent {
+  id: string
+  name: string
+  description: string | null
+  model: string
+  temperature: number
+  imagePath: string | null
+  filePath: string
+  systemPrompt: string | null
+  archived: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+// Zod schemas
+
+export const LaunchClientParcoursInput = z.object({
+  clientId: z.string().uuid('clientId invalide'),
+  steps: z.array(
+    z.object({
+      agentId: z.string().uuid('agentId invalide'),
+      stepLabel: z.string().min(1, 'Le label est requis').max(200),
+    })
+  ).min(1, 'Au moins un agent est requis'),
+})
+export type LaunchClientParcoursInput = z.infer<typeof LaunchClientParcoursInput>
+
+export const GetClientParcoursAgentsInput = z.object({
+  clientId: z.string().uuid('clientId invalide'),
+})
+export type GetClientParcoursAgentsInput = z.infer<typeof GetClientParcoursAgentsInput>
+
+export const AddParcoursStepInput = z.object({
+  clientId: z.string().uuid('clientId invalide'),
+  agentId: z.string().uuid('agentId invalide'),
+  stepLabel: z.string().min(1, 'Le label est requis').max(200),
+})
+export type AddParcoursStepInput = z.infer<typeof AddParcoursStepInput>

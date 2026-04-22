@@ -1,6 +1,6 @@
 # Story 14.3 : Assemblage du Parcours Client depuis le Catalogue
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -36,33 +36,33 @@ afin de **personnaliser l'accompagnement de chaque client avec les Élio experts
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Migration SQL `client_parcours_agents` (AC: #3, #4)
-  - [ ] 1.1 Créer migration `00098_create_client_parcours_agents.sql`
-  - [ ] 1.2 Table : `id` (UUID PK), `client_id` (UUID FK clients), `elio_lab_agent_id` (UUID FK elio_lab_agents), `step_order` (INTEGER), `step_label` (TEXT), `status` (TEXT CHECK IN ('pending','active','completed','skipped') DEFAULT 'pending'), `created_at`, `updated_at`
-  - [ ] 1.3 Index : `idx_client_parcours_agents_client_id` sur `client_id`
-  - [ ] 1.4 RLS : `is_operator()` pour toutes les opérations
-  - [ ] 1.5 Trigger `trg_client_parcours_agents_updated_at`
+- [x] Task 1 — Migration SQL `client_parcours_agents` (AC: #3, #4)
+  - [x] 1.1 Créer migration `00098_create_client_parcours_agents.sql`
+  - [x] 1.2 Table : `id` (UUID PK), `client_id` (UUID FK clients), `elio_lab_agent_id` (UUID FK elio_lab_agents), `step_order` (INTEGER), `step_label` (TEXT), `status` (TEXT CHECK IN ('pending','active','completed','skipped') DEFAULT 'pending'), `created_at`, `updated_at`
+  - [x] 1.3 Index : `idx_client_parcours_agents_client_id` sur `client_id`
+  - [x] 1.4 RLS : `is_operator()` pour toutes les opérations
+  - [x] 1.5 Trigger `trg_client_parcours_agents_updated_at`
 
-- [ ] Task 2 — Server Actions (AC: #3, #4, #5)
-  - [ ] 2.1 `packages/modules/parcours/actions/launch-client-parcours.ts` — INSERT batch dans `client_parcours_agents` + mise à jour flag Lab actif
-  - [ ] 2.2 `packages/modules/parcours/actions/get-client-parcours-agents.ts` — SELECT étapes d'un client avec JOIN `elio_lab_agents`
-  - [ ] 2.3 `packages/modules/parcours/actions/add-parcours-step.ts` — INSERT une étape supplémentaire en fin de parcours
-  - [ ] 2.4 Tests co-localisés
+- [x] Task 2 — Server Actions (AC: #3, #4, #5)
+  - [x] 2.1 `packages/modules/parcours/actions/launch-client-parcours.ts`
+  - [x] 2.2 `packages/modules/parcours/actions/get-client-parcours-agents.ts`
+  - [x] 2.3 `packages/modules/parcours/actions/add-parcours-step.ts`
+  - [x] 2.4 Tests co-localisés (25 tests)
 
-- [ ] Task 3 — Modal d'assemblage (AC: #1, #2, #3, #6)
-  - [ ] 3.1 `packages/modules/parcours/components/launch-parcours-modal.tsx` — liste agents catalogue, sélection + ordonnancement, labels éditables
-  - [ ] 3.2 Ordonnancement simple : boutons ↑↓ (pas de drag & drop pour l'instant)
-  - [ ] 3.3 Validation : au moins 1 agent sélectionné
+- [x] Task 3 — Modal d'assemblage (AC: #1, #2, #3, #6)
+  - [x] 3.1 `packages/modules/parcours/components/launch-parcours-modal.tsx`
+  - [x] 3.2 Ordonnancement ↑↓
+  - [x] 3.3 Validation : au moins 1 agent
 
-- [ ] Task 4 — Vue parcours dans fiche client (AC: #5)
-  - [ ] 4.1 Remplacer `ParcoursHubTab` dans l'onglet Lab par la nouvelle vue `ClientParcoursAgentsList`
-  - [ ] 4.2 `packages/modules/parcours/components/client-parcours-agents-list.tsx` — liste des étapes avec image agent, nom, statut, bouton "Ajouter une étape"
-  - [ ] 4.3 Bouton "Lancer le Lab" visible uniquement si aucun parcours actif
-  - [ ] 4.4 Test du composant
+- [x] Task 4 — Vue parcours dans fiche client (AC: #5)
+  - [x] 4.1 `ClientParcoursAgentsList` remplace `ParcoursHubTab`
+  - [x] 4.2 `packages/modules/parcours/components/client-parcours-agents-list.tsx`
+  - [x] 4.3 Bouton "Lancer le Lab" si aucun parcours
+  - [x] 4.4 9 tests composant
 
-- [ ] Task 5 — Nettoyage
-  - [ ] 5.1 Supprimer ou archiver `packages/modules/parcours/components/parcours-hub-tab.tsx` (remplacé)
-  - [ ] 5.2 Mettre à jour `packages/modules/parcours/index.ts`
+- [x] Task 5 — Nettoyage
+  - [x] 5.1 `ParcoursHubTab` retiré des exports et de l'app Hub
+  - [x] 5.2 `packages/modules/parcours/index.ts` mis à jour
 
 ## Dev Notes
 
@@ -73,4 +73,22 @@ afin de **personnaliser l'accompagnement de chaque client avec les Élio experts
 
 ## File List
 
-*(auto-généré à la complétion)*
+- `supabase/migrations/00098_create_client_parcours_agents.sql` (new)
+- `packages/modules/parcours/types/parcours.types.ts` (updated — nouveaux types 14.3)
+- `packages/modules/parcours/actions/launch-client-parcours.ts` (new)
+- `packages/modules/parcours/actions/launch-client-parcours.test.ts` (new)
+- `packages/modules/parcours/actions/get-client-parcours-agents.ts` (new)
+- `packages/modules/parcours/actions/get-client-parcours-agents.test.ts` (new)
+- `packages/modules/parcours/actions/add-parcours-step.ts` (new)
+- `packages/modules/parcours/actions/add-parcours-step.test.ts` (new)
+- `packages/modules/parcours/components/launch-parcours-modal.tsx` (new)
+- `packages/modules/parcours/components/add-step-modal.tsx` (new)
+- `packages/modules/parcours/components/client-parcours-agents-list.tsx` (new)
+- `packages/modules/parcours/components/client-parcours-agents-list.test.tsx` (new)
+- `packages/modules/parcours/index.ts` (updated)
+- `apps/hub/app/(dashboard)/modules/crm/clients/[clientId]/client-detail-with-support.tsx` (updated)
+
+## Completion Notes
+
+Migration à appliquer : `npx supabase db push --linked`
+`ParcoursHubTab` reste dans le repo mais n'est plus exporté ni utilisé (peut être supprimé dans une story de nettoyage future).

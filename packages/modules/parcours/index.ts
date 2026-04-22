@@ -32,7 +32,16 @@ export { AbandonParcoursDialog } from './components/abandon-parcours-dialog'
 
 // Components — Elio Step Config (Story 14.1)
 export { StepElioConfigPanel } from './components/step-elio-config-panel'
-export { ParcoursHubTab } from './components/parcours-hub-tab'
+
+// Components — Assemblage Parcours Client (Story 14.3)
+export { ClientParcoursAgentsList } from './components/client-parcours-agents-list'
+export { LaunchParcoursModal } from './components/launch-parcours-modal'
+export { AddStepModal } from './components/add-step-modal'
+
+// Actions — Assemblage Parcours Client (Story 14.3)
+export { launchClientParcours } from './actions/launch-client-parcours'
+export { getClientParcoursAgents } from './actions/get-client-parcours-agents'
+export { addParcoursStep } from './actions/add-parcours-step'
 
 // Actions
 export { getParcours } from './actions/get-parcours'
@@ -88,3 +97,17 @@ export type {
   RequestAbandonmentInput,
   ReactivateParcoursInput,
 } from './types/parcours.types'
+
+export type {
+  ClientParcoursAgent,
+  ClientParcoursAgentDB,
+  ClientParcoursAgentWithDetails,
+  ClientParcoursAgentStatus,
+  ElioLabAgent,
+  ElioLabAgentDB,
+  LaunchClientParcoursInput,
+  GetClientParcoursAgentsInput,
+  AddParcoursStepInput,
+} from './types/parcours.types'
+
+export { ClientParcoursAgentStatusValues } from './types/parcours.types'

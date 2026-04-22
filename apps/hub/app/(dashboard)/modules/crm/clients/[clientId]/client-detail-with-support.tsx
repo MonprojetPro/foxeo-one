@@ -2,7 +2,7 @@
 
 import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions } from '@monprojetpro/modules-crm'
 import { ClientSupportTab } from '@monprojetpro/modules-support'
-import { SubmissionsList, ParcoursHubTab } from '@monprojetpro/module-parcours'
+import { SubmissionsList, ClientParcoursAgentsList } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
 import { LabBillingTab, getClientLabStatus } from '@monprojetpro/modules-facturation'
 import { ClientExportButton } from '@monprojetpro/module-admin'
@@ -96,7 +96,7 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
               <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
                 Configuration Élio par étape
               </h3>
-              <ParcoursHubTab clientId={client.id} />
+              <ClientParcoursAgentsList clientId={client.id} />
             </div>
             <LabBillingTab clientId={client.id} clientName={client.name} />
           </div>
