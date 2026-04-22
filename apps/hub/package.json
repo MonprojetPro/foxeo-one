@@ -10,9 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
     "@monprojetpro/module-admin": "*",
-    "@monprojetpro/module-elio": "*",
     "@monprojetpro/module-analytics": "*",
+    "@monprojetpro/module-elio": "*",
     "@monprojetpro/module-templates": "*",
     "@monprojetpro/modules-chat": "*",
     "@monprojetpro/modules-facturation": "*",
@@ -22,7 +23,7 @@
     "@monprojetpro/types": "*",
     "@monprojetpro/ui": "*",
     "@monprojetpro/utils": "*",
-    "@hookform/resolvers": "^3.9.0",
+    "googleapis": "^171.4.0",
     "mammoth": "^1.11.0",
     "next": "^15.1.0",
     "pdfjs-dist": "^5.5.207",
