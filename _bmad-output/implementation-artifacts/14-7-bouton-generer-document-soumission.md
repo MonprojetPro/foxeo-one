@@ -1,6 +1,6 @@
 # Story 14.7 : Bouton "Générer mon document" + soumission
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -50,34 +50,34 @@ so that **je transforme mes échanges Élio en un livrable concret et je progres
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Migration : ajout statut 'pending_review' (AC: #8)
-  - [ ] 1.1 Créer migration `00098_add_pending_review_status.sql`
-  - [ ] 1.2 ALTER TABLE parcours_steps DROP CONSTRAINT + ADD CONSTRAINT avec 'pending_review' ajouté
-  - [ ] 1.3 Mettre à jour `ParcoursStepStatusValues` dans types
+- [x] Task 1 — Migration : ajout statut 'pending_review' (AC: #8)
+  - [x] 1.1 Créer migration `00102_add_pending_review_status.sql` (00098 déjà pris)
+  - [x] 1.2 ALTER TABLE parcours_steps DROP CONSTRAINT + ADD CONSTRAINT avec 'pending_review' ajouté
+  - [x] 1.3 Mettre à jour `ParcoursStepStatusValues` dans types
 
-- [ ] Task 2 — Server Action generateAndSubmitStep (AC: #6)
-  - [ ] 2.1 Créer `packages/modules/parcours/actions/generate-and-submit-step.ts`
-  - [ ] 2.2 Logique : getEffectiveElioConfig → appeler Claude avec system prompt + historique conversation → retourner document markdown
-  - [ ] 2.3 Créer `packages/modules/parcours/actions/submit-generated-document.ts` — INSERT step_submissions + validation_requests + UPDATE step status + notification
-  - [ ] 2.4 Tests pour les 2 actions
+- [x] Task 2 — Server Action generateAndSubmitStep (AC: #6)
+  - [x] 2.1 Créer `packages/modules/parcours/actions/generate-and-submit-step.ts`
+  - [x] 2.2 Logique : getEffectiveElioConfig → appeler Claude avec system prompt + historique conversation → retourner document markdown
+  - [x] 2.3 Créer `packages/modules/parcours/actions/submit-generated-document.ts` — INSERT step_submissions + validation_requests + UPDATE step status + notification
+  - [x] 2.4 Tests pour les 2 actions (8 + 9 tests)
 
-- [ ] Task 3 — Composant GenerateDocumentButton (AC: #1, #2, #3, #4, #5, #7)
-  - [ ] 3.1 Créer `packages/modules/parcours/components/generate-document-button.tsx`
-  - [ ] 3.2 États : idle, confirmation, loading, preview, submitted
-  - [ ] 3.3 Vérification conditions (>= 3 messages, pas de pending, status = 'current')
-  - [ ] 3.4 Dialog de confirmation avec les 2 boutons
-  - [ ] 3.5 État loading avec animation
-  - [ ] 3.6 Aperçu avec BriefMarkdownRenderer + bouton confirmer
-  - [ ] 3.7 Tooltip quand disabled
-  - [ ] 3.8 Test du composant (tous les états)
+- [x] Task 3 — Composant GenerateDocumentButton (AC: #1, #2, #3, #4, #5, #7)
+  - [x] 3.1 Créer `packages/modules/parcours/components/generate-document-button.tsx`
+  - [x] 3.2 États : idle, confirmation, loading, preview, submitting, submitted
+  - [x] 3.3 Vérification conditions (>= 3 messages, pas de pending, status = 'current')
+  - [x] 3.4 Dialog de confirmation avec les 2 boutons
+  - [x] 3.5 État loading avec animation
+  - [x] 3.6 Aperçu avec BriefMarkdownRenderer + bouton confirmer
+  - [x] 3.7 Tooltip quand disabled
+  - [x] 3.8 Test du composant (11 tests, tous les états)
 
-- [ ] Task 4 — Intégration dans ParcoursStepDetail (AC: #1)
-  - [ ] 4.1 Placer le bouton après StepElioChat dans la colonne gauche
-  - [ ] 4.2 Le bouton n'apparaît que si status === 'current' (absent pour locked/completed/skipped)
+- [x] Task 4 — Intégration dans ParcoursStepDetail (AC: #1)
+  - [x] 4.1 Placer le bouton après StepElioChat dans la colonne gauche
+  - [x] 4.2 Bouton visible pour 'current' ET 'pending_review' (SCAN fix : feedback nécessaire post-soumission)
 
-- [ ] Task 5 — Hook useStepSubmissionStatus (AC: #1, #7)
-  - [ ] 5.1 Créer `packages/modules/parcours/hooks/use-step-submission-status.ts` — TanStack Query, vérifie si soumission pending existe pour le step_id
-  - [ ] 5.2 Test du hook
+- [x] Task 5 — Hook useStepSubmissionStatus (AC: #1, #7)
+  - [x] 5.1 Créer `packages/modules/parcours/hooks/use-step-submission-status.ts` — TanStack Query, vérifie si soumission pending existe pour le step_id
+  - [x] 5.2 Test du hook (4 tests)
 
 ## Dev Notes
 
@@ -120,4 +120,30 @@ packages/modules/parcours/components/parcours-step-detail.tsx              # MOD
 
 ## File List (auto-generated at completion)
 
+```
+supabase/migrations/00102_add_pending_review_status.sql                        # CRÉÉ (00098 déjà pris)
+packages/modules/parcours/types/parcours.types.ts                              # MODIFIÉ — 'pending_review' ajouté
+packages/modules/parcours/actions/generate-and-submit-step.ts                  # CRÉÉ
+packages/modules/parcours/actions/generate-and-submit-step.test.ts             # CRÉÉ — 8 tests
+packages/modules/parcours/actions/submit-generated-document.ts                 # CRÉÉ
+packages/modules/parcours/actions/submit-generated-document.test.ts            # CRÉÉ — 9 tests
+packages/modules/parcours/hooks/use-step-submission-status.ts                  # CRÉÉ
+packages/modules/parcours/hooks/use-step-submission-status.test.ts             # CRÉÉ — 4 tests
+packages/modules/parcours/components/generate-document-button.tsx              # CRÉÉ
+packages/modules/parcours/components/generate-document-button.test.tsx         # CRÉÉ — 11 tests
+packages/modules/parcours/components/step-elio-chat.tsx                        # MODIFIÉ — onMessagesLoaded useEffect
+packages/modules/parcours/components/parcours-step-detail.tsx                  # MODIFIÉ — messageCount state + GenerateDocumentButton
+packages/modules/parcours/components/parcours-step-status-badge.tsx            # MODIFIÉ — badge 'pending_review'
+packages/modules/parcours/index.ts                                              # MODIFIÉ — exports ajoutés
+```
+
+Total : 14 fichiers, +1,145 insertions, -2 suppressions, +1,143 net. 32 tests ✅.
+Commit : `9ab46d3` — `feat: Story 14.7 — Bouton "Générer mon document" + soumission (32 tests)`
+Migration appliquée : `npx supabase db push --linked` ✅
+
 ## Completion Notes
+
+- Migration 00098 était déjà utilisée → utilisé 00102 (prochaine disponible après 00101)
+- SCAN a trouvé 2 BLOQUANTs fixés : (1) bouton non affiché en pending_review → condition élargie, (2) messageCount non mis à jour après envois → useEffect sur messages
+- SCAN 2 IMPORTANTs fixés : handlers après return (réorganisés en useCallback), parcours_id manquant dans validation_requests insert
+- État 'submitting' ajouté (non dans l'AC mais nécessaire pour UX cohérente entre preview et submitted)
