@@ -11,7 +11,7 @@
 |------|-----------|-----------|
 | CFG | Configuration | 3 |
 | DL | Téléchargement / Storage | 5 |
-| API | Intégration API externe | 3 |
+| API | Intégration API externe | 5 |
 | RSC | Next.js Server/Client | 2 |
 | DB | Base de données / Schéma | 1 |
 | DEP | Déploiement | 3 |
@@ -424,3 +424,29 @@
   2. Si l'insert DB échoue après un upload réussi : appeler `storage.from(bucket).remove([filePath]).catch(() => {})` avant de retourner l'erreur.
 - **Regle a suivre** : Chaque action qui écrit dans Storage ET en DB doit prévoir les deux opérations de nettoyage (rollback upload si DB fail, cleanup Storage si delete DB).
 - **Agents impliques** : SPARK, SCAN, ATLAS
+
+---
+
+### [API-004] Google Workspace — Service Account désactivé par la politique org (iam.disableServiceAccountKeyCreation)
+- **Date** : 2026-04-22
+- **Projet** : MonprojetPro One
+- **Phase** : Story 15.1 — Auth Google Meet API
+- **Categorie** : Intégration API externe (API)
+- **Symptome** : Tentative de créer une clé JSON pour un Service Account → erreur `iam.disableServiceAccountKeyCreation` bloquée par la politique Google Workspace.
+- **Cause racine** : Google Workspace peut interdire la création de clés Service Account au niveau org. C'est une pratique de sécurité courante.
+- **Solution** : Utiliser OAuth2 Web Application avec refresh token à la place. L'OAuth Playground (`https://developers.google.com/oauthplayground`) permet de générer un refresh_token long-durée. L'URL de redirect `https://developers.google.com/oauthplayground` doit être dans les URIs autorisées de l'OAuth client.
+- **Regle a suivre** : Pour les Google Workspace APIs, préférer OAuth2 + refresh token dès le départ. Vérifier si les Service Accounts sont autorisés avant de baser l'architecture dessus.
+- **Agents impliques** : SPARK, ARCH, ATLAS
+
+---
+
+### [API-005] Dependency injection dans les composants partagés pour les Server Actions Hub-spécifiques
+- **Date** : 2026-04-22
+- **Projet** : MonprojetPro One
+- **Phase** : Story 15.2 — Migration OpenVidu → Google Meet
+- **Categorie** : Intégration API externe (API)
+- **Symptome** : Le module `packages/modules/visio` ne peut pas importer `apps/hub/lib/google-meet-client.ts` — une app ne peut pas être importée depuis un package dans une architecture Turborepo.
+- **Cause racine** : Dans un monorepo, les packages ne connaissent pas les apps. La logique Hub-spécifique (appel Google Meet API) ne peut pas être dans le module partagé.
+- **Solution** : Pattern de dependency injection via prop `createMeetingAction?: CreateMeetingFn` sur le composant partagé `MeetingScheduleDialog`. Le Hub passe sa propre action `createHubMeeting` (qui appelle Google Meet + createMeeting). Le module garde son action `createMeeting` par défaut.
+- **Regle a suivre** : Quand un composant partagé doit avoir un comportement différent selon l'app (Hub vs Client), utiliser une prop d'action injectable plutôt que de mettre la logique d'app dans le package.
+- **Agents impliques** : SPARK, ARCH, SCAN, ATLAS
