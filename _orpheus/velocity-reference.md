@@ -187,6 +187,7 @@
 | 97 | 14.6 — Nourrir Élio par étape, injection contexte Hub | 2026-04-22 | f74de15 | 24 | +1,792 | -102 | +1,690 | 59✅ |
 | 98 | 14.7 — Bouton "Générer mon document" + soumission | 2026-04-22 | 9ab46d3 | 14 | +1,145 | -2 | +1,143 | 32✅ |
 | 99 | 14.8 — Panneau droit historique de l'étape | 2026-04-22 | 0bb831c | 13 | +1,061 | -44 | +1,017 | 28✅ |
+| 100 | 14.9 — Feedback MiKL injection questions Élio | 2026-04-22 | 4741755 | 18 | +1,066 | -28 | +1,038 | 37✅ |
 
 > `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,464+.
 
