@@ -191,8 +191,9 @@
 | 101 | 14.10 — Réouverture d'étape validée par MiKL | 2026-04-22 | 13770ed | 7 | +807 | -25 | +782 | 27✅ |
 | 102 | 14.11 — Dashboard Tokens & Coûts IA | 2026-04-22 | 8dc50f5 | 23 | +1,559 | -13 | +1,546 | 30✅ |
 | — | 14.11 refactor — Dashboard déplacé vers Élio Lab + encart accueil | 2026-04-22 | 580e790 | 4 | +66 | -28 | +38 | — |
+| 103 | 14.12 — Refonte UX page étape intégration finale | 2026-04-22 | 42bef4e | 6 | +317 | -129 | +188 | 30✅ |
 
-> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,521+.
+> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,551+.
 
 ### Claude Design Integration (hors epic — refonte visuelle)
 
@@ -210,14 +211,14 @@
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **102** (100 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **103** (101 commits, dont 2 doubles et 1 triple) |
 | Integrations design (hors epic) | **1** (Claude Design — Lab+One visual refonte) |
 | Commits de correction post-story | **2** (code review retroactif + 14.11 relocalisation dashboard) |
 | Fichiers totaux modifies | **2,410** |
 | Lignes inserees | **+181,881** |
 | Lignes supprimees | **-15,667** |
 | Lignes nettes ajoutees | **+166,214** |
-| Tests finaux | **~4,491+** |
+| Tests finaux | **~4,521+** |
 | Duree calendaire | **74 jours** (8 fev — 22 avr) |
 | Jours effectifs de dev | **~26 jours** |
 
