@@ -6,9 +6,13 @@ vi.mock('../hooks/use-step-history', () => ({
   useStepHistory: vi.fn(),
 }))
 
-vi.mock('@monprojetpro/utils', () => ({
-  formatRelativeDate: vi.fn((d: string) => `il y a quelques jours (${d})`),
-}))
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/utils')>()
+  return {
+    ...actual,
+    formatRelativeDate: vi.fn((d: string) => `il y a quelques jours (${d})`),
+  }
+})
 
 vi.mock('@monprojetpro/ui', () => ({
   showSuccess: vi.fn(),

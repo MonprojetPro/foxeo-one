@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { cn } from '@monprojetpro/utils'
 import { useStepHistory } from '../hooks/use-step-history'
 import { StepSubmissionsList } from './step-submissions-list'
 import { StepDocumentsList } from './step-documents-list'
@@ -61,16 +62,17 @@ function CollapsibleSection({ title, count, defaultOpen = true, children }: Coll
 interface StepHistoryPanelProps {
   stepId: string | undefined
   stepNumber: number
+  className?: string
 }
 
-export function StepHistoryPanel({ stepId, stepNumber }: StepHistoryPanelProps) {
+export function StepHistoryPanel({ stepId, stepNumber, className = 'hidden lg:flex' }: StepHistoryPanelProps) {
   const { submissions, feedbackInjections, isLoadingSubmissions, isLoadingFeedback } = useStepHistory(stepId)
 
   const unreadFeedbackCount = feedbackInjections.filter((f) => f.readAt === null).length
   const totalFeedback = feedbackInjections.length
 
   return (
-    <div className="hidden lg:flex w-[420px] shrink-0 flex-col bg-[#141414] border-l border-[#2d2d2d] overflow-hidden">
+    <div className={cn(className, 'w-[420px] shrink-0 flex-col bg-[#141414] border-l border-[#2d2d2d] overflow-hidden')}>
       {/* Panel header */}
       <div className="h-[52px] shrink-0 bg-[#1a1033] border-b border-[#2d2d2d] px-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5">

@@ -1,10 +1,24 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { ParcoursStepDetail } from './parcours-step-detail'
 import type { ParcoursStep } from '../types/parcours.types'
 
 vi.mock('./step-elio-chat', () => ({
   StepElioChat: () => <div data-testid="step-elio-chat">StepElioChat</div>,
+}))
+vi.mock('./generate-document-button', () => ({
+  GenerateDocumentButton: () => <div data-testid="generate-document-button">GenerateDocumentButton</div>,
+}))
+vi.mock('./step-history-panel', () => ({
+  StepHistoryPanel: () => <div data-testid="step-history-panel">StepHistoryPanel</div>,
+}))
+vi.mock('./step-mobile-tabs', () => ({
+  StepMobileTabs: ({ activeTab, onTabChange }: { activeTab: string; onTabChange: (t: string) => void }) => (
+    <div data-testid="step-mobile-tabs" data-active-tab={activeTab}>
+      <button onClick={() => onTabChange('step')}>Étape</button>
+      <button onClick={() => onTabChange('history')}>Historique</button>
+    </div>
+  ),
 }))
 vi.mock('react-markdown', () => ({
   default: ({ children }: { children: string }) => <div data-testid="markdown-content">{children}</div>,
@@ -63,33 +77,64 @@ describe('ParcoursStepDetail', () => {
     expect(screen.getByTestId('markdown-content')).toBeDefined()
   })
 
-  it('renders teasing MonprojetPro One card', () => {
+  it('renders StepElioChat when clientId is provided', () => {
+    render(<ParcoursStepDetail step={baseStep} totalSteps={5} clientId="client-001" />)
+    expect(screen.getByTestId('step-elio-chat')).toBeDefined()
+  })
+
+  it('does not render StepElioChat when clientId is absent', () => {
     render(<ParcoursStepDetail step={baseStep} totalSteps={5} />)
-    expect(screen.getByText('Aperçu MonprojetPro One')).toBeDefined()
-    expect(screen.getByText('Dans One, cela sera automatisé.')).toBeDefined()
+    expect(screen.queryByTestId('step-elio-chat')).toBeNull()
   })
 
-  it('hides teasing card when no message', () => {
-    const stepNoTeasing = { ...baseStep, oneTeasingMessage: null }
-    render(<ParcoursStepDetail step={stepNoTeasing} totalSteps={5} />)
-    expect(screen.queryByText('Aperçu MonprojetPro One')).toBeNull()
+  it('renders GenerateDocumentButton for current step with clientId', () => {
+    render(<ParcoursStepDetail step={baseStep} totalSteps={5} clientId="client-001" />)
+    expect(screen.getByTestId('generate-document-button')).toBeDefined()
   })
 
-  it('renders CTA "Commencer cette étape" for current step', () => {
-    render(<ParcoursStepDetail step={baseStep} totalSteps={5} />)
-    expect(screen.getByText('Commencer cette étape')).toBeDefined()
+  it('renders GenerateDocumentButton for pending_review step with clientId', () => {
+    const pendingStep = { ...baseStep, status: 'pending_review' as const }
+    render(<ParcoursStepDetail step={pendingStep} totalSteps={5} clientId="client-001" />)
+    expect(screen.getByTestId('generate-document-button')).toBeDefined()
   })
 
-  it('renders CTA "Étape verrouillée" disabled for locked step', () => {
-    const locked = { ...baseStep, status: 'locked' as const }
-    render(<ParcoursStepDetail step={locked} totalSteps={5} />)
-    expect(screen.getByText('Étape verrouillée')).toBeDefined()
+  it('does not render GenerateDocumentButton for locked step', () => {
+    const lockedStep = { ...baseStep, status: 'locked' as const }
+    render(<ParcoursStepDetail step={lockedStep} totalSteps={5} clientId="client-001" />)
+    expect(screen.queryByTestId('generate-document-button')).toBeNull()
   })
 
-  it('renders CTA "Voir ma soumission" for completed step', () => {
+  it('does not render GenerateDocumentButton for completed step', () => {
+    const completedStep = { ...baseStep, status: 'completed' as const }
+    render(<ParcoursStepDetail step={completedStep} totalSteps={5} clientId="client-001" />)
+    expect(screen.queryByTestId('generate-document-button')).toBeNull()
+  })
+
+  it('renders "Voir ma soumission" for completed step', () => {
     const completed = { ...baseStep, status: 'completed' as const }
     render(<ParcoursStepDetail step={completed} totalSteps={5} />)
     expect(screen.getByText('Voir ma soumission')).toBeDefined()
+  })
+
+  it('does not render "Voir ma soumission" for current step', () => {
+    render(<ParcoursStepDetail step={baseStep} totalSteps={5} />)
+    expect(screen.queryByText('Voir ma soumission')).toBeNull()
+  })
+
+  it('does not render "Voir ma soumission" for locked step', () => {
+    const lockedStep = { ...baseStep, status: 'locked' as const }
+    render(<ParcoursStepDetail step={lockedStep} totalSteps={5} />)
+    expect(screen.queryByText('Voir ma soumission')).toBeNull()
+  })
+
+  it('renders StepHistoryPanel', () => {
+    render(<ParcoursStepDetail step={baseStep} totalSteps={5} />)
+    expect(screen.getByTestId('step-history-panel')).toBeDefined()
+  })
+
+  it('renders StepMobileTabs', () => {
+    render(<ParcoursStepDetail step={baseStep} totalSteps={5} />)
+    expect(screen.getByTestId('step-mobile-tabs')).toBeDefined()
   })
 
   it('falls back to briefTemplate when briefContent is null', () => {
@@ -101,5 +146,18 @@ describe('ParcoursStepDetail', () => {
   it('renders status badge', () => {
     render(<ParcoursStepDetail step={baseStep} totalSteps={5} />)
     expect(screen.getByText('En cours')).toBeDefined()
+  })
+
+  it('StepMobileTabs switches to history tab and StepHistoryPanel remains in DOM', () => {
+    render(<ParcoursStepDetail step={baseStep} totalSteps={5} />)
+    fireEvent.click(screen.getByText('Historique'))
+    expect(screen.getByTestId('step-history-panel')).toBeDefined()
+  })
+
+  it('StepMobileTabs switches back to step tab', () => {
+    render(<ParcoursStepDetail step={baseStep} totalSteps={5} />)
+    fireEvent.click(screen.getByText('Historique'))
+    fireEvent.click(screen.getByText('Étape'))
+    expect(screen.getByText('Pourquoi cette étape ?')).toBeDefined()
   })
 })
