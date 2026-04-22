@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 // --- Enums ---
 
-export const ParcoursStepStatusValues = ['locked', 'current', 'completed', 'skipped'] as const
+export const ParcoursStepStatusValues = ['locked', 'current', 'completed', 'skipped', 'pending_review'] as const
 export type ParcoursStepStatus = typeof ParcoursStepStatusValues[number]
 
 // --- DB Types (snake_case, from Supabase) ---

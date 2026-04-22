@@ -18,6 +18,7 @@ interface StepElioChatProps {
   stepStatus: ParcoursStepStatus | 'pending_review'
   stepNumber: number
   clientId: string
+  onMessagesLoaded?: (count: number) => void
 }
 
 type ChatStatus = 'idle' | 'loading' | 'ready' | 'error'
@@ -38,7 +39,7 @@ function getDisabledMessage(status: ParcoursStepStatus | 'pending_review'): stri
   return null
 }
 
-export function StepElioChat({ stepId, stepStatus, stepNumber, clientId }: StepElioChatProps) {
+export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessagesLoaded }: StepElioChatProps) {
   const [chatStatus, setChatStatus] = useState<ChatStatus>('idle')
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ElioMessagePersisted[]>([])
@@ -66,6 +67,13 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId }: StepE
   useEffect(() => {
     if (messages.length > 0) scrollToBottom()
   }, [messages, scrollToBottom])
+
+  // Sync messageCount vers le parent à chaque mise à jour (initial load + nouveaux messages)
+  useEffect(() => {
+    if (chatStatus === 'ready') {
+      onMessagesLoaded?.(messages.length)
+    }
+  }, [messages, chatStatus, onMessagesLoaded])
 
   // Init : trouver/créer la conversation + charger l'historique + config agent Élio
   useEffect(() => {

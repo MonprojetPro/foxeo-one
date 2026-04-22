@@ -20,6 +20,10 @@ const statusConfig: Record<ParcoursStepStatus, { label: string; className: strin
     label: 'Passée',
     className: 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
   },
+  pending_review: {
+    label: 'En attente de validation',
+    className: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+  },
 }
 
 interface ParcoursStepStatusBadgeProps {

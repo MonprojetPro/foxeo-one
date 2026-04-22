@@ -33,6 +33,9 @@ export { AbandonParcoursDialog } from './components/abandon-parcours-dialog'
 // Components — Elio Step Config (Story 14.1)
 export { StepElioConfigPanel } from './components/step-elio-config-panel'
 
+// Components — Générer document (Story 14.7)
+export { GenerateDocumentButton } from './components/generate-document-button'
+
 // Components — Assemblage Parcours Client (Story 14.3)
 export { ClientParcoursAgentsList } from './components/client-parcours-agents-list'
 export { LaunchParcoursModal } from './components/launch-parcours-modal'
@@ -45,6 +48,13 @@ export { addParcoursStep } from './actions/add-parcours-step'
 
 // Actions — Nourrir Élio (Story 14.6)
 export { getStepContextCounts } from './actions/get-step-context-counts'
+
+// Actions — Générer document (Story 14.7)
+export { generateDocumentFromConversation } from './actions/generate-and-submit-step'
+export { submitGeneratedDocument } from './actions/submit-generated-document'
+
+// Hooks — Générer document (Story 14.7)
+export { useStepSubmissionStatus } from './hooks/use-step-submission-status'
 
 // Actions
 export { getParcours } from './actions/get-parcours'

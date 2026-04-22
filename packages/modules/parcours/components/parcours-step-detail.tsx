@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@monprojetpro/ui'
 import type { ParcoursStep } from '../types/parcours.types'
@@ -9,6 +10,7 @@ import { BriefAssetsGallery } from './brief-assets-gallery'
 import { OneTeasingCard } from './one-teasing-card'
 import { StepNavigationButtons } from './step-navigation-buttons'
 import { StepElioChat } from './step-elio-chat'
+import { GenerateDocumentButton } from './generate-document-button'
 
 interface AdjacentStep {
   stepNumber: number
@@ -24,6 +26,7 @@ interface ParcoursStepDetailProps {
 }
 
 export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId }: ParcoursStepDetailProps) {
+  const [messageCount, setMessageCount] = useState(0)
   return (
     <div className="-m-6 flex overflow-hidden" style={{ height: 'calc(100vh - 60px)' }}>
       {/* Left column — step content */}
@@ -61,6 +64,18 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             stepStatus={step.status}
             stepNumber={step.stepNumber}
             clientId={clientId}
+            onMessagesLoaded={setMessageCount}
+          />
+        )}
+
+        {/* Bouton Générer mon document — Story 14.7 (visible aussi en pending_review pour le feedback) */}
+        {clientId && (step.status === 'current' || step.status === 'pending_review') && (
+          <GenerateDocumentButton
+            stepId={step.id}
+            stepStatus={step.status}
+            clientId={clientId}
+            messageCount={messageCount}
+            stepNumber={step.stepNumber}
           />
         )}
 
