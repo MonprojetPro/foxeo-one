@@ -1,6 +1,6 @@
 # Story 14.10 : Réouverture d'étape validée par MiKL
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -40,30 +40,30 @@ so that **le client peut réviser son travail si nécessaire, sans perdre son hi
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Server Action reopenStep (AC: #2, #3, #4, #6)
-  - [ ] 1.1 Créer `packages/modules/parcours/actions/reopen-step.ts`
-  - [ ] 1.2 Guard is_operator() — retourner `{ data: null, error: { message: 'Accès refusé', code: 'FORBIDDEN' } }` si KO
-  - [ ] 1.3 Guard status === 'completed' — erreur si pas 'completed'
-  - [ ] 1.4 Transaction : UPDATE parcours_steps + UPDATE dernière step_submissions approved → revision_requested
-  - [ ] 1.5 INSERT notification client (type = 'step_reopened')
-  - [ ] 1.6 Input Zod : `ReopenStepInput { stepId: uuid, reason?: string }`
-  - [ ] 1.7 Test co-localisé (guards, succès, notification, pas d'effet sur autres étapes)
+- [x] Task 1 — Server Action reopenStep (AC: #2, #3, #4, #6)
+  - [x] 1.1 Créer `packages/modules/parcours/actions/reopen-step.ts`
+  - [x] 1.2 Guard is_operator() — retourner `{ data: null, error: { message: 'Accès refusé', code: 'FORBIDDEN' } }` si KO
+  - [x] 1.3 Guard status === 'completed' — erreur si pas 'completed'
+  - [x] 1.4 Transaction : UPDATE parcours_steps + UPDATE dernière step_submissions approved → revision_requested
+  - [x] 1.5 INSERT notification client (type = 'info', body avec raison optionnelle)
+  - [x] 1.6 Input Zod : `ReopenStepInput { stepId: uuid, reason?: string }`
+  - [x] 1.7 Test co-localisé (guards, succès, notification, pas d'effet sur autres étapes)
 
-- [ ] Task 2 — Composant ReopenStepButton (AC: #1)
-  - [ ] 2.1 Créer `packages/modules/parcours/components/reopen-step-button.tsx`
-  - [ ] 2.2 Bouton rouge/orange "Rouvrir cette étape" avec icône warning
-  - [ ] 2.3 Au clic : expand textarea "Raison (optionnel)" + bouton confirmer
-  - [ ] 2.4 Loading state pendant l'action
-  - [ ] 2.5 Toast succès / erreur
-  - [ ] 2.6 Test du composant
+- [x] Task 2 — Composant ReopenStepButton (AC: #1)
+  - [x] 2.1 Créer `packages/modules/parcours/components/reopen-step-button.tsx`
+  - [x] 2.2 Bouton orange "Rouvrir cette étape" avec icône warning
+  - [x] 2.3 Au clic : expand textarea "Raison (optionnel)" + bouton confirmer
+  - [x] 2.4 Loading state pendant l'action
+  - [x] 2.5 Toast succès / erreur
+  - [x] 2.6 Test du composant
 
-- [ ] Task 3 — Intégration Hub (AC: #1)
-  - [ ] 3.1 Intégrer ReopenStepButton dans la vue détaillée d'une soumission approuvée (Validation Hub)
-  - [ ] 3.2 Visible uniquement si step.status === 'completed'
+- [x] Task 3 — Intégration Hub (AC: #1)
+  - [x] 3.1 Intégrer ReopenStepButton dans la vue détaillée d'une soumission approuvée (Validation Hub)
+  - [x] 3.2 Visible uniquement si submission.status === 'approved' et showValidationForm
 
-- [ ] Task 4 — Types (AC: #2)
-  - [ ] 4.1 Ajouter `ReopenStepInput` Zod schema dans types
-  - [ ] 4.2 Ajouter 'step_reopened' au type de notification si nécessaire
+- [x] Task 4 — Types (AC: #2)
+  - [x] 4.1 Ajouter `ReopenStepInput` Zod schema + `ReopenStepResult` dans types
+  - [x] 4.2 Notification type 'info' (compatible schéma existant)
 
 ## Dev Notes
 
@@ -88,4 +88,18 @@ packages/modules/parcours/components/reopen-step-button.test.tsx      # CRÉER
 
 ## File List (auto-generated at completion)
 
+- `packages/modules/parcours/types/parcours.types.ts` — modifié (ReopenStepInput, ReopenStepResult)
+- `packages/modules/parcours/actions/reopen-step.ts` — créé
+- `packages/modules/parcours/actions/reopen-step.test.ts` — créé (14 tests)
+- `packages/modules/parcours/components/reopen-step-button.tsx` — créé
+- `packages/modules/parcours/components/reopen-step-button.test.tsx` — créé (13 tests)
+- `packages/modules/parcours/components/submission-detail-view.tsx` — modifié (intégration ReopenStepButton)
+- `packages/modules/parcours/index.ts` — modifié (exports)
+
 ## Completion Notes
+
+- 27 tests passent (14 action + 13 composant)
+- Guard is_operator() via query operators table (RLS operators_select_self compatible)
+- Notification type 'info' (schéma notifications existant)
+- Visible dans SubmissionDetailView uniquement si submission.status === 'approved' ET showValidationForm (Hub)
+- Pas de migration nécessaire (aucune nouvelle table)

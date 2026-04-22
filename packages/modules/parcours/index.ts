@@ -39,6 +39,9 @@ export { GenerateDocumentButton } from './components/generate-document-button'
 // Components — Feedback Injection MiKL (Story 14.9)
 export { FeedbackInjectionForm } from './components/feedback-injection-form'
 
+// Components — Réouverture étape (Story 14.10)
+export { ReopenStepButton } from './components/reopen-step-button'
+
 // Components — Assemblage Parcours Client (Story 14.3)
 export { ClientParcoursAgentsList } from './components/client-parcours-agents-list'
 export { LaunchParcoursModal } from './components/launch-parcours-modal'
@@ -55,6 +58,9 @@ export { getStepContextCounts } from './actions/get-step-context-counts'
 // Actions — Feedback Injection MiKL (Story 14.9)
 export { createFeedbackInjection } from './actions/create-feedback-injection'
 export { markInjectionsRead } from './actions/mark-injections-read'
+
+// Actions — Réouverture étape (Story 14.10)
+export { reopenStep } from './actions/reopen-step'
 
 // Hooks — Feedback Injection (Story 14.9)
 export { useUnreadInjections } from './hooks/use-unread-injections'
@@ -143,3 +149,8 @@ export type {
 } from './types/parcours.types'
 
 export { FeedbackInjectionTypeValues } from './types/parcours.types'
+
+export type {
+  ReopenStepInput,
+  ReopenStepResult,
+} from './types/parcours.types'

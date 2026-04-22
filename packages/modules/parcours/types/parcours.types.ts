@@ -392,3 +392,15 @@ export const AddParcoursStepInput = z.object({
   stepLabel: z.string().min(1, 'Le label est requis').max(200),
 })
 export type AddParcoursStepInput = z.infer<typeof AddParcoursStepInput>
+
+// --- Réouverture d'étape (Story 14.10) ---
+
+export const ReopenStepInput = z.object({
+  stepId: z.string().uuid('stepId invalide'),
+  reason: z.string().max(1000, 'La raison ne peut pas dépasser 1000 caractères').optional(),
+})
+export type ReopenStepInput = z.infer<typeof ReopenStepInput>
+
+export interface ReopenStepResult {
+  reopened: boolean
+}

@@ -8,6 +8,7 @@ import { Separator, Skeleton } from '@monprojetpro/ui'
 import { getSubmissionById } from '../actions/get-submission-by-id'
 import { SubmissionStatusBadge } from './submission-status-badge'
 import { ValidateSubmissionForm } from './validate-submission-form'
+import { ReopenStepButton } from './reopen-step-button'
 import type { StepSubmissionWithStep } from '../types/parcours.types'
 
 interface SubmissionDetailViewProps {
@@ -133,6 +134,21 @@ export function SubmissionDetailView({
           <div>
             <h3 className="text-sm font-semibold mb-4">Valider cette soumission</h3>
             <ValidateSubmissionForm submissionId={submissionId} clientId={clientId} />
+          </div>
+        </>
+      )}
+
+      {/* Bouton réouverture — seulement si étape approuvée et showValidationForm (Hub MiKL) */}
+      {showValidationForm && submission.status === 'approved' && (
+        <>
+          <Separator />
+          <div>
+            <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Actions avancées</h3>
+            <ReopenStepButton
+              stepId={submission.parcoursStepId}
+              clientId={clientId}
+              stepNumber={submission.stepNumber}
+            />
           </div>
         </>
       )}
