@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { composeStepContextMessage } from '../utils/compose-step-context-message'
 
 const InputSchema = z.object({
   stepId: z.string().uuid('stepId invalide'),
@@ -84,40 +85,56 @@ export async function getEffectiveStepConfig(
       })
     }
 
-    // 2. Chercher le premier contexte non-consommé pour cette étape
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: context, error: contextError } = await (supabase as any)
-      .from('client_step_contexts')
-      .select('id, context_message')
-      .eq('client_id', clientId)
-      .eq('step_id', stepId)
-      .is('consumed_at', null)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle() as { data: { id: string; context_message: string } | null; error: unknown }
-
-    if (contextError) {
-      // Non-bloquant : on continue sans contexte, mais on log pour détecter les anomalies
-      console.error('[ELIO:GET_EFFECTIVE_STEP_CONFIG] Context query error:', contextError)
-    }
-
     const agent = parcoursAgent?.elio_lab_agents ?? null
 
-    // 3. Agent trouvé → utiliser sa config
-    if (agent) {
+    // 2. Agent trouvé → charger le contexte non-consommé par client_parcours_agent_id
+    if (agent && parcoursAgent) {
+      type ContextRow = {
+        id: string
+        context_message: string
+        content_type: string
+        file_name: string | null
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: context, error: contextError } = await (supabase as any)
+        .from('client_step_contexts')
+        .select('id, context_message, content_type, file_name')
+        .eq('client_parcours_agent_id', parcoursAgent.id)
+        .is('consumed_at', null)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle() as { data: ContextRow | null; error: unknown }
+
+      if (contextError) {
+        console.error('[ELIO:GET_EFFECTIVE_STEP_CONFIG] Context query error:', contextError)
+        // Ne pas continuer silencieusement — signaler l'erreur pour éviter que
+        // le contexte injecté par MiKL ne soit jamais annoncé au client
+        return errorResponse("Erreur lors de la récupération du contexte de l'étape", 'DB_ERROR', {
+          message: String(contextError),
+        })
+      }
+
+      const announcementMessage = context
+        ? composeStepContextMessage({
+            contextMessage: context.context_message,
+            contentType: context.content_type as 'text' | 'file',
+            fileName: context.file_name,
+          })
+        : null
+
       return successResponse({
         agentName: agent.name,
         agentImagePath: agent.image_path,
         systemPrompt: agent.system_prompt,
         model: agent.model,
         temperature: Number(agent.temperature),
-        announcementMessage: context?.context_message ?? null,
+        announcementMessage,
         contextId: context?.id ?? null,
         source: 'agent' as const,
       })
     }
 
-    // 4. Fallback : config globale client
+    // 3. Fallback : config globale client (pas de contexte dans ce cas)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: globalConfig } = await (supabase as any)
       .from('elio_configs')
@@ -131,8 +148,8 @@ export async function getEffectiveStepConfig(
       systemPrompt: null,
       model: globalConfig?.model ?? 'claude-sonnet-4-6',
       temperature: globalConfig?.temperature ?? 1.0,
-      announcementMessage: context?.context_message ?? null,
-      contextId: context?.id ?? null,
+      announcementMessage: null,
+      contextId: null,
       source: 'global' as const,
     })
   } catch (error) {

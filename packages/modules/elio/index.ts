@@ -216,3 +216,16 @@ export type { GetElioLabAgentsOptions } from './actions/get-elio-lab-agents'
 export { getEffectiveStepConfig } from './actions/get-effective-step-config'
 export { consumeStepContext } from './actions/consume-step-context'
 export type { EffectiveStepConfig } from './actions/get-effective-step-config'
+
+// Actions — Story 14.6
+export { injectStepContext } from './actions/inject-step-context'
+export { getStepContexts } from './actions/get-step-contexts'
+export { deleteStepContext } from './actions/delete-step-context'
+export type { StepContext } from './actions/get-step-contexts'
+
+// Components — Story 14.6
+export { InjectStepContextPanel } from './components/inject-step-context-panel'
+
+// Utils — Story 14.6
+export { composeStepContextMessage } from './utils/compose-step-context-message'
+export type { StepContextForMessage } from './utils/compose-step-context-message'

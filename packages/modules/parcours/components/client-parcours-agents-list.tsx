@@ -6,6 +6,8 @@ import { Button } from '@monprojetpro/ui'
 import { getClientParcoursAgents } from '../actions/get-client-parcours-agents'
 import { LaunchParcoursModal } from './launch-parcours-modal'
 import { AddStepModal } from './add-step-modal'
+import { InjectStepContextPanel } from '@monprojetpro/module-elio'
+import { getStepContextCounts } from '../actions/get-step-context-counts'
 import type { ClientParcoursAgentWithDetails, ClientParcoursAgentStatus } from '../types/parcours.types'
 
 interface ClientParcoursAgentsListProps {
@@ -26,9 +28,15 @@ const STATUS_CLASSES: Record<ClientParcoursAgentStatus, string> = {
   skipped: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
 }
 
+interface ActivePanel {
+  parcoursAgentId: string
+  stepLabel: string
+}
+
 export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListProps) {
   const [showLaunchModal, setShowLaunchModal] = useState(false)
   const [showAddStepModal, setShowAddStepModal] = useState(false)
+  const [activePanel, setActivePanel] = useState<ActivePanel | null>(null)
   const queryClient = useQueryClient()
 
   const { data: steps, isLoading, error } = useQuery({
@@ -39,6 +47,17 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
       return result.data ?? []
     },
     staleTime: 2 * 60 * 1_000,
+  })
+
+  const { data: contextCounts } = useQuery({
+    queryKey: ['step-context-counts', clientId],
+    queryFn: async () => {
+      const result = await getStepContextCounts(clientId)
+      if (result.error) return {}
+      return result.data ?? {}
+    },
+    enabled: !!steps && steps.length > 0,
+    staleTime: 60 * 1_000,
   })
 
   function invalidate() {
@@ -107,52 +126,88 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
       {/* Liste des étapes */}
       {hasSteps && (
         <ol className="space-y-2">
-          {(steps as ClientParcoursAgentWithDetails[]).map(step => (
-            <li
-              key={step.id}
-              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4"
-            >
-              {/* Numéro étape */}
-              <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground"
-                aria-hidden="true"
-              >
-                {step.stepOrder}
-              </div>
+          {(steps as ClientParcoursAgentWithDetails[]).map(step => {
+            const pendingCount = contextCounts?.[step.id] ?? 0
 
-              {/* Image agent */}
-              {step.agentImagePath ? (
-                <img
-                  src={step.agentImagePath}
-                  alt=""
-                  className="h-9 w-9 shrink-0 rounded-full object-cover"
-                  aria-hidden="true"
-                />
-              ) : (
+            return (
+              <li
+                key={step.id}
+                className="flex items-center gap-4 rounded-xl border border-border bg-card p-4"
+              >
+                {/* Numéro étape */}
                 <div
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground"
                   aria-hidden="true"
                 >
-                  {step.agentName.charAt(0).toUpperCase()}
+                  {step.stepOrder}
                 </div>
-              )}
 
-              {/* Infos */}
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground truncate">{step.agentName}</p>
-                <p className="text-sm font-medium text-foreground truncate">{step.stepLabel}</p>
-              </div>
+                {/* Image agent */}
+                {step.agentImagePath ? (
+                  <img
+                    src={step.agentImagePath}
+                    alt=""
+                    className="h-9 w-9 shrink-0 rounded-full object-cover"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground"
+                    aria-hidden="true"
+                  >
+                    {step.agentName.charAt(0).toUpperCase()}
+                  </div>
+                )}
 
-              {/* Statut */}
-              <span
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CLASSES[step.status]}`}
-                aria-label={`Statut : ${STATUS_LABELS[step.status]}`}
-              >
-                {STATUS_LABELS[step.status]}
-              </span>
-            </li>
-          ))}
+                {/* Infos */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground truncate">{step.agentName}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{step.stepLabel}</p>
+                </div>
+
+                {/* Badge contextes en attente */}
+                {pendingCount > 0 && (
+                  <span
+                    className="shrink-0 rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-xs font-medium text-amber-400"
+                    aria-label={`${pendingCount} contexte${pendingCount > 1 ? 's' : ''} injecté${pendingCount > 1 ? 's' : ''}`}
+                  >
+                    {pendingCount} contexte{pendingCount > 1 ? 's' : ''}
+                  </span>
+                )}
+
+                {/* Statut */}
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CLASSES[step.status]}`}
+                  aria-label={`Statut : ${STATUS_LABELS[step.status]}`}
+                >
+                  {STATUS_LABELS[step.status]}
+                </span>
+
+                {/* Bouton Nourrir Élio */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActivePanel({ parcoursAgentId: step.id, stepLabel: step.stepLabel })}
+                  aria-label={`Nourrir Élio pour l'étape ${step.stepLabel}`}
+                  className="shrink-0 text-xs"
+                >
+                  Nourrir Élio
+                </Button>
+              </li>
+            )
+          })}
         </ol>
+      )}
+
+      {/* Panneau injection */}
+      {activePanel && (
+        <InjectStepContextPanel
+          parcoursAgentId={activePanel.parcoursAgentId}
+          clientId={clientId}
+          stepLabel={activePanel.stepLabel}
+          open={true}
+          onClose={() => setActivePanel(null)}
+        />
       )}
 
       {/* Modals */}

@@ -25,8 +25,20 @@ vi.mock('./add-step-modal', () => ({
     </div>
   ),
 }))
+vi.mock('@monprojetpro/module-elio', () => ({
+  InjectStepContextPanel: ({ open, onClose, stepLabel }: { open: boolean; onClose: () => void; stepLabel: string }) =>
+    open ? (
+      <div role="dialog" aria-label={`Nourrir Élio — ${stepLabel}`}>
+        <button onClick={onClose}>Fermer</button>
+      </div>
+    ) : null,
+}))
+vi.mock('../actions/get-step-context-counts', () => ({
+  getStepContextCounts: vi.fn(),
+}))
 
 import { getClientParcoursAgents } from '../actions/get-client-parcours-agents'
+import { getStepContextCounts } from '../actions/get-step-context-counts'
 
 const CLIENT_ID = '00000000-0000-0000-0000-000000000001'
 
@@ -69,6 +81,7 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('ClientParcoursAgentsList', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getStepContextCounts).mockResolvedValue({ data: {}, error: null })
   })
 
   it('shows skeleton while loading', () => {
@@ -144,6 +157,37 @@ describe('ClientParcoursAgentsList', () => {
     render(<ClientParcoursAgentsList clientId={CLIENT_ID} />, { wrapper })
     await waitFor(() =>
       expect(screen.getByText(/Impossible de charger/i)).toBeTruthy()
+    )
+  })
+
+  it('shows "Nourrir Élio" button for each step', async () => {
+    vi.mocked(getClientParcoursAgents).mockResolvedValue({ data: mockSteps, error: null })
+    render(<ClientParcoursAgentsList clientId={CLIENT_ID} />, { wrapper })
+    await waitFor(() => {
+      const buttons = screen.getAllByRole('button', { name: /Nourrir Élio/i })
+      expect(buttons).toHaveLength(mockSteps.length)
+    })
+  })
+
+  it('opens inject context panel on "Nourrir Élio" click', async () => {
+    vi.mocked(getClientParcoursAgents).mockResolvedValue({ data: mockSteps, error: null })
+    render(<ClientParcoursAgentsList clientId={CLIENT_ID} />, { wrapper })
+    await waitFor(() => screen.getAllByRole('button', { name: /Nourrir Élio/i }))
+    await userEvent.click(screen.getAllByRole('button', { name: /Nourrir Élio/i })[0])
+    await waitFor(() =>
+      expect(screen.getByRole('dialog', { name: /Nourrir Élio/i })).toBeTruthy()
+    )
+  })
+
+  it('shows pending context badge when count > 0', async () => {
+    vi.mocked(getClientParcoursAgents).mockResolvedValue({ data: mockSteps, error: null })
+    vi.mocked(getStepContextCounts).mockResolvedValue({
+      data: { [mockSteps[0].id]: 2 },
+      error: null,
+    })
+    render(<ClientParcoursAgentsList clientId={CLIENT_ID} />, { wrapper })
+    await waitFor(() =>
+      expect(screen.getByLabelText(/2 contextes injectés/i)).toBeTruthy()
     )
   })
 })

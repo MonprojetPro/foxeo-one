@@ -43,6 +43,9 @@ export { launchClientParcours } from './actions/launch-client-parcours'
 export { getClientParcoursAgents } from './actions/get-client-parcours-agents'
 export { addParcoursStep } from './actions/add-parcours-step'
 
+// Actions — Nourrir Élio (Story 14.6)
+export { getStepContextCounts } from './actions/get-step-context-counts'
+
 // Actions
 export { getParcours } from './actions/get-parcours'
 export { updateStepStatus } from './actions/update-step-status'
