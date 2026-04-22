@@ -10,7 +10,7 @@
 | Code | Categorie | Nb lecons |
 |------|-----------|-----------|
 | CFG | Configuration | 3 |
-| DL | Téléchargement / Storage | 3 |
+| DL | Téléchargement / Storage | 5 |
 | API | Intégration API externe | 3 |
 | RSC | Next.js Server/Client | 2 |
 | DB | Base de données / Schéma | 1 |
@@ -383,3 +383,44 @@
   - Quand un nouveau projet Next.js est ajouté au monorepo, copier la config `ignoreBuildErrors: true` depuis les projets existants si cette dette n'est pas encore résolue
   - Documenter la dette dans CLAUDE.md ou dans un README infra pour que les nouveaux contributeurs la connaissent
 - **Agents impliques** : SPARK, ATLAS
+
+---
+
+### [DL-003] Bucket Supabase Storage à créer dans la migration — sans ça, l'upload échoue silencieusement
+- **Date** : 2026-04-22
+- **Projet** : MonprojetPro One
+- **Phase** : Story 14.6 — Nourrir Élio par étape
+- **Categorie** : Téléchargement / Storage (DL)
+- **Symptome** : `supabase.storage.from('step-contexts').upload(...)` retourne `StorageError: Bucket not found`. L'erreur est catchée dans un `if (uploadError)` et retourne `STORAGE_ERROR`. Toutes les injections fichier échouent au premier déploiement.
+- **Cause racine** : Le bucket n'est pas créé automatiquement à l'upload. Il faut l'insérer dans `storage.buckets` via une migration SQL. Sans ça, le bucket n'existe pas en production même si le code l'utilise.
+- **Solution** : Ajouter dans la migration correspondante (même fichier `.sql`) un `INSERT INTO storage.buckets (...) ON CONFLICT (id) DO NOTHING` avec les paramètres `public: false`, `file_size_limit`, `allowed_mime_types`, suivi de la policy RLS Storage.
+- **Regle a suivre** : Toute feature qui introduit un nouveau bucket Storage DOIT créer ce bucket dans la migration associée. Ne jamais compter sur la création manuelle via le dashboard Supabase.
+- **Agents impliques** : SPARK, SCAN, ATLAS
+
+---
+
+### [DL-004] Validation MIME dans extractFileText — utiliser MIME uniquement, pas OR avec extension
+- **Date** : 2026-04-22
+- **Projet** : MonprojetPro One
+- **Phase** : Story 14.6 — Nourrir Élio par étape
+- **Categorie** : Téléchargement / Storage (DL)
+- **Symptome** : Pattern `const isTxt = ext === 'txt' || mime === 'text/plain'` permet à un fichier image PNG avec extension `.txt` de passer la validation de type. Il est décodé en UTF-8 → données corrompues en base.
+- **Cause racine** : L'extension `.ext` côté client est falsifiable. Le MIME type `file.type` est la seule valeur que le navigateur renseigne à partir du fichier réel (même si non-garanti sur certains OS). La validation externe dans `inject-step-context.ts` valide déjà le MIME — l'utilitaire interne doit faire pareil.
+- **Solution** : Dans les fonctions d'extraction, utiliser `mime === 'text/plain'`, `mime === 'application/pdf'`, etc. — jamais de OR avec l'extension.
+- **Regle a suivre** : La validation MIME est toujours prioritaire sur l'extension. L'extension peut être un indice UI (affichage utilisateur) mais pas une décision de sécurité.
+- **Agents impliques** : SPARK, SCAN, ATLAS
+
+---
+
+### [DL-005] Nettoyage Storage orphelin sur delete et rollback DB — toujours les deux
+- **Date** : 2026-04-22
+- **Projet** : MonprojetPro One
+- **Phase** : Story 14.6 — Nourrir Élio par étape
+- **Categorie** : Téléchargement / Storage (DL)
+- **Symptome** : Sans nettoyage explicite, chaque suppression de contexte-fichier laisse un fichier orphelin dans le bucket. Idem si l'upload réussit mais l'insert DB échoue : le fichier reste sans référence.
+- **Cause racine** : Supabase Storage n'a pas de CASCADE automatique depuis une table SQL. La cohérence entre DB et Storage est gérée uniquement par le code applicatif.
+- **Solution** :
+  1. À la suppression d'un contexte : récupérer `file_path` avant le DELETE, puis appeler `storage.from(bucket).remove([filePath])` si non-null.
+  2. Si l'insert DB échoue après un upload réussi : appeler `storage.from(bucket).remove([filePath]).catch(() => {})` avant de retourner l'erreur.
+- **Regle a suivre** : Chaque action qui écrit dans Storage ET en DB doit prévoir les deux opérations de nettoyage (rollback upload si DB fail, cleanup Storage si delete DB).
+- **Agents impliques** : SPARK, SCAN, ATLAS

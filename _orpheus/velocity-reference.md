@@ -184,8 +184,9 @@
 | 94 | 14.3 — Assemblage parcours client depuis catalogue | 2026-04-21 | — | 25 | +1,468 | -5 | +1,463 | 25✅ |
 | 95 | 14.4 — Chat Élio embarqué dans la page étape | 2026-04-22 | c355c4f | 10 | +788 | -2 | +786 | 26✅ |
 | 96 | 14.5 — Chat Élio Lab câblé sur l'agent assigné | 2026-04-22 | 115c45e | 9 | +816 | -34 | +782 | 25✅ |
+| 97 | 14.6 — Nourrir Élio par étape, injection contexte Hub | 2026-04-22 | f74de15 | 24 | +1,792 | -102 | +1,690 | 59✅ |
 
-> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,345+.
+> `†` = run partiel (fichiers de la story uniquement, pas full suite). Tests cumulés ~4,404+.
 
 ### Claude Design Integration (hors epic — refonte visuelle)
 
@@ -203,14 +204,14 @@
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **95** (93 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **96** (94 commits, dont 2 doubles et 1 triple) |
 | Integrations design (hors epic) | **1** (Claude Design — Lab+One visual refonte) |
 | Commits de correction post-story | **1** (code review retroactif + bug systemic) |
-| Fichiers totaux modifies | **2,348** |
-| Lignes inserees | **+177,010** |
-| Lignes supprimees | **-15,466** |
-| Lignes nettes ajoutees | **+161,544** |
-| Tests finaux | **~4,267+** |
+| Fichiers totaux modifies | **2,372** |
+| Lignes inserees | **+178,802** |
+| Lignes supprimees | **-15,568** |
+| Lignes nettes ajoutees | **+163,234** |
+| Tests finaux | **~4,404+** |
 | Duree calendaire | **73 jours** (8 fev — 21 avr) |
 | Jours effectifs de dev | **~26 jours** |
 
