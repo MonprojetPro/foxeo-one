@@ -1,6 +1,6 @@
 # Story 15.3 : Post-meeting Google — Enregistrements, Transcriptions Gemini & Nettoyage final
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -32,59 +32,53 @@ so that **je retrouve les comptes-rendus automatiquement sans gestion manuelle**
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Server Action : syncMeetingResults
-  - [ ] 1.1 Créer `packages/modules/visio/actions/sync-meeting-results.ts`
-  - [ ] 1.2 Requête `googleMeetClient.conferenceRecords.list({ filter: \`space.name="${meet_space_name}"\` })`
-  - [ ] 1.3 Pour chaque conferenceRecord : requête `recordings.list` et `transcripts.list`
-  - [ ] 1.4 Upsert dans `meeting_recordings` : `recording_url` (lien Drive), `transcript_url` (lien Docs), `transcription_status`
-  - [ ] 1.5 Appeler cette action depuis `endMeeting()` en arrière-plan (non-bloquant)
-  - [ ] 1.6 Test co-localisé avec mock googleapis
+- [x] Task 1 — Server Action : syncMeetingResults
+  - [x] 1.1 Créer `packages/modules/visio/actions/sync-meeting-results.ts`
+  - [x] 1.2 Requête `conferenceRecords.list` via Google Meet REST API v2
+  - [x] 1.3 Pour chaque conferenceRecord : requête `recordings.list` et `transcripts.list`
+  - [x] 1.4 SELECT/INSERT ou UPDATE dans `meeting_recordings` : `recording_url` (lien Drive), `transcript_url` (lien Docs), `transcription_status`
+  - [x] 1.5 Appeler cette action depuis `endMeeting()` en arrière-plan (non-bloquant)
+  - [x] 1.6 Test co-localisé avec 13 tests (mock fetch)
 
-- [ ] Task 2 — Adaptation composants recordings
-  - [ ] 2.1 Modifier `packages/modules/visio/components/recording-list.tsx`
-  - [ ] 2.2 Remplacer le player HTML5 → lien "Voir sur Google Drive" (icône external link)
-  - [ ] 2.3 Remplacer le viewer SRT → lien "Voir la transcription (Google Docs)" (icône external link)
-  - [ ] 2.4 Conserver `RecordingStatusBadge` — adapter les libellés :
-    - `pending` → "En attente de traitement Google"
-    - `processing` → "Gemini transcrit en cours..."
-    - `completed` → "Disponible"
-    - `failed` → "Non disponible"
-  - [ ] 2.5 Supprimer `packages/modules/visio/components/recording-player.tsx`
-  - [ ] 2.6 Supprimer `packages/modules/visio/components/transcript-viewer.tsx`
-  - [ ] 2.7 Supprimer `packages/modules/visio/utils/parse-srt.ts`
+- [x] Task 2 — Adaptation composants recordings
+  - [x] 2.1 Modifier `packages/modules/visio/components/recording-list.tsx`
+  - [x] 2.2 Remplacer le player HTML5 → lien "Enregistrement (Google Drive)" (icône external link)
+  - [x] 2.3 Remplacer le viewer SRT → lien "Transcription (Google Docs)" (icône external link)
+  - [x] 2.4 RecordingStatusBadge libellés mis à jour (pending/processing/completed/failed)
+  - [x] 2.5 Supprimer `recording-player.tsx` + tests
+  - [x] 2.6 Supprimer `transcript-viewer.tsx` + tests
+  - [x] 2.7 Supprimer `parse-srt.ts` + tests
 
-- [ ] Task 3 — Nettoyage Edge Functions OpenVidu + Whisper
-  - [ ] 3.1 Supprimer `supabase/functions/openvidu-webhook/`
-  - [ ] 3.2 Supprimer `supabase/functions/transcribe-recording/`
-  - [ ] 3.3 Supprimer `supabase/functions/get-openvidu-token/`
-  - [ ] 3.4 Retirer les variables d'env OpenVidu/Whisper de `supabase/functions/.env`
-  - [ ] 3.5 Retirer `OPENVIDU_*` et `OPENAI_API_KEY` (Whisper) de `.env.example` et `.env.local`
+- [x] Task 3 — Nettoyage Edge Functions OpenVidu + Whisper
+  - [x] 3.1 Supprimer `supabase/functions/openvidu-webhook/`
+  - [x] 3.2 Supprimer `supabase/functions/transcribe-recording/`
+  - [x] 3.3 Supprimer `supabase/functions/get-openvidu-token/`
+  - [x] 3.4 health-check-cron: suppression du check OpenVidu
+  - [x] 3.5 .env.example déjà nettoyé (pas de refs OpenVidu/OPENAI)
 
-- [ ] Task 4 — Nettoyage Docker OpenVidu
-  - [ ] 4.1 Supprimer `docker/openvidu/` (dossier entier)
-  - [ ] 4.2 Mettre à jour `docker/README.md` si existant (mentionner seulement Cal.com)
+- [x] Task 4 — Nettoyage Docker OpenVidu
+  - [x] 4.1 Supprimer `docker/openvidu/` (dossier entier)
+  - [x] 4.2 Pas de docker/README.md existant
 
-- [ ] Task 5 — Migration DB nettoyage meeting_requests
-  - [ ] 5.1 Créer migration `00107_drop_meeting_requests.sql`
-  - [ ] 5.2 `DROP TABLE IF EXISTS meeting_requests CASCADE`
-  - [ ] 5.3 Supprimer les RLS policies associées
+- [x] Task 5 — Migration DB nettoyage meeting_requests
+  - [x] 5.1 Créer migration `00108_drop_meeting_requests.sql`
+  - [x] 5.2 `DROP TABLE IF EXISTS meeting_requests CASCADE`
+  - [x] 5.3 + RLS operator INSERT/UPDATE sur meeting_recordings
 
-- [ ] Task 6 — Types et manifest
-  - [ ] 6.1 Supprimer `packages/modules/visio/types/meeting-request.types.ts`
-  - [ ] 6.2 Mettre à jour `packages/modules/visio/manifest.ts` : supprimer routes `/requests`, `/request`, `/lobby`
-  - [ ] 6.3 Mettre à jour `packages/modules/visio/index.ts` (barrel) — supprimer exports supprimés
+- [x] Task 6 — Types et manifest
+  - [x] 6.1 `meeting-request.types.ts` déjà absent (supprimé en 15.2)
+  - [x] 6.2 manifest.ts : routes /requests déjà absentes
+  - [x] 6.3 Mettre à jour `index.ts` — suppression RecordingPlayer, TranscriptViewer, parseSrt, downloadRecording, downloadTranscript
 
-- [ ] Task 7 — Documentation module Visio (DOC)
-  - [ ] 7.1 Réécrire `packages/modules/visio/docs/guide.md` (Google Meet, plus OpenVidu)
-  - [ ] 7.2 Réécrire `packages/modules/visio/docs/faq.md` (nouvelles FAQ Google Meet)
-  - [ ] 7.3 Réécrire `packages/modules/visio/docs/flows.md` (nouveaux flows)
-  - [ ] 7.4 Supprimer `packages/modules/visio/docs/openvidu-setup.md`
-  - [ ] 7.5 Mettre à jour `packages/modules/visio/docs/calcom-setup.md` (toujours valide)
+- [x] Task 7 — Documentation module Visio (DOC)
+  - [x] 7.1-7.3 guide.md, faq.md, flows.md déjà réécrites en Story 15.2
+  - [x] 7.4 openvidu-setup.md déjà absent
+  - [x] 7.5 calcom-setup.md conservé intact
 
-- [ ] Task 8 — Tests nettoyage
-  - [ ] 8.1 Supprimer tous les tests fichiers supprimés
-  - [ ] 8.2 Vérifier 0 import vers `openvidu-browser` dans le codebase (`grep -r openvidu`)
-  - [ ] 8.3 Vérifier 0 import vers `whisper` ou `transcribe-recording` dans le codebase
+- [x] Task 8 — Tests nettoyage
+  - [x] 8.1 Tests fichiers supprimés retirés
+  - [x] 8.2 0 référence `openvidu` dans le code source packages/ et apps/
+  - [x] 8.3 0 référence `transcribe-recording` dans le code source
 
 ## Dev Notes
 
@@ -150,4 +144,35 @@ packages/modules/visio/docs/openvidu-setup.md                               # SU
 
 ## File List (auto-generated at completion)
 
+**Créés :**
+- `packages/modules/visio/actions/sync-meeting-results.ts`
+- `packages/modules/visio/actions/sync-meeting-results.test.ts`
+- `supabase/migrations/00108_drop_meeting_requests.sql`
+
+**Modifiés :**
+- `packages/modules/visio/actions/end-meeting.ts` (appel background syncMeetingResults)
+- `packages/modules/visio/actions/end-meeting.test.ts` (mock + test syncMeetingResults)
+- `packages/modules/visio/components/recording-list.tsx` (liens Drive/Docs)
+- `packages/modules/visio/components/recording-list.test.tsx` (12 tests)
+- `packages/modules/visio/components/recording-status-badge.tsx` (libellés Google Meet)
+- `packages/modules/visio/components/recording-status-badge.test.tsx`
+- `packages/modules/visio/index.ts` (suppression exports obsolètes)
+- `packages/modules/admin/components/system-health.test.tsx` (suppression open_vidu)
+- `packages/handoff/src/extract-client-data.ts` (suppression meeting_requests)
+- `supabase/functions/health-check-cron/index.ts` (suppression check OpenVidu)
+
+**Supprimés :**
+- `packages/modules/visio/components/recording-player.tsx` + test
+- `packages/modules/visio/components/transcript-viewer.tsx` + test
+- `packages/modules/visio/utils/parse-srt.ts` + test
+- `packages/modules/visio/utils/to-meeting-request.ts` + test
+- `supabase/functions/openvidu-webhook/`
+- `supabase/functions/transcribe-recording/`
+- `supabase/functions/get-openvidu-token/`
+- `docker/openvidu/`
+
 ## Completion Notes
+
+Commit: `30d015a` — 2026-04-23
+Tests: 47 passing (13 sync-meeting-results, 12 recording-list, 5 recording-status-badge, 7 end-meeting, 10 system-health)
+Migration: 00108_drop_meeting_requests.sql

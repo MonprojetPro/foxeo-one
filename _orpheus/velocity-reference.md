@@ -211,6 +211,7 @@
 |---|-------|-------------|-------------------|----------|------------|-------------|-----|-------|
 | 1 | 15.1 — Auth Google Meet API — client OAuth2 | 22/04 18:31 | — | 5 | +523 | -11 | +512 | 4 |
 | 2 | 15.2 — Migration OpenVidu → Google Meet + Refonte UX | 22/04 19:00 | ~0h35 | 66 | +524 | -3304 | -2780 | 65 |
+| 3 | 15.3 — Post-meeting recordings/transcriptions Gemini & nettoyage OpenVidu | 23/04 10:44 | ~1h45 | 25 | +729 | -1129 | -400 | 47 |
 
 ---
 
@@ -218,15 +219,15 @@
 
 | Metrique | Valeur |
 |----------|--------|
-| Stories livrees | **105** (103 commits, dont 2 doubles et 1 triple) |
+| Stories livrees | **106** (104 commits, dont 2 doubles et 1 triple) |
 | Integrations design (hors epic) | **1** (Claude Design — Lab+One visual refonte) |
 | Commits de correction post-story | **2** (code review retroactif + 14.11 relocalisation dashboard) |
-| Fichiers totaux modifies | **2,410** |
-| Lignes inserees | **+181,881** |
-| Lignes supprimees | **-15,667** |
-| Lignes nettes ajoutees | **+166,214** |
-| Tests finaux | **~4,521+** |
-| Duree calendaire | **74 jours** (8 fev — 22 avr) |
+| Fichiers totaux modifies | **2,435** |
+| Lignes inserees | **+182,610** |
+| Lignes supprimees | **-16,796** |
+| Lignes nettes ajoutees | **+165,814** |
+| Tests finaux | **~4,568+** |
+| Duree calendaire | **75 jours** (8 fev — 23 avr) |
 | Jours effectifs de dev | **~26 jours** |
 
 ### Totaux par epic
