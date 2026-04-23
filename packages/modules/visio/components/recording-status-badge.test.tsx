@@ -5,10 +5,10 @@ import type { TranscriptionStatus } from '../types/recording.types'
 
 describe('RecordingStatusBadge', () => {
   const cases: Array<{ status: TranscriptionStatus; label: string }> = [
-    { status: 'pending', label: 'En attente' },
-    { status: 'processing', label: 'En cours' },
-    { status: 'completed', label: 'Transcrit' },
-    { status: 'failed', label: 'Échec' },
+    { status: 'pending', label: 'En attente de traitement Google' },
+    { status: 'processing', label: 'Gemini transcrit en cours...' },
+    { status: 'completed', label: 'Disponible' },
+    { status: 'failed', label: 'Non disponible' },
   ]
 
   cases.forEach(({ status, label }) => {

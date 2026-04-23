@@ -18,7 +18,6 @@ import {
 interface SystemAlertData {
   last_alert_pennylane_at?: string | null
   last_alert_cal_com_at?: string | null
-  last_alert_open_vidu_at?: string | null
   last_alert_supabase_db_at?: string | null
   last_alert_supabase_storage_at?: string | null
   last_alert_supabase_auth_at?: string | null
@@ -139,18 +138,6 @@ async function checkCalCom(): Promise<ServiceCheck> {
   }
 }
 
-async function checkOpenVidu(): Promise<ServiceCheck> {
-  const openViduUrl = Deno.env.get('OPENVIDU_URL')
-  if (!openViduUrl) {
-    return { status: 'ok', latencyMs: 0, error: 'OPENVIDU_URL not configured — skipped' }
-  }
-  const { ok, latencyMs } = await timedFetch(`${openViduUrl}/openvidu/api`)
-  return {
-    status: evaluateServiceStatus('open_vidu', latencyMs, !ok),
-    latencyMs,
-  }
-}
-
 // ── Notification MiKL ─────────────────────────────────────────────────────────
 
 async function sendAlertNotification(
@@ -209,14 +196,13 @@ serve(async (_req: Request) => {
   const supabase = createClient(supabaseUrl, serviceKey)
 
   // 1. Exécuter tous les checks en parallèle
-  const [db, storage, auth, realtime, pennylane, calCom, openVidu] = await Promise.all([
+  const [db, storage, auth, realtime, pennylane, calCom] = await Promise.all([
     checkSupabaseDb(supabaseUrl, serviceKey),
     checkSupabaseStorage(supabaseUrl, serviceKey),
     checkSupabaseAuth(supabaseUrl, serviceKey),
     checkSupabaseRealtime(supabaseUrl, serviceKey),
     checkPennylane(pennylaneToken),
     checkCalCom(),
-    checkOpenVidu(),
   ])
 
   const services: Record<string, ServiceCheck> = {
@@ -226,7 +212,6 @@ serve(async (_req: Request) => {
     supabase_realtime: realtime,
     pennylane,
     cal_com: calCom,
-    open_vidu: openVidu,
   }
 
   const result = buildHealthCheckResult(services)

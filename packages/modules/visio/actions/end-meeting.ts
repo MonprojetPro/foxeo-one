@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { type Meeting, type MeetingDB, EndMeetingInput } from '../types/meeting.types'
 import { toMeeting } from '../utils/to-meeting'
+import { syncMeetingResults } from './sync-meeting-results'
 
 export async function endMeeting(
   input: { meetingId: string }
@@ -55,7 +56,14 @@ export async function endMeeting(
       return errorResponse('Erreur lors de la fin du meeting', 'DB_ERROR', error)
     }
 
-    return successResponse(toMeeting(data as MeetingDB))
+    const meeting = toMeeting(data as MeetingDB)
+
+    // Sync post-meeting results (non-blocking — Google Meet may take a few minutes)
+    void syncMeetingResults({ meetingId: meeting.id }).catch((err) => {
+      console.error('[VISIO:END_MEETING] syncMeetingResults background error:', err)
+    })
+
+    return successResponse(meeting)
   } catch (error) {
     console.error('[VISIO:END_MEETING] Unexpected error:', error)
     return errorResponse('Une erreur inattendue est survenue', 'INTERNAL_ERROR', error)

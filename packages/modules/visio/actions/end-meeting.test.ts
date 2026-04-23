@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Meeting } from '../types/meeting.types'
 
+const mockSyncMeetingResults = vi.fn().mockResolvedValue({ data: { synced: true }, error: null })
+vi.mock('./sync-meeting-results', () => ({
+  syncMeetingResults: mockSyncMeetingResults,
+}))
+
 const mockGetUser = vi.fn()
 
 const mockUpdateSingle = vi.fn()
@@ -116,6 +121,16 @@ describe('endMeeting Server Action', () => {
     expect(result.data?.durationSeconds).toBe(3600)
     expect(result.data?.endedAt).toBe('2026-03-01T11:00:00.000Z')
     expect(result.data?.type).toBe('standard')
+  })
+
+  it('triggers syncMeetingResults in background after successful end', async () => {
+    const { endMeeting } = await import('./end-meeting')
+    await endMeeting({ meetingId: MEETING_ID })
+
+    // Allow micro-task queue to flush the void promise
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(mockSyncMeetingResults).toHaveBeenCalledWith({ meetingId: MEETING_ID })
   })
 
   it('returns meeting with prospect type so caller can trigger post-meeting dialog', async () => {

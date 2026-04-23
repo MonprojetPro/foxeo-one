@@ -8,11 +8,9 @@ export { MeetingStatusBadge } from './components/meeting-status-badge'
 export { MeetingScheduleDialog } from './components/meeting-schedule-dialog'
 export { CalcomBookingWidget } from './components/calcom-booking-widget'
 
-// Recording Components (Story 5.2)
-export { RecordingPlayer } from './components/recording-player'
+// Recording Components
 export { RecordingList } from './components/recording-list'
 export { RecordingListPage } from './components/recording-list-page'
-export { TranscriptViewer } from './components/transcript-viewer'
 export { RecordingStatusBadge } from './components/recording-status-badge'
 
 // Post-Meeting Dialog Components (Story 5.4)
@@ -36,8 +34,7 @@ export { createMeeting } from './actions/create-meeting'
 export { startMeeting } from './actions/start-meeting'
 export { endMeeting } from './actions/end-meeting'
 export { getMeetingRecordings } from './actions/get-meeting-recordings'
-export { downloadRecording } from './actions/download-recording'
-export { downloadTranscript } from './actions/download-transcript'
+export { syncMeetingResults } from './actions/sync-meeting-results'
 
 // Post-Meeting Actions (Story 5.4)
 export { createLabOnboarding } from './actions/create-lab-onboarding'
@@ -49,10 +46,6 @@ export type { CreateLabOnboardingInput, LabOnboardingResult } from './actions/cr
 export type { SendProspectResourcesInput, ProspectResourcesResult } from './actions/send-prospect-resources'
 export type { ScheduleFollowUpInput, FollowUpResult } from './actions/schedule-follow-up'
 export type { MarkProspectNotInterestedInput, NotInterestedReason } from './actions/mark-prospect-not-interested'
-
-// Utils (Story 5.2)
-export { parseSrt, formatTimestamp } from './utils/parse-srt'
-export type { SrtEntry } from './utils/parse-srt'
 
 // Utils (Story 5.4)
 export { generateResourceLinks } from './utils/generate-resource-links'
@@ -77,8 +70,6 @@ export type {
   MeetingRecordingDB,
   TranscriptionStatus,
   GetMeetingRecordingsInput,
-  DownloadRecordingInput,
-  DownloadTranscriptInput,
 } from './types/recording.types'
 
 export { TranscriptionStatusValues } from './types/recording.types'

@@ -18,7 +18,6 @@ const CLIENT_TABLES = [
   'support_tickets',
   'reminders',
   'meetings',
-  'meeting_requests',
   'validation_requests',
   'user_preferences',
   'data_exports',

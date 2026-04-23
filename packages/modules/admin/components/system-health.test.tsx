@@ -15,7 +15,6 @@ const mockHealthData: HealthCheckData = {
     supabase_realtime: { status: 'ok', latencyMs: 95 },
     pennylane: { status: 'degraded', latencyMs: 1800 },
     cal_com: { status: 'ok', latencyMs: 450 },
-    open_vidu: { status: 'ok', latencyMs: 0, error: 'OPENVIDU_URL not configured — skipped' },
   },
 }
 
@@ -88,6 +87,20 @@ describe('SystemHealth', () => {
   })
 
   it('affiche "Non configuré" pour les services skippés', () => {
+    vi.mocked(useSystemHealthModule.useSystemHealth).mockReturnValue({
+      data: {
+        ...mockHealthData,
+        services: {
+          ...mockHealthData.services,
+          pennylane: { status: 'ok', latencyMs: 0, error: 'PENNYLANE_API_TOKEN not configured — skipped' },
+        },
+      },
+      isPending: false,
+      isError: false,
+      triggerRefresh: mockTriggerRefresh,
+      refreshing: false,
+    } as ReturnType<typeof useSystemHealthModule.useSystemHealth>)
+
     render(<SystemHealth />)
     const nonConfigured = screen.getAllByText('Non configuré')
     expect(nonConfigured.length).toBeGreaterThan(0)
