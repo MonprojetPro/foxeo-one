@@ -5,7 +5,7 @@ export const manifest: ModuleManifest = {
   name: 'Validation Hub',
   description: 'File d\'attente des demandes de validation — briefs Lab et évolutions One',
   version: '1.0.0',
-  targets: ['hub', 'client-lab'],
+  targets: ['hub'],
   navigation: {
     label: 'Soumissions',
     icon: 'send',
