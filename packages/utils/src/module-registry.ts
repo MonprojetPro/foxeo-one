@@ -13,37 +13,28 @@ export function registerModule(manifest: ModuleManifest): void {
 
 /**
  * Auto-discover all modules from packages/modules/
- * Each module is imported with try/catch — missing modules are silently skipped.
+ * Static imports allow webpack to statically analyze dependencies (no dynamic expression warning).
  */
 export async function discoverModules(): Promise<void> {
   if (isDiscovered) return
 
-  const moduleImports: Array<{
-    pkg: string
-    named?: string
-  }> = [
-    { pkg: '@monprojetpro/module-core-dashboard', named: 'coreDashboardManifest' },
-    { pkg: '@monprojetpro/modules-chat' },
-    { pkg: '@monprojetpro/module-documents' },
-    { pkg: '@monprojetpro/module-elio' },
-    { pkg: '@monprojetpro/module-parcours' },
-    { pkg: '@monprojetpro/modules-validation-hub' },
-    { pkg: '@monprojetpro/modules-crm' },
-    { pkg: '@monprojetpro/modules-notifications' },
-    { pkg: '@monprojetpro/module-visio' },
-    { pkg: '@monprojetpro/modules-support' },
-    { pkg: '@monprojetpro/module-admin' },
-  ]
+  const results = await Promise.allSettled([
+    import('@monprojetpro/module-core-dashboard').then((m) => m.coreDashboardManifest),
+    import('@monprojetpro/modules-chat').then((m) => m.manifest),
+    import('@monprojetpro/module-documents').then((m) => m.manifest),
+    import('@monprojetpro/module-elio').then((m) => m.manifest),
+    import('@monprojetpro/module-parcours').then((m) => m.manifest),
+    import('@monprojetpro/modules-validation-hub').then((m) => m.manifest),
+    import('@monprojetpro/modules-crm').then((m) => m.manifest),
+    import('@monprojetpro/modules-notifications').then((m) => m.manifest),
+    import('@monprojetpro/module-visio').then((m) => m.manifest),
+    import('@monprojetpro/modules-support').then((m) => m.manifest),
+    import('@monprojetpro/module-admin').then((m) => m.manifest),
+  ])
 
-  for (const { pkg, named } of moduleImports) {
-    try {
-      const mod = await import(pkg)
-      const manifest: ModuleManifest = named ? mod[named] : mod.manifest
-      if (manifest) {
-        registerModule(manifest)
-      }
-    } catch {
-      // Module not available — skip silently (tolerant to missing modules)
+  for (const result of results) {
+    if (result.status === 'fulfilled' && result.value) {
+      registerModule(result.value)
     }
   }
 
