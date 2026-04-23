@@ -45,7 +45,7 @@ export function ModeToggle({
     setMode(newMode)
     document.cookie = `${MODE_TOGGLE_COOKIE}=${newMode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
     onToggle?.(newMode)
-    startTransition(() => router.refresh())
+    startTransition(() => router.push('/'))
   }
 
   return (
