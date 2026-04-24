@@ -10,6 +10,8 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "dev:hub": "turbo dev --filter=@monprojetpro/hub",
+    "dev:client": "turbo dev --filter=@monprojetpro/client",
     "lint": "turbo lint",
     "test": "turbo test",
     "clean": "turbo clean",

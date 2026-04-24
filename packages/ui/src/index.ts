@@ -48,7 +48,12 @@ export { ModuleSidebar } from './components/module-sidebar'
 export { EmptyState } from './components/empty-state'
 export { EMPTY_SEARCH, EMPTY_LIST, EMPTY_ERROR } from './components/empty-state-presets'
 export { ThemeToggle } from './components/theme-toggle'
-export { ModeToggle, MODE_TOGGLE_COOKIE, type ModeToggleProps } from './components/mode-toggle'
+export { ModeToggle, type ModeToggleProps } from './components/mode-toggle'
+// IMPORTANT : MODE_TOGGLE_COOKIE est exporté depuis un fichier SANS 'use client'.
+// Un ré-export depuis `mode-toggle.tsx` (use client) rendrait la constante `undefined`
+// côté RSC — Next.js transforme les exports d'un fichier use client en références
+// client, et seules les fonctions passent le pont. Les constantes deviennent undefined.
+export { MODE_TOGGLE_COOKIE } from './components/mode-toggle-constants'
 export { DataTable, type ColumnDef, type DataTableProps } from './components/data-table'
 
 // Breadcrumb

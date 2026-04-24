@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { cn } from '@monprojetpro/utils'
+import { setActiveViewMode } from './mode-toggle-action'
 
 /**
  * ModeToggle — Bascule visuelle entre Mode Lab et Mode One.
@@ -12,15 +12,14 @@ import { cn } from '@monprojetpro/utils'
  *   (clients gradués post-graduation, ou clients Lab natifs)
  * - Le mode actif est stocké dans un cookie navigateur (`mpp_active_view`)
  *   pour zéro DB write et persistance entre sessions
- * - Le toggle déclenche `router.refresh()` pour que le layout serveur
- *   recalcule les onglets / thème selon le nouveau mode actif
+ * - Le toggle appelle une Server Action qui pose le cookie côté serveur,
+ *   puis un full reload (`window.location.replace('/')`) garantit que le
+ *   layout et la page d'accueil se re-rendent avec le nouveau mode.
  *
  * IMPORTANT : ce composant ne change PAS `dashboard_type` en DB.
  * `dashboard_type` reste le statut canonique (Lab natif ou One gradué).
  * Le toggle est une préférence d'affichage uniquement.
  */
-
-export const MODE_TOGGLE_COOKIE = 'mpp_active_view'
 
 export interface ModeToggleProps {
   currentMode: 'lab' | 'one'
@@ -33,7 +32,6 @@ export function ModeToggle({
   labModeAvailable,
   onToggle,
 }: ModeToggleProps) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [mode, setMode] = useState<'lab' | 'one'>(currentMode)
 
@@ -43,9 +41,13 @@ export function ModeToggle({
   const handleToggle = (newMode: 'lab' | 'one') => {
     if (newMode === mode) return
     setMode(newMode)
-    document.cookie = `${MODE_TOGGLE_COOKIE}=${newMode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
     onToggle?.(newMode)
-    startTransition(() => router.push('/'))
+    startTransition(async () => {
+      await setActiveViewMode(newMode)
+      if (typeof window !== 'undefined') {
+        window.location.replace('/')
+      }
+    })
   }
 
   return (

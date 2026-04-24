@@ -1,18 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { ModeToggle, MODE_TOGGLE_COOKIE } from './mode-toggle'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { ModeToggle } from './mode-toggle'
 
-const mockRefresh = vi.fn()
+const mockSetActiveViewMode = vi.fn(() => Promise.resolve())
 
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ refresh: mockRefresh }),
+vi.mock('./mode-toggle-action', () => ({
+  setActiveViewMode: (mode: 'lab' | 'one') => mockSetActiveViewMode(mode),
+}))
+
+vi.mock('./mode-toggle-constants', () => ({
+  MODE_TOGGLE_COOKIE: 'mpp_active_view',
 }))
 
 describe('ModeToggle', () => {
+  const originalReplace = window.location.replace
+  const mockReplace = vi.fn()
+
   beforeEach(() => {
     vi.clearAllMocks()
-    // Reset cookies between tests
-    document.cookie = `${MODE_TOGGLE_COOKIE}=; path=/; max-age=0`
+    // Stub window.location.replace (JSDOM ne le supporte pas nativement sur nav)
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, replace: mockReplace },
+    })
+    mockReplace.mockClear()
   })
 
   it('exports ModeToggle component', () => {
@@ -40,16 +51,20 @@ describe('ModeToggle', () => {
     expect(oneBtn.getAttribute('aria-pressed')).toBe('false')
   })
 
-  it('writes the cookie when toggling to a new mode', () => {
+  it('calls setActiveViewMode server action when toggling to a new mode', async () => {
     render(<ModeToggle currentMode="one" labModeAvailable={true} />)
     fireEvent.click(screen.getByText('Mode Lab'))
-    expect(document.cookie).toContain(`${MODE_TOGGLE_COOKIE}=lab`)
+    await waitFor(() => {
+      expect(mockSetActiveViewMode).toHaveBeenCalledWith('lab')
+    })
   })
 
-  it('calls router.refresh() after toggle', () => {
+  it('reloads to / via window.location.replace after the server action resolves', async () => {
     render(<ModeToggle currentMode="one" labModeAvailable={true} />)
     fireEvent.click(screen.getByText('Mode Lab'))
-    expect(mockRefresh).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith('/')
+    })
   })
 
   it('calls onToggle callback with the new mode', () => {
@@ -68,7 +83,8 @@ describe('ModeToggle', () => {
     )
     fireEvent.click(screen.getByText('Mode Lab'))
     expect(onToggle).not.toHaveBeenCalled()
-    expect(mockRefresh).not.toHaveBeenCalled()
+    expect(mockSetActiveViewMode).not.toHaveBeenCalled()
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
   it('switches the active button after a click', () => {

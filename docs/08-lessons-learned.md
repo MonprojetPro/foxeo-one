@@ -12,7 +12,7 @@
 | CFG | Configuration | 3 |
 | DL | Téléchargement / Storage | 5 |
 | API | Intégration API externe | 5 |
-| RSC | Next.js Server/Client | 2 |
+| RSC | Next.js Server/Client | 3 |
 | DB | Base de données / Schéma | 1 |
 | DEP | Déploiement | 3 |
 | GIT | Git / Workflow | 1 |
@@ -184,6 +184,33 @@
 - **Solution validee** : Remplacer `ClientDocumentsTab` pour utiliser `getDocuments` du module documents (bon schéma) et afficher une liste simple cohérente avec le design.
 - **Prevention** : Quand deux modules requêtent la même table, toujours vérifier que les deux utilisent le même schéma. Éviter les actions dupliquées (`getClientDocuments` vs `getDocuments`) — un seul point d'accès par table.
 - **Agents impliques** : SPARK (dev), ATLAS (documentation)
+
+---
+
+### [RSC-003] Constantes exportées depuis un fichier `'use client'` arrivent `undefined` au RSC
+- **Date** : 2026-04-23
+- **Projet** : MonprojetPro (apps/client — toggle Mode Lab/One)
+- **Categorie** : Next.js Server/Client (RSC)
+- **Symptome** : Le toggle Mode Lab/One posait bien le cookie `mpp_active_view=one` (confirmé DevTools + logs middleware), mais le layout serveur retournait toujours `activeMode='lab'`. La page `/` redirigeait systématiquement vers `/modules/parcours`. Bug invisible à la lecture du code — la logique `cookieStore.get(MODE_TOGGLE_COOKIE)` semblait correcte.
+- **Cause racine** : `MODE_TOGGLE_COOKIE` était exporté depuis `packages/ui/src/components/mode-toggle.tsx` (marqué `'use client'`), puis ré-exporté par `packages/ui/src/index.ts`. Quand le layout serveur (RSC) faisait `import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'`, **Next.js 15 transformait la constante en référence client et la valeur arrivait `undefined` côté serveur**. Le layout faisait donc `cookieStore.get(undefined)` → retournait `undefined` pour TOUTES les requêtes. Seules les FONCTIONS (Server Actions, composants React) passent correctement le pont client/serveur — les constantes, types, et primitives deviennent `undefined` quand elles transitent via un fichier `'use client'`.
+- **Temps perdu** : ~2h de bobologie avant d'appeler FIX — j'ai testé 4 hypothèses incorrectes (cache RSC, `NextResponse.next({ request })`, Supabase SSR `setAll` qui masquait les cookies, race condition middleware/RSC). La cause n'est devenue évidente qu'en loggant la constante elle-même : `console.log('[FIX:LAYOUT-CONSTANT] MODE_TOGGLE_COOKIE =', MODE_TOGGLE_COOKIE)` → `undefined`.
+- **Solution validee** :
+  1. Créer un fichier dédié SANS `'use client'` : `packages/ui/src/components/mode-toggle-constants.ts` qui exporte uniquement les constantes (`MODE_TOGGLE_COOKIE`)
+  2. Dans `packages/ui/src/index.ts`, exporter les constantes depuis ce fichier (pas depuis `mode-toggle.tsx`) :
+     ```ts
+     export { ModeToggle, type ModeToggleProps } from './components/mode-toggle'
+     export { MODE_TOGGLE_COOKIE } from './components/mode-toggle-constants'
+     ```
+  3. Les Server Actions (fichiers `'use server'`) et les composants Server (RSC) importent depuis le fichier constants, pas depuis le composant client.
+- **Prevention** :
+  - **Jamais** mettre de constantes, types, ou primitives exportées dans un fichier `'use client'` qui sera consommé par des RSC
+  - Organisation recommandée pour un composant client + sa Server Action + ses constantes partagées :
+    - `xxx.tsx` ← `'use client'` : composant React + interfaces de props uniquement
+    - `xxx-action.ts` ← `'use server'` : Server Actions (async functions only)
+    - `xxx-constants.ts` ← aucune directive : constantes partagées côté serveur ET client
+  - Règle de détection : si l'import vient d'un fichier `'use client'` ET que le consumer est un RSC/Server Action, tout ce qui n'est pas une fonction devient `undefined` en silence
+  - À checker en code review : `grep -n "^'use client'" <fichier> && grep -n "^export const" <fichier>` — si les deux existent, c'est suspect
+- **Agents impliques** : SPARK (dev initial), FIX (diagnostic méthodique via sondes de log), ATLAS (documentation)
 
 ---
 
