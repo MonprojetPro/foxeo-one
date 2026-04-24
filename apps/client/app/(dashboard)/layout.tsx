@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import {
@@ -165,14 +166,22 @@ export default async function DashboardLayout({
       | null
   }
 
+  if (!user) {
+    redirect('/login')
+  }
+
   let clientRecord: ClientRecord | null = null
-  if (user) {
+  {
     const { data } = await supabase
       .from('clients')
       .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, custom_branding, lab_mode_available)')
       .eq('auth_user_id', user.id)
       .maybeSingle()
     clientRecord = (data as ClientRecord | null) ?? null
+  }
+
+  if (!clientRecord) {
+    redirect('/login')
   }
 
   const clientId = clientRecord?.id ?? ''
