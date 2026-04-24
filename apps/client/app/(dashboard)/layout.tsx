@@ -181,6 +181,7 @@ export default async function DashboardLayout({
   }
 
   if (!clientRecord) {
+    await supabase.auth.signOut()
     redirect('/login')
   }
 
