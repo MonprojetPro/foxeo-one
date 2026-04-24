@@ -2,6 +2,14 @@
 @import "@monprojetpro/ui/themes/lab.css";
 @import "@monprojetpro/ui/themes/one.css";
 
+/* Scan workspace packages so Tailwind v4 generates all used utilities (same pattern as Hub) */
+@source "../../../packages/ui/src/**/*.{tsx,ts}";
+@source "../../../packages/modules/**/*.{tsx,ts}";
+@source "../../../packages/supabase/src/**/*.{tsx,ts}";
+@source "../../../packages/utils/src/**/*.{tsx,ts}";
+@source "../../../packages/types/src/**/*.{tsx,ts}";
+@source "../../**/*.{tsx,ts}";
+
 /* Graduation theme transition — Lab → One */
 html.theme-transition {
   transition: all 1s ease-in-out;
