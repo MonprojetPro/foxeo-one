@@ -14,7 +14,7 @@
 | API | Intégration API externe | 5 |
 | RSC | Next.js Server/Client | 3 |
 | DB | Base de données / Schéma | 1 |
-| DEP | Déploiement | 3 |
+| DEP | Déploiement | 5 |
 | GIT | Git / Workflow | 1 |
 | SEC | Sécurité / Secrets | 1 |
 
@@ -477,3 +477,27 @@
 - **Solution** : Pattern de dependency injection via prop `createMeetingAction?: CreateMeetingFn` sur le composant partagé `MeetingScheduleDialog`. Le Hub passe sa propre action `createHubMeeting` (qui appelle Google Meet + createMeeting). Le module garde son action `createMeeting` par défaut.
 - **Regle a suivre** : Quand un composant partagé doit avoir un comportement différent selon l'app (Hub vs Client), utiliser une prop d'action injectable plutôt que de mettre la logique d'app dans le package.
 - **Agents impliques** : SPARK, ARCH, SCAN, ATLAS
+
+---
+
+### [DEP-004] Tailwind v4 — @source non hérité des fichiers importés sur Vercel
+- **Date** : 2026-04-24
+- **Projet** : MonprojetPro One
+- **Categorie** : Déploiement (DEP)
+- **Symptome** : Après un commit ajoutant `OneElioBox`, l'intégralité du CSS disparaît sur Vercel (HTML brut sans styles). En local, tout fonctionne correctement.
+- **Cause racine** : `apps/client/app/globals.css` importait `@monprojetpro/ui/globals.css` qui lui contenait les directives `@source`. Sur Vercel, le compilateur Tailwind v4 ne résout les `@source` que depuis le **fichier CSS racine** — pas depuis les fichiers importés. Le Hub avait les `@source` directement dans son propre `globals.css`, pas le client.
+- **Solution** : Ajouter les directives `@source` explicitement dans `apps/client/app/globals.css` (même pattern que `apps/hub/app/globals.css`).
+- **Regle a suivre** : Chaque app (`hub`, `client`) doit avoir ses propres directives `@source` dans son `globals.css` racine. Ne jamais compter sur les `@source` d'un fichier importé pour le build Vercel.
+- **Agents impliques** : SPARK, FIX, ATLAS
+
+---
+
+### [DEP-005] Layout client sans guard — compte Hub operator génère un dashboard Lab cassé
+- **Date** : 2026-04-24
+- **Projet** : MonprojetPro One
+- **Categorie** : Déploiement (DEP)
+- **Symptome** : En se connectant avec un compte Hub operator sur l'app client (`localhost:3000`), on atterrit sur un dashboard Lab vide (sidebar avec seulement "Dashboard", contenu noir, avatar "CL"), et on ne peut plus se déconnecter normalement.
+- **Cause racine** : `apps/client/app/(dashboard)/layout.tsx` ne vérifiait pas si l'user authentifié avait un enregistrement dans la table `clients`. En l'absence d'enregistrement, il defaultait en mode Lab avec `activeModules: ['core-dashboard']` au lieu de rediriger vers `/login`.
+- **Solution** : Ajouter deux guards dans le layout : `if (!user) redirect('/login')` et `if (!clientRecord) redirect('/login')`.
+- **Regle a suivre** : Tout layout de dashboard client DOIT vérifier l'existence du record client après l'auth, avant de rendre quoi que ce soit. Un user authentifié sans record client ne doit jamais voir de dashboard — il doit être renvoyé au login.
+- **Agents impliques** : SPARK, FIX, ATLAS
