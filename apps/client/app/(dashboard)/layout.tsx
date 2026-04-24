@@ -32,16 +32,19 @@ import { PresenceProvider } from '@monprojetpro/modules-chat'
 import { LogoutButton } from './logout-button'
 import { ThemeClassSetter } from './theme-class-setter'
 import { ImpersonationWrapper } from './impersonation-wrapper'
+import { OneElioBox } from '../../components/one-elio-box'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
 function ClientSidebar({
   dashboardType,
   activeModules,
   logoUrl,
+  userId,
 }: {
   dashboardType: string
   activeModules: string[]
   logoUrl?: string | null
+  userId: string
 }) {
   const target: ModuleTarget =
     dashboardType === 'one' ? 'client-one' : 'client-lab'
@@ -58,8 +61,14 @@ function ClientSidebar({
     )
   }
 
+  // Widget Élio en bas de sidebar pour One (si le module elio est actif)
+  const elioWidget =
+    target === 'client-one' && activeModules.includes('elio')
+      ? <OneElioBox userId={userId} />
+      : undefined
+
   return (
-    <ModuleSidebar target={target} modules={modules} />
+    <ModuleSidebar target={target} modules={modules} elioWidget={elioWidget} />
   )
 }
 
@@ -215,7 +224,7 @@ export default async function DashboardLayout({
       <DashboardShell
         density={density}
         sidebar={
-          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} logoUrl={logoUrl} />
+          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} logoUrl={logoUrl} userId={user?.id ?? ''} />
         }
         header={
           <ClientHeader
