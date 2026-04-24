@@ -65,13 +65,17 @@ export function ModuleSidebar({ target, modules }: ModuleSidebarProps) {
       {/* Nav items */}
       <nav className="flex flex-col gap-0.5 px-[14px]" aria-label="Navigation principale">
         {mainModules.map((module) => {
-          const isActive = Boolean(pathname?.startsWith(`/modules/${module.id}`))
+          // core-dashboard est l'accueil — on pointe vers / et non /modules/core-dashboard
+          const href = module.id === 'core-dashboard' ? '/' : `/modules/${module.id}`
+          const isActive = module.id === 'core-dashboard'
+            ? pathname === '/'
+            : Boolean(pathname?.startsWith(`/modules/${module.id}`))
           const IconComponent = ICON_MAP[module.navigation.icon] ?? Box
 
           return (
             <Link
               key={module.id}
-              href={`/modules/${module.id}`}
+              href={href}
               style={isActive ? {
                 background: activeBg,
                 borderLeft: `2px solid ${activeBorder}`,
