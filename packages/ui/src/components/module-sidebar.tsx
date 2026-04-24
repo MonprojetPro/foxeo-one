@@ -42,9 +42,16 @@ const SECTION_LABEL: Record<string, string> = {
 export function ModuleSidebar({ target, modules }: ModuleSidebarProps) {
   const pathname = usePathname()
   const isLab = target === 'client-lab'
+  const isOne = target === 'client-one'
   const activeColor = isLab ? '#a78bfa' : '#4ade80'
   const activeBg = isLab ? '#1e1557' : 'rgba(22,163,74,0.1)'
   const activeBorder = isLab ? '#7c3aed' : '#16a34a'
+
+  // En mode One, Élio a un raccourci dédié en bas de sidebar (comme sur Hub)
+  const elioModule = isOne ? modules.find(m => m.id === 'elio') : undefined
+  const mainModules = isOne ? modules.filter(m => m.id !== 'elio') : modules
+
+  const isElioActive = Boolean(pathname?.startsWith('/modules/elio'))
 
   return (
     <div className="flex flex-col h-full">
@@ -57,7 +64,7 @@ export function ModuleSidebar({ target, modules }: ModuleSidebarProps) {
 
       {/* Nav items */}
       <nav className="flex flex-col gap-0.5 px-[14px]" aria-label="Navigation principale">
-        {modules.map((module) => {
+        {mainModules.map((module) => {
           const isActive = Boolean(pathname?.startsWith(`/modules/${module.id}`))
           const IconComponent = ICON_MAP[module.navigation.icon] ?? Box
 
@@ -91,6 +98,30 @@ export function ModuleSidebar({ target, modules }: ModuleSidebarProps) {
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      {/* Élio — raccourci bas de sidebar (One uniquement) */}
+      {elioModule && (
+        <div className="px-[14px] pb-[10px]">
+          <Link
+            href="/modules/elio"
+            style={isElioActive ? {
+              background: activeBg,
+              borderColor: activeBorder,
+              color: activeColor,
+            } : {}}
+            className={cn(
+              'flex items-center gap-3 py-[10px] px-3 rounded-xl border text-[13px] font-medium transition-all duration-[0.12s]',
+              isElioActive
+                ? 'font-semibold'
+                : 'border-[#2d2d2d] text-[#9ca3af] hover:border-[#16a34a] hover:text-[#4ade80] hover:bg-[rgba(22,163,74,0.05)]'
+            )}
+          >
+            <Bot size={16} aria-hidden="true" className={cn(isElioActive ? '' : 'text-[#4ade80]')} />
+            <span className="flex-1">Chat Élio</span>
+            <span className="text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded bg-[rgba(22,163,74,0.15)] text-[#4ade80]">IA</span>
+          </Link>
+        </div>
+      )}
 
       {/* Settings — bas de sidebar */}
       <div className="border-t border-[#2d2d2d] px-[14px] py-[14px] mb-2">

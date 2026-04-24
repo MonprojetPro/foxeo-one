@@ -36,6 +36,9 @@ const MODULE_META: Record<string, { label: string; icon: string; href: string; d
  */
 export function CoreDashboard({ clientConfig, clientName, showTeasing = false }: CoreDashboardProps) {
   const router = useRouter()
+
+  if (!clientConfig) return null
+
   const { activeModules, customBranding } = clientConfig
 
   const logoUrl = customBranding?.logoUrl

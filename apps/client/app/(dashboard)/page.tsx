@@ -65,9 +65,16 @@ export default async function ClientHomePage() {
     redirect('/modules/parcours')
   }
 
+  // On est en mode One — filtrer les modules Lab-only (parcours appartient au Lab, pas à One)
+  const LAB_ONLY_IDS = new Set(['parcours'])
+  const clientConfigOne = {
+    ...clientConfig,
+    activeModules: clientConfig.activeModules.filter(id => !LAB_ONLY_IDS.has(id)),
+  }
+
   // Fetch teasing eligibility server-side (avoids flash UI côté client)
   const teasingResult = clientId ? await getTeasingEligibility(clientId) : null
   const showTeasing = teasingResult?.data?.showTeasing ?? false
 
-  return <CoreDashboard clientConfig={clientConfig} clientName={clientName} showTeasing={showTeasing} />
+  return <CoreDashboard clientConfig={clientConfigOne} clientName={clientName} showTeasing={showTeasing} />
 }
