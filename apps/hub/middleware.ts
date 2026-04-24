@@ -45,7 +45,9 @@ export async function middleware(request: NextRequest) {
   }
 
   // 3. Authenticated user on public auth page → redirect to dashboard if already aal2
-  if (user && isPublic) {
+  // Skip AAL check on verify-mfa: user is in the process of verifying, cannot be AAL2 yet.
+  // Avoids an extra Supabase round-trip that pushes total calls to 5 and causes TOTP expiry on slow connections.
+  if (user && isPublic && !request.nextUrl.pathname.startsWith('/login/verify-mfa')) {
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
     if (aal?.currentLevel === 'aal2') {
       const redirectResponse = NextResponse.redirect(new URL('/', request.url))

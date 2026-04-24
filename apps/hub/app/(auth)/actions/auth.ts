@@ -1,6 +1,6 @@
 'use server'
 
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 import { createHash } from 'crypto'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
@@ -129,6 +129,19 @@ export async function hubLoginAction(
     (f: { status: string }) => f.status === 'verified'
   )
 
+  // Cache factorId in a short-lived cookie to skip listFactors() during verify
+  const verifiedFactor = totpFactors.find((f: { id: string; status: string }) => f.status === 'verified')
+  if (verifiedFactor) {
+    const cookieStore = await cookies()
+    cookieStore.set('mpp_mfa_factor_id', verifiedFactor.id, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 300,
+      path: '/',
+    })
+  }
+
   return successResponse({
     requiresMfa: hasVerifiedTotp,
     needsSetup: !hasVerifiedTotp && !operator.twoFactorEnabled,
@@ -159,19 +172,26 @@ export async function hubVerifyMfaAction(
     return errorResponse('Session expiree. Veuillez vous reconnecter.', 'AUTH_ERROR')
   }
 
-  // List TOTP factors
-  const { data: factors } = await supabase.auth.mfa.listFactors()
-  const totpFactor = factors?.totp?.find(
-    (f: { status: string }) => f.status === 'verified'
-  )
+  // Resolve factorId from cookie (set during login) to skip a listFactors() round-trip
+  const cookieStore = await cookies()
+  const cachedFactorId = cookieStore.get('mpp_mfa_factor_id')?.value
+  let factorId: string
 
-  if (!totpFactor) {
-    return errorResponse('Aucun facteur 2FA configure.', 'MFA_NOT_CONFIGURED')
+  if (cachedFactorId) {
+    factorId = cachedFactorId
+  } else {
+    // Fallback if cookie missing (direct navigation to verify-mfa page)
+    const { data: factors } = await supabase.auth.mfa.listFactors()
+    const totpFactor = factors?.totp?.find((f: { status: string }) => f.status === 'verified')
+    if (!totpFactor) {
+      return errorResponse('Aucun facteur 2FA configure.', 'MFA_NOT_CONFIGURED')
+    }
+    factorId = totpFactor.id
   }
 
   // Create challenge
   const { data: challenge, error: challengeError } =
-    await supabase.auth.mfa.challenge({ factorId: totpFactor.id })
+    await supabase.auth.mfa.challenge({ factorId })
 
   if (challengeError || !challenge) {
     return errorResponse('Erreur lors de la verification 2FA.', 'MFA_ERROR')
@@ -179,7 +199,7 @@ export async function hubVerifyMfaAction(
 
   // Verify TOTP code
   const { data: verify, error: verifyError } = await supabase.auth.mfa.verify({
-    factorId: totpFactor.id,
+    factorId,
     challengeId: challenge.id,
     code,
   })
@@ -187,6 +207,9 @@ export async function hubVerifyMfaAction(
   if (verifyError || !verify) {
     return errorResponse('Code 2FA incorrect. Veuillez reessayer.', 'MFA_INVALID_CODE')
   }
+
+  // Clean up temp cookie
+  cookieStore.delete('mpp_mfa_factor_id')
 
   // Session is now AAL2 — build UserSession via SECURITY DEFINER function
   const { data: operator } = (await supabase.rpc('fn_get_operator_by_email' as never, {
