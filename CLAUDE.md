@@ -53,6 +53,24 @@ A module MUST contain: `manifest.ts`, `docs/guide.md`, `docs/faq.md`, `docs/flow
 
 Modules CANNOT import other modules directly. Inter-module communication goes through Supabase (data) or Realtime (events).
 
+### ⚠️ Checklist obligatoire — Ajout d'un module client (client-one ou client-lab)
+
+Quand un nouveau module est créé ou activé pour les clients, vérifier OBLIGATOIREMENT ces 3 points :
+
+1. **Manifest dans `ALL_CLIENT_MANIFESTS`** — `apps/client/app/(dashboard)/layout.tsx`
+   - Importer `manifest as [name]Mani` depuis le package du module
+   - Ajouter à l'array avec un commentaire indiquant les targets et la route
+   - **Ne jamais** ajouter un manifest qui cible uniquement `hub` (ex: validation-hub)
+
+2. **Page dédiée** — `apps/client/app/(dashboard)/modules/[moduleId]/page.tsx`
+   - Créer la page (Server Component de préférence, Client si gestion d'état interne)
+   - Pattern standard : auth check → récupérer `clientId` → passer aux composants du module
+   - Exemple de référence : `modules/facturation/page.tsx` ou `modules/documents/page.tsx`
+
+3. **Route sidebar** — la sidebar génère automatiquement `/modules/${module.id}`
+   - Vérifier que le `id` dans le manifest correspond au dossier créé
+   - Si le module déclare des routes non-standard dans `manifest.routes`, créer quand même la page sous `/modules/[id]`
+
 ## Naming Conventions
 
 | Context | Convention | Example |

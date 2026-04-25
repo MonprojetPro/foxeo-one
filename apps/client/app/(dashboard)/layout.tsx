@@ -13,19 +13,24 @@ import { manifest as parcoursMani } from '@monprojetpro/module-parcours/manifest
 import { manifest as elioMani } from '@monprojetpro/module-elio/manifest'
 import { manifest as chatMani } from '@monprojetpro/modules-chat/manifest'
 import { manifest as docsMani } from '@monprojetpro/module-documents/manifest'
-import { manifest as validationMani } from '@monprojetpro/modules-validation-hub/manifest'
 import { manifest as visioMani } from '@monprojetpro/module-visio/manifest'
+import { manifest as facturationMani } from '@monprojetpro/modules-facturation/manifest'
+import { manifest as supportMani } from '@monprojetpro/modules-support/manifest'
 import { coreDashboardManifest as coreMani } from '@monprojetpro/module-core-dashboard/manifest'
 import type { ModuleManifest } from '@monprojetpro/types'
 
+// Catalogue exhaustif des modules clients — TOUT module ciblant client-lab ou client-one
+// doit être listé ici. Le filtre targets + activeModules décide ce qui s'affiche.
+// ⚠️ Checklist ajout module : (1) ajouter ici, (2) créer apps/client/app/(dashboard)/modules/[name]/page.tsx
 const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
-  parcoursMani,
-  chatMani,
-  docsMani,
-  elioMani,
-  visioMani,
-  validationMani,
-  coreMani,
+  coreMani,      // Dashboard accueil → /
+  parcoursMani,  // Lab uniquement → /modules/parcours
+  chatMani,      // Lab + One → /modules/chat
+  docsMani,      // Lab + One → /modules/documents
+  elioMani,      // Lab + One → widget sidebar (One) / /modules/elio (Lab)
+  visioMani,     // Lab + One → /modules/visio
+  facturationMani, // One → /modules/facturation
+  supportMani,   // Lab + One → /modules/support
 ]
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { NotificationBadge } from '@monprojetpro/modules-notifications'

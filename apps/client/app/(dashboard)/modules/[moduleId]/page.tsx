@@ -23,21 +23,14 @@ export default async function ModulePage({ params }: ModulePageProps) {
     notFound()
   }
 
-  // Dynamic import of module component
-  // For now, manually map module IDs to imports
-  // In production, this would use a more sophisticated registry
-  const moduleComponents: Record<string, any> = {}
-
-  const ModuleComponent = moduleComponents[moduleId]
-
-  if (!ModuleComponent) {
-    return (
-      <EmptyState
-        title={`Module: ${module.name}`}
-        description="Ce module n'a pas encore de composant implementé."
-      />
-    )
-  }
-
-  return <ModuleComponent />
+  // Tous les modules actifs ont leur propre dossier apps/client/app/(dashboard)/modules/[name]/page.tsx
+  // Ce catch-all ne devrait jamais être atteint pour les modules connus — si on arrive ici,
+  // le module est activé dans la DB mais sa page dédiée n'a pas encore été créée.
+  // ⚠️ Checklist ajout module : créer apps/client/app/(dashboard)/modules/[moduleId]/page.tsx
+  return (
+    <EmptyState
+      title={module.name}
+      description={`Le module "${module.name}" est activé mais sa page n'a pas encore été déployée. Contactez MiKL.`}
+    />
+  )
 }
