@@ -5,6 +5,7 @@ import { Button } from '@monprojetpro/ui'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNotifications } from '../hooks/use-notifications'
 import { markAllAsRead } from '../actions/mark-all-as-read'
+import { deleteAllNotifications } from '../actions/delete-all-notifications'
 import { NotificationItem } from './notification-item'
 
 interface NotificationCenterProps {
@@ -19,6 +20,18 @@ export function NotificationCenter({ recipientId, onClose }: NotificationCenterP
 
   const markAllMutation = useMutation({
     mutationFn: () => markAllAsRead(recipientId),
+    onSuccess: (response) => {
+      if (!response.error) {
+        queryClient.invalidateQueries({ queryKey: ['notifications', recipientId] })
+        queryClient.invalidateQueries({
+          queryKey: ['notifications', recipientId, 'unread-count'],
+        })
+      }
+    },
+  })
+
+  const deleteAllMutation = useMutation({
+    mutationFn: () => deleteAllNotifications(recipientId),
     onSuccess: (response) => {
       if (!response.error) {
         queryClient.invalidateQueries({ queryKey: ['notifications', recipientId] })
@@ -50,17 +63,31 @@ export function NotificationCenter({ recipientId, onClose }: NotificationCenterP
     >
       <div className="flex items-center justify-between border-b p-3">
         <h3 className="text-sm font-semibold">Notifications</h3>
-        {hasUnread && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => markAllMutation.mutate()}
-            disabled={markAllMutation.isPending}
-            data-testid="mark-all-read-button"
-          >
-            Tout marquer lu
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {hasUnread && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => markAllMutation.mutate()}
+              disabled={markAllMutation.isPending}
+              data-testid="mark-all-read-button"
+            >
+              Tout marquer lu
+            </Button>
+          )}
+          {notifications.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => deleteAllMutation.mutate()}
+              disabled={deleteAllMutation.isPending}
+              className="text-muted-foreground hover:text-destructive"
+              data-testid="delete-all-button"
+            >
+              Vider
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="divide-y">
