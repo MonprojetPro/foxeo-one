@@ -92,7 +92,23 @@ export async function middleware(request: NextRequest) {
           setLocaleCookie(redirectResponse, locale)
           return redirectResponse
         }
-        // 2FA setup but not verified this session → redirect to verify
+        // Guard against inconsistent state: DB says 2FA enabled but Supabase Auth
+        // has no verified TOTP factor (e.g. factor deleted after session revocation)
+        const { data: factors } = await supabase.auth.mfa.listFactors()
+        const hasVerifiedFactor = factors?.totp?.some(
+          (f: { status: string }) => f.status === 'verified'
+        )
+        if (!hasVerifiedFactor) {
+          // Re-enrollment required — reset DB flag so setup flow is clean
+          await supabase
+            .from('operators')
+            .update({ two_factor_enabled: false } as never)
+            .eq('email', user.email ?? '')
+          const redirectResponse = NextResponse.redirect(new URL('/setup-mfa', request.url))
+          setLocaleCookie(redirectResponse, locale)
+          return redirectResponse
+        }
+        // 2FA setup and verified factor exists — just not verified this session yet
         const redirectResponse = NextResponse.redirect(new URL('/login/verify-mfa', request.url))
         setLocaleCookie(redirectResponse, locale)
         return redirectResponse
