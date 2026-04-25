@@ -166,48 +166,37 @@ export async function hubVerifyMfaAction(
   const { code } = parsed.data
   const supabase = await createServerSupabaseClient()
 
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  // 1. Vérifier la session (gère le refresh du token si nécessaire)
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user) {
+    console.error('[MFA:VERIFY] Session invalide:', userError)
     return errorResponse('Session expiree. Veuillez vous reconnecter.', 'AUTH_ERROR')
   }
 
-  // Resolve factorId — cookie d'abord (set pendant login), listFactors() en fallback
-  const cookieStore = await cookies()
-  const cachedFactorId = cookieStore.get('mpp_mfa_factor_id')?.value
-
-  const resolveFactorId = async (): Promise<string | null> => {
-    if (cachedFactorId) return cachedFactorId
-    const { data: factors } = await supabase.auth.mfa.listFactors()
-    return factors?.totp?.find((f: { status: string }) => f.status === 'verified')?.id ?? null
-  }
-
-  let factorId = await resolveFactorId()
-  if (!factorId) {
-    return errorResponse('Aucun facteur 2FA configure.', 'MFA_NOT_CONFIGURED')
-  }
-
-  // Create challenge — si le factorId du cookie est périmé, retry avec listFactors()
-  let challengeResult = await supabase.auth.mfa.challenge({ factorId })
-
-  if (challengeResult.error && cachedFactorId) {
-    console.error('[MFA:VERIFY] Challenge échoué avec factorId cookie, retry via listFactors():', challengeResult.error)
-    const { data: factors } = await supabase.auth.mfa.listFactors()
-    const freshFactor = factors?.totp?.find((f: { status: string }) => f.status === 'verified')
-    if (freshFactor && freshFactor.id !== cachedFactorId) {
-      factorId = freshFactor.id
-      challengeResult = await supabase.auth.mfa.challenge({ factorId })
-    }
-  }
-
-  const { data: challenge, error: challengeError } = challengeResult
-
-  if (challengeError || !challenge) {
-    console.error('[MFA:VERIFY] Challenge final échoué:', challengeError)
+  // 2. Résoudre le factorId depuis la source de vérité (jamais depuis un cookie périmé)
+  const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
+  if (factorsError) {
+    console.error('[MFA:VERIFY] listFactors échoué:', factorsError)
     return errorResponse('Erreur lors de la verification 2FA.', 'MFA_ERROR')
   }
 
-  // Verify TOTP code
+  const totpFactor = factors?.totp?.find((f: { status: string }) => f.status === 'verified')
+  if (!totpFactor) {
+    return errorResponse('Aucun facteur 2FA configure.', 'MFA_NOT_CONFIGURED')
+  }
+
+  const factorId = totpFactor.id
+
+  // 3. Challenge + Verify enchaînés immédiatement — réduire le délai entre les deux
+  //    pour éviter que le code TOTP (fenêtre 30s) n'expire entre les appels
+  const { data: challenge, error: challengeError } =
+    await supabase.auth.mfa.challenge({ factorId })
+
+  if (challengeError || !challenge) {
+    console.error('[MFA:VERIFY] Challenge échoué — factorId:', factorId, 'erreur:', challengeError)
+    return errorResponse('Erreur lors de la verification 2FA.', 'MFA_ERROR')
+  }
+
   const { data: verify, error: verifyError } = await supabase.auth.mfa.verify({
     factorId,
     challengeId: challenge.id,
@@ -218,10 +207,11 @@ export async function hubVerifyMfaAction(
     return errorResponse('Code 2FA incorrect. Veuillez reessayer.', 'MFA_INVALID_CODE')
   }
 
-  // Clean up temp cookie
+  // 4. Nettoyer le cookie factorId résiduel si présent
+  const cookieStore = await cookies()
   cookieStore.delete('mpp_mfa_factor_id')
 
-  // Session is now AAL2 — build UserSession via SECURITY DEFINER function
+  // 5. Session AAL2 confirmée — construire UserSession
   const { data: operator } = (await supabase.rpc('fn_get_operator_by_email' as never, {
     p_email: user.email ?? '',
   } as never)) as unknown as {
