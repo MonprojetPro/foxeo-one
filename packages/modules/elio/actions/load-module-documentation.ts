@@ -1,41 +1,38 @@
 // Internal utility — NOT a Server Action. Called only from send-to-elio.ts.
+//
+// Utilise le registre statique embarqué dans le bundle (module-docs-registry.ts)
+// au lieu de fs.readFileSync qui échoue silencieusement sur Vercel (fichiers source
+// non déployés). Le registre est toujours disponible car compilé dans le bundle JS.
 
-import * as fs from 'fs'
-import * as path from 'path'
+import { getModuleDoc } from '../config/module-docs-registry'
 
-const MODULES_DIR = path.resolve(process.cwd(), 'packages/modules')
-const MAX_TOKENS_PER_MODULE = 2000 // NFR : limiter la taille d'injection
-const CHARS_PER_TOKEN = 4 // approximation : 1 token ≈ 4 caractères
+const KEYWORDS: Record<string, string[]> = {
+  'chat': ['chat', 'message', 'messagerie', 'contacter mikl', 'écrire à mikl'],
+  'documents': ['document', 'fichier', 'pdf', 'upload', 'dossier', 'télécharger'],
+  'visio': ['visio', 'meeting', 'réunion', 'visioconférence', 'google meet', 'cal.com'],
+  'facturation': ['facturation', 'facture', 'devis', 'abonnement', 'paiement', 'comptabilité'],
+  'support': ['support', 'aide', 'faq', 'signaler', 'problème', 'ticket', 'contacter'],
+  'elio': ['élio', 'elio', 'assistant'],
+  'core-dashboard': ['accueil', 'dashboard', 'tableau de bord'],
+}
 
-/** Cache Node.js en mémoire : invalidé au redémarrage (redéploiement Next.js) */
-const docCache = new Map<string, string>()
+/**
+ * Détecte si le message mentionne un module spécifique (par nom ou mots-clés associés).
+ */
+function detectMentionedModule(activeModules: string[], userMessage: string): string | null {
+  const lower = userMessage.toLowerCase()
 
-function readDocFileSafe(moduleId: string, fileName: string): string {
-  const filePath = path.join(MODULES_DIR, moduleId, 'docs', fileName)
-  try {
-    return fs.readFileSync(filePath, 'utf-8').trim()
-  } catch {
-    return ''
+  // 1. Correspondance exacte par ID de module
+  const byId = activeModules.find((id) => lower.includes(id.toLowerCase()))
+  if (byId) return byId
+
+  // 2. Correspondance par mots-clés associés
+  for (const [moduleId, kw] of Object.entries(KEYWORDS)) {
+    if (!activeModules.includes(moduleId)) continue
+    if (kw.some((k) => lower.includes(k))) return moduleId
   }
-}
 
-function truncateToTokenBudget(content: string, maxTokens: number): string {
-  const maxChars = maxTokens * CHARS_PER_TOKEN
-  if (content.length <= maxChars) return content
-  return content.slice(0, maxChars) + '\n[...tronqué]'
-}
-
-function buildModuleDocSection(moduleId: string): string {
-  const guide = readDocFileSafe(moduleId, 'guide.md')
-  const faq = readDocFileSafe(moduleId, 'faq.md')
-
-  if (!guide && !faq) return ''
-
-  const parts: string[] = [`## Module : ${moduleId}`]
-  if (guide) parts.push(guide)
-  if (faq) parts.push('### FAQ\n' + faq)
-
-  return truncateToTokenBudget(parts.join('\n\n'), MAX_TOKENS_PER_MODULE)
+  return null
 }
 
 /**
@@ -43,9 +40,9 @@ function buildModuleDocSection(moduleId: string): string {
  *
  * Stratégie d'injection sélective (économie de tokens) :
  * - Si la question mentionne un module spécifique → injecter uniquement sa doc
- * - Sinon → injecter guide.md de tous les modules actifs (pas FAQ ni flows)
+ * - Sinon → injecter la doc de tous les modules actifs
  *
- * Cache en mémoire : invalidé au restart (redéploiement).
+ * Source : registre statique embarqué dans le bundle (pas de fs, fonctionne en prod Vercel).
  */
 export function loadModuleDocumentation(
   activeModules: string[],
@@ -55,40 +52,22 @@ export function loadModuleDocumentation(
 
   // Injection sélective : détecter si la question mentionne un module précis
   if (userMessage) {
-    const mentionedModule = activeModules.find((id) =>
-      userMessage.toLowerCase().includes(id.toLowerCase())
-    )
-
+    const mentionedModule = detectMentionedModule(activeModules, userMessage)
     if (mentionedModule) {
-      const cacheKey = `selective:${mentionedModule}`
-      if (!docCache.has(cacheKey)) {
-        const section = buildModuleDocSection(mentionedModule)
-        docCache.set(cacheKey, section)
-      }
-      const cached = docCache.get(cacheKey) ?? ''
-      return cached ? `# DOCUMENTATION MODULE\n${cached}` : null
+      const doc = getModuleDoc(mentionedModule)
+      return doc ? `# DOCUMENTATION MODULE\n${doc}` : null
     }
   }
 
-  // Injection globale : guide.md de tous les modules actifs (sans FAQ pour économiser tokens)
-  const cacheKey = `global:${[...activeModules].sort().join(',')}`
-  if (!docCache.has(cacheKey)) {
-    const sections = activeModules
-      .map((id) => {
-        const guide = readDocFileSafe(id, 'guide.md')
-        if (!guide) return ''
-        return `## Module : ${id}\n${truncateToTokenBudget(guide, MAX_TOKENS_PER_MODULE)}`
-      })
-      .filter(Boolean)
+  // Injection globale : doc de tous les modules actifs
+  const sections = activeModules
+    .map((id) => getModuleDoc(id))
+    .filter(Boolean) as string[]
 
-    docCache.set(cacheKey, sections.join('\n\n'))
-  }
-
-  const cached = docCache.get(cacheKey) ?? ''
-  return cached ? `# DOCUMENTATION MODULES ACTIFS\n${cached}` : null
+  return sections.length > 0 ? `# DOCUMENTATION MODULES ACTIFS\n${sections.join('\n\n')}` : null
 }
 
-/** Vide le cache (utile pour les tests) */
+/** Conservé pour compatibilité des tests existants */
 export function clearDocumentationCache(): void {
-  docCache.clear()
+  // No-op : le registre statique n'a pas de cache à vider
 }

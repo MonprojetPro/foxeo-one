@@ -7,20 +7,19 @@ export const ONE_NAVIGATION_MAP = `
 # Modules et routes du dashboard One
 
 ## Dashboard principal
-- **Accueil** : / → Vue d'ensemble, actions rapides, statistiques clés
+- **Accueil** : / → Vue d'ensemble personnalisée, actions rapides, métriques clés de l'activité
 
-## Modules de base (toujours actifs)
-- **Profil** : /profil → Vos informations personnelles, préférences, sécurité
-- **Documents** : /modules/documents → Vos documents, livrables Lab, fichiers partagés par MiKL
-- **Support** : /support → Aide, signalement d'un problème, contact MiKL
+## Modules de communication
+- **Chat** : /modules/chat → Messagerie directe avec MiKL (messages en temps réel, historique complet)
+- **Visio** : /modules/visio → Visioconférences Google Meet, réservation de créneaux, historique des réunions
+- **Élio** : /modules/elio → Interface complète de conversation avec l'assistant IA (historique toutes conversations)
 
-## Modules optionnels (selon votre configuration)
-- **Calendrier / Agenda** : /modules/agenda → Événements, réservations, planification
-- **Membres** : /modules/membres → Gestion des membres (associations, équipes)
-- **Facturation** : /modules/facturation → Factures, devis, suivi des paiements
-- **SMS** : /modules/sms → Envoi de SMS groupés à vos contacts
-- **Présences** : /modules/presences → Feuilles d'émargement (cours, formations, ateliers)
-- **Élio** : /modules/elio → Votre assistant IA (vous êtes ici)
+## Modules de gestion
+- **Documents** : /modules/documents → Stockage de fichiers, livrables partagés par MiKL, upload de documents
+- **Facturation / Comptabilité** : /modules/facturation → Devis, factures, abonnement actif, suivi des paiements
 
-**Note importante** : Si un module n'est pas visible dans votre navigation, il n'est pas encore activé. Vous pouvez demander à MiKL de l'activer pour vous.
+## Aide & support
+- **Support** : /modules/support → FAQ, signalement de problèmes, suivi des tickets, contact MiKL
+
+**Note importante** : Si un module n'est pas visible dans la navigation à gauche, il n'est pas encore activé pour ce client. Le client peut demander à MiKL de l'activer.
 `.trim()
