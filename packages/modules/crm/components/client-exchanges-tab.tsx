@@ -15,6 +15,7 @@ interface ClientExchangesTabProps {
 const exchangeTypeConfig: Record<string, { label: string; icon: string }> = {
   message: { label: 'Chat', icon: '💬' },
   notification: { label: 'Notification', icon: '🔔' },
+  elio_escalation: { label: 'Question Élio', icon: '🔺' },
   elio_summary: { label: 'Résumé Élio', icon: '🤖' },
 }
 
@@ -139,15 +140,38 @@ export function ClientExchangesTab({ clientId }: ClientExchangesTabProps) {
             {exchanges.map((exchange) => {
               const config = exchangeTypeConfig[exchange.type] ?? { label: exchange.type, icon: '📌' }
               const exchangeDate = format(new Date(exchange.createdAt), 'd MMM yyyy, HH:mm', { locale: fr })
+
+              // Rendu spécial pour les escalades Élio
+              if (exchange.type === 'elio_escalation') {
+                return (
+                  <Card key={exchange.id} className="border-amber-500/30 bg-amber-500/5">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{config.icon}</span>
+                          <Badge variant="outline" className="text-xs h-5 px-1.5 border-amber-500/50 text-amber-400">
+                            {config.label}
+                          </Badge>
+                        </div>
+                        <span className="text-xs text-muted-foreground">{exchangeDate}</span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{exchange.content}</p>
+                      <Button asChild size="sm" variant="outline" className="w-full border-amber-500/30 hover:bg-amber-500/10">
+                        <Link href={`/modules/chat/${clientId}`}>
+                          <MessageSquare className="mr-2 h-3.5 w-3.5" />
+                          Répondre via Chat
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )
+              }
+
+              // Rendu standard
               const preview = exchange.content.length > 120
                 ? exchange.content.substring(0, 120) + '…'
                 : exchange.content
-
-              const href = exchange.type === 'message'
-                ? `/modules/chat/${clientId}`
-                : exchange.type === 'notification'
-                ? null
-                : null
+              const href = exchange.type === 'message' ? `/modules/chat/${clientId}` : null
 
               const content = (
                 <Card className={href ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}>

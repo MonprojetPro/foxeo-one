@@ -43,12 +43,13 @@ export async function getClientExchanges(
       return errorResponse('Impossible de charger les messages', 'DATABASE_ERROR', messagesError)
     }
 
-    // Query 2 : notifications opérateur liées à ce client
-    const { data: notificationsData } = await supabase
+    // Query 2 : escalades Élio pour ce client (notifications elio_escalation dont le link contient le clientId)
+    const { data: escalationsData } = await supabase
       .from('notifications')
-      .select('id, title, message, created_at')
-      .eq('entity_type', 'client')
-      .eq('entity_id', clientId)
+      .select('id, title, body, created_at')
+      .eq('type', 'elio_escalation')
+      .eq('recipient_id', user.id)
+      .like('link', `%${clientId}%`)
       .order('created_at', { ascending: false })
       .limit(10)
 
@@ -63,19 +64,19 @@ export async function getClientExchanges(
       })
     )
 
-    // Map notifications → ClientExchange
-    const notificationExchanges: ClientExchange[] = (notificationsData ?? []).map((notif) =>
+    // Map escalades Élio → ClientExchange
+    const escalationExchanges: ClientExchange[] = (escalationsData ?? []).map((notif) =>
       ClientExchangeSchema.parse({
         id: notif.id,
         clientId: clientId,
-        type: 'notification',
-        content: notif.message || notif.title || 'Notification',
+        type: 'elio_escalation',
+        content: notif.body ?? notif.title ?? 'Question escaladée',
         createdAt: notif.created_at,
       })
     )
 
     // Fusion, tri par date desc, limite à 20
-    const exchanges = [...messageExchanges, ...notificationExchanges]
+    const exchanges = [...messageExchanges, ...escalationExchanges]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 20)
 

@@ -53,7 +53,7 @@ export async function escalateToMiKL(
     type: 'elio_escalation',
     title: `Question escaladée par ${client.name}`,
     body: `Élio One n'était pas sûr de sa réponse.\n\nQuestion : "${question}"${historyText}`,
-    link: `/modules/crm/clients/${clientId}`,
+    link: `/modules/crm/clients/${clientId}?tab=echanges`,
   })
 
   if (notifError) {

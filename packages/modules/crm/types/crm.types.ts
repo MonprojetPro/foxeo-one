@@ -144,7 +144,7 @@ export type ClientDocument = z.infer<typeof ClientDocument>
 export const ClientExchange = z.object({
   id: z.string().uuid(),
   clientId: z.string().uuid(),
-  type: z.enum(['message', 'notification', 'elio_summary']),
+  type: z.enum(['message', 'notification', 'elio_escalation', 'elio_summary']),
   content: z.string(),
   createdAt: z.string().datetime({ offset: true })
 })
