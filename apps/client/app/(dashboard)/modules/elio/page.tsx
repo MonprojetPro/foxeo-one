@@ -3,7 +3,12 @@ import { cookies } from 'next/headers'
 import { ElioChat } from '@monprojetpro/module-elio'
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
 
-export default async function ElioClientPage() {
+interface PageProps {
+  searchParams: Promise<{ conv?: string }>
+}
+
+export default async function ElioClientPage({ searchParams }: PageProps) {
+  const { conv: initialConversationId } = await searchParams
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -35,6 +40,7 @@ export default async function ElioClientPage() {
         dashboardType={effectiveMode}
         clientId={clientId}
         userId={user.id}
+        initialConversationId={initialConversationId}
       />
     </div>
   )

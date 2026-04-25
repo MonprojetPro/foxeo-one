@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, type KeyboardEvent } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Send, Loader2, ExternalLink, Bot, MessageCircle, PenLine, HelpCircle } from 'lucide-react'
 import { newConversation, sendToElio, saveElioMessage } from '@monprojetpro/module-elio'
 import Link from 'next/link'
@@ -52,12 +53,14 @@ interface OneElioBoxProps {
 }
 
 export function OneElioBox({ userId }: OneElioBoxProps) {
+  const queryClient = useQueryClient()
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<OneMode>('question')
   const [isFocused, setIsFocused] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [lastReply, setLastReply] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [lastConvId, setLastConvId] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const activeMode = MODES.find((m) => m.id === mode)!
@@ -77,6 +80,8 @@ export function OneElioBox({ userId }: OneElioBoxProps) {
       return
     }
 
+    setLastConvId(conv.id)
+
     const fullMessage = activeMode.prefix + text
     await saveElioMessage(conv.id, 'user', fullMessage)
 
@@ -91,6 +96,10 @@ export function OneElioBox({ userId }: OneElioBoxProps) {
     if (reply) {
       await saveElioMessage(conv.id, 'assistant', reply.content)
       setLastReply(reply.content)
+      // Invalider le cache conversations pour que la page Élio reflète la nouvelle conversation
+      void queryClient.invalidateQueries({
+        queryKey: ['elio-conversations', userId, 'one'],
+      })
     }
   }
 
@@ -112,7 +121,7 @@ export function OneElioBox({ userId }: OneElioBoxProps) {
           </span>
         </div>
         <Link
-          href="/modules/elio"
+          href={lastConvId ? `/modules/elio?conv=${lastConvId}` : '/modules/elio'}
           className="flex items-center gap-0.5 text-[10px] text-[#6b7280] hover:text-[#4ade80] transition-colors"
           title="Ouvrir la conversation complète"
         >
@@ -173,7 +182,7 @@ export function OneElioBox({ userId }: OneElioBoxProps) {
             {lastReply}
           </p>
           <Link
-            href="/modules/elio"
+            href={lastConvId ? `/modules/elio?conv=${lastConvId}` : '/modules/elio'}
             className="self-end text-[10px] text-[#4ade80] hover:underline flex items-center gap-0.5"
           >
             Voir dans Élio

@@ -78,6 +78,8 @@ interface ElioChatProps {
   customGreeting?: string
   // Story 9.3: désactiver Élio Lab si parcours abandonné
   parcoursAbandoned?: boolean
+  // Conversation à ouvrir directement (ex: depuis le widget sidebar One)
+  initialConversationId?: string
 }
 
 export const PALETTE_CLASSES: Record<DashboardType, string> = {
@@ -192,13 +194,14 @@ function ElioChatPersisted({
   tutoiement = false,
   placeholder,
   customGreeting,
+  initialConversationId,
 }: Required<Pick<ElioChatProps, 'dashboardType' | 'userId'>> &
-  Pick<ElioChatProps, 'clientId' | 'tutoiement' | 'placeholder' | 'customGreeting'>) {
+  Pick<ElioChatProps, 'clientId' | 'tutoiement' | 'placeholder' | 'customGreeting' | 'initialConversationId'>) {
   const queryClient = useQueryClient()
 
   const [inputValue, setInputValue] = useState('')
   const [mode, setMode] = useState<ElioMode>('ordre')
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(initialConversationId ?? null)
   const [isCreatingConversation, setIsCreatingConversation] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<ElioError | null>(null)
@@ -970,6 +973,7 @@ export function ElioChat({
   placeholder,
   customGreeting,
   parcoursAbandoned = false,
+  initialConversationId,
 }: ElioChatProps) {
   // Story 9.3 — Désactiver Élio Lab si parcours abandonné
   if (parcoursAbandoned && dashboardType === 'lab') {
@@ -1013,6 +1017,7 @@ export function ElioChat({
         tutoiement={tutoiement}
         placeholder={resolvedPlaceholder}
         customGreeting={customGreeting}
+        initialConversationId={initialConversationId}
       />
     )
   }
