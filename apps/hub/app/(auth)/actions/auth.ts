@@ -172,28 +172,38 @@ export async function hubVerifyMfaAction(
     return errorResponse('Session expiree. Veuillez vous reconnecter.', 'AUTH_ERROR')
   }
 
-  // Resolve factorId from cookie (set during login) to skip a listFactors() round-trip
+  // Resolve factorId — cookie d'abord (set pendant login), listFactors() en fallback
   const cookieStore = await cookies()
   const cachedFactorId = cookieStore.get('mpp_mfa_factor_id')?.value
-  let factorId: string
 
-  if (cachedFactorId) {
-    factorId = cachedFactorId
-  } else {
-    // Fallback if cookie missing (direct navigation to verify-mfa page)
+  const resolveFactorId = async (): Promise<string | null> => {
+    if (cachedFactorId) return cachedFactorId
     const { data: factors } = await supabase.auth.mfa.listFactors()
-    const totpFactor = factors?.totp?.find((f: { status: string }) => f.status === 'verified')
-    if (!totpFactor) {
-      return errorResponse('Aucun facteur 2FA configure.', 'MFA_NOT_CONFIGURED')
-    }
-    factorId = totpFactor.id
+    return factors?.totp?.find((f: { status: string }) => f.status === 'verified')?.id ?? null
   }
 
-  // Create challenge
-  const { data: challenge, error: challengeError } =
-    await supabase.auth.mfa.challenge({ factorId })
+  let factorId = await resolveFactorId()
+  if (!factorId) {
+    return errorResponse('Aucun facteur 2FA configure.', 'MFA_NOT_CONFIGURED')
+  }
+
+  // Create challenge — si le factorId du cookie est périmé, retry avec listFactors()
+  let challengeResult = await supabase.auth.mfa.challenge({ factorId })
+
+  if (challengeResult.error && cachedFactorId) {
+    console.error('[MFA:VERIFY] Challenge échoué avec factorId cookie, retry via listFactors():', challengeResult.error)
+    const { data: factors } = await supabase.auth.mfa.listFactors()
+    const freshFactor = factors?.totp?.find((f: { status: string }) => f.status === 'verified')
+    if (freshFactor && freshFactor.id !== cachedFactorId) {
+      factorId = freshFactor.id
+      challengeResult = await supabase.auth.mfa.challenge({ factorId })
+    }
+  }
+
+  const { data: challenge, error: challengeError } = challengeResult
 
   if (challengeError || !challenge) {
+    console.error('[MFA:VERIFY] Challenge final échoué:', challengeError)
     return errorResponse('Erreur lors de la verification 2FA.', 'MFA_ERROR')
   }
 
