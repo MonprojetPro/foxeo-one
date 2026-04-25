@@ -30,8 +30,6 @@ export async function middleware(request: NextRequest) {
 
   const { supabase, user, response } = await createMiddlewareSupabaseClient(request)
 
-  console.log('[MW:HUB] path:', request.nextUrl.pathname, 'user:', user?.id ?? 'null')
-
   // Set locale cookie on response
   setLocaleCookie(response, locale)
 
@@ -66,14 +64,11 @@ export async function middleware(request: NextRequest) {
   if (user && !isPublic) {
     // Verify operator exists via SECURITY DEFINER function (bypasses RLS)
     // Direct table query would fail if auth_user_id not yet linked
-    const { data: operator, error: operatorError } = (await supabase.rpc('fn_get_operator_by_email' as never, {
+    const { data: operator } = (await supabase.rpc('fn_get_operator_by_email' as never, {
       p_email: user.email ?? '',
     } as never)) as unknown as {
       data: { id: string; name: string; role: string; twoFactorEnabled: boolean; authUserId: string | null } | null
-      error: unknown
     }
-
-    console.log('[MW:HUB] user:', user.id, 'email:', user.email, 'operator:', !!operator, 'operatorError:', operatorError)
 
     if (!operator) {
       // Not an operator — sign out and redirect
@@ -88,9 +83,7 @@ export async function middleware(request: NextRequest) {
     // Check AAL (Authentication Assurance Level)
     // DEV: Skip MFA check in development
     if (process.env.NODE_ENV !== 'development') {
-      const { data: aal, error: aalError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
-
-      console.log('[MW:HUB] AAL currentLevel:', aal?.currentLevel, 'nextLevel:', aal?.nextLevel, 'aalError:', aalError)
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 
       if (aal?.currentLevel !== 'aal2') {
         // 2FA not yet setup → redirect to setup
