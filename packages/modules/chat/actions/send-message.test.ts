@@ -4,18 +4,25 @@ import type { Message } from '../types/chat.types'
 
 const mockGetUser = vi.fn()
 
-// Auth check chain: from('operators'|'clients').select().eq().eq().single()
+// Auth/lookup chain : supporte n'importe quel nombre de .eq() avant .single()
 const mockAuthSingle = vi.fn()
-const mockAuthEq2 = vi.fn(() => ({ single: mockAuthSingle }))
-const mockAuthEq1 = vi.fn(() => ({ eq: mockAuthEq2 }))
-const mockAuthSelect = vi.fn(() => ({ eq: mockAuthEq1 }))
+const mockEqChain: Record<string, unknown> = {}
+mockEqChain.eq = vi.fn(() => mockEqChain)
+mockEqChain.single = mockAuthSingle
+const mockAuthSelect = vi.fn(() => mockEqChain)
 
 // Insert chain: from('messages').insert().select().single()
 const mockInsertSingle = vi.fn()
 const mockInsertSelect = vi.fn(() => ({ single: mockInsertSingle }))
 const mockInsert = vi.fn(() => ({ select: mockInsertSelect }))
 
+// Notification insert (fire-and-forget, no .select().single())
+const mockNotifInsert = vi.fn().mockResolvedValue({ error: null })
+
 const mockFrom = vi.fn((table: string) => {
+  if (table === 'notifications') {
+    return { insert: mockNotifInsert }
+  }
   if (table === 'operators' || table === 'clients') {
     return { select: mockAuthSelect }
   }
@@ -41,7 +48,7 @@ describe('sendMessage Server Action', () => {
     vi.clearAllMocks()
     // Default: auth OK, authorization OK
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-id' } }, error: null })
-    mockAuthSingle.mockResolvedValue({ data: { id: VALID_INPUT.operatorId }, error: null })
+    mockAuthSingle.mockResolvedValue({ data: { id: VALID_INPUT.operatorId, auth_user_id: 'auth-uuid' }, error: null })
   })
 
   it('returns UNAUTHORIZED when user is not authenticated', async () => {

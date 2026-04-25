@@ -70,6 +70,45 @@ export async function sendMessage(
       return errorResponse("Erreur lors de l'envoi du message", 'DB_ERROR', error)
     }
 
+    // Notification au destinataire (fire-and-forget — ne bloque pas l'envoi)
+    if (senderType === 'operator') {
+      // MiKL → client : notifier le client
+      const { data: clientRow } = await supabase
+        .from('clients')
+        .select('auth_user_id')
+        .eq('id', clientId)
+        .single()
+      if (clientRow?.auth_user_id) {
+        const preview = content.length > 200 ? content.substring(0, 200) + '…' : content
+        await supabase.from('notifications').insert({
+          recipient_type: 'client',
+          recipient_id: clientRow.auth_user_id,
+          type: 'message',
+          title: 'Nouveau message de MiKL',
+          body: preview,
+          link: '/modules/chat',
+        })
+      }
+    } else {
+      // Client → MiKL : notifier l'opérateur
+      const { data: operatorRow } = await supabase
+        .from('operators')
+        .select('auth_user_id')
+        .eq('id', operatorId)
+        .single()
+      if (operatorRow?.auth_user_id) {
+        const preview = content.length > 200 ? content.substring(0, 200) + '…' : content
+        await supabase.from('notifications').insert({
+          recipient_type: 'operator',
+          recipient_id: operatorRow.auth_user_id,
+          type: 'message',
+          title: `Nouveau message`,
+          body: preview,
+          link: `/modules/chat/${clientId}`,
+        })
+      }
+    }
+
     return successResponse(toMessage(data as MessageDB))
   } catch (error) {
     console.error('[CHAT:SEND_MESSAGE] Unexpected error:', error)
