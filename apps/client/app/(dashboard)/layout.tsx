@@ -39,6 +39,7 @@ import { LogoutButton } from './logout-button'
 import { ThemeClassSetter } from './theme-class-setter'
 import { ImpersonationWrapper } from './impersonation-wrapper'
 import { OneElioBox } from '../../components/one-elio-box'
+import { SessionKeepAlive } from './session-keep-alive'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
 function ClientSidebar({
@@ -235,6 +236,7 @@ export default async function DashboardLayout({
 
   return (
     <div style={accentStyle}>
+      <SessionKeepAlive />
       <ThemeClassSetter activeMode={activeMode} />
       <DashboardShell
         density={density}
