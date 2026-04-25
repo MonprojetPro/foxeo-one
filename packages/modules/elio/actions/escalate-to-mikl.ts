@@ -30,6 +30,18 @@ export async function escalateToMiKL(
     return errorResponse('Client non trouvé', 'NOT_FOUND', clientError)
   }
 
+  // Récupérer l'auth_user_id de l'opérateur — c'est la clé utilisée par le système de notifications
+  // (recipient_id = auth_user_id, pas operators.id)
+  const { data: operator, error: operatorError } = await supabase
+    .from('operators')
+    .select('auth_user_id')
+    .eq('id', client.operator_id)
+    .single()
+
+  if (operatorError || !operator?.auth_user_id) {
+    return errorResponse('Opérateur non trouvé', 'NOT_FOUND', operatorError)
+  }
+
   const historyText =
     recentMessages.length > 0
       ? `\n\nHistorique récent :\n${recentMessages.map((m, i) => `${i + 1}. ${m}`).join('\n')}`
@@ -37,7 +49,7 @@ export async function escalateToMiKL(
 
   const { error: notifError } = await supabase.from('notifications').insert({
     recipient_type: 'operator',
-    recipient_id: client.operator_id,
+    recipient_id: operator.auth_user_id,
     type: 'elio_escalation',
     title: `Question escaladée par ${client.name}`,
     body: `Élio One n'était pas sûr de sa réponse.\n\nQuestion : "${question}"${historyText}`,

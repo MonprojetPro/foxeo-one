@@ -17,6 +17,7 @@ export const NotificationTypeEnum = z.enum([
   'inactivity_alert',
   'csv_import_complete',
   'export_ready',
+  'elio_escalation',
 ])
 export type NotificationType = z.infer<typeof NotificationTypeEnum>
 
@@ -97,4 +98,5 @@ export const NOTIFICATION_ICONS: Record<NotificationType, string> = {
   inactivity_alert: 'clock',
   csv_import_complete: 'file-check',
   export_ready: 'download',
+  elio_escalation: 'alert-triangle',
 }
