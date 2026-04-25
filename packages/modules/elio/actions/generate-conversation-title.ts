@@ -20,7 +20,8 @@ export async function generateConversationTitle(
 
   const supabase = await createServerSupabaseClient()
 
-  const prompt = `Résume cette conversation en 5 mots maximum (titre court et descriptif) :\n${firstMessages.slice(0, 3).join('\n')}`
+  const question = firstMessages[0] ?? ''
+  const prompt = `Question posée : "${question}"\n\nGénère un titre de 3 à 6 mots en français qui résume le sujet. Réponds UNIQUEMENT avec le titre, sans guillemets, sans ponctuation finale, sans explication.`
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
@@ -28,12 +29,10 @@ export async function generateConversationTitle(
   try {
     const { data, error: fnError } = await supabase.functions.invoke('elio-chat', {
       body: {
-        systemPrompt: 'Tu es un assistant qui génère des titres courts (5 mots max) pour des conversations.',
+        systemPrompt: 'Tu génères des titres courts (3 à 6 mots) en français pour des conversations. Réponds uniquement avec le titre demandé, sans guillemets ni ponctuation.',
         message: prompt,
-        dashboardType: 'hub',
-        model: 'claude-haiku-4-5-20251001',
-        maxTokens: 20,
-        temperature: 0.3,
+        maxTokens: 30,
+        temperature: 0.2,
       },
       signal: controller.signal,
     })
