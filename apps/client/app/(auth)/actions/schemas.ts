@@ -6,6 +6,10 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Mot de passe requis'),
 })
 
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+})
+
 export const signupSchema = z.object({
   email: emailSchema,
   password: passwordSchema,

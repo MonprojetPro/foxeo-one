@@ -8,7 +8,7 @@ import {
   successResponse,
   errorResponse,
 } from '@monprojetpro/types'
-import { loginSchema, signupSchema } from './schemas'
+import { loginSchema, signupSchema, forgotPasswordSchema } from './schemas'
 
 // --- Server Actions ---
 
@@ -217,6 +217,49 @@ export async function signupAction(
   }
 
   return successResponse(session)
+}
+
+export async function forgotPasswordAction(
+  formData: FormData
+): Promise<ActionResponse<null>> {
+  const raw = { email: formData.get('email') }
+  const parsed = forgotPasswordSchema.safeParse(raw)
+  if (!parsed.success) {
+    return errorResponse(
+      parsed.error.errors[0]?.message ?? 'Email invalide',
+      'VALIDATION_ERROR'
+    )
+  }
+
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/auth/callback?next=/reset-password`,
+  })
+
+  // On retourne toujours succès pour ne pas révéler si l'email existe
+  if (error) {
+    console.error('[AUTH:FORGOT_PASSWORD]', error)
+  }
+
+  return successResponse(null)
+}
+
+export async function resetPasswordAction(
+  formData: FormData
+): Promise<ActionResponse<null>> {
+  const password = formData.get('password') as string
+  if (!password || password.length < 8) {
+    return errorResponse('Minimum 8 caracteres', 'VALIDATION_ERROR')
+  }
+
+  const supabase = await createServerSupabaseClient()
+  const { error } = await supabase.auth.updateUser({ password })
+
+  if (error) {
+    return errorResponse('Erreur lors de la mise a jour du mot de passe', 'AUTH_ERROR')
+  }
+
+  return successResponse(null)
 }
 
 export async function logoutAction(): Promise<ActionResponse<null>> {
