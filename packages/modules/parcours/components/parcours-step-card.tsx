@@ -8,15 +8,46 @@ interface ParcoursStepCardProps {
   step: ParcoursStep
   className?: string
   unreadCount?: number
+  isAbandoned?: boolean
 }
 
-export function ParcoursStepCard({ step, className, unreadCount = 0 }: ParcoursStepCardProps) {
+export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned = false }: ParcoursStepCardProps) {
   const router = useRouter()
 
   function handleClick() {
+    if (isAbandoned) return
     if (step.status === 'current' || step.status === 'completed' || step.status === 'skipped') {
       router.push(`/modules/parcours/steps/${step.stepNumber}`)
     }
+  }
+
+  // ÉTAT EN PAUSE — parcours abandonné : toutes les étapes verrouillées visuellement
+  if (isAbandoned) {
+    return (
+      <div
+        className={cn(
+          'h-[158px] flex flex-col rounded-[14px] p-[18px] opacity-50 cursor-not-allowed',
+          'bg-[#111111] border border-dashed border-[#374151]',
+          className
+        )}
+        aria-label={`Étape ${step.stepNumber} — parcours en pause`}
+      >
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-1 bg-[rgba(251,146,60,0.12)] text-orange-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+            <svg width="8" height="8" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <rect x="2" y="5" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M4 5V4a2 2 0 014 0v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            En pause
+          </span>
+          <span className="text-[11px] text-[#6b7280]">Étape {step.stepNumber}</span>
+        </div>
+        <div className="mt-3.5 text-[16px] font-medium text-[#9ca3af] leading-snug">{step.title}</div>
+        <div className="text-[12px] text-[#6b7280] mt-1 line-clamp-2">{step.description}</div>
+        <div className="flex-1" />
+        <div className="text-[11px] text-[#6b7280] italic">Accès suspendu</div>
+      </div>
+    )
   }
 
   // ÉTAT COMPLÉTÉ — fond vert discret, badge "Complétée"

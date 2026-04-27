@@ -54,16 +54,16 @@ export async function suspendParcours(
       )
     }
 
-    if (action === 'reactivate' && current.status !== 'suspendu') {
+    if (action === 'reactivate' && current.status !== 'suspendu' && current.status !== 'abandoned') {
       return errorResponse(
-        'Seul un parcours suspendu peut être réactivé',
+        'Seul un parcours suspendu ou en pause peut être réactivé',
         'INVALID_STATE'
       )
     }
 
     const updateData = action === 'suspend'
       ? { status: 'suspendu', suspended_at: new Date().toISOString() }
-      : { status: 'en_cours', suspended_at: null }
+      : { status: 'en_cours', suspended_at: null, abandonment_reason: null, completed_at: null }
 
     const { data: updated, error: updateError } = await supabase
       .from('parcours')

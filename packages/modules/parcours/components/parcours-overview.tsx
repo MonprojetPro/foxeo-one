@@ -73,7 +73,7 @@ export function ParcoursOverview({ clientId, clientFirstName }: ParcoursOverview
       {/* Grille 3 colonnes — design Lovable (remplace la timeline verticale) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {parcours.steps.map((step) => (
-          <ParcoursStepCard key={step.id} step={step} unreadCount={unreadByStep[step.id] ?? 0} />
+          <ParcoursStepCard key={step.id} step={step} unreadCount={unreadByStep[step.id] ?? 0} isAbandoned={isAbandoned} />
         ))}
       </div>
 
