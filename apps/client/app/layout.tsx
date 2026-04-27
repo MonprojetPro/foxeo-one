@@ -1,3 +1,4 @@
+// build: 2026-04-27
 import type { Metadata } from 'next'
 import { Poppins, Inter } from 'next/font/google'
 import { QueryProvider, ThemeProvider, RealtimeProvider } from '@monprojetpro/supabase'
