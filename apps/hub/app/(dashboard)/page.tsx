@@ -165,6 +165,22 @@ async function getHubStats(operatorId: string) {
     .eq('status', 'pending')
   const pendingQuotesCount = rawQuotes?.length ?? 0
 
+  // Clients avec parcours en pause (abandoned)
+  const { data: pausedParcours } = await supabase
+    .from('parcours')
+    .select('id, client_id, abandonment_reason, updated_at, clients(id, name, company_name)')
+    .eq('status', 'abandoned')
+    .in('client_id', clientIds.length > 0 ? clientIds : ['00000000-0000-0000-0000-000000000000'])
+    .order('updated_at', { ascending: false })
+
+  const pausedClients = (pausedParcours ?? []) as {
+    id: string
+    client_id: string
+    abandonment_reason: string | null
+    updated_at: string
+    clients: { id: string; name: string; company_name: string } | { id: string; name: string; company_name: string }[] | null
+  }[]
+
   return {
     totalClients: clients?.length ?? 0,
     labCount,
@@ -176,6 +192,7 @@ async function getHubStats(operatorId: string) {
     unpaidAmount,
     unpaidCount,
     pendingQuotesCount,
+    pausedClients,
   }
 }
 
@@ -201,7 +218,7 @@ export default async function HubHomePage() {
 
   const operatorId = (operator as { id: string } | null)?.id ?? ''
   const [
-    { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, mrr, unpaidAmount, unpaidCount, pendingQuotesCount },
+    { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, mrr, unpaidAmount, unpaidCount, pendingQuotesCount, pausedClients },
     breakdown,
     newProspects,
     tokenSummaryResult,
@@ -406,6 +423,27 @@ export default async function HubHomePage() {
                   )}
                 </div>
               </div>
+            )
+          })}
+        </DashboardCard>
+      )}
+
+      {/* Clients en pause */}
+      {pausedClients.length > 0 && (
+        <DashboardCard title="Parcours en pause" badge={pausedClients.length}>
+          {pausedClients.map((p) => {
+            const c = Array.isArray(p.clients) ? p.clients[0] : p.clients
+            const clientName = c?.company_name || c?.name || 'Client'
+            const reason = p.abandonment_reason ? `Raison : ${p.abandonment_reason}` : 'Aucune raison précisée'
+            return (
+              <AlertItem
+                key={p.id}
+                icon="warning"
+                title={`${clientName} a mis son parcours en pause`}
+                detail={reason}
+                iconColor="text-amber-400"
+                href={`/modules/crm/clients/${p.client_id}`}
+              />
             )
           })}
         </DashboardCard>
