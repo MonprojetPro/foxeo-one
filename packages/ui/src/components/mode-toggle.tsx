@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { cn } from '@monprojetpro/utils'
-import { setActiveViewMode } from './mode-toggle-action'
+import { MODE_TOGGLE_COOKIE } from './mode-toggle-constants'
 
 /**
  * ModeToggle — Bascule visuelle entre Mode Lab et Mode One.
@@ -32,7 +32,6 @@ export function ModeToggle({
   labModeAvailable,
   onToggle,
 }: ModeToggleProps) {
-  const [isPending, startTransition] = useTransition()
   const [mode, setMode] = useState<'lab' | 'one'>(currentMode)
 
   // Si le client n'a pas accès au Mode Lab, on ne montre pas le toggle.
@@ -42,12 +41,11 @@ export function ModeToggle({
     if (newMode === mode) return
     setMode(newMode)
     onToggle?.(newMode)
-    startTransition(async () => {
-      await setActiveViewMode(newMode)
-      if (typeof window !== 'undefined') {
-        window.location.replace('/')
-      }
-    })
+    // Cookie posé côté client pour éviter le router auto-refresh déclenché
+    // par une Server Action (qui causait un crash client-side d'1 sec).
+    // httpOnly=false → accessible depuis JS.
+    document.cookie = `${MODE_TOGGLE_COOKIE}=${newMode}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
+    window.location.replace('/')
   }
 
   return (
@@ -59,7 +57,7 @@ export function ModeToggle({
       <button
         type="button"
         onClick={() => handleToggle('lab')}
-        disabled={isPending}
+        disabled={false}
         aria-pressed={mode === 'lab'}
         className={cn(
           'flex-1 rounded-full text-[12px] font-semibold tracking-[0.04em] uppercase transition-all duration-200',
@@ -73,7 +71,7 @@ export function ModeToggle({
       <button
         type="button"
         onClick={() => handleToggle('one')}
-        disabled={isPending}
+        disabled={false}
         aria-pressed={mode === 'one'}
         className={cn(
           'flex-1 rounded-full text-[12px] font-semibold tracking-[0.04em] uppercase transition-all duration-200',
