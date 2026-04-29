@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@monprojetpro/ui'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import { getClientParcoursAgents } from '../actions/get-client-parcours-agents'
+import { reorderParcoursStep } from '../actions/reorder-parcours-step'
 import { LaunchParcoursModal } from './launch-parcours-modal'
 import { AddStepModal } from './add-step-modal'
 import { InjectStepContextPanel } from '@monprojetpro/module-elio'
@@ -37,6 +39,7 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
   const [showLaunchModal, setShowLaunchModal] = useState(false)
   const [showAddStepModal, setShowAddStepModal] = useState(false)
   const [activePanel, setActivePanel] = useState<ActivePanel | null>(null)
+  const [reordering, setReordering] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
   const { data: steps, isLoading, error } = useQuery({
@@ -62,6 +65,16 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['client-parcours-agents', clientId] })
+  }
+
+  async function handleReorder(stepId: string, direction: 'up' | 'down') {
+    setReordering(stepId)
+    try {
+      await reorderParcoursStep({ stepId, clientId, direction })
+      invalidate()
+    } finally {
+      setReordering(null)
+    }
   }
 
   if (isLoading) {
@@ -126,8 +139,11 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
       {/* Liste des étapes */}
       {hasSteps && (
         <ol className="space-y-2">
-          {(steps as ClientParcoursAgentWithDetails[]).map(step => {
+          {(steps as ClientParcoursAgentWithDetails[]).map((step, index) => {
             const pendingCount = contextCounts?.[step.id] ?? 0
+            const isFirst = index === 0
+            const isLast = index === (steps as ClientParcoursAgentWithDetails[]).length - 1
+            const isReordering = reordering === step.id
 
             return (
               <li
@@ -182,6 +198,26 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
                 >
                   {STATUS_LABELS[step.status]}
                 </span>
+
+                {/* Boutons réordonnancement */}
+                <div className="flex shrink-0 flex-col gap-0.5">
+                  <button
+                    onClick={() => handleReorder(step.id, 'up')}
+                    disabled={isFirst || isReordering}
+                    aria-label="Monter l'étape"
+                    className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-20"
+                  >
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleReorder(step.id, 'down')}
+                    disabled={isLast || isReordering}
+                    aria-label="Descendre l'étape"
+                    className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-20"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                </div>
 
                 {/* Bouton Nourrir Élio */}
                 <Button
