@@ -98,13 +98,16 @@ function ClientHeader({
 
   return (
     <div className="flex w-full items-center justify-between relative">
-      {/* Gauche — logo MonprojetPro */}
-      <div className="flex items-center gap-2.5" style={{ width: 220 }}>
+      {/* Gauche — logo */}
+      <div className="flex items-center" style={{ width: 220 }}>
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt="Logo" className="h-7 w-auto object-contain" />
+          <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
+        ) : activeMode === 'lab' ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/logos/logo-lab.png" alt="MonprojetPro Lab" className="h-8 w-auto object-contain" />
         ) : (
-          <>
+          <div className="flex items-center gap-2.5">
             <div
               className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-white font-extrabold text-[14px] tracking-[-0.04em] shrink-0"
               style={{ background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})` }}
@@ -115,7 +118,7 @@ function ClientHeader({
               <span style={{ color: accentText }}>Monprojet</span>
               <span className="text-[#f9fafb]">Pro</span>
             </div>
-          </>
+          </div>
         )}
       </div>
 
