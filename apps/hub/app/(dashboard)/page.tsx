@@ -190,6 +190,7 @@ async function getHubStats(operatorId: string) {
     meetings: (meetings ?? []) as MeetingRow[],
     unreadCount,
     recentMessages,
+    clientNameMap,
     mrr,
     unpaidAmount,
     unpaidCount,
@@ -220,7 +221,7 @@ export default async function HubHomePage() {
 
   const operatorId = (operator as { id: string } | null)?.id ?? ''
   const [
-    { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, mrr, unpaidAmount, unpaidCount, pendingQuotesCount, pausedClients },
+    { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, clientNameMap, mrr, unpaidAmount, unpaidCount, pendingQuotesCount, pausedClients },
     breakdown,
     newProspects,
     tokenSummaryResult,
