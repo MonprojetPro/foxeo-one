@@ -107,18 +107,8 @@ function ClientHeader({
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logos/logo-lab.png" alt="MonprojetPro Lab" className="w-auto object-contain" style={{ height: '60px' }} />
         ) : (
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-white font-extrabold text-[14px] tracking-[-0.04em] shrink-0"
-              style={{ background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})` }}
-            >
-              M
-            </div>
-            <div className="text-[15px] font-bold leading-none tracking-[-0.01em]">
-              <span style={{ color: accentText }}>Monprojet</span>
-              <span className="text-[#f9fafb]">Pro</span>
-            </div>
-          </div>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/logos/logo-one.png" alt="MonprojetPro One" className="w-auto object-contain" style={{ height: '60px' }} />
         )}
       </div>
 
