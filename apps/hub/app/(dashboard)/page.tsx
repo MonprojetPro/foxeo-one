@@ -74,10 +74,10 @@ async function getHubStats(operatorId: string) {
   const supabase = await createServerSupabaseClient()
 
   // Clients
-  type ClientRow = { id: string; client_configs: { dashboard_type: string }[] | { dashboard_type: string } | null }
+  type ClientRow = { id: string; name: string; company: string | null; client_configs: { dashboard_type: string }[] | { dashboard_type: string } | null }
   const { data: rawClients } = await supabase
     .from('clients')
-    .select('id, client_configs(dashboard_type)')
+    .select('id, name, company, client_configs(dashboard_type)')
     .eq('operator_id', operatorId)
   const clients = (rawClients ?? []) as ClientRow[]
 
@@ -92,6 +92,7 @@ async function getHubStats(operatorId: string) {
   }).length
 
   const clientIds = clients.map((c) => c.id)
+  const clientNameMap = new Map(clients.map((c) => [c.id, c.company || c.name || 'Client']))
 
   // Meetings today
   const todayStart = new Date()
@@ -122,13 +123,14 @@ async function getHubStats(operatorId: string) {
 
     const { data: msgs } = await supabase
       .from('messages')
-      .select('id, content, created_at, client_id, clients(company_name)')
+      .select('id, content, created_at, client_id')
       .in('client_id', clientIds)
       .eq('sender_type', 'client')
       .is('read_at', null)
       .order('created_at', { ascending: false })
       .limit(3)
-    recentMessages = (msgs ?? []) as MessageRow[]
+    recentMessages = ((msgs ?? []) as { id: string; content: string; created_at: string; client_id: string }[])
+      .map((m) => ({ ...m, clients: null }))
   }
 
   // MRR + impayés
@@ -458,7 +460,7 @@ export default async function HubHomePage() {
             </p>
           ) : (
             recentMessages.map((msg) => {
-              const clientName = getClientName(msg.clients as MeetingRow['clients']) || 'Client'
+              const clientName = clientNameMap.get(msg.client_id) ?? 'Client'
               return (
                 <MessageItem
                   key={msg.id}

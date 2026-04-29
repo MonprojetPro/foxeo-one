@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, createServiceRoleSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { SendMessageInput, type MessageDB } from '../types/chat.types'
 import { toMessage } from '../utils/to-message'
@@ -70,17 +70,19 @@ export async function sendMessage(
       return errorResponse("Erreur lors de l'envoi du message", 'DB_ERROR', error)
     }
 
-    // Notification au destinataire (fire-and-forget — ne bloque pas l'envoi)
+    // Notification au destinataire — service role pour bypass RLS (cross-user lookup)
+    const serviceSupabase = createServiceRoleSupabaseClient()
+    const preview = content.length > 200 ? content.substring(0, 200) + '…' : content
+
     if (senderType === 'operator') {
       // MiKL → client : notifier le client
-      const { data: clientRow } = await supabase
+      const { data: clientRow } = await serviceSupabase
         .from('clients')
         .select('auth_user_id')
         .eq('id', clientId)
         .single()
       if (clientRow?.auth_user_id) {
-        const preview = content.length > 200 ? content.substring(0, 200) + '…' : content
-        await supabase.from('notifications').insert({
+        await serviceSupabase.from('notifications').insert({
           recipient_type: 'client',
           recipient_id: clientRow.auth_user_id,
           type: 'message',
@@ -91,14 +93,13 @@ export async function sendMessage(
       }
     } else {
       // Client → MiKL : notifier l'opérateur
-      const { data: operatorRow } = await supabase
+      const { data: operatorRow } = await serviceSupabase
         .from('operators')
         .select('auth_user_id')
         .eq('id', operatorId)
         .single()
       if (operatorRow?.auth_user_id) {
-        const preview = content.length > 200 ? content.substring(0, 200) + '…' : content
-        await supabase.from('notifications').insert({
+        await serviceSupabase.from('notifications').insert({
           recipient_type: 'operator',
           recipient_id: operatorRow.auth_user_id,
           type: 'message',
