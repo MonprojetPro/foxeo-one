@@ -11,7 +11,7 @@ async function HubHeader({ authUserId }: { authUserId: string }) {
   return (
     <header className="h-16 shrink-0 border-b border-border bg-background flex items-center px-6 gap-4">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/logos/logo-hub.png" alt="MonprojetPro Hub" className="w-auto object-contain shrink-0 hidden md:block" style={{ height: '60px' }} />
+      <img src="/logos/logo-hub.png" alt="MonprojetPro Hub" className="w-auto object-contain shrink-0 hidden md:block" style={{ height: '36px' }} />
 
       <div className="mx-auto w-full max-w-md">
         <div className="flex items-center gap-2 rounded-md border border-border bg-accent/50 px-3 py-2">
