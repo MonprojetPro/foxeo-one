@@ -105,10 +105,10 @@ function ClientHeader({
           <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
         ) : activeMode === 'lab' ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src="/logos/logo-lab.png" alt="MonprojetPro Lab" className="w-auto object-contain" style={{ height: '36px' }} />
+          <img src="/logos/logo-lab.png" alt="MonprojetPro Lab" className="w-auto object-contain" style={{ height: '60px' }} />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src="/logos/logo-one.png" alt="MonprojetPro One" className="w-auto object-contain" style={{ height: '36px' }} />
+          <img src="/logos/logo-one.png" alt="MonprojetPro One" className="w-auto object-contain" style={{ height: '60px' }} />
         )}
       </div>
 
