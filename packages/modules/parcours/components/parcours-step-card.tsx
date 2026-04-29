@@ -15,25 +15,26 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
   const router = useRouter()
 
   function handleClick() {
-    if (isAbandoned) return
-    if (step.status === 'current' || step.status === 'completed' || step.status === 'skipped') {
-      router.push(`/modules/parcours/steps/${step.stepNumber}`)
-    }
+    router.push(`/modules/parcours/steps/${step.stepNumber}`)
   }
 
-  // ÉTAT EN PAUSE — parcours abandonné : toutes les étapes verrouillées visuellement
+  // ÉTAT EN PAUSE — parcours abandonné : cartes cliquables (consultation) mais badge orange visible
   if (isAbandoned) {
     return (
       <div
         className={cn(
-          'h-[158px] flex flex-col rounded-[14px] p-[18px] opacity-50 cursor-not-allowed',
-          'bg-[#111111] border border-dashed border-[#374151]',
+          'h-[158px] flex flex-col rounded-[14px] p-[18px] opacity-70 cursor-pointer transition-all hover:opacity-90',
+          'bg-[#111111] border border-[rgba(251,146,60,0.35)]',
           className
         )}
-        aria-label={`Étape ${step.stepNumber} — parcours en pause`}
+        onClick={handleClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
+        aria-label={`Étape ${step.stepNumber}: ${step.title} — parcours en pause, consultation uniquement`}
       >
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1 bg-[rgba(251,146,60,0.12)] text-orange-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+          <span className="inline-flex items-center gap-1 bg-[rgba(251,146,60,0.15)] text-orange-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
             <svg width="8" height="8" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <rect x="2" y="5" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M4 5V4a2 2 0 014 0v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -45,7 +46,7 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
         <div className="mt-3.5 text-[16px] font-medium text-[#9ca3af] leading-snug">{step.title}</div>
         <div className="text-[12px] text-[#6b7280] mt-1 line-clamp-2">{step.description}</div>
         <div className="flex-1" />
-        <div className="text-[11px] text-[#6b7280] italic">Accès suspendu</div>
+        <div className="text-[11px] text-orange-400/60 italic">Consultation uniquement →</div>
       </div>
     )
   }

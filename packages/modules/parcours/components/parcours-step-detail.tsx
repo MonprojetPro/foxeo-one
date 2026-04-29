@@ -24,6 +24,7 @@ interface ParcoursStepDetailProps {
   prevStep?: AdjacentStep | null
   nextStep?: AdjacentStep | null
   clientId?: string
+  isPaused?: boolean
 }
 
 interface StepConfig {
@@ -54,7 +55,7 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
   },
 }
 
-export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId }: ParcoursStepDetailProps) {
+export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false }: ParcoursStepDetailProps) {
   const [messageCount, setMessageCount] = useState(0)
   const [mobileTab, setMobileTab] = useState<MobileTab>('step')
 
@@ -81,6 +82,17 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             <span className="mx-1.5">›</span>
             <span className="text-[#a78bfa]">Étape {step.stepNumber} : {step.title}</span>
           </nav>
+
+          {/* Banner parcours en pause — consultation uniquement */}
+          {isPaused && (
+            <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-sm text-orange-300">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
+                <rect x="2" y="9" width="12" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M5 9V7a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              Votre parcours est en pause — consultation uniquement. MiKL va vous recontacter.
+            </div>
+          )}
 
           {/* Step header */}
           <div className="bg-[#1e1557] border-2 border-[#7c3aed] rounded-2xl p-[22px] mt-3 shadow-[0_0_0_4px_rgba(124,58,237,0.12)]">
@@ -139,8 +151,8 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             />
           )}
 
-          {/* Bouton Générer mon document — Story 14.7 */}
-          {clientId && config.showGenerateButton && (
+          {/* Bouton Générer mon document — désactivé si parcours en pause */}
+          {clientId && config.showGenerateButton && !isPaused && (
             <GenerateDocumentButton
               stepId={step.id}
               stepStatus={step.status}

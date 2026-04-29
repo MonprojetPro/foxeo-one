@@ -1,4 +1,4 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getParcours } from '@monprojetpro/module-parcours'
 import { ParcoursStepDetail } from '@monprojetpro/module-parcours'
@@ -28,8 +28,7 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
   const { data: parcours } = await getParcours({ clientId: client.id })
   if (!parcours) notFound()
 
-  // Parcours en pause — bloquer l'accès aux étapes
-  if (parcours.status === 'abandoned') redirect('/modules/parcours')
+  const isPaused = parcours.status === 'abandoned'
 
   const step = parcours.steps.find(s => s.stepNumber === stepNum)
   if (!step) notFound()
@@ -44,6 +43,7 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
       prevStep={prevStep ? { stepNumber: prevStep.stepNumber, status: prevStep.status } : null}
       nextStep={nextStep ? { stepNumber: nextStep.stepNumber, status: nextStep.status } : null}
       clientId={client.id}
+      isPaused={isPaused}
     />
   )
 }
