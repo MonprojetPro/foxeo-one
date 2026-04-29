@@ -150,12 +150,12 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
                 key={step.id}
                 className="flex items-center gap-4 rounded-xl border border-border bg-card p-4"
               >
-                {/* Numéro étape */}
+                {/* Numéro étape — position réelle dans la liste */}
                 <div
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground"
                   aria-hidden="true"
                 >
-                  {step.stepOrder}
+                  {index + 1}
                 </div>
 
                 {/* Image agent */}
