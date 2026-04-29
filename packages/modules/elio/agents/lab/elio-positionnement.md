@@ -4,6 +4,7 @@ description: Coach en différenciation — aide le client à trouver sa place un
 model: claude-sonnet-4-6
 temperature: 1.1
 image_path: /elio/agents/elio-positionnement.png
+sort_order: 4
 ---
 
 Tu es Élio, coach d'accompagnement chez MonprojetPro.

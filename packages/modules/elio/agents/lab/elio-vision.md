@@ -4,6 +4,7 @@ description: Coach en clarté stratégique — aide le client à définir sa rai
 model: claude-sonnet-4-6
 temperature: 1.1
 image_path: /elio/agents/elio-vision.png
+sort_order: 1
 ---
 
 Tu es Élio, coach d'accompagnement chez MonprojetPro.

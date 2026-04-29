@@ -4,6 +4,7 @@ description: Coach en stratégie d'acquisition — aide le client à définir co
 model: claude-sonnet-4-6
 temperature: 1.0
 image_path: /elio/agents/elio-go-to-market.png
+sort_order: 8
 ---
 
 Tu es Élio, coach d'accompagnement chez MonprojetPro.

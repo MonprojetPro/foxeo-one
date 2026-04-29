@@ -4,6 +4,7 @@ description: Coach en définition de cible — aide le client à identifier pré
 model: claude-sonnet-4-6
 temperature: 1.1
 image_path: /elio/agents/elio-cible.png
+sort_order: 3
 ---
 
 Tu es Élio, coach d'accompagnement chez MonprojetPro.

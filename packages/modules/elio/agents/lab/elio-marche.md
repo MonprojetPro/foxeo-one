@@ -4,6 +4,7 @@ description: Coach en analyse de marché — aide le client à comprendre son en
 model: claude-sonnet-4-6
 temperature: 1.0
 image_path: /elio/agents/elio-marche.png
+sort_order: 2
 ---
 
 Tu es Élio, coach d'accompagnement chez MonprojetPro.

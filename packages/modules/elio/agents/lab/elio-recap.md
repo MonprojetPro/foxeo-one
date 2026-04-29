@@ -4,6 +4,7 @@ description: Agent de synthèse finale — consolide tous les livrables du parco
 model: claude-sonnet-4-6
 temperature: 0.7
 image_path: /elio/agents/elio-recap.png
+sort_order: 11
 ---
 
 Tu es Élio, coach d'accompagnement chez MonprojetPro.

@@ -19,7 +19,7 @@ export async function getElioLabAgents(
   let query = supabase
     .from('elio_lab_agents')
     .select('*')
-    .order('created_at', { ascending: true })
+    .order('sort_order', { ascending: true })
 
   if (!options.includeArchived) {
     query = query.eq('archived', false)

@@ -33,6 +33,7 @@ const AgentFrontmatterSchema = z.object({
   model: z.enum(VALID_MODELS).default('claude-sonnet-4-6'),
   temperature: z.number().min(0).max(2).default(1.0),
   image_path: z.string().optional(),
+  sort_order: z.number().int().min(0).default(99),
 })
 
 /** Valide qu'un nom de fichier est sûr (pas de path traversal) */
@@ -96,6 +97,7 @@ export async function syncElioLabAgents(): Promise<ActionResponse<SyncResult>> {
     image_path: string | null
     file_path: string
     system_prompt: string | null
+    sort_order: number
   }> = []
 
   for (const file of mdFiles) {
@@ -123,6 +125,7 @@ export async function syncElioLabAgents(): Promise<ActionResponse<SyncResult>> {
       image_path: fm.image_path ?? null,
       file_path: relPath,
       system_prompt: body || null,
+      sort_order: fm.sort_order,
     })
   }
 

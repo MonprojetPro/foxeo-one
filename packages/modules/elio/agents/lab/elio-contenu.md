@@ -4,6 +4,7 @@ description: Coach en stratégie de contenu — aide le client à définir ses p
 model: claude-sonnet-4-6
 temperature: 1.1
 image_path: /elio/agents/elio-contenu.png
+sort_order: 9
 ---
 
 Tu es Élio, coach d'accompagnement chez MonprojetPro.

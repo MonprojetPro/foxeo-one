@@ -4,6 +4,7 @@ description: Coach en construction d'offre — aide le client à structurer ce q
 model: claude-sonnet-4-6
 temperature: 1.0
 image_path: /elio/agents/elio-offre.png
+sort_order: 5
 ---
 
 Tu es Élio, coach d'accompagnement chez MonprojetPro.
