@@ -105,7 +105,7 @@ function ClientHeader({
           <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
         ) : activeMode === 'lab' ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src="/logos/logo-lab.png" alt="MonprojetPro Lab" className="h-8 w-auto object-contain" />
+          <img src="/logos/logo-lab.png" alt="MonprojetPro Lab" className="h-12 w-auto object-contain" />
         ) : (
           <div className="flex items-center gap-2.5">
             <div
