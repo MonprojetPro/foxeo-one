@@ -25,12 +25,16 @@ export interface ModeToggleProps {
   currentMode: 'lab' | 'one'
   labModeAvailable: boolean
   onToggle?: (newMode: 'lab' | 'one') => void
+  labPath?: string
+  onePath?: string
 }
 
 export function ModeToggle({
   currentMode,
   labModeAvailable,
   onToggle,
+  labPath = '/modules/parcours',
+  onePath = '/',
 }: ModeToggleProps) {
   const [mode, setMode] = useState<'lab' | 'one'>(currentMode)
 
@@ -41,11 +45,11 @@ export function ModeToggle({
     if (newMode === mode) return
     setMode(newMode)
     onToggle?.(newMode)
-    // Cookie posé côté client pour éviter le router auto-refresh déclenché
-    // par une Server Action (qui causait un crash client-side d'1 sec).
-    // httpOnly=false → accessible depuis JS.
+    // Cookie posé côté client (httpOnly=false). Navigation directe vers la
+    // home du mode cible pour éviter le redirect server-side de '/' →
+    // '/modules/parcours' qui causait un hooks count mismatch (React #310).
     document.cookie = `${MODE_TOGGLE_COOKIE}=${newMode}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
-    window.location.replace('/')
+    window.location.replace(newMode === 'lab' ? labPath : onePath)
   }
 
   return (
