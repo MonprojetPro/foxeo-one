@@ -36,7 +36,7 @@ export function LaunchParcoursModal({ clientId, onClose, onLaunched }: LaunchPar
   })
 
   function addAgent(agent: ElioLabAgent) {
-    const defaultLabel = `Étape ${selectedSteps.length + 1} — ${agent.name}`
+    const defaultLabel = agent.name
     setSelectedSteps(prev => [...prev, {
       agentId: agent.id,
       agentName: agent.name,

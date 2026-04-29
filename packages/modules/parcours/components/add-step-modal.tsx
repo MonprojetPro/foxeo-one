@@ -33,7 +33,7 @@ export function AddStepModal({ clientId, onClose, onAdded }: AddStepModalProps) 
   function handleSelect(agentId: string, agentName: string) {
     setSelectedAgentId(agentId)
     if (!stepLabel) {
-      setStepLabel(`Étape supplémentaire — ${agentName}`)
+      setStepLabel(agentName)
     }
   }
 
