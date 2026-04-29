@@ -12,7 +12,7 @@
 | CFG | Configuration | 3 |
 | DL | Téléchargement / Storage | 5 |
 | API | Intégration API externe | 5 |
-| RSC | Next.js Server/Client | 3 |
+| RSC | Next.js Server/Client | 6 |
 | DB | Base de données / Schéma | 1 |
 | DEP | Déploiement | 5 |
 | GIT | Git / Workflow | 1 |
@@ -501,3 +501,40 @@
 - **Solution** : Ajouter deux guards dans le layout : `if (!user) redirect('/login')` et `if (!clientRecord) redirect('/login')`.
 - **Regle a suivre** : Tout layout de dashboard client DOIT vérifier l'existence du record client après l'auth, avant de rendre quoi que ce soit. Un user authentifié sans record client ne doit jamais voir de dashboard — il doit être renvoyé au login.
 - **Agents impliques** : SPARK, FIX, ATLAS
+
+---
+
+### [RSC-004] PostgREST join imbriqué échoue silencieusement si la colonne n'existe pas → count ≠ résultats
+- **Date** : 2026-04-29
+- **Projet** : MonprojetPro
+- **Categorie** : Next.js Server/Client (RSC)
+- **Symptome** : Widget "Messages non lus" du Hub affichait un badge count=1 mais l'encart montrait "Aucun message en attente". La requête count (sans join) retournait 1. La requête data (avec join `clients(company_name)`) retournait [].
+- **Cause racine** : La colonne `company_name` n'existe pas dans la table `clients` (la colonne s'appelle `company`). PostgREST échoue silencieusement sur un join avec une colonne inconnue → INNER JOIN → zéro résultats. Le count sans join fonctionnait normalement.
+- **Solution** : Supprimer le join `clients(company_name)` et construire un `clientNameMap` depuis la requête clients déjà disponible (sans join supplémentaire).
+- **Regle a suivre** : Toujours vérifier le nom exact des colonnes avant d'utiliser un embed PostgREST. Un join sur une colonne inexistante ne remonte pas d'erreur — il filtre silencieusement tous les résultats.
+
+---
+
+### [RSC-005] Server Action → router auto-refresh → crash client-side (React #310)
+- **Date** : 2026-04-29
+- **Projet** : MonprojetPro
+- **Categorie** : Next.js Server/Client (RSC)
+- **Symptome** : Page blanche client-side ~1 sec lors du toggle One → Lab. React error #310 "Rendered more hooks than during the previous render."
+- **Cause racine** : Next.js déclenche un router auto-refresh après chaque Server Action. La Server Action `setActiveViewMode` + `revalidatePath` déclenchait un re-render RSC en background en race avec `window.location.replace('/')`. Même sans `revalidatePath`, le router auto-refresh suffisait.
+- **Fausses pistes** :
+  1. Supprimer `revalidatePath` → toujours en erreur (le router auto-refresh persiste)
+  2. Poser le cookie côté client (sans Server Action) + `window.location.replace('/')` → résoud la Server Action mais `/` redirecte vers `/modules/parcours` côté serveur → React #310 sur le redirect intermédiaire
+- **Solution** : Cookie posé via `document.cookie` JS (httpOnly=false), puis `window.location.replace(destination)` vers la page FINALE directement (`/modules/parcours` pour Lab, `/` pour One). Zéro Server Action, zéro redirect intermédiaire, zéro hooks mismatch.
+- **Regle a suivre** : Quand une page fait `redirect()` côté serveur, ne jamais naviguer vers elle via une Server Action — aller directement à la destination finale pour éviter les navigations client en cascade.
+
+---
+
+### [RSC-006] RLS client session bloque les lookups cross-user dans les Server Actions
+- **Date** : 2026-04-29
+- **Projet** : MonprojetPro
+- **Categorie** : Next.js Server/Client (RSC)
+- **Symptome** : Notification jamais créée quand le client envoie un message au Hub. La cloche Hub restait vide.
+- **Cause racine** : `createServerSupabaseClient()` utilise l'ANON KEY + session utilisateur → RLS appliquée. Quand la Server Action tourne dans le contexte du client, la requête `operators.auth_user_id` est bloquée par RLS. `operatorRow` retourne null → bloc `if (operatorRow?.auth_user_id)` jamais exécuté → notification jamais insérée.
+- **Solution** : Utiliser `createServiceRoleSupabaseClient()` (bypass RLS) pour les lookups cross-user et les inserts de notifications dans les Server Actions. Le `createServerSupabaseClient()` reste pour la vérification d'identité de l'appelant.
+- **Regle a suivre** : Toute opération nécessitant de lire des données d'un autre utilisateur (operator → client, client → operator) doit utiliser le service role. Ne jamais supposer que la session de l'appelant a accès aux tables de l'autre partie.
+- **Agents impliques** : FIX, SPARK, ATLAS
