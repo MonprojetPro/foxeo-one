@@ -23,6 +23,14 @@ export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted }
       ? `Bonjour ${firstName} ! Vous progressez bien. Votre étape ${currentStep.stepNumber} (${currentStep.title}) attend votre attention. Cliquez sur « Continuer » pour que je vous guide.`
       : `Bonjour ${firstName} ! Bienvenue dans votre parcours. Commencez par l'étape 1 pour démarrer !`
 
+  const stepHref = allCompleted
+    ? '/modules/parcours'
+    : currentStep
+      ? `/modules/parcours/steps/${currentStep.stepNumber}`
+      : '/modules/parcours/steps/1'
+
+  const buttonLabel = allCompleted ? 'Voir mon parcours →' : 'Continuer avec Élio →'
+
   return (
     <div className="bg-[#141414] border border-[#2d2d2d] rounded-xl p-5">
       <div className="flex items-center gap-2.5">
@@ -40,11 +48,11 @@ export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted }
       </div>
 
       <Link
-        href="/modules/elio"
+        href={stepHref}
         className="inline-flex items-center mt-3 border border-[#a78bfa] text-[#a78bfa] hover:bg-[#1e1557] text-sm px-4 py-2 rounded-lg transition-colors"
-        aria-label="Ouvrir le chat Élio"
+        aria-label="Continuer sur l'étape en cours"
       >
-        Continuer avec Élio →
+        {buttonLabel}
       </Link>
     </div>
   )
