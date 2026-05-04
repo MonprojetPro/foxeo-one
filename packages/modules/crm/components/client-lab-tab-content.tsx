@@ -202,7 +202,7 @@ export function ClientLabTabContent({ clientId }: ClientLabTabContentProps) {
           onOpenChange={setGraduationDialogOpen}
         />
       )}
-      {isLabClient && parcours && parcoursAbandoned && (
+      {parcours && parcoursAbandoned && (
         <ReactivateParcoursDialog
           clientId={clientId}
           clientName={client.name}

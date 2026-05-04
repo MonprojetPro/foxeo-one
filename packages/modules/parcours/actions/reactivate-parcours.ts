@@ -42,7 +42,7 @@ export async function reactivateParcours(
       .eq('client_id', clientId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (parcoursError || !parcours) {
       return errorResponse('Parcours non trouvé', 'NOT_FOUND', parcoursError)
