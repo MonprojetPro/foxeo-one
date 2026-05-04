@@ -168,27 +168,30 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
     )
   }
 
-  // ÉTAT VERROUILLÉ — fond sombre, tirets, opacité
+  // ÉTAT EN ATTENTE — accessible mais pas encore commencé
   return (
     <div
       className={cn(
-        'h-[158px] flex flex-col rounded-[14px] p-[18px] opacity-[0.55] cursor-not-allowed',
-        'bg-[#111111] border border-dashed border-[#374151]',
+        'h-[158px] flex flex-col rounded-[14px] p-[18px] cursor-pointer transition-all hover:opacity-80',
+        'bg-[#111111] border border-dashed border-[#374151] opacity-70',
         className
       )}
-      aria-label={`Étape ${step.stepNumber} verrouillée`}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
+      aria-label={`Étape ${step.stepNumber}: ${step.title} — en attente`}
     >
       <div className="flex items-center justify-between">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="#6b7280" strokeWidth="1.5"/>
-          <path d="M5 7V5a3 3 0 016 0v2" stroke="#6b7280" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
+        <span className="inline-flex items-center bg-muted/50 text-[#6b7280] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+          À venir
+        </span>
         <span className="text-[11px] text-[#6b7280]">Étape {step.stepNumber}</span>
       </div>
       <div className="mt-3.5 text-[16px] font-medium text-[#9ca3af] leading-snug">{step.title}</div>
       <div className="text-[12px] text-[#6b7280] mt-1 line-clamp-2">{step.description}</div>
       <div className="flex-1" />
-      <div className="text-[11px] text-[#6b7280] italic">Disponible après l&apos;étape précédente</div>
+      <div className="text-[11px] text-[#6b7280] italic">Commencer →</div>
     </div>
   )
 }
