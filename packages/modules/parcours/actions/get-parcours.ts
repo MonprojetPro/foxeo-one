@@ -57,7 +57,7 @@ export async function getParcours(
         id: row.id,
         parcoursId: clientId,
         stepNumber: index + 1,
-        title: row.step_label,
+        title: row.step_label.replace(/^étape\s+\d+\s*[—\-]\s*/i, '').trim() || row.step_label,
         description: (row.elio_lab_agents as { description: string | null } | null)?.description ?? '',
         briefTemplate: null,
         briefContent: null,
