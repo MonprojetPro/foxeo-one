@@ -57,7 +57,18 @@ export async function getParcours(
         id: row.id,
         parcoursId: clientId,
         stepNumber: index + 1,
-        title: row.step_label.replace(/^étape\s+\d+\s*[—\-]\s*/i, '').trim() || row.step_label,
+        title: (() => {
+          const s = row.step_label
+          const dashIdx = s.indexOf('—')
+          if (dashIdx !== -1) {
+            const prefix = s.slice(0, dashIdx).trim().toLowerCase()
+            if (prefix.startsWith('étape') || prefix.startsWith('etape')) {
+              const after = s.slice(dashIdx + 1).trim()
+              if (after.length > 0) return after
+            }
+          }
+          return s
+        })(),
         description: (row.elio_lab_agents as { description: string | null } | null)?.description ?? '',
         briefTemplate: null,
         briefContent: null,
