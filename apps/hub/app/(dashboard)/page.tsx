@@ -24,7 +24,7 @@ interface MessageRow {
   content: string
   created_at: string
   client_id: string
-  clients: { company_name: string } | { company_name: string }[] | null
+  clients: { company: string } | { company: string }[] | null
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -302,7 +302,11 @@ export default async function HubHomePage() {
         <InteractiveMetricCard
           title="Clients Lab"
           value={String(labCount)}
-          subtitle={`${breakdown.lab.pendingPayment.length} en attente · ${breakdown.lab.active.length} actifs`}
+          subtitle={[
+            breakdown.lab.pendingPayment.length > 0 ? `${breakdown.lab.pendingPayment.length} en attente` : null,
+            breakdown.lab.active.length > 0 ? `${breakdown.lab.active.length} actifs` : null,
+            breakdown.lab.suspended.length > 0 ? `${breakdown.lab.suspended.length} suspendu${breakdown.lab.suspended.length > 1 ? 's' : ''}` : null,
+          ].filter(Boolean).join(' · ') || 'Aucun client Lab'}
           sections={[
             {
               label: 'En attente de paiement',
@@ -317,6 +321,13 @@ export default async function HubHomePage() {
               items: breakdown.lab.active,
               emptyText: 'Aucun client Lab actif',
               accentColor: 'green',
+            },
+            {
+              label: 'Suspendus (parcours en pause)',
+              count: breakdown.lab.suspended.length,
+              items: breakdown.lab.suspended,
+              emptyText: 'Aucun parcours suspendu',
+              accentColor: 'red',
             },
           ]}
         />

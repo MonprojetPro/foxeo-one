@@ -12,6 +12,7 @@ export type ClientsBreakdown = {
   lab: {
     pendingPayment: ClientBreakdownItem[]
     active: ClientBreakdownItem[]
+    suspended: ClientBreakdownItem[]
   }
   one: {
     active: ClientBreakdownItem[]
@@ -58,8 +59,25 @@ export async function getClientsBreakdown(operatorId: string): Promise<ClientsBr
   const labPendingPayment = clients.filter(
     (c) => getDashboardType(c) === null && c.lab_invoice_sent_at && !c.lab_paid
   )
-  const labActive = clients.filter((c) => getDashboardType(c) === 'lab')
+  const labClients = clients.filter((c) => getDashboardType(c) === 'lab')
   const oneActive = clients.filter((c) => getDashboardType(c) === 'one')
+
+  // Récupérer les IDs des clients Lab avec un parcours en statut abandoned
+  const labClientIds = labClients.map((c) => c.id)
+  const abandonedClientIds = new Set<string>()
+  if (labClientIds.length > 0) {
+    const { data: abandonedParcours } = await supabase
+      .from('parcours')
+      .select('client_id')
+      .eq('status', 'abandoned')
+      .in('client_id', labClientIds)
+    for (const row of abandonedParcours ?? []) {
+      abandonedClientIds.add((row as { client_id: string }).client_id)
+    }
+  }
+
+  const labActive = labClients.filter((c) => !abandonedClientIds.has(c.id))
+  const labSuspended = labClients.filter((c) => abandonedClientIds.has(c.id))
 
   type BillingSyncRow = {
     pennylane_id: string
@@ -93,6 +111,7 @@ export async function getClientsBreakdown(operatorId: string): Promise<ClientsBr
     lab: {
       pendingPayment: labPendingPayment.map(toItem),
       active: labActive.map(toItem),
+      suspended: labSuspended.map(toItem),
     },
     one: {
       active: oneActive.map(toItem),
