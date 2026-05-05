@@ -11,6 +11,9 @@ export { createClient as createBrowserSupabaseClient } from './client'
 export function createServerSupabaseClient(): never {
   throw new Error('createServerSupabaseClient cannot be used in client components. Import from @monprojetpro/supabase/server instead.')
 }
+export function createServiceRoleSupabaseClient(): never {
+  throw new Error('createServiceRoleSupabaseClient cannot be used in client components.')
+}
 export function createMiddlewareSupabaseClient(): never {
   throw new Error('createMiddlewareSupabaseClient cannot be used in client components. Import from @monprojetpro/supabase/middleware instead.')
 }
