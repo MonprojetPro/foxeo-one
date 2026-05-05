@@ -23,3 +23,5 @@ export default async function ClientParcoursPage() {
   )
 }
 // rebuild Tue, May  5, 2026  4:58:53 PM
+
+// rebuild-parcours-fix
