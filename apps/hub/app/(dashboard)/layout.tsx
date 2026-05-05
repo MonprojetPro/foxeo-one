@@ -6,6 +6,7 @@ import { ThemeToggle } from '@monprojetpro/ui'
 import { HubSidebarClient } from '../../components/hub-sidebar-client'
 import { LogoutButton } from './logout-button'
 import { SessionKeepAlive } from './session-keep-alive'
+import { RealtimeDashboardRefresh } from '../../components/realtime-dashboard-refresh'
 
 async function HubHeader({ authUserId }: { authUserId: string }) {
   return (
@@ -54,6 +55,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <SessionKeepAlive />
+      <RealtimeDashboardRefresh operatorId={operatorId} />
       <HubHeader authUserId={user?.id ?? ''} />
       <div className="flex flex-1 overflow-hidden">
         <PresenceProvider userId={operatorId} userType="operator" operatorId={operatorId}>

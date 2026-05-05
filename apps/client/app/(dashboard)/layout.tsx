@@ -37,6 +37,7 @@ import { NotificationBadge } from '@monprojetpro/modules-notifications'
 import { PresenceProvider } from '@monprojetpro/modules-chat'
 import { LogoutButton } from './logout-button'
 import { ThemeClassSetter } from './theme-class-setter'
+import { RealtimeDashboardRefresh } from '../../components/realtime-dashboard-refresh'
 import { ImpersonationWrapper } from './impersonation-wrapper'
 import { OneElioBox } from '../../components/one-elio-box'
 import { SessionKeepAlive } from './session-keep-alive'
@@ -230,6 +231,7 @@ export default async function DashboardLayout({
   return (
     <div style={accentStyle}>
       <SessionKeepAlive />
+      <RealtimeDashboardRefresh clientId={clientId} />
       <ThemeClassSetter activeMode={activeMode} />
       <DashboardShell
         density={density}
