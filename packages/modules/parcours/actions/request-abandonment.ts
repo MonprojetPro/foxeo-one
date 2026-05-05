@@ -1,9 +1,8 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, createServiceRoleSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { RequestAbandonmentInput } from '../types/parcours.types'
-import { createNotification } from '../../notifications/actions/create-notification'
 
 export async function requestParcoursAbandonment(
   input: { clientId: string; reason?: string }
@@ -123,9 +122,10 @@ export async function requestParcoursAbandonment(
       },
     })
 
-    // Notifier MiKL (opérateur)
+    // Notifier MiKL (opérateur) — service role pour bypass total RLS
     if (client.operator_id) {
-      const { data: operator } = await supabase
+      const adminSupabase = createServiceRoleSupabaseClient()
+      const { data: operator } = await adminSupabase
         .from('operators')
         .select('auth_user_id')
         .eq('id', client.operator_id)
@@ -133,9 +133,9 @@ export async function requestParcoursAbandonment(
 
       if (operator?.auth_user_id) {
         const reasonText = reason || 'Aucune raison précisée'
-        await createNotification({
-          recipientType: 'operator',
-          recipientId: operator.auth_user_id,
+        await adminSupabase.from('notifications').insert({
+          recipient_type: 'operator',
+          recipient_id: operator.auth_user_id,
           type: 'alert',
           title: `Le client ${client.name} souhaite abandonner son parcours Lab`,
           body: `Raison : ${reasonText}. Progression : ${completedSteps}/${totalSteps} étapes. Contactez-le pour en discuter.`,

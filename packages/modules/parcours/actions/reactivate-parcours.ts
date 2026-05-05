@@ -1,9 +1,8 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, createServiceRoleSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { ReactivateParcoursInput } from '../types/parcours.types'
-import { createNotification } from '../../notifications/actions/create-notification'
 
 export async function reactivateParcours(
   input: { clientId: string }
@@ -115,9 +114,10 @@ export async function reactivateParcours(
       .single()
 
     if (client?.auth_user_id) {
-      await createNotification({
-        recipientType: 'client',
-        recipientId: client.auth_user_id,
+      const adminSupabase = createServiceRoleSupabaseClient()
+      await adminSupabase.from('notifications').insert({
+        recipient_type: 'client',
+        recipient_id: client.auth_user_id,
         type: 'system',
         title: 'Bonne nouvelle ! Votre parcours Lab a été réactivé par MiKL.',
         body: 'Vous pouvez reprendre votre parcours de création là où vous l\'aviez laissé.',

@@ -22,3 +22,4 @@ export default async function ClientParcoursPage() {
     </div>
   )
 }
+// rebuild Tue, May  5, 2026  4:58:53 PM
