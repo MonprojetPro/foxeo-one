@@ -70,6 +70,33 @@ export async function reactivateParcours(
       return errorResponse('Impossible de réactiver le parcours', 'DATABASE_ERROR', updateError)
     }
 
+    // Nouveau système : réactiver la 1ère étape si aucune n'est déjà active
+    const { data: existingActive } = await supabase
+      .from('client_parcours_agents')
+      .select('id')
+      .eq('client_id', clientId)
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle()
+
+    if (!existingActive) {
+      const { data: firstPending } = await supabase
+        .from('client_parcours_agents')
+        .select('id')
+        .eq('client_id', clientId)
+        .eq('status', 'pending')
+        .order('step_order', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      if (firstPending) {
+        await supabase
+          .from('client_parcours_agents')
+          .update({ status: 'active' })
+          .eq('id', firstPending.id)
+      }
+    }
+
     // Log activity
     await supabase.from('activity_logs').insert({
       actor_type: 'operator',

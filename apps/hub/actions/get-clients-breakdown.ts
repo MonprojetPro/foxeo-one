@@ -27,12 +27,11 @@ export type ClientsBreakdown = {
 export async function getClientsBreakdown(operatorId: string): Promise<ClientsBreakdown> {
   const supabase = await createServerSupabaseClient()
 
-  // Clients Lab et One avec leurs configs
   type ClientRow = {
     id: string
     name: string
     first_name: string | null
-    company_name: string
+    company: string
     lab_paid: boolean | null
     lab_invoice_sent_at: string | null
     client_configs: { dashboard_type: string }[] | { dashboard_type: string } | null
@@ -40,7 +39,7 @@ export async function getClientsBreakdown(operatorId: string): Promise<ClientsBr
 
   const { data: rawClients } = await supabase
     .from('clients')
-    .select('id, name, first_name, company_name, lab_paid, lab_invoice_sent_at, client_configs(dashboard_type)')
+    .select('id, name, first_name, company, lab_paid, lab_invoice_sent_at, client_configs(dashboard_type)')
     .eq('operator_id', operatorId)
     .neq('status', 'archived')
 
@@ -48,7 +47,7 @@ export async function getClientsBreakdown(operatorId: string): Promise<ClientsBr
 
   function toItem(c: ClientRow): ClientBreakdownItem {
     const fullName = c.first_name ? `${c.first_name} ${c.name}` : c.name
-    return { id: c.id, name: fullName, company: c.company_name }
+    return { id: c.id, name: fullName, company: c.company }
   }
 
   function getDashboardType(c: ClientRow): string | null {
@@ -62,7 +61,6 @@ export async function getClientsBreakdown(operatorId: string): Promise<ClientsBr
   const labActive = clients.filter((c) => getDashboardType(c) === 'lab')
   const oneActive = clients.filter((c) => getDashboardType(c) === 'one')
 
-  // Factures impayées avec lookup client
   type BillingSyncRow = {
     pennylane_id: string
     amount: number | null

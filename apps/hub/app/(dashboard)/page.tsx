@@ -16,7 +16,7 @@ interface MeetingRow {
   scheduled_at: string | null
   status: string
   session_id: string | null
-  clients: { company_name: string } | { company_name: string }[] | null
+  clients: { company: string } | { company: string }[] | null
 }
 
 interface MessageRow {
@@ -47,7 +47,7 @@ function formatRelativeTime(iso: string): string {
 function getClientName(clients: MeetingRow['clients']): string {
   if (!clients) return ''
   const c = Array.isArray(clients) ? clients[0] : clients
-  return c?.company_name ?? ''
+  return c?.company ?? ''
 }
 
 function minutesUntil(iso: string | null): number | null {
@@ -102,7 +102,7 @@ async function getHubStats(operatorId: string) {
 
   const { data: meetings } = await supabase
     .from('meetings')
-    .select('id, title, scheduled_at, status, session_id, clients(company_name)')
+    .select('id, title, scheduled_at, status, session_id, clients(company)')
     .eq('operator_id', operatorId)
     .gte('scheduled_at', todayStart.toISOString())
     .lte('scheduled_at', todayEnd.toISOString())
@@ -170,7 +170,7 @@ async function getHubStats(operatorId: string) {
   // Clients avec parcours en pause (abandoned)
   const { data: pausedParcours } = await supabase
     .from('parcours')
-    .select('id, client_id, abandonment_reason, updated_at, clients(id, name, company_name)')
+    .select('id, client_id, abandonment_reason, updated_at, clients(id, name, company)')
     .eq('status', 'abandoned')
     .in('client_id', clientIds.length > 0 ? clientIds : ['00000000-0000-0000-0000-000000000000'])
     .order('updated_at', { ascending: false })
@@ -180,7 +180,7 @@ async function getHubStats(operatorId: string) {
     client_id: string
     abandonment_reason: string | null
     updated_at: string
-    clients: { id: string; name: string; company_name: string } | { id: string; name: string; company_name: string }[] | null
+    clients: { id: string; name: string; company: string } | { id: string; name: string; company: string }[] | null
   }[]
 
   return {
@@ -436,7 +436,7 @@ export default async function HubHomePage() {
         <DashboardCard title="Parcours en pause" badge={pausedClients.length}>
           {pausedClients.map((p) => {
             const c = Array.isArray(p.clients) ? p.clients[0] : p.clients
-            const clientName = c?.company_name || c?.name || 'Client'
+            const clientName = c?.company || c?.name || 'Client'
             const reason = p.abandonment_reason ? `Raison : ${p.abandonment_reason}` : 'Aucune raison précisée'
             return (
               <AlertItem
