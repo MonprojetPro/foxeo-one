@@ -55,13 +55,23 @@ export async function requestParcoursAbandonment(
         )
       }
 
-      // Compter les étapes depuis parcours_steps
-      const { data: steps } = await supabase
-        .from('parcours_steps')
+      // Compter les étapes — priorité à client_parcours_agents (nouveau système)
+      const { data: agentSteps } = await supabase
+        .from('client_parcours_agents')
         .select('id, status')
-        .eq('parcours_id', parcours.id)
-      totalSteps = steps?.length ?? 0
-      completedSteps = steps?.filter((s: { status: string }) => s.status === 'completed').length ?? 0
+        .eq('client_id', clientId)
+
+      if (agentSteps && agentSteps.length > 0) {
+        totalSteps = agentSteps.length
+        completedSteps = agentSteps.filter((s: { status: string }) => s.status === 'completed').length
+      } else {
+        const { data: steps } = await supabase
+          .from('parcours_steps')
+          .select('id, status')
+          .eq('parcours_id', parcours.id)
+        totalSteps = steps?.length ?? 0
+        completedSteps = steps?.filter((s: { status: string }) => s.status === 'completed').length ?? 0
+      }
 
       // Mettre à jour le statut
       const { error: updateError } = await supabase
