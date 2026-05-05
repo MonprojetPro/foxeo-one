@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { ParcoursOverview } from '@monprojetpro/module-parcours'
+// rebuild
 
 export default async function ClientParcoursPage() {
   const supabase = await createServerSupabaseClient()
