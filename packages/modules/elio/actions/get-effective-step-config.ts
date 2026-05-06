@@ -13,6 +13,7 @@ const InputSchema = z.object({
 
 export interface EffectiveStepConfig {
   agentName: string
+  agentDescription: string | null
   agentImagePath: string | null
   systemPrompt: string | null
   model: string
@@ -28,6 +29,7 @@ type ParcoursAgentRow = {
   elio_lab_agents: {
     id: string
     name: string
+    description: string | null
     model: string
     temperature: number
     image_path: string | null
@@ -68,6 +70,7 @@ export async function getEffectiveStepConfig(
         elio_lab_agents (
           id,
           name,
+          description,
           model,
           temperature,
           image_path,
@@ -124,6 +127,7 @@ export async function getEffectiveStepConfig(
 
       return successResponse({
         agentName: agent.name,
+        agentDescription: agent.description ?? null,
         agentImagePath: agent.image_path,
         systemPrompt: agent.system_prompt,
         model: agent.model,
@@ -144,6 +148,7 @@ export async function getEffectiveStepConfig(
 
     return successResponse({
       agentName: 'Élio',
+      agentDescription: null,
       agentImagePath: null,
       systemPrompt: null,
       model: globalConfig?.model ?? 'claude-sonnet-4-6',

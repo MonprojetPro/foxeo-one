@@ -47,6 +47,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
 
   // Config agent (Story 14.5)
   const [agentName, setAgentName] = useState<string>('Élio')
+  const [agentDescription, setAgentDescription] = useState<string | null>(null)
   const [agentImagePath, setAgentImagePath] = useState<string | null>(null)
   const [agentImgError, setAgentImgError] = useState(false)
   const [systemPromptOverride, setSystemPromptOverride] = useState<string | null>(null)
@@ -109,6 +110,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       if (configResult.data) {
         const cfg = configResult.data
         setAgentName(cfg.agentName)
+        setAgentDescription(cfg.agentDescription ?? null)
         setAgentImagePath(cfg.agentImagePath)
         setSystemPromptOverride(cfg.systemPrompt)
         setAgentModel(cfg.model)
@@ -223,9 +225,9 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       className={`mt-6 rounded-xl border border-[#2d2d2d] overflow-hidden transition-opacity ${isDisabled ? 'opacity-50' : ''}`}
       aria-label={`Chat Élio — Étape ${stepNumber}`}
     >
-      {/* Header — avatar agent + nom agent */}
-      <div className="bg-[#1a1033] border-b border-[#2d2d2d] px-4 py-2.5 flex items-center gap-2.5">
-        <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-gradient-to-br from-[#7c3aed] to-[#a78bfa]">
+      {/* Header — avatar agent + nom + description */}
+      <div className="bg-[#1a1033] border-b border-[#2d2d2d] px-4 py-3 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-gradient-to-br from-[#7c3aed] to-[#a78bfa]">
           {agentImagePath && !agentImgError ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -235,12 +237,17 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
               onError={() => setAgentImgError(true)}
             />
           ) : (
-            <Bot className="w-3.5 h-3.5 text-white" aria-hidden="true" />
+            <Bot className="w-4 h-4 text-white" aria-hidden="true" />
           )}
         </div>
-        <span className="text-sm font-semibold text-[#a78bfa]">{agentName}</span>
+        <div className="flex-1 min-w-0">
+          <span className="block text-sm font-semibold text-[#a78bfa] leading-tight">{agentName}</span>
+          {agentDescription && (
+            <span className="block text-xs text-[#6b7280] leading-tight truncate mt-0.5">{agentDescription}</span>
+          )}
+        </div>
         {chatStatus === 'ready' && (
-          <span className="ml-auto flex items-center gap-1 text-xs text-[#9ca3af]">
+          <span className="shrink-0 flex items-center gap-1 text-xs text-[#9ca3af]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] inline-block" aria-hidden="true" />
             En ligne
           </span>
