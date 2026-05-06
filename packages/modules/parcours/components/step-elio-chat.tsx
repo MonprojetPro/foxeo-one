@@ -173,11 +173,12 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       return
     }
 
-    // Appeler Élio avec system prompt + modèle/température de l'agent
+    // Appeler Élio avec system prompt + modèle/température + historique (via conversationId)
     // skipLabEnabledCheck : le step chat est toujours actif si le client a un parcours actif
     const overrides = {
       ...(agentModel !== undefined ? { model: agentModel } : {}),
       ...(agentTemperature !== undefined ? { temperature: agentTemperature } : {}),
+      ...(conversationId ? { conversationId } : {}),
       skipLabEnabledCheck: true,
     }
 

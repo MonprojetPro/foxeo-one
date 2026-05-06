@@ -514,6 +514,19 @@ async function callLLM(
   agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string },
   clientId?: string,
 ): Promise<ActionResponse<ElioMessage>> {
+  // Charger l'historique de conversation si conversationId fourni (max 30 messages = 15 tours)
+  let history: Array<{ role: string; content: string }> = []
+  if (agentOverrides?.conversationId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: historyRows } = await (supabase as any)
+      .from('elio_messages')
+      .select('role, content')
+      .eq('conversation_id', agentOverrides.conversationId)
+      .order('created_at', { ascending: true })
+      .limit(30) as { data: Array<{ role: string; content: string }> | null }
+    history = historyRows ?? []
+  }
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
 
@@ -522,6 +535,7 @@ async function callLLM(
       body: {
         systemPrompt,
         message,
+        history,
         dashboardType,
         model: agentOverrides?.model ?? elioConfig?.model ?? 'claude-sonnet-4-20250514',
         maxTokens: elioConfig?.maxTokens ?? 8192,
