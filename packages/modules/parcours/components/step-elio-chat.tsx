@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bot } from 'lucide-react'
+import { ChatMarkdownRenderer } from './chat-markdown-renderer'
 import { getOrCreateStepConversation } from '../actions/get-or-create-step-conversation'
 import { markInjectionsRead } from '../actions/mark-injections-read'
 import {
@@ -182,12 +183,14 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       skipLabEnabledCheck: true,
     }
 
+    const FORMATTING_INSTRUCTION = '\n\n---\nFormatage : structure tes réponses avec des sauts de ligne. Quand tu proposes des choix, utilise une liste numérotée (1. 2. 3.). Évite les séparateurs --- en milieu de message. Sois concis.'
+
     const { data: reply, error: elioError } = await sendToElio(
       'lab',
       content,
       clientId,
       undefined,
-      systemPromptOverride ?? undefined,
+      systemPromptOverride ? systemPromptOverride + FORMATTING_INSTRUCTION : undefined,
       overrides
     )
 
@@ -322,7 +325,11 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
                         : 'bg-[#1e1557] border border-[#3d2d6d] text-[#e5e7eb] rounded-tl-[4px]'
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === 'user' ? (
+                    msg.content
+                  ) : (
+                    <ChatMarkdownRenderer content={msg.content} />
+                  )}
                 </div>
               </div>
             </div>
