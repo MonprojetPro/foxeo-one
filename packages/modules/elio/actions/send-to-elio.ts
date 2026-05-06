@@ -117,6 +117,7 @@ function handleElioError(err: unknown): { message: string; code: string; details
  * @param clientId — ID du client (utilisé pour le tracking tokens)
  * @param agentOverrides.agentId — ID de l'agent Élio Lab (pour le tracking tokens)
  * @param agentOverrides.conversationId — ID de la conversation (pour le tracking tokens)
+ * @param agentOverrides.skipLabEnabledCheck — bypass du guard elio_lab_enabled (usage: step chat parcours)
  */
 export async function sendToElio(
   dashboardType: DashboardType,
@@ -124,7 +125,7 @@ export async function sendToElio(
   clientId?: string,
   draftContext?: DraftContext,
   systemPromptOverride?: string,
-  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string },
+  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string; skipLabEnabledCheck?: boolean },
 ): Promise<ActionResponse<ElioMessage>> {
   if (!message.trim()) {
     return errorResponse('Le message ne peut pas être vide', 'VALIDATION_ERROR')
@@ -473,7 +474,8 @@ export async function sendToElio(
   }
 
   // 3bis. Guard Élio Lab — MiKL peut désactiver elio_lab_enabled après graduation (ADR-01 Révision 2)
-  if (dashboardType === 'lab' && clientId) {
+  // Bypass autorisé pour le chat embarqué dans une étape de parcours (step chat)
+  if (dashboardType === 'lab' && clientId && !agentOverrides?.skipLabEnabledCheck) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: labConfig } = await (supabase as any)
       .from('client_configs')

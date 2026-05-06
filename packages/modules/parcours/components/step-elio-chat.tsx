@@ -174,9 +174,12 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
     }
 
     // Appeler Élio avec system prompt + modèle/température de l'agent
-    const overrides = (agentModel !== undefined || agentTemperature !== undefined)
-      ? { model: agentModel, temperature: agentTemperature }
-      : undefined
+    // skipLabEnabledCheck : le step chat est toujours actif si le client a un parcours actif
+    const overrides = {
+      ...(agentModel !== undefined ? { model: agentModel } : {}),
+      ...(agentTemperature !== undefined ? { temperature: agentTemperature } : {}),
+      skipLabEnabledCheck: true,
+    }
 
     const { data: reply, error: elioError } = await sendToElio(
       'lab',
