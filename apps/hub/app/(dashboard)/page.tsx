@@ -57,6 +57,24 @@ function minutesUntil(iso: string | null): number | null {
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
+async function getPendingValidations(operatorId: string) {
+  const supabase = await createServerSupabaseClient()
+  const { data } = await supabase
+    .from('validation_requests')
+    .select('id, title, type, created_at, clients(name, company)')
+    .eq('operator_id', operatorId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+    .limit(5)
+  return (data ?? []) as {
+    id: string
+    title: string
+    type: string
+    created_at: string
+    clients: { name: string; company: string } | { name: string; company: string }[] | null
+  }[]
+}
+
 async function getNewProspects(operatorId: string) {
   const supabase = await createServerSupabaseClient()
   const { data } = await supabase
@@ -225,11 +243,13 @@ export default async function HubHomePage() {
     breakdown,
     newProspects,
     tokenSummaryResult,
+    pendingValidations,
   ] = await Promise.all([
     getHubStats(operatorId),
     getClientsBreakdown(operatorId),
     getNewProspects(operatorId),
     getTokenUsageSummary(),
+    getPendingValidations(operatorId),
   ])
 
   const tokenSummary = tokenSummaryResult.data
@@ -405,10 +425,27 @@ export default async function HubHomePage() {
           )}
         </DashboardCard>
 
-        <DashboardCard title="Validations en attente" linkHref="/modules/validation-hub">
-          <p className="px-3 py-4 text-sm text-muted-foreground italic">
-            Voir la file d'attente →
-          </p>
+        <DashboardCard title="Validations en attente" badge={pendingValidations.length || undefined} linkHref="/modules/validation-hub">
+          {pendingValidations.length === 0 ? (
+            <p className="px-3 py-4 text-sm text-muted-foreground italic">
+              Aucune validation en attente
+            </p>
+          ) : (
+            pendingValidations.map((v) => {
+              const clientObj = Array.isArray(v.clients) ? v.clients[0] : v.clients
+              const clientName = clientObj?.company || clientObj?.name || 'Client'
+              const typeLabel = v.type === 'step_submission' ? 'Soumission étape' : v.type === 'brief_lab' ? 'Brief Lab' : v.type === 'evolution_one' ? 'Évolution One' : v.type
+              return (
+                <AlertItem
+                  key={v.id}
+                  icon="bell"
+                  title={v.title}
+                  detail={`${clientName} · ${typeLabel} · ${formatRelativeTime(v.created_at)}`}
+                  href="/modules/validation-hub"
+                />
+              )
+            })
+          )}
         </DashboardCard>
       </div>
 
