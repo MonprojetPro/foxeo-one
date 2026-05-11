@@ -106,23 +106,31 @@ export async function submitStep(
       .eq('id', input.stepId)
 
     // Notification opérateur
-    await supabase.from('notifications').insert([
-      {
+    const { data: operatorRow } = await supabase
+      .from('operators')
+      .select('auth_user_id')
+      .eq('id', client.operator_id)
+      .single()
+
+    const notifs: object[] = []
+    if (operatorRow?.auth_user_id) {
+      notifs.push({
         recipient_type: 'operator',
-        recipient_id: client.operator_id,
+        recipient_id: operatorRow.auth_user_id,
         type: 'alert',
         title: `Nouvelle soumission — ${client.name}`,
         body: `Étape ${step.step_number}: ${step.title}`,
         link: `/modules/crm/clients/${client.id}/submissions/${submission.id}`,
-      },
-      {
-        recipient_type: 'client',
-        recipient_id: client.id,
-        type: 'info',
-        title: 'Soumission envoyée',
-        body: 'MiKL va valider votre travail sous peu.',
-      },
-    ])
+      })
+    }
+    notifs.push({
+      recipient_type: 'client',
+      recipient_id: client.id,
+      type: 'info',
+      title: 'Soumission envoyée',
+      body: 'MiKL va valider votre travail sous peu.',
+    })
+    await supabase.from('notifications').insert(notifs)
 
     console.log('[PARCOURS:SUBMIT] Soumission créée:', submission.id)
 

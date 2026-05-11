@@ -69,16 +69,24 @@ export async function createSupportTicket(
     }
 
     // Notify MiKL (operator) — non-blocking, log on failure
-    const { error: notifError } = await supabase.from('notifications').insert({
-      recipient_type: 'operator',
-      recipient_id: client.operator_id,
-      type: 'alert',
-      title: `Nouveau signalement de ${client.name}`,
-      body: `${type}: ${subject}`,
-      link: `/modules/crm/clients/${client.id}?tab=support`,
-    })
-    if (notifError) {
-      console.warn('[SUPPORT:CREATE_TICKET] Notification failed (non-blocking):', notifError)
+    const { data: operatorRow } = await supabase
+      .from('operators')
+      .select('auth_user_id')
+      .eq('id', client.operator_id)
+      .single()
+
+    if (operatorRow?.auth_user_id) {
+      const { error: notifError } = await supabase.from('notifications').insert({
+        recipient_type: 'operator',
+        recipient_id: operatorRow.auth_user_id,
+        type: 'alert',
+        title: `Nouveau signalement de ${client.name}`,
+        body: `${type}: ${subject}`,
+        link: `/modules/crm/clients/${client.id}?tab=support`,
+      })
+      if (notifError) {
+        console.warn('[SUPPORT:CREATE_TICKET] Notification failed (non-blocking):', notifError)
+      }
     }
 
     const ticket = toCamelCase<SupportTicketDB, SupportTicket>(ticketData as SupportTicketDB)

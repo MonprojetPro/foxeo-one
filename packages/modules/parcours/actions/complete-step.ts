@@ -96,12 +96,22 @@ export async function completeStep(
         .update({ completed_at: new Date().toISOString() })
         .eq('id', typedStep.parcours_id)
 
-      // Récupérer l'operator_id du client
+      // Récupérer l'operator auth_user_id du client
       const { data: clientData } = await supabase
         .from('clients')
         .select('operator_id')
         .eq('id', typedStep.parcours.client_id)
         .single()
+
+      let operatorAuthId: string | null = null
+      if (clientData?.operator_id) {
+        const { data: operatorRow } = await supabase
+          .from('operators')
+          .select('auth_user_id')
+          .eq('id', clientData.operator_id)
+          .single()
+        operatorAuthId = operatorRow?.auth_user_id ?? null
+      }
 
       // Notifications client + opérateur
       await supabase.from('notifications').insert([
@@ -112,11 +122,11 @@ export async function completeStep(
           title: 'Parcours Lab terminé ! 🎉',
           body: 'Félicitations, vous avez complété toutes les étapes de votre parcours.',
         },
-        ...(clientData?.operator_id
+        ...(operatorAuthId
           ? [
               {
                 recipient_type: 'operator',
-                recipient_id: clientData.operator_id,
+                recipient_id: operatorAuthId,
                 type: 'info',
                 title: 'Parcours Lab terminé',
                 body: `Le client a terminé son parcours Lab.`,

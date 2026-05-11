@@ -49,14 +49,24 @@ export async function submitEvolutionRequest(
   }
 
   // 3. Notification MiKL
-  const { error: notifError } = await supabase.from('notifications').insert({
-    recipient_type: 'operator',
-    recipient_id: client.operator_id,
-    type: 'validation',
-    title: `Nouvelle demande d'évolution de ${client.name} — ${title.trim()}`,
-    body: content.trim(),
-    link: '/modules/validation-hub',
-  })
+  const { data: operatorRow } = await supabase
+    .from('operators')
+    .select('auth_user_id')
+    .eq('id', client.operator_id)
+    .single()
+
+  let notifError: { message?: string } | null = null
+  if (operatorRow?.auth_user_id) {
+    const { error } = await supabase.from('notifications').insert({
+      recipient_type: 'operator',
+      recipient_id: operatorRow.auth_user_id,
+      type: 'validation',
+      title: `Nouvelle demande d'évolution de ${client.name} — ${title.trim()}`,
+      body: content.trim(),
+      link: '/modules/validation-hub',
+    })
+    notifError = error
+  }
 
   if (notifError) {
     console.error('[ELIO:EVOLUTION] Notification error:', notifError)

@@ -109,14 +109,22 @@ export async function submitGeneratedDocument(
       .eq('id', input.stepId)
 
     // 4. Notification opérateur
-    await supabase.from('notifications').insert({
-      recipient_type: 'operator',
-      recipient_id: client.operator_id,
-      type: 'alert',
-      title: `Nouvelle soumission — ${stepTitle}`,
-      body: `${client.name} a soumis son document pour : ${stepTitle}`,
-      link: `/modules/validation/submissions/${submission.id}`,
-    })
+    const { data: operatorRow } = await supabase
+      .from('operators')
+      .select('auth_user_id')
+      .eq('id', client.operator_id)
+      .single()
+
+    if (operatorRow?.auth_user_id) {
+      await supabase.from('notifications').insert({
+        recipient_type: 'operator',
+        recipient_id: operatorRow.auth_user_id,
+        type: 'alert',
+        title: `Nouvelle soumission — ${stepTitle}`,
+        body: `${client.name} a soumis son document pour : ${stepTitle}`,
+        link: `/modules/validation/submissions/${submission.id}`,
+      })
+    }
 
     console.log('[PARCOURS:SUBMIT_GENERATED_DOC] Soumission créée:', submission.id)
 

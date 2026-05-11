@@ -94,23 +94,31 @@ export async function submitElioBrief(
       .eq('id', input.stepId)
 
     // Notifications
-    await supabase.from('notifications').insert([
-      {
+    const { data: operatorRow } = await supabase
+      .from('operators')
+      .select('auth_user_id')
+      .eq('id', client.operator_id)
+      .single()
+
+    const notifs: object[] = []
+    if (operatorRow?.auth_user_id) {
+      notifs.push({
         recipient_type: 'operator',
-        recipient_id: client.operator_id,
+        recipient_id: operatorRow.auth_user_id,
         type: 'alert',
         title: `Nouveau brief Élio — ${client.name}`,
         body: `Étape ${step.step_number}: ${step.title}`,
         link: `/modules/crm/clients/${client.id}/submissions/${submission.id}`,
-      },
-      {
-        recipient_type: 'client',
-        recipient_id: client.id,
-        type: 'info',
-        title: 'Brief soumis',
-        body: 'MiKL va valider votre brief sous peu.',
-      },
-    ])
+      })
+    }
+    notifs.push({
+      recipient_type: 'client',
+      recipient_id: client.id,
+      type: 'info',
+      title: 'Brief soumis',
+      body: 'MiKL va valider votre brief sous peu.',
+    })
+    await supabase.from('notifications').insert(notifs)
 
     console.log('[ELIO:SUBMIT_BRIEF] Soumission créée:', submission.id)
 
