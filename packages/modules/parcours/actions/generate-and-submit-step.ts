@@ -22,12 +22,19 @@ export async function generateDocumentFromConversation(
       return errorResponse('Non authentifié', 'UNAUTHORIZED')
     }
 
-    // Récupérer l'étape depuis client_parcours_agents (nouveau système)
-    const { data: step, error: stepError } = await supabase
-      .from('client_parcours_agents')
-      .select('id, step_order, step_label, client_id, elio_lab_agents(name, description)')
-      .eq('id', input.stepId)
-      .single()
+    // Récupérer l'étape et le nom du client en parallèle
+    const [{ data: step, error: stepError }, { data: clientRow }] = await Promise.all([
+      supabase
+        .from('client_parcours_agents')
+        .select('id, step_order, step_label, client_id, elio_lab_agents(name, description)')
+        .eq('id', input.stepId)
+        .single(),
+      supabase
+        .from('clients')
+        .select('first_name, name')
+        .eq('id', input.clientId)
+        .single(),
+    ])
 
     if (stepError || !step) {
       return errorResponse('Étape non trouvée', 'NOT_FOUND', {
@@ -83,12 +90,16 @@ export async function generateDocumentFromConversation(
     const stepNumber = Number(step.step_order) || 0
     const stepTitle = String(step.step_label ?? agent?.name ?? '')
     const stepDescription = String(agent?.description ?? '')
+    const clientName = String((clientRow as { first_name?: string; name?: string } | null)?.first_name ?? (clientRow as { first_name?: string; name?: string } | null)?.name ?? 'Client')
+    const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 
     const prompt = buildDocumentPrompt({
       stepNumber,
       stepTitle,
       stepDescription,
       conversationContext,
+      clientName,
+      date: today,
       customInstructions: config?.customInstructions ?? undefined,
     })
 
@@ -129,17 +140,20 @@ interface BuildDocumentPromptInput {
   stepTitle: string
   stepDescription: string
   conversationContext: string
+  clientName: string
+  date: string
   customInstructions?: string
 }
 
 function buildDocumentPrompt(input: BuildDocumentPromptInput): string {
-  const { stepNumber, stepTitle, stepDescription, conversationContext, customInstructions } = input
+  const { stepNumber, stepTitle, stepDescription, conversationContext, clientName, date, customInstructions } = input
 
   const contextSection = conversationContext
     ? `**Conversation avec le client :**\n${conversationContext}`
     : '**Contexte :** Aucune conversation disponible — génère un document basé sur la description de l\'étape.'
 
-  return `Le client vient de terminer ses échanges sur l'étape ${stepNumber} : "${stepTitle}".
+  return `Le client "${clientName}" vient de terminer ses échanges sur l'étape ${stepNumber} : "${stepTitle}".
+Date du document : ${date}
 Description de l'étape : ${stepDescription}
 
 ${contextSection}
@@ -147,6 +161,7 @@ ${contextSection}
 **Tâche :**
 À partir de cette conversation, génère un document professionnel et structuré en markdown.
 Le document doit :
+- Commencer par un en-tête avec : titre du document, "Client : ${clientName}", "Date : ${date}", "Étape : ${stepNumber}"
 - Synthétiser les échanges et les décisions prises lors de la conversation
 - Être clair et actionnable pour MiKL qui va le valider
 - Utiliser un format markdown soigné (headings, listes, etc.)

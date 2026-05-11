@@ -151,7 +151,7 @@ export function GenerateDocumentButton({
           <span className="text-sm font-semibold text-[#a78bfa]">Aperçu de votre document</span>
           <span className="text-xs text-[#6b7280]">Étape {stepNumber}</span>
         </div>
-        <div className="max-h-[400px] overflow-y-auto p-5">
+        <div className="max-h-[400px] overflow-y-auto p-5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#3d3d3d] [&::-webkit-scrollbar-thumb]:rounded-full">
           <BriefMarkdownRenderer content={generatedDocument} />
         </div>
         <div className="px-4 py-3 border-t border-[#2d2d2d] flex gap-2 justify-between">

@@ -27,6 +27,11 @@ const mockStepSingle = vi.fn()
 const mockStepEq = vi.fn(() => ({ single: mockStepSingle }))
 const mockStepSelect = vi.fn(() => ({ eq: mockStepEq }))
 
+// clients
+const mockClientSingle = vi.fn()
+const mockClientEq = vi.fn(() => ({ single: mockClientSingle }))
+const mockClientSelect = vi.fn(() => ({ eq: mockClientEq }))
+
 // elio_conversations
 const mockConvMaybeSingle = vi.fn()
 const mockConvEq2 = vi.fn(() => ({ maybeSingle: mockConvMaybeSingle }))
@@ -41,6 +46,7 @@ const mockMsgSelect = vi.fn(() => ({ eq: mockMsgEq }))
 
 const mockFrom = vi.fn((table: string) => {
   if (table === 'client_parcours_agents') return { select: mockStepSelect }
+  if (table === 'clients') return { select: mockClientSelect }
   if (table === 'elio_conversations') return { select: mockConvSelect }
   if (table === 'elio_messages') return { select: mockMsgSelect }
   return {}
@@ -82,6 +88,7 @@ describe('generateDocumentFromConversation', () => {
     vi.clearAllMocks()
     mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
     mockStepSingle.mockResolvedValue({ data: mockStep, error: null })
+    mockClientSingle.mockResolvedValue({ data: { first_name: 'Alice', name: 'Alice Martin' }, error: null })
     mockConvMaybeSingle.mockResolvedValue({ data: { id: CONV_ID }, error: null })
     mockMsgLimit.mockResolvedValue({ data: mockMessages, error: null })
     mockFunctionsInvoke.mockResolvedValue({
