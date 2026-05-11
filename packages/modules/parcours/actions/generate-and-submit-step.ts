@@ -118,10 +118,9 @@ export async function generateDocumentFromConversation(
 
     return successResponse({ document })
   } catch (error) {
-    console.error('[PARCOURS:GENERATE_DOC] Unexpected error:', error)
-    return errorResponse('Échec génération document', 'API_ERROR', {
-      message: error instanceof Error ? error.message : String(error),
-    })
+    const detail = error instanceof Error ? error.message : String(error)
+    console.error('[PARCOURS:GENERATE_DOC] Unexpected error:', detail)
+    return errorResponse(`Échec: ${detail}`, 'API_ERROR')
   }
 }
 
