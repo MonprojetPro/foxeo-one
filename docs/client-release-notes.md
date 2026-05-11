@@ -1,5 +1,13 @@
 # Release Notes Client — MonprojetPro
 
+## 2026-05-11 — Génération de document corrigée (parcours Lab)
+
+**Ce qui change pour toi :** Le bouton "Générer mon document" dans chaque étape de ton parcours fonctionne à nouveau. Élio synthétise ta conversation et produit un document structuré que tu peux soumettre directement à MiKL pour validation.
+
+**Élio peut maintenant :**
+- Générer un document professionnel à partir de ta conversation sur chaque étape
+- Soumettre ce document automatiquement à MiKL pour validation
+
 ## 2026-04-22 — Historique de l'étape en temps réel (Story 14.8)
 
 **Ce qui change pour toi :** La colonne droite de chaque page d'étape affiche maintenant ton historique complet : tes soumissions avec leur statut coloré, tes documents générés et les feedbacks que MiKL t'a transmis. Le statut de tes soumissions se met à jour automatiquement sans recharger la page.

@@ -11,12 +11,12 @@ const mockClientSingle = vi.fn()
 const mockClientEq = vi.fn(() => ({ single: mockClientSingle }))
 const mockClientSelect = vi.fn(() => ({ eq: mockClientEq }))
 
-// parcours_steps get
+// client_parcours_agents get
 const mockStepSingle = vi.fn()
 const mockStepEq = vi.fn(() => ({ single: mockStepSingle }))
 const mockStepSelect = vi.fn(() => ({ eq: mockStepEq }))
 
-// parcours_steps update
+// client_parcours_agents update
 const mockStepUpdateEq = vi.fn(() => ({}))
 const mockStepUpdate = vi.fn(() => ({ eq: mockStepUpdateEq }))
 
@@ -37,7 +37,7 @@ const mockSimpleInsert = vi.fn(() => ({}))
 
 const mockFrom = vi.fn((table: string) => {
   if (table === 'clients') return { select: mockClientSelect }
-  if (table === 'parcours_steps') return { select: mockStepSelect, update: mockStepUpdate }
+  if (table === 'client_parcours_agents') return { select: mockStepSelect, update: mockStepUpdate }
   if (table === 'step_submissions') return { select: mockExistingSelect, insert: mockInsert }
   if (table === 'validation_requests') return { insert: mockSimpleInsert }
   if (table === 'notifications') return { insert: mockSimpleInsert }
@@ -63,10 +63,11 @@ const DOCUMENT = '## Mon Document\n\nContenu du document généré par Élio.'
 const mockClient = { id: CLIENT_ID, operator_id: OPERATOR_ID, name: 'Client Test' }
 const mockStep = {
   id: STEP_ID,
-  step_number: 2,
-  title: 'Valider mon concept',
-  parcours_id: '00000000-0000-0000-0000-000000000001',
-  status: 'current',
+  step_order: 2,
+  step_label: 'Valider mon concept',
+  client_id: CLIENT_ID,
+  status: 'active',
+  elio_lab_agents: { name: 'Agent Stratégie' },
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -111,8 +112,18 @@ describe('submitGeneratedDocument', () => {
     expect(result.error?.code).toBe('NOT_FOUND')
   })
 
-  it('returns INVALID_STATUS when step is not current', async () => {
-    mockStepSingle.mockResolvedValue({ data: { ...mockStep, status: 'locked' }, error: null })
+  it('returns FORBIDDEN when step belongs to another client', async () => {
+    mockStepSingle.mockResolvedValue({
+      data: { ...mockStep, client_id: 'other-client-id' },
+      error: null,
+    })
+    const { submitGeneratedDocument } = await import('./submit-generated-document')
+    const result = await submitGeneratedDocument({ stepId: STEP_ID, document: DOCUMENT })
+    expect(result.error?.code).toBe('FORBIDDEN')
+  })
+
+  it('returns INVALID_STATUS when step is not active', async () => {
+    mockStepSingle.mockResolvedValue({ data: { ...mockStep, status: 'pending' }, error: null })
     const { submitGeneratedDocument } = await import('./submit-generated-document')
     const result = await submitGeneratedDocument({ stepId: STEP_ID, document: DOCUMENT })
     expect(result.error?.code).toBe('INVALID_STATUS')
@@ -139,10 +150,10 @@ describe('submitGeneratedDocument', () => {
     expect(result.data?.submissionId).toBe(SUBMISSION_ID)
   })
 
-  it('updates step status to pending_review on success', async () => {
+  it('updates step status to completed on success', async () => {
     const { submitGeneratedDocument } = await import('./submit-generated-document')
     await submitGeneratedDocument({ stepId: STEP_ID, document: DOCUMENT })
-    expect(mockStepUpdate).toHaveBeenCalledWith({ status: 'pending_review' })
+    expect(mockStepUpdate).toHaveBeenCalledWith({ status: 'completed' })
     expect(mockStepUpdateEq).toHaveBeenCalledWith('id', STEP_ID)
   })
 })
