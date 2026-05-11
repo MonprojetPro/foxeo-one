@@ -17,11 +17,15 @@ interface ElioParcoursPanelProps {
 export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted }: ElioParcoursPanelProps) {
   const firstName = clientFirstName || 'vous'
 
+  const isPendingReview = currentStep?.status === 'pending_review'
+
   const message = allCompleted
     ? `Bonjour ${firstName} ! Bravo, toutes vos étapes sont complètes. Votre graduation vers One arrive bientôt !`
-    : currentStep
-      ? `Bonjour ${firstName} ! Vous progressez bien. Votre étape ${currentStep.stepNumber} (${currentStep.title}) attend votre attention. Cliquez sur « Continuer » pour que je vous guide.`
-      : `Bonjour ${firstName} ! Bienvenue dans votre parcours. Commencez par l'étape 1 pour démarrer !`
+    : isPendingReview
+      ? `Bonjour ${firstName} ! Votre document pour l'étape ${currentStep!.stepNumber} (${currentStep!.title}) est en cours d'examen par MiKL. Vous serez notifié dès qu'il rendra sa décision.`
+      : currentStep
+        ? `Bonjour ${firstName} ! Vous progressez bien. Votre étape ${currentStep.stepNumber} (${currentStep.title}) attend votre attention. Cliquez sur « Continuer » pour que je vous guide.`
+        : `Bonjour ${firstName} ! Bienvenue dans votre parcours. Commencez par l'étape 1 pour démarrer !`
 
   const stepHref = allCompleted
     ? '/modules/parcours'
@@ -29,7 +33,11 @@ export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted }
       ? `/modules/parcours/steps/${currentStep.stepNumber}`
       : '/modules/parcours/steps/1'
 
-  const buttonLabel = allCompleted ? 'Voir mon parcours →' : 'Continuer avec Élio →'
+  const buttonLabel = allCompleted
+    ? 'Voir mon parcours →'
+    : isPendingReview
+      ? 'Voir l\'historique →'
+      : 'Continuer avec Élio →'
 
   return (
     <div className="bg-[#141414] border border-[#2d2d2d] rounded-xl p-5">
