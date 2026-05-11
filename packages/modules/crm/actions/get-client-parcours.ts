@@ -61,7 +61,7 @@ export async function getClientParcours(clientId: string): Promise<ActionRespons
       key: a.id as string,
       active: (a.status as string) !== 'skipped',
       status: (
-        a.status === 'active' ? 'in_progress'
+        a.status === 'active' || a.status === 'pending_review' ? 'in_progress'
         : a.status === 'completed' ? 'completed'
         : a.status === 'skipped' ? 'skipped'
         : 'pending'

@@ -6,6 +6,11 @@ const mockGetUser = vi.fn()
 const mockSingleParcours = vi.fn()
 const mockSingleClient = vi.fn()
 
+// client_parcours_agents chain — retourne [] par défaut → déclenche le fallback vers parcours
+const mockAgentsOrder = vi.fn()
+const mockAgentsEq = vi.fn(() => ({ order: mockAgentsOrder }))
+const mockAgentsSelect = vi.fn(() => ({ eq: mockAgentsEq }))
+
 // Parcours query chain
 const mockParcoursLimit = vi.fn(() => ({ single: mockSingleParcours }))
 const mockParcoursOrder = vi.fn(() => ({ limit: mockParcoursLimit }))
@@ -18,6 +23,7 @@ const mockStepsEq = vi.fn(() => ({ order: mockStepsOrder }))
 const mockStepsSelect = vi.fn(() => ({ eq: mockStepsEq }))
 
 const mockFrom = vi.fn((table: string) => {
+  if (table === 'client_parcours_agents') return { select: mockAgentsSelect }
   if (table === 'parcours') return { select: mockParcoursSelect }
   if (table === 'parcours_steps') return { select: mockStepsSelect }
   return { select: vi.fn() }
@@ -86,6 +92,8 @@ describe('getParcours Server Action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-id' } }, error: null })
+    // agents → [] pour déclencher le fallback vers parcours + parcours_steps
+    mockAgentsOrder.mockResolvedValue({ data: [], error: null })
     mockSingleParcours.mockResolvedValue({ data: mockParcoursDB, error: null })
     mockStepsOrder.mockResolvedValue({ data: mockStepsDB, error: null })
   })

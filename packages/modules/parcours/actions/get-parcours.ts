@@ -12,6 +12,7 @@ import { toParcours, toParcoursStep } from '../utils/parcours-mappers'
 function mapAgentStatus(status: ClientParcoursAgentStatus): ParcoursStepStatus {
   switch (status) {
     case 'active': return 'current'
+    case 'pending_review': return 'pending_review'
     case 'completed': return 'completed'
     case 'skipped': return 'skipped'
     default: return 'locked'

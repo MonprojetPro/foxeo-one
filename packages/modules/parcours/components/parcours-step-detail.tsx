@@ -42,7 +42,7 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
     showSubmissionLink: false,
   },
   pending_review: {
-    showGenerateButton: true,
+    showGenerateButton: false,
     showSubmissionLink: false,
   },
   completed: {
@@ -82,6 +82,17 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             <span className="mx-1.5">›</span>
             <span className="text-[#a78bfa]">Étape {step.stepNumber} : {step.title}</span>
           </nav>
+
+          {/* Banner soumission en attente de validation */}
+          {step.status === 'pending_review' && (
+            <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-[#7c3aed]/30 bg-[#7c3aed]/10 px-4 py-3 text-sm text-[#a78bfa]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              Votre document a été soumis — en attente de validation par MiKL.
+            </div>
+          )}
 
           {/* Banner parcours en pause — consultation uniquement */}
           {isPaused && (

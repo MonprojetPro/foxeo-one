@@ -272,7 +272,7 @@ export const ABANDONMENT_REASONS = [
 
 // --- Client Parcours Agents (Story 14.3) ---
 
-export const ClientParcoursAgentStatusValues = ['pending', 'active', 'completed', 'skipped'] as const
+export const ClientParcoursAgentStatusValues = ['pending', 'active', 'pending_review', 'completed', 'skipped'] as const
 export type ClientParcoursAgentStatus = typeof ClientParcoursAgentStatusValues[number]
 
 export interface ClientParcoursAgentDB {

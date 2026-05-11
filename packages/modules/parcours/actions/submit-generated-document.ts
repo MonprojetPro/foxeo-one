@@ -102,10 +102,10 @@ export async function submitGeneratedDocument(
       content: input.document.substring(0, 500),
     })
 
-    // 3. UPDATE client_parcours_agents status → 'completed'
+    // 3. UPDATE client_parcours_agents status → 'pending_review' (en attente de validation MiKL)
     await supabase
       .from('client_parcours_agents')
-      .update({ status: 'completed' })
+      .update({ status: 'pending_review' })
       .eq('id', input.stepId)
 
     // 4. Notification opérateur
