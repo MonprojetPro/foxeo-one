@@ -35,10 +35,10 @@ export async function submitGeneratedDocument(
       return errorResponse('Client non trouvé', 'NOT_FOUND', { message: clientError?.message ?? 'not found' })
     }
 
-    // Récupérer l'étape avec son parcours
+    // Récupérer l'étape depuis client_parcours_agents (nouveau système)
     const { data: step, error: stepError } = await supabase
-      .from('parcours_steps')
-      .select('id, step_number, title, parcours_id, status')
+      .from('client_parcours_agents')
+      .select('id, step_order, step_label, client_id, status, elio_lab_agents(name)')
       .eq('id', input.stepId)
       .single()
 
@@ -46,8 +46,12 @@ export async function submitGeneratedDocument(
       return errorResponse('Étape non trouvée', 'NOT_FOUND', { message: stepError?.message ?? 'not found' })
     }
 
-    if (step.status !== 'current') {
-      return errorResponse('Cette étape n\'est pas en cours', 'INVALID_STATUS')
+    if (step.client_id !== client.id) {
+      return errorResponse('Accès non autorisé à cette étape', 'FORBIDDEN')
+    }
+
+    if (step.status !== 'active') {
+      return errorResponse('Cette étape n\'est pas active', 'INVALID_STATUS')
     }
 
     // Vérifier qu'il n'y a pas déjà une soumission pending
@@ -65,6 +69,9 @@ export async function submitGeneratedDocument(
         'DUPLICATE_SUBMISSION'
       )
     }
+
+    const agentData = step.elio_lab_agents as { name?: string } | null
+    const stepTitle = step.step_label ?? agentData?.name ?? `Étape ${step.step_order}`
 
     // 1. INSERT step_submissions
     const { data: submission, error: submissionError } = await supabase
@@ -88,17 +95,17 @@ export async function submitGeneratedDocument(
     await supabase.from('validation_requests').insert({
       client_id: client.id,
       operator_id: client.operator_id,
-      parcours_id: step.parcours_id,
+      parcours_id: null,
       step_id: input.stepId,
       type: 'step_submission',
-      title: `Nouvelle soumission — Étape ${step.step_number}`,
+      title: `Nouvelle soumission — ${stepTitle}`,
       content: input.document.substring(0, 500),
     })
 
-    // 3. UPDATE parcours_steps status → 'pending_review'
+    // 3. UPDATE client_parcours_agents status → 'completed'
     await supabase
-      .from('parcours_steps')
-      .update({ status: 'pending_review' })
+      .from('client_parcours_agents')
+      .update({ status: 'completed' })
       .eq('id', input.stepId)
 
     // 4. Notification opérateur
@@ -106,8 +113,8 @@ export async function submitGeneratedDocument(
       recipient_type: 'operator',
       recipient_id: client.operator_id,
       type: 'alert',
-      title: `Nouvelle soumission — Étape ${step.step_number}`,
-      body: `${client.name} a soumis son document pour : ${step.title}`,
+      title: `Nouvelle soumission — ${stepTitle}`,
+      body: `${client.name} a soumis son document pour : ${stepTitle}`,
       link: `/modules/validation/submissions/${submission.id}`,
     })
 

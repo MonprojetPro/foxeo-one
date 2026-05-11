@@ -29,10 +29,10 @@ export async function generateDocumentFromConversation(
       return errorResponse('Non authentifié', 'UNAUTHORIZED')
     }
 
-    // Récupérer l'étape avec son parcours
+    // Récupérer l'étape depuis client_parcours_agents (nouveau système)
     const { data: step, error: stepError } = await supabase
-      .from('parcours_steps')
-      .select('id, step_number, title, description, brief_template, status, parcours(client_id)')
+      .from('client_parcours_agents')
+      .select('id, step_order, step_label, client_id, elio_lab_agents(name, description)')
       .eq('id', input.stepId)
       .single()
 
@@ -43,8 +43,7 @@ export async function generateDocumentFromConversation(
     }
 
     // Vérification ownership
-    const parcoursData = step.parcours as { client_id: string } | null
-    if (!parcoursData || parcoursData.client_id !== input.clientId) {
+    if (step.client_id !== input.clientId) {
       return errorResponse('Accès non autorisé à cette étape', 'FORBIDDEN')
     }
 
@@ -87,10 +86,11 @@ export async function generateDocumentFromConversation(
       clientId: input.clientId,
     })
 
-    const stepNumber = Number(step.step_number) || 0
-    const stepTitle = String(step.title ?? '')
-    const stepDescription = String(step.description ?? '')
-    const briefTemplate = step.brief_template ? String(step.brief_template) : null
+    const agent = step.elio_lab_agents as { name?: string; description?: string } | null
+    const stepNumber = Number(step.step_order) || 0
+    const stepTitle = String(step.step_label ?? agent?.name ?? '')
+    const stepDescription = String(agent?.description ?? '')
+    const briefTemplate = null
 
     const prompt = buildDocumentPrompt({
       stepNumber,
