@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { generateDocumentFromConversation } from '../actions/generate-and-submit-step'
 import { submitGeneratedDocument } from '../actions/submit-generated-document'
@@ -40,6 +41,7 @@ export function GenerateDocumentButton({
   stepNumber,
   onSubmitted,
 }: GenerateDocumentButtonProps) {
+  const queryClient = useQueryClient()
   const [buttonState, setButtonState] = useState<ButtonState>('idle')
   const [generatedDocument, setGeneratedDocument] = useState<string>('')
 
@@ -79,6 +81,9 @@ export function GenerateDocumentButton({
     }
     showSuccess('Votre document a été soumis à MiKL !')
     setButtonState('submitted')
+    // Rafraîchir immédiatement la sidebar historique sans attendre le Realtime
+    queryClient.invalidateQueries({ queryKey: ['step-history-submissions', stepId] })
+    queryClient.invalidateQueries({ queryKey: ['step-submission-status', stepId] })
     onSubmitted?.()
   }, [stepId, generatedDocument, onSubmitted])
 
