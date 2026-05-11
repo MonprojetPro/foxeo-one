@@ -1,4 +1,4 @@
-export type ValidationRequestType = 'brief_lab' | 'evolution_one'
+export type ValidationRequestType = 'brief_lab' | 'evolution_one' | 'step_submission'
 
 export type ValidationRequestStatus =
   | 'pending'

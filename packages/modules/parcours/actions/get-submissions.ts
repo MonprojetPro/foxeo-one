@@ -21,14 +21,12 @@ function mapSubmission(db: StepSubmissionDB): StepSubmission {
   }
 }
 
-function mapSubmissionWithStep(
-  db: StepSubmissionDB & { parcours_steps: { step_number: number; title: string; parcours_id: string } | null }
-): StepSubmissionWithStep {
+function mapSubmissionWithStep(db: StepSubmissionDB): StepSubmissionWithStep {
   return {
     ...mapSubmission(db),
-    stepNumber: db.parcours_steps?.step_number ?? 0,
-    stepTitle: db.parcours_steps?.title ?? '',
-    parcoursId: db.parcours_steps?.parcours_id ?? '',
+    stepNumber: 0,
+    stepTitle: '',
+    parcoursId: '',
   }
 }
 
@@ -51,7 +49,7 @@ export async function getSubmissions(
 
     let query = supabase
       .from('step_submissions')
-      .select('*, parcours_steps(step_number, title, parcours_id)')
+      .select('*')
       .order('submitted_at', { ascending: false })
 
     if (parsed.data.clientId) {
@@ -72,10 +70,7 @@ export async function getSubmissions(
       return errorResponse('Échec récupération soumissions', 'DATABASE_ERROR', error)
     }
 
-    type SubmissionRow = StepSubmissionDB & {
-      parcours_steps: { step_number: number; title: string; parcours_id: string } | null
-    }
-    const submissions = (data as SubmissionRow[]).map(mapSubmissionWithStep)
+    const submissions = (data as StepSubmissionDB[]).map(mapSubmissionWithStep)
 
     console.log('[PARCOURS:GET_SUBMISSIONS] Récupérées:', submissions.length)
 

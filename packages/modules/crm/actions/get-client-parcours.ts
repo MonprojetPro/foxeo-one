@@ -50,12 +50,32 @@ export async function getClientParcours(clientId: string): Promise<ActionRespons
       return successResponse(null)
     }
 
+    // Lire client_parcours_agents pour un décompte réel des étapes
+    const { data: agents } = await supabase
+      .from('client_parcours_agents')
+      .select('id, step_order, status')
+      .eq('client_id', clientId)
+      .order('step_order', { ascending: true })
+
+    const derivedStages = (agents ?? []).map((a) => ({
+      key: a.id as string,
+      active: (a.status as string) !== 'skipped',
+      status: (
+        a.status === 'active' ? 'in_progress'
+        : a.status === 'completed' ? 'completed'
+        : a.status === 'skipped' ? 'skipped'
+        : 'pending'
+      ) as 'pending' | 'in_progress' | 'completed' | 'skipped',
+    }))
+
+    const activeStages = derivedStages.length > 0 ? derivedStages : (data.active_stages ?? [])
+
     const parcours = ParcoursSchema.parse({
       id: data.id,
       clientId: data.client_id,
       templateId: data.template_id,
       operatorId: data.operator_id,
-      activeStages: data.active_stages,
+      activeStages,
       status: data.status,
       startedAt: data.started_at,
       suspendedAt: data.suspended_at,

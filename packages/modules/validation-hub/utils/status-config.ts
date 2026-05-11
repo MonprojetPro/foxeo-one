@@ -37,4 +37,8 @@ export const TYPE_CONFIG: Record<
     label: 'Évolution One',
     className: 'bg-[#F7931E]/20 text-[#F7931E] border-[#F7931E]/30',
   },
+  step_submission: {
+    label: 'Soumission étape',
+    className: 'bg-[#7c3aed]/20 text-[#a78bfa] border-[#7c3aed]/30',
+  },
 }

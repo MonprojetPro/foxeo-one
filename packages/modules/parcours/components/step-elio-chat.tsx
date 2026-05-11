@@ -263,7 +263,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
 
       {/* Messages */}
       <div
-        className="h-[420px] overflow-y-auto p-4 flex flex-col gap-3 bg-[#0f0f0f]"
+        className="h-[420px] overflow-y-auto p-4 flex flex-col gap-3 bg-[#0f0f0f] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#3d2d6d] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7c3aed]"
         role="log"
         aria-live="polite"
       >
