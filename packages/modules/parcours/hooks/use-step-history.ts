@@ -63,14 +63,14 @@ export function useStepHistory(stepId: string | undefined) {
     staleTime: 60_000,
   })
 
-  // Realtime subscription sur step_submissions filtré par step_id
+  // Realtime subscription sur step_submissions ET step_feedback_injections filtrés par step_id
   useEffect(() => {
     if (!stepId) return
 
     const supabase = createBrowserSupabaseClient()
 
     const channel = supabase
-      .channel(`step-submissions-${stepId}`)
+      .channel(`step-history-${stepId}`)
       .on(
         'postgres_changes',
         {
@@ -81,9 +81,20 @@ export function useStepHistory(stepId: string | undefined) {
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['step-history-submissions', stepId] })
-          // Invalider aussi les queries parentes qui dépendent du statut
           queryClient.invalidateQueries({ queryKey: ['step-submission-status', stepId] })
           queryClient.invalidateQueries({ queryKey: ['step-submissions'] })
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'step_feedback_injections',
+          filter: `step_id=eq.${stepId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['step-feedback-injections', stepId] })
         }
       )
       .subscribe((status, err) => {

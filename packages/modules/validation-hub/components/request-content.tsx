@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { FileText, Download } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import {
   Card,
   CardContent,
@@ -29,6 +30,7 @@ export function RequestContent({ content, documents }: RequestContentProps) {
         {/* Contenu markdown */}
         <div className="prose prose-invert max-w-none text-sm text-foreground/90">
           <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
             components={{
               p: ({ children }) => (
                 <p className="mb-3 last:mb-0">{children}</p>
@@ -56,6 +58,28 @@ export function RequestContent({ content, documents }: RequestContentProps) {
                 <strong className="font-semibold text-foreground">
                   {children}
                 </strong>
+              ),
+              table: ({ children }) => (
+                <div className="overflow-x-auto mb-3">
+                  <table className="w-full border-collapse text-xs">{children}</table>
+                </div>
+              ),
+              thead: ({ children }) => (
+                <thead className="bg-muted/40">{children}</thead>
+              ),
+              tbody: ({ children }) => <tbody>{children}</tbody>,
+              tr: ({ children }) => (
+                <tr className="border-b border-border/40">{children}</tr>
+              ),
+              th: ({ children }) => (
+                <th className="px-3 py-1.5 text-left font-semibold text-foreground/80 border border-border/30">
+                  {children}
+                </th>
+              ),
+              td: ({ children }) => (
+                <td className="px-3 py-1.5 text-foreground/70 border border-border/30">
+                  {children}
+                </td>
               ),
             }}
           >
