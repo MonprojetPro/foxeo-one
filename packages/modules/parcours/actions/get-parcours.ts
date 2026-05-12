@@ -54,6 +54,22 @@ export async function getParcours(
       .order('step_order', { ascending: true })
 
     if (!agentStepsError && agentSteps && agentSteps.length > 0) {
+      // Récupérer la dernière soumission par étape pour afficher le bon statut dans le panel Élio
+      const stepIds = agentSteps.map((s) => s.id)
+      const { data: latestSubmissions } = await supabase
+        .from('step_submissions')
+        .select('parcours_step_id, status, created_at')
+        .eq('client_id', clientId)
+        .in('parcours_step_id', stepIds)
+        .order('created_at', { ascending: false })
+
+      const latestByStep = new Map<string, string>()
+      for (const sub of latestSubmissions ?? []) {
+        if (!latestByStep.has(sub.parcours_step_id)) {
+          latestByStep.set(sub.parcours_step_id, sub.status)
+        }
+      }
+
       const steps: ParcoursStep[] = agentSteps.map((row, index) => ({
         id: row.id,
         parcoursId: clientId,
@@ -68,6 +84,7 @@ export async function getParcours(
         completedAt: null,
         validationRequired: false,
         validationId: null,
+        latestSubmissionStatus: (latestByStep.get(row.id) as import('../types/parcours.types').SubmissionStatus) ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }))

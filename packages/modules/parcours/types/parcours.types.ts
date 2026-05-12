@@ -67,6 +67,7 @@ export interface ParcoursStep {
   completedAt: string | null
   validationRequired: boolean
   validationId: string | null
+  latestSubmissionStatus: SubmissionStatus | null
   createdAt: string
   updatedAt: string
 }

@@ -99,7 +99,7 @@ export async function submitGeneratedDocument(
       step_id: input.stepId,
       type: 'step_submission',
       title: `Nouvelle soumission — ${stepTitle}`,
-      content: input.document.substring(0, 500),
+      content: input.document,
     })
 
     // 3. UPDATE client_parcours_agents status → 'pending_review' (en attente de validation MiKL)

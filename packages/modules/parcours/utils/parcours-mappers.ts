@@ -30,6 +30,7 @@ export function toParcoursStep(db: ParcoursStepDB): ParcoursStep {
     completedAt: db.completed_at,
     validationRequired: db.validation_required,
     validationId: db.validation_id,
+    latestSubmissionStatus: null,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
   }

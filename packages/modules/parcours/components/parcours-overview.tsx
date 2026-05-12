@@ -36,7 +36,9 @@ export function ParcoursOverview({ clientId, clientFirstName }: ParcoursOverview
 
   const isAbandoned = parcours.status === 'abandoned'
   const canAbandon = ABANDONABLE_STATUSES.includes(parcours.status)
-  const currentStep = parcours.steps.find((s) => s.status === 'current' || s.status === 'pending_review') ?? null
+  const currentStep = parcours.steps.find(
+    (s) => s.status === 'current' || s.status === 'pending_review'
+  ) ?? null
   const allCompleted = parcours.completedSteps > 0 && parcours.completedSteps === parcours.totalSteps
 
   return (
