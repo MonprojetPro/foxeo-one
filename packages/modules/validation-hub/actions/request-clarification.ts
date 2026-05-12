@@ -69,7 +69,29 @@ export async function requestClarification(
       client_id: string
       type: string
       title: string
+      step_id: string | null
       [key: string]: unknown
+    }
+
+    let stepOrder: number | null = null
+
+    // Pour les soumissions d'étape : injecter la question dans le panneau historique client
+    if (requestData.type === 'step_submission' && requestData.step_id) {
+      const { data: stepRow } = await supabase
+        .from('client_parcours_agents')
+        .select('step_order')
+        .eq('id', requestData.step_id)
+        .single()
+
+      stepOrder = stepRow?.step_order ?? null
+
+      await supabase.from('step_feedback_injections').insert({
+        step_id: requestData.step_id,
+        operator_id: operator.id,
+        client_id: requestData.client_id,
+        content: comment,
+        type: 'text_feedback',
+      })
     }
 
     // Create notification for client
@@ -80,8 +102,14 @@ export async function requestClarification(
       .single()
 
     if (clientData?.auth_user_id) {
-      const link =
-        requestData.type === 'brief_lab' ? '/modules/parcours-lab' : '/modules/core-dashboard'
+      let link: string
+      if (requestData.type === 'step_submission' && stepOrder !== null) {
+        link = `/modules/parcours/steps/${stepOrder}`
+      } else if (requestData.type === 'brief_lab') {
+        link = '/modules/parcours-lab'
+      } else {
+        link = '/modules/core-dashboard'
+      }
 
       const { error: notifError } = await supabase
         .from('notifications')

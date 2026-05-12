@@ -175,6 +175,94 @@ describe('requestClarification', () => {
     expect(result.data).toBeDefined()
   })
 
+  it('should insert step_feedback_injection and use step URL for step_submission type', async () => {
+    const stepId = '00000000-0000-0000-0000-000000000099'
+    const requestData = {
+      id: validRequestId,
+      client_id: 'client-1',
+      operator_id: 'operator-1',
+      type: 'step_submission',
+      title: 'Soumission étape 2',
+      status: 'needs_clarification',
+      reviewer_comment: validComment,
+      reviewed_at: '2026-02-26T10:00:00Z',
+      updated_at: '2026-02-26T10:00:00Z',
+      content: 'content',
+      document_ids: [],
+      submitted_at: '2026-02-25T10:00:00Z',
+      created_at: '2026-02-25T10:00:00Z',
+      parcours_id: null,
+      step_id: stepId,
+    }
+
+    const mockInsertFeedback = vi.fn().mockResolvedValue({ data: { id: 'fi-1' }, error: null })
+    const mockInsertNotif = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: { id: 'notif-1' }, error: null }),
+      }),
+    })
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'operators') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: 'operator-1' }, error: null }),
+            }),
+          }),
+        }
+      }
+      if (table === 'validation_requests') {
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: requestData, error: null }),
+              }),
+            }),
+          }),
+        }
+      }
+      if (table === 'client_parcours_agents') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { step_order: 2 }, error: null }),
+            }),
+          }),
+        }
+      }
+      if (table === 'step_feedback_injections') {
+        return { insert: mockInsertFeedback }
+      }
+      if (table === 'clients') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { auth_user_id: 'auth-client-1' }, error: null }),
+            }),
+          }),
+        }
+      }
+      if (table === 'notifications') {
+        return { insert: mockInsertNotif }
+      }
+      return {}
+    })
+
+    const { requestClarification } = await import('./request-clarification')
+    const result = await requestClarification(validRequestId, validComment)
+
+    expect(result.error).toBeNull()
+    expect(mockInsertFeedback).toHaveBeenCalledWith(
+      expect.objectContaining({ step_id: stepId, type: 'text_feedback', content: validComment })
+    )
+    // Notification link doit pointer vers l'étape 2
+    expect(mockInsertNotif).toHaveBeenCalledWith(
+      expect.objectContaining({ link: '/modules/parcours/steps/2' })
+    )
+  })
+
   it('should return DB_ERROR when update fails', async () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === 'operators') {
