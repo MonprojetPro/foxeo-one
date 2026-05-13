@@ -22,7 +22,15 @@ const statusConfig: Record<ParcoursStepStatus, { label: string; className: strin
   },
   pending_review: {
     label: 'En attente de validation',
-    className: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+    className: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30',
+  },
+  rejected: {
+    label: 'À corriger',
+    className: 'bg-orange-500/20 text-orange-300 border border-orange-500/40',
+  },
+  needs_clarification: {
+    label: 'Question MiKL',
+    className: 'bg-blue-500/20 text-blue-300 border border-blue-500/40',
   },
 }
 

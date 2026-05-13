@@ -10,10 +10,28 @@ import {
 import { cn } from '@monprojetpro/utils'
 import type { ModuleManifest, ModuleTarget } from '@monprojetpro/types'
 
+export type ModuleSidebarBadgeVariant = 'red' | 'orange' | 'yellow' | 'blue' | 'violet' | 'green'
+
+export type ModuleSidebarBadge = {
+  count?: number
+  variant: ModuleSidebarBadgeVariant
+  ariaLabel?: string
+}
+
 type ModuleSidebarProps = {
   target: ModuleTarget
   modules: ModuleManifest[]
   elioWidget?: React.ReactNode
+  badges?: Record<string, ModuleSidebarBadge>
+}
+
+const BADGE_VARIANT_CLASSES: Record<ModuleSidebarBadgeVariant, string> = {
+  red:    'bg-red-500 text-white',
+  orange: 'bg-orange-500 text-white',
+  yellow: 'bg-yellow-500 text-black',
+  blue:   'bg-blue-500 text-white',
+  violet: 'bg-[#7c3aed] text-white',
+  green:  'bg-green-500 text-white',
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -40,7 +58,7 @@ const SECTION_LABEL: Record<string, string> = {
   'hub': 'Hub MonprojetPro',
 }
 
-export function ModuleSidebar({ target, modules, elioWidget }: ModuleSidebarProps) {
+export function ModuleSidebar({ target, modules, elioWidget, badges }: ModuleSidebarProps) {
   const pathname = usePathname()
   const isLab = target === 'client-lab'
   const isOne = target === 'client-one'
@@ -70,6 +88,8 @@ export function ModuleSidebar({ target, modules, elioWidget }: ModuleSidebarProp
             : Boolean(pathname?.startsWith(`/modules/${module.id}`))
           const IconComponent = ICON_MAP[module.navigation.icon] ?? Box
 
+          const badge = badges?.[module.id]
+
           return (
             <Link
               key={module.id}
@@ -92,7 +112,20 @@ export function ModuleSidebar({ target, modules, elioWidget }: ModuleSidebarProp
               aria-current={isActive ? 'page' : undefined}
             >
               <IconComponent size={16} aria-hidden="true" />
-              <span>{module.navigation.label}</span>
+              <span className="flex-1">{module.navigation.label}</span>
+              {badge && (badge.count === undefined || badge.count > 0) && (
+                <span
+                  className={cn(
+                    'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold px-1.5 shrink-0',
+                    BADGE_VARIANT_CLASSES[badge.variant]
+                  )}
+                  aria-label={badge.ariaLabel}
+                >
+                  {badge.count !== undefined
+                    ? badge.count > 9 ? '9+' : badge.count
+                    : ''}
+                </span>
+              )}
             </Link>
           )
         })}

@@ -171,11 +171,14 @@ describe('completeStep — unlock next step logic (AC5)', () => {
     mockStepSingle.mockResolvedValue({ data: mockStep, error: null })
   })
 
-  it('ParcoursStepStatusValues covers all DB status values', () => {
+  it('ParcoursStepStatusValues covers all visual status values', () => {
     expect(ParcoursStepStatusValues).toContain('locked')
     expect(ParcoursStepStatusValues).toContain('current')
     expect(ParcoursStepStatusValues).toContain('completed')
     expect(ParcoursStepStatusValues).toContain('skipped')
-    expect(ParcoursStepStatusValues).toHaveLength(4)
+    expect(ParcoursStepStatusValues).toContain('pending_review')
+    expect(ParcoursStepStatusValues).toContain('rejected')
+    expect(ParcoursStepStatusValues).toContain('needs_clarification')
+    expect(ParcoursStepStatusValues).toHaveLength(7)
   })
 })

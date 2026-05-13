@@ -16,7 +16,7 @@ export function RealtimeDashboardRefresh({ clientId }: RealtimeDashboardRefreshP
 
     const supabase = createBrowserSupabaseClient()
 
-    // Rafraîchir le dashboard client quand le parcours ou les étapes changent
+    // Rafraîchir le dashboard client quand le parcours, les étapes ou les demandes de validation changent
     const parcoursChannel = supabase
       .channel(`client-dashboard-refresh:${clientId}`)
       .on(
@@ -35,6 +35,26 @@ export function RealtimeDashboardRefresh({ clientId }: RealtimeDashboardRefreshP
           event: '*',
           schema: 'public',
           table: 'client_parcours_agents',
+          filter: `client_id=eq.${clientId}`,
+        },
+        () => { router.refresh() }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'validation_requests',
+          filter: `client_id=eq.${clientId}`,
+        },
+        () => { router.refresh() }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'step_submissions',
           filter: `client_id=eq.${clientId}`,
         },
         () => { router.refresh() }

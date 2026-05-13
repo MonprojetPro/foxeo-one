@@ -92,9 +92,21 @@ describe('ParcoursStepDetail', () => {
     expect(screen.getByTestId('generate-document-button')).toBeDefined()
   })
 
-  it('renders GenerateDocumentButton for pending_review step with clientId', () => {
+  it('does not render GenerateDocumentButton for pending_review step (MiKL examine, pas de resoumission tant que pending)', () => {
     const pendingStep = { ...baseStep, status: 'pending_review' as const }
     render(<ParcoursStepDetail step={pendingStep} totalSteps={5} clientId="client-001" />)
+    expect(screen.queryByTestId('generate-document-button')).toBeNull()
+  })
+
+  it('renders GenerateDocumentButton for rejected step (client doit pouvoir corriger et resoumettre)', () => {
+    const rejectedStep = { ...baseStep, status: 'rejected' as const }
+    render(<ParcoursStepDetail step={rejectedStep} totalSteps={5} clientId="client-001" />)
+    expect(screen.getByTestId('generate-document-button')).toBeDefined()
+  })
+
+  it('renders GenerateDocumentButton for needs_clarification step (client peut répondre par nouveau doc)', () => {
+    const clarifStep = { ...baseStep, status: 'needs_clarification' as const }
+    render(<ParcoursStepDetail step={clarifStep} totalSteps={5} clientId="client-001" />)
     expect(screen.getByTestId('generate-document-button')).toBeDefined()
   })
 

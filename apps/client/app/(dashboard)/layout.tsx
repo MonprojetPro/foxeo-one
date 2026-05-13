@@ -9,6 +9,7 @@ import {
   ModuleSidebar,
   Button,
 } from '@monprojetpro/ui'
+import type { ModuleSidebarBadge } from '@monprojetpro/ui'
 import { manifest as parcoursMani } from '@monprojetpro/module-parcours/manifest'
 import { manifest as elioMani } from '@monprojetpro/module-elio/manifest'
 import { manifest as chatMani } from '@monprojetpro/modules-chat/manifest'
@@ -48,11 +49,13 @@ function ClientSidebar({
   activeModules,
   logoUrl,
   userId,
+  badges,
 }: {
   dashboardType: string
   activeModules: string[]
   logoUrl?: string | null
   userId: string
+  badges?: Record<string, ModuleSidebarBadge>
 }) {
   const target: ModuleTarget =
     dashboardType === 'one' ? 'client-one' : 'client-lab'
@@ -76,8 +79,80 @@ function ClientSidebar({
       : undefined
 
   return (
-    <ModuleSidebar target={target} modules={modules} elioWidget={elioWidget} />
+    <ModuleSidebar target={target} modules={modules} elioWidget={elioWidget} badges={badges} />
   )
+}
+
+/**
+ * Calcule le badge à afficher sur l'item "parcours" de la sidebar gauche client.
+ * - rouge : feedbacks MiKL non lus (priorité absolue)
+ * - bleu  : MiKL a posé une question (needs_clarification)
+ * - orange : la dernière soumission a été refusée
+ * - jaune : soumission en attente de validation
+ * Retourne undefined si rien à signaler.
+ */
+async function computeParcoursBadge(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  clientId: string,
+): Promise<ModuleSidebarBadge | undefined> {
+  if (!clientId) return undefined
+
+  // 1. Feedbacks MiKL non lus → rouge avec compteur
+  const { count: unreadFeedbackCount } = await supabase
+    .from('step_feedback_injections')
+    .select('id', { count: 'exact', head: true })
+    .eq('client_id', clientId)
+    .is('read_at', null)
+
+  if ((unreadFeedbackCount ?? 0) > 0) {
+    return {
+      variant: 'red',
+      count: unreadFeedbackCount ?? 0,
+      ariaLabel: `${unreadFeedbackCount} feedback(s) MiKL non lu(s)`,
+    }
+  }
+
+  // 2. Question MiKL en attente → bleu (sans compteur)
+  const { data: clarificationRow } = await supabase
+    .from('validation_requests')
+    .select('id')
+    .eq('client_id', clientId)
+    .eq('type', 'step_submission')
+    .eq('status', 'needs_clarification')
+    .limit(1)
+    .maybeSingle()
+
+  if (clarificationRow) {
+    return { variant: 'blue', ariaLabel: 'Une question MiKL en attente' }
+  }
+
+  // 3. Dernière soumission refusée → orange (sans compteur)
+  const { data: latestSubmission } = await supabase
+    .from('step_submissions')
+    .select('status')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if ((latestSubmission as { status: string } | null)?.status === 'rejected') {
+    return { variant: 'orange', ariaLabel: 'Document refusé — à corriger' }
+  }
+
+  // 4. Étape en attente de validation → jaune (sans compteur)
+  const { data: pendingReviewRow } = await supabase
+    .from('client_parcours_agents')
+    .select('id')
+    .eq('client_id', clientId)
+    .eq('status', 'pending_review')
+    .limit(1)
+    .maybeSingle()
+
+  if (pendingReviewRow) {
+    return { variant: 'yellow', ariaLabel: 'Soumission en attente de validation' }
+  }
+
+  return undefined
 }
 
 function ClientHeader({
@@ -223,6 +298,13 @@ export default async function DashboardLayout({
   const accentColor = customBranding?.accentColor ?? null
   const logoUrl = customBranding?.logoUrl ?? null
 
+  // Badges sidebar — calculés côté serveur, propagés via prop (Kit Complet)
+  const sidebarBadges: Record<string, ModuleSidebarBadge> = {}
+  if (activeModules.includes('parcours')) {
+    const parcoursBadge = await computeParcoursBadge(supabase, clientId)
+    if (parcoursBadge) sidebarBadges.parcours = parcoursBadge
+  }
+
   // Build accent color CSS override style
   const accentStyle: React.CSSProperties = accentColor
     ? ({ '--accent': accentColor } as React.CSSProperties)
@@ -236,7 +318,7 @@ export default async function DashboardLayout({
       <DashboardShell
         density={density}
         sidebar={
-          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} logoUrl={logoUrl} userId={user?.id ?? ''} />
+          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} logoUrl={logoUrl} userId={user?.id ?? ''} badges={sidebarBadges} />
         }
         header={
           <ClientHeader

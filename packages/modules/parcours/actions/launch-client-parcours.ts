@@ -23,12 +23,14 @@ export async function launchClientParcours(
 
     const { clientId, steps } = parsed.data
 
+    // 1ère étape en 'active' (le client peut démarrer immédiatement),
+    // étapes suivantes en 'pending' (verrouillées jusqu'à validation de l'étape précédente).
     const rows = steps.map((step, index) => ({
       client_id: clientId,
       elio_lab_agent_id: step.agentId,
       step_order: index + 1,
       step_label: step.stepLabel,
-      status: 'pending' as const,
+      status: (index === 0 ? 'active' : 'pending') as 'active' | 'pending',
     }))
 
     const { error: insertError } = await supabase
@@ -39,6 +41,27 @@ export async function launchClientParcours(
       console.error('[PARCOURS:LAUNCH_CLIENT_PARCOURS] Insert error:', insertError)
       return errorResponse('Erreur lors du lancement du parcours', 'DB_ERROR', {
         message: insertError.message,
+      })
+    }
+
+    // Notifier le client que son parcours démarre — kit complet : la cloche client
+    // doit s'animer dès le lancement côté Hub (Realtime).
+    const { data: clientRow } = await supabase
+      .from('clients')
+      .select('auth_user_id')
+      .eq('id', clientId)
+      .maybeSingle()
+
+    const clientAuthUserId = (clientRow as { auth_user_id: string | null } | null)?.auth_user_id
+
+    if (clientAuthUserId) {
+      await supabase.from('notifications').insert({
+        recipient_type: 'client',
+        recipient_id: clientAuthUserId,
+        type: 'parcours',
+        title: 'Votre parcours Lab démarre !',
+        body: `Découvrez l'étape 1 : ${steps[0].stepLabel}. Élio vous accompagne dès maintenant.`,
+        link: '/modules/parcours/steps/1',
       })
     }
 

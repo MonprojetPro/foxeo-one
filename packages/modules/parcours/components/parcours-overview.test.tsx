@@ -20,6 +20,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({
     invalidateQueries: vi.fn(),
   }),
+  useQuery: () => ({ data: {}, isLoading: false, error: null }),
 }))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {

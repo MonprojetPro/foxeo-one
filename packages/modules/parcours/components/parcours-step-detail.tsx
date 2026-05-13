@@ -45,6 +45,16 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
     showGenerateButton: false,
     showSubmissionLink: false,
   },
+  // rejected : MiKL a refusé → le client peut regénérer un document corrigé et resoumettre
+  rejected: {
+    showGenerateButton: true,
+    showSubmissionLink: false,
+  },
+  // needs_clarification : le client peut répondre par chat OU regénérer un nouveau document
+  needs_clarification: {
+    showGenerateButton: true,
+    showSubmissionLink: false,
+  },
   completed: {
     showGenerateButton: false,
     showSubmissionLink: true,
@@ -83,14 +93,50 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             <span className="text-[#a78bfa]">Étape {step.stepNumber} : {step.title}</span>
           </nav>
 
-          {/* Banner soumission en attente de validation */}
+          {/* Banner soumission en attente de validation — jaune */}
           {step.status === 'pending_review' && (
-            <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-[#7c3aed]/30 bg-[#7c3aed]/10 px-4 py-3 text-sm text-[#a78bfa]">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+            <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300">
+              <span className="w-2 h-2 rounded-full bg-yellow-300 animate-pulse shrink-0" aria-hidden="true" />
               Votre document a été soumis — en attente de validation par MiKL.
+            </div>
+          )}
+
+          {/* Banner refus — orange : MiKL a refusé, le client doit corriger et resoumettre */}
+          {step.status === 'rejected' && (
+            <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-orange-500/40 bg-orange-500/10 px-4 py-3 text-sm text-orange-300">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0 mt-0.5">
+                <path d="M12 3l10 18H2L12 3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M12 10v4M12 17v.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+              </svg>
+              <div>
+                <p className="font-medium">MiKL a refusé votre soumission — corrections à apporter.</p>
+                <p className="text-xs text-orange-300/80 mt-0.5">Consultez le feedback dans le panneau de droite, puis régénérez un document corrigé avec Élio.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Banner question MiKL — bleu : MiKL pose une question avant de décider */}
+          {step.status === 'needs_clarification' && (
+            <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-sm text-blue-300">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0 mt-0.5">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M9 9a3 3 0 116 0c0 2-3 3-3 5M12 17v.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
+              </svg>
+              <div>
+                <p className="font-medium">MiKL a une question avant de décider.</p>
+                <p className="text-xs text-blue-300/80 mt-0.5">Consultez sa question dans le panneau de droite. Répondez en chat ou resoumettez un document corrigé.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Banner validation — vert : étape terminée */}
+          {step.status === 'completed' && (
+            <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-green-500/40 bg-green-500/10 px-4 py-3 text-sm text-green-300">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M8 12l3 3 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Cette étape a été validée par MiKL. {totalSteps > step.stepNumber ? `Passez à l'étape ${step.stepNumber + 1}.` : 'Toutes vos étapes sont terminées — graduation proche !'}
             </div>
           )}
 

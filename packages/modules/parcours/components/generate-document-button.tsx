@@ -48,12 +48,17 @@ export function GenerateDocumentButton({
   const { hasPending, isLoading: pendingLoading } = useStepSubmissionStatus(stepId)
 
   // Conditions pour activer le bouton
+  // Étapes éligibles pour générer/regénérer : current (1ère soumission) + rejected (correction
+  // après refus) + needs_clarification (réponse à une question MiKL avec un nouveau doc).
   const hasEnoughMessages = messageCount >= MIN_MESSAGES
-  const isStepCurrent = stepStatus === 'current'
-  const isEnabled = isStepCurrent && hasEnoughMessages && !hasPending && !pendingLoading
+  const isStepActionable =
+    stepStatus === 'current' ||
+    stepStatus === 'rejected' ||
+    stepStatus === 'needs_clarification'
+  const isEnabled = isStepActionable && hasEnoughMessages && !hasPending && !pendingLoading
 
   function getDisabledTooltip(): string {
-    if (!isStepCurrent) return 'Étape non accessible'
+    if (!isStepActionable) return 'Étape non accessible'
     if (hasPending) return 'Soumission en attente de validation'
     if (!hasEnoughMessages) return `Minimum ${MIN_MESSAGES} échanges avec Élio`
     return ''

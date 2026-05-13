@@ -35,12 +35,18 @@ const mockInsert = vi.fn(() => ({ select: mockInsertSelect }))
 // validation_requests + notifications insert (fire-and-forget)
 const mockSimpleInsert = vi.fn(() => ({}))
 
+// operators select (récupération auth_user_id pour notif)
+const mockOperatorSingle = vi.fn()
+const mockOperatorEq = vi.fn(() => ({ single: mockOperatorSingle }))
+const mockOperatorSelect = vi.fn(() => ({ eq: mockOperatorEq }))
+
 const mockFrom = vi.fn((table: string) => {
   if (table === 'clients') return { select: mockClientSelect }
   if (table === 'client_parcours_agents') return { select: mockStepSelect, update: mockStepUpdate }
   if (table === 'step_submissions') return { select: mockExistingSelect, insert: mockInsert }
   if (table === 'validation_requests') return { insert: mockSimpleInsert }
   if (table === 'notifications') return { insert: mockSimpleInsert }
+  if (table === 'operators') return { select: mockOperatorSelect }
   return {}
 })
 
@@ -80,6 +86,7 @@ describe('submitGeneratedDocument', () => {
     mockStepSingle.mockResolvedValue({ data: mockStep, error: null })
     mockExistingMaybeSingle.mockResolvedValue({ data: null, error: null })
     mockInsertSingle.mockResolvedValue({ data: { id: SUBMISSION_ID }, error: null })
+    mockOperatorSingle.mockResolvedValue({ data: { auth_user_id: 'auth-op-1' }, error: null })
   })
 
   it('returns VALIDATION_ERROR when document is empty', async () => {
@@ -150,10 +157,10 @@ describe('submitGeneratedDocument', () => {
     expect(result.data?.submissionId).toBe(SUBMISSION_ID)
   })
 
-  it('updates step status to completed on success', async () => {
+  it('updates step status to pending_review on success (en attente validation MiKL)', async () => {
     const { submitGeneratedDocument } = await import('./submit-generated-document')
     await submitGeneratedDocument({ stepId: STEP_ID, document: DOCUMENT })
-    expect(mockStepUpdate).toHaveBeenCalledWith({ status: 'completed' })
+    expect(mockStepUpdate).toHaveBeenCalledWith({ status: 'pending_review' })
     expect(mockStepUpdateEq).toHaveBeenCalledWith('id', STEP_ID)
   })
 })

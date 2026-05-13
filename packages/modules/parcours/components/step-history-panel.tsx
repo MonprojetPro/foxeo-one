@@ -65,11 +65,49 @@ interface StepHistoryPanelProps {
   className?: string
 }
 
+// Statut de la dernière soumission de l'étape — pour afficher un badge clair en haut du panneau.
+// Source : `submissions[0].status` (les soumissions sont triées submitted_at DESC dans use-step-history).
+type SubmissionBadgeKind = 'none' | 'pending' | 'approved' | 'rejected'
+
+const SUBMISSION_BADGE_CONFIG: Record<SubmissionBadgeKind, { label: string; className: string; description: string }> = {
+  none: {
+    label: 'Aucune soumission',
+    className: 'bg-[#1a1a1a] text-[#6b7280] border-[#2d2d2d]',
+    description: 'Discutez avec Élio puis générez votre document pour soumettre.',
+  },
+  pending: {
+    label: 'En attente',
+    className: 'bg-yellow-500/15 text-yellow-300 border-yellow-500/40',
+    description: 'Votre document est en cours d\'examen par MiKL.',
+  },
+  approved: {
+    label: 'Validée',
+    className: 'bg-green-500/15 text-green-300 border-green-500/40',
+    description: 'MiKL a validé cette soumission.',
+  },
+  rejected: {
+    label: 'À corriger',
+    className: 'bg-orange-500/15 text-orange-300 border-orange-500/40',
+    description: 'MiKL a refusé — consultez le feedback ci-dessous.',
+  },
+}
+
 export function StepHistoryPanel({ stepId, stepNumber, className = 'hidden lg:flex' }: StepHistoryPanelProps) {
   const { submissions, feedbackInjections, isLoadingSubmissions, isLoadingFeedback } = useStepHistory(stepId)
 
   const unreadFeedbackCount = feedbackInjections.filter((f) => f.readAt === null).length
   const totalFeedback = feedbackInjections.length
+
+  // Déterminer le badge de statut soumission
+  const latestSubmission = submissions[0]
+  const submissionBadgeKind: SubmissionBadgeKind = !latestSubmission
+    ? 'none'
+    : latestSubmission.status === 'approved'
+      ? 'approved'
+      : latestSubmission.status === 'rejected'
+        ? 'rejected'
+        : 'pending'
+  const submissionBadge = SUBMISSION_BADGE_CONFIG[submissionBadgeKind]
 
   return (
     <div className={cn(className, 'w-[420px] shrink-0 flex-col bg-[#141414] border-l border-[#2d2d2d] overflow-hidden')}>
@@ -88,6 +126,19 @@ export function StepHistoryPanel({ stepId, stepNumber, className = 'hidden lg:fl
             {unreadFeedbackCount}
           </span>
         )}
+      </div>
+
+      {/* Statut de la dernière soumission — toujours visible en haut du panel */}
+      <div className="px-4 py-3 border-b border-[#2d2d2d] bg-[#0f0f0f]">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6b7280] mb-1.5">
+          Statut de votre soumission
+        </p>
+        <div className="flex items-start gap-2">
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${submissionBadge.className}`}>
+            {submissionBadge.label}
+          </span>
+        </div>
+        <p className="text-[11px] text-[#9ca3af] mt-1.5 leading-relaxed">{submissionBadge.description}</p>
       </div>
 
       {/* Sections scrollables */}

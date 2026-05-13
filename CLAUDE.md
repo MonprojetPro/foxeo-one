@@ -143,7 +143,7 @@ Tests are **co-located**: `*.test.ts` next to source files, never in a separate 
 |-----------|-------------|---------|-------|
 | **Hub** | Cyan/Turquoise | Compact | MiKL data-dense cockpit |
 | **Lab** | Violet/Purple | Spacious | Client creative incubation |
-| **One** | Green/Orange | Comfortable | Client daily business tool |
+| **One** | Vert (`#16a34a` fond boutons, `#4ade80` texte accent) | Comfortable | Client daily business tool |
 
 CSS theme files: `packages/ui/src/themes/{hub,lab,one}.css`
 Full reference: `_bmad-output/planning-artifacts/design-system-themes.css`
@@ -188,7 +188,7 @@ Full reference: `_bmad-output/planning-artifacts/design-system-themes.css`
 
 **Graduation Lab → One** : la graduation ne provisionne rien. C'est une mise à jour du flag `client_configs.dashboard_type` (`'lab'` → `'one'`). Le client reste sur le même déploiement, la même DB Supabase, la même session. Seul le jeu d'onglets et le thème changent.
 
-**Toggle Mode Lab / Mode One** : au sein de ce déploiement multi-tenant unique, un switch persistant dans le shell permet au client gradué de basculer instantanément entre la vue Lab (thème violet, historique parcours en lecture) et la vue One (thème vert/orange, outil quotidien). Pas de reload, pas de provisioning.
+**Toggle Mode Lab / Mode One** : au sein de ce déploiement multi-tenant unique, un switch persistant dans le shell permet au client gradué de basculer instantanément entre la vue Lab (thème violet, historique parcours en lecture) et la vue One (thème vert `#16a34a`/`#4ade80`, outil quotidien). Pas de reload, pas de provisioning.
 
 **Feature flag Élio Lab** : `client_configs.elio_lab_enabled` contrôle la disponibilité de l'agent Élio Lab pour chaque client. MiKL active/désactive ce flag depuis le Hub admin à tout moment (ex : lancement d'un nouveau projet d'amélioration pour un client gradué).
 
