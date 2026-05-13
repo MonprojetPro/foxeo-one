@@ -70,35 +70,15 @@ export async function getParcours(
         }
       }
 
-      // Récupérer les validation_requests en needs_clarification par étape
-      // → permet d'afficher la carte étape en "Question MiKL" (bleu) sur la grille parcours
-      const { data: clarificationRequests } = await supabase
-        .from('validation_requests')
-        .select('step_id, status, created_at')
-        .eq('client_id', clientId)
-        .eq('type', 'step_submission')
-        .eq('status', 'needs_clarification')
-        .in('step_id', stepIds)
-        .order('created_at', { ascending: false })
-
-      const clarificationByStep = new Set<string>()
-      for (const vr of clarificationRequests ?? []) {
-        if (vr.step_id) clarificationByStep.add(vr.step_id as string)
-      }
-
       const steps: ParcoursStep[] = agentSteps.map((row, index) => {
         const latestSubStatus = latestByStep.get(row.id) ?? null
         const baseStatus = mapAgentStatus(row.status as ClientParcoursAgentStatus)
 
-        // Statut visuel dérivé — order matters :
-        // 1. needs_clarification (validation_requests) → carte bleue prioritaire
-        // 2. pending_review (étape en attente) → reste pending_review (carte jaune)
-        // 3. current + dernière soumission rejected → carte orange "À corriger"
-        // 4. sinon baseStatus
+        // Statut visuel dérivé :
+        // - current + dernière soumission rejected → carte orange "À corriger"
+        // - sinon baseStatus
         let displayStatus: ParcoursStepStatus = baseStatus
-        if (clarificationByStep.has(row.id) && baseStatus !== 'completed') {
-          displayStatus = 'needs_clarification'
-        } else if (baseStatus === 'current' && latestSubStatus === 'rejected') {
+        if (baseStatus === 'current' && latestSubStatus === 'rejected') {
           displayStatus = 'rejected'
         }
 

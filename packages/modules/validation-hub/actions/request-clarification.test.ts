@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockFrom = vi.fn()
 const mockGetUser = vi.fn()
+const mockSendMessage = vi.fn()
 
 const mockSupabase = {
   auth: {
@@ -12,6 +13,10 @@ const mockSupabase = {
 
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => Promise.resolve(mockSupabase)),
+}))
+
+vi.mock('@monprojetpro/modules-chat', () => ({
+  sendMessage: (...args: unknown[]) => mockSendMessage(...args),
 }))
 
 vi.mock('@monprojetpro/types', async (importOriginal) => {
@@ -34,49 +39,91 @@ vi.mock('@monprojetpro/utils', async (importOriginal) => {
   }
 })
 
-describe('requestClarification', () => {
-  const validRequestId = '00000000-0000-0000-0000-000000000001'
-  const validComment = 'Pouvez-vous préciser votre besoin en détail ?'
+const VALID_REQUEST_ID = '00000000-0000-0000-0000-000000000001'
+const VALID_COMMENT = 'Pouvez-vous préciser votre besoin en détail ?'
+const OPERATOR_ID = '00000000-0000-0000-0000-000000000010'
+const CLIENT_ID = '00000000-0000-0000-0000-000000000020'
 
+function buildRequestRow(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: VALID_REQUEST_ID,
+    client_id: CLIENT_ID,
+    operator_id: OPERATOR_ID,
+    type: 'step_submission',
+    title: 'Soumission étape 2',
+    status: 'pending',
+    step_id: '00000000-0000-0000-0000-000000000099',
+    reviewer_comment: VALID_COMMENT,
+    reviewed_at: '2026-05-13T10:00:00Z',
+    updated_at: '2026-05-13T10:00:00Z',
+    ...overrides,
+  }
+}
+
+function setupHappyPath(requestRow = buildRequestRow()) {
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'operators') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: { id: OPERATOR_ID }, error: null }),
+          }),
+        }),
+      }
+    }
+    if (table === 'validation_requests') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: requestRow, error: null }),
+          }),
+        }),
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: requestRow, error: null }),
+            }),
+          }),
+        }),
+      }
+    }
+    return {}
+  })
+}
+
+describe('requestClarification', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'auth-user-1' } },
       error: null,
     })
+    mockSendMessage.mockResolvedValue({ data: { id: 'msg-1' }, error: null })
   })
 
-  it('should return error when requestId is invalid UUID', async () => {
+  it('returns VALIDATION_ERROR when requestId is invalid UUID', async () => {
     const { requestClarification } = await import('./request-clarification')
-    const result = await requestClarification('not-a-uuid', validComment)
-
-    expect(result.data).toBeNull()
+    const result = await requestClarification('not-a-uuid', VALID_COMMENT)
     expect(result.error?.code).toBe('VALIDATION_ERROR')
   })
 
-  it('should return error when comment is less than 10 chars', async () => {
+  it('returns VALIDATION_ERROR when comment is less than 10 chars', async () => {
     const { requestClarification } = await import('./request-clarification')
-    const result = await requestClarification(validRequestId, 'Court')
-
-    expect(result.data).toBeNull()
+    const result = await requestClarification(VALID_REQUEST_ID, 'Court')
     expect(result.error?.code).toBe('VALIDATION_ERROR')
   })
 
-  it('should return UNAUTHORIZED when user is not authenticated', async () => {
+  it('returns UNAUTHORIZED when user is not authenticated', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: null },
       error: new Error('Not authenticated'),
     })
-
     const { requestClarification } = await import('./request-clarification')
-    const result = await requestClarification(validRequestId, validComment)
-
-    expect(result.data).toBeNull()
+    const result = await requestClarification(VALID_REQUEST_ID, VALID_COMMENT)
     expect(result.error?.code).toBe('UNAUTHORIZED')
   })
 
-  it('should return NOT_FOUND when user is not an operator', async () => {
+  it('returns NOT_FOUND when user is not an operator', async () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === 'operators') {
         return {
@@ -91,202 +138,101 @@ describe('requestClarification', () => {
     })
 
     const { requestClarification } = await import('./request-clarification')
-    const result = await requestClarification(validRequestId, validComment)
-
-    expect(result.data).toBeNull()
+    const result = await requestClarification(VALID_REQUEST_ID, VALID_COMMENT)
     expect(result.error?.code).toBe('NOT_FOUND')
   })
 
-  it('should update validation_request and create notification on success', async () => {
-    const requestData = {
-      id: validRequestId,
-      client_id: 'client-1',
-      operator_id: 'operator-1',
-      type: 'brief_lab',
-      title: 'Brief test',
-      status: 'needs_clarification',
-      reviewer_comment: validComment,
-      reviewed_at: '2026-02-26T10:00:00Z',
-      updated_at: '2026-02-26T10:00:00Z',
-      content: 'content',
-      document_ids: [],
-      submitted_at: '2026-02-25T10:00:00Z',
-      created_at: '2026-02-25T10:00:00Z',
-      parcours_id: null,
-      step_id: null,
-    }
-
-    const clientData = {
-      auth_user_id: 'auth-user-client-1',
-    }
-
+  it('keeps the validation request in pending status (does NOT switch to needs_clarification)', async () => {
+    const row = buildRequestRow()
+    setupHappyPath(row)
+    // Capture update payload
+    let updatePayload: Record<string, unknown> | undefined
     mockFrom.mockImplementation((table: string) => {
       if (table === 'operators') {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: { id: 'operator-1' },
-                error: null,
-              }),
+              single: vi.fn().mockResolvedValue({ data: { id: OPERATOR_ID }, error: null }),
             }),
           }),
         }
       }
       if (table === 'validation_requests') {
         return {
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: requestData, error: null }),
-              }),
-            }),
-          }),
-        }
-      }
-      if (table === 'clients') {
-        return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: clientData, error: null }),
+              single: vi.fn().mockResolvedValue({ data: row, error: null }),
             }),
           }),
-        }
-      }
-      if (table === 'notifications') {
-        return {
-          insert: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: { id: 'notif-1' },
-                error: null,
-              }),
-            }),
-          }),
-        }
-      }
-      return {}
-    })
-
-    const { requestClarification } = await import('./request-clarification')
-    const result = await requestClarification(validRequestId, validComment)
-
-    expect(result.error).toBeNull()
-    expect(result.data).toBeDefined()
-  })
-
-  it('should insert step_feedback_injection and use step URL for step_submission type', async () => {
-    const stepId = '00000000-0000-0000-0000-000000000099'
-    const requestData = {
-      id: validRequestId,
-      client_id: 'client-1',
-      operator_id: 'operator-1',
-      type: 'step_submission',
-      title: 'Soumission étape 2',
-      status: 'needs_clarification',
-      reviewer_comment: validComment,
-      reviewed_at: '2026-02-26T10:00:00Z',
-      updated_at: '2026-02-26T10:00:00Z',
-      content: 'content',
-      document_ids: [],
-      submitted_at: '2026-02-25T10:00:00Z',
-      created_at: '2026-02-25T10:00:00Z',
-      parcours_id: null,
-      step_id: stepId,
-    }
-
-    const mockInsertFeedback = vi.fn().mockResolvedValue({ data: { id: 'fi-1' }, error: null })
-    const mockInsertNotif = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: { id: 'notif-1' }, error: null }),
-      }),
-    })
-
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'operators') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: { id: 'operator-1' }, error: null }),
-            }),
-          }),
-        }
-      }
-      if (table === 'validation_requests') {
-        return {
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: requestData, error: null }),
-              }),
-            }),
-          }),
-        }
-      }
-      if (table === 'client_parcours_agents') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: { step_order: 2 }, error: null }),
-            }),
-          }),
-        }
-      }
-      if (table === 'step_feedback_injections') {
-        return { insert: mockInsertFeedback }
-      }
-      if (table === 'clients') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: { auth_user_id: 'auth-client-1' }, error: null }),
-            }),
-          }),
-        }
-      }
-      if (table === 'notifications') {
-        return { insert: mockInsertNotif }
-      }
-      return {}
-    })
-
-    const { requestClarification } = await import('./request-clarification')
-    const result = await requestClarification(validRequestId, validComment)
-
-    expect(result.error).toBeNull()
-    expect(mockInsertFeedback).toHaveBeenCalledWith(
-      expect.objectContaining({ step_id: stepId, type: 'text_feedback', content: validComment })
-    )
-    // Notification link doit pointer vers l'étape 2
-    expect(mockInsertNotif).toHaveBeenCalledWith(
-      expect.objectContaining({ link: '/modules/parcours/steps/2' })
-    )
-  })
-
-  it('should return DB_ERROR when update fails', async () => {
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'operators') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: { id: 'operator-1' },
-                error: null,
-              }),
-            }),
-          }),
-        }
-      }
-      if (table === 'validation_requests') {
-        return {
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: null,
-                  error: { message: 'DB error' },
+          update: vi.fn((payload: Record<string, unknown>) => {
+            updatePayload = payload
+            return {
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({ data: row, error: null }),
                 }),
               }),
+            }
+          }),
+        }
+      }
+      return {}
+    })
+
+    const { requestClarification } = await import('./request-clarification')
+    const result = await requestClarification(VALID_REQUEST_ID, VALID_COMMENT)
+
+    expect(result.error).toBeNull()
+    // Le payload UPDATE ne doit PAS changer le status
+    expect(updatePayload).toBeDefined()
+    expect(updatePayload).not.toHaveProperty('status')
+    expect(updatePayload?.reviewer_comment).toBe(VALID_COMMENT)
+  })
+
+  it('sends a chat message from operator to client with the question', async () => {
+    const row = buildRequestRow()
+    setupHappyPath(row)
+
+    const { requestClarification } = await import('./request-clarification')
+    await requestClarification(VALID_REQUEST_ID, VALID_COMMENT)
+
+    expect(mockSendMessage).toHaveBeenCalledTimes(1)
+    const arg = mockSendMessage.mock.calls[0][0]
+    expect(arg).toMatchObject({
+      clientId: CLIENT_ID,
+      operatorId: OPERATOR_ID,
+      senderType: 'operator',
+    })
+    expect(arg.content).toContain(VALID_COMMENT)
+    expect(arg.content).toContain('Demande de précisions')
+  })
+
+  it('still returns success if sendMessage fails (non-blocking)', async () => {
+    const row = buildRequestRow()
+    setupHappyPath(row)
+    mockSendMessage.mockResolvedValue({ data: null, error: { message: 'Chat down', code: 'X' } })
+
+    const { requestClarification } = await import('./request-clarification')
+    const result = await requestClarification(VALID_REQUEST_ID, VALID_COMMENT)
+    expect(result.error).toBeNull()
+  })
+
+  it('returns NOT_FOUND when validation_request does not exist', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'operators') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: OPERATOR_ID }, error: null }),
+            }),
+          }),
+        }
+      }
+      if (table === 'validation_requests') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
             }),
           }),
         }
@@ -295,53 +241,42 @@ describe('requestClarification', () => {
     })
 
     const { requestClarification } = await import('./request-clarification')
-    const result = await requestClarification(validRequestId, validComment)
+    const result = await requestClarification(VALID_REQUEST_ID, VALID_COMMENT)
+    expect(result.error?.code).toBe('NOT_FOUND')
+  })
 
-    expect(result.data).toBeNull()
+  it('returns DB_ERROR when update fails', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'operators') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: OPERATOR_ID }, error: null }),
+            }),
+          }),
+        }
+      }
+      if (table === 'validation_requests') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: buildRequestRow(), error: null }),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' } }),
+              }),
+            }),
+          }),
+        }
+      }
+      return {}
+    })
+
+    const { requestClarification } = await import('./request-clarification')
+    const result = await requestClarification(VALID_REQUEST_ID, VALID_COMMENT)
     expect(result.error?.code).toBe('DB_ERROR')
-  })
-
-  it('should log error with VALIDATION-HUB:CLARIFICATION prefix on DB error', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'operators') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: { id: 'operator-1' },
-                error: null,
-              }),
-            }),
-          }),
-        }
-      }
-      if (table === 'validation_requests') {
-        return {
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: null,
-                  error: { message: 'DB error' },
-                }),
-              }),
-            }),
-          }),
-        }
-      }
-      return {}
-    })
-
-    const { requestClarification } = await import('./request-clarification')
-    await requestClarification(validRequestId, validComment)
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[VALIDATION-HUB:CLARIFICATION]'),
-      expect.anything()
-    )
-
-    consoleSpy.mockRestore()
   })
 })

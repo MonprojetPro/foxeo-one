@@ -49,12 +49,9 @@ export function GenerateDocumentButton({
 
   // Conditions pour activer le bouton
   // Étapes éligibles pour générer/regénérer : current (1ère soumission) + rejected (correction
-  // après refus) + needs_clarification (réponse à une question MiKL avec un nouveau doc).
+  // après refus).
   const hasEnoughMessages = messageCount >= MIN_MESSAGES
-  const isStepActionable =
-    stepStatus === 'current' ||
-    stepStatus === 'rejected' ||
-    stepStatus === 'needs_clarification'
+  const isStepActionable = stepStatus === 'current' || stepStatus === 'rejected'
   const isEnabled = isStepActionable && hasEnoughMessages && !hasPending && !pendingLoading
 
   function getDisabledTooltip(): string {

@@ -112,21 +112,7 @@ async function computeParcoursBadge(
     }
   }
 
-  // 2. Question MiKL en attente → bleu (sans compteur)
-  const { data: clarificationRow } = await supabase
-    .from('validation_requests')
-    .select('id')
-    .eq('client_id', clientId)
-    .eq('type', 'step_submission')
-    .eq('status', 'needs_clarification')
-    .limit(1)
-    .maybeSingle()
-
-  if (clarificationRow) {
-    return { variant: 'blue', ariaLabel: 'Une question MiKL en attente' }
-  }
-
-  // 3. Dernière soumission refusée → orange (sans compteur)
+  // 2. Dernière soumission refusée → orange (sans compteur)
   const { data: latestSubmission } = await supabase
     .from('step_submissions')
     .select('status')
@@ -139,7 +125,7 @@ async function computeParcoursBadge(
     return { variant: 'orange', ariaLabel: 'Document refusé — à corriger' }
   }
 
-  // 4. Étape en attente de validation → jaune (sans compteur)
+  // 3. Étape en attente de validation → jaune (sans compteur)
   const { data: pendingReviewRow } = await supabase
     .from('client_parcours_agents')
     .select('id')

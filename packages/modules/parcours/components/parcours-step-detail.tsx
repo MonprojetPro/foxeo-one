@@ -50,11 +50,6 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
     showGenerateButton: true,
     showSubmissionLink: false,
   },
-  // needs_clarification : le client peut répondre par chat OU regénérer un nouveau document
-  needs_clarification: {
-    showGenerateButton: true,
-    showSubmissionLink: false,
-  },
   completed: {
     showGenerateButton: false,
     showSubmissionLink: true,
@@ -111,20 +106,6 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
               <div>
                 <p className="font-medium">MiKL a refusé votre soumission — corrections à apporter.</p>
                 <p className="text-xs text-orange-300/80 mt-0.5">Consultez le feedback dans le panneau de droite, puis régénérez un document corrigé avec Élio.</p>
-              </div>
-            </div>
-          )}
-
-          {/* Banner question MiKL — bleu : MiKL pose une question avant de décider */}
-          {step.status === 'needs_clarification' && (
-            <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-blue-500/40 bg-blue-500/10 px-4 py-3 text-sm text-blue-300">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0 mt-0.5">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M9 9a3 3 0 116 0c0 2-3 3-3 5M12 17v.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
-              </svg>
-              <div>
-                <p className="font-medium">MiKL a une question avant de décider.</p>
-                <p className="text-xs text-blue-300/80 mt-0.5">Consultez sa question dans le panneau de droite. Répondez en chat ou resoumettez un document corrigé.</p>
               </div>
             </div>
           )}

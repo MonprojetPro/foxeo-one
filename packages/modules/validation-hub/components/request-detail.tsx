@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertCircle } from 'lucide-react'
+import Link from 'next/link'
+import { AlertCircle, MessageSquare } from 'lucide-react'
 import { Skeleton } from '@monprojetpro/ui'
 import { useValidationRequest } from '../hooks/use-validation-request'
 import { RequestHeader } from './request-header'
@@ -91,6 +92,17 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
           status={request.status}
           submittedAt={request.submittedAt}
         />
+
+        {/* Raccourci vers le chat MiKL ↔ Client — utilisé pour les demandes de précisions
+            (la question MiKL est envoyée dans le chat, la réponse client arrive aussi là). */}
+        <Link
+          href={`/modules/chat/${request.clientId}`}
+          className="inline-flex items-center gap-2 rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-300 hover:bg-blue-500/15 transition-colors w-fit"
+          aria-label={`Ouvrir le chat avec ${request.client.name}`}
+        >
+          <MessageSquare className="h-4 w-4" />
+          Ouvrir le chat avec {request.client.name}
+        </Link>
 
         {/* Responsive layout: 1 col mobile, 2 col desktop */}
         <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-6">

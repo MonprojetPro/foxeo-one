@@ -19,19 +19,16 @@ export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted }
 
   const isPendingReview = currentStep?.status === 'pending_review'
   const isRejected = currentStep?.status === 'rejected'
-  const isClarification = currentStep?.status === 'needs_clarification'
 
   const message = allCompleted
     ? `Bonjour ${firstName} ! Bravo, toutes vos étapes sont complètes. Votre graduation vers One arrive bientôt !`
-    : isClarification
-      ? `Bonjour ${firstName} ! MiKL a une question sur votre soumission pour l'étape ${currentStep!.stepNumber} (${currentStep!.title}) avant de décider. Consultez sa question dans l'historique, répondez dans le chat ou resoumettez un document corrigé.`
-      : isPendingReview
-        ? `Bonjour ${firstName} ! Votre document pour l'étape ${currentStep!.stepNumber} (${currentStep!.title}) est en cours d'examen par MiKL. Vous serez notifié dès qu'il rendra sa décision.`
-        : isRejected
-          ? `Bonjour ${firstName} ! MiKL a examiné votre soumission pour l'étape ${currentStep!.stepNumber} (${currentStep!.title}) et vous a laissé un feedback. Consultez l'historique, corrigez votre document et resoumettez.`
-          : currentStep
-            ? `Bonjour ${firstName} ! Vous progressez bien. Votre étape ${currentStep.stepNumber} (${currentStep.title}) attend votre attention. Cliquez sur « Continuer » pour que je vous guide.`
-            : `Bonjour ${firstName} ! Bienvenue dans votre parcours. Commencez par l'étape 1 pour démarrer !`
+    : isPendingReview
+      ? `Bonjour ${firstName} ! Votre document pour l'étape ${currentStep!.stepNumber} (${currentStep!.title}) est en cours d'examen par MiKL. Si MiKL a besoin de précisions, il vous contactera dans le chat — sinon vous serez notifié dès la décision.`
+      : isRejected
+        ? `Bonjour ${firstName} ! MiKL a examiné votre soumission pour l'étape ${currentStep!.stepNumber} (${currentStep!.title}) et vous a laissé un feedback. Consultez l'historique, corrigez votre document et resoumettez.`
+        : currentStep
+          ? `Bonjour ${firstName} ! Vous progressez bien. Votre étape ${currentStep.stepNumber} (${currentStep.title}) attend votre attention. Cliquez sur « Continuer » pour que je vous guide.`
+          : `Bonjour ${firstName} ! Bienvenue dans votre parcours. Commencez par l'étape 1 pour démarrer !`
 
   const stepHref = allCompleted
     ? '/modules/parcours'
@@ -41,13 +38,11 @@ export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted }
 
   const buttonLabel = allCompleted
     ? 'Voir mon parcours →'
-    : isClarification
-      ? 'Voir la question →'
-      : isPendingReview
-        ? 'Voir l\'historique →'
-        : isRejected
-          ? 'Voir le feedback →'
-          : 'Continuer avec Élio →'
+    : isPendingReview
+      ? 'Voir l\'historique →'
+      : isRejected
+        ? 'Voir le feedback →'
+        : 'Continuer avec Élio →'
 
   return (
     <div className="bg-[#141414] border border-[#2d2d2d] rounded-xl p-5">

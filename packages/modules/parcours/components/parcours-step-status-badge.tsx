@@ -28,10 +28,6 @@ const statusConfig: Record<ParcoursStepStatus, { label: string; className: strin
     label: 'À corriger',
     className: 'bg-orange-500/20 text-orange-300 border border-orange-500/40',
   },
-  needs_clarification: {
-    label: 'Question MiKL',
-    className: 'bg-blue-500/20 text-blue-300 border border-blue-500/40',
-  },
 }
 
 interface ParcoursStepStatusBadgeProps {

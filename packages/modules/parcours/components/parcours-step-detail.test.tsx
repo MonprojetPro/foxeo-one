@@ -104,12 +104,6 @@ describe('ParcoursStepDetail', () => {
     expect(screen.getByTestId('generate-document-button')).toBeDefined()
   })
 
-  it('renders GenerateDocumentButton for needs_clarification step (client peut répondre par nouveau doc)', () => {
-    const clarifStep = { ...baseStep, status: 'needs_clarification' as const }
-    render(<ParcoursStepDetail step={clarifStep} totalSteps={5} clientId="client-001" />)
-    expect(screen.getByTestId('generate-document-button')).toBeDefined()
-  })
-
   it('does not render GenerateDocumentButton for locked step', () => {
     const lockedStep = { ...baseStep, status: 'locked' as const }
     render(<ParcoursStepDetail step={lockedStep} totalSteps={5} clientId="client-001" />)

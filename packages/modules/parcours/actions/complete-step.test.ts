@@ -178,7 +178,6 @@ describe('completeStep — unlock next step logic (AC5)', () => {
     expect(ParcoursStepStatusValues).toContain('skipped')
     expect(ParcoursStepStatusValues).toContain('pending_review')
     expect(ParcoursStepStatusValues).toContain('rejected')
-    expect(ParcoursStepStatusValues).toContain('needs_clarification')
-    expect(ParcoursStepStatusValues).toHaveLength(7)
+    expect(ParcoursStepStatusValues).toHaveLength(6)
   })
 })

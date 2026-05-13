@@ -36,13 +36,12 @@ export function ParcoursOverview({ clientId, clientFirstName }: ParcoursOverview
 
   const isAbandoned = parcours.status === 'abandoned'
   const canAbandon = ABANDONABLE_STATUSES.includes(parcours.status)
-  // L'étape "active visuellement" : current, en cours de review, refusée, ou question MiKL
+  // L'étape "active visuellement" : current, en cours de review, ou refusée
   const currentStep = parcours.steps.find(
     (s) =>
       s.status === 'current' ||
       s.status === 'pending_review' ||
-      s.status === 'rejected' ||
-      s.status === 'needs_clarification'
+      s.status === 'rejected'
   ) ?? null
   const allCompleted = parcours.completedSteps > 0 && parcours.completedSteps === parcours.totalSteps
 

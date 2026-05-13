@@ -27,6 +27,7 @@
     "@monprojetpro/utils": "*",
     "@monprojetpro/supabase": "*",
     "@monprojetpro/module-parcours": "*",
+    "@monprojetpro/modules-chat": "*",
     "@tanstack/react-query": "^5.90.0",
     "react-markdown": "^9.0.0",
     "remark-gfm": "^4.0.0"

@@ -3,11 +3,13 @@ import { z } from 'zod'
 // --- Enums ---
 
 // Statuts visuels de l'étape côté client (combinés depuis client_parcours_agents.status
-// + step_submissions.status + validation_requests.status pour les états dérivés).
+// + step_submissions.status pour les états dérivés).
 // - locked / current / completed / skipped : pilotés par client_parcours_agents.status
 // - pending_review : doc soumis, en attente de décision MiKL
 // - rejected : MiKL a refusé, le client doit corriger et resoumettre (carte orange)
-// - needs_clarification : MiKL pose une question avant de décider (carte bleue)
+//
+// Note : les "demandes de précisions" ne créent PAS de statut visuel dédié — elles
+// passent par le chat MiKL ↔ Client (cf. validation-hub/actions/request-clarification.ts).
 export const ParcoursStepStatusValues = [
   'locked',
   'current',
@@ -15,7 +17,6 @@ export const ParcoursStepStatusValues = [
   'skipped',
   'pending_review',
   'rejected',
-  'needs_clarification',
 ] as const
 export type ParcoursStepStatus = typeof ParcoursStepStatusValues[number]
 
