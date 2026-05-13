@@ -16,7 +16,9 @@ export function useUnreadCount(recipientId: string) {
       return response.data?.count ?? 0
     },
     enabled: !!recipientId,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 10,
     refetchOnWindowFocus: true,
+    // Fallback si la subscription Realtime saute : refetch toutes les 30s
+    refetchInterval: 1000 * 30,
   })
 }

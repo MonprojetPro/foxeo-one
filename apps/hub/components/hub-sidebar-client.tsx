@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video } from 'lucide-react'
 import { Badge } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
-import { useValidationBadge } from '@monprojetpro/modules-validation-hub'
+import { useValidationBadge, useValidationRealtime } from '@monprojetpro/modules-validation-hub'
 import { usePendingRemindersCount } from '@monprojetpro/modules-facturation'
 import { ElioQueryBox } from './elio-query-box'
 
@@ -26,6 +26,9 @@ export function HubSidebarClient({ operatorId, userId }: { operatorId: string; u
   const pathname = usePathname()
   const { pendingCount } = useValidationBadge(operatorId)
   const { pendingCount: reminderCount } = usePendingRemindersCount()
+  // Branche Realtime sur validation_requests pour que le badge se mette à jour instantanément
+  // (sinon polling 30s via refetchInterval, ce qui fait râler l'utilisateur).
+  useValidationRealtime(operatorId)
 
   return (
     <aside className="w-64 shrink-0 border-r border-sidebar-border bg-sidebar flex flex-col">
