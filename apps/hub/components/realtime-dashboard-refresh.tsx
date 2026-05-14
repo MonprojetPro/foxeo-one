@@ -57,6 +57,11 @@ export function RealtimeDashboardRefresh({ operatorId, authUserId }: RealtimeDas
         { event: '*', schema: 'public', table: 'client_parcours_agents' },
         refresh,
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages', filter: `operator_id=eq.${operatorId}` },
+        refresh,
+      )
       .subscribe()
 
     // Canal séparé pour les notifications du user connecté (auth_user_id)

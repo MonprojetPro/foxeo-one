@@ -7,6 +7,7 @@ import { Badge } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
 import { useValidationBadge, useValidationRealtime } from '@monprojetpro/modules-validation-hub'
 import { usePendingRemindersCount } from '@monprojetpro/modules-facturation'
+import { useConversations, useConversationsRealtime } from '@monprojetpro/modules-chat'
 import { ElioQueryBox } from './elio-query-box'
 
 const navItems = [
@@ -30,6 +31,13 @@ export function HubSidebarClient({ operatorId, userId }: { operatorId: string; u
   // (sinon polling 30s via refetchInterval, ce qui fait râler l'utilisateur).
   useValidationRealtime(operatorId)
 
+  // Badge "Chat" — somme des messages non lus toutes conversations confondues.
+  // useConversations a un refetchInterval 30s en fallback + useConversationsRealtime
+  // pour update instantané quand un client envoie un message.
+  const { data: conversations } = useConversations()
+  useConversationsRealtime({ operatorId })
+  const unreadChatCount = conversations?.reduce((sum, c) => sum + c.unreadCount, 0) ?? 0
+
   return (
     <aside className="w-64 shrink-0 border-r border-sidebar-border bg-sidebar flex flex-col">
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
@@ -40,6 +48,7 @@ export function HubSidebarClient({ operatorId, userId }: { operatorId: string; u
           const badge =
             item.href === '/modules/validation-hub' ? pendingCount
             : item.href === '/modules/facturation' ? reminderCount
+            : item.href === '/modules/chat' ? unreadChatCount
             : undefined
 
           return (

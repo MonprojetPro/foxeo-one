@@ -54,6 +54,11 @@ export function RealtimeDashboardRefresh({ clientId }: RealtimeDashboardRefreshP
         { event: '*', schema: 'public', table: 'step_submissions', filter: `client_id=eq.${clientId}` },
         refresh,
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages', filter: `client_id=eq.${clientId}` },
+        refresh,
+      )
       .subscribe()
 
     return () => {

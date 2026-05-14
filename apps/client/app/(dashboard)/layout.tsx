@@ -142,6 +142,33 @@ async function computeParcoursBadge(
   return undefined
 }
 
+/**
+ * Badge "Chat" : nombre de messages non lus envoyés par l'opérateur au client.
+ * Toujours rouge avec compteur.
+ */
+async function computeChatBadge(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  clientId: string,
+): Promise<ModuleSidebarBadge | undefined> {
+  if (!clientId) return undefined
+
+  const { count } = await supabase
+    .from('messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('client_id', clientId)
+    .eq('sender_type', 'operator')
+    .is('read_at', null)
+
+  const unread = count ?? 0
+  if (unread === 0) return undefined
+
+  return {
+    variant: 'red',
+    count: unread,
+    ariaLabel: `${unread} message(s) non lu(s) de MiKL`,
+  }
+}
+
 function ClientHeader({
   authUserId,
   logoUrl,
@@ -285,12 +312,15 @@ export default async function DashboardLayout({
   const accentColor = customBranding?.accentColor ?? null
   const logoUrl = customBranding?.logoUrl ?? null
 
-  // Badges sidebar — calculés côté serveur, propagés via prop (Kit Complet)
+  // Badges sidebar — calculés côté serveur, propagés via prop (Kit Complet).
+  // Realtime branché via `RealtimeDashboardRefresh` qui écoute aussi `messages`.
   const sidebarBadges: Record<string, ModuleSidebarBadge> = {}
-  if (activeModules.includes('parcours')) {
-    const parcoursBadge = await computeParcoursBadge(supabase, clientId)
-    if (parcoursBadge) sidebarBadges.parcours = parcoursBadge
-  }
+  const [parcoursBadge, chatBadge] = await Promise.all([
+    activeModules.includes('parcours') ? computeParcoursBadge(supabase, clientId) : Promise.resolve(undefined),
+    activeModules.includes('chat') ? computeChatBadge(supabase, clientId) : Promise.resolve(undefined),
+  ])
+  if (parcoursBadge) sidebarBadges.parcours = parcoursBadge
+  if (chatBadge) sidebarBadges.chat = chatBadge
 
   // Build accent color CSS override style
   const accentStyle: React.CSSProperties = accentColor
