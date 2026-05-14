@@ -86,10 +86,13 @@ function ClientSidebar({
 /**
  * Calcule le badge à afficher sur l'item "parcours" de la sidebar gauche client.
  * - rouge : feedbacks MiKL non lus (priorité absolue)
- * - bleu  : MiKL a posé une question (needs_clarification)
  * - orange : la dernière soumission a été refusée
  * - jaune : soumission en attente de validation
  * Retourne undefined si rien à signaler.
+ *
+ * Les 3 queries tournent en parallèle (Promise.all) pour réduire la pression sur le pool
+ * DB Supabase — au SSR avec `router.refresh()` fréquent, des queries séquentielles ont
+ * fait sauter "Connection closed" en mai 2026.
  */
 async function computeParcoursBadge(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -97,44 +100,42 @@ async function computeParcoursBadge(
 ): Promise<ModuleSidebarBadge | undefined> {
   if (!clientId) return undefined
 
-  // 1. Feedbacks MiKL non lus → rouge avec compteur
-  const { count: unreadFeedbackCount } = await supabase
-    .from('step_feedback_injections')
-    .select('id', { count: 'exact', head: true })
-    .eq('client_id', clientId)
-    .is('read_at', null)
+  const [unreadFeedbackRes, latestSubmissionRes, pendingReviewRes] = await Promise.all([
+    supabase
+      .from('step_feedback_injections')
+      .select('id', { count: 'exact', head: true })
+      .eq('client_id', clientId)
+      .is('read_at', null),
+    supabase
+      .from('step_submissions')
+      .select('status')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('client_parcours_agents')
+      .select('id')
+      .eq('client_id', clientId)
+      .eq('status', 'pending_review')
+      .limit(1)
+      .maybeSingle(),
+  ])
 
-  if ((unreadFeedbackCount ?? 0) > 0) {
+  const unreadFeedbackCount = unreadFeedbackRes.count ?? 0
+  if (unreadFeedbackCount > 0) {
     return {
       variant: 'red',
-      count: unreadFeedbackCount ?? 0,
+      count: unreadFeedbackCount,
       ariaLabel: `${unreadFeedbackCount} feedback(s) MiKL non lu(s)`,
     }
   }
 
-  // 2. Dernière soumission refusée → orange (sans compteur)
-  const { data: latestSubmission } = await supabase
-    .from('step_submissions')
-    .select('status')
-    .eq('client_id', clientId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if ((latestSubmission as { status: string } | null)?.status === 'rejected') {
+  if ((latestSubmissionRes.data as { status: string } | null)?.status === 'rejected') {
     return { variant: 'orange', ariaLabel: 'Document refusé — à corriger' }
   }
 
-  // 3. Étape en attente de validation → jaune (sans compteur)
-  const { data: pendingReviewRow } = await supabase
-    .from('client_parcours_agents')
-    .select('id')
-    .eq('client_id', clientId)
-    .eq('status', 'pending_review')
-    .limit(1)
-    .maybeSingle()
-
-  if (pendingReviewRow) {
+  if (pendingReviewRes.data) {
     return { variant: 'yellow', ariaLabel: 'Soumission en attente de validation' }
   }
 
