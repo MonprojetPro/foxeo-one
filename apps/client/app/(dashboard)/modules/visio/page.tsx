@@ -3,11 +3,14 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getMeetings, MeetingStatusBadge, CalcomBookingWidget } from '@monprojetpro/module-visio'
 import { ExternalLink, MessageSquare } from 'lucide-react'
 
-const CALCOM_URL = process.env.NEXT_PUBLIC_CALCOM_URL ?? 'https://cal.monprojet-pro.com/mikl/consultation'
-
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
   return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(iso))
+}
+
+function normalizeCalcomUrl(raw: string): string {
+  const trimmed = raw.trim().replace(/\/+$/, '')
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
 }
 
 export default async function ClientVisioPage() {
@@ -22,6 +25,29 @@ export default async function ClientVisioPage() {
     .single()
 
   if (!client) notFound()
+
+  // Resolve Cal.com URL from operator's calendar_integrations
+  let calcomUrl: string | null = null
+  if (client.operator_id) {
+    const { data: operator } = await supabase
+      .from('operators')
+      .select('auth_user_id')
+      .eq('id', client.operator_id)
+      .maybeSingle()
+
+    if (operator?.auth_user_id) {
+      const { data: integration } = await supabase
+        .from('calendar_integrations')
+        .select('metadata')
+        .eq('user_id', operator.auth_user_id)
+        .eq('provider', 'calcom')
+        .eq('connected', true)
+        .maybeSingle()
+
+      const url = (integration?.metadata as { url?: string } | null)?.url
+      if (url) calcomUrl = normalizeCalcomUrl(url)
+    }
+  }
 
   const { data: meetings } = await getMeetings({ clientId: client.id })
   const allMeetings = meetings ?? []
@@ -66,18 +92,35 @@ export default async function ClientVisioPage() {
       {/* Prise de RDV */}
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Prendre rendez-vous</h2>
-        <CalcomBookingWidget
-          calcomUrl={CALCOM_URL}
-          clientId={client.id}
-          operatorId={client.operator_id ?? ''}
-        />
-        <p className="text-sm text-muted-foreground text-center">
-          Pas de créneau disponible ?{' '}
-          <a href="/modules/chat" className="inline-flex items-center gap-1 text-primary hover:underline">
-            <MessageSquare className="h-3.5 w-3.5" />
-            Contactez MiKL via le Chat
-          </a>
-        </p>
+        {calcomUrl ? (
+          <>
+            <CalcomBookingWidget
+              calcomUrl={calcomUrl}
+              clientId={client.id}
+              operatorId={client.operator_id ?? ''}
+            />
+            <p className="text-sm text-muted-foreground text-center">
+              Pas de créneau disponible ?{' '}
+              <a href="/modules/chat" className="inline-flex items-center gap-1 text-primary hover:underline">
+                <MessageSquare className="h-3.5 w-3.5" />
+                Contactez MiKL via le Chat
+              </a>
+            </p>
+          </>
+        ) : (
+          <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              La prise de RDV en ligne n&apos;est pas encore disponible.
+            </p>
+            <a
+              href="/modules/chat"
+              className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Contactez MiKL via le Chat
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Réunions passées */}

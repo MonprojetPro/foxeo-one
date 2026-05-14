@@ -39,12 +39,23 @@ Ajouter des champs cachés à l'event type :
 
 Ces champs sont passés automatiquement via les query params de l'iframe.
 
+## Configuration de l'URL Cal.com côté Hub
+
+L'URL Cal.com de l'opérateur n'est plus définie via une variable d'environnement. Elle est gérée dynamiquement par MiKL dans le Hub :
+
+1. Hub → `/modules/agenda` → bouton **Synchronisation Calendriers**
+2. Section **Cal.com** → saisir l'URL complète (username + event-type), par exemple `cal.com/mickael-culus-unpfqq/rdv-offert`
+3. Cliquer **Connecter Cal.com**
+
+L'URL est stockée dans `calendar_integrations` (provider='calcom', metadata.url) et lue :
+- par le widget de booking côté client (`apps/client/.../modules/visio`)
+- par l'action « Programmer une visio » du Validation Hub (Hub)
+
+Si l'URL n'est pas configurée, l'action « Programmer une visio » du Hub affiche une erreur claire qui renvoie vers `/modules/agenda`, et le widget client affiche un message invitant à contacter MiKL via le Chat.
+
 ## Variables d'environnement
 
 ```env
-# .env (apps/client)
-NEXT_PUBLIC_CALCOM_URL=http://localhost:3001/mikl/consultation
-
 # Supabase Edge Function secrets
 CALCOM_WEBHOOK_SECRET=your-webhook-secret
 

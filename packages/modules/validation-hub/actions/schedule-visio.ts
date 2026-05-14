@@ -50,7 +50,24 @@ export async function scheduleVisio(
       return errorResponse('Opérateur non trouvé', 'NOT_FOUND')
     }
 
-    // 1. Update reviewer_comment (request stays pending)
+    // 1. Read operator's Cal.com URL from calendar_integrations
+    const { data: calcomIntegration } = await supabase
+      .from('calendar_integrations')
+      .select('metadata')
+      .eq('user_id', user.id)
+      .eq('provider', 'calcom')
+      .eq('connected', true)
+      .maybeSingle()
+
+    const rawCalcomUrl = (calcomIntegration?.metadata as { url?: string } | null)?.url
+    if (!rawCalcomUrl) {
+      return errorResponse(
+        "Cal.com n'est pas configuré. Renseigne ton URL Cal.com dans Agenda → Synchronisation Calendriers.",
+        'CALCOM_NOT_CONFIGURED'
+      )
+    }
+
+    // 2. Update reviewer_comment (request stays pending)
     const { data, error } = await supabase
       .from('validation_requests')
       .update({
@@ -67,7 +84,7 @@ export async function scheduleVisio(
       return errorResponse('Erreur lors de la mise à jour', 'DB_ERROR', error)
     }
 
-    // 2. Get client info for Cal.com URL
+    // 3. Get client info for Cal.com URL
     const { data: clientData, error: clientError } = await supabase
       .from('clients')
       .select('auth_user_id, name, email')
@@ -78,7 +95,7 @@ export async function scheduleVisio(
       return errorResponse('Client introuvable', 'NOT_FOUND')
     }
 
-    // 3. Notify client
+    // 4. Notify client
     if (clientData.auth_user_id) {
       const { error: notifError } = await supabase
         .from('notifications')
@@ -100,7 +117,12 @@ export async function scheduleVisio(
 
     const clientName = clientData.name ?? ''
     const clientEmail = clientData.email ?? ''
-    const calComUrl = `https://cal.com/mikl/consult?prefill[name]=${encodeURIComponent(clientName)}&prefill[email]=${encodeURIComponent(clientEmail)}`
+
+    // Normalize stored URL: accepts "cal.com/x/y", "https://cal.com/x/y", "http://..."
+    const trimmed = rawCalcomUrl.trim().replace(/\/+$/, '')
+    const normalizedUrl = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+    const separator = normalizedUrl.includes('?') ? '&' : '?'
+    const calComUrl = `${normalizedUrl}${separator}name=${encodeURIComponent(clientName)}&email=${encodeURIComponent(clientEmail)}`
 
     return successResponse({
       request: toCamelCase(data) as ValidationRequest,

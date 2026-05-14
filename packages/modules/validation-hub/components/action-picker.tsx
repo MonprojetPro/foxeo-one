@@ -78,6 +78,11 @@ export function ActionPicker({
     startTransition(async () => {
       const result = await scheduleVisio(requestId, clientId)
       if (result.error) {
+        if (result.error.code === 'CALCOM_NOT_CONFIGURED') {
+          showError(result.error.message)
+          router.push('/modules/agenda')
+          return
+        }
         showError('Erreur lors de la mise à jour — veuillez réessayer')
         return
       }

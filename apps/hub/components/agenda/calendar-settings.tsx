@@ -24,7 +24,7 @@ const PRESET_COLORS = [
 
 export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSettingsProps) {
   const [status, setStatus] = useState<CalendarStatus>({ googleAccounts: [], calcom: false, icalFeeds: [] });
-  const [calcomUrl, setCalcomUrl] = useState("cal.com/mikl-monprojetpro");
+  const [calcomUrl, setCalcomUrl] = useState("cal.com/mickael-culus-unpfqq/rdv-offert");
   const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -237,11 +237,11 @@ export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSett
                   }
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Les RDV clients Cal.com apparaissent automatiquement dans l&apos;agenda.
+                  Les RDV clients Cal.com apparaissent automatiquement dans l&apos;agenda. Saisis l&apos;URL complète avec l&apos;event-type (ex&nbsp;: <span className="font-mono">cal.com/username/rdv-offert</span>) pour que la prise de RDV directe fonctionne.
                 </p>
                 {!status.calcom && (
                   <Input value={calcomUrl} onChange={e => setCalcomUrl(e.target.value)}
-                    placeholder="cal.com/votre-url" className="text-xs" disabled={busy} />
+                    placeholder="cal.com/username/event-type" className="text-xs" disabled={busy} />
                 )}
                 {status.calcom ? (
                   <div className="space-y-1.5">

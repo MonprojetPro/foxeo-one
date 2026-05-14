@@ -37,12 +37,15 @@ const MOCK_CLIENT = {
   email: 'alice@example.com',
 }
 
+const MOCK_CALCOM_URL = 'cal.com/mickael-culus-unpfqq/rdv-offert'
+
 function buildSupabaseMock({
   userError = null as unknown,
   operatorError = null as unknown,
   requestError = null as unknown,
   clientError = null as unknown,
   notifError = null as unknown,
+  calcomIntegration = { metadata: { url: MOCK_CALCOM_URL } } as { metadata: { url?: string } } | null,
 } = {}) {
   return {
     auth: {
@@ -60,6 +63,22 @@ function buildSupabaseMock({
                 data: operatorError ? null : MOCK_OPERATOR,
                 error: operatorError,
               }),
+            })),
+          })),
+        }
+      }
+      if (table === 'calendar_integrations') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  maybeSingle: vi.fn().mockResolvedValue({
+                    data: calcomIntegration,
+                    error: null,
+                  }),
+                })),
+              })),
             })),
           })),
         }
@@ -120,10 +139,60 @@ describe('scheduleVisio', () => {
     expect(result.error).toBeNull()
     expect(result.data?.request.status).toBe('pending')
     expect(result.data?.request.reviewerComment).toBe('Visio à programmer')
-    expect(result.data?.calComUrl).toContain('cal.com/mikl/consult')
+    expect(result.data?.calComUrl).toContain('https://cal.com/mickael-culus-unpfqq/rdv-offert')
     expect(result.data?.calComUrl).toContain('Alice%20Martin')
     expect(result.data?.clientName).toBe('Alice Martin')
     expect(result.data?.clientEmail).toBe('alice@example.com')
+  })
+
+  it('should return CALCOM_NOT_CONFIGURED when operator has no Cal.com integration', async () => {
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(
+      buildSupabaseMock({ calcomIntegration: null }) as never
+    )
+    const { scheduleVisio } = await import('./schedule-visio')
+    const result = await scheduleVisio(REQ_ID, CLIENT_ID)
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('CALCOM_NOT_CONFIGURED')
+    expect(result.error?.message).toContain('Agenda')
+  })
+
+  it('should return CALCOM_NOT_CONFIGURED when metadata.url is missing', async () => {
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(
+      buildSupabaseMock({ calcomIntegration: { metadata: {} } }) as never
+    )
+    const { scheduleVisio } = await import('./schedule-visio')
+    const result = await scheduleVisio(REQ_ID, CLIENT_ID)
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('CALCOM_NOT_CONFIGURED')
+  })
+
+  it('should accept Cal.com URL with https:// prefix', async () => {
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(
+      buildSupabaseMock({
+        calcomIntegration: { metadata: { url: 'https://cal.com/mickael-culus-unpfqq/rdv-offert' } },
+      }) as never
+    )
+    const { scheduleVisio } = await import('./schedule-visio')
+    const result = await scheduleVisio(REQ_ID, CLIENT_ID)
+
+    expect(result.error).toBeNull()
+    expect(result.data?.calComUrl).toMatch(/^https:\/\/cal\.com\/mickael-culus-unpfqq\/rdv-offert\?/)
+  })
+
+  it('should strip trailing slashes from stored URL', async () => {
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(
+      buildSupabaseMock({
+        calcomIntegration: { metadata: { url: 'cal.com/mickael-culus-unpfqq/rdv-offert///' } },
+      }) as never
+    )
+    const { scheduleVisio } = await import('./schedule-visio')
+    const result = await scheduleVisio(REQ_ID, CLIENT_ID)
+
+    expect(result.error).toBeNull()
+    expect(result.data?.calComUrl).toContain('rdv-offert?name=')
+    expect(result.data?.calComUrl).not.toContain('rdv-offert/?')
   })
 
   it('should return VALIDATION_ERROR for invalid requestId', async () => {
@@ -201,5 +270,18 @@ describe('scheduleVisio', () => {
 
     expect(result.data?.calComUrl).toContain(encodeURIComponent('Alice Martin'))
     expect(result.data?.calComUrl).toContain(encodeURIComponent('alice@example.com'))
+  })
+
+  it('should use & separator when stored URL already has query params', async () => {
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(
+      buildSupabaseMock({
+        calcomIntegration: { metadata: { url: 'cal.com/mickael-culus-unpfqq/rdv-offert?theme=dark' } },
+      }) as never
+    )
+    const { scheduleVisio } = await import('./schedule-visio')
+    const result = await scheduleVisio(REQ_ID, CLIENT_ID)
+
+    expect(result.error).toBeNull()
+    expect(result.data?.calComUrl).toContain('?theme=dark&name=')
   })
 })
