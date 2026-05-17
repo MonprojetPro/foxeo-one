@@ -250,9 +250,9 @@ function FilterBar({
         </label>
         <select
           id="sort-filter"
-          value={`${filters.sortBy}_${filters.sortOrder}`}
+          value={`${filters.sortBy}|${filters.sortOrder}`}
           onChange={(e) => {
-            const [sortBy, sortOrder] = e.target.value.split('_') as [
+            const [sortBy, sortOrder] = e.target.value.split('|') as [
               ValidationQueueFilters['sortBy'],
               ValidationQueueFilters['sortOrder'],
             ]
@@ -260,8 +260,8 @@ function FilterBar({
           }}
           className="text-sm bg-card border border-border rounded-md px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         >
-          <option value="submitted_at_asc">Date (plus ancienne)</option>
-          <option value="submitted_at_desc">Date (plus récente)</option>
+          <option value="submitted_at|asc">Date (plus ancienne)</option>
+          <option value="submitted_at|desc">Date (plus récente)</option>
         </select>
       </div>
     </div>
