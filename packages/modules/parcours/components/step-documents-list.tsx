@@ -208,6 +208,90 @@ function slugifyFilename(title: string): string {
     .toLowerCase()
 }
 
+// Trouve la dernière ligne quasi-blanche dans [minY, idealEndY], en partant
+// d'idealEndY vers le bas. Retourne idealEndY si rien trouvé (fallback : coupe
+// au max, comme avant le fix).
+function findLastWhiteBefore(
+  canvas: HTMLCanvasElement,
+  idealEndY: number,
+  minY: number,
+): number {
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return idealEndY
+  const w = canvas.width
+  // Scanne de bas en haut depuis idealEndY-1 jusqu'à minY
+  for (let y = Math.min(idealEndY - 1, canvas.height - 1); y > minY; y--) {
+    const row = ctx.getImageData(0, y, w, 1).data
+    let isWhite = true
+    // Test : tous les pixels de la ligne sont quasi-blancs (>= 245 sur R,G,B)
+    for (let i = 0; i < row.length; i += 4) {
+      const r = row[i] ?? 255
+      const g = row[i + 1] ?? 255
+      const b = row[i + 2] ?? 255
+      if (r < 245 || g < 245 || b < 245) {
+        isWhite = false
+        break
+      }
+    }
+    if (isWhite) return y + 1 // +1 pour inclure la ligne blanche dans la page courante
+  }
+  return idealEndY
+}
+
+interface JsPdfLike {
+  addImage: (data: string, fmt: string, x: number, y: number, w: number, h: number) => void
+  addPage: () => void
+}
+
+function addSlicedPages(
+  pdf: JsPdfLike,
+  canvas: HTMLCanvasElement,
+  imgWidthMm: number,
+  pageHeightMm: number,
+): void {
+  // Conversion mm → px via le ratio largeur
+  const pxPerMm = canvas.width / imgWidthMm
+  const pageHeightPx = pageHeightMm * pxPerMm
+  // Sécurité : on accepte qu'une page soit au pire 30% plus courte que la cible
+  // si on doit reculer pour trouver une bande blanche.
+  const minPageHeightPx = pageHeightPx * 0.7
+
+  let pageStartY = 0
+  let pageIndex = 0
+  while (pageStartY < canvas.height) {
+    const idealEndY = Math.min(pageStartY + pageHeightPx, canvas.height)
+    const isLastPage = idealEndY >= canvas.height
+    const actualEndY = isLastPage
+      ? canvas.height
+      : findLastWhiteBefore(canvas, idealEndY, pageStartY + minPageHeightPx)
+
+    // Construire un sub-canvas pour cette tranche
+    const sliceHeight = actualEndY - pageStartY
+    const sliceCanvas = document.createElement('canvas')
+    sliceCanvas.width = canvas.width
+    sliceCanvas.height = sliceHeight
+    const sliceCtx = sliceCanvas.getContext('2d')
+    if (!sliceCtx) {
+      pageStartY = actualEndY
+      continue
+    }
+    sliceCtx.fillStyle = '#ffffff'
+    sliceCtx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height)
+    sliceCtx.drawImage(canvas, 0, -pageStartY)
+
+    const sliceImg = sliceCanvas.toDataURL('image/jpeg', 0.95)
+    const sliceHeightMm = sliceHeight / pxPerMm
+
+    if (pageIndex > 0) pdf.addPage()
+    pdf.addImage(sliceImg, 'JPEG', 0, 0, imgWidthMm, sliceHeightMm)
+
+    pageStartY = actualEndY
+    pageIndex += 1
+    // Anti-boucle infinie au cas où findLastWhiteBefore retourne pageStartY
+    if (actualEndY <= pageStartY) break
+  }
+}
+
 async function downloadPdf(content: string, title: string, dateIso: string): Promise<void> {
   // Imports dynamiques : libs browser-only, casseraient le SSR Next.js en static.
   // - html2canvas-pro : fork de html2canvas avec support OKLCH/lab/lch (Tailwind v4)
@@ -265,22 +349,14 @@ async function downloadPdf(content: string, title: string, dateIso: string): Pro
     const imgWidth = pageWidth
     const imgHeight = (canvas.height * imgWidth) / canvas.width
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.95)
-
-    // Pagination : si le canvas est plus haut qu'une page, on découpe verticalement.
     if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight)
+      // Tient sur une seule page
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgWidth, imgHeight)
     } else {
-      let heightLeft = imgHeight
-      let position = 0
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
-      while (heightLeft > 0) {
-        position -= pageHeight
-        pdf.addPage()
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
-        heightLeft -= pageHeight
-      }
+      // Pagination intelligente : on coupe le canvas à des positions Y "sûres"
+      // (bandes horizontales blanches = entre les éléments / paragraphes) plutôt
+      // qu'à hauteur fixe (qui couperait au milieu du texte).
+      addSlicedPages(pdf, canvas, imgWidth, pageHeight)
     }
 
     pdf.save(`${slugifyFilename(title)}.pdf`)
