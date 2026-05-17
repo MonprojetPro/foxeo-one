@@ -209,77 +209,82 @@ function slugifyFilename(title: string): string {
 }
 
 async function downloadPdf(content: string, title: string, dateIso: string): Promise<void> {
-  // Imports dynamiques : ces libs sont browser-only (utilisent window/canvas)
-  // et casseraient le build SSR Next.js en import statique.
-  const [markedMod, html2pdfMod] = await Promise.all([
+  // Imports dynamiques : libs browser-only, casseraient le SSR Next.js en static.
+  // - html2canvas-pro : fork de html2canvas avec support OKLCH/lab/lch (Tailwind v4)
+  // - jspdf : moteur PDF, construit le doc à partir du canvas
+  // - marked : markdown → HTML
+  const [markedMod, html2canvasMod, jspdfMod] = await Promise.all([
     import('marked'),
-    import('html2pdf.js'),
+    import('html2canvas-pro'),
+    import('jspdf'),
   ])
 
   const marked = (markedMod as { marked?: { parse: (s: string, o?: unknown) => string | Promise<string> }; default?: unknown }).marked
     ?? (markedMod as { default: { parse: (s: string, o?: unknown) => string | Promise<string> } }).default
-  const html2pdfFn =
-    (html2pdfMod as { default?: unknown }).default
-    ?? (html2pdfMod as unknown as () => unknown)
+  const html2canvas = (html2canvasMod as { default?: unknown }).default ?? (html2canvasMod as unknown)
+  const jsPDFCtor = (jspdfMod as { jsPDF?: unknown }).jsPDF ?? (jspdfMod as { default?: unknown }).default
 
-  if (!marked || typeof html2pdfFn !== 'function') {
-    throw new Error('Impossible de charger les libs PDF (marked / html2pdf.js)')
+  if (!marked || typeof html2canvas !== 'function' || typeof jsPDFCtor !== 'function') {
+    throw new Error('Impossible de charger les libs PDF (marked / html2canvas-pro / jspdf)')
   }
 
   const markdownHtml = await marked.parse(content, { gfm: true, breaks: true })
   const fullHtml = buildPdfHtml(String(markdownHtml), title, dateIso)
 
-  // Container caché dans le document principal. html2pdf clone le target avant de
-  // le passer à html2canvas, donc placer le HTML dans une iframe ne suffisait pas
-  // à isoler du thème parent.
+  // Container caché : html2canvas-pro a besoin que l'élément soit dans le DOM
+  // pour calculer le layout. position:fixed + opacity:0 + pointer-events:none.
   const container = document.createElement('div')
   container.style.cssText =
-    'position:fixed;left:0;top:0;width:820px;opacity:0;pointer-events:none;z-index:-1'
+    'position:fixed;left:0;top:0;width:820px;opacity:0;pointer-events:none;z-index:-1;background:#ffffff'
   container.innerHTML = fullHtml
   document.body.appendChild(container)
 
-  // 🔴 PARADE OKLCH : le thème Tailwind v4 du projet définit ses variables CSS
-  // (--background, --foreground, --primary, etc.) en oklch(...). html2canvas ne
-  // sait pas parser oklch et crashe. On désactive temporairement TOUTES les
-  // stylesheets du document parent pendant la génération : le HTML PDF a tous
-  // ses styles en inline (hex/rgb), il n'a pas besoin du theme parent. L'UI
-  // visible flashe sans style pendant ~1s, c'est acceptable pour un export.
-  const stylesheets = Array.from(document.styleSheets)
-  const previousDisabled: boolean[] = stylesheets.map((s) => {
-    try { return s.disabled } catch { return false }
-  })
-  stylesheets.forEach((s) => {
-    try { s.disabled = true } catch { /* cross-origin sheet : on l'ignore */ }
-  })
-
   try {
-    const target = container.querySelector('.page') ?? container
-    await (html2pdfFn as (...args: unknown[]) => {
-      from: (el: Element) => {
-        set: (opts: unknown) => { save: () => Promise<void> }
-      }
-    })()
-      .from(target)
-      .set({
-        margin: [10, 10, 14, 10],
-        filename: `${slugifyFilename(title)}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] },
-      })
-      .save()
-  } finally {
-    // Restaurer les stylesheets puis nettoyer le container
-    stylesheets.forEach((s, i) => {
-      try { s.disabled = previousDisabled[i] ?? false } catch { /* ignore */ }
+    const target = (container.querySelector('.page') ?? container) as HTMLElement
+
+    const canvas = await (html2canvas as (el: HTMLElement, opts?: unknown) => Promise<HTMLCanvasElement>)(target, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
     })
+
+    // Construire le PDF A4 portrait depuis le canvas
+    // A4 = 210 × 297 mm. On scale l'image pour qu'elle fasse la largeur A4.
+    const PdfCtor = jsPDFCtor as new (opts: { unit: string; format: string; orientation: string }) => {
+      internal: { pageSize: { getWidth: () => number; getHeight: () => number } }
+      addImage: (data: string, fmt: string, x: number, y: number, w: number, h: number) => void
+      addPage: () => void
+      save: (filename: string) => void
+    }
+    const pdf = new PdfCtor({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const imgWidth = pageWidth
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95)
+
+    // Pagination : si le canvas est plus haut qu'une page, on découpe verticalement.
+    if (imgHeight <= pageHeight) {
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight)
+    } else {
+      let heightLeft = imgHeight
+      let position = 0
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+      while (heightLeft > 0) {
+        position -= pageHeight
+        pdf.addPage()
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
+    }
+
+    pdf.save(`${slugifyFilename(title)}.pdf`)
+  } finally {
     document.body.removeChild(container)
   }
 }
