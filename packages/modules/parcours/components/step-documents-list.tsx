@@ -216,8 +216,6 @@ async function downloadPdf(content: string, title: string, dateIso: string): Pro
     import('html2pdf.js'),
   ])
 
-  // marked et html2pdf.js exposent leur API soit en default, soit en named, selon
-  // le mode d'interop ESM/CJS du bundler. On accepte les deux.
   const marked = (markedMod as { marked?: { parse: (s: string, o?: unknown) => string | Promise<string> }; default?: unknown }).marked
     ?? (markedMod as { default: { parse: (s: string, o?: unknown) => string | Promise<string> } }).default
   const html2pdfFn =
@@ -231,22 +229,32 @@ async function downloadPdf(content: string, title: string, dateIso: string): Pro
   const markdownHtml = await marked.parse(content, { gfm: true, breaks: true })
   const fullHtml = buildPdfHtml(String(markdownHtml), title, dateIso)
 
-  // html2pdf a besoin d'un élément monté dans le DOM pour mesurer le layout.
-  // On utilise opacity:0 + pointer-events:none plutôt que left:-10000px : certaines
-  // versions de html2canvas refusent de capturer un élément hors-viewport.
-  const container = document.createElement('div')
-  container.style.position = 'fixed'
-  container.style.left = '0'
-  container.style.top = '0'
-  container.style.width = '794px' // ~ A4 width in px at 96dpi
-  container.style.opacity = '0'
-  container.style.pointerEvents = 'none'
-  container.style.zIndex = '-1'
-  container.innerHTML = fullHtml
-  document.body.appendChild(container)
+  // Isolation iframe OBLIGATOIRE : le thème Tailwind v4 du projet utilise des
+  // variables CSS en oklch(...), qui sont héritées par n'importe quel élément du
+  // document principal. html2canvas ne sait PAS parser oklch → crash. L'iframe
+  // crée un document neuf sans aucune variable CSS héritée du parent.
+  const iframe = document.createElement('iframe')
+  iframe.style.cssText =
+    'position:fixed;left:0;top:0;width:820px;height:1200px;opacity:0;pointer-events:none;z-index:-1;border:0'
+  document.body.appendChild(iframe)
 
   try {
-    const target = container.querySelector('.page') ?? container
+    await new Promise<void>((resolve, reject) => {
+      iframe.addEventListener('load', () => resolve(), { once: true })
+      iframe.addEventListener('error', () => reject(new Error('Échec du chargement de l\'iframe PDF')), { once: true })
+      iframe.srcdoc = fullHtml
+    })
+
+    const iframeDoc = iframe.contentDocument
+    if (!iframeDoc) {
+      throw new Error('Iframe document inaccessible')
+    }
+
+    const target = iframeDoc.querySelector('.page') ?? iframeDoc.body
+    if (!target) {
+      throw new Error('Élément cible introuvable dans l\'iframe PDF')
+    }
+
     await (html2pdfFn as (...args: unknown[]) => {
       from: (el: Element) => {
         set: (opts: unknown) => { save: () => Promise<void> }
@@ -257,13 +265,22 @@ async function downloadPdf(content: string, title: string, dateIso: string): Pro
         margin: [10, 10, 14, 10],
         filename: `${slugifyFilename(title)}.pdf`,
         image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          // Crucial pour capturer le contenu d'un autre document (l'iframe) :
+          // pointe html2canvas vers la window de l'iframe.
+          windowWidth: 820,
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] },
       })
       .save()
   } finally {
-    document.body.removeChild(container)
+    document.body.removeChild(iframe)
   }
 }
 
@@ -316,8 +333,9 @@ export function StepDocumentsList({ submissions }: StepDocumentsListProps) {
                   try {
                     await downloadPdf(doc.content, doc.title, doc.date)
                   } catch (e) {
+                    const msg = e instanceof Error ? e.message : String(e)
                     console.error('[STEP-DOCUMENTS-LIST] PDF generation failed:', e)
-                    showError('Échec de la génération PDF')
+                    showError(`Échec PDF : ${msg.slice(0, 200)}`)
                   }
                 }}
                 className="rounded-lg p-1.5 text-[#6b7280] hover:text-[#a78bfa] hover:bg-[#1a1033] transition-all"
