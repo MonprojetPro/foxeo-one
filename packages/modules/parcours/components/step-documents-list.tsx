@@ -52,16 +52,18 @@ function buildPdfHtml(markdownHtml: string, title: string, dateIso: string): str
     month: 'long',
     year: 'numeric',
   })
+  // ⚠️ Pas de @import Google Fonts ici : html2canvas tente de fetch les fonts
+  // en mode CORS et échoue silencieusement → la génération PDF plante. On utilise
+  // exclusivement la stack système (Apple system / Segoe UI / etc.).
   return `<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8" />
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
     color: #1f2937;
     line-height: 1.6;
     font-size: 11pt;
@@ -78,7 +80,7 @@ function buildPdfHtml(markdownHtml: string, title: string, dateIso: string): str
     margin-bottom: 28px;
   }
   .header .brand {
-    font-family: 'Poppins', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
     font-weight: 700;
     font-size: 18pt;
     color: #7c3aed;
@@ -86,7 +88,7 @@ function buildPdfHtml(markdownHtml: string, title: string, dateIso: string): str
   }
   .header .brand-suffix { color: #1f2937; }
   .header .doc-title {
-    font-family: 'Poppins', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
     font-weight: 600;
     font-size: 22pt;
     color: #111827;
@@ -102,7 +104,7 @@ function buildPdfHtml(markdownHtml: string, title: string, dateIso: string): str
     font-size: 11pt;
   }
   .content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
-    font-family: 'Poppins', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
     color: #111827;
     line-height: 1.3;
     margin-top: 22px;
@@ -156,7 +158,7 @@ function buildPdfHtml(markdownHtml: string, title: string, dateIso: string): str
   }
   .content th {
     background: #f9fafb;
-    font-family: 'Poppins', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
     font-weight: 600;
     color: #111827;
   }
@@ -209,32 +211,53 @@ function slugifyFilename(title: string): string {
 async function downloadPdf(content: string, title: string, dateIso: string): Promise<void> {
   // Imports dynamiques : ces libs sont browser-only (utilisent window/canvas)
   // et casseraient le build SSR Next.js en import statique.
-  const [{ marked }, html2pdfMod] = await Promise.all([
+  const [markedMod, html2pdfMod] = await Promise.all([
     import('marked'),
     import('html2pdf.js'),
   ])
-  const html2pdf = (html2pdfMod as { default: typeof import('html2pdf.js') }).default
+
+  // marked et html2pdf.js exposent leur API soit en default, soit en named, selon
+  // le mode d'interop ESM/CJS du bundler. On accepte les deux.
+  const marked = (markedMod as { marked?: { parse: (s: string, o?: unknown) => string | Promise<string> }; default?: unknown }).marked
+    ?? (markedMod as { default: { parse: (s: string, o?: unknown) => string | Promise<string> } }).default
+  const html2pdfFn =
+    (html2pdfMod as { default?: unknown }).default
+    ?? (html2pdfMod as unknown as () => unknown)
+
+  if (!marked || typeof html2pdfFn !== 'function') {
+    throw new Error('Impossible de charger les libs PDF (marked / html2pdf.js)')
+  }
 
   const markdownHtml = await marked.parse(content, { gfm: true, breaks: true })
-  const fullHtml = buildPdfHtml(markdownHtml as string, title, dateIso)
+  const fullHtml = buildPdfHtml(String(markdownHtml), title, dateIso)
 
-  // html2pdf a besoin d'un élément monté dans le DOM (caché) pour mesurer le layout
+  // html2pdf a besoin d'un élément monté dans le DOM pour mesurer le layout.
+  // On utilise opacity:0 + pointer-events:none plutôt que left:-10000px : certaines
+  // versions de html2canvas refusent de capturer un élément hors-viewport.
   const container = document.createElement('div')
   container.style.position = 'fixed'
-  container.style.left = '-10000px'
+  container.style.left = '0'
   container.style.top = '0'
   container.style.width = '794px' // ~ A4 width in px at 96dpi
+  container.style.opacity = '0'
+  container.style.pointerEvents = 'none'
+  container.style.zIndex = '-1'
   container.innerHTML = fullHtml
   document.body.appendChild(container)
 
   try {
-    await html2pdf()
-      .from(container.querySelector('.page') ?? container)
+    const target = container.querySelector('.page') ?? container
+    await (html2pdfFn as (...args: unknown[]) => {
+      from: (el: Element) => {
+        set: (opts: unknown) => { save: () => Promise<void> }
+      }
+    })()
+      .from(target)
       .set({
         margin: [10, 10, 14, 10],
         filename: `${slugifyFilename(title)}.pdf`,
         image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] },
       })
