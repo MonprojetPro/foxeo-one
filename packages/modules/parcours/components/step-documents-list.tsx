@@ -229,32 +229,31 @@ async function downloadPdf(content: string, title: string, dateIso: string): Pro
   const markdownHtml = await marked.parse(content, { gfm: true, breaks: true })
   const fullHtml = buildPdfHtml(String(markdownHtml), title, dateIso)
 
-  // Isolation iframe OBLIGATOIRE : le thème Tailwind v4 du projet utilise des
-  // variables CSS en oklch(...), qui sont héritées par n'importe quel élément du
-  // document principal. html2canvas ne sait PAS parser oklch → crash. L'iframe
-  // crée un document neuf sans aucune variable CSS héritée du parent.
-  const iframe = document.createElement('iframe')
-  iframe.style.cssText =
-    'position:fixed;left:0;top:0;width:820px;height:1200px;opacity:0;pointer-events:none;z-index:-1;border:0'
-  document.body.appendChild(iframe)
+  // Container caché dans le document principal. html2pdf clone le target avant de
+  // le passer à html2canvas, donc placer le HTML dans une iframe ne suffisait pas
+  // à isoler du thème parent.
+  const container = document.createElement('div')
+  container.style.cssText =
+    'position:fixed;left:0;top:0;width:820px;opacity:0;pointer-events:none;z-index:-1'
+  container.innerHTML = fullHtml
+  document.body.appendChild(container)
+
+  // 🔴 PARADE OKLCH : le thème Tailwind v4 du projet définit ses variables CSS
+  // (--background, --foreground, --primary, etc.) en oklch(...). html2canvas ne
+  // sait pas parser oklch et crashe. On désactive temporairement TOUTES les
+  // stylesheets du document parent pendant la génération : le HTML PDF a tous
+  // ses styles en inline (hex/rgb), il n'a pas besoin du theme parent. L'UI
+  // visible flashe sans style pendant ~1s, c'est acceptable pour un export.
+  const stylesheets = Array.from(document.styleSheets)
+  const previousDisabled: boolean[] = stylesheets.map((s) => {
+    try { return s.disabled } catch { return false }
+  })
+  stylesheets.forEach((s) => {
+    try { s.disabled = true } catch { /* cross-origin sheet : on l'ignore */ }
+  })
 
   try {
-    await new Promise<void>((resolve, reject) => {
-      iframe.addEventListener('load', () => resolve(), { once: true })
-      iframe.addEventListener('error', () => reject(new Error('Échec du chargement de l\'iframe PDF')), { once: true })
-      iframe.srcdoc = fullHtml
-    })
-
-    const iframeDoc = iframe.contentDocument
-    if (!iframeDoc) {
-      throw new Error('Iframe document inaccessible')
-    }
-
-    const target = iframeDoc.querySelector('.page') ?? iframeDoc.body
-    if (!target) {
-      throw new Error('Élément cible introuvable dans l\'iframe PDF')
-    }
-
+    const target = container.querySelector('.page') ?? container
     await (html2pdfFn as (...args: unknown[]) => {
       from: (el: Element) => {
         set: (opts: unknown) => { save: () => Promise<void> }
@@ -271,16 +270,17 @@ async function downloadPdf(content: string, title: string, dateIso: string): Pro
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false,
-          // Crucial pour capturer le contenu d'un autre document (l'iframe) :
-          // pointe html2canvas vers la window de l'iframe.
-          windowWidth: 820,
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] },
       })
       .save()
   } finally {
-    document.body.removeChild(iframe)
+    // Restaurer les stylesheets puis nettoyer le container
+    stylesheets.forEach((s, i) => {
+      try { s.disabled = previousDisabled[i] ?? false } catch { /* ignore */ }
+    })
+    document.body.removeChild(container)
   }
 }
 
