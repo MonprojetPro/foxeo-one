@@ -278,10 +278,13 @@ async function downloadPdf(content: string, title: string, dateIso: string): Pro
           },
           autoPaging: 'text',
           margin: [10, 10, 14, 10], // top, right, bottom, left (mm)
-          width: 190, // largeur utile A4 = 210 - 2*10 marges
-          windowWidth: 794, // largeur du container source en px
+          width: 190, // largeur utile A4 (mm) = 210 - 2*10 marges
+          windowWidth: 794, // largeur source en px utilisée pour le layout du HTML
           html2canvas: {
-            scale: 0.24, // 190mm / 794px ≈ 0.24
+            // scale = oversampling de la résolution canvas. 2 = qualité "retina"
+            // (le canvas fait 794*2 = 1588px de large, puis compressé à 190mm
+            // dans le PDF par jsPDF) → texte net, pas de flou.
+            scale: 2,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
