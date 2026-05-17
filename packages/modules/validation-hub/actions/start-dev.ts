@@ -50,53 +50,30 @@ export async function startDev(
       return errorResponse('Opérateur non trouvé', 'NOT_FOUND')
     }
 
-    // 1. Approve the request
-    const { data, error } = await supabase
-      .from('validation_requests')
-      .update({
-        status: 'approved',
-        reviewer_comment: 'Pris en charge — développement direct',
-        reviewed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', requestId)
-      .select()
-      .single()
+    // Approve via la RPC : elle propage le statut à client_parcours_agents,
+    // step_submissions, step_feedback_injections et crée la notification client.
+    // Wording de notif personnalisé pour la sémantique "prise en charge dev direct".
+    const { data, error } = await supabase.rpc('approve_validation_request', {
+      p_request_id: requestId,
+      p_comment: 'Pris en charge — développement direct',
+      p_operator_id: operator.id,
+      p_notification_title: `MiKL a tous les éléments — début du développement de ton projet — ${requestTitle}`,
+      p_notification_body: 'MiKL dispose de tous les éléments et commence le développement de ton projet.',
+    })
 
     if (error) {
-      console.error('[VALIDATION-HUB:START-DEV] Error updating request:', error)
+      console.error('[VALIDATION-HUB:START-DEV] Error approving request:', error)
       return errorResponse('Erreur lors de la prise en charge', 'DB_ERROR', error)
     }
 
-    // 2. Get client bmad_project_path
+    // Récupère bmad_project_path pour le deeplink Cursor côté Hub
     const { data: clientData } = await supabase
       .from('clients')
-      .select('auth_user_id, bmad_project_path')
+      .select('bmad_project_path')
       .eq('id', clientId)
       .single()
 
     const bmadProjectPath = clientData?.bmad_project_path ?? null
-
-    // 3. Notify client
-    if (clientData?.auth_user_id) {
-      const { error: notifError } = await supabase
-        .from('notifications')
-        .insert({
-          recipient_type: 'client',
-          recipient_id: clientData.auth_user_id,
-          type: 'validation',
-          title: `Votre demande '${requestTitle}' est prise en charge par MiKL`,
-          link: '/modules/core-dashboard',
-        })
-        .select('id')
-        .single()
-
-      if (notifError) {
-        console.error('[VALIDATION-HUB:START-DEV] Error creating notification:', notifError)
-        // Non-blocking
-      }
-    }
-
     const cursorUrl = bmadProjectPath ? `cursor://${bmadProjectPath}` : null
 
     return successResponse({

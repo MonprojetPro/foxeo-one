@@ -34,9 +34,8 @@ const MOCK_REQUEST = {
 function buildSupabaseMock({
   userError = null as unknown,
   operatorError = null as unknown,
-  requestError = null as unknown,
+  rpcError = null as unknown,
   bmadProjectPath = '/projects/client-alice' as string | null,
-  notifError = null as unknown,
 } = {}) {
   return {
     auth: {
@@ -45,6 +44,10 @@ function buildSupabaseMock({
         error: userError,
       }),
     },
+    rpc: vi.fn().mockResolvedValue({
+      data: rpcError ? null : MOCK_REQUEST,
+      error: rpcError,
+    }),
     from: vi.fn((table: string) => {
       if (table === 'operators') {
         return {
@@ -58,37 +61,14 @@ function buildSupabaseMock({
           })),
         }
       }
-      if (table === 'validation_requests') {
-        return {
-          update: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              select: vi.fn(() => ({
-                single: vi.fn().mockResolvedValue({
-                  data: requestError ? null : MOCK_REQUEST,
-                  error: requestError,
-                }),
-              })),
-            })),
-          })),
-        }
-      }
       if (table === 'clients') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
               single: vi.fn().mockResolvedValue({
-                data: { auth_user_id: 'auth-user-client-1', bmad_project_path: bmadProjectPath },
+                data: { bmad_project_path: bmadProjectPath },
                 error: null,
               }),
-            })),
-          })),
-        }
-      }
-      if (table === 'notifications') {
-        return {
-          insert: vi.fn(() => ({
-            select: vi.fn(() => ({
-              single: vi.fn().mockResolvedValue({ data: { id: 'notif-1' }, error: notifError }),
             })),
           })),
         }
@@ -171,9 +151,9 @@ describe('startDev', () => {
     expect(result.error?.code).toBe('NOT_FOUND')
   })
 
-  it('should return DB_ERROR when request update fails', async () => {
+  it('should return DB_ERROR when RPC fails', async () => {
     vi.mocked(createServerSupabaseClient).mockResolvedValue(
-      buildSupabaseMock({ requestError: { message: 'DB error' } }) as never
+      buildSupabaseMock({ rpcError: { message: 'DB error' } }) as never
     )
     const { startDev } = await import('./start-dev')
     const result = await startDev(REQ_ID, CLIENT_ID, 'Brief Vision')
@@ -182,26 +162,19 @@ describe('startDev', () => {
     expect(result.error?.code).toBe('DB_ERROR')
   })
 
-  it('should succeed even if notification creation fails (non-blocking)', async () => {
-    vi.mocked(createServerSupabaseClient).mockResolvedValue(
-      buildSupabaseMock({ notifError: { message: 'Notification error' } }) as never
-    )
-    const { startDev } = await import('./start-dev')
-    const result = await startDev(REQ_ID, CLIENT_ID, 'Brief Vision')
-
-    expect(result.error).toBeNull()
-    expect(result.data?.request.status).toBe('approved')
-  })
-
-  it('should include title in notification', async () => {
+  it('should call approve_validation_request RPC with custom notification wording', async () => {
     const mockSupabase = buildSupabaseMock()
     vi.mocked(createServerSupabaseClient).mockResolvedValue(mockSupabase as never)
 
     const { startDev } = await import('./start-dev')
     await startDev(REQ_ID, CLIENT_ID, 'Mon Brief Important')
 
-    const fromCall = vi.mocked(mockSupabase.from)
-    const notifCall = fromCall.mock.calls.find(([t]) => t === 'notifications')
-    expect(notifCall).toBeDefined()
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('approve_validation_request', {
+      p_request_id: REQ_ID,
+      p_comment: 'Pris en charge — développement direct',
+      p_operator_id: OPERATOR_ID,
+      p_notification_title: expect.stringContaining('Mon Brief Important'),
+      p_notification_body: expect.stringContaining('commence le développement'),
+    })
   })
 })
