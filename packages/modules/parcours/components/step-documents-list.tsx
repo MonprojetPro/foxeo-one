@@ -210,9 +210,6 @@ function slugifyFilename(title: string): string {
 
 async function downloadPdf(content: string, title: string, dateIso: string): Promise<void> {
   // Imports dynamiques : libs browser-only, casseraient le SSR Next.js en static.
-  // - html2canvas-pro : fork de html2canvas avec support OKLCH/lab/lch (Tailwind v4)
-  // - jspdf : moteur PDF, construit le doc à partir du canvas
-  // - marked : markdown → HTML
   const [markedMod, html2canvasMod, jspdfMod] = await Promise.all([
     import('marked'),
     import('html2canvas-pro'),
@@ -221,72 +218,87 @@ async function downloadPdf(content: string, title: string, dateIso: string): Pro
 
   const marked = (markedMod as { marked?: { parse: (s: string, o?: unknown) => string | Promise<string> }; default?: unknown }).marked
     ?? (markedMod as { default: { parse: (s: string, o?: unknown) => string | Promise<string> } }).default
-  const html2canvas = (html2canvasMod as { default?: unknown }).default ?? (html2canvasMod as unknown)
+  const html2canvasPro = (html2canvasMod as { default?: unknown }).default ?? (html2canvasMod as unknown)
   const jsPDFCtor = (jspdfMod as { jsPDF?: unknown }).jsPDF ?? (jspdfMod as { default?: unknown }).default
 
-  if (!marked || typeof html2canvas !== 'function' || typeof jsPDFCtor !== 'function') {
+  if (!marked || typeof html2canvasPro !== 'function' || typeof jsPDFCtor !== 'function') {
     throw new Error('Impossible de charger les libs PDF (marked / html2canvas-pro / jspdf)')
   }
 
   const markdownHtml = await marked.parse(content, { gfm: true, breaks: true })
   const fullHtml = buildPdfHtml(String(markdownHtml), title, dateIso)
 
-  // Container caché : html2canvas-pro a besoin que l'élément soit dans le DOM
-  // pour calculer le layout. position:fixed + opacity:0 + pointer-events:none.
+  // Container caché. Pas position:fixed (peut tronquer la capture hors viewport) :
+  // on utilise position:absolute hors-écran horizontalement, ce qui garde le
+  // contenu dans le flow vertical et capturable en entier.
   const container = document.createElement('div')
   container.style.cssText =
-    'position:fixed;left:0;top:0;width:820px;opacity:0;pointer-events:none;z-index:-1;background:#ffffff'
+    'position:absolute;left:-99999px;top:0;width:794px;background:#ffffff;color:#000000'
   container.innerHTML = fullHtml
   document.body.appendChild(container)
+
+  // Monkey-patch GLOBAL html2canvas → html2canvas-pro. jsPDF.html() utilise en
+  // interne window.html2canvas pour le rendu ; en lui substituant html2canvas-pro
+  // on bénéficie du support OKLCH/lab/lch (sinon crash sur le thème Tailwind v4).
+  const windowAny = window as unknown as { html2canvas?: unknown }
+  const previousH2C = windowAny.html2canvas
+  windowAny.html2canvas = html2canvasPro
 
   try {
     const target = (container.querySelector('.page') ?? container) as HTMLElement
 
-    const canvas = await (html2canvas as (el: HTMLElement, opts?: unknown) => Promise<HTMLCanvasElement>)(target, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-    })
-
-    // Construire le PDF A4 portrait depuis le canvas
-    // A4 = 210 × 297 mm. On scale l'image pour qu'elle fasse la largeur A4.
     const PdfCtor = jsPDFCtor as new (opts: { unit: string; format: string; orientation: string }) => {
-      internal: { pageSize: { getWidth: () => number; getHeight: () => number } }
-      addImage: (data: string, fmt: string, x: number, y: number, w: number, h: number) => void
-      addPage: () => void
-      save: (filename: string) => void
+      html: (
+        el: HTMLElement,
+        opts: {
+          callback: (pdf: { save: (f: string) => void }) => void
+          margin?: number[]
+          autoPaging?: boolean | 'text' | 'slice'
+          width?: number
+          windowWidth?: number
+          html2canvas?: unknown
+        },
+      ) => Promise<void>
     }
     const pdf = new PdfCtor({ unit: 'mm', format: 'a4', orientation: 'portrait' })
 
-    const pageWidth = pdf.internal.pageSize.getWidth()
-    const pageHeight = pdf.internal.pageSize.getHeight()
-    const imgWidth = pageWidth
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-
-    const imgData = canvas.toDataURL('image/jpeg', 0.95)
-
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight)
-    } else {
-      // Pagination simple : on imprime l'image entière à la même position absolue
-      // mais décalée vers le haut à chaque page. Petit overlap (4mm) entre pages
-      // pour qu'une ligne coupée par la jonction soit visible en haut de la page
-      // suivante (légère duplication mais zéro perte de contenu).
-      const OVERLAP_MM = 4
-      let position = 0 // mm — décalage de l'image entière par rapport au haut de la page
-      let pageCursor = 0 // mm — début de la zone visible courante
-      while (pageCursor < imgHeight) {
-        if (pageCursor > 0) pdf.addPage()
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
-        pageCursor += pageHeight - OVERLAP_MM
-        position = -pageCursor
+    // pdf.html() gère NATIVEMENT les sauts de page propres entre éléments :
+    //   autoPaging: 'text' évalue les positions de fin d'éléments texte avant
+    //   de couper → plus de coupure horizontale au milieu d'une ligne.
+    await new Promise<void>((resolve, reject) => {
+      try {
+        pdf.html(target, {
+          callback: (doc) => {
+            try {
+              doc.save(`${slugifyFilename(title)}.pdf`)
+              resolve()
+            } catch (e) {
+              reject(e instanceof Error ? e : new Error(String(e)))
+            }
+          },
+          autoPaging: 'text',
+          margin: [10, 10, 14, 10], // top, right, bottom, left (mm)
+          width: 190, // largeur utile A4 = 210 - 2*10 marges
+          windowWidth: 794, // largeur du container source en px
+          html2canvas: {
+            scale: 0.24, // 190mm / 794px ≈ 0.24
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+          },
+        })
+      } catch (e) {
+        reject(e instanceof Error ? e : new Error(String(e)))
       }
-    }
-
-    pdf.save(`${slugifyFilename(title)}.pdf`)
+    })
   } finally {
+    // Restaurer l'éventuel html2canvas global préexistant + nettoyer le DOM
+    if (previousH2C === undefined) {
+      delete (window as unknown as { html2canvas?: unknown }).html2canvas
+    } else {
+      windowAny.html2canvas = previousH2C
+    }
     document.body.removeChild(container)
   }
 }
