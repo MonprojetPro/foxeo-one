@@ -35,25 +35,213 @@ function stripMarkdown(text: string): string {
     .replace(/\*(.+?)\*/g, '$1')
     .replace(/`(.+?)`/g, '$1')
     .replace(/\[(.+?)\]\(.+?\)/g, '$1')
-    .replace(/^\s*[-*+]\s+/gm, '')
+    .replace(/^\s*[-*+]\s+/gm, '• ')
     .replace(/^\s*\d+\.\s+/gm, '')
     .replace(/\|.+\|/g, '')
-    .replace(/\n{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
 
-async function copyToClipboard(content: string): Promise<void> {
-  await navigator.clipboard.writeText(content)
+async function copyFormattedText(content: string): Promise<void> {
+  await navigator.clipboard.writeText(stripMarkdown(content))
 }
 
-function downloadMarkdown(content: string, title: string): void {
-  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${title.replace(/\s+/g, '-').toLowerCase()}.md`
-  a.click()
-  URL.revokeObjectURL(url)
+function buildPdfHtml(markdownHtml: string, title: string, dateIso: string): string {
+  const dateStr = new Date(dateIso).toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+  return `<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1f2937;
+    line-height: 1.6;
+    font-size: 11pt;
+    background: #ffffff;
+  }
+  .page {
+    padding: 40px 48px 60px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .header {
+    border-bottom: 2px solid #7c3aed;
+    padding-bottom: 18px;
+    margin-bottom: 28px;
+  }
+  .header .brand {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 18pt;
+    color: #7c3aed;
+    letter-spacing: -0.01em;
+  }
+  .header .brand-suffix { color: #1f2937; }
+  .header .doc-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 22pt;
+    color: #111827;
+    margin-top: 12px;
+    line-height: 1.25;
+  }
+  .header .date {
+    color: #6b7280;
+    font-size: 10pt;
+    margin-top: 6px;
+  }
+  .content {
+    font-size: 11pt;
+  }
+  .content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
+    font-family: 'Poppins', sans-serif;
+    color: #111827;
+    line-height: 1.3;
+    margin-top: 22px;
+    margin-bottom: 10px;
+  }
+  .content h1 { font-size: 18pt; font-weight: 700; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+  .content h2 { font-size: 14pt; font-weight: 600; color: #7c3aed; }
+  .content h3 { font-size: 12pt; font-weight: 600; }
+  .content h4, .content h5, .content h6 { font-size: 11pt; font-weight: 600; }
+  .content p { margin: 10px 0; }
+  .content ul, .content ol { margin: 10px 0; padding-left: 24px; }
+  .content li { margin: 4px 0; }
+  .content strong { color: #111827; font-weight: 600; }
+  .content em { color: #374151; }
+  .content code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Menlo', 'Consolas', monospace;
+    font-size: 10pt;
+    color: #7c3aed;
+  }
+  .content pre {
+    background: #1f2937;
+    color: #f9fafb;
+    padding: 14px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 9.5pt;
+    line-height: 1.5;
+  }
+  .content pre code { background: transparent; color: inherit; padding: 0; }
+  .content blockquote {
+    border-left: 3px solid #7c3aed;
+    background: #f5f3ff;
+    margin: 14px 0;
+    padding: 10px 16px;
+    color: #4b5563;
+    font-style: italic;
+  }
+  .content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 14px 0;
+    font-size: 10pt;
+  }
+  .content th, .content td {
+    border: 1px solid #e5e7eb;
+    padding: 8px 12px;
+    text-align: left;
+  }
+  .content th {
+    background: #f9fafb;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #111827;
+  }
+  .content a { color: #7c3aed; text-decoration: underline; }
+  .content hr { border: 0; border-top: 1px solid #e5e7eb; margin: 24px 0; }
+  .footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    color: #9ca3af;
+    font-size: 9pt;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="brand">Monprojet<span class="brand-suffix">Pro</span></div>
+      <h1 class="doc-title">${escapeHtml(title)}</h1>
+      <div class="date">Généré le ${dateStr}</div>
+    </header>
+    <main class="content">${markdownHtml}</main>
+    <footer class="footer">
+      Document généré par MonprojetPro · monprojet-pro.com
+    </footer>
+  </div>
+</body>
+</html>`
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function slugifyFilename(title: string): string {
+  return title
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+}
+
+async function downloadPdf(content: string, title: string, dateIso: string): Promise<void> {
+  // Imports dynamiques : ces libs sont browser-only (utilisent window/canvas)
+  // et casseraient le build SSR Next.js en import statique.
+  const [{ marked }, html2pdfMod] = await Promise.all([
+    import('marked'),
+    import('html2pdf.js'),
+  ])
+  const html2pdf = (html2pdfMod as { default: typeof import('html2pdf.js') }).default
+
+  const markdownHtml = await marked.parse(content, { gfm: true, breaks: true })
+  const fullHtml = buildPdfHtml(markdownHtml as string, title, dateIso)
+
+  // html2pdf a besoin d'un élément monté dans le DOM (caché) pour mesurer le layout
+  const container = document.createElement('div')
+  container.style.position = 'fixed'
+  container.style.left = '-10000px'
+  container.style.top = '0'
+  container.style.width = '794px' // ~ A4 width in px at 96dpi
+  container.innerHTML = fullHtml
+  document.body.appendChild(container)
+
+  try {
+    await html2pdf()
+      .from(container.querySelector('.page') ?? container)
+      .set({
+        margin: [10, 10, 14, 10],
+        filename: `${slugifyFilename(title)}.pdf`,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] },
+      })
+      .save()
+  } finally {
+    document.body.removeChild(container)
+  }
 }
 
 export function StepDocumentsList({ submissions }: StepDocumentsListProps) {
@@ -85,15 +273,15 @@ export function StepDocumentsList({ submissions }: StepDocumentsListProps) {
               <button
                 onClick={async () => {
                   try {
-                    await copyToClipboard(doc.content)
-                    showSuccess('Document copié dans le presse-papier')
+                    await copyFormattedText(doc.content)
+                    showSuccess('Texte copié dans le presse-papier')
                   } catch {
                     showError('Impossible de copier — vérifiez les permissions du navigateur')
                   }
                 }}
                 className="rounded-lg p-1.5 text-[#6b7280] hover:text-[#a78bfa] hover:bg-[#1a1033] transition-all"
-                title="Copier le markdown"
-                aria-label="Copier le contenu du document"
+                title="Copier le texte formaté"
+                aria-label="Copier le texte du document"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
@@ -101,10 +289,17 @@ export function StepDocumentsList({ submissions }: StepDocumentsListProps) {
                 </svg>
               </button>
               <button
-                onClick={() => downloadMarkdown(doc.content, doc.title)}
+                onClick={async () => {
+                  try {
+                    await downloadPdf(doc.content, doc.title, doc.date)
+                  } catch (e) {
+                    console.error('[STEP-DOCUMENTS-LIST] PDF generation failed:', e)
+                    showError('Échec de la génération PDF')
+                  }
+                }}
                 className="rounded-lg p-1.5 text-[#6b7280] hover:text-[#a78bfa] hover:bg-[#1a1033] transition-all"
-                title="Télécharger en .md"
-                aria-label="Télécharger le document"
+                title="Télécharger en PDF"
+                aria-label="Télécharger le document en PDF"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />

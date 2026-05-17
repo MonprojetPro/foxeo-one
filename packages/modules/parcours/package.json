@@ -19,18 +19,20 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@hookform/resolvers": "*",
     "@monprojetpro/supabase": "*",
     "@monprojetpro/types": "*",
     "@monprojetpro/ui": "*",
     "@monprojetpro/utils": "*",
-    "@hookform/resolvers": "*",
     "@tanstack/react-query": "^5.90.0",
     "date-fns": "^4.1.0",
+    "html2pdf.js": "^0.14.0",
+    "jszip": "^3.10.1",
+    "marked": "^18.0.3",
     "react": "^19.0.0",
     "react-hook-form": "*",
     "react-markdown": "^9.0.1",
     "remark-gfm": "^4.0.0",
-    "jszip": "^3.10.1",
     "zod": "*"
   },
   "devDependencies": {

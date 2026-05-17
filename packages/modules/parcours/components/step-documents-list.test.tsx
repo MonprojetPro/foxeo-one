@@ -45,7 +45,7 @@ describe('StepDocumentsList', () => {
     expect(screen.getByText(/il y a X jours/)).toBeInTheDocument()
   })
 
-  it('copies content to clipboard on button click', async () => {
+  it('copies formatted (markdown-stripped) text to clipboard on button click', async () => {
     const mockWriteText = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, 'clipboard', {
       value: { writeText: mockWriteText },
@@ -53,17 +53,32 @@ describe('StepDocumentsList', () => {
       configurable: true,
     })
 
-    render(<StepDocumentsList submissions={[makeSubmission()]} />)
+    render(
+      <StepDocumentsList
+        submissions={[
+          makeSubmission({
+            submissionContent: '# Titre\n\n**Important** : voici une *idée* clé.\n- Point A\n- Point B',
+          }),
+        ]}
+      />,
+    )
 
-    const copyButton = screen.getByLabelText('Copier le contenu du document')
+    const copyButton = screen.getByLabelText('Copier le texte du document')
     fireEvent.click(copyButton)
 
     await waitFor(() => {
-      expect(mockWriteText).toHaveBeenCalledWith('Contenu markdown de ma soumission')
+      expect(mockWriteText).toHaveBeenCalled()
     })
+    const written = mockWriteText.mock.calls[0]?.[0] as string
+    // Plus de marqueurs markdown bruts
+    expect(written).not.toContain('#')
+    expect(written).not.toContain('**')
+    expect(written).toContain('Titre')
+    expect(written).toContain('Important')
+    expect(written).toContain('• Point A')
 
     await waitFor(() => {
-      expect(mockShowSuccess).toHaveBeenCalledWith('Document copié dans le presse-papier')
+      expect(mockShowSuccess).toHaveBeenCalledWith('Texte copié dans le presse-papier')
     })
   })
 
@@ -76,11 +91,16 @@ describe('StepDocumentsList', () => {
 
     render(<StepDocumentsList submissions={[makeSubmission()]} />)
 
-    const copyButton = screen.getByLabelText('Copier le contenu du document')
+    const copyButton = screen.getByLabelText('Copier le texte du document')
     fireEvent.click(copyButton)
 
     await waitFor(() => {
       expect(mockShowError).toHaveBeenCalledWith(expect.stringContaining('permissions'))
     })
+  })
+
+  it('renders a PDF download button with the correct aria-label', () => {
+    render(<StepDocumentsList submissions={[makeSubmission()]} />)
+    expect(screen.getByLabelText('Télécharger le document en PDF')).toBeInTheDocument()
   })
 })
