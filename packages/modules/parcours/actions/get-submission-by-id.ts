@@ -17,7 +17,7 @@ export async function getSubmissionById(
 
     const { data, error } = await supabase
       .from('step_submissions')
-      .select('*, parcours_steps(step_number, title, parcours_id)')
+      .select('*')
       .eq('id', submissionId)
       .single()
 
@@ -25,9 +25,26 @@ export async function getSubmissionById(
       return errorResponse('Soumission non trouvée', 'NOT_FOUND', error)
     }
 
-    const db = data as StepSubmissionDB & {
-      parcours_steps: { step_number: number; title: string; parcours_id: string } | null
-    }
+    const db = data as StepSubmissionDB
+
+    // parcours_step_id n'a plus de FK déclarée (migration 00116). Il peut pointer vers
+    // client_parcours_agents (nouveau système Story 14.x) OU parcours_steps (ancien Lab brief).
+    // On résout en deux queries parallèles, on garde le premier hit.
+    const [cpaRes, psRes] = await Promise.all([
+      supabase
+        .from('client_parcours_agents')
+        .select('step_order, step_label')
+        .eq('id', db.parcours_step_id)
+        .maybeSingle(),
+      supabase
+        .from('parcours_steps')
+        .select('step_number, title, parcours_id')
+        .eq('id', db.parcours_step_id)
+        .maybeSingle(),
+    ])
+
+    const cpa = cpaRes.data as { step_order: number; step_label: string } | null
+    const ps = psRes.data as { step_number: number; title: string; parcours_id: string } | null
 
     const submission: StepSubmissionWithStep = {
       id: db.id,
@@ -41,9 +58,9 @@ export async function getSubmissionById(
       feedbackAt: db.feedback_at,
       createdAt: db.created_at,
       updatedAt: db.updated_at,
-      stepNumber: db.parcours_steps?.step_number ?? 0,
-      stepTitle: db.parcours_steps?.title ?? '',
-      parcoursId: db.parcours_steps?.parcours_id ?? '',
+      stepNumber: cpa?.step_order ?? ps?.step_number ?? 0,
+      stepTitle: cpa?.step_label ?? ps?.title ?? '',
+      parcoursId: ps?.parcours_id ?? '',
     }
 
     console.log('[PARCOURS:GET_SUBMISSION] Récupérée:', submissionId)
