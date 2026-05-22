@@ -148,16 +148,14 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
 
               {/* Contenu gauche — padding-right pour ne pas chevaucher le renard */}
               <div className="relative z-10 p-6" style={{ paddingRight: '220px', minHeight: '160px' }}>
-                <div className="flex items-center gap-2 mb-3">
-                  <ParcoursStepStatusBadge status={step.status} />
-                </div>
-                <div className="flex items-baseline gap-3 mb-2">
+                <div className="flex items-baseline gap-3 mb-3 flex-wrap">
                   <span className="text-5xl font-black leading-none tabular-nums select-none" style={{ color: 'oklch(0.50 0.20 290)' }}>
                     {String(step.stepNumber).padStart(2, '0')}
                   </span>
                   <h1 className="text-2xl font-bold leading-snug text-white">{step.title}</h1>
+                  <ParcoursStepStatusBadge status={step.status} />
                 </div>
-                <p className="text-sm text-[#a78bfa]/80 leading-relaxed max-w-[360px]">{step.description}</p>
+                <p className="text-sm text-[#a78bfa]/80 leading-relaxed">{step.description}</p>
               </div>
             </div>
 
