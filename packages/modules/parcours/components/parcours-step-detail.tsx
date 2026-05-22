@@ -144,70 +144,43 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             {/* Halo glow top-left */}
             <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-[#7c3aed]/20 blur-3xl" />
 
-            <div className="relative z-10 flex items-end justify-between p-6 pb-0 pr-0">
-              {/* Left: numéro + statut + titre */}
-              <div className="pb-6 min-w-0 flex-1">
-                <div className="mb-3">
+            <div className="relative z-10 flex items-stretch justify-between">
+              {/* Left: badges + numéro + titre + description */}
+              <div className="flex-1 min-w-0 p-6 pr-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center rounded-full bg-[#7c3aed]/30 border border-[#7c3aed]/50 px-2.5 py-0.5 text-xs font-semibold text-[#c4b5fd]">
+                    Étape {String(step.stepNumber).padStart(2, '0')}
+                  </span>
                   <ParcoursStepStatusBadge status={step.status} />
                 </div>
-                <div className="flex items-baseline gap-3">
-                  <span
-                    className="shrink-0 text-7xl font-black leading-none select-none tabular-nums"
-                    style={{ color: 'oklch(0.45 0.18 290)' }}
-                  >
-                    {String(step.stepNumber).padStart(2, '0')}
-                  </span>
-                  <h1 className="text-2xl font-bold leading-snug text-[#f0ebff]">{step.title}</h1>
-                </div>
+                <h1 className="text-2xl font-bold leading-snug text-white mb-2">{step.title}</h1>
+                <p className="text-sm text-[#a78bfa]/80 leading-relaxed max-w-sm">{step.description}</p>
               </div>
 
               {/* Right: avatar renard — tronc vers le haut, animation d'entrée */}
-              <div className="relative h-[168px] w-[130px] shrink-0 overflow-hidden">
+              <div className="relative w-[150px] shrink-0 self-end overflow-hidden" style={{ height: '180px' }}>
                 <div
                   style={{
                     transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease-out',
-                    transform: avatarReady ? 'translateY(0px)' : 'translateY(28px)',
+                    transform: avatarReady ? 'translateY(0px)' : 'translateY(32px)',
                     opacity: avatarReady ? 1 : 0,
                     position: 'absolute',
-                    bottom: '-12px',
+                    bottom: '-8px',
                     left: '50%',
-                    marginLeft: '-70px',
-                    width: '140px',
-                    height: '210px',
+                    marginLeft: '-75px',
+                    width: '150px',
+                    height: '220px',
                   }}
                 >
                   <Image
                     src="/elio/elio-lab.png"
                     alt={`Agent Élio — ${step.title}`}
-                    width={140}
-                    height={210}
+                    width={150}
+                    height={220}
                     className="h-full w-full object-contain object-bottom"
                     priority
                   />
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Carte présentation agent — s'adresse au client */}
-          <div className="mt-4 rounded-xl border border-[#2a1f5c] bg-[#130f2e]/70 p-5">
-            <div className="flex items-start gap-3">
-              <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-[#7c3aed]/40 bg-[#1e1557]">
-                <Image
-                  src="/elio/elio-lab.png"
-                  alt=""
-                  fill
-                  className="object-cover object-top"
-                  style={{ objectPosition: 'center 8%' }}
-                />
-              </div>
-              <div className="min-w-0">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-[#a78bfa]">
-                  {step.title}
-                </p>
-                <p className="text-sm leading-relaxed text-[#c4b5fd]/90">
-                  {step.description}
-                </p>
               </div>
             </div>
           </div>
