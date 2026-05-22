@@ -67,10 +67,13 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
   const [avatarReady, setAvatarReady] = useState(false)
   const [agentImagePath, setAgentImagePath] = useState<string | null>(null)
 
+  // Déclenche l'animation 60ms après que l'image agent est connue
   useEffect(() => {
-    const t = setTimeout(() => setAvatarReady(true), 80)
+    if (!agentImagePath) return
+    setAvatarReady(false)
+    const t = setTimeout(() => setAvatarReady(true), 60)
     return () => clearTimeout(t)
-  }, [])
+  }, [agentImagePath])
 
   const config = stepStatusConfig[step.status] ?? stepStatusConfig.locked
 
@@ -140,14 +143,14 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             </div>
           )}
 
-          {/* Step hero header */}
-          <div className="relative mt-3 overflow-hidden rounded-2xl border border-[#7c3aed]/50 bg-gradient-to-br from-[#1e1557] via-[#251970] to-[#160e40] shadow-[0_0_40px_rgba(124,58,237,0.18)]">
+          {/* Step hero header — overflow:visible pour que l'avatar déborde en haut */}
+          <div className="relative mt-3 rounded-2xl border border-[#7c3aed]/50 bg-gradient-to-br from-[#1e1557] via-[#251970] to-[#160e40] shadow-[0_0_40px_rgba(124,58,237,0.18)]" style={{ overflow: 'visible' }}>
             {/* Halo glow top-left */}
             <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-[#7c3aed]/20 blur-3xl" />
 
-            <div className="relative z-10 flex items-stretch justify-between">
-              {/* Left: badges + numéro + titre + description */}
-              <div className="flex-1 min-w-0 p-6 pr-4">
+            <div className="relative z-10 flex items-end justify-between">
+              {/* Left: badges + titre + description */}
+              <div className="flex-1 min-w-0 p-6 pr-2">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="inline-flex items-center rounded-full bg-[#7c3aed]/30 border border-[#7c3aed]/50 px-2.5 py-0.5 text-xs font-semibold text-[#c4b5fd]">
                     Étape {String(step.stepNumber).padStart(2, '0')}
@@ -158,30 +161,34 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
                 <p className="text-sm text-[#a78bfa]/80 leading-relaxed max-w-sm">{step.description}</p>
               </div>
 
-              {/* Right: avatar renard — tronc vers le haut, animation d'entrée */}
-              <div className="relative w-[150px] shrink-0 self-end overflow-hidden" style={{ height: '180px' }}>
-                <div
-                  style={{
-                    transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease-out',
-                    transform: avatarReady ? 'translateY(0px)' : 'translateY(32px)',
-                    opacity: avatarReady ? 1 : 0,
-                    position: 'absolute',
-                    bottom: '-8px',
-                    left: '50%',
-                    marginLeft: '-75px',
-                    width: '150px',
-                    height: '220px',
-                  }}
-                >
-                  <Image
-                    src={agentImagePath ?? '/elio/elio-lab.png'}
-                    alt={`Agent Élio — ${step.title}`}
-                    width={150}
-                    height={220}
-                    className="h-full w-full object-contain object-bottom"
-                    priority
-                  />
-                </div>
+              {/* Right: avatar renard — déborde en haut, animation scale+slide+fade */}
+              <div className="relative shrink-0" style={{ width: '180px', height: '220px', marginBottom: 0 }}>
+                {agentImagePath && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: '8px',
+                      width: '180px',
+                      height: '260px',
+                      transition: 'transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease-out',
+                      transform: avatarReady
+                        ? 'translateY(0px) scale(1)'
+                        : 'translateY(40px) scale(0.75)',
+                      opacity: avatarReady ? 1 : 0,
+                      transformOrigin: 'bottom center',
+                    }}
+                  >
+                    <Image
+                      src={agentImagePath}
+                      alt={`Agent Élio — ${step.title}`}
+                      width={180}
+                      height={260}
+                      className="h-full w-full object-contain object-bottom"
+                      priority
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
