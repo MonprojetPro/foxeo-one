@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getParcours } from '@monprojetpro/module-parcours'
 import { ParcoursStepDetail } from '@monprojetpro/module-parcours'
+import { getEffectiveStepConfig } from '@monprojetpro/module-elio'
 
 interface ParcoursStepDetailPageProps {
   params: Promise<{ stepNumber: string }>
@@ -36,6 +37,12 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
   const prevStep = parcours.steps.find(s => s.stepNumber === stepNum - 1) ?? null
   const nextStep = parcours.steps.find(s => s.stepNumber === stepNum + 1) ?? null
 
+  const { data: agentConfig } = await getEffectiveStepConfig({
+    stepId: step.id,
+    stepNumber: step.stepNumber,
+    clientId: client.id,
+  })
+
   return (
     <ParcoursStepDetail
       step={step}
@@ -44,6 +51,7 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
       nextStep={nextStep ? { stepNumber: nextStep.stepNumber, status: nextStep.status } : null}
       clientId={client.id}
       isPaused={isPaused}
+      agentImagePath={agentConfig?.agentImagePath ?? null}
     />
   )
 }

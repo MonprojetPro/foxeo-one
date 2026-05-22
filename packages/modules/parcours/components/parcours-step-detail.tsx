@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@monprojetpro/ui'
@@ -13,7 +13,6 @@ import { StepElioChat } from './step-elio-chat'
 import { GenerateDocumentButton } from './generate-document-button'
 import { StepHistoryPanel } from './step-history-panel'
 import { StepMobileTabs, type MobileTab } from './step-mobile-tabs'
-import { getEffectiveStepConfig } from '@monprojetpro/module-elio'
 
 interface AdjacentStep {
   stepNumber: number
@@ -27,6 +26,7 @@ interface ParcoursStepDetailProps {
   nextStep?: AdjacentStep | null
   clientId?: string
   isPaused?: boolean
+  agentImagePath?: string | null
 }
 
 interface StepConfig {
@@ -62,19 +62,9 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
   },
 }
 
-export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false }: ParcoursStepDetailProps) {
+export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false, agentImagePath = null }: ParcoursStepDetailProps) {
   const [messageCount, setMessageCount] = useState(0)
   const [mobileTab, setMobileTab] = useState<MobileTab>('step')
-  const [agentImagePath, setAgentImagePath] = useState<string | null>(null)
-
-  // Charger la config agent indépendamment du chat pour afficher l'avatar sans délai
-  useEffect(() => {
-    if (!clientId || !step.id) return
-    getEffectiveStepConfig({ stepId: step.id, stepNumber: step.stepNumber, clientId })
-      .then(({ data }) => {
-        if (data?.agentImagePath) setAgentImagePath(data.agentImagePath)
-      })
-  }, [step.id, step.stepNumber, clientId])
 
   const config = stepStatusConfig[step.status] ?? stepStatusConfig.locked
 
@@ -218,7 +208,7 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
               stepNumber={step.stepNumber}
               clientId={clientId}
               onMessagesLoaded={setMessageCount}
-              onAgentConfigLoaded={({ imagePath }) => setAgentImagePath(imagePath)}
+              onAgentConfigLoaded={undefined}
             />
           )}
 
