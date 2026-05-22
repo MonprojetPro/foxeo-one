@@ -67,12 +67,8 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
   const [avatarReady, setAvatarReady] = useState(false)
   const [agentImagePath, setAgentImagePath] = useState<string | null>(null)
 
-  // Déclenche l'animation 60ms après que l'image agent est connue
   useEffect(() => {
-    if (!agentImagePath) return
-    setAvatarReady(false)
-    const t = setTimeout(() => setAvatarReady(true), 60)
-    return () => clearTimeout(t)
+    if (agentImagePath) setAvatarReady(true)
   }, [agentImagePath])
 
   const config = stepStatusConfig[step.status] ?? stepStatusConfig.locked
@@ -143,53 +139,45 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             </div>
           )}
 
-          {/* Step hero header — overflow:visible pour que l'avatar déborde en haut */}
-          <div className="relative mt-3 rounded-2xl border border-[#7c3aed]/50 bg-gradient-to-br from-[#1e1557] via-[#251970] to-[#160e40] shadow-[0_0_40px_rgba(124,58,237,0.18)]" style={{ overflow: 'visible' }}>
-            {/* Halo glow top-left */}
-            <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-[#7c3aed]/20 blur-3xl" />
+          {/* Step hero header */}
+          <div className="relative mt-3 overflow-hidden rounded-2xl border border-[#7c3aed]/50 bg-gradient-to-br from-[#1e1557] via-[#251970] to-[#160e40] shadow-[0_0_40px_rgba(124,58,237,0.18)]">
+            {/* Halo glow */}
+            <div className="pointer-events-none absolute -left-10 -top-10 h-48 w-48 rounded-full bg-[#7c3aed]/20 blur-3xl" />
 
-            <div className="relative z-10 flex items-end justify-between">
+            {/* Numéro watermark en arrière-plan */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute right-[160px] top-1/2 -translate-y-1/2 select-none font-black leading-none tabular-nums text-white/[0.06]"
+              style={{ fontSize: '160px' }}
+            >
+              {String(step.stepNumber).padStart(2, '0')}
+            </span>
+
+            <div className="relative z-10 flex min-h-[160px] items-stretch">
               {/* Left: badges + titre + description */}
-              <div className="flex-1 min-w-0 p-6 pr-2">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="inline-flex items-center rounded-full bg-[#7c3aed]/30 border border-[#7c3aed]/50 px-2.5 py-0.5 text-xs font-semibold text-[#c4b5fd]">
+              <div className="flex flex-1 flex-col justify-center min-w-0 p-6 pr-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="inline-flex items-center rounded-full border border-[#7c3aed]/60 bg-[#7c3aed]/25 px-3 py-1 text-sm font-bold text-[#e9d5ff]">
                     Étape {String(step.stepNumber).padStart(2, '0')}
                   </span>
                   <ParcoursStepStatusBadge status={step.status} />
                 </div>
                 <h1 className="text-2xl font-bold leading-snug text-white mb-2">{step.title}</h1>
-                <p className="text-sm text-[#a78bfa]/80 leading-relaxed max-w-sm">{step.description}</p>
+                <p className="text-sm text-[#a78bfa]/80 leading-relaxed max-w-[340px]">{step.description}</p>
               </div>
 
-              {/* Right: avatar renard — déborde en haut, animation scale+slide+fade */}
-              <div className="relative shrink-0" style={{ width: '180px', height: '220px', marginBottom: 0 }}>
-                {agentImagePath && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: '8px',
-                      width: '180px',
-                      height: '260px',
-                      transition: 'transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease-out',
-                      transform: avatarReady
-                        ? 'translateY(0px) scale(1)'
-                        : 'translateY(40px) scale(0.75)',
-                      opacity: avatarReady ? 1 : 0,
-                      transformOrigin: 'bottom center',
-                    }}
-                  >
-                    <Image
-                      src={agentImagePath}
-                      alt={`Agent Élio — ${step.title}`}
-                      width={180}
-                      height={260}
-                      className="h-full w-full object-contain object-bottom"
-                      priority
-                    />
-                  </div>
-                )}
-              </div>
+              {/* Right: avatar renard — pleine hauteur, affiché direct sans animation */}
+              {agentImagePath && (
+                <div className="relative shrink-0 self-end" style={{ width: '180px', height: '200px' }}>
+                  <Image
+                    src={agentImagePath}
+                    alt={`Agent Élio — ${step.title}`}
+                    fill
+                    className="object-contain object-bottom"
+                    priority
+                  />
+                </div>
+              )}
             </div>
           </div>
 
