@@ -139,46 +139,43 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             </div>
           )}
 
-          {/* Step hero header */}
-          <div className="relative mt-3 overflow-hidden rounded-2xl border border-[#7c3aed]/50 bg-gradient-to-br from-[#1e1557] via-[#251970] to-[#160e40] shadow-[0_0_40px_rgba(124,58,237,0.18)]">
-            {/* Halo glow */}
-            <div className="pointer-events-none absolute -left-10 -top-10 h-48 w-48 rounded-full bg-[#7c3aed]/20 blur-3xl" />
+          {/* Step hero header — mt-10 pour laisser de la place au renard qui déborde en haut */}
+          <div className="relative mt-10 overflow-visible">
+            {/* Carte */}
+            <div className="relative overflow-hidden rounded-2xl border border-[#7c3aed]/50 bg-gradient-to-br from-[#1e1557] via-[#251970] to-[#160e40] shadow-[0_0_40px_rgba(124,58,237,0.18)]">
+              {/* Halo glow */}
+              <div className="pointer-events-none absolute -left-10 -top-10 h-48 w-48 rounded-full bg-[#7c3aed]/20 blur-3xl" />
 
-            {/* Numéro watermark en arrière-plan */}
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute right-[160px] top-1/2 -translate-y-1/2 select-none font-black leading-none tabular-nums text-white/[0.06]"
-              style={{ fontSize: '160px' }}
-            >
-              {String(step.stepNumber).padStart(2, '0')}
-            </span>
-
-            <div className="relative z-10 flex min-h-[160px] items-stretch">
-              {/* Left: badges + titre + description */}
-              <div className="flex flex-1 flex-col justify-center min-w-0 p-6 pr-4">
+              {/* Contenu gauche — padding-right pour ne pas chevaucher le renard */}
+              <div className="relative z-10 p-6" style={{ paddingRight: '220px', minHeight: '160px' }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="inline-flex items-center rounded-full border border-[#7c3aed]/60 bg-[#7c3aed]/25 px-3 py-1 text-sm font-bold text-[#e9d5ff]">
-                    Étape {String(step.stepNumber).padStart(2, '0')}
-                  </span>
                   <ParcoursStepStatusBadge status={step.status} />
                 </div>
-                <h1 className="text-2xl font-bold leading-snug text-white mb-2">{step.title}</h1>
-                <p className="text-sm text-[#a78bfa]/80 leading-relaxed max-w-[340px]">{step.description}</p>
-              </div>
-
-              {/* Right: avatar renard — pleine hauteur, affiché direct sans animation */}
-              {agentImagePath && (
-                <div className="relative shrink-0 self-end" style={{ width: '180px', height: '200px' }}>
-                  <Image
-                    src={agentImagePath}
-                    alt={`Agent Élio — ${step.title}`}
-                    fill
-                    className="object-contain object-bottom"
-                    priority
-                  />
+                <div className="flex items-baseline gap-3 mb-2">
+                  <span className="text-5xl font-black leading-none tabular-nums select-none" style={{ color: 'oklch(0.50 0.20 290)' }}>
+                    {String(step.stepNumber).padStart(2, '0')}
+                  </span>
+                  <h1 className="text-2xl font-bold leading-snug text-white">{step.title}</h1>
                 </div>
-              )}
+                <p className="text-sm text-[#a78bfa]/80 leading-relaxed max-w-[360px]">{step.description}</p>
+              </div>
             </div>
+
+            {/* Avatar renard — positionné en absolu, sort au-dessus de la carte */}
+            {agentImagePath && (
+              <div
+                className="absolute bottom-0 right-6 z-20 pointer-events-none"
+                style={{ width: '200px', height: '260px' }}
+              >
+                <Image
+                  src={agentImagePath}
+                  alt={`Agent Élio — ${step.title}`}
+                  fill
+                  className="object-contain object-bottom"
+                  priority
+                />
+              </div>
+            )}
           </div>
 
           {/* Brief content (markdown) */}
