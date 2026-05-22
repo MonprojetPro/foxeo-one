@@ -51,7 +51,7 @@ export async function getSubmissionById(
       parcoursStepId: db.parcours_step_id,
       clientId: db.client_id,
       submissionContent: db.submission_content,
-      submissionFiles: db.submission_files ?? [],
+      submissionFiles: Array.isArray(db.submission_files) ? db.submission_files : [],
       submittedAt: db.submitted_at,
       status: db.status,
       feedback: db.feedback,

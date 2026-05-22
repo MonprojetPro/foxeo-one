@@ -80,7 +80,7 @@ export async function submitGeneratedDocument(
         parcours_step_id: input.stepId,
         client_id: client.id,
         submission_content: input.document,
-        submission_files: JSON.stringify([]),
+        submission_files: [],
       })
       .select('id')
       .single()

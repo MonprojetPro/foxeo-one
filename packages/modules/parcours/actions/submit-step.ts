@@ -90,7 +90,7 @@ export async function submitStep(
         parcours_step_id: input.stepId,
         client_id: client.id,
         submission_content: input.content,
-        submission_files: JSON.stringify(fileUrls),
+        submission_files: fileUrls,
       })
       .select('id')
       .single()
