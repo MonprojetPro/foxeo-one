@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@monprojetpro/ui'
 import type { ParcoursStep, ParcoursStepStatus } from '../types/parcours.types'
 import { ParcoursStepStatusBadge } from './parcours-step-status-badge'
@@ -63,6 +64,12 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
 export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false }: ParcoursStepDetailProps) {
   const [messageCount, setMessageCount] = useState(0)
   const [mobileTab, setMobileTab] = useState<MobileTab>('step')
+  const [avatarReady, setAvatarReady] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setAvatarReady(true), 80)
+    return () => clearTimeout(t)
+  }, [])
 
   const config = stepStatusConfig[step.status] ?? stepStatusConfig.locked
 
@@ -132,22 +139,78 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             </div>
           )}
 
-          {/* Step header */}
-          <div className="bg-[#1e1557] border-2 border-[#7c3aed] rounded-2xl p-[22px] mt-3 shadow-[0_0_0_4px_rgba(124,58,237,0.12)]">
-            <ParcoursStepStatusBadge status={step.status} />
-            <div className="flex items-center gap-3 mt-3 mb-1.5">
-              <span className="text-4xl font-bold text-[#3d2d6d] leading-none select-none">
-                {String(step.stepNumber).padStart(2, '0')}
-              </span>
-              <h1 className="text-xl font-bold text-[#f9fafb] leading-tight">{step.title}</h1>
+          {/* Step hero header */}
+          <div className="relative mt-3 overflow-hidden rounded-2xl border border-[#7c3aed]/50 bg-gradient-to-br from-[#1e1557] via-[#251970] to-[#160e40] shadow-[0_0_40px_rgba(124,58,237,0.18)]">
+            {/* Halo glow top-left */}
+            <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-[#7c3aed]/20 blur-3xl" />
+
+            <div className="relative z-10 flex items-end justify-between p-6 pb-0 pr-0">
+              {/* Left: numéro + statut + titre */}
+              <div className="pb-6 min-w-0 flex-1">
+                <div className="mb-3">
+                  <ParcoursStepStatusBadge status={step.status} />
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <span
+                    className="shrink-0 text-7xl font-black leading-none select-none tabular-nums"
+                    style={{ color: 'oklch(0.45 0.18 290)' }}
+                  >
+                    {String(step.stepNumber).padStart(2, '0')}
+                  </span>
+                  <h1 className="text-2xl font-bold leading-snug text-[#f0ebff]">{step.title}</h1>
+                </div>
+              </div>
+
+              {/* Right: avatar renard — tronc vers le haut, animation d'entrée */}
+              <div className="relative h-[168px] w-[130px] shrink-0 overflow-hidden">
+                <div
+                  style={{
+                    transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease-out',
+                    transform: avatarReady ? 'translateY(0px)' : 'translateY(28px)',
+                    opacity: avatarReady ? 1 : 0,
+                    position: 'absolute',
+                    bottom: '-12px',
+                    left: '50%',
+                    marginLeft: '-70px',
+                    width: '140px',
+                    height: '210px',
+                  }}
+                >
+                  <Image
+                    src="/elio/elio-lab.png"
+                    alt={`Agent Élio — ${step.title}`}
+                    width={140}
+                    height={210}
+                    className="h-full w-full object-contain object-bottom"
+                    priority
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Pourquoi cette étape ? */}
-          <section className="mt-6 rounded-xl border border-[#2d2d2d] bg-[#141414]/50 p-5">
-            <h2 className="text-base font-semibold text-[#f9fafb] mb-2">Pourquoi cette étape ?</h2>
-            <p className="text-sm text-[#9ca3af] leading-relaxed">{step.description}</p>
-          </section>
+          {/* Carte présentation agent — s'adresse au client */}
+          <div className="mt-4 rounded-xl border border-[#2a1f5c] bg-[#130f2e]/70 p-5">
+            <div className="flex items-start gap-3">
+              <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-[#7c3aed]/40 bg-[#1e1557]">
+                <Image
+                  src="/elio/elio-lab.png"
+                  alt=""
+                  fill
+                  className="object-cover object-top"
+                  style={{ objectPosition: 'center 8%' }}
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-[#a78bfa]">
+                  {step.title}
+                </p>
+                <p className="text-sm leading-relaxed text-[#c4b5fd]/90">
+                  {step.description}
+                </p>
+              </div>
+            </div>
+          </div>
 
           {/* Brief content (markdown) */}
           {step.briefContent && (
