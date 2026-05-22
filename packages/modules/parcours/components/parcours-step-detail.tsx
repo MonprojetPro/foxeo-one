@@ -13,6 +13,7 @@ import { StepElioChat } from './step-elio-chat'
 import { GenerateDocumentButton } from './generate-document-button'
 import { StepHistoryPanel } from './step-history-panel'
 import { StepMobileTabs, type MobileTab } from './step-mobile-tabs'
+import { getEffectiveStepConfig } from '@monprojetpro/module-elio'
 
 interface AdjacentStep {
   stepNumber: number
@@ -64,12 +65,16 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
 export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false }: ParcoursStepDetailProps) {
   const [messageCount, setMessageCount] = useState(0)
   const [mobileTab, setMobileTab] = useState<MobileTab>('step')
-  const [avatarReady, setAvatarReady] = useState(false)
   const [agentImagePath, setAgentImagePath] = useState<string | null>(null)
 
+  // Charger la config agent indépendamment du chat pour afficher l'avatar sans délai
   useEffect(() => {
-    if (agentImagePath) setAvatarReady(true)
-  }, [agentImagePath])
+    if (!clientId || !step.id) return
+    getEffectiveStepConfig({ stepId: step.id, stepNumber: step.stepNumber, clientId })
+      .then(({ data }) => {
+        if (data?.agentImagePath) setAgentImagePath(data.agentImagePath)
+      })
+  }, [step.id, step.stepNumber, clientId])
 
   const config = stepStatusConfig[step.status] ?? stepStatusConfig.locked
 
