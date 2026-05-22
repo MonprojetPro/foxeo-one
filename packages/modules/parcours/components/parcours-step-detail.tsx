@@ -154,12 +154,12 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
               </div>
             </div>
 
-            {/* Avatar renard — positionné en absolu, sort au-dessus de la carte */}
-            {agentImagePath && (
-              <div
-                className="absolute bottom-0 right-6 z-20 pointer-events-none"
-                style={{ width: '200px', height: '260px' }}
-              >
+            {/* Avatar renard — conteneur toujours rendu pour réserver l'espace */}
+            <div
+              className="absolute bottom-0 right-6 z-20 pointer-events-none"
+              style={{ width: '200px', height: '260px' }}
+            >
+              {agentImagePath && (
                 <Image
                   src={agentImagePath}
                   alt={`Agent Élio — ${step.title}`}
@@ -167,8 +167,8 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
                   className="object-contain object-bottom"
                   priority
                 />
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Brief content (markdown) */}
