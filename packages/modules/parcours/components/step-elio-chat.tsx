@@ -21,6 +21,7 @@ interface StepElioChatProps {
   stepNumber: number
   clientId: string
   onMessagesLoaded?: (count: number) => void
+  onAgentConfigLoaded?: (config: { imagePath: string | null; name: string }) => void
 }
 
 type ChatStatus = 'idle' | 'loading' | 'ready' | 'error'
@@ -41,7 +42,7 @@ function getDisabledMessage(status: ParcoursStepStatus | 'pending_review'): stri
   return null
 }
 
-export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessagesLoaded }: StepElioChatProps) {
+export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessagesLoaded, onAgentConfigLoaded }: StepElioChatProps) {
   const [chatStatus, setChatStatus] = useState<ChatStatus>('idle')
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ElioMessagePersisted[]>([])
@@ -116,6 +117,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
         setSystemPromptOverride(cfg.systemPrompt)
         setAgentModel(cfg.model)
         setAgentTemperature(cfg.temperature)
+        onAgentConfigLoaded?.({ imagePath: cfg.agentImagePath, name: cfg.agentName })
 
         // Injecter le message d'annonce MiKL si contexte non-consommé + aucun historique
         if (cfg.announcementMessage && cfg.contextId && existingMessages.length === 0) {
@@ -232,35 +234,6 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       className={`mt-6 rounded-xl border border-[#2d2d2d] overflow-hidden transition-opacity ${isDisabled ? 'opacity-50' : ''}`}
       aria-label={`Chat Élio — Étape ${stepNumber}`}
     >
-      {/* Header — avatar agent + nom + description */}
-      <div className="bg-[#1a1033] border-b border-[#2d2d2d] px-4 py-3 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shrink-0 bg-gradient-to-br from-[#7c3aed] to-[#a78bfa]">
-          {agentImagePath && !agentImgError ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={agentImagePath}
-              alt={agentName}
-              className="w-full h-full object-cover"
-              onError={() => setAgentImgError(true)}
-            />
-          ) : (
-            <Bot className="w-4 h-4 text-white" aria-hidden="true" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <span className="block text-sm font-semibold text-[#a78bfa] leading-tight">{agentName}</span>
-          {agentDescription && (
-            <span className="block text-xs text-[#6b7280] leading-tight truncate mt-0.5">{agentDescription}</span>
-          )}
-        </div>
-        {chatStatus === 'ready' && (
-          <span className="shrink-0 flex items-center gap-1 text-xs text-[#9ca3af]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e] inline-block" aria-hidden="true" />
-            En ligne
-          </span>
-        )}
-      </div>
-
       {/* Messages */}
       <div
         className="h-[420px] overflow-y-auto p-4 flex flex-col gap-3 bg-[#0f0f0f] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#3d2d6d] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7c3aed]"

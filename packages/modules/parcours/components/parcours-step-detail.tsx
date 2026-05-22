@@ -65,6 +65,7 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
   const [messageCount, setMessageCount] = useState(0)
   const [mobileTab, setMobileTab] = useState<MobileTab>('step')
   const [avatarReady, setAvatarReady] = useState(false)
+  const [agentImagePath, setAgentImagePath] = useState<string | null>(null)
 
   useEffect(() => {
     const t = setTimeout(() => setAvatarReady(true), 80)
@@ -173,7 +174,7 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
                   }}
                 >
                   <Image
-                    src="/elio/elio-lab.png"
+                    src={agentImagePath ?? '/elio/elio-lab.png'}
                     alt={`Agent Élio — ${step.title}`}
                     width={150}
                     height={220}
@@ -222,6 +223,7 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
               stepNumber={step.stepNumber}
               clientId={clientId}
               onMessagesLoaded={setMessageCount}
+              onAgentConfigLoaded={({ imagePath }) => setAgentImagePath(imagePath)}
             />
           )}
 

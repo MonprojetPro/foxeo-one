@@ -3,30 +3,36 @@
 import { cn } from '@monprojetpro/utils'
 import type { ParcoursStepStatus } from '../types/parcours.types'
 
-const statusConfig: Record<ParcoursStepStatus, { label: string; className: string }> = {
+const statusConfig: Record<ParcoursStepStatus, { label: string; dot: string; className: string }> = {
   locked: {
     label: 'Verrouillée',
-    className: 'bg-muted text-muted-foreground',
+    dot: 'bg-[#6b7280]',
+    className: 'bg-[#1f2937] text-[#9ca3af] border border-[#374151]',
   },
   current: {
     label: 'En cours',
-    className: 'bg-purple-600/20 text-purple-400 border border-purple-500/30',
+    dot: 'bg-[#f59e0b] animate-pulse',
+    className: 'bg-[#451a03] text-[#fbbf24] border border-[#92400e]',
   },
   completed: {
     label: 'Validée',
-    className: 'bg-green-500/20 text-green-400 border border-green-500/30',
+    dot: 'bg-[#22c55e]',
+    className: 'bg-[#052e16] text-[#4ade80] border border-[#166534]',
   },
   skipped: {
     label: 'Passée',
-    className: 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
+    dot: 'bg-[#8b5cf6]',
+    className: 'bg-[#2e1065] text-[#c4b5fd] border border-[#4c1d95]',
   },
   pending_review: {
-    label: 'En attente de validation',
-    className: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30',
+    label: 'En attente',
+    dot: 'bg-[#38bdf8] animate-pulse',
+    className: 'bg-[#0c1a2e] text-[#7dd3fc] border border-[#0369a1]',
   },
   rejected: {
     label: 'À corriger',
-    className: 'bg-orange-500/20 text-orange-300 border border-orange-500/40',
+    dot: 'bg-[#f87171]',
+    className: 'bg-[#2d0a0a] text-[#fca5a5] border border-[#7f1d1d]',
   },
 }
 
@@ -40,11 +46,12 @@ export function ParcoursStepStatusBadge({ status, className }: ParcoursStepStatu
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold',
         config.className,
         className
       )}
     >
+      <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', config.dot)} aria-hidden="true" />
       {config.label}
     </span>
   )
