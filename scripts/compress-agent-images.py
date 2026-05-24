@@ -29,7 +29,7 @@ def compress(path):
         img = img.resize((MAX_WIDTH, int(h * ratio)), Image.LANCZOS)
     img.save(path, "PNG", optimize=True)
     new_kb = os.path.getsize(path) // 1024
-    print(f"  {os.path.basename(path)}: {orig_kb} KB → {new_kb} KB")
+    print(f"  {os.path.basename(path)}: {orig_kb} KB -> {new_kb} KB")
 
 def main():
     folder = os.path.abspath(AGENTS_DIR)
