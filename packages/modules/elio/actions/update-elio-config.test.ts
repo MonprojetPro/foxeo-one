@@ -45,7 +45,7 @@ describe('updateElioConfig', () => {
     const savedConfig = {
       id: 'config-1',
       client_id: 'client-1',
-      model: 'claude-haiku-4-20250122',
+      model: 'claude-haiku-4-5-20251001',
       temperature: 0.7,
       max_tokens: 1000,
       custom_instructions: 'Instructions test',
@@ -59,7 +59,7 @@ describe('updateElioConfig', () => {
     )
 
     const result = await updateElioConfig({
-      model: 'claude-haiku-4-20250122',
+      model: 'claude-haiku-4-5-20251001',
       temperature: 0.7,
       maxTokens: 1000,
       customInstructions: 'Instructions test',
@@ -67,7 +67,7 @@ describe('updateElioConfig', () => {
     })
 
     expect(result.error).toBeNull()
-    expect(result.data?.model).toBe('claude-haiku-4-20250122')
+    expect(result.data?.model).toBe('claude-haiku-4-5-20251001')
     expect(result.data?.temperature).toBe(0.7)
     expect(result.data?.maxTokens).toBe(1000)
     expect(result.data?.customInstructions).toBe('Instructions test')
@@ -75,7 +75,7 @@ describe('updateElioConfig', () => {
 
   it('retourne VALIDATION_ERROR si température hors limites', async () => {
     const result = await updateElioConfig({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       temperature: 999,
       maxTokens: 1500,
     })
@@ -97,7 +97,7 @@ describe('updateElioConfig', () => {
 
   it('retourne VALIDATION_ERROR si maxTokens hors limites', async () => {
     const result = await updateElioConfig({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       temperature: 1.0,
       maxTokens: 99,
     })
@@ -114,7 +114,7 @@ describe('updateElioConfig', () => {
     } as never)
 
     const result = await updateElioConfig({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       temperature: 1.0,
       maxTokens: 1500,
     })
@@ -136,7 +136,7 @@ describe('updateElioConfig', () => {
     } as never)
 
     const result = await updateElioConfig({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       temperature: 1.0,
       maxTokens: 1500,
     })
@@ -151,7 +151,7 @@ describe('updateElioConfig', () => {
     )
 
     const result = await updateElioConfig({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       temperature: 1.0,
       maxTokens: 1500,
     })

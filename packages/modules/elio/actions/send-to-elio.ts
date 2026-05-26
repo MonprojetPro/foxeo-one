@@ -537,7 +537,7 @@ async function callLLM(
         message,
         history,
         dashboardType,
-        model: agentOverrides?.model ?? elioConfig?.model ?? 'claude-sonnet-4-20250514',
+        model: agentOverrides?.model ?? elioConfig?.model ?? 'claude-sonnet-4-6',
         maxTokens: elioConfig?.maxTokens ?? 8192,
         temperature: agentOverrides?.temperature ?? elioConfig?.temperature ?? 1.0,
       },

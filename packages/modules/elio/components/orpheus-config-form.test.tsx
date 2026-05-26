@@ -44,7 +44,7 @@ describe('OrpheusConfigForm', () => {
 
   it('affiche les valeurs initiales si une config est fournie', () => {
     const customConfig: ElioConfig = {
-      model: 'claude-haiku-4-20250122',
+      model: 'claude-haiku-4-5-20251001',
       temperature: 0.5,
       maxTokens: 1000,
       customInstructions: 'Instructions de test',

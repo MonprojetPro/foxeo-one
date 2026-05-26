@@ -28,7 +28,7 @@ vi.mock('@monprojetpro/supabase', () => ({
 // ─────────────────────────────────────────────────────────────
 
 const OLD_CONFIG = {
-  model: 'claude-haiku-4-20250122',
+  model: 'claude-haiku-4-5-20251001',
   temperature: 0.5,
   max_tokens: 1000,
   custom_instructions: null,
@@ -89,7 +89,7 @@ describe('restoreElioConfig', () => {
 
     const result = await restoreElioConfig('client-1', 'hist-1')
     expect(result.error).toBeNull()
-    expect(result.data?.model).toBe('claude-haiku-4-20250122')
+    expect(result.data?.model).toBe('claude-haiku-4-5-20251001')
     expect(result.data?.temperature).toBe(0.5)
   })
 

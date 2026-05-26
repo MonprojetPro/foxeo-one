@@ -106,7 +106,7 @@ describe('generateBrief — injection config Élio (Orpheus)', () => {
 
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1500,
         temperature: 1.0,
       })
@@ -117,7 +117,7 @@ describe('generateBrief — injection config Élio (Orpheus)', () => {
     const customConfig = {
       id: 'config-1',
       client_id: 'client-1',
-      model: 'claude-haiku-4-20250122',
+      model: 'claude-haiku-4-5-20251001',
       temperature: 0.5,
       max_tokens: 800,
       custom_instructions: null,
@@ -135,7 +135,7 @@ describe('generateBrief — injection config Élio (Orpheus)', () => {
 
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'claude-haiku-4-20250122',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 800,
         temperature: 0.5,
       })
@@ -146,7 +146,7 @@ describe('generateBrief — injection config Élio (Orpheus)', () => {
     const customConfig = {
       id: 'config-1',
       client_id: 'client-1',
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       temperature: 1.0,
       max_tokens: 1500,
       custom_instructions: 'Utilise toujours des analogies cinématographiques',
@@ -177,7 +177,7 @@ describe('generateBrief — injection config Élio (Orpheus)', () => {
     const configWithoutInstructions = {
       id: 'config-1',
       client_id: 'client-1',
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       temperature: 1.0,
       max_tokens: 1500,
       custom_instructions: null,

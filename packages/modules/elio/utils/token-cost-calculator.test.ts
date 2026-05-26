@@ -37,8 +37,7 @@ describe('calculateCostEur', () => {
   })
 
   it('gère les noms de modèles avec variante (préfixe)', () => {
-    // 'claude-sonnet-4-20250514' est dans la table
-    const cost = calculateCostEur('claude-sonnet-4-20250514', 1_000, 500)
+    const cost = calculateCostEur('claude-sonnet-4-6', 1_000, 500)
     expect(cost).toBeGreaterThan(0)
   })
 

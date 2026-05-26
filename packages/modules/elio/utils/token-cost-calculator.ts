@@ -25,7 +25,6 @@ const MODEL_PRICING: Record<string, { inputPer1M: number; outputPer1M: number }>
   'claude-haiku-4-5': { inputPer1M: 0.80, outputPer1M: 4.00 },
   'claude-haiku-4-5-20251001': { inputPer1M: 0.80, outputPer1M: 4.00 },
   'claude-sonnet-4-6': { inputPer1M: 3.00, outputPer1M: 15.00 },
-  'claude-sonnet-4-20250514': { inputPer1M: 3.00, outputPer1M: 15.00 },
   'claude-opus-4-6': { inputPer1M: 15.00, outputPer1M: 75.00 },
 }
 

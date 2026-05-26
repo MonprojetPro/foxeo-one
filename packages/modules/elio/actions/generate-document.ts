@@ -39,7 +39,7 @@ export async function generateDocument(
         systemPrompt: 'Tu es un assistant de génération de documents professionnels. Génère un document formel et structuré selon le format demandé.',
         message: prompt,
         dashboardType: 'one',
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         maxTokens: 2000,
         temperature: 0.3,
       },

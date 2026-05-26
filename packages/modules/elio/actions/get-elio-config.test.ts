@@ -77,7 +77,7 @@ describe('getElioConfig', () => {
     const dbConfig = {
       id: 'config-1',
       client_id: 'client-1',
-      model: 'claude-haiku-4-20250122',
+      model: 'claude-haiku-4-5-20251001',
       temperature: 0.5,
       max_tokens: 2000,
       custom_instructions: 'Utilise des analogies',
@@ -93,7 +93,7 @@ describe('getElioConfig', () => {
     const result = await getElioConfig()
 
     expect(result.error).toBeNull()
-    expect(result.data?.model).toBe('claude-haiku-4-20250122')
+    expect(result.data?.model).toBe('claude-haiku-4-5-20251001')
     expect(result.data?.temperature).toBe(0.5)
     expect(result.data?.maxTokens).toBe(2000)
     expect(result.data?.customInstructions).toBe('Utilise des analogies')

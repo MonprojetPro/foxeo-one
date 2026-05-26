@@ -39,8 +39,8 @@ const HISTORY_ENTRY = {
   id: 'hist-1',
   clientId: 'client-1',
   fieldChanged: 'elio_config',
-  oldValue: { model: 'claude-haiku-4-20250122', temperature: 0.5, max_tokens: 1000 },
-  newValue: { model: 'claude-sonnet-4-20250514', temperature: 1.0, max_tokens: 1500 },
+  oldValue: { model: 'claude-haiku-4-5-20251001', temperature: 0.5, max_tokens: 1000 },
+  newValue: { model: 'claude-sonnet-4-6', temperature: 1.0, max_tokens: 1500 },
   changedAt: '2026-03-01T10:00:00Z',
   changedBy: 'user-1',
 }

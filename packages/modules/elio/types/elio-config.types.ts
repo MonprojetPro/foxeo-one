@@ -1,7 +1,7 @@
 export const ELIO_MODELS = [
-  'claude-haiku-4-20250122',
-  'claude-sonnet-4-20250514',
-  'claude-opus-4-20250514',
+  'claude-haiku-4-5-20251001',
+  'claude-sonnet-4-6',
+  'claude-opus-4-6',
 ] as const
 
 export type ElioModel = (typeof ELIO_MODELS)[number]
@@ -35,7 +35,7 @@ export interface UpdateElioConfigInput {
 }
 
 export const DEFAULT_ELIO_CONFIG: ElioConfig = {
-  model: 'claude-sonnet-4-20250514',
+  model: 'claude-sonnet-4-6',
   temperature: 1.0,
   maxTokens: 1500,
   customInstructions: null,

@@ -4,16 +4,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ELIO_MODELS, type ElioModel } from '../types/elio-config.types'
 
 const MODEL_LABELS: Record<ElioModel, { label: string; description: string }> = {
-  'claude-haiku-4-20250122': {
-    label: 'Haiku 4',
+  'claude-haiku-4-5-20251001': {
+    label: 'Haiku 4.5',
     description: 'Rapide & économique',
   },
-  'claude-sonnet-4-20250514': {
-    label: 'Sonnet 4',
+  'claude-sonnet-4-6': {
+    label: 'Sonnet 4.6',
     description: 'Équilibré — Recommandé',
   },
-  'claude-opus-4-20250514': {
-    label: 'Opus 4',
+  'claude-opus-4-6': {
+    label: 'Opus 4.6',
     description: 'Puissant & plus lent',
   },
 }
