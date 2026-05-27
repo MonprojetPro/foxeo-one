@@ -73,6 +73,12 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
     if (messages.length > 0) scrollToBottom()
   }, [messages, scrollToBottom])
 
+  useEffect(() => {
+    if (!isSending && chatStatus === 'ready' && !isInputDisabled) {
+      inputRef.current?.focus()
+    }
+  }, [isSending, chatStatus, isInputDisabled])
+
   // Sync messageCount vers le parent à chaque mise à jour (initial load + nouveaux messages)
   useEffect(() => {
     if (chatStatus === 'ready') {
@@ -174,7 +180,6 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
       setInput(content)
       setIsSending(false)
-      setTimeout(() => inputRef.current?.focus(), 0)
       return
     }
 
@@ -202,7 +207,6 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
     if (elioError || !reply) {
       setSendError(elioError?.message ?? 'Erreur de connexion à Élio')
       setIsSending(false)
-      setTimeout(() => inputRef.current?.focus(), 0)
       return
     }
 
