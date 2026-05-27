@@ -60,6 +60,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
   const [isSending, setIsSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const isDisabled = stepStatus === 'locked'
   const isInputDisabled = isReadonly(stepStatus) || stepStatus === 'locked' || isSending
@@ -173,6 +174,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
       setInput(content)
       setIsSending(false)
+      inputRef.current?.focus()
       return
     }
 
@@ -200,6 +202,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
     if (elioError || !reply) {
       setSendError(elioError?.message ?? 'Erreur de connexion à Élio')
       setIsSending(false)
+      inputRef.current?.focus()
       return
     }
 
@@ -216,6 +219,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
     }
     setMessages((prev) => [...prev, assistantMsg])
     setIsSending(false)
+    inputRef.current?.focus()
   }, [input, conversationId, isSending, clientId, systemPromptOverride, agentModel, agentTemperature])
 
   const handleKeyDown = useCallback(
@@ -338,6 +342,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       {/* Input */}
       <div className="border-t border-[#2d2d2d] bg-[#141414] p-3 flex gap-2 items-end">
         <textarea
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
