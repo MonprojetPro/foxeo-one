@@ -178,21 +178,22 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
 
     // Appeler Élio avec system prompt + modèle/température + historique (via conversationId)
     // skipLabEnabledCheck : le step chat est toujours actif si le client a un parcours actif
+    const FORMATTING_INSTRUCTION = '\n\n---\nINSTRUCTIONS DE FORMATAGE (obligatoires) : sauts de ligne entre les paragraphes. TOUJOURS numéroter les choix (1. 2. 3.) — jamais de puces •. L\'utilisateur répond en tapant le numéro. Pas de séparateurs --- en milieu de message. Sois concis.'
+
     const overrides = {
       ...(agentModel !== undefined ? { model: agentModel } : {}),
       ...(agentTemperature !== undefined ? { temperature: agentTemperature } : {}),
       ...(conversationId ? { conversationId } : {}),
       skipLabEnabledCheck: true,
+      systemPromptSuffix: FORMATTING_INSTRUCTION,
     }
-
-    const FORMATTING_INSTRUCTION = '\n\n---\nFormatage : structure tes réponses avec des sauts de ligne. Quand tu proposes des choix, utilise une liste numérotée (1. 2. 3.). Évite les séparateurs --- en milieu de message. Sois concis.'
 
     const { data: reply, error: elioError } = await sendToElio(
       'lab',
       content,
       clientId,
       undefined,
-      systemPromptOverride ? systemPromptOverride + FORMATTING_INSTRUCTION : undefined,
+      systemPromptOverride ?? undefined,
       overrides
     )
 

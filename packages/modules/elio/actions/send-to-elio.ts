@@ -125,7 +125,7 @@ export async function sendToElio(
   clientId?: string,
   draftContext?: DraftContext,
   systemPromptOverride?: string,
-  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string; skipLabEnabledCheck?: boolean },
+  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string; skipLabEnabledCheck?: boolean; systemPromptSuffix?: string },
 ): Promise<ActionResponse<ElioMessage>> {
   if (!message.trim()) {
     return errorResponse('Le message ne peut pas être vide', 'VALIDATION_ERROR')
@@ -493,10 +493,13 @@ export async function sendToElio(
 
   // 4. Cas général (Lab, Hub sans intent spécifique) : construire le system prompt et appeler le LLM
   // Un systemPromptOverride peut être fourni pour les chats spécifiques (ex: StepElioChat, Story 14.4)
-  const systemPrompt = systemPromptOverride ?? buildSystemPrompt({
+  const basePrompt = systemPromptOverride ?? buildSystemPrompt({
     dashboardType,
     customInstructions: elioConfig?.customInstructions,
   })
+  const systemPrompt = agentOverrides?.systemPromptSuffix
+    ? basePrompt + agentOverrides.systemPromptSuffix
+    : basePrompt
 
   return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
 }
