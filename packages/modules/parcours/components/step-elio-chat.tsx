@@ -174,7 +174,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       setMessages((prev) => prev.filter((m) => m.id !== tempId))
       setInput(content)
       setIsSending(false)
-      inputRef.current?.focus()
+      setTimeout(() => inputRef.current?.focus(), 0)
       return
     }
 
@@ -202,7 +202,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
     if (elioError || !reply) {
       setSendError(elioError?.message ?? 'Erreur de connexion à Élio')
       setIsSending(false)
-      inputRef.current?.focus()
+      setTimeout(() => inputRef.current?.focus(), 0)
       return
     }
 
@@ -219,7 +219,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
     }
     setMessages((prev) => [...prev, assistantMsg])
     setIsSending(false)
-    inputRef.current?.focus()
+    setTimeout(() => inputRef.current?.focus(), 0)
   }, [input, conversationId, isSending, clientId, systemPromptOverride, agentModel, agentTemperature])
 
   const handleKeyDown = useCallback(
