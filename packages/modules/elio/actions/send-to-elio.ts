@@ -528,7 +528,9 @@ async function callLLM(
   }
 
   const model = agentOverrides?.model ?? elioConfig?.model ?? 'claude-sonnet-4-6'
-  console.log('[ELIO:DEBUG] callLLM start — dashboardType:', dashboardType, '| model:', model, '| systemPromptLen:', systemPrompt?.length ?? 0, '| messageLen:', message?.length ?? 0, '| historyLen:', history.length)
+  // Anthropic Claude 4 : temperature strictement dans [0..1]
+  const rawTemp = agentOverrides?.temperature ?? elioConfig?.temperature ?? 1.0
+  const temperature = Math.min(1.0, Math.max(0, rawTemp))
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
@@ -540,9 +542,9 @@ async function callLLM(
         message,
         history,
         dashboardType,
-        model: agentOverrides?.model ?? elioConfig?.model ?? 'claude-sonnet-4-6',
+        model,
         maxTokens: elioConfig?.maxTokens ?? 8192,
-        temperature: agentOverrides?.temperature ?? elioConfig?.temperature ?? 1.0,
+        temperature,
       },
       signal: controller.signal,
     })
