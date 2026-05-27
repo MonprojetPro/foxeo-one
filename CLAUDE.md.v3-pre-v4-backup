@@ -2,59 +2,6 @@
 
 > ⚠️ **Rebrand (Avril 2026)** : La plateforme s'appelait autrefois "Foxeo" / "Foxio". Ces noms n'existent plus. Le produit s'appelle désormais **MonprojetPro** avec le domaine **monprojet-pro.com**. Ne jamais utiliser les anciens noms dans les URLs, docs ou commentaires.
 
----
-
-## 🆕 Mode v4.0 hybride MPP + Ruflo (alignement 2026-05-27)
-
-Ce projet hérite du **CLAUDE.md global v4.0** (`~/.claude/CLAUDE.md`).
-
-**Branche migration** : `feat/ruflo-v4-migration` (tag rollback : `v-pre-v4`)
-**Backup pré-v4** : `CLAUDE.md.v3-pre-v4-backup`
-
-### Répartition active
-
-| Domaine | Moteur |
-|---|---|
-| Code (Next.js, Supabase, modules) | 🟦 **RUFLO** (à installer — voir section "Installation ruflo" ci-dessous) |
-| Tests, code review, refacto, debug, sécurité | 🟦 **RUFLO** |
-| **INSPECTION CONSUMERS** sur tables critiques (`validation_requests`, `step_submissions`, `notifications`) | 🟦 RUFLO + règle MPP universelle |
-| **TILT** sur auth/session/données | 🟦 RUFLO + règle MPP universelle |
-| Stratégie produit, modules client | 🟧 **REX + OTTO** (MPP) |
-| UX/UI design + marketing-psychology | 🟧 **PIXEL** (MPP) |
-| Copywriting (parcours, Élio, emails) | 🟧 **NORA** (MPP) |
-| **Documentation Élio One/One+** (guide.md/faq.md/flows.md) | 🟧 **DOC** (MPP) — CRITIQUE |
-| Visuels (Élio, brand) | 🟧 **ART** (MPP) |
-| Vidéos (onboarding, démo) | 🟧 **MOTION** (MPP) |
-| SEO + GEO (pages publiques) | 🟧 **SEREN** (MPP) |
-| Mémoire métier + leçons | 🟧 **MEMO + ATLAS** (MPP) |
-| Orchestration | 🟧 **MAX** dispatche |
-
-### Installation ruflo — à exécuter
-
-Sur cette branche `feat/ruflo-v4-migration` :
-
-```bash
-cd "C:/Users/Mikaculus/Desktop/Projets BMAD/foxeo-one"
-npx -y ruflo@latest init --hybrid --with-embeddings --no-global
-```
-
-**Vérifications post-install OBLIGATOIRES** :
-1. ✅ `~/.claude/CLAUDE.md` non modifié (incident 2026-05-05)
-2. ✅ `.gitignore` inclut `.claude-flow/`, `data/`, `logs/`, `sessions/`
-3. ✅ `.mcp.json` aucun secret en clair
-
-### Rollback
-
-```bash
-git checkout master
-git branch -D feat/ruflo-v4-migration
-# Si ruflo a touché : git reset --hard v-pre-v4
-```
-
-⚠️ Le WIP a été commité (commit `17e78fe`) sur master — pas perdu.
-
----
-
 ## Project Overview
 
 MonprojetPro is a modular SaaS B2B platform for entrepreneurs, using the "Centaure" model (AI + Human). Three dashboards: **Hub** (MiKL operator), **Lab** (client incubation), **One** (client business tool).
