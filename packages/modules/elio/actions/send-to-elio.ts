@@ -552,20 +552,8 @@ async function callLLM(
     clearTimeout(timeoutId)
 
     if (fnError) {
-      // Extraire le body réel de l'Edge Function pour diagnostic
-      let edgeErrorBody: string | null = null
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const ctx = (fnError as any).context
-        if (ctx && typeof ctx.text === 'function') {
-          edgeErrorBody = await ctx.text()
-          console.error('[ELIO] Edge Function error body:', edgeErrorBody)
-        }
-      } catch (_) { /* ignore */ }
-      console.error('[ELIO] callLLM fnError:', fnError.message, '| body:', edgeErrorBody)
       const errorInfo = handleElioError(fnError)
-      const displayMsg = edgeErrorBody ? `${errorInfo.message} [detail: ${edgeErrorBody}]` : errorInfo.message
-      return errorResponse(displayMsg, errorInfo.code, { fnError: fnError.message, edgeBody: edgeErrorBody })
+      return errorResponse(errorInfo.message, errorInfo.code, errorInfo.details)
     }
 
     const responseData = data as { content?: string; model?: string; inputTokens?: number; outputTokens?: number }
