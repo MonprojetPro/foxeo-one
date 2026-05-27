@@ -527,6 +527,9 @@ async function callLLM(
     history = historyRows ?? []
   }
 
+  const model = agentOverrides?.model ?? elioConfig?.model ?? 'claude-sonnet-4-6'
+  console.log('[ELIO:DEBUG] callLLM start — dashboardType:', dashboardType, '| model:', model, '| systemPromptLen:', systemPrompt?.length ?? 0, '| messageLen:', message?.length ?? 0, '| historyLen:', history.length)
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
 
@@ -547,17 +550,20 @@ async function callLLM(
     clearTimeout(timeoutId)
 
     if (fnError) {
-      // Extraire le body réel de l'Edge Function pour debug
+      // Extraire le body réel de l'Edge Function pour diagnostic
+      let edgeErrorBody: string | null = null
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const ctx = (fnError as any).context
-        if (ctx && typeof ctx.json === 'function') {
-          const body = await ctx.json()
-          console.error('[ELIO] Edge Function error body:', JSON.stringify(body))
+        if (ctx && typeof ctx.text === 'function') {
+          edgeErrorBody = await ctx.text()
+          console.error('[ELIO] Edge Function error body:', edgeErrorBody)
         }
       } catch (_) { /* ignore */ }
+      console.error('[ELIO] callLLM fnError:', fnError.message, '| body:', edgeErrorBody)
       const errorInfo = handleElioError(fnError)
-      return errorResponse(errorInfo.message, errorInfo.code, errorInfo.details)
+      const displayMsg = edgeErrorBody ? `${errorInfo.message} [detail: ${edgeErrorBody}]` : errorInfo.message
+      return errorResponse(displayMsg, errorInfo.code, { fnError: fnError.message, edgeBody: edgeErrorBody })
     }
 
     const responseData = data as { content?: string; model?: string; inputTokens?: number; outputTokens?: number }
@@ -565,7 +571,7 @@ async function callLLM(
     // Fire-and-forget : tracking tokens (ne bloque jamais le chat)
     const inputTokens = responseData?.inputTokens ?? 0
     const outputTokens = responseData?.outputTokens ?? 0
-    const model = responseData?.model ?? agentOverrides?.model ?? elioConfig?.model ?? 'gemini-2.5-flash'
+    const usedModel = responseData?.model ?? model
 
     if (inputTokens > 0 || outputTokens > 0) {
       logTokenUsage({
@@ -574,7 +580,7 @@ async function callLLM(
         conversationId: agentOverrides?.conversationId ?? null,
         inputTokens,
         outputTokens,
-        model,
+        model: usedModel,
       }).catch(() => { /* fire-and-forget : échec silencieux */ })
     }
 
