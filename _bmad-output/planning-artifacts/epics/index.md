@@ -187,3 +187,8 @@
     - [Story 12.7 : Monitoring instances One — usage, seuils & alertes](./epic-12-administration-analytics-templates-stories-detaillees.md#story-127-monitoring-instances-one-usage-seuils-alertes)
     - [Story 12.8 : Documentation obligatoire par module & verification](./epic-12-administration-analytics-templates-stories-detaillees.md#story-128-documentation-obligatoire-par-module-verification)
     - [Resume Epic 12 — Couverture FRs](./epic-12-administration-analytics-templates-stories-detaillees.md#resume-epic-12-couverture-frs)
+
+- **Epic 15 : Migration Visio — OpenVidu → Google Meet (3 stories)**
+  - Story 15.1 : Auth Google Meet API — Setup OAuth2 & client
+  - Story 15.2 : Migration Visio — OpenVidu → Google Meet + Refonte UX
+  - Story 15.3 : Post-meeting Google — Enregistrements, Transcriptions Gemini & Nettoyage final

@@ -128,6 +128,19 @@ SELECT cron.schedule(
 
 ---
 
+## 🟠 À tester en live — Fonctionnalités nécessitant un environnement réel
+
+### Story 13.3 — Impersonation MiKL
+
+- [ ] Tester le flow complet : bouton "Se connecter comme" → modale → redirection → banner rouge → fermer session
+- [ ] Vérifier que l'email de notification est bien reçu par le client (nécessite Edge Function `send-email` déployée + Resend configuré)
+- [ ] Vérifier que la session expire bien après 1h (cookie + DB)
+- [ ] Vérifier que la page `/settings/support-history` côté client affiche bien les sessions passées
+- [ ] Vérifier le cross-domain cookie Hub → Client (si domaines différents, ajuster `Domain=.monprojet-pro.com`)
+- [ ] Tester avec un vrai client actif — confirmer que le dashboard s'affiche comme si on était le client
+
+---
+
 ## 🟢 Pré-flight checks avant chaque déploiement
 
 - [ ] Toutes les migrations Supabase appliquées sur la prod (`supabase db push`)
