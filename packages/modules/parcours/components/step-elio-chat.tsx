@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bot } from 'lucide-react'
+import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 import { ChatMarkdownRenderer } from './chat-markdown-renderer'
 import { getOrCreateStepConversation } from '../actions/get-or-create-step-conversation'
 import { markInjectionsRead } from '../actions/mark-injections-read'
@@ -152,6 +153,58 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
     init()
     return () => { cancelled = true }
   }, [stepId, stepNumber, clientId])
+
+  // Realtime — apparition instantanée des questions injectées par MiKL (Story 14.9).
+  // On n'ajoute en live que les injections opérateur : les messages du client et d'Élio
+  // sont déjà rendus en optimistic UI, les ré-ajouter via Realtime créerait des doublons.
+  useEffect(() => {
+    if (!conversationId) return
+
+    const supabase = createBrowserSupabaseClient()
+    const channel = supabase
+      .channel(`elio-step-chat:${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'elio_messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const row = payload.new as {
+            id: string
+            conversation_id: string
+            role: ElioMessagePersisted['role']
+            content: string
+            metadata: Record<string, unknown> | null
+            created_at: string
+          }
+          const isOperatorInjection = row.metadata?.source === 'operator_injection'
+          if (!isOperatorInjection) return
+
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === row.id)) return prev
+            return [
+              ...prev,
+              {
+                id: row.id,
+                conversationId: row.conversation_id,
+                role: row.role,
+                content: row.content,
+                metadata: (row.metadata ?? {}) as ElioMessagePersisted['metadata'],
+                createdAt: row.created_at,
+              },
+            ]
+          })
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [conversationId])
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || !conversationId || isSending) return

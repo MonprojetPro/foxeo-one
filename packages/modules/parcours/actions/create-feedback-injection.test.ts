@@ -28,17 +28,23 @@ function buildSupabaseMock({
   isOperator = true,
   injectionId = INJECTION_ID,
   insertError = null,
-  hasConversation = true,
+  injectRpcError = null,
   stepNumber = 3,
 }: {
   isOperator?: boolean
   injectionId?: string
   insertError?: { message: string } | null
-  hasConversation?: boolean
+  injectRpcError?: { message: string } | null
   stepNumber?: number
 } = {}) {
   mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
-  mockRpc.mockResolvedValue({ data: isOperator, error: null })
+  // rpc('is_operator') → autorisation ; rpc('inject_elio_questions') → injection chat Élio
+  mockRpc.mockImplementation((fn: string) => {
+    if (fn === 'inject_elio_questions') {
+      return Promise.resolve({ data: injectRpcError ? null : CONV_ID, error: injectRpcError })
+    }
+    return Promise.resolve({ data: isOperator, error: null })
+  })
 
   mockFrom.mockImplementation((table: string) => {
     if (table === 'step_feedback_injections') {
@@ -53,22 +59,6 @@ function buildSupabaseMock({
           }),
         }),
       }
-    }
-    if (table === 'elio_conversations') {
-      return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            maybeSingle: vi.fn().mockResolvedValue(
-              hasConversation
-                ? { data: { id: CONV_ID }, error: null }
-                : { data: null, error: null }
-            ),
-          }),
-        }),
-      }
-    }
-    if (table === 'elio_messages') {
-      return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) }
     }
     if (table === 'parcours_steps') {
       return {
@@ -143,8 +133,8 @@ describe('createFeedbackInjection', () => {
     expect(result.data?.injectionId).toBe(INJECTION_ID)
   })
 
-  it('crée une injection elio_questions et insère dans elio_messages si conversation existe', async () => {
-    buildSupabaseMock({ hasConversation: true })
+  it('crée une injection elio_questions et appelle la RPC inject_elio_questions', async () => {
+    buildSupabaseMock()
 
     const result = await createFeedbackInjection({
       stepId: STEP_ID,
@@ -155,10 +145,16 @@ describe('createFeedbackInjection', () => {
 
     expect(result.error).toBeNull()
     expect(result.data?.injectionId).toBe(INJECTION_ID)
+    expect(mockRpc).toHaveBeenCalledWith('inject_elio_questions', {
+      p_step_id: STEP_ID,
+      p_client_id: CLIENT_ID,
+      p_content: 'Quelle est votre cible principale ?',
+      p_injection_id: INJECTION_ID,
+    })
   })
 
-  it("ne tente pas d'injecter dans elio_messages si pas de conversation", async () => {
-    buildSupabaseMock({ hasConversation: false })
+  it('retourne DB_ERROR si la RPC inject_elio_questions échoue', async () => {
+    buildSupabaseMock({ injectRpcError: { message: 'rls denied' } })
 
     const result = await createFeedbackInjection({
       stepId: STEP_ID,
@@ -167,9 +163,7 @@ describe('createFeedbackInjection', () => {
       type: 'elio_questions',
     })
 
-    // L'injection DB est créée mais elio_messages n'est pas inséré (pas de conversation)
-    expect(result.error).toBeNull()
-    expect(result.data?.injectionId).toBe(INJECTION_ID)
+    expect(result.error?.code).toBe('DB_ERROR')
   })
 
   it('retourne DB_ERROR si l\'insertion échoue', async () => {

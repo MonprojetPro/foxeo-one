@@ -16,6 +16,19 @@ vi.mock('../actions/get-or-create-step-conversation', () => ({
   }),
 }))
 
+vi.mock('@monprojetpro/supabase', () => {
+  const channel = {
+    on: vi.fn().mockReturnThis(),
+    subscribe: vi.fn().mockReturnThis(),
+  }
+  return {
+    createBrowserSupabaseClient: vi.fn(() => ({
+      channel: vi.fn(() => channel),
+      removeChannel: vi.fn(),
+    })),
+  }
+})
+
 vi.mock('@monprojetpro/module-elio', () => ({
   getMessages: vi.fn().mockResolvedValue({ data: [], error: null }),
   saveElioMessage: vi.fn().mockResolvedValue({ data: {}, error: null }),

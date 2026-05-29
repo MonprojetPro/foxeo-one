@@ -64,25 +64,25 @@ export async function createFeedbackInjection(
     )
   }
 
-  // Si type = 'elio_questions' : injecter dans elio_messages de la conversation d'étape
+  // Si type = 'elio_questions' : injecter dans elio_messages via RPC SECURITY DEFINER.
+  // La session opérateur ne peut PAS accéder aux conversations/messages du client
+  // (RLS owner-only sur elio_conversations / elio_messages). La RPC contourne la RLS
+  // proprement (garde is_operator() interne), trouve OU crée la conversation d'étape,
+  // puis insère le message. On vérifie l'erreur : plus de succès silencieux.
   if (type === 'elio_questions') {
-    const { data: conversation } = await supabase
-      .from('elio_conversations')
-      .select('id')
-      .eq('step_id', stepId)
-      .maybeSingle()
+    const { error: injectError } = await supabase.rpc('inject_elio_questions', {
+      p_step_id: stepId,
+      p_client_id: clientId,
+      p_content: content,
+      p_injection_id: injection.id,
+    })
 
-    // Ne pas injecter si le client n'a pas encore commencé la conversation
-    if (conversation) {
-      await supabase.from('elio_messages').insert({
-        conversation_id: conversation.id,
-        role: 'assistant',
-        content,
-        metadata: {
-          source: 'operator_injection',
-          injection_id: injection.id,
-        },
-      })
+    if (injectError) {
+      return errorResponse(
+        "Erreur lors de l'injection dans le chat Élio",
+        'DB_ERROR',
+        { message: injectError.message }
+      )
     }
   }
 
