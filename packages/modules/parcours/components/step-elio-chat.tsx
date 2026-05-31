@@ -57,7 +57,9 @@ ${roadmap.trim()}
 
 Règles absolues :
 - AVANT de poser une question, RELIS la conversation et repère les points qui ont DÉJÀ reçu une réponse du client.
-- Ne repose JAMAIS un point déjà répondu. Ne contredis jamais le client et n'invente aucune valeur : reprends ses mots et ses chiffres EXACTS (ex : s'il a dit 45-75 ans, ne dis jamais 35-55).
+- Ne repose JAMAIS un point déjà répondu. Ne contredis jamais le client et n'invente aucune valeur : reprends ses mots et ses chiffres EXACTS.
+- Si le client a donné des réponses DIFFÉRENTES à des moments différents (y compris une session précédente), la réponse la PLUS RÉCENTE fait foi.
+- N'affirme JAMAIS au client qu'il n'a pas dit quelque chose. S'il te corrige (« j'ai dit 45-75 »), tu ACCEPTES immédiatement sa correction sans discuter ni te justifier.
 - Pose UNIQUEMENT les points encore sans réponse, un seul à la fois, reformulés dans TES propres mots.
 - Si le client répond « je ne sais pas », le point est traité : passe au suivant.
 - TANT QU'il reste un point sans réponse : interdiction de résumer, conclure ou produire une fiche / carte de synthèse.
