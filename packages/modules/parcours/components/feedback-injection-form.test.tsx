@@ -59,7 +59,7 @@ describe('FeedbackInjectionForm', () => {
       { wrapper }
     )
     expect(screen.getByLabelText('Feedback texte')).toBeInTheDocument()
-    expect(screen.getByLabelText('Injecter questions dans Élio')).toBeInTheDocument()
+    expect(screen.getByLabelText('Feuille de route pour Élio')).toBeInTheDocument()
   })
 
   it('désactive le bouton si le contenu est vide', () => {
@@ -103,12 +103,12 @@ describe('FeedbackInjectionForm', () => {
     })
   })
 
-  it('change le label du bouton quand "Injecter questions dans Élio" est sélectionné', () => {
+  it('change le label du bouton quand "Feuille de route pour Élio" est sélectionné', () => {
     render(
       createElement(FeedbackInjectionForm, { stepId: STEP_ID, clientId: CLIENT_ID }),
       { wrapper }
     )
-    const radioElio = screen.getByLabelText('Injecter questions dans Élio')
+    const radioElio = screen.getByLabelText('Feuille de route pour Élio')
     fireEvent.click(radioElio)
     expect(screen.getByRole('button', { name: /injecter dans élio/i })).toBeInTheDocument()
   })

@@ -3,8 +3,6 @@
 import { z } from 'zod'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
-import { composeStepContextMessage } from '../utils/compose-step-context-message'
-
 const InputSchema = z.object({
   stepId: z.string().uuid('stepId invalide'),
   stepNumber: z.number().int().min(1, 'stepNumber doit être >= 1'),
@@ -18,8 +16,15 @@ export interface EffectiveStepConfig {
   systemPrompt: string | null
   model: string
   temperature: number
-  announcementMessage: string | null
-  contextId: string | null
+  /**
+   * Feuille de route CACHÉE injectée par MiKL pour cette étape (jamais montrée telle quelle
+   * au client). Texte brut à injecter dans le system prompt d'Élio pour orienter ses questions.
+   */
+  steeringInstruction: string | null
+  /** Id du contexte le plus récent (pour le marquer consommé après la relance proactive d'Élio). */
+  steeringContextId: string | null
+  /** true si ce contexte n'a pas encore déclenché la relance proactive d'Élio. */
+  steeringPendingKickoff: boolean
   source: 'agent' | 'global'
 }
 
@@ -90,40 +95,33 @@ export async function getEffectiveStepConfig(
 
     const agent = parcoursAgent?.elio_lab_agents ?? null
 
-    // 2. Agent trouvé → charger le contexte non-consommé par client_parcours_agent_id
+    // 2. Agent trouvé → charger la feuille de route la PLUS RÉCENTE par client_parcours_agent_id.
+    //    On la récupère qu'elle soit consommée ou non : le texte sert de consigne cachée à Élio
+    //    pour TOUT le tour de conversation (gating). Le flag consumed_at indique seulement si la
+    //    relance proactive d'Élio a déjà eu lieu.
     if (agent && parcoursAgent) {
       type ContextRow = {
         id: string
         context_message: string
-        content_type: string
-        file_name: string | null
+        consumed_at: string | null
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: context, error: contextError } = await (supabase as any)
         .from('client_step_contexts')
-        .select('id, context_message, content_type, file_name')
+        .select('id, context_message, consumed_at')
         .eq('client_parcours_agent_id', parcoursAgent.id)
-        .is('consumed_at', null)
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle() as { data: ContextRow | null; error: unknown }
 
       if (contextError) {
         console.error('[ELIO:GET_EFFECTIVE_STEP_CONFIG] Context query error:', contextError)
         // Ne pas continuer silencieusement — signaler l'erreur pour éviter que
-        // le contexte injecté par MiKL ne soit jamais annoncé au client
+        // la feuille de route injectée par MiKL ne soit jamais utilisée par Élio
         return errorResponse("Erreur lors de la récupération du contexte de l'étape", 'DB_ERROR', {
           message: String(contextError),
         })
       }
-
-      const announcementMessage = context
-        ? composeStepContextMessage({
-            contextMessage: context.context_message,
-            contentType: context.content_type as 'text' | 'file',
-            fileName: context.file_name,
-          })
-        : null
 
       return successResponse({
         agentName: agent.name,
@@ -132,8 +130,9 @@ export async function getEffectiveStepConfig(
         systemPrompt: agent.system_prompt,
         model: agent.model,
         temperature: Number(agent.temperature),
-        announcementMessage,
-        contextId: context?.id ?? null,
+        steeringInstruction: context?.context_message ?? null,
+        steeringContextId: context?.id ?? null,
+        steeringPendingKickoff: context ? context.consumed_at === null : false,
         source: 'agent' as const,
       })
     }
@@ -153,8 +152,9 @@ export async function getEffectiveStepConfig(
       systemPrompt: null,
       model: globalConfig?.model ?? 'claude-sonnet-4-6',
       temperature: globalConfig?.temperature ?? 1.0,
-      announcementMessage: null,
-      contextId: null,
+      steeringInstruction: null,
+      steeringContextId: null,
+      steeringPendingKickoff: false,
       source: 'global' as const,
     })
   } catch (error) {

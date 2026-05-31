@@ -132,7 +132,7 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
                   Envoyer un message à Élio
                 </h3>
                 <p className="text-xs text-[#9ca3af] mb-4">
-                  Envoyez un feedback texte ou injectez des questions directement dans le chat Élio du client.
+                  Feedback texte visible dans l&apos;historique, ou feuille de route cachée qui oriente Élio et renvoie l&apos;étape au client.
                 </p>
                 <FeedbackInjectionForm
                   stepId={request.stepId}

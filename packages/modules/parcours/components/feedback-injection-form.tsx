@@ -21,8 +21,8 @@ const TYPE_OPTIONS: Array<{ value: FeedbackInjectionType; label: string; descrip
   },
   {
     value: 'elio_questions',
-    label: 'Injecter questions dans Élio',
-    description: 'Les questions apparaissent dans le chat Élio du client',
+    label: 'Feuille de route pour Élio',
+    description: 'Consigne cachée : Élio oriente ses questions dessus et renvoie l\'étape au client (invisible pour lui)',
   },
 ]
 
@@ -52,7 +52,7 @@ export function FeedbackInjectionForm({
 
     showSuccess(
       type === 'elio_questions'
-        ? 'Questions injectées dans le chat Élio du client'
+        ? 'Feuille de route injectée — l\'étape repart au client, Élio le relancera'
         : 'Feedback envoyé au client'
     )
     setContent('')
@@ -103,7 +103,7 @@ export function FeedbackInjectionForm({
           htmlFor="injection-content"
           className="block text-sm font-medium text-[#f9fafb] mb-2"
         >
-          {type === 'elio_questions' ? 'Questions à injecter' : 'Feedback'}
+          {type === 'elio_questions' ? 'Feuille de route pour Élio' : 'Feedback'}
           <span className="text-[#ef4444] ml-1" aria-hidden="true">*</span>
         </label>
         <Textarea
@@ -113,7 +113,7 @@ export function FeedbackInjectionForm({
           rows={5}
           placeholder={
             type === 'elio_questions'
-              ? 'Quels sont vos 3 clients idéaux ?\nQuelle est votre proposition de valeur unique ?'
+              ? 'Colle ici les points à creuser (ex : le retour de ton analyse).\nÉlio les abordera avec le client dans ses propres mots, sans les montrer.'
               : 'Votre retour sur le travail du client...'
           }
           className="w-full"

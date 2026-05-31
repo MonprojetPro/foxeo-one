@@ -116,11 +116,12 @@ describe('getEffectiveStepConfig', () => {
     expect(result.data?.temperature).toBe(0.8)
     expect(result.data?.agentImagePath).toBe('https://example.com/fox.png')
     expect(result.data?.systemPrompt).toBe('Tu es un expert en branding.')
-    expect(result.data?.announcementMessage).toBeNull()
-    expect(result.data?.contextId).toBeNull()
+    expect(result.data?.steeringInstruction).toBeNull()
+    expect(result.data?.steeringContextId).toBeNull()
+    expect(result.data?.steeringPendingKickoff).toBe(false)
   })
 
-  it('retourne le contexte non-consommé quand il existe (announcementMessage composé)', async () => {
+  it('retourne la feuille de route brute + pendingKickoff quand un contexte non-consommé existe', async () => {
     const agentChain = makeChain({
       data: {
         id: 'cpa-1',
@@ -140,8 +141,7 @@ describe('getEffectiveStepConfig', () => {
       data: {
         id: CONTEXT_ID,
         context_message: 'Quelle est ta vision long terme ?',
-        content_type: 'text',
-        file_name: null,
+        consumed_at: null,
       },
       error: null,
     })
@@ -159,9 +159,52 @@ describe('getEffectiveStepConfig', () => {
     })
 
     expect(result.error).toBeNull()
-    expect(result.data?.announcementMessage).toContain('MiKL a ajouté des précisions')
-    expect(result.data?.announcementMessage).toContain('Quelle est ta vision long terme ?')
-    expect(result.data?.contextId).toBe(CONTEXT_ID)
+    // Texte BRUT (jamais "MiKL te demande") — c'est une consigne cachée pour Élio
+    expect(result.data?.steeringInstruction).toBe('Quelle est ta vision long terme ?')
+    expect(result.data?.steeringContextId).toBe(CONTEXT_ID)
+    expect(result.data?.steeringPendingKickoff).toBe(true)
+  })
+
+  it('un contexte déjà consommé reste une consigne mais sans relance proactive', async () => {
+    const agentChain = makeChain({
+      data: {
+        id: 'cpa-1',
+        elio_lab_agent_id: AGENT_ID,
+        elio_lab_agents: {
+          id: AGENT_ID,
+          name: 'Élio Vision',
+          model: 'claude-sonnet-4-6',
+          temperature: 1.0,
+          image_path: null,
+          system_prompt: null,
+        },
+      },
+      error: null,
+    })
+    const contextChain = makeChain({
+      data: {
+        id: CONTEXT_ID,
+        context_message: 'Creuse la proposition de valeur.',
+        consumed_at: '2026-05-31T10:00:00Z',
+      },
+      error: null,
+    })
+
+    let callCount = 0
+    mockFrom.mockImplementation(() => {
+      callCount++
+      return callCount === 1 ? agentChain : contextChain
+    })
+
+    const result = await getEffectiveStepConfig({
+      stepId: STEP_ID,
+      stepNumber: STEP_NUMBER,
+      clientId: CLIENT_ID,
+    })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.steeringInstruction).toBe('Creuse la proposition de valeur.')
+    expect(result.data?.steeringPendingKickoff).toBe(false)
   })
 
   it('retourne la config globale en fallback quand aucun agent n\'est assigné (source: global)', async () => {
@@ -193,8 +236,9 @@ describe('getEffectiveStepConfig', () => {
     expect(result.data?.systemPrompt).toBeNull()
     expect(result.data?.model).toBe('claude-haiku-4-5-20251001')
     expect(result.data?.temperature).toBe(0.7)
-    expect(result.data?.announcementMessage).toBeNull()
-    expect(result.data?.contextId).toBeNull()
+    expect(result.data?.steeringInstruction).toBeNull()
+    expect(result.data?.steeringContextId).toBeNull()
+    expect(result.data?.steeringPendingKickoff).toBe(false)
   })
 
   it('utilise les valeurs par défaut si elio_configs est vide en fallback', async () => {

@@ -38,9 +38,9 @@ function buildSupabaseMock({
   stepNumber?: number
 } = {}) {
   mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
-  // rpc('is_operator') → autorisation ; rpc('inject_elio_questions') → injection chat Élio
+  // rpc('is_operator') → autorisation ; rpc('inject_elio_roadmap') → feuille de route + renvoi étape
   mockRpc.mockImplementation((fn: string) => {
-    if (fn === 'inject_elio_questions') {
+    if (fn === 'inject_elio_roadmap') {
       return Promise.resolve({ data: injectRpcError ? null : CONV_ID, error: injectRpcError })
     }
     return Promise.resolve({ data: isOperator, error: null })
@@ -133,7 +133,7 @@ describe('createFeedbackInjection', () => {
     expect(result.data?.injectionId).toBe(INJECTION_ID)
   })
 
-  it('crée une injection elio_questions et appelle la RPC inject_elio_questions', async () => {
+  it('elio_questions : appelle la RPC inject_elio_roadmap et renvoie le contextId', async () => {
     buildSupabaseMock()
 
     const result = await createFeedbackInjection({
@@ -144,16 +144,16 @@ describe('createFeedbackInjection', () => {
     })
 
     expect(result.error).toBeNull()
-    expect(result.data?.injectionId).toBe(INJECTION_ID)
-    expect(mockRpc).toHaveBeenCalledWith('inject_elio_questions', {
+    // L'id retourné est celui du contexte (feuille de route), pas d'une injection visible
+    expect(result.data?.injectionId).toBe(CONV_ID)
+    expect(mockRpc).toHaveBeenCalledWith('inject_elio_roadmap', {
       p_step_id: STEP_ID,
       p_client_id: CLIENT_ID,
       p_content: 'Quelle est votre cible principale ?',
-      p_injection_id: INJECTION_ID,
     })
   })
 
-  it('retourne DB_ERROR si la RPC inject_elio_questions échoue', async () => {
+  it('retourne DB_ERROR si la RPC inject_elio_roadmap échoue', async () => {
     buildSupabaseMock({ injectRpcError: { message: 'rls denied' } })
 
     const result = await createFeedbackInjection({

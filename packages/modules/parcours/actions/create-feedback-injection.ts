@@ -9,9 +9,15 @@ export interface CreateFeedbackInjectionResult {
 }
 
 /**
- * Server Action Hub — Injecte un feedback MiKL sur une étape client.
- * - type 'text_feedback' : visible dans l'historique étape (step_feedback_injections seulement)
- * - type 'elio_questions' : injecté aussi dans elio_messages de la conversation d'étape
+ * Server Action Hub — Envoie un message MiKL sur une étape client.
+ *
+ * Deux modes radicalement différents :
+ * - 'text_feedback'  : message VISIBLE tel quel dans l'historique de l'étape (step_feedback_injections).
+ * - 'elio_questions' : FEUILLE DE ROUTE CACHÉE pour Élio. Le contenu n'est jamais montré au client ;
+ *   il oriente les prochaines questions d'Élio et renvoie l'étape au client (révision).
+ *   Géré par la RPC inject_elio_roadmap (SECURITY DEFINER) qui contourne la RLS owner-only,
+ *   stocke la consigne dans client_step_contexts, réactive l'étape et notifie le client.
+ *
  * Retourne toujours { data, error } — jamais throw.
  */
 export async function createFeedbackInjection(
@@ -43,7 +49,28 @@ export async function createFeedbackInjection(
     return errorResponse('Accès refusé — opérateurs uniquement', 'FORBIDDEN')
   }
 
-  // Insérer l'injection de feedback
+  // ── Mode 'elio_questions' : feuille de route cachée + renvoi de l'étape ──────
+  // Tout est fait atomiquement côté base par la RPC SECURITY DEFINER (la session
+  // opérateur ne peut pas écrire dans les tables du client à cause de la RLS).
+  if (type === 'elio_questions') {
+    const { data: contextId, error: roadmapError } = await supabase.rpc('inject_elio_roadmap', {
+      p_step_id: stepId,
+      p_client_id: clientId,
+      p_content: content,
+    })
+
+    if (roadmapError) {
+      return errorResponse(
+        "Erreur lors de l'injection de la feuille de route Élio",
+        'DB_ERROR',
+        { message: roadmapError.message }
+      )
+    }
+
+    return successResponse({ injectionId: String(contextId) })
+  }
+
+  // ── Mode 'text_feedback' : message visible dans l'historique de l'étape ──────
   const { data: injection, error: insertError } = await supabase
     .from('step_feedback_injections')
     .insert({
@@ -64,28 +91,6 @@ export async function createFeedbackInjection(
     )
   }
 
-  // Si type = 'elio_questions' : injecter dans elio_messages via RPC SECURITY DEFINER.
-  // La session opérateur ne peut PAS accéder aux conversations/messages du client
-  // (RLS owner-only sur elio_conversations / elio_messages). La RPC contourne la RLS
-  // proprement (garde is_operator() interne), trouve OU crée la conversation d'étape,
-  // puis insère le message. On vérifie l'erreur : plus de succès silencieux.
-  if (type === 'elio_questions') {
-    const { error: injectError } = await supabase.rpc('inject_elio_questions', {
-      p_step_id: stepId,
-      p_client_id: clientId,
-      p_content: content,
-      p_injection_id: injection.id,
-    })
-
-    if (injectError) {
-      return errorResponse(
-        "Erreur lors de l'injection dans le chat Élio",
-        'DB_ERROR',
-        { message: injectError.message }
-      )
-    }
-  }
-
   // Notification client
   const { data: step } = await supabase
     .from('parcours_steps')
@@ -93,13 +98,13 @@ export async function createFeedbackInjection(
     .eq('id', stepId)
     .maybeSingle()
 
-  const stepLabel = step ? `l'étape ${step.step_number}` : "votre étape"
+  const stepLabel = step ? `l'étape ${step.step_number}` : 'votre étape'
 
   await supabase.from('notifications').insert({
     recipient_type: 'client',
     recipient_id: clientId,
     type: 'step_feedback',
-    body: `MiKL vous a envoyé des questions sur ${stepLabel}`,
+    body: `MiKL vous a envoyé un message sur ${stepLabel}`,
     read: false,
   })
 

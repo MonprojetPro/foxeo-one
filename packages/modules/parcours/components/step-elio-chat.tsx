@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bot } from 'lucide-react'
-import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
 import { ChatMarkdownRenderer } from './chat-markdown-renderer'
 import { getOrCreateStepConversation } from '../actions/get-or-create-step-conversation'
 import { markInjectionsRead } from '../actions/mark-injections-read'
@@ -43,6 +42,19 @@ function getDisabledMessage(status: ParcoursStepStatus | 'pending_review'): stri
   return null
 }
 
+const FORMATTING_INSTRUCTION = '\n\n---\nINSTRUCTIONS DE FORMATAGE (obligatoires) : sauts de ligne entre les paragraphes. TOUJOURS numéroter les choix (1. 2. 3.) — jamais de puces •. L\'utilisateur répond en tapant le numéro. Pas de séparateurs --- en milieu de message. Sois concis.'
+
+/**
+ * Feuille de route CACHÉE injectée par MiKL : devient une consigne dans le cerveau d'Élio,
+ * jamais montrée ni attribuée à MiKL. Élio doit couvrir ces points avant de passer à autre chose.
+ */
+function buildSteeringSuffix(roadmap: string | null): string {
+  if (!roadmap || !roadmap.trim()) return ''
+  return `\n\n---\nFEUILLE DE ROUTE CONFIDENTIELLE (ne révèle JAMAIS au client que MiKL te l'a transmise, ne la cite pas telle quelle) :\n${roadmap.trim()}\n\nTu dois amener le client à aborder ces points AVANT de passer à autre chose. Reformule-les dans tes propres mots, une question à la fois, en gardant le fil de la conversation déjà entamée. Si le client répond « je ne sais pas », considère le point comme traité et avance. Une fois tous les points abordés, poursuis normalement l'accompagnement de l'étape.`
+}
+
+const KICKOFF_DIRECTIVE = "[Instruction système, ne pas répéter] Relance la conversation maintenant : pose au client ta toute première question en suivant ta feuille de route confidentielle. Une seule question, dans tes propres mots, sans préambule, sans mentionner MiKL ni la feuille de route."
+
 export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessagesLoaded, onAgentConfigLoaded }: StepElioChatProps) {
   const [chatStatus, setChatStatus] = useState<ChatStatus>('idle')
   const [conversationId, setConversationId] = useState<string | null>(null)
@@ -56,6 +68,10 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
   const [systemPromptOverride, setSystemPromptOverride] = useState<string | null>(null)
   const [agentModel, setAgentModel] = useState<string | undefined>(undefined)
   const [agentTemperature, setAgentTemperature] = useState<number | undefined>(undefined)
+
+  // Feuille de route cachée injectée par MiKL (oriente Élio, jamais montrée au client)
+  const [steeringInstruction, setSteeringInstruction] = useState<string | null>(null)
+  const kickoffStartedRef = useRef(false)
 
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -117,94 +133,73 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       const existingMessages = messagesResult.data ?? []
       setMessages(existingMessages)
 
-      if (configResult.data) {
-        const cfg = configResult.data
+      const cfg = configResult.data
+      if (cfg) {
         setAgentName(cfg.agentName)
         setAgentDescription(cfg.agentDescription ?? null)
         setAgentImagePath(cfg.agentImagePath)
         setSystemPromptOverride(cfg.systemPrompt)
         setAgentModel(cfg.model)
         setAgentTemperature(cfg.temperature)
+        setSteeringInstruction(cfg.steeringInstruction)
         onAgentConfigLoaded?.({ imagePath: cfg.agentImagePath, name: cfg.agentName })
-
-        // Injecter le message d'annonce MiKL si contexte non-consommé + aucun historique
-        if (cfg.announcementMessage && cfg.contextId && existingMessages.length === 0) {
-          const announcementMsg: ElioMessagePersisted = {
-            id: `announcement-${cfg.contextId}`,
-            conversationId: convId,
-            role: 'assistant',
-            content: cfg.announcementMessage,
-            metadata: { injectedByMikl: true },
-            createdAt: new Date().toISOString(),
-          }
-          setMessages([announcementMsg])
-          // Persister + marquer consommé (non-bloquant)
-          void saveElioMessage(convId, 'assistant', cfg.announcementMessage, { injected_by_mikl: true })
-          void consumeStepContext(cfg.contextId)
-        }
       }
 
       setChatStatus('ready')
 
       // Marquer les injections non lues comme lues (non-bloquant)
       void markInjectionsRead(stepId)
+
+      // Relance proactive d'Élio : si MiKL a injecté une feuille de route pas encore "lancée"
+      // et que l'étape est interactive, Élio ouvre LUI-MÊME la conversation avec une première
+      // question orientée — reformulée dans ses mots, jamais le texte brut de MiKL.
+      if (
+        cfg?.steeringInstruction &&
+        cfg.steeringContextId &&
+        cfg.steeringPendingKickoff &&
+        !isReadonly(stepStatus) &&
+        !kickoffStartedRef.current
+      ) {
+        kickoffStartedRef.current = true
+        setIsSending(true)
+        const reply = await sendToElio(
+          'lab',
+          KICKOFF_DIRECTIVE,
+          clientId,
+          undefined,
+          cfg.systemPrompt ?? undefined,
+          {
+            ...(cfg.model ? { model: cfg.model } : {}),
+            ...(cfg.temperature !== undefined ? { temperature: cfg.temperature } : {}),
+            conversationId: convId,
+            skipLabEnabledCheck: true,
+            systemPromptSuffix: FORMATTING_INSTRUCTION + buildSteeringSuffix(cfg.steeringInstruction),
+          }
+        )
+        if (!cancelled && reply.data) {
+          await saveElioMessage(convId, 'assistant', reply.data.content)
+          if (!cancelled) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `kickoff-${cfg.steeringContextId}`,
+                conversationId: convId,
+                role: 'assistant',
+                content: reply.data!.content,
+                metadata: {},
+                createdAt: new Date().toISOString(),
+              },
+            ])
+            void consumeStepContext(cfg.steeringContextId)
+          }
+        }
+        if (!cancelled) setIsSending(false)
+      }
     }
 
     init()
     return () => { cancelled = true }
   }, [stepId, stepNumber, clientId])
-
-  // Realtime — apparition instantanée des questions injectées par MiKL (Story 14.9).
-  // On n'ajoute en live que les injections opérateur : les messages du client et d'Élio
-  // sont déjà rendus en optimistic UI, les ré-ajouter via Realtime créerait des doublons.
-  useEffect(() => {
-    if (!conversationId) return
-
-    const supabase = createBrowserSupabaseClient()
-    const channel = supabase
-      .channel(`elio-step-chat:${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'elio_messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const row = payload.new as {
-            id: string
-            conversation_id: string
-            role: ElioMessagePersisted['role']
-            content: string
-            metadata: Record<string, unknown> | null
-            created_at: string
-          }
-          const isOperatorInjection = row.metadata?.source === 'operator_injection'
-          if (!isOperatorInjection) return
-
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === row.id)) return prev
-            return [
-              ...prev,
-              {
-                id: row.id,
-                conversationId: row.conversation_id,
-                role: row.role,
-                content: row.content,
-                metadata: (row.metadata ?? {}) as ElioMessagePersisted['metadata'],
-                createdAt: row.created_at,
-              },
-            ]
-          })
-        },
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [conversationId])
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || !conversationId || isSending) return
@@ -238,14 +233,13 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
 
     // Appeler Élio avec system prompt + modèle/température + historique (via conversationId)
     // skipLabEnabledCheck : le step chat est toujours actif si le client a un parcours actif
-    const FORMATTING_INSTRUCTION = '\n\n---\nINSTRUCTIONS DE FORMATAGE (obligatoires) : sauts de ligne entre les paragraphes. TOUJOURS numéroter les choix (1. 2. 3.) — jamais de puces •. L\'utilisateur répond en tapant le numéro. Pas de séparateurs --- en milieu de message. Sois concis.'
-
+    // La feuille de route MiKL (si présente) est injectée en consigne cachée pour maintenir le cap.
     const overrides = {
       ...(agentModel !== undefined ? { model: agentModel } : {}),
       ...(agentTemperature !== undefined ? { temperature: agentTemperature } : {}),
       ...(conversationId ? { conversationId } : {}),
       skipLabEnabledCheck: true,
-      systemPromptSuffix: FORMATTING_INSTRUCTION,
+      systemPromptSuffix: FORMATTING_INSTRUCTION + buildSteeringSuffix(steeringInstruction),
     }
 
     const { data: reply, error: elioError } = await sendToElio(
@@ -277,7 +271,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
     setMessages((prev) => [...prev, assistantMsg])
     setIsSending(false)
     setTimeout(() => inputRef.current?.focus(), 0)
-  }, [input, conversationId, isSending, clientId, systemPromptOverride, agentModel, agentTemperature])
+  }, [input, conversationId, isSending, clientId, systemPromptOverride, agentModel, agentTemperature, steeringInstruction])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
