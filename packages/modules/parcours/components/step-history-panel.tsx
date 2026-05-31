@@ -86,9 +86,9 @@ const SUBMISSION_BADGE_CONFIG: Record<SubmissionBadgeKind, { label: string; clas
     description: 'MiKL a validé cette soumission.',
   },
   rejected: {
-    label: 'À corriger',
+    label: 'À compléter',
     className: 'bg-orange-500/15 text-orange-300 border-orange-500/40',
-    description: 'MiKL a refusé — consultez le feedback ci-dessous.',
+    description: 'Encore quelques précisions à apporter avec Élio.',
   },
 }
 

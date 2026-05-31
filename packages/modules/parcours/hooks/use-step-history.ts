@@ -39,10 +39,13 @@ export function useStepHistory(stepId: string | undefined) {
       if (!stepId) return []
       try {
         const supabase = createBrowserSupabaseClient()
+        // type='text_feedback' uniquement : les 'elio_questions' (feuille de route) sont des
+        // consignes CACHÉES pour Élio et ne doivent jamais s'afficher en clair au client.
         const { data, error } = await supabase
           .from('step_feedback_injections')
           .select('id, step_id, content, read_at, created_at')
           .eq('step_id', stepId)
+          .eq('type', 'text_feedback')
           .order('created_at', { ascending: false })
 
         // Si la table n'existe pas ou erreur → retourner tableau vide

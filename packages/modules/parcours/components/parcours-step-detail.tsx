@@ -106,8 +106,8 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
                 <path d="M12 10v4M12 17v.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/>
               </svg>
               <div>
-                <p className="font-medium">MiKL a refusé votre soumission — corrections à apporter.</p>
-                <p className="text-xs text-orange-300/80 mt-0.5">Consultez le feedback dans le panneau de droite, puis régénérez un document corrigé avec Élio.</p>
+                <p className="font-medium">MiKL a étudié ton document — il reste quelques précisions à apporter.</p>
+                <p className="text-xs text-orange-300/80 mt-0.5">Continue d&apos;échanger avec Élio juste en dessous : il a été informé des points à approfondir, puis régénère ton document.</p>
               </div>
             </div>
           )}
