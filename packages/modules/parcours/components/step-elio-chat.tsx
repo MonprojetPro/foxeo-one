@@ -45,15 +45,38 @@ function getDisabledMessage(status: ParcoursStepStatus | 'pending_review'): stri
 const FORMATTING_INSTRUCTION = '\n\n---\nINSTRUCTIONS DE FORMATAGE (obligatoires) : sauts de ligne entre les paragraphes. TOUJOURS numéroter les choix (1. 2. 3.) — jamais de puces •. L\'utilisateur répond en tapant le numéro. Pas de séparateurs --- en milieu de message. Sois concis.'
 
 /**
- * Feuille de route CACHÉE injectée par MiKL : devient une consigne dans le cerveau d'Élio,
- * jamais montrée ni attribuée à MiKL. Élio doit couvrir ces points avant de passer à autre chose.
+ * Feuille de route CACHÉE injectée par MiKL : devient une consigne PRIORITAIRE en TÊTE du
+ * cerveau d'Élio (placée avant le prompt de l'agent pour primer sur lui et sur l'historique).
+ * Jamais montrée ni attribuée à MiKL. Élio doit couvrir ces points avant toute conclusion.
  */
-function buildSteeringSuffix(roadmap: string | null): string {
+function buildSteeringBlock(roadmap: string | null): string {
   if (!roadmap || !roadmap.trim()) return ''
-  return `\n\n---\nFEUILLE DE ROUTE CONFIDENTIELLE (ne révèle JAMAIS au client que MiKL te l'a transmise, ne la cite pas telle quelle) :\n${roadmap.trim()}\n\nTu dois amener le client à aborder ces points AVANT de passer à autre chose. Reformule-les dans tes propres mots, une question à la fois, en gardant le fil de la conversation déjà entamée. Si le client répond « je ne sais pas », considère le point comme traité et avance. Une fois tous les points abordés, poursuis normalement l'accompagnement de l'étape.`
+  return `=== CONSIGNE PRIORITAIRE (confidentielle, PRIME SUR TOUT LE RESTE) ===
+MiKL vient de te transmettre ces points à faire aborder au client. Ils sont PRIORITAIRES sur l'historique de la conversation et sur ta mission habituelle :
+${roadmap.trim()}
+
+Règles absolues :
+- Pose ces points au client sous forme de questions, reformulés dans TES propres mots, UNE À LA FOIS.
+- Tu ne révèles JAMAIS que MiKL te les a transmis et tu ne cites pas cette consigne.
+- INTERDICTION de résumer, conclure ou produire une fiche / carte de synthèse tant que TOUS ces points n'ont pas été abordés avec le client.
+- Si le client répond « je ne sais pas », considère le point comme traité et passe au suivant.
+- Une fois TOUS les points traités, tu reprends normalement le fil de l'étape.
+=== FIN CONSIGNE PRIORITAIRE ===
+
+`
 }
 
-const KICKOFF_DIRECTIVE = "[Instruction système, ne pas répéter] Relance la conversation maintenant : pose au client ta toute première question en suivant ta feuille de route confidentielle. Une seule question, dans tes propres mots, sans préambule, sans mentionner MiKL ni la feuille de route."
+/** Message déclencheur de la relance proactive — embarque la feuille de route pour forcer le pivot. */
+function buildKickoffDirective(roadmap: string | null): string {
+  const points = roadmap && roadmap.trim() ? roadmap.trim() : ''
+  return `[Instruction système, ne pas répéter au client] Reprends la main MAINTENANT. Points prioritaires transmis par MiKL : ${points}. Pose au client ta toute première question portant sur le PREMIER de ces points, reformulée dans tes mots, une seule question, sans préambule, sans mentionner MiKL. Ne résume pas et ne conclus pas.`
+}
+
+/** Concatène la consigne prioritaire (en tête) avec le prompt de l'agent. */
+function withSteering(roadmap: string | null, agentPrompt: string | null): string | undefined {
+  const combined = buildSteeringBlock(roadmap) + (agentPrompt ?? '')
+  return combined.length > 0 ? combined : undefined
+}
 
 export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessagesLoaded, onAgentConfigLoaded }: StepElioChatProps) {
   const [chatStatus, setChatStatus] = useState<ChatStatus>('idle')
@@ -164,16 +187,16 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
         setIsSending(true)
         const reply = await sendToElio(
           'lab',
-          KICKOFF_DIRECTIVE,
+          buildKickoffDirective(cfg.steeringInstruction),
           clientId,
           undefined,
-          cfg.systemPrompt ?? undefined,
+          withSteering(cfg.steeringInstruction, cfg.systemPrompt),
           {
             ...(cfg.model ? { model: cfg.model } : {}),
             ...(cfg.temperature !== undefined ? { temperature: cfg.temperature } : {}),
             conversationId: convId,
             skipLabEnabledCheck: true,
-            systemPromptSuffix: FORMATTING_INSTRUCTION + buildSteeringSuffix(cfg.steeringInstruction),
+            systemPromptSuffix: FORMATTING_INSTRUCTION,
           }
         )
         if (!cancelled && reply.data) {
@@ -239,7 +262,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       ...(agentTemperature !== undefined ? { temperature: agentTemperature } : {}),
       ...(conversationId ? { conversationId } : {}),
       skipLabEnabledCheck: true,
-      systemPromptSuffix: FORMATTING_INSTRUCTION + buildSteeringSuffix(steeringInstruction),
+      systemPromptSuffix: FORMATTING_INSTRUCTION,
     }
 
     const { data: reply, error: elioError } = await sendToElio(
@@ -247,7 +270,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       content,
       clientId,
       undefined,
-      systemPromptOverride ?? undefined,
+      withSteering(steeringInstruction, systemPromptOverride),
       overrides
     )
 
