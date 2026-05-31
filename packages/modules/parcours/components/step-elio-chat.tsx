@@ -185,6 +185,9 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       ) {
         kickoffStartedRef.current = true
         setIsSending(true)
+        // IMPORTANT : pas de conversationId ici → la relance NE rejoue PAS l'historique terminé
+        // (sinon Élio est tiré vers la conclusion déjà produite). Elle génère une question
+        // fraîche, focalisée sur la feuille de route. Les tours suivants, eux, ont l'historique.
         const reply = await sendToElio(
           'lab',
           buildKickoffDirective(cfg.steeringInstruction),
@@ -194,7 +197,6 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
           {
             ...(cfg.model ? { model: cfg.model } : {}),
             ...(cfg.temperature !== undefined ? { temperature: cfg.temperature } : {}),
-            conversationId: convId,
             skipLabEnabledCheck: true,
             systemPromptSuffix: FORMATTING_INSTRUCTION,
           }
