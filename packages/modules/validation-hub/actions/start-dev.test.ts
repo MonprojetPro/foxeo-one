@@ -73,8 +73,17 @@ function buildSupabaseMock({
           })),
         }
       }
+      if (table === 'documents') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) }
+      }
       return {}
     }),
+    storage: {
+      from: vi.fn(() => ({
+        upload: vi.fn().mockResolvedValue({ data: { path: 'p' }, error: null }),
+        remove: vi.fn().mockResolvedValue({ error: null }),
+      })),
+    },
   }
 }
 

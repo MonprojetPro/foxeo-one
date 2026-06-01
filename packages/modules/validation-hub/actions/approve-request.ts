@@ -6,6 +6,7 @@ import type { ActionResponse } from '@monprojetpro/types'
 import { toCamelCase } from '@monprojetpro/utils'
 import { z } from 'zod'
 import type { ValidationRequest } from '../types/validation.types'
+import { archiveValidatedBriefAsDocument } from '../utils/archive-validated-brief'
 
 const approveRequestSchema = z.object({
   requestId: z.string().uuid('requestId doit être un UUID valide'),
@@ -53,6 +54,9 @@ export async function approveRequest(
       console.error('[VALIDATION-HUB:APPROVE] Error:', error)
       return errorResponse('Erreur lors de la validation', 'DB_ERROR', error)
     }
+
+    // Archive le brief validé dans le module Documents (best-effort, ne bloque jamais la validation)
+    await archiveValidatedBriefAsDocument(supabase, data)
 
     return successResponse(toCamelCase(data) as ValidationRequest)
   } catch (err) {

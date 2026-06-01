@@ -6,6 +6,7 @@ import type { ActionResponse } from '@monprojetpro/types'
 import { toCamelCase } from '@monprojetpro/utils'
 import { z } from 'zod'
 import type { ValidationRequest } from '../types/validation.types'
+import { archiveValidatedBriefAsDocument } from '../utils/archive-validated-brief'
 
 const startDevSchema = z.object({
   requestId: z.string().uuid('requestId doit être un UUID valide'),
@@ -65,6 +66,9 @@ export async function startDev(
       console.error('[VALIDATION-HUB:START-DEV] Error approving request:', error)
       return errorResponse('Erreur lors de la prise en charge', 'DB_ERROR', error)
     }
+
+    // Archive le brief validé dans le module Documents (best-effort, ne bloque jamais la prise en charge)
+    await archiveValidatedBriefAsDocument(supabase, data)
 
     // Récupère bmad_project_path pour le deeplink Cursor côté Hub
     const { data: clientData } = await supabase
