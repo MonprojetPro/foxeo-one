@@ -140,4 +140,29 @@ describe('GenerateDocumentButton', () => {
     fireEvent.click(screen.getByText("Confirmer l'envoi"))
     await waitFor(() => screen.getByText(/Soumission en cours d'examen/i))
   })
+
+  it('réinitialise l\'état soumis et masque le bandeau quand MiKL refuse (stepStatus → rejected)', async () => {
+    mockGenerateDocument.mockResolvedValue({ data: { document: '## Doc' }, error: null })
+    mockSubmitDocument.mockResolvedValue({ data: { submissionId: 'sub-1' }, error: null })
+
+    // Même QueryClientProvider conservé entre les rerenders pour préserver l'état React local.
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const tree = (props: typeof baseProps) =>
+      createElement(QueryClientProvider, { client: qc }, createElement(GenerateDocumentButton, props))
+
+    const { rerender } = render(tree(baseProps))
+    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByText('Oui, je suis prêt'))
+    await waitFor(() => screen.getByText("Confirmer l'envoi"))
+    fireEvent.click(screen.getByText("Confirmer l'envoi"))
+    await waitFor(() => screen.getByText(/Soumission en cours d'examen/i))
+
+    // MiKL refuse → stepStatus passe à 'rejected' (rafraîchi en temps réel via router.refresh) :
+    // le bandeau doit disparaître et le bouton « Générer » réapparaître, sans rechargement.
+    rerender(tree({ ...baseProps, stepStatus: 'rejected' as const }))
+    await waitFor(() => {
+      expect(screen.queryByText(/Soumission en cours d'examen/i)).toBeNull()
+    })
+    expect(screen.getByRole('button', { name: /Générer mon document/i })).toBeDefined()
+  })
 })

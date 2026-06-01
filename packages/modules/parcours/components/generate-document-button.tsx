@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { generateDocumentFromConversation } from '../actions/generate-and-submit-step'
@@ -46,6 +46,18 @@ export function GenerateDocumentButton({
   const [generatedDocument, setGeneratedDocument] = useState<string>('')
 
   const { hasPending, isLoading: pendingLoading } = useStepSubmissionStatus(stepId)
+
+  // router.refresh() (Realtime) rafraîchit stepStatus (prop SSR) mais PAS l'état React local.
+  // Quand MiKL REFUSE/renvoie l'étape, stepStatus passe à 'rejected' : on sort alors de l'état
+  // optimiste 'submitted' pour que le bandeau « en cours d'examen » disparaisse et que le bouton
+  // « Générer » réapparaisse, sans rechargement.
+  // NB : on ne réinitialise PAS sur 'current' — c'est l'état transitoire juste après une soumission
+  // (avant que le serveur passe à 'pending_review'), où le bandeau optimiste doit rester affiché.
+  useEffect(() => {
+    if (stepStatus === 'rejected' && buttonState === 'submitted') {
+      setButtonState('idle')
+    }
+  }, [stepStatus, buttonState])
 
   // Conditions pour activer le bouton
   // Étapes éligibles pour générer/regénérer : current (1ère soumission) + rejected (correction
