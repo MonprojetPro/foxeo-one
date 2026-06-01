@@ -8,6 +8,15 @@ import { ONE_NAVIGATION_MAP } from './one-navigation-map'
 export const UPSELL_ONE_PLUS_MESSAGE =
   "Cette fonctionnalité fait partie de l'offre Élio One+. Contactez MiKL pour en savoir plus !"
 
+/**
+ * Consigne de formatage UNIVERSELLE d'Élio — appliquée à TOUS les contextes et agents
+ * (chat flottant, agents Lab du catalogue, One, Hub, step chat parcours).
+ * Injectée dans callLLM (send-to-elio.ts), point de passage unique de tous les appels LLM,
+ * pour qu'aucun chemin ne puisse l'oublier.
+ */
+export const ELIO_FORMATTING_INSTRUCTION =
+  '\n\n---\nINSTRUCTIONS DE FORMATAGE (obligatoires) : sauts de ligne entre les paragraphes. TOUJOURS numéroter les choix (1. 2. 3.) — jamais de puces •. L\'utilisateur répond en tapant le numéro. Pas de séparateurs --- en milieu de message. Sois concis.'
+
 interface SystemPromptOptions {
   dashboardType: DashboardType
   communicationProfile?: CommunicationProfileFR66

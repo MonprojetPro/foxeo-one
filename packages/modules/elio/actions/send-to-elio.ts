@@ -2,7 +2,7 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
-import { buildSystemPrompt, UPSELL_ONE_PLUS_MESSAGE } from '../config/system-prompts'
+import { buildSystemPrompt, UPSELL_ONE_PLUS_MESSAGE, ELIO_FORMATTING_INSTRUCTION } from '../config/system-prompts'
 import { getElioConfig } from './get-elio-config'
 import { DEFAULT_ELIO_CONFIG } from '../types/elio-config.types'
 import { searchClientInfo } from './search-client-info'
@@ -125,7 +125,7 @@ export async function sendToElio(
   clientId?: string,
   draftContext?: DraftContext,
   systemPromptOverride?: string,
-  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string; skipLabEnabledCheck?: boolean; systemPromptSuffix?: string },
+  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string; skipLabEnabledCheck?: boolean },
 ): Promise<ActionResponse<ElioMessage>> {
   if (!message.trim()) {
     return errorResponse('Le message ne peut pas être vide', 'VALIDATION_ERROR')
@@ -493,13 +493,10 @@ export async function sendToElio(
 
   // 4. Cas général (Lab, Hub sans intent spécifique) : construire le system prompt et appeler le LLM
   // Un systemPromptOverride peut être fourni pour les chats spécifiques (ex: StepElioChat, Story 14.4)
-  const basePrompt = systemPromptOverride ?? buildSystemPrompt({
+  const systemPrompt = systemPromptOverride ?? buildSystemPrompt({
     dashboardType,
     customInstructions: elioConfig?.customInstructions,
   })
-  const systemPrompt = agentOverrides?.systemPromptSuffix
-    ? basePrompt + agentOverrides.systemPromptSuffix
-    : basePrompt
 
   return callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
 }
@@ -535,13 +532,17 @@ async function callLLM(
   const rawTemp = agentOverrides?.temperature ?? elioConfig?.temperature ?? 1.0
   const temperature = Math.min(1.0, Math.max(0, rawTemp))
 
+  // Consigne de formatage UNIVERSELLE : appliquée ici car callLLM est le point de passage
+  // unique de TOUS les appels LLM (Hub, One, Lab, agents du catalogue, recherche client).
+  const systemPromptWithFormatting = systemPrompt + ELIO_FORMATTING_INSTRUCTION
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
 
   try {
     const { data, error: fnError } = await supabase.functions.invoke('elio-chat', {
       body: {
-        systemPrompt,
+        systemPrompt: systemPromptWithFormatting,
         message,
         history,
         dashboardType,

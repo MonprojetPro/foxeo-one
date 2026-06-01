@@ -42,8 +42,6 @@ function getDisabledMessage(status: ParcoursStepStatus | 'pending_review'): stri
   return null
 }
 
-const FORMATTING_INSTRUCTION = '\n\n---\nINSTRUCTIONS DE FORMATAGE (obligatoires) : sauts de ligne entre les paragraphes. TOUJOURS numéroter les choix (1. 2. 3.) — jamais de puces •. L\'utilisateur répond en tapant le numéro. Pas de séparateurs --- en milieu de message. Sois concis.'
-
 /**
  * Feuille de route CACHÉE injectée par MiKL : devient une consigne PRIORITAIRE en TÊTE du
  * cerveau d'Élio (placée avant le prompt de l'agent pour primer sur lui et sur l'historique).
@@ -201,7 +199,6 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
             ...(cfg.model ? { model: cfg.model } : {}),
             ...(cfg.temperature !== undefined ? { temperature: cfg.temperature } : {}),
             skipLabEnabledCheck: true,
-            systemPromptSuffix: FORMATTING_INSTRUCTION,
           }
         )
         if (!cancelled && reply.data) {
@@ -267,7 +264,6 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
       ...(agentTemperature !== undefined ? { temperature: agentTemperature } : {}),
       ...(conversationId ? { conversationId } : {}),
       skipLabEnabledCheck: true,
-      systemPromptSuffix: FORMATTING_INSTRUCTION,
     }
 
     const { data: reply, error: elioError } = await sendToElio(
