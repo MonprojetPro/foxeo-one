@@ -73,10 +73,19 @@ function buildKickoffDirective(roadmap: string | null): string {
   return `[Instruction système, ne pas répéter au client] Reprends la main MAINTENANT. Points prioritaires transmis par MiKL : ${points}. Pose au client ta toute première question portant sur le PREMIER de ces points, reformulée dans tes mots, une seule question, sans préambule, sans mentionner MiKL. Ne résume pas et ne conclus pas.`
 }
 
-/** Concatène la consigne prioritaire (en tête) avec le prompt de l'agent. */
+/**
+ * Consigne FIN D'ÉTAPE (propre au chat d'étape Lab) : invite à la soumission.
+ * Élio ne propose de soumettre qu'APRÈS avoir vérifié que le client n'a plus rien à ajouter.
+ */
+const STEP_SUBMISSION_INVITATION = `
+
+---
+FIN D'ÉTAPE (consigne) : Quand tu estimes que l'objectif de l'étape est couvert, demande d'abord au client s'il souhaite ajouter ou préciser quelque chose avant de conclure. S'il confirme qu'il n'a plus rien à ajouter, invite-le explicitement et chaleureusement à générer puis soumettre son document via le bouton « Générer mon document » situé juste sous la conversation. N'invite à soumettre qu'une fois cette confirmation obtenue — jamais tant qu'il reste un point à creuser.`
+
+/** Concatène la consigne prioritaire (en tête) avec le prompt de l'agent + l'invitation de fin d'étape. */
 function withSteering(roadmap: string | null, agentPrompt: string | null): string | undefined {
-  const combined = buildSteeringBlock(roadmap) + (agentPrompt ?? '')
-  return combined.length > 0 ? combined : undefined
+  const base = buildSteeringBlock(roadmap) + (agentPrompt ?? '')
+  return base.length > 0 ? base + STEP_SUBMISSION_INVITATION : undefined
 }
 
 export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessagesLoaded, onAgentConfigLoaded }: StepElioChatProps) {
