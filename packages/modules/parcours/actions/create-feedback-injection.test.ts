@@ -9,6 +9,7 @@ const mockEq = vi.fn()
 const mockFrom = vi.fn()
 const mockRpc = vi.fn()
 const mockGetUser = vi.fn()
+const mockNotificationInsert = vi.fn().mockResolvedValue({ error: null })
 
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
@@ -60,17 +61,26 @@ function buildSupabaseMock({
         }),
       }
     }
-    if (table === 'parcours_steps') {
+    if (table === 'clients') {
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            maybeSingle: vi.fn().mockResolvedValue({ data: { step_number: stepNumber }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { auth_user_id: USER_ID }, error: null }),
+          }),
+        }),
+      }
+    }
+    if (table === 'client_parcours_agents') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: { step_order: stepNumber }, error: null }),
           }),
         }),
       }
     }
     if (table === 'notifications') {
-      return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) }
+      return { insert: mockNotificationInsert }
     }
     return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) }
   })
@@ -131,6 +141,16 @@ describe('createFeedbackInjection', () => {
 
     expect(result.error).toBeNull()
     expect(result.data?.injectionId).toBe(INJECTION_ID)
+    // La notification client doit cibler l'auth_user_id (pas clients.id) avec un type valide.
+    expect(mockNotificationInsert).toHaveBeenCalledTimes(1)
+    const notifArg = mockNotificationInsert.mock.calls[0][0]
+    expect(notifArg).toMatchObject({
+      recipient_type: 'client',
+      recipient_id: USER_ID,
+      type: 'message',
+    })
+    expect(notifArg.title).toBeTruthy()
+    expect('read' in notifArg).toBe(false)
   })
 
   it('elio_questions : appelle la RPC inject_elio_roadmap et renvoie le contextId', async () => {

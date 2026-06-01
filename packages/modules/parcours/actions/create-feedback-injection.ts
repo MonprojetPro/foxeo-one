@@ -91,22 +91,39 @@ export async function createFeedbackInjection(
     )
   }
 
-  // Notification client
-  const { data: step } = await supabase
-    .from('parcours_steps')
-    .select('step_number')
+  // Notification client (best-effort) — la soumission du feedback est déjà persistée.
+  // IMPORTANT : recipient_id = auth_user_id du client (cf. RLS notifications : recipient_id = auth.uid()),
+  // type dans la liste autorisée ('message'), title NOT NULL requis, et PAS de colonne `read`
+  // (remplacée par read_at). L'ancienne version utilisait clients.id + type 'step_feedback' + read,
+  // ce qui faisait silencieusement échouer l'INSERT → aucune notification côté client.
+  const { data: clientRow } = await supabase
+    .from('clients')
+    .select('auth_user_id')
+    .eq('id', clientId)
+    .maybeSingle() as { data: { auth_user_id: string | null } | null }
+
+  const { data: stepRow } = await supabase
+    .from('client_parcours_agents')
+    .select('step_order')
     .eq('id', stepId)
-    .maybeSingle()
+    .maybeSingle() as { data: { step_order: number | null } | null }
 
-  const stepLabel = step ? `l'étape ${step.step_number}` : 'votre étape'
+  const stepOrder = stepRow?.step_order ?? null
+  const stepLabel = stepOrder ? `l'étape ${stepOrder}` : 'votre étape'
 
-  await supabase.from('notifications').insert({
-    recipient_type: 'client',
-    recipient_id: clientId,
-    type: 'step_feedback',
-    body: `MiKL vous a envoyé un message sur ${stepLabel}`,
-    read: false,
-  })
+  if (clientRow?.auth_user_id) {
+    const { error: notifError } = await supabase.from('notifications').insert({
+      recipient_type: 'client',
+      recipient_id: clientRow.auth_user_id,
+      type: 'message',
+      title: 'MiKL t\'a envoyé un message',
+      body: `MiKL t'a laissé un retour sur ${stepLabel}.`,
+      link: stepOrder ? `/modules/parcours/steps/${stepOrder}` : '/modules/parcours',
+    })
+    if (notifError) {
+      console.error('[PARCOURS:FEEDBACK-NOTIF] Notification insert error:', notifError)
+    }
+  }
 
   return successResponse({ injectionId: injection.id })
 }
