@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import type { DocumentSummary } from '../types/validation.types'
 
 // Mock react-markdown to avoid needing the actual package
@@ -70,5 +70,28 @@ describe('RequestContent', () => {
     render(<RequestContent content="Contenu" documents={mockDocuments} />)
     const link = screen.getByRole('link', { name: /brief\.pdf/i })
     expect(link.getAttribute('href')).toContain('documents')
+  })
+
+  it('should render a copy button', async () => {
+    const RequestContent = await importComponent()
+    render(<RequestContent content="Contenu à copier" documents={[]} />)
+    expect(screen.getByRole('button', { name: /copier le contenu/i })).toBeDefined()
+  })
+
+  it('should copy raw content to clipboard and show feedback on click', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    })
+
+    const rawContent = 'Le contenu brut a copier dans Cursor'
+    const RequestContent = await importComponent()
+    render(<RequestContent content={rawContent} documents={[]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /copier le contenu/i }))
+
+    expect(writeText).toHaveBeenCalledWith(rawContent)
+    await waitFor(() => expect(screen.getByText('Copié')).toBeDefined())
   })
 })

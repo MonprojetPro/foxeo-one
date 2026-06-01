@@ -1,10 +1,12 @@
 'use client'
 
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { FileText, Download } from 'lucide-react'
+import { FileText, Download, Copy, Check } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
+  Button,
   Card,
   CardContent,
   CardHeader,
@@ -22,9 +24,12 @@ export function RequestContent({ content, documents }: RequestContentProps) {
   return (
     <Card className="bg-card/50 border-border/50">
       <CardHeader className="pb-3">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          Besoin exprimé
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            Besoin exprimé
+          </h2>
+          <CopyContentButton content={content} />
+        </div>
       </CardHeader>
       <CardContent className="pt-0 space-y-4">
         {/* Contenu markdown */}
@@ -105,6 +110,43 @@ export function RequestContent({ content, documents }: RequestContentProps) {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+/**
+ * Bouton « Copier » le contenu brut (markdown) du besoin exprimé dans le presse-papier.
+ * Permet à MiKL de coller directement le document dans son Cursor / Claude Code.
+ */
+function CopyContentButton({ content }: { content: string }) {
+  const [copied, setCopied] = useState(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+  }, [])
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(content)
+      setCopied(true)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      timeoutRef.current = setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Presse-papier indisponible (contexte non sécurisé / permission refusée) — échec silencieux
+    }
+  }, [content])
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleCopy}
+      className="h-7 shrink-0 gap-1.5 text-xs"
+      aria-label="Copier le contenu du document"
+    >
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? 'Copié' : 'Copier'}
+    </Button>
   )
 }
 
