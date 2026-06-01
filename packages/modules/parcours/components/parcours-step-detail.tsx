@@ -154,6 +154,9 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
                   <h1 className="text-2xl font-bold leading-snug text-white">{step.title}</h1>
                   <ParcoursStepStatusBadge status={step.status} />
                 </div>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a78bfa]/60 mb-1">
+                  Pourquoi cette étape ?
+                </p>
                 <p className="text-sm text-[#a78bfa]/80 leading-relaxed">{step.description}</p>
               </div>
             </div>
