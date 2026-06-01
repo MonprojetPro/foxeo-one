@@ -131,7 +131,7 @@ export function StepHistoryPanel({ stepId, stepNumber, className = 'hidden lg:fl
       {/* Statut de la dernière soumission — toujours visible en haut du panel */}
       <div className="px-4 py-3 border-b border-[#2d2d2d] bg-[#0f0f0f]">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6b7280] mb-1.5">
-          Statut de votre soumission
+          Statut de l&apos;étape
         </p>
         <div className="flex items-start gap-2">
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${submissionBadge.className}`}>

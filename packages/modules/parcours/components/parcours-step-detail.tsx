@@ -13,6 +13,7 @@ import { StepElioChat } from './step-elio-chat'
 import { GenerateDocumentButton } from './generate-document-button'
 import { StepHistoryPanel } from './step-history-panel'
 import { StepMobileTabs, type MobileTab } from './step-mobile-tabs'
+import { useStepRealtimeRefresh } from '../hooks/use-step-realtime-refresh'
 
 interface AdjacentStep {
   stepNumber: number
@@ -65,6 +66,9 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
 export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false, agentImagePath = null }: ParcoursStepDetailProps) {
   const [messageCount, setMessageCount] = useState(0)
   const [mobileTab, setMobileTab] = useState<MobileTab>('step')
+
+  // Statut de l'étape (SSR) rafraîchi en direct quand le Hub valide / refuse / renvoie l'étape.
+  useStepRealtimeRefresh(step.id)
 
   const config = stepStatusConfig[step.status] ?? stepStatusConfig.locked
 

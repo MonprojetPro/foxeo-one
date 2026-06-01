@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, MessageSquare } from 'lucide-react'
 import { Skeleton } from '@monprojetpro/ui'
 import { useValidationRequest } from '../hooks/use-validation-request'
@@ -24,6 +25,7 @@ type RequestDetailProps = {
 
 export function RequestDetail({ requestId }: RequestDetailProps) {
   const { request, isLoading, error } = useValidationRequest(requestId)
+  const queryClient = useQueryClient()
   const [isApproveOpen, setIsApproveOpen] = useState(false)
   const [isRejectOpen, setIsRejectOpen] = useState(false)
   const [isClarificationOpen, setIsClarificationOpen] = useState(false)
@@ -137,6 +139,13 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
                 <FeedbackInjectionForm
                   stepId={request.stepId}
                   clientId={request.clientId}
+                  onSuccess={() => {
+                    // L'injection d'une feuille de route passe la demande à 'rejected' côté base
+                    // (étape renvoyée au client). On réinvalide pour que la barre d'actions reflète
+                    // le nouveau statut (Valider grisé) au lieu de rester sur 'pending'.
+                    queryClient.invalidateQueries({ queryKey: ['validation-request', requestId] })
+                    queryClient.invalidateQueries({ queryKey: ['validation-requests'] })
+                  }}
                 />
               </div>
             )}

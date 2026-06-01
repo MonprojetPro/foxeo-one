@@ -12,6 +12,11 @@ vi.mock('./generate-document-button', () => ({
 vi.mock('./step-history-panel', () => ({
   StepHistoryPanel: () => <div data-testid="step-history-panel">StepHistoryPanel</div>,
 }))
+// Hook Realtime testé isolément (use-step-realtime-refresh.test.ts) — no-op ici pour éviter
+// d'avoir à monter un app-router + QueryClientProvider dans ce test de composant.
+vi.mock('../hooks/use-step-realtime-refresh', () => ({
+  useStepRealtimeRefresh: () => {},
+}))
 vi.mock('./step-mobile-tabs', () => ({
   StepMobileTabs: ({ activeTab, onTabChange }: { activeTab: string; onTabChange: (t: string) => void }) => (
     <div data-testid="step-mobile-tabs" data-active-tab={activeTab}>

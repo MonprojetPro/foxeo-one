@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createElement } from 'react'
 import type { ValidationRequestDetail } from '../types/validation.types'
+
+// RequestDetail utilise useQueryClient → fournir un QueryClientProvider au rendu de test.
+function renderWithClient(ui: React.ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(createElement(QueryClientProvider, { client: queryClient }, ui))
+}
 
 const mockUseValidationRequest = vi.fn()
 
@@ -101,7 +109,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    const { container } = render(<RequestDetail requestId="req-1" />)
+    const { container } = renderWithClient(<RequestDetail requestId="req-1" />)
     // Skeletons are rendered when loading
     expect(container.querySelector('[class*="skeleton"], [class*="Skeleton"]')).toBeDefined()
   })
@@ -114,7 +122,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    render(<RequestDetail requestId="req-1" />)
+    renderWithClient(<RequestDetail requestId="req-1" />)
     expect(screen.getByText(/Impossible de charger/)).toBeDefined()
     expect(screen.getByText('Demande introuvable')).toBeDefined()
   })
@@ -127,7 +135,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    render(<RequestDetail requestId="req-1" />)
+    renderWithClient(<RequestDetail requestId="req-1" />)
     expect(screen.getByText('Demande introuvable')).toBeDefined()
   })
 
@@ -139,7 +147,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    render(<RequestDetail requestId="req-1" />)
+    renderWithClient(<RequestDetail requestId="req-1" />)
 
     expect(screen.getByTestId('request-header')).toBeDefined()
     expect(screen.getByTestId('client-info-card')).toBeDefined()
@@ -156,7 +164,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    render(<RequestDetail requestId="req-1" />)
+    renderWithClient(<RequestDetail requestId="req-1" />)
     expect(screen.getByTestId('request-header').textContent).toBe('Mon brief')
   })
 
@@ -168,7 +176,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    render(<RequestDetail requestId="req-1" />)
+    renderWithClient(<RequestDetail requestId="req-1" />)
     expect(screen.getByTestId('client-info-card').textContent).toBe('Jean Dupont')
   })
 
@@ -186,7 +194,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    render(<RequestDetail requestId="req-1" />)
+    renderWithClient(<RequestDetail requestId="req-1" />)
     expect(screen.getByTestId('request-exchanges')).toBeDefined()
     // 1 exchange created
     expect(screen.getByTestId('request-exchanges').textContent).toBe('1')
@@ -200,7 +208,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    render(<RequestDetail requestId="req-1" />)
+    renderWithClient(<RequestDetail requestId="req-1" />)
     expect(screen.queryByTestId('request-exchanges')).toBeNull()
   })
 
@@ -220,7 +228,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    render(<RequestDetail requestId="req-1" />)
+    renderWithClient(<RequestDetail requestId="req-1" />)
     expect(screen.getByTestId('request-exchanges')).toBeDefined()
     // 2 exchanges: MiKL asked + Client resubmitted
     expect(screen.getByTestId('request-exchanges').textContent).toBe('2')
@@ -234,7 +242,7 @@ describe('RequestDetail', () => {
     })
 
     const RequestDetail = await importComponent()
-    render(<RequestDetail requestId="req-1" />)
+    renderWithClient(<RequestDetail requestId="req-1" />)
     // Clarification dialog is closed by default
     expect(screen.queryByTestId('clarification-dialog')).toBeNull()
   })
