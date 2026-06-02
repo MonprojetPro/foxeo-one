@@ -46,6 +46,10 @@ export function markdownToHtml(markdown: string): string {
     return `<a href="${sanitizedUrl}" style="color:#1d4ed8;text-decoration:underline">${text}</a>`
   })
 
+  // Tables GFM — converties AVANT les listes/paragraphes (sinon les lignes « | a | b | »
+  // seraient happées par le wrapping en <p> et cassées).
+  html = convertTables(html)
+
   // Horizontal rule
   html = html.replace(/^---+$/gm, '<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">')
 
@@ -75,6 +79,72 @@ export function markdownToHtml(markdown: string): string {
   html = html.replace(/\n{3,}/g, '\n\n')
 
   return html.trim()
+}
+
+// ── Tables GFM ────────────────────────────────────────────────────────────────
+
+/**
+ * Ligne de séparation d'un tableau GFM : `|---|`, `|---|---|`, `| :-- | --: |`, etc.
+ * Doit contenir au moins un pipe et un tiret, et uniquement des `| - : espaces` (sinon c'est
+ * une donnée). Un `---` sans pipe reste un trait horizontal, pas une séparation de tableau.
+ */
+function isSeparatorRow(line: string): boolean {
+  const t = line.trim()
+  return t.includes('|') && t.includes('-') && /^[\s|:-]+$/.test(t)
+}
+
+function isTableRow(line: string): boolean {
+  return line.includes('|') && line.trim().length > 0
+}
+
+/** Découpe une ligne « | a | b | » en cellules nettoyées (pipes de bord retirés). */
+function splitCells(line: string): string[] {
+  let s = line.trim()
+  if (s.startsWith('|')) s = s.slice(1)
+  if (s.endsWith('|')) s = s.slice(0, -1)
+  return s.split('|').map((c) => c.trim())
+}
+
+/** Construit le <table> HTML (styles inline pour un rendu identique aperçu / Word / PDF). */
+function buildTable(header: string[], rows: string[][]): string {
+  const th = header
+    .map((c) => `<th style="border:1px solid #d1d5db;padding:6px 10px;text-align:left;background:#f3f4f6">${c}</th>`)
+    .join('')
+  const body = rows
+    .map((r) => `<tr>${r.map((c) => `<td style="border:1px solid #d1d5db;padding:6px 10px">${c}</td>`).join('')}</tr>`)
+    .join('')
+  return `<table style="border-collapse:collapse;width:100%;margin:12px 0"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table>`
+}
+
+/**
+ * Convertit les tableaux GFM en <table>. Un tableau = une ligne d'en-tête « | … | » suivie
+ * d'une ligne de séparation « |---|---| », puis des lignes de données. Le contenu des cellules
+ * a déjà reçu le formatage inline (gras, liens…) à ce stade du pipeline.
+ */
+function convertTables(input: string): string {
+  const lines = input.split('\n')
+  const out: string[] = []
+  let i = 0
+  while (i < lines.length) {
+    const header = lines[i] ?? ''
+    const sep = lines[i + 1]
+    if (isTableRow(header) && sep !== undefined && isSeparatorRow(sep)) {
+      const headerCells = splitCells(header)
+      i += 2
+      const bodyRows: string[][] = []
+      while (i < lines.length) {
+        const row = lines[i] ?? ''
+        if (!isTableRow(row) || isSeparatorRow(row)) break
+        bodyRows.push(splitCells(row))
+        i++
+      }
+      out.push(buildTable(headerCells, bodyRows))
+      continue
+    }
+    out.push(header)
+    i++
+  }
+  return out.join('\n')
 }
 
 function escapeHtml(text: string): string {

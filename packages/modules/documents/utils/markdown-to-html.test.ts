@@ -69,6 +69,28 @@ describe('markdownToHtml', () => {
     expect(result).toContain('<hr')
   })
 
+  it('converts GFM tables to <table> with header and body cells', () => {
+    const md = '| Élément | Valeur |\n|---------|--------|\n| Coût | 8 € |\n| Seuil | 2500 € |'
+    const result = markdownToHtml(md)
+    expect(result).toContain('<table')
+    expect(result).toContain('<th')
+    expect(result).toContain('Élément')
+    expect(result).toContain('<td')
+    expect(result).toContain('8 €')
+    expect(result).toContain('Seuil')
+    // La ligne de séparation ne doit pas apparaître en texte
+    expect(result).not.toContain('|---------|')
+    // Les lignes du tableau ne doivent pas être enveloppées dans un <p>
+    expect(result).not.toMatch(/<p[^>]*>\s*\|/)
+  })
+
+  it('keeps bold formatting inside table cells', () => {
+    const md = '| Col |\n|-----|\n| **gras** |'
+    const result = markdownToHtml(md)
+    expect(result).toContain('<td')
+    expect(result).toContain('<strong>gras</strong>')
+  })
+
   // XSS / Security tests
   it('escapes raw HTML script tags outside code blocks', () => {
     const result = markdownToHtml('<script>alert("xss")</script>')
