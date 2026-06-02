@@ -116,8 +116,8 @@ export async function createFeedbackInjection(
       recipient_type: 'client',
       recipient_id: clientRow.auth_user_id,
       type: 'message',
-      title: 'MiKL t\'a envoyé un message',
-      body: `MiKL t'a laissé un retour sur ${stepLabel}.`,
+      title: 'MiKL t\'a envoyé un feedback',
+      body: `MiKL t'a laissé un feedback sur ${stepLabel}.`,
       link: stepOrder ? `/modules/parcours/steps/${stepOrder}` : '/modules/parcours',
     })
     if (notifError) {

@@ -95,5 +95,5 @@ export const DEFAULT_VALIDATION_QUEUE_FILTERS: ValidationQueueFilters = {
   status: 'all',
   type: 'all',
   sortBy: 'submitted_at',
-  sortOrder: 'asc',
+  sortOrder: 'desc',
 }

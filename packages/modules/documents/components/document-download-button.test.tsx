@@ -1,21 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { DocumentDownloadButton } from './document-download-button'
 import type { Document } from '../types/document.types'
 
-const { mockToast, mockGeneratePdf } = vi.hoisted(() => ({
+const { mockToast } = vi.hoisted(() => ({
   mockToast: { success: vi.fn(), error: vi.fn() },
-  mockGeneratePdf: vi.fn(),
 }))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
   return { ...actual, toast: mockToast }
 })
-
-vi.mock('../actions/generate-pdf', () => ({
-  generatePdf: (...args: unknown[]) => mockGeneratePdf(...args),
-}))
 
 const baseDoc: Document = {
   id: 'doc-1',
@@ -38,51 +33,38 @@ describe('DocumentDownloadButton', () => {
     vi.clearAllMocks()
   })
 
-  it('shows "Telecharger" for PDF files', () => {
+  it('affiche "Télécharger" pour un PDF', () => {
     render(<DocumentDownloadButton document={baseDoc} contentUrl="https://example.com/file.pdf" />)
     expect(screen.getByTestId('download-button')).toHaveTextContent('Télécharger')
   })
 
-  it('shows "Telecharger en HTML" for Markdown files', () => {
+  it('affiche "Télécharger" (pas "HTML") pour un Markdown', () => {
     const mdDoc = { ...baseDoc, fileType: 'md', name: 'guide.md' }
     render(<DocumentDownloadButton document={mdDoc} contentUrl={null} />)
-    expect(screen.getByTestId('download-button')).toHaveTextContent('Télécharger en HTML')
+    const btn = screen.getByTestId('download-button')
+    expect(btn).toHaveTextContent('Télécharger')
+    expect(btn).not.toHaveTextContent('HTML')
   })
 
-  it('calls generatePdf for Markdown', async () => {
+  it('déclenche le téléchargement du fichier réel via le proxy API', () => {
     const mdDoc = { ...baseDoc, fileType: 'md', name: 'guide.md' }
-    mockGeneratePdf.mockResolvedValue({
-      data: { htmlContent: '<html>content</html>', fileName: 'guide.pdf' },
-      error: null,
-    })
-
-    globalThis.URL.createObjectURL = vi.fn(() => 'blob:test')
-    globalThis.URL.revokeObjectURL = vi.fn()
-
     render(<DocumentDownloadButton document={mdDoc} contentUrl={null} />)
+
+    // Mock createElement APRÈS le render (sinon React casse au rendu des éléments hôtes).
+    const anchor = window.document.createElement('a')
+    const clickSpy = vi.spyOn(anchor, 'click').mockImplementation(() => {})
+    const createSpy = vi.spyOn(window.document, 'createElement').mockReturnValue(anchor)
+
     fireEvent.click(screen.getByTestId('download-button'))
 
-    await waitFor(() => {
-      expect(mockGeneratePdf).toHaveBeenCalledWith({ documentId: 'doc-1' })
-    })
+    expect(anchor.href).toContain('/api/documents/download/doc-1')
+    expect(clickSpy).toHaveBeenCalled()
+    expect(mockToast.success).toHaveBeenCalledWith('Téléchargement lancé')
+
+    createSpy.mockRestore()
   })
 
-  it('shows error toast when generatePdf fails', async () => {
-    const mdDoc = { ...baseDoc, fileType: 'md', name: 'guide.md' }
-    mockGeneratePdf.mockResolvedValue({
-      data: null,
-      error: { message: 'Erreur generation', code: 'INTERNAL_ERROR' },
-    })
-
-    render(<DocumentDownloadButton document={mdDoc} contentUrl={null} />)
-    fireEvent.click(screen.getByTestId('download-button'))
-
-    await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith('Erreur generation')
-    })
-  })
-
-  it('renders icon variant', () => {
+  it('rend la variante icône', () => {
     render(
       <DocumentDownloadButton document={baseDoc} contentUrl="https://example.com/file.pdf" variant="icon" />
     )

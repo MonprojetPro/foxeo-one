@@ -106,7 +106,7 @@ export async function getValidationRequests(
 
     // Apply sort
     const sortBy = filters?.sortBy ?? 'submitted_at'
-    const ascending = (filters?.sortOrder ?? 'asc') === 'asc'
+    const ascending = (filters?.sortOrder ?? 'desc') === 'asc'
 
     if (sortBy === 'submitted_at') {
       query = query.order('submitted_at', { ascending })

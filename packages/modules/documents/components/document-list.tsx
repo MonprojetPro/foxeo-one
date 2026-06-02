@@ -36,6 +36,9 @@ interface DocumentMoveDropdownProps {
 
 function DocumentMoveDropdown({ doc, folders, onMove, isPending }: DocumentMoveDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
+  // Ouvre le menu vers le HAUT quand il manque de place sous le bouton (sinon il sort de
+  // l'écran et il faut scroller pour le voir — cf. retour MiKL).
+  const [dropUp, setDropUp] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -49,13 +52,23 @@ function DocumentMoveDropdown({ doc, folders, onMove, isPending }: DocumentMoveD
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen])
 
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isOpen && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      // ~280px = hauteur max du menu : si l'espace sous le bouton est insuffisant, on ouvre vers le haut.
+      setDropUp(window.innerHeight - rect.bottom < 280)
+    }
+    setIsOpen((v) => !v)
+  }
+
   return (
     <div className="relative" ref={ref}>
       <Button
         variant="ghost"
         size="icon"
         className="h-8 w-8 text-muted-foreground"
-        onClick={(e) => { e.stopPropagation(); setIsOpen((v) => !v) }}
+        onClick={handleToggle}
         disabled={isPending}
         aria-label={`Déplacer ${doc.name}`}
         data-testid={`move-doc-${doc.id}`}
@@ -63,7 +76,12 @@ function DocumentMoveDropdown({ doc, folders, onMove, isPending }: DocumentMoveD
         <FolderInput className="h-4 w-4" />
       </Button>
       {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-md border bg-popover p-1 shadow-md">
+        <div
+          className={[
+            'absolute right-0 z-50 min-w-[180px] max-h-[260px] overflow-y-auto rounded-md border bg-popover p-1 shadow-md',
+            dropUp ? 'bottom-full mb-1' : 'top-full mt-1',
+          ].join(' ')}
+        >
           <p className="px-3 py-1 text-xs font-medium text-muted-foreground">Déplacer vers</p>
           <button
             type="button"

@@ -154,19 +154,19 @@ export function StepHistoryPanel({ stepId, stepNumber, className = 'hidden lg:fl
           )}
         </CollapsibleSection>
 
+        <CollapsibleSection title="Feedback MiKL" count={totalFeedback} defaultOpen>
+          {isLoadingFeedback ? (
+            <div className="h-14 rounded-xl bg-[#2d2d2d] animate-pulse" />
+          ) : (
+            <StepFeedbackList feedbackInjections={feedbackInjections} />
+          )}
+        </CollapsibleSection>
+
         <CollapsibleSection title="Documents générés" count={0} defaultOpen={false}>
           {isLoadingSubmissions ? (
             <div className="h-14 rounded-xl bg-[#2d2d2d] animate-pulse" />
           ) : (
             <StepDocumentsList submissions={submissions} />
-          )}
-        </CollapsibleSection>
-
-        <CollapsibleSection title="Feedback MiKL" count={totalFeedback} defaultOpen={unreadFeedbackCount > 0}>
-          {isLoadingFeedback ? (
-            <div className="h-14 rounded-xl bg-[#2d2d2d] animate-pulse" />
-          ) : (
-            <StepFeedbackList feedbackInjections={feedbackInjections} />
           )}
         </CollapsibleSection>
       </div>
