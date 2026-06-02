@@ -2,7 +2,7 @@
 
 import { useDocumentViewer } from '../hooks/use-document-viewer'
 import { DocumentViewer } from './document-viewer'
-import { DocumentDownloadButton } from './document-download-button'
+import { DocumentExportButton } from './document-export-button'
 import { DocumentVisibilityBadge } from './document-visibility-badge'
 import { DocumentIcon } from './document-icon'
 import { DocumentViewerSkeleton } from './document-viewer-skeleton'
@@ -69,9 +69,9 @@ export function DocumentViewerPageClient({
             <DocumentVisibilityBadge visibility={document.visibility} />
           )}
         </div>
-        <DocumentDownloadButton
+        <DocumentExportButton
           document={document}
-          contentUrl={contentUrl}
+          markdownHtml={markdownHtml}
         />
       </div>
 
