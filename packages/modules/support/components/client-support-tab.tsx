@@ -18,7 +18,7 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string; activeClass: string 
   { value: 'open', label: 'Ouvert', activeClass: 'bg-red-500 text-white hover:bg-red-500/90' },
   { value: 'in_progress', label: 'En cours', activeClass: 'bg-amber-500 text-white hover:bg-amber-500/90' },
   { value: 'resolved', label: 'Résolu', activeClass: 'bg-green-600 text-white hover:bg-green-600/90' },
-  { value: 'closed', label: 'Fermé', activeClass: 'bg-muted-foreground text-background hover:bg-muted-foreground/90' },
+  { value: 'closed', label: 'Fermé', activeClass: 'bg-zinc-600 text-white hover:bg-zinc-600/90' },
 ]
 
 export function ClientSupportTab({ clientId }: { clientId: string }) {
@@ -100,9 +100,16 @@ export function ClientSupportTab({ clientId }: { clientId: string }) {
                       key={opt.value}
                       size="sm"
                       variant={active ? 'default' : 'outline'}
-                      className={cn('h-7 px-2.5 text-xs', active && opt.activeClass)}
-                      disabled={updateStatus.isPending || active}
-                      onClick={() => handleStatusChange(ticket.id, opt.value)}
+                      aria-pressed={active}
+                      className={cn(
+                        'h-7 px-2.5 text-xs',
+                        active && opt.activeClass,
+                        active && 'cursor-default'
+                      )}
+                      disabled={updateStatus.isPending}
+                      onClick={() => {
+                        if (!active) handleStatusChange(ticket.id, opt.value)
+                      }}
                     >
                       {opt.label}
                     </Button>
