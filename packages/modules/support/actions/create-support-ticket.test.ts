@@ -4,6 +4,9 @@ const testClientId = '550e8400-e29b-41d4-a716-446655440001'
 const testOperatorId = '550e8400-e29b-41d4-a716-446655440002'
 const testAuthUserId = '550e8400-e29b-41d4-a716-446655440003'
 const testTicketId = '550e8400-e29b-41d4-a716-446655440004'
+// auth_user_id de l'opérateur — c'est CETTE valeur qui sert de recipient_id de la notif
+// (convention notifications : recipient_id = auth_user_id, jamais l'id métier).
+const testOperatorAuthUserId = '550e8400-e29b-41d4-a716-446655440005'
 
 // Mock Supabase
 const mockInsertSingle = vi.fn()
@@ -15,9 +18,17 @@ const mockClientSingle = vi.fn()
 const mockClientEq = vi.fn(() => ({ single: mockClientSingle }))
 const mockClientSelect = vi.fn(() => ({ eq: mockClientEq }))
 
+// operators : lookup auth_user_id pour notifier MiKL (select → eq → single)
+const mockOpSingle = vi.fn()
+const mockOpEq = vi.fn(() => ({ single: mockOpSingle }))
+const mockOpSelect = vi.fn(() => ({ eq: mockOpEq }))
+
 const mockFrom = vi.fn((table: string) => {
   if (table === 'clients') {
     return { select: mockClientSelect }
+  }
+  if (table === 'operators') {
+    return { select: mockOpSelect }
   }
   if (table === 'notifications') {
     return { insert: mockNotificationInsert }
@@ -61,6 +72,7 @@ describe('createSupportTicket Server Action', () => {
       error: null,
     })
     mockInsertSingle.mockResolvedValue({ data: dbRow, error: null })
+    mockOpSingle.mockResolvedValue({ data: { auth_user_id: testOperatorAuthUserId }, error: null })
   })
 
   it('should return UNAUTHORIZED when user is not authenticated', async () => {
@@ -118,7 +130,7 @@ describe('createSupportTicket Server Action', () => {
     expect(mockNotificationInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         recipient_type: 'operator',
-        recipient_id: testOperatorId,
+        recipient_id: testOperatorAuthUserId,
         type: 'alert',
       })
     )
