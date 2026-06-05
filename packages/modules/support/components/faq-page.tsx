@@ -2,10 +2,29 @@
 
 import { useState, useMemo } from 'react'
 import { Card, Button } from '@monprojetpro/ui'
-import { ChevronDown, MessageCircle, AlertTriangle } from 'lucide-react'
+import {
+  ChevronDown,
+  MessageCircle,
+  AlertTriangle,
+  Rocket,
+  FlaskConical,
+  LayoutDashboard,
+  Shield,
+  HelpCircle,
+  type LucideIcon,
+} from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import { FAQ_CATEGORIES, type FaqCategory, type FaqQuestion } from '../data/faq-content'
 import { FaqSearch } from './faq-search'
+
+// Mappe l'icône déclarée dans faq-content vers le composant lucide correspondant.
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  rocket: Rocket,
+  flask: FlaskConical,
+  'layout-dashboard': LayoutDashboard,
+  shield: Shield,
+  'message-circle': MessageCircle,
+}
 
 function FaqCategorySection({
   category,
@@ -18,29 +37,49 @@ function FaqCategorySection({
 
   if (filteredQuestions.length === 0) return null
 
+  const Icon = CATEGORY_ICONS[category.icon] ?? HelpCircle
+
   return (
-    <div className="space-y-2">
-      <h2 className="text-lg font-semibold">{category.title}</h2>
-      <div className="space-y-1">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-inset ring-primary/20">
+          <Icon className="h-5 w-5" />
+        </span>
+        <h2 className="text-lg font-semibold">{category.title}</h2>
+      </div>
+      <div className="space-y-2">
         {filteredQuestions.map((faq, idx) => {
           const isOpen = openIndex === idx
           return (
-            <div key={idx} className="rounded-lg border border-border">
+            <div
+              key={idx}
+              className={cn(
+                'overflow-hidden rounded-xl border bg-card/40 transition-all',
+                isOpen
+                  ? 'border-primary/40 bg-card shadow-sm ring-1 ring-primary/10'
+                  : 'border-border hover:border-primary/30 hover:bg-card/70'
+              )}
+            >
               <button
                 type="button"
-                className="flex w-full items-center justify-between p-4 text-left text-sm font-medium hover:bg-accent/50"
+                className="flex w-full items-center justify-between gap-3 p-4 text-left text-sm font-medium transition-colors"
                 onClick={() => setOpenIndex(isOpen ? null : idx)}
+                aria-expanded={isOpen}
               >
-                {faq.q}
-                <ChevronDown
+                <span className={cn('transition-colors', isOpen && 'text-primary')}>{faq.q}</span>
+                <span
                   className={cn(
-                    'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
-                    isOpen && 'rotate-180'
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition-all',
+                    isOpen ? 'bg-primary/15 text-primary' : 'text-muted-foreground'
                   )}
-                />
+                >
+                  <ChevronDown
+                    className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')}
+                  />
+                </span>
               </button>
               {isOpen && (
-                <div className="border-t border-border px-4 py-3 text-sm text-muted-foreground">
+                <div className="border-t border-border/60 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
                   {faq.a}
                 </div>
               )}
@@ -77,7 +116,7 @@ export function FaqPage({ onReportIssue, chatHref = '/modules/chat' }: FaqPagePr
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Aide & FAQ</h1>
+        <h1 className="text-2xl font-bold">Aide &amp; FAQ</h1>
         <p className="text-muted-foreground">
           Trouvez rapidement des réponses à vos questions.
         </p>
@@ -88,11 +127,11 @@ export function FaqPage({ onReportIssue, chatHref = '/modules/chat' }: FaqPagePr
       {filteredCategories.length === 0 ? (
         <Card className="p-8 text-center">
           <p className="text-muted-foreground">
-            Aucun résultat pour « {search} ».
+            Aucun résultat pour «&nbsp;{search}&nbsp;».
           </p>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {filteredCategories.map((cat) => (
             <FaqCategorySection
               key={cat.id}
@@ -103,7 +142,7 @@ export function FaqPage({ onReportIssue, chatHref = '/modules/chat' }: FaqPagePr
         </div>
       )}
 
-      <Card className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="flex flex-col gap-3 border-primary/20 bg-primary/5 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="font-medium">Vous ne trouvez pas la réponse ?</h3>
           <p className="text-sm text-muted-foreground">

@@ -3,6 +3,7 @@
 import { Card, Skeleton } from '@monprojetpro/ui'
 import { formatRelativeDate } from '@monprojetpro/utils'
 import { useSupportTickets } from '../hooks/use-support-tickets'
+import { useSupportTicketsRealtime } from '../hooks/use-support-tickets-realtime'
 import { TicketStatusBadge } from './ticket-status-badge'
 import type { TicketType } from '../types/support.types'
 
@@ -13,6 +14,8 @@ const TYPE_LABELS: Record<TicketType, string> = {
 }
 
 export function MyTicketsList() {
+  // Statut mis à jour en temps réel quand MiKL le change depuis le Hub.
+  useSupportTicketsRealtime()
   const { data: tickets, isPending, error } = useSupportTickets()
 
   if (isPending) {

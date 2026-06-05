@@ -11,15 +11,30 @@ const mockUpdateEqOperator = vi.fn(() => ({ select: mockUpdateSelect }))
 const mockUpdateEqId = vi.fn(() => ({ eq: mockUpdateEqOperator }))
 const mockUpdate = vi.fn(() => ({ eq: mockUpdateEqId }))
 
+// support_tickets : pré-lecture du statut existant (select status → eq → eq → single)
+const mockExistingSingle = vi.fn()
+const mockExistingEqOperator = vi.fn(() => ({ single: mockExistingSingle }))
+const mockExistingEqId = vi.fn(() => ({ eq: mockExistingEqOperator }))
+const mockTicketSelect = vi.fn(() => ({ eq: mockExistingEqId }))
+
 const mockOpSingle = vi.fn()
 const mockOpEq = vi.fn(() => ({ single: mockOpSingle }))
 const mockOpSelect = vi.fn(() => ({ eq: mockOpEq }))
 
+// clients : lookup auth_user_id (select → eq → single)
+const mockClientSingle = vi.fn()
+const mockClientEq = vi.fn(() => ({ single: mockClientSingle }))
+const mockClientSelect = vi.fn(() => ({ eq: mockClientEq }))
+
+// notifications : insert (awaité → résout { error })
+const mockNotifInsert = vi.fn(() => Promise.resolve({ error: null }))
+
 const mockFrom = vi.fn((table: string) => {
-  if (table === 'operators') {
-    return { select: mockOpSelect }
-  }
-  return { update: mockUpdate }
+  if (table === 'operators') return { select: mockOpSelect }
+  if (table === 'support_tickets') return { update: mockUpdate, select: mockTicketSelect }
+  if (table === 'clients') return { select: mockClientSelect }
+  if (table === 'notifications') return { insert: mockNotifInsert }
+  return {}
 })
 const mockGetUser = vi.fn()
 
@@ -49,6 +64,9 @@ describe('updateTicketStatus Server Action', () => {
     vi.resetModules()
     mockOpSingle.mockResolvedValue({ data: { id: testOperatorId }, error: null })
     mockUpdateSingle.mockResolvedValue({ data: dbRow, error: null })
+    mockExistingSingle.mockResolvedValue({ data: { status: 'open' }, error: null })
+    mockClientSingle.mockResolvedValue({ data: { auth_user_id: testAuthUserId }, error: null })
+    mockNotifInsert.mockResolvedValue({ error: null })
   })
 
   it('should return UNAUTHORIZED when user is not authenticated', async () => {

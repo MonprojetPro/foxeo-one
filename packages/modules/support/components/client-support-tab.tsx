@@ -1,7 +1,7 @@
 'use client'
 
-import { Card, Skeleton, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@monprojetpro/ui'
-import { formatRelativeDate } from '@monprojetpro/utils'
+import { Card, Skeleton, Button } from '@monprojetpro/ui'
+import { formatRelativeDate, cn } from '@monprojetpro/utils'
 import { useSupportTickets, useUpdateTicketStatus } from '../hooks/use-support-tickets'
 import { TicketStatusBadge } from './ticket-status-badge'
 import { showSuccess, showError } from '@monprojetpro/ui'
@@ -13,11 +13,11 @@ const TYPE_LABELS: Record<TicketType, string> = {
   suggestion: 'Suggestion',
 }
 
-const STATUS_OPTIONS: { value: TicketStatus; label: string }[] = [
-  { value: 'open', label: 'Ouvert' },
-  { value: 'in_progress', label: 'En cours' },
-  { value: 'resolved', label: 'Résolu' },
-  { value: 'closed', label: 'Fermé' },
+const STATUS_OPTIONS: { value: TicketStatus; label: string; activeClass: string }[] = [
+  { value: 'open', label: 'Ouvert', activeClass: 'bg-red-500 text-white hover:bg-red-500/90' },
+  { value: 'in_progress', label: 'En cours', activeClass: 'bg-amber-500 text-white hover:bg-amber-500/90' },
+  { value: 'resolved', label: 'Résolu', activeClass: 'bg-green-600 text-white hover:bg-green-600/90' },
+  { value: 'closed', label: 'Fermé', activeClass: 'bg-muted-foreground text-background hover:bg-muted-foreground/90' },
 ]
 
 export function ClientSupportTab({ clientId }: { clientId: string }) {
@@ -85,27 +85,29 @@ export function ClientSupportTab({ clientId }: { clientId: string }) {
                 </a>
               )}
             </div>
-            <div className="flex shrink-0 flex-col items-end gap-2">
-              <span className="text-xs text-muted-foreground">
-                {formatRelativeDate(ticket.createdAt)}
-              </span>
-              <Select
-                value={ticket.status}
-                onValueChange={(value) => handleStatusChange(ticket.id, value as TicketStatus)}
-                disabled={updateStatus.isPending}
-              >
-                <SelectTrigger className="w-32 h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {formatRelativeDate(ticket.createdAt)}
+            </span>
+          </div>
+
+          {/* Changement de statut par boutons directs (remplace l'ancien menu déroulant) */}
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
+            <span className="mr-1 text-xs text-muted-foreground">Statut :</span>
+            {STATUS_OPTIONS.map((opt) => {
+              const active = ticket.status === opt.value
+              return (
+                <Button
+                  key={opt.value}
+                  size="sm"
+                  variant={active ? 'default' : 'outline'}
+                  className={cn('h-7 px-2.5 text-xs', active && opt.activeClass)}
+                  disabled={updateStatus.isPending || active}
+                  onClick={() => handleStatusChange(ticket.id, opt.value)}
+                >
+                  {opt.label}
+                </Button>
+              )
+            })}
           </div>
         </Card>
       ))}
