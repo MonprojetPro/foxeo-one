@@ -17,10 +17,23 @@
 | DEP | Déploiement | 6 |
 | GIT | Git / Workflow | 1 |
 | SEC | Sécurité / Secrets | 1 |
+| UI | Interface / CSS | 1 |
 
 ---
 
 ## Lecons
+
+### [UI-001] `field-sizing-content` sur un textarea le fait déborder hors de son conteneur
+- **Date** : 2026-06-05
+- **Projet** : MonprojetPro
+- **Phase** : Patch — formulaire de signalement (module support)
+- **Categorie** : Interface / CSS (UI)
+- **Symptome** : En tapant un texte long **sans espaces** (« tttttt… ») dans le `Textarea` du dialogue « Signaler un problème », le champ s'élargissait horizontalement et faisait **déborder toute la modale hors de l'écran** (le `max-width` de la modale n'était pas respecté).
+- **Cause racine** : Le composant `Textarea` de base (`packages/ui/src/textarea.tsx`) porte la classe `field-sizing-content` (auto-dimensionnement au contenu). Combinée au `min-width: auto` par défaut des éléments de grid/flex, la largeur intrinsèque = celle du mot le plus long. Or en CSS **`min-width` prime sur `max-width`** : la modale (grid) était forcée plus large que son `max-w-2xl`.
+- **Solution validee** : Ajouter `min-w-0 max-w-full break-words` au `Textarea` de base (corrige tous les textarea de l'app) + `min-w-0` sur le conteneur (form du dialogue) + `break-words` sur les textes libres affichés (descriptions de tickets).
+- **Regle a suivre** : tout `Textarea` (et tout conteneur de texte libre saisi par l'utilisateur) doit avoir `min-w-0` + un retour à la ligne forcé (`break-words`/`overflow-wrap`). Ne jamais supposer que `max-width` suffit à contenir un élément à `field-sizing-content` dans un grid/flex.
+
+---
 
 ### [DEP-006] Module importé mais non déclaré dans package.json → cache Turbo périmé → déploiement fantôme
 - **Date** : 2026-06-05
