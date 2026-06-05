@@ -4,6 +4,7 @@ import { Card, Skeleton, Button } from '@monprojetpro/ui'
 import { formatRelativeDate, cn } from '@monprojetpro/utils'
 import { useSupportTickets, useUpdateTicketStatus } from '../hooks/use-support-tickets'
 import { TicketStatusBadge } from './ticket-status-badge'
+import { ExpandableText } from './expandable-text'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import type { TicketType, TicketStatus } from '../types/support.types'
 
@@ -65,7 +66,7 @@ export function ClientSupportTab({ clientId }: { clientId: string }) {
       {tickets.map((ticket) => (
         <Card key={ticket.id} className="p-4">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 space-y-1">
+            <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-muted-foreground">
                   {TYPE_LABELS[ticket.type] ?? ticket.type}
@@ -73,41 +74,42 @@ export function ClientSupportTab({ clientId }: { clientId: string }) {
                 <TicketStatusBadge status={ticket.status} />
               </div>
               <h3 className="font-medium">{ticket.subject}</h3>
-              <p className="text-sm text-muted-foreground">{ticket.description}</p>
+              <ExpandableText text={ticket.description} />
               {ticket.screenshotUrl && (
                 <a
                   href={ticket.screenshotUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-primary underline"
+                  className="inline-block text-xs text-primary underline"
                 >
                   Voir la capture
                 </a>
               )}
             </div>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {formatRelativeDate(ticket.createdAt)}
-            </span>
-          </div>
 
-          {/* Changement de statut par boutons directs (remplace l'ancien menu déroulant) */}
-          <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
-            <span className="mr-1 text-xs text-muted-foreground">Statut :</span>
-            {STATUS_OPTIONS.map((opt) => {
-              const active = ticket.status === opt.value
-              return (
-                <Button
-                  key={opt.value}
-                  size="sm"
-                  variant={active ? 'default' : 'outline'}
-                  className={cn('h-7 px-2.5 text-xs', active && opt.activeClass)}
-                  disabled={updateStatus.isPending || active}
-                  onClick={() => handleStatusChange(ticket.id, opt.value)}
-                >
-                  {opt.label}
-                </Button>
-              )
-            })}
+            {/* Colonne droite : date + boutons de statut (alignés avec le reste) */}
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <span className="text-xs text-muted-foreground">
+                {formatRelativeDate(ticket.createdAt)}
+              </span>
+              <div className="flex max-w-[18rem] flex-wrap justify-end gap-1.5">
+                {STATUS_OPTIONS.map((opt) => {
+                  const active = ticket.status === opt.value
+                  return (
+                    <Button
+                      key={opt.value}
+                      size="sm"
+                      variant={active ? 'default' : 'outline'}
+                      className={cn('h-7 px-2.5 text-xs', active && opt.activeClass)}
+                      disabled={updateStatus.isPending || active}
+                      onClick={() => handleStatusChange(ticket.id, opt.value)}
+                    >
+                      {opt.label}
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </Card>
       ))}

@@ -5,6 +5,7 @@ import { formatRelativeDate } from '@monprojetpro/utils'
 import { useSupportTickets } from '../hooks/use-support-tickets'
 import { useSupportTicketsRealtime } from '../hooks/use-support-tickets-realtime'
 import { TicketStatusBadge } from './ticket-status-badge'
+import { ExpandableText } from './expandable-text'
 import type { TicketType } from '../types/support.types'
 
 const TYPE_LABELS: Record<TicketType, string> = {
@@ -49,7 +50,7 @@ export function MyTicketsList() {
       {tickets.map((ticket) => (
         <Card key={ticket.id} className="p-4">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 space-y-1">
+            <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-muted-foreground">
                   {TYPE_LABELS[ticket.type] ?? ticket.type}
@@ -57,9 +58,7 @@ export function MyTicketsList() {
                 <TicketStatusBadge status={ticket.status} />
               </div>
               <h3 className="font-medium">{ticket.subject}</h3>
-              <p className="line-clamp-2 text-sm text-muted-foreground">
-                {ticket.description}
-              </p>
+              <ExpandableText text={ticket.description} />
             </div>
             <span className="shrink-0 text-xs text-muted-foreground">
               {formatRelativeDate(ticket.createdAt)}
