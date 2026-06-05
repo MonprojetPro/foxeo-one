@@ -54,3 +54,17 @@ Thumbs.db
 
 # Windows artifacts
 nul
+
+# Ruflo runtime (MPP v4.0) — ne jamais committer
+.claude-flow/
+data/
+logs/
+sessions/
+_backups/
+
+# claude-flow / ruflo — définitions d'agents & tooling local (pas du code projet)
+.claude/agents/
+.claude/commands/
+.claude/helpers/
+.claude/skills/
+.claude/settings.json
