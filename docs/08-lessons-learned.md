@@ -14,13 +14,30 @@
 | API | Intégration API externe | 5 |
 | RSC | Next.js Server/Client | 6 |
 | DB | Base de données / Schéma | 1 |
-| DEP | Déploiement | 5 |
+| DEP | Déploiement | 6 |
 | GIT | Git / Workflow | 1 |
 | SEC | Sécurité / Secrets | 1 |
 
 ---
 
 ## Lecons
+
+### [DEP-006] Module importé mais non déclaré dans package.json → cache Turbo périmé → déploiement fantôme
+- **Date** : 2026-06-05
+- **Projet** : MonprojetPro
+- **Phase** : Patch — améliorations module support (boutons statut Hub)
+- **Categorie** : Déploiement (DEP)
+- **Symptome** : Des modifs commitées + poussées (boutons de statut + badge coloré dans `ClientSupportTab`) ne s'affichaient JAMAIS sur le Hub déployé, alors que Vercel indiquait « success » pour `monprojetpro-hub`. La FAQ (même package `modules-support`, mais rendue dans l'app **client**) se mettait bien à jour. Hard refresh sans effet.
+- **Cause racine** : `apps/hub/package.json` importait `@monprojetpro/modules-support` (et 6 autres modules) dans son code **sans les déclarer en `dependencies`**. Turborepo construit son graphe de dépendances à partir des `package.json`, pas des imports réels. Le Hub n'étant pas lié au module support, un changement du module **n'invalidait pas le cache de build du Hub** → Vercel restaurait l'ancien artefact depuis le cache Turbo et reportait « success » en servant l'**ancien code**. L'app client, elle, déclarait bien `modules-support` → cache invalidé → FAQ à jour.
+- **Fausses pistes** :
+  1. **FAUSSE PISTE — déploiement pas terminé / onglet périmé** : les statuts Vercel montraient « success » bien avant la capture, et un hard refresh ne changeait rien. Le build « réussissait » mais sur cache.
+  2. **FAUSSE PISTE — REPLICA IDENTITY pour le Realtime** : supposé qu'il fallait `REPLICA IDENTITY FULL` pour le Realtime client. Vérifié : `validation_requests` (qui marche) utilise `default(PK)` comme `support_tickets`. Donc non.
+  3. **FAUSSE PISTE — bug dans le code des boutons** : le code était correct depuis le début et compilait (prouvé : la FAQ du même package s'affichait).
+- **Solution validee** : déclarer TOUS les modules importés dans `apps/hub/package.json` (7 ajoutés : `module-core-dashboard`, `module-documents`, `module-parcours`, `module-visio`, `modules-crm`, `modules-email`, `modules-support`), `npm install` pour resync le lockfile, commit → le Hub a alors fait un vrai rebuild (statut Vercel `pending` → `success`).
+- **Diagnostic reproductible** : comparer `grep -rhoE "@monprojetpro/module[a-z-]+" apps/<app> --include="*.ts*"` (hors `.next`) avec les `dependencies` du `package.json` de l'app. Tout écart = bombe à retardement de cache.
+- **Regle a suivre** : un build Vercel « success » ne prouve PAS que le code récent est servi (cache Turbo). Toute app du monorepo doit déclarer en `dependencies` chaque package `@monprojetpro/*` qu'elle importe. Attention aux noms tronqués (`module-core` ≠ `module-core-dashboard`).
+
+---
 
 ### [CFG-003] vi.mock('fs/promises') ne fonctionne pas — utiliser vi.mock('fs') + méthodes sync
 - **Date** : 2026-04-21
