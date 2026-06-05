@@ -26,7 +26,7 @@ export function ExpandableText({ text }: { text: string }) {
       <p
         ref={ref}
         className={cn(
-          'whitespace-pre-wrap text-sm text-muted-foreground',
+          'whitespace-pre-wrap break-words text-sm text-muted-foreground',
           !expanded && 'line-clamp-2'
         )}
       >

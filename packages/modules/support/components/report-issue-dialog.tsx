@@ -74,7 +74,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="min-w-0 space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Type</label>
             <Select
