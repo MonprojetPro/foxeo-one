@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
-import { checkConsentVersion, checkIaConsentVersion } from './middleware-consent'
+import { checkConsentVersion } from './middleware-consent'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
 
 export const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/maintenance']
@@ -201,12 +201,9 @@ export async function middleware(request: NextRequest) {
       if (consentRedirect) {
         return consentRedirect
       }
-
-      // Check IA policy consent version (re-consent only if a prior IA decision is stale)
-      const iaConsentRedirect = await checkIaConsentVersion(request, client.id)
-      if (iaConsentRedirect) {
-        return iaConsentRedirect
-      }
+      // Note : le re-consentement IA n'est PAS géré ici. Les redirections middleware
+      // échouent en navigation interne (soft-nav RSC) → géré dans le layout (dashboard)
+      // via redirect() côté serveur, robuste en nav interne ET au login.
 
       // Onboarding detection — only for non-onboarding paths
       if (!isOnboardingExcluded(request.nextUrl.pathname)) {

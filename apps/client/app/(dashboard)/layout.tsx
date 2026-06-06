@@ -34,6 +34,7 @@ const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
   supportMani,   // Lab + One → /modules/support
 ]
 import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
+import { CURRENT_IA_POLICY_VERSION } from '@monprojetpro/utils'
 import { NotificationBadge } from '@monprojetpro/modules-notifications'
 import { PresenceProvider } from '@monprojetpro/modules-chat'
 import { LogoutButton } from './logout-button'
@@ -278,6 +279,26 @@ export default async function DashboardLayout({
 
   const clientId = clientRecord?.id ?? ''
   const operatorId = clientRecord?.operator_id ?? ''
+
+  // Re-consentement IA — déclenché UNIQUEMENT si une décision IA antérieure est périmée
+  // (jamais les clients sans consentement, ni ceux à jour). On le fait ici avec redirect()
+  // côté serveur (et non dans le middleware) car les redirections middleware échouent en
+  // navigation interne (soft-nav RSC). /ia-consent-update est hors du groupe (dashboard) :
+  // pas de boucle.
+  if (clientId) {
+    const { data: latestIa } = (await supabase
+      .from('consents')
+      .select('version')
+      .eq('client_id', clientId)
+      .eq('consent_type', 'ia_processing')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()) as { data: { version: string } | null }
+
+    if (latestIa && latestIa.version !== CURRENT_IA_POLICY_VERSION) {
+      redirect('/ia-consent-update')
+    }
+  }
 
   // Calcul des initiales pour l'avatar header
   const firstName = clientRecord?.first_name ?? ''

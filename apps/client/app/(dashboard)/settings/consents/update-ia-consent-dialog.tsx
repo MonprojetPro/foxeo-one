@@ -63,7 +63,7 @@ export function UpdateIaConsentDialog({
       <DialogTrigger asChild>
         <Button variant="outline">Modifier mon consentement IA</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Modifier le consentement IA</DialogTitle>
           <DialogDescription>

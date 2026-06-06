@@ -37,3 +37,6 @@ export function hasIaConsent(): never {
 export function getLatestConsents(): never {
   throw new Error('getLatestConsents cannot be used in client components.')
 }
+export function getConsentHistory(): never {
+  throw new Error('getConsentHistory cannot be used in client components.')
+}
