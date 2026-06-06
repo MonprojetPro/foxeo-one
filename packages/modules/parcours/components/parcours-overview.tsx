@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useParcours } from '../hooks/use-parcours'
 import { useUnreadInjections } from '../hooks/use-unread-injections'
 import { ParcoursProgressBar } from './parcours-progress-bar'
@@ -98,6 +99,24 @@ export function ParcoursOverview({ clientId, clientFirstName }: ParcoursOverview
           </button>
         </div>
       )}
+
+      {/* Mention IA (RGPD) — Élio repose sur une IA dans l'accompagnement du parcours */}
+      <div className="rounded-lg border border-border/60 bg-muted/40 p-4">
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          ℹ️ Tout au long de ce parcours, <strong>Élio</strong> peut vous
+          accompagner. Élio est un assistant basé sur l&apos;intelligence
+          artificielle (Claude, développé par Anthropic — États-Unis). Vous gardez
+          le contrôle : vous pouvez activer ou désactiver ce traitement à tout
+          moment dans{' '}
+          <Link
+            href="/settings/consents"
+            className="text-primary underline hover:text-primary/80"
+          >
+            Paramètres → Consentements
+          </Link>
+          .
+        </p>
+      </div>
 
       {/* Story 9.3 — Dialog abandon */}
       <AbandonParcoursDialog
