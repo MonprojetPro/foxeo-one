@@ -568,3 +568,17 @@
 - **Solution** : Utiliser `createServiceRoleSupabaseClient()` (bypass RLS) pour les lookups cross-user et les inserts de notifications dans les Server Actions. Le `createServerSupabaseClient()` reste pour la vérification d'identité de l'appelant.
 - **Regle a suivre** : Toute opération nécessitant de lire des données d'un autre utilisateur (operator → client, client → operator) doit utiliser le service role. Ne jamais supposer que la session de l'appelant a accès aux tables de l'autre partie.
 - **Agents impliques** : FIX, SPARK, ATLAS
+
+---
+
+### [RSC-007] Redirection dans le middleware → « unexpected response » en navigation interne (soft-nav RSC)
+- **Date** : 2026-06-06
+- **Projet** : MonprojetPro
+- **Categorie** : Next.js Server/Client (RSC)
+- **Symptome** : Un interstitiel forcé (re-consentement IA) redirigé via `NextResponse.redirect()` dans le middleware lançait « An unexpected response was received from the server » lors d'une **navigation interne** (clic dans l'app, déjà connecté). L'utilisateur restait piégé sur une page d'erreur, incapable de se déconnecter (chaque navigation re-déclenchait la redirection cassée).
+- **Cause racine** : Les navigations App Router internes sont des requêtes **RSC**. Une redirection émise par le middleware sur ce type de requête n'est pas correctement suivie par le routeur client → réponse non-RSC interprétée comme « unexpected response ». La même redirection passait au **login** (navigation document classique).
+- **Fausse piste écartée (méthode TILT)** : la page cible (`/ia-consent-update`) et le verrou serveur étaient sains — prouvé en tapant l'URL à la main (la page s'affichait correctement). Seule la **redirection middleware en soft-nav** échouait. On n'a pas corrigé à l'aveugle : une seule sonde (accès direct vs redirection) a isolé la cause certaine.
+- **Solution** : déplacer le déclenchement de l'interstitiel du middleware vers le **layout serveur** (`app/(dashboard)/layout.tsx`) avec `redirect()` de `next/navigation` — fonctionne en navigation interne ET au login. Cible hors du groupe de routes concerné → pas de boucle.
+- **Regle a suivre** : Pour un interstitiel/redirection forcé déclenché par une condition de données (consentement, onboarding, statut), préférer `redirect()` dans un layout/page serveur plutôt qu'une redirection middleware. ⚠️ Le re-consentement **CGU** (`checkConsentVersion`) garde ce même bug latent (jamais déclenché car rarement activé) — à migrer de la même façon avant tout bump de `CURRENT_CGU_VERSION`.
+- **Leçon connexe (KIT COMPLET / RGPD)** : un consentement « tracé en base » n'a aucune valeur tant qu'il n'est pas **branché sur tous ses consumers**. Ici `ia_processing` était enregistré mais aucun gate ne vérifiait `hasIaConsent()` → Élio continuait d'appeler Claude malgré un refus (coquille vide juridique). Recenser les consumers d'une décision avant de la livrer. À noter aussi : la politique affichée annonçait **DeepSeek** alors que le code appelait **Claude/Anthropic** → un texte légal doit refléter le code réel.
+- **Agents impliques** : FIX, SPARK, ATLAS
