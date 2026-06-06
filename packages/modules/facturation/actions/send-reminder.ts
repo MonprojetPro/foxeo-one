@@ -120,7 +120,7 @@ export async function sendReminder(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: process.env.EMAIL_FROM ?? 'MonprojetPro <noreply@monprojet-pro.com>',
+          from: process.env.EMAIL_FROM ?? 'MonprojetPro <contact@monprojet-pro.com>',
           to: client.email,
           subject: `Facture ${reminder.invoice_number} — Rappel`,
           html,

@@ -25,7 +25,7 @@
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` — clé service role (jamais exposée client, utilisée par les webhooks et les Edge Functions)
 - [ ] `NEXT_PUBLIC_CLIENT_URL` — `https://app.monprojet-pro.com` en prod
 - [ ] `RESEND_API_KEY` — utilisée par les Edge Functions email
-- [ ] `EMAIL_FROM` — adresse expéditeur Resend (ex: `MonprojetPro <no-reply@monprojet-pro.com>`)
+- [ ] `EMAIL_FROM` — adresse expéditeur Resend (`MonprojetPro <contact@monprojet-pro.com>` — seule adresse valable du site)
 
 ### Story 11.x — Pennylane facturation
 
@@ -68,7 +68,7 @@ Via `supabase secrets set` ou dashboard Supabase → Settings → Edge Functions
 
 - [ ] `PENNYLANE_API_TOKEN` — token API Pennylane (sandbox puis prod)
 - [ ] `RESEND_API_KEY` — clé API Resend pour l'envoi d'emails
-- [ ] `EMAIL_FROM` — adresse expéditeur Resend (ex: `MonprojetPro <no-reply@monprojet-pro.com>`)
+- [ ] `EMAIL_FROM` — adresse expéditeur Resend (`MonprojetPro <contact@monprojet-pro.com>` — seule adresse valable du site)
 - [ ] `APP_URL` — URL de l'app cliente (ex: `https://app.monprojet-pro.com`)
 
 ### Cron pg_cron à activer après déploiement billing-sync
