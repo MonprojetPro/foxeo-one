@@ -2,7 +2,7 @@
 
 import { useState, useRef, type KeyboardEvent } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Send, Loader2, ExternalLink, Bot, MessageCircle, PenLine, HelpCircle } from 'lucide-react'
+import { Send, Loader2, ExternalLink, Bot, MessageCircle, PenLine, HelpCircle, Lock } from 'lucide-react'
 import { newConversation, sendToElio, saveElioMessage } from '@monprojetpro/module-elio'
 import Link from 'next/link'
 
@@ -50,9 +50,11 @@ const MODE_ACTIVE: Record<OneMode, string> = {
 
 interface OneElioBoxProps {
   userId: string
+  /** Consentement au traitement IA (RGPD). Si false, Élio reste en veille. */
+  iaConsentGranted: boolean
 }
 
-export function OneElioBox({ userId }: OneElioBoxProps) {
+export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
   const queryClient = useQueryClient()
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<OneMode>('question')
@@ -64,6 +66,40 @@ export function OneElioBox({ userId }: OneElioBoxProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const activeMode = MODES.find((m) => m.id === mode)!
+
+  // Guard consentement IA (RGPD) — Élio en veille tant que le client n'a pas consenti.
+  // Les hooks ci-dessus sont déclarés inconditionnellement (règle React) ; ce return
+  // n'intervient qu'après, et iaConsentGranted est une prop SSR stable.
+  if (!iaConsentGranted) {
+    return (
+      <div className="flex flex-col gap-2 px-2 pb-2">
+        <div className="flex items-center gap-1.5 px-1">
+          <Bot className="h-3.5 w-3.5 text-[#6b7280]" />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6b7280]">
+            Élio
+          </span>
+        </div>
+        <div className="flex flex-col gap-1.5 rounded-lg border border-[#2d2d2d] bg-[#111] px-3 py-2.5">
+          <div className="flex items-center gap-1.5">
+            <Lock className="h-3 w-3 shrink-0 text-[#6b7280]" />
+            <span className="text-[11px] font-medium text-[#9ca3af]">
+              Élio est en veille
+            </span>
+          </div>
+          <p className="text-[10px] leading-relaxed text-[#6b7280]">
+            Aucune donnée n&apos;est traitée. Activez le traitement IA pour discuter
+            avec Élio.
+          </p>
+          <Link
+            href="/settings/consents"
+            className="self-start text-[10px] text-[#4ade80] hover:underline"
+          >
+            Activer Élio →
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   const handleSend = async () => {
     const text = input.trim()

@@ -63,10 +63,10 @@ export default function IaProcessingPage() {
           <section className="space-y-3">
             <h2 className="text-2xl font-semibold">3. Où sont stockées vos données ?</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Vos données sont stockées de manière sécurisée sur les serveurs de Supabase, hébergés en Europe (conformité RGPD).
+              Vos données de conversation sont stockées de manière sécurisée sur les serveurs de Supabase, hébergés en Europe (conformité RGPD).
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              Lorsque vous interagissez avec Élio, vos messages sont transmis à notre fournisseur d'intelligence artificielle (DeepSeek) pour génération de réponses. Ces données sont traitées de manière confidentielle et ne sont pas utilisées pour entraîner des modèles publics.
+              Lorsque vous interagissez avec Élio, vos messages sont transmis à notre fournisseur d'intelligence artificielle, <strong>Claude, édité par la société Anthropic (États-Unis)</strong>, afin de générer les réponses. Ce traitement implique un <strong>transfert de vos données en dehors de l'Union européenne</strong>, encadré par les garanties contractuelles prévues par le RGPD. Anthropic s'engage à traiter ces données de manière confidentielle et à ne pas les utiliser pour entraîner ses modèles.
             </p>
             <div className="rounded-md bg-muted p-4 mt-4">
               <p className="text-sm text-muted-foreground">

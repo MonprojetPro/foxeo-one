@@ -3,6 +3,8 @@ import { sendToElio } from './send-to-elio'
 import { DEFAULT_ELIO_CONFIG } from '../types/elio-config.types'
 
 const mockInvoke = vi.fn()
+// vi.hoisted : la variable est utilisée dans la factory vi.mock (hoistée en haut du fichier)
+const mockHasIaConsent = vi.hoisted(() => vi.fn())
 
 // Chaîne eq récursive pour supporter .eq().eq().eq() (validation_requests, etc.)
 function makeEqChain(): {
@@ -21,6 +23,7 @@ function makeEqChain(): {
 }
 
 vi.mock('@monprojetpro/supabase', () => ({
+  hasIaConsent: mockHasIaConsent,
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } }, error: null })),
@@ -107,6 +110,8 @@ vi.mock('./generate-document', () => ({
 describe('sendToElio', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Par défaut : consentement IA accordé (cas nominal)
+    mockHasIaConsent.mockResolvedValue(true)
   })
 
   it('retourne { data, error: null } en cas de succès', async () => {
@@ -128,6 +133,30 @@ describe('sendToElio', () => {
     const result = await sendToElio('lab', '   ', 'client-1')
     expect(result.data).toBeNull()
     expect(result.error?.code).toBe('VALIDATION_ERROR')
+  })
+
+  it('retourne IA_CONSENT_REQUIRED et n\'appelle jamais Claude sans consentement IA', async () => {
+    mockHasIaConsent.mockResolvedValueOnce(false)
+
+    const result = await sendToElio('one', 'Bonjour Élio', 'client-1')
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('IA_CONSENT_REQUIRED')
+    // Verrou RGPD : l'Edge Function (Claude) ne doit JAMAIS être appelée
+    expect(mockInvoke).not.toHaveBeenCalled()
+  })
+
+  it('bloque AUSSI le chat d\'étape parcours sans consentement (skipLabEnabledCheck ne bypasse pas le consentement)', async () => {
+    mockHasIaConsent.mockResolvedValueOnce(false)
+
+    const result = await sendToElio('lab', 'Question parcours', 'client-1', undefined, undefined, {
+      skipLabEnabledCheck: true,
+    })
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('IA_CONSENT_REQUIRED')
+    // Verrou RGPD : Claude n'est jamais appelé, même dans le parcours
+    expect(mockInvoke).not.toHaveBeenCalled()
   })
 
   it('retourne une erreur TIMEOUT si l\'Edge Function signale un timeout', async () => {

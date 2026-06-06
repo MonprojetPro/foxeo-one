@@ -22,4 +22,4 @@ export { RealtimeProvider, useRealtime } from './providers/realtime-provider'
 export { ThemeProvider, useTheme } from './providers/theme-provider'
 
 // Queries
-export { hasIaConsent, getLatestConsents } from './queries/get-consent'
+export { hasIaConsent, getLatestConsents, getConsentHistory } from './queries/get-consent'

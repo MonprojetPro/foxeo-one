@@ -54,6 +54,27 @@ describe('StepElioChat', () => {
     vi.clearAllMocks()
   })
 
+  // ── Guard consentement IA (RGPD) ────────────────────────────────────────────
+
+  it('affiche « Élio en veille » et ne crée pas de conversation sans consentement IA', async () => {
+    const { getOrCreateStepConversation } = await import(
+      '../actions/get-or-create-step-conversation'
+    )
+
+    render(
+      <StepElioChat
+        stepId={STEP_ID}
+        stepStatus="current"
+        stepNumber={3}
+        clientId={CLIENT_ID}
+        iaConsentGranted={false}
+      />
+    )
+
+    expect(screen.getByText('Élio est en veille')).toBeTruthy()
+    expect(getOrCreateStepConversation).not.toHaveBeenCalled()
+  })
+
   // ── Tests existants (Story 14.4) ────────────────────────────────────────────
 
   it('remonte le nom de l\'agent au parent via onAgentConfigLoaded (AC#1)', async () => {

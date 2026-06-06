@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { getParcours } from '@monprojetpro/module-parcours'
 import { ParcoursStepDetail } from '@monprojetpro/module-parcours'
 import { getEffectiveStepConfig } from '@monprojetpro/module-elio'
@@ -43,6 +43,9 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
     clientId: client.id,
   })
 
+  // Guard consentement IA (RGPD) — pilote la mise en veille du chat d'étape Élio.
+  const iaConsentGranted = await hasIaConsent(client.id)
+
   return (
     <ParcoursStepDetail
       step={step}
@@ -52,6 +55,7 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
       clientId={client.id}
       isPaused={isPaused}
       agentImagePath={agentConfig?.agentImagePath ?? null}
+      iaConsentGranted={iaConsentGranted}
     />
   )
 }

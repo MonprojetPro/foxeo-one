@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { Bot } from 'lucide-react'
 import { ChatMarkdownRenderer } from './chat-markdown-renderer'
 import { getOrCreateStepConversation } from '../actions/get-or-create-step-conversation'
@@ -20,6 +21,8 @@ interface StepElioChatProps {
   stepStatus: ParcoursStepStatus | 'pending_review'
   stepNumber: number
   clientId: string
+  /** Consentement au traitement IA (RGPD). Si false, Élio reste en veille dans l'étape. */
+  iaConsentGranted?: boolean
   onMessagesLoaded?: (count: number) => void
   onAgentConfigLoaded?: (config: { imagePath: string | null; name: string }) => void
 }
@@ -88,7 +91,7 @@ function withSteering(roadmap: string | null, agentPrompt: string | null): strin
   return base.length > 0 ? base + STEP_SUBMISSION_INVITATION : undefined
 }
 
-export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessagesLoaded, onAgentConfigLoaded }: StepElioChatProps) {
+export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConsentGranted = true, onMessagesLoaded, onAgentConfigLoaded }: StepElioChatProps) {
   const [chatStatus, setChatStatus] = useState<ChatStatus>('idle')
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ElioMessagePersisted[]>([])
@@ -138,7 +141,8 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
 
   // Init : trouver/créer la conversation + charger l'historique + config agent Élio
   useEffect(() => {
-    if (!stepId || !clientId) return
+    // Pas de consentement IA → on ne crée même pas de conversation (RGPD).
+    if (!stepId || !clientId || !iaConsentGranted) return
 
     let cancelled = false
     setChatStatus('loading')
@@ -233,7 +237,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
 
     init()
     return () => { cancelled = true }
-  }, [stepId, stepNumber, clientId])
+  }, [stepId, stepNumber, clientId, iaConsentGranted])
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || !conversationId || isSending) return
@@ -317,6 +321,33 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, onMessa
   )
 
   const disabledMessage = getDisabledMessage(stepStatus)
+
+  // Guard consentement IA (RGPD) — Élio en veille dans l'étape tant que le client n'a pas
+  // consenti. Le parcours reste accessible ; seul l'accompagnement IA est suspendu.
+  if (!iaConsentGranted) {
+    return (
+      <section
+        className="mt-6 overflow-hidden rounded-xl border border-[#2d2d2d] bg-[#0f0f0f] p-6"
+        aria-label={`Élio en veille — Étape ${stepNumber}`}
+      >
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1a1a1a]">
+            <Bot className="h-5 w-5 text-[#6b7280]" aria-hidden="true" />
+          </div>
+          <h3 className="text-sm font-semibold text-[#e5e7eb]">Élio est en veille</h3>
+          <p className="max-w-md text-xs leading-relaxed text-[#6b7280]">
+            Vous n&apos;avez pas activé le traitement de vos données par l&apos;IA :
+            Élio ne vous accompagne donc pas dans cette étape. Vous pouvez poursuivre
+            votre parcours et échanger avec MiKL (chat &amp; visio), ou activer Élio
+            pour être assisté.
+          </p>
+          <Link href="/settings/consents" className="text-xs text-[#a78bfa] hover:underline">
+            Activer Élio →
+          </Link>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section

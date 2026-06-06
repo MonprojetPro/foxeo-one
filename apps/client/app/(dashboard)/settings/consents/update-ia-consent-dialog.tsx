@@ -78,18 +78,49 @@ export function UpdateIaConsentDialog({
             <AlertDescription>
               {newConsent ? (
                 <span>
-                  ✅ <strong>Élio activé :</strong> L'assistant IA pourra vous
+                  ✅ <strong>Élio activé :</strong> l'assistant IA pourra vous
                   accompagner dans votre parcours entrepreneurial.
                 </span>
               ) : (
                 <span>
-                  ⚠️ <strong>Élio désactivé :</strong> Vous ne pourrez plus
-                  utiliser les fonctionnalités IA (chat, génération de briefs,
-                  suggestions).
+                  ⚠️ <strong>Élio en veille :</strong> aucune de vos données ne
+                  sera traitée par l'IA. Le chat, la génération de brouillons et
+                  les suggestions seront indisponibles. Vous gardez l'accès à
+                  toute la plateforme.
                 </span>
               )}
             </AlertDescription>
           </Alert>
+
+          {/* Transparence — ce que ça implique réellement */}
+          <div className="space-y-2 rounded-lg border border-border bg-muted/50 p-4 text-sm">
+            <p className="font-medium">Avant d'activer, ce que ça implique :</p>
+            <p className="text-muted-foreground">
+              Pour fonctionner, Élio confie vos échanges à un moteur d'IA externe :{' '}
+              <strong>Claude, développé par la société Anthropic (États-Unis)</strong>.
+            </p>
+            <ul className="space-y-1.5 text-muted-foreground">
+              <li>
+                🌍 <strong>Vos messages quittent l'Europe</strong> le temps d'être
+                traités par Claude aux États-Unis, puis la réponse vous revient
+                (transfert encadré par le RGPD).
+              </li>
+              <li>
+                🔒 <strong>Vos données ne servent jamais à entraîner l'IA.</strong>
+              </li>
+              <li>
+                🔐 <strong>Tout est chiffré</strong>, en transit comme au stockage.
+              </li>
+              <li>
+                👁️ <strong>Élio voit</strong> : vos messages avec lui, les documents
+                que vous lui partagez, vos préférences de communication.
+              </li>
+              <li>
+                🙈 <strong>Élio ne voit pas</strong> : vos identifiants, vos
+                coordonnées bancaires, ni vos échanges privés avec MiKL.
+              </li>
+            </ul>
+          </div>
 
           {/* Checkbox */}
           <div className="flex items-start space-x-3 rounded-lg border border-border p-4">
@@ -105,11 +136,12 @@ export function UpdateIaConsentDialog({
                 htmlFor="ia-consent"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                J'accepte le traitement de mes données par l'IA Élio
+                J'ai compris et j'autorise Élio à traiter mes données via Claude
+                (Anthropic, États-Unis)
               </label>
               <p className="text-sm text-muted-foreground">
-                Élio pourra accéder à vos messages, documents partagés et profil
-                de communication pour vous offrir une assistance personnalisée.
+                C'est 100 % votre choix : vous pouvez refuser maintenant et activer
+                plus tard, ou couper Élio à tout moment depuis cette page.
               </p>
             </div>
           </div>
@@ -117,10 +149,7 @@ export function UpdateIaConsentDialog({
           {/* Additional Info */}
           <div className="text-xs text-muted-foreground space-y-1">
             <p>
-              • Vous pouvez modifier ce choix à tout moment depuis cette page.
-            </p>
-            <p>
-              • La modification est immédiate et tracée conformément au RGPD.
+              • Votre choix est appliqué immédiatement et tracé conformément au RGPD.
             </p>
             <p>
               •{' '}

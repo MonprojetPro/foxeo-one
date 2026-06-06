@@ -10,6 +10,7 @@ const mockConvCount = vi.fn()
 const mockProfileMaybeSingle = vi.fn()
 const mockMsgInsert = vi.fn()
 const mockClientConfigMaybeSingle = vi.fn()
+const mockHasIaConsent = vi.fn()
 
 const CONV_DATA = {
   id: 'conv-new',
@@ -21,6 +22,7 @@ const CONV_DATA = {
 }
 
 vi.mock('@monprojetpro/supabase', () => ({
+  hasIaConsent: mockHasIaConsent,
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } }, error: null })),
@@ -76,6 +78,8 @@ describe('newConversation', () => {
     mockMsgInsert.mockResolvedValue({ error: null })
     // Par défaut : pas de client_config (guard ne bloque pas)
     mockClientConfigMaybeSingle.mockResolvedValue({ data: null, error: null })
+    // Par défaut : consentement IA accordé (cas nominal)
+    mockHasIaConsent.mockResolvedValue(true)
   })
 
   it('crée une conversation et retourne { data, error: null }', async () => {
@@ -133,7 +137,7 @@ describe('newConversation', () => {
     recentDate.setDate(recentDate.getDate() - 3) // 3 jours — dans les 7 jours
 
     mockConvSingle.mockResolvedValueOnce({ data: { ...CONV_DATA, dashboard_type: 'one' }, error: null })
-    mockClientMaybeSingle.mockResolvedValueOnce({
+    mockClientMaybeSingle.mockResolvedValue({
       data: { id: 'client-1', graduated_at: recentDate.toISOString() },
       error: null,
     })
@@ -159,7 +163,7 @@ describe('newConversation', () => {
     recentDate.setDate(recentDate.getDate() - 2)
 
     mockConvSingle.mockResolvedValueOnce({ data: { ...CONV_DATA, dashboard_type: 'one' }, error: null })
-    mockClientMaybeSingle.mockResolvedValueOnce({
+    mockClientMaybeSingle.mockResolvedValue({
       data: { id: 'client-1', graduated_at: recentDate.toISOString() },
       error: null,
     })
@@ -225,7 +229,7 @@ describe('newConversation', () => {
     recentDate.setDate(recentDate.getDate() - 1)
 
     mockConvSingle.mockResolvedValueOnce({ data: { ...CONV_DATA, dashboard_type: 'one' }, error: null })
-    mockClientMaybeSingle.mockResolvedValueOnce({
+    mockClientMaybeSingle.mockResolvedValue({
       data: { id: 'client-1', graduated_at: recentDate.toISOString() },
       error: null,
     })
@@ -235,5 +239,16 @@ describe('newConversation', () => {
     await newConversation('one')
 
     expect(mockMsgInsert).not.toHaveBeenCalled()
+  })
+
+  it('retourne IA_CONSENT_REQUIRED si le client n\'a pas consenti au traitement IA', async () => {
+    mockClientMaybeSingle.mockResolvedValueOnce({ data: { id: 'client-1' }, error: null })
+    mockHasIaConsent.mockResolvedValueOnce(false)
+
+    const { newConversation } = await import('./new-conversation')
+    const result = await newConversation('one')
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('IA_CONSENT_REQUIRED')
   })
 })

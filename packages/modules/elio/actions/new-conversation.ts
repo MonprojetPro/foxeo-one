@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 import { toCamelCase } from '@monprojetpro/utils'
 import type { DashboardType, ElioConversation } from '../types/elio.types'
@@ -43,10 +43,8 @@ export async function newConversation(
     return errorResponse('Utilisateur non authentifié', 'AUTH_ERROR')
   }
 
-  // Guard : Élio Lab doit être activé (ADR-01 Révision 2)
-  // MiKL peut désactiver elio_lab_enabled après graduation — dans ce cas,
-  // le client ne peut plus créer de nouvelle conversation Lab.
-  if (dashboardType === 'lab') {
+  // Guards client (lab/one) — le Hub (MiKL opérateur) n'est jamais concerné.
+  if (dashboardType !== 'hub') {
     const { data: clientRow } = await supabase
       .from('clients')
       .select('id')
@@ -54,17 +52,30 @@ export async function newConversation(
       .maybeSingle()
 
     if (clientRow) {
-      const { data: config } = await supabase
-        .from('client_configs')
-        .select('elio_lab_enabled')
-        .eq('client_id', clientRow.id)
-        .maybeSingle()
-
-      if (config && config.elio_lab_enabled === false) {
+      // Guard consentement IA (RGPD) — pas de conversation Élio sans consentement.
+      const iaConsentGranted = await hasIaConsent(clientRow.id)
+      if (!iaConsentGranted) {
         return errorResponse(
-          'Élio Lab est désactivé pour ce client. Contactez MiKL pour le réactiver.',
-          'ELIO_LAB_DISABLED'
+          "Élio est en veille : activez le traitement de vos données par l'IA dans Paramètres → Consentements pour discuter avec Élio.",
+          'IA_CONSENT_REQUIRED'
         )
+      }
+
+      // Guard Élio Lab (ADR-01 Révision 2) — MiKL peut désactiver elio_lab_enabled
+      // après graduation : le client ne peut alors plus créer de conversation Lab.
+      if (dashboardType === 'lab') {
+        const { data: config } = await supabase
+          .from('client_configs')
+          .select('elio_lab_enabled')
+          .eq('client_id', clientRow.id)
+          .maybeSingle()
+
+        if (config && config.elio_lab_enabled === false) {
+          return errorResponse(
+            'Élio Lab est désactivé pour ce client. Contactez MiKL pour le réactiver.',
+            'ELIO_LAB_DISABLED'
+          )
+        }
       }
     }
   }

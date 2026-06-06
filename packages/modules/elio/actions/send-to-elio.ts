@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 import { buildSystemPrompt, UPSELL_ONE_PLUS_MESSAGE, ELIO_FORMATTING_INSTRUCTION } from '../config/system-prompts'
 import { getElioConfig } from './get-elio-config'
@@ -142,6 +142,21 @@ export async function sendToElio(
       return errorResponse('Erreur de configuration Élio', 'CONFIG_ERROR', configError)
     }
     if (cfg) elioConfig = cfg
+  }
+
+  // 1bis. Guard consentement IA (RGPD) — verrou universel : un client qui n'a pas consenti
+  // au traitement de ses données par l'IA ne doit JAMAIS voir ses messages envoyés à Claude.
+  // S'applique à TOUTES les surfaces client, y compris le chat d'étape du parcours
+  // (skipLabEnabledCheck ne bypasse PAS le consentement, à la différence du guard Élio Lab).
+  // Le Hub (MiKL opérateur) n'est jamais concerné.
+  if (dashboardType !== 'hub' && clientId) {
+    const iaConsentGranted = await hasIaConsent(clientId)
+    if (!iaConsentGranted) {
+      return errorResponse(
+        "Élio est en veille : vous n'avez pas activé le traitement de vos données par l'IA. Activez-le dans Paramètres → Consentements pour discuter avec Élio.",
+        'IA_CONSENT_REQUIRED'
+      )
+    }
   }
 
   // 2. Hub uniquement : détecter l'intention et router vers la Server Action appropriée

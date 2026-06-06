@@ -28,6 +28,8 @@ interface ParcoursStepDetailProps {
   clientId?: string
   isPaused?: boolean
   agentImagePath?: string | null
+  /** Consentement au traitement IA (RGPD). Si false, le chat d'étape Élio est en veille. */
+  iaConsentGranted?: boolean
 }
 
 interface StepConfig {
@@ -63,7 +65,7 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
   },
 }
 
-export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false, agentImagePath = null }: ParcoursStepDetailProps) {
+export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false, agentImagePath = null, iaConsentGranted = true }: ParcoursStepDetailProps) {
   const [messageCount, setMessageCount] = useState(0)
   const [mobileTab, setMobileTab] = useState<MobileTab>('step')
 
@@ -214,6 +216,7 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
               stepStatus={step.status}
               stepNumber={step.stepNumber}
               clientId={clientId}
+              iaConsentGranted={iaConsentGranted}
               onMessagesLoaded={setMessageCount}
               onAgentConfigLoaded={undefined}
             />

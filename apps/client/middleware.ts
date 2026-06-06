@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
-import { checkConsentVersion } from './middleware-consent'
+import { checkConsentVersion, checkIaConsentVersion } from './middleware-consent'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
 
 export const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/maintenance']
-export const CONSENT_EXCLUDED_PATHS = ['/consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
-export const ONBOARDING_EXCLUDED_PATHS = ['/onboarding', '/login', '/signup', '/auth/callback', '/consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
-export const GRADUATION_EXCLUDED_PATHS = ['/graduation', '/login', '/signup', '/auth/callback', '/consent-update', '/legal', '/api', '/suspended', '/transferred', '/onboarding', '/archived', '/maintenance']
+export const CONSENT_EXCLUDED_PATHS = ['/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
+export const ONBOARDING_EXCLUDED_PATHS = ['/onboarding', '/login', '/signup', '/auth/callback', '/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
+export const GRADUATION_EXCLUDED_PATHS = ['/graduation', '/login', '/signup', '/auth/callback', '/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/onboarding', '/archived', '/maintenance']
 export const MAINTENANCE_EXCLUDED_PATHS = ['/maintenance', '/login', '/signup', '/auth/callback', '/api']
 
 export function isPublicPath(pathname: string): boolean {
@@ -196,10 +196,16 @@ export async function middleware(request: NextRequest) {
         return pwdResponse
       }
 
-      // Check consent version
+      // Check CGU consent version
       const consentRedirect = await checkConsentVersion(request, client.id)
       if (consentRedirect) {
         return consentRedirect
+      }
+
+      // Check IA policy consent version (re-consent only if a prior IA decision is stale)
+      const iaConsentRedirect = await checkIaConsentVersion(request, client.id)
+      if (iaConsentRedirect) {
+        return iaConsentRedirect
       }
 
       // Onboarding detection — only for non-onboarding paths

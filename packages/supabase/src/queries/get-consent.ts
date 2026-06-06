@@ -74,3 +74,36 @@ export async function getLatestConsents(clientId: string): Promise<
     error: null,
   }
 }
+
+/**
+ * Récupère l'historique complet des consentements d'un client (toutes versions,
+ * CGU + IA), du plus récent au plus ancien. Sert à l'affichage de l'audit trail RGPD
+ * dans Paramètres → Consentements (la table `consents` est en INSERT-only).
+ */
+export async function getConsentHistory(
+  clientId: string
+): Promise<ActionResponse<Consent[]>> {
+  const supabase = await createServerSupabaseClient()
+
+  const { data, error } = (await supabase
+    .from('consents')
+    .select('*')
+    .eq('client_id', clientId)
+    .order('created_at', { ascending: false })) as {
+    data: Consent[] | null
+    error: unknown
+  }
+
+  if (error) {
+    return {
+      data: null,
+      error: {
+        message: "Erreur lors de la récupération de l'historique des consentements",
+        code: 'FETCH_ERROR',
+        details: error,
+      } as ActionError,
+    }
+  }
+
+  return { data: data ?? [], error: null }
+}

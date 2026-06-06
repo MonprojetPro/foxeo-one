@@ -33,7 +33,7 @@ const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
   facturationMani, // One → /modules/facturation
   supportMani,   // Lab + One → /modules/support
 ]
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { NotificationBadge } from '@monprojetpro/modules-notifications'
 import { PresenceProvider } from '@monprojetpro/modules-chat'
 import { LogoutButton } from './logout-button'
@@ -50,12 +50,14 @@ function ClientSidebar({
   logoUrl,
   userId,
   badges,
+  iaConsentGranted,
 }: {
   dashboardType: string
   activeModules: string[]
   logoUrl?: string | null
   userId: string
   badges?: Record<string, ModuleSidebarBadge>
+  iaConsentGranted: boolean
 }) {
   const target: ModuleTarget =
     dashboardType === 'one' ? 'client-one' : 'client-lab'
@@ -75,7 +77,7 @@ function ClientSidebar({
   // Widget Élio en bas de sidebar pour One (si le module elio est actif)
   const elioWidget =
     target === 'client-one' && activeModules.includes('elio')
-      ? <OneElioBox userId={userId} />
+      ? <OneElioBox userId={userId} iaConsentGranted={iaConsentGranted} />
       : undefined
 
   return (
@@ -315,9 +317,11 @@ export default async function DashboardLayout({
   // Badges sidebar — calculés côté serveur, propagés via prop (Kit Complet).
   // Realtime branché via `RealtimeDashboardRefresh` qui écoute aussi `messages`.
   const sidebarBadges: Record<string, ModuleSidebarBadge> = {}
-  const [parcoursBadge, chatBadge] = await Promise.all([
+  const needsIaConsent = activeMode === 'one' && activeModules.includes('elio')
+  const [parcoursBadge, chatBadge, iaConsentGranted] = await Promise.all([
     activeModules.includes('parcours') ? computeParcoursBadge(supabase, clientId) : Promise.resolve(undefined),
     activeModules.includes('chat') ? computeChatBadge(supabase, clientId) : Promise.resolve(undefined),
+    needsIaConsent && clientId ? hasIaConsent(clientId) : Promise.resolve(false),
   ])
   if (parcoursBadge) sidebarBadges.parcours = parcoursBadge
   if (chatBadge) sidebarBadges.chat = chatBadge
@@ -335,7 +339,7 @@ export default async function DashboardLayout({
       <DashboardShell
         density={density}
         sidebar={
-          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} logoUrl={logoUrl} userId={user?.id ?? ''} badges={sidebarBadges} />
+          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} logoUrl={logoUrl} userId={user?.id ?? ''} badges={sidebarBadges} iaConsentGranted={iaConsentGranted} />
         }
         header={
           <ClientHeader

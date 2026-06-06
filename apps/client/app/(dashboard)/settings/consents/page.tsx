@@ -1,7 +1,8 @@
-import { createServerSupabaseClient, getLatestConsents } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, getLatestConsents, getConsentHistory } from '@monprojetpro/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from '@monprojetpro/ui'
 import { UpdateIaConsentDialog } from './update-ia-consent-dialog'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 
 export const metadata = {
   title: 'Consentements — MonprojetPro',
@@ -31,8 +32,9 @@ export default async function ConsentsPage() {
     redirect('/login')
   }
 
-  // Fetch latest consents
+  // Fetch latest consents + full audit history (RGPD)
   const { data: consents } = await getLatestConsents(client.id)
+  const { data: history } = await getConsentHistory(client.id)
 
   function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -42,6 +44,12 @@ export default async function ConsentsPage() {
       hour: '2-digit',
       minute: '2-digit',
     })
+  }
+
+  function consentTypeLabel(type: string) {
+    if (type === 'cgu') return "Conditions Générales d'Utilisation"
+    if (type === 'ia_processing') return 'Traitement des données par l\'IA'
+    return type
   }
 
   return (
@@ -126,15 +134,17 @@ export default async function ConsentsPage() {
             <p className="text-sm text-muted-foreground">
               {consents?.ia?.accepted ? (
                 <>
-                  ✅ Vous avez autorisé Élio à traiter vos données pour vous
-                  offrir une assistance personnalisée. L'assistant IA est
-                  disponible dans toute la plateforme.
+                  ✅ Vous avez autorisé Élio à traiter vos données via{' '}
+                  <strong>Claude (Anthropic, États-Unis)</strong> pour vous offrir
+                  une assistance personnalisée. L'assistant est disponible dans
+                  toute la plateforme.
                 </>
               ) : (
                 <>
-                  ⚠️ Vous avez refusé le traitement IA. L'assistant Élio est
-                  désactivé. Vous pouvez utiliser la plateforme normalement sans
-                  les fonctionnalités IA.
+                  🔒 <strong>Élio est en veille</strong> : aucune de vos données
+                  n'est traitée par l'IA. Vous utilisez la plateforme normalement,
+                  sans les fonctionnalités IA. Vous pouvez réactiver Élio à tout
+                  moment ci-dessous.
                 </>
               )}
             </p>
@@ -172,6 +182,55 @@ export default async function ConsentsPage() {
         </CardContent>
       </Card>
 
+      {/* Historique des consentements (audit RGPD — table INSERT-only) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Historique de vos consentements</CardTitle>
+          <CardDescription>
+            Chaque décision est conservée de façon immuable et horodatée,
+            conformément au RGPD.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {history && history.length > 0 ? (
+            <ul className="divide-y divide-border">
+              {history.map((c) => (
+                <li
+                  key={c.id}
+                  className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">
+                      {consentTypeLabel(c.consent_type)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(c.created_at)} · version {c.version}
+                      {c.ip_address && c.ip_address !== 'unknown'
+                        ? ` · IP ${c.ip_address}`
+                        : ''}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={c.accepted ? 'default' : 'secondary'}
+                    className={
+                      c.accepted
+                        ? 'self-start bg-success text-success-foreground sm:self-center'
+                        : 'self-start sm:self-center'
+                    }
+                  >
+                    {c.accepted ? 'Accepté' : 'Refusé'}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Aucun consentement enregistré pour le moment.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Information Footer */}
       <Card className="bg-muted">
         <CardContent className="pt-6">
@@ -182,8 +241,19 @@ export default async function ConsentsPage() {
               d'opposition au traitement de vos données personnelles.
             </p>
             <p>
-              Pour toute question ou pour exercer vos droits, contactez notre
-              DPO :{' '}
+              Vous pouvez télécharger l'ensemble de vos données personnelles
+              (portabilité) depuis la page{' '}
+              <Link
+                href="/settings"
+                className="text-primary underline hover:text-primary/80"
+              >
+                Paramètres → Conformité RGPD
+              </Link>
+              .
+            </p>
+            <p>
+              Pour exercer votre droit à l'effacement (« droit à l'oubli ») ou
+              pour toute question, contactez notre DPO :{' '}
               <a
                 href="mailto:dpo@monprojet-pro.com"
                 className="text-primary underline hover:text-primary/80"

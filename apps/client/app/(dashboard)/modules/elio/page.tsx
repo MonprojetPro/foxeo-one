@@ -1,7 +1,8 @@
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { cookies } from 'next/headers'
 import { ElioChat } from '@monprojetpro/module-elio'
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
+import { ElioVeille } from '../../../../components/elio-veille'
 
 interface PageProps {
   searchParams: Promise<{ conv?: string }>
@@ -34,14 +35,21 @@ export default async function ElioClientPage({ searchParams }: PageProps) {
     : cookieMode === 'one' ? 'one'
     : (dbDashboardType === 'lab' ? 'lab' : 'one')
 
+  // Guard consentement IA (RGPD) — si le client n'a pas consenti, Élio reste en veille.
+  const iaConsentGranted = clientId ? await hasIaConsent(clientId) : false
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <ElioChat
-        dashboardType={effectiveMode}
-        clientId={clientId}
-        userId={user.id}
-        initialConversationId={initialConversationId}
-      />
+      {iaConsentGranted ? (
+        <ElioChat
+          dashboardType={effectiveMode}
+          clientId={clientId}
+          userId={user.id}
+          initialConversationId={initialConversationId}
+        />
+      ) : (
+        <ElioVeille />
+      )}
     </div>
   )
 }
