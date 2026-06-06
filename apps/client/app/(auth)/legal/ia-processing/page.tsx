@@ -169,7 +169,7 @@ export default function IaProcessingPage() {
               <li><strong>Droit de limitation :</strong> Limiter le traitement dans certaines conditions</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
-              Pour exercer ces droits, contactez-nous à : dpo@monprojet-pro.com
+              Pour exercer ces droits, contactez-nous à : contact@monprojet-pro.com
             </p>
           </section>
 
@@ -177,11 +177,10 @@ export default function IaProcessingPage() {
           <section className="space-y-3 border-t border-border pt-6">
             <h2 className="text-2xl font-semibold">Contact</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Pour toute question relative au traitement de vos données par intelligence artificielle, contactez notre Délégué à la Protection des Données (DPO) :
+              Pour toute question relative au traitement de vos données par intelligence artificielle, contactez-nous :
             </p>
             <ul className="list-none space-y-1 text-muted-foreground ml-4">
-              <li><strong>Email :</strong> dpo@monprojet-pro.com</li>
-              <li><strong>Courrier :</strong> MonprojetPro — Service DPO, [Adresse à compléter]</li>
+              <li><strong>Email :</strong> contact@monprojet-pro.com</li>
             </ul>
           </section>
         </div>

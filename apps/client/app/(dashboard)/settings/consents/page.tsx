@@ -253,12 +253,12 @@ export default async function ConsentsPage() {
             </p>
             <p>
               Pour exercer votre droit à l'effacement (« droit à l'oubli ») ou
-              pour toute question, contactez notre DPO :{' '}
+              pour toute question, contactez-nous :{' '}
               <a
-                href="mailto:dpo@monprojet-pro.com"
+                href="mailto:contact@monprojet-pro.com"
                 className="text-primary underline hover:text-primary/80"
               >
-                dpo@monprojet-pro.com
+                contact@monprojet-pro.com
               </a>
             </p>
           </div>

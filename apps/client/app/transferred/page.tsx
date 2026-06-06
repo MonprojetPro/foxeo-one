@@ -28,10 +28,10 @@ export default function TransferredPage() {
               Pour toute question ou assistance technique, contactez notre équipe :
             </p>
             <a
-              href="mailto:support@monprojet-pro.com"
+              href="mailto:contact@monprojet-pro.com"
               className="text-sm font-medium text-primary hover:underline mt-1 block"
             >
-              support@monprojet-pro.com
+              contact@monprojet-pro.com
             </a>
           </div>
         </CardContent>
