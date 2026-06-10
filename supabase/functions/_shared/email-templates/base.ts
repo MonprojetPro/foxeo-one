@@ -19,8 +19,11 @@ export interface BaseTemplateContent {
 }
 
 export function baseTemplate(content: BaseTemplateContent): string {
-  const cta = content.ctaUrl
-    ? `<a href="${content.ctaUrl}" style="display:inline-block;margin-top:24px;padding:12px 24px;background:#059669;color:#ffffff;border-radius:6px;text-decoration:none;font-family:'Poppins',sans-serif;font-weight:600;">${content.ctaText ?? 'Voir sur MonprojetPro'}</a>`
+  // Sécurité : n'autoriser que des URLs http(s) (rejette javascript:/data:) et
+  // échapper l'URL (attribut) + le texte avant interpolation HTML.
+  const safeCtaText = escapeHtml(content.ctaText ?? 'Voir sur MonprojetPro')
+  const cta = content.ctaUrl && /^https?:\/\//.test(content.ctaUrl)
+    ? `<a href="${escapeHtml(content.ctaUrl)}" style="display:inline-block;margin-top:24px;padding:12px 24px;background:#059669;color:#ffffff;border-radius:6px;text-decoration:none;font-family:'Poppins',sans-serif;font-weight:600;">${safeCtaText}</a>`
     : ''
 
   return `<!DOCTYPE html>
