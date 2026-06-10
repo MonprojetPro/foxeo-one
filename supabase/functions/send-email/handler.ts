@@ -12,6 +12,7 @@ import { welcomeLabEmailTemplate } from '../_shared/email-templates/welcome-lab.
 import { welcomeOneEmailTemplate } from '../_shared/email-templates/welcome-one.ts'
 import { finalPaymentConfirmationEmailTemplate } from '../_shared/email-templates/final-payment-confirmation.ts'
 import { prospectResourcesEmailTemplate } from '../_shared/email-templates/prospect-resources.ts'
+import { exportReadyEmailTemplate } from '../_shared/email-templates/export-ready.ts'
 import { escapeHtml } from '../_shared/email-templates/base.ts'
 
 export interface SendEmailInput {
@@ -247,6 +248,15 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
         html: graduationEmailTemplate({
           clientName: recipient.name,
           oneUrl: platformUrl,
+        }),
+      }
+
+    case 'export_ready':
+      return {
+        subject: 'Votre export de données est prêt — MonprojetPro',
+        html: exportReadyEmailTemplate({
+          clientName: recipient.name,
+          downloadUrl: platformUrl,
         }),
       }
 

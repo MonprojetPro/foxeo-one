@@ -303,10 +303,11 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to update export record: ${updateError.message}`)
     }
 
-    // Create in-app notification for the client
-    // Use absolute Hub URL so the link works from any dashboard (client/lab/one)
-    const hubUrl = Deno.env.get('HUB_URL') || supabaseUrl?.replace('.supabase.co', '') || ''
-    const downloadLink = `${hubUrl}/api/exports/${exportId}/download`
+    // Create in-app notification for the client.
+    // Relative path on purpose: the in-app bell resolves it on the client app
+    // (where the client has a valid session), and the email trigger prefixes the
+    // client base URL. An absolute Hub URL would 401 the client (no Hub session).
+    const downloadLink = `/api/exports/${exportId}/download`
     const { error: notifError } = await supabase
       .from('notifications')
       .insert({
@@ -323,23 +324,9 @@ Deno.serve(async (req) => {
       // Don't fail — export is ready, notification is best-effort
     }
 
-    // Trigger email notification
-    const { error: emailError } = await supabase.functions.invoke('send-email', {
-      body: {
-        to: (client as ClientRow).email,
-        template: 'export-ready',
-        data: {
-          clientName: (client as ClientRow).name,
-          downloadLink,
-          expiresAt,
-        },
-      },
-    })
-
-    if (emailError) {
-      console.error('[EXPORT:GENERATE] Email error:', emailError)
-      // Don't fail
-    }
+    // Email is sent automatically by the trg_send_email_on_notification DB trigger,
+    // which invokes the send-email Edge Function ('export_ready' template). No direct
+    // invoke here — that previously targeted a non-existent direct template.
 
     console.log(`[EXPORT:GENERATE] Export completed for client ${clientId}, export ${exportId}`)
 
