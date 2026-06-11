@@ -117,9 +117,12 @@ interface RecipientRow {
 }
 
 function buildPlatformUrl(notification: NotificationRow): string {
-  const base = notification.recipient_type === 'operator'
-    ? 'https://hub.monprojet-pro.com'
-    : 'https://lab.monprojet-pro.com'
+  // Bases configurables via env. Defauts = URLs Vercel reelles tant que les
+  // sous-domaines app./hub.monprojet-pro.com ne sont pas branches en DNS.
+  // lab.monprojet-pro.com n'existe pas — ne jamais l'utiliser.
+  const clientBase = Deno.env.get('CLIENT_APP_URL') ?? 'https://monprojetpro-client.vercel.app'
+  const hubBase = Deno.env.get('HUB_URL') ?? 'https://monprojetpro-hub.vercel.app'
+  const base = notification.recipient_type === 'operator' ? hubBase : clientBase
   return notification.link ? `${base}${notification.link}` : base
 }
 
