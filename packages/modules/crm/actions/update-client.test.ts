@@ -19,10 +19,16 @@ const mockUpdateEqOperator = vi.fn(() => ({ eq: mockEqUpdatedAt, select: mockSel
 const mockUpdateEqId = vi.fn(() => ({ eq: mockUpdateEqOperator }))
 const mockUpdate = vi.fn(() => ({ eq: mockUpdateEqId }))
 const mockMaybeSingle = vi.fn()
+const mockCurrentSingle = vi.fn()
 const mockNeq = vi.fn(() => ({ maybeSingle: mockMaybeSingle }))
-const mockSelectEq2 = vi.fn(() => ({ neq: mockNeq }))
+// select(...).eq(...).eq(...) sert pour la check d'unicité (.neq().maybeSingle())
+// ET pour le fetch auth_user_id avant sync Auth (.single())
+const mockSelectEq2 = vi.fn(() => ({ neq: mockNeq, single: mockCurrentSingle }))
 const mockSelectEq1 = vi.fn(() => ({ eq: mockSelectEq2 }))
 const mockSelectChain = vi.fn(() => ({ eq: mockSelectEq1 }))
+
+// Admin (service role) — auth.admin.updateUserById
+const mockUpdateUserById = vi.fn()
 
 // Operator lookup mock chain
 const mockOpSingle = vi.fn()
@@ -44,6 +50,9 @@ vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },
+  })),
+  createServiceRoleSupabaseClient: vi.fn(() => ({
+    auth: { admin: { updateUserById: mockUpdateUserById } },
   })),
 }))
 
@@ -365,5 +374,75 @@ describe('updateClient Server Action', () => {
 
     // Email uniqueness check should not have been called
     expect(mockMaybeSingle).not.toHaveBeenCalled()
+  })
+
+  it('should sync the auth login email when the email changes', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: validAuthUuid } },
+      error: null,
+    })
+    // Unicité OK (pas d'autre client avec cet email)
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+    // Fetch auth_user_id + email courant
+    mockCurrentSingle.mockResolvedValue({
+      data: { auth_user_id: 'auth-xyz', email: 'old@acme.com' },
+      error: null,
+    })
+    // Sync Auth OK
+    mockUpdateUserById.mockResolvedValue({ data: { user: {} }, error: null })
+    // Update fiche OK
+    mockSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        operator_id: testOperatorId,
+        name: 'Jean',
+        company: 'Acme Corp',
+        email: 'new@acme.com',
+        client_type: 'complet',
+        status: 'lab-actif',
+        sector: null,
+        phone: null,
+        website: null,
+        notes: null,
+        created_at: '2026-02-13T10:00:00Z',
+        updated_at: '2026-02-13T12:00:00Z',
+      },
+      error: null,
+    })
+
+    const { updateClient } = await import('./update-client')
+    const result = await updateClient(testClientId, { email: 'new@acme.com' })
+
+    expect(result.error).toBeNull()
+    // L'email de connexion (Auth) doit être synchronisé avec confirmation auto
+    expect(mockUpdateUserById).toHaveBeenCalledWith('auth-xyz', {
+      email: 'new@acme.com',
+      email_confirm: true,
+    })
+  })
+
+  it('should return AUTH_SYNC_ERROR when the auth email sync fails', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: validAuthUuid } },
+      error: null,
+    })
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+    mockCurrentSingle.mockResolvedValue({
+      data: { auth_user_id: 'auth-xyz', email: 'old@acme.com' },
+      error: null,
+    })
+    // Sync Auth échoue (ex: email déjà pris globalement dans Auth)
+    mockUpdateUserById.mockResolvedValue({
+      data: null,
+      error: { message: 'Email already registered' },
+    })
+
+    const { updateClient } = await import('./update-client')
+    const result = await updateClient(testClientId, { email: 'taken@acme.com' })
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('AUTH_SYNC_ERROR')
+    // La fiche client ne doit PAS avoir été modifiée si l'Auth échoue
+    expect(mockUpdate).not.toHaveBeenCalled()
   })
 })

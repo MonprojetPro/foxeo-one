@@ -1,7 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import {
+  createServerSupabaseClient,
+  createServiceRoleSupabaseClient,
+} from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   successResponse,
@@ -76,6 +79,38 @@ export async function updateClient(
           'Cet email est déjà associé à un client',
           'EMAIL_ALREADY_EXISTS'
         )
+      }
+    }
+
+    // Sync de l'email de CONNEXION (Supabase Auth) si l'email change.
+    // L'identifiant de login vit dans auth.users, pas dans la table clients :
+    // sans cette synchro, modifier l'email de la fiche empêcherait le client de
+    // se reconnecter. KIT COMPLET : changer un email = fiche ET compte Auth.
+    // Fait AVANT l'update de la fiche : si l'Auth échoue (ex: email déjà pris
+    // globalement), on n'a rien désynchronisé.
+    if (updateData.email !== undefined) {
+      const { data: current } = await supabase
+        .from('clients')
+        .select('auth_user_id, email')
+        .eq('id', clientId)
+        .eq('operator_id', operatorId)
+        .single()
+
+      if (current?.auth_user_id && current.email !== updateData.email) {
+        const admin = createServiceRoleSupabaseClient()
+        const { error: authSyncError } = await admin.auth.admin.updateUserById(
+          current.auth_user_id,
+          { email: updateData.email, email_confirm: true }
+        )
+
+        if (authSyncError) {
+          console.error('[CRM:UPDATE] Auth email sync error:', authSyncError)
+          return errorResponse(
+            `Impossible de synchroniser l'email de connexion : ${authSyncError.message}`,
+            'AUTH_SYNC_ERROR',
+            authSyncError
+          )
+        }
       }
     }
 
