@@ -14,7 +14,10 @@ type LoginFormData = z.infer<typeof loginSchema>
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') ?? '/'
+  // Sécurité : n'autoriser que des chemins internes (évite l'open redirect).
+  const rawRedirect = searchParams.get('redirectTo') ?? '/'
+  const redirectTo =
+    rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
   const [isPending, startTransition] = useTransition()
   const [serverError, setServerError] = useState<string | null>(null)
 
@@ -40,8 +43,22 @@ export function LoginForm() {
         return
       }
 
-      router.push(redirectTo)
+      // Une route API (ex: /api/exports/.../download) sert un fichier, pas une
+      // page : y naviguer laisserait l'écran figé sur le login. On atterrit sur
+      // le dashboard, puis on déclenche le téléchargement en arrière-plan.
+      const isApiTarget = redirectTo.startsWith('/api/')
+      router.push(isApiTarget ? '/' : redirectTo)
       router.refresh()
+
+      if (isApiTarget) {
+        setTimeout(() => {
+          const a = document.createElement('a')
+          a.href = redirectTo
+          document.body.appendChild(a)
+          a.click()
+          a.remove()
+        }, 150)
+      }
     })
   }
 
