@@ -180,6 +180,17 @@ describe('DocumentList', () => {
     expect(link.getAttribute('href')).toBe('/modules/documents/client-1/doc-1')
   })
 
+  it('le menu ⋯ propose « Télécharger » (et le clic ne plante pas)', () => {
+    render(
+      <DocumentList documents={MOCK_DOCS} clientId="client-1" onDelete={vi.fn()} />,
+      { wrapper: Wrapper }
+    )
+    fireEvent.click(screen.getByTestId('actions-doc-doc-1'))
+    const dl = screen.getByTestId('download-doc-doc-1')
+    expect(dl).toBeDefined()
+    expect(() => fireEvent.click(dl)).not.toThrow()
+  })
+
   // Batch actions tests
   it('does not show checkboxes when showBatchActions is false', () => {
     render(<DocumentList documents={MOCK_DOCS} showBatchActions={false} />, { wrapper: Wrapper })

@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { DataTable, type ColumnDef } from '@monprojetpro/ui'
 import { Badge, Button, Checkbox } from '@monprojetpro/ui'
-import { Eye, MoreVertical, Trash2 } from 'lucide-react'
+import { Download, Eye, FolderInput, MoreVertical, Trash2 } from 'lucide-react'
 import { formatFileSize } from '@monprojetpro/utils'
 import { DocumentIcon } from './document-icon'
 import { DocumentShareButton } from './document-share-button'
@@ -28,6 +29,16 @@ interface DocumentListProps {
   folders?: DocumentFolder[]
 }
 
+/** Déclenche le téléchargement d'un document via la route API (mêmes droits que partout). */
+function triggerDownload(documentId: string) {
+  const a = window.document.createElement('a')
+  a.href = `/api/documents/download/${documentId}`
+  a.style.display = 'none'
+  window.document.body.appendChild(a)
+  a.click()
+  window.document.body.removeChild(a)
+}
+
 interface DocumentActionsMenuProps {
   doc: Document
   /** Si fourni (+ onMove), affiche la section « Déplacer vers ». */
@@ -40,9 +51,11 @@ interface DocumentActionsMenuProps {
 }
 
 /**
- * Menu d'actions secondaires « ⋯ » regroupant Déplacer + Supprimer en un seul point,
- * pour éviter d'étaler les boutons sur plusieurs colonnes (cause du scroll latéral — retour MiKL).
- * S'ouvre vers le HAUT quand l'espace sous le bouton est insuffisant.
+ * Menu d'actions secondaires « ⋯ » : Télécharger + Déplacer + Supprimer en un seul point
+ * (évite d'étaler les boutons sur plusieurs colonnes — cause du scroll latéral, retour MiKL).
+ * Rendu dans un PORTAL en position `fixed` : sinon le menu est rogné par l'`overflow-auto`
+ * de la DataTable (menu tronqué — retour MiKL). Position calculée depuis le bouton, ouverture
+ * vers le haut si l'espace sous le bouton est insuffisant.
  */
 function DocumentActionsMenu({
   doc,
@@ -53,34 +66,51 @@ function DocumentActionsMenu({
   isDeleting = false,
 }: DocumentActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [dropUp, setDropUp] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ right: number; top?: number; bottom?: number } | null>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const canMove = !!folders && !!onMove
+
+  const close = () => setIsOpen(false)
 
   useEffect(() => {
     if (!isOpen) return
     const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false)
+      const target = e.target as Node
+      if (
+        triggerRef.current && !triggerRef.current.contains(target) &&
+        menuRef.current && !menuRef.current.contains(target)
+      ) {
+        close()
       }
     }
+    // Le menu est en position fixed : il ne suit pas le scroll → on le ferme.
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
   }, [isOpen])
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!isOpen && ref.current) {
-      const rect = ref.current.getBoundingClientRect()
+    if (!isOpen && triggerRef.current) {
+      const r = triggerRef.current.getBoundingClientRect()
+      const right = window.innerWidth - r.right
       // ~280px = hauteur max du menu : si l'espace sous le bouton est insuffisant, on ouvre vers le haut.
-      setDropUp(window.innerHeight - rect.bottom < 280)
+      const dropUp = window.innerHeight - r.bottom < 280
+      setPos(dropUp ? { right, bottom: window.innerHeight - r.top + 4 } : { right, top: r.bottom + 4 })
     }
     setIsOpen((v) => !v)
   }
 
   return (
-    <div className="relative" ref={ref}>
+    <>
       <Button
+        ref={triggerRef}
         variant="ghost"
         size="icon"
         className="h-8 w-8 text-muted-foreground"
@@ -91,20 +121,34 @@ function DocumentActionsMenu({
       >
         <MoreVertical className="h-4 w-4" />
       </Button>
-      {isOpen && (
+      {isOpen && pos && createPortal(
         <div
-          className={[
-            'absolute right-0 z-50 min-w-[180px] max-h-[260px] overflow-y-auto rounded-md border bg-popover p-1 shadow-md',
-            dropUp ? 'bottom-full mb-1' : 'top-full mt-1',
-          ].join(' ')}
+          ref={menuRef}
+          style={{ position: 'fixed', right: pos.right, top: pos.top, bottom: pos.bottom }}
+          className="z-[60] min-w-[190px] max-h-[280px] overflow-y-auto rounded-md border bg-popover p-1 shadow-lg"
         >
+          {/* Télécharger — toujours disponible */}
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors"
+            onClick={() => { triggerDownload(doc.id); close() }}
+            data-testid={`download-doc-${doc.id}`}
+          >
+            <Download className="h-3.5 w-3.5" />
+            Télécharger
+          </button>
+
           {canMove && (
             <>
-              <p className="px-3 py-1 text-xs font-medium text-muted-foreground">Déplacer vers</p>
+              <div className="my-1 h-px bg-border" />
+              <p className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-muted-foreground">
+                <FolderInput className="h-3.5 w-3.5" />
+                Déplacer vers
+              </p>
               <button
                 type="button"
                 className="w-full rounded px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors"
-                onClick={() => { onMove?.(null); setIsOpen(false) }}
+                onClick={() => { onMove?.(null); close() }}
                 disabled={isMovePending}
               >
                 Non classé
@@ -117,7 +161,7 @@ function DocumentActionsMenu({
                     'w-full rounded px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors',
                     doc.folderId === folder.id ? 'text-muted-foreground' : '',
                   ].join(' ')}
-                  onClick={() => { onMove?.(folder.id); setIsOpen(false) }}
+                  onClick={() => { onMove?.(folder.id); close() }}
                   disabled={isMovePending || doc.folderId === folder.id}
                 >
                   {folder.name}
@@ -125,22 +169,26 @@ function DocumentActionsMenu({
               ))}
             </>
           )}
-          {canMove && onDelete && <div className="my-1 h-px bg-border" />}
+
           {onDelete && (
-            <button
-              type="button"
-              className="flex w-full items-center gap-2 rounded px-3 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10 transition-colors"
-              onClick={() => { onDelete(doc.id); setIsOpen(false) }}
-              disabled={isDeleting}
-              data-testid={`delete-doc-${doc.id}`}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Supprimer
-            </button>
+            <>
+              <div className="my-1 h-px bg-border" />
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded px-3 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={() => { onDelete(doc.id); close() }}
+                disabled={isDeleting}
+                data-testid={`delete-doc-${doc.id}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Supprimer
+              </button>
+            </>
           )}
-        </div>
+        </div>,
+        window.document.body
       )}
-    </div>
+    </>
   )
 }
 
