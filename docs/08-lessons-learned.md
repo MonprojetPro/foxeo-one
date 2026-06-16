@@ -230,6 +230,18 @@
 
 ---
 
+### [UI-004] Composant codé + testé mais jamais rendu = capacité invisible (coquille inverse)
+- **Date** : 2026-06-16
+- **Projet** : MonprojetPro — Module CRM (onglet Lab)
+- **Categorie** : Architecture UI / Complétude
+- **Symptome** : MiKL ne pouvait pas activer le Lab d'un client sans paiement. Pourtant le composant `AccessToggles` (switch Lab/One → `toggleAccess`, avec confirmation + journalisation `activity_logs`) existait et était **entièrement testé**.
+- **Cause racine** : `AccessToggles` n'était importé/rendu **dans aucune page** (grep `<AccessToggles` → 0 usage hors test). Une capacité 100% codée mais jamais branchée à l'UI est, du point de vue utilisateur, inexistante — l'inverse de la « coquille vide » (un bouton qui ne fait rien) : ici une fonction qui marche mais sans bouton.
+- **Solution validee** : surfacer le composant dans l'onglet pertinent (section « Activation »). + corriger un écart de complétude : l'activation manuelle (`toggleAccess`) ne posait que `dashboard_type` alors que le chemin automatique (paiement) posait aussi `elio_lab_enabled` + `lab_mode_available` → « Lab activé » mais Élio Lab muet. Aligner les deux chemins.
+- **Prevention** : après avoir codé un composant exposant une capacité, vérifier par grep qu'il est **réellement rendu** quelque part (pas seulement exporté/testé). Quand deux chemins activent la même chose (manuel vs automatique), ils doivent écrire le MÊME jeu de flags.
+- **Agents impliques** : SPARK (dev), ATLAS
+
+---
+
 ### [UI-003] Menu/dropdown : rogné par `overflow-auto`, puis non cliquable dans un dialogue Radix modal
 - **Date** : 2026-06-16
 - **Projet** : MonprojetPro — Module Documents
