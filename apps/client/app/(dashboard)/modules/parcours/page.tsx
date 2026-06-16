@@ -4,7 +4,8 @@ import { cookies } from 'next/headers'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
 import { resolveClientMode } from '@monprojetpro/utils'
-import { ParcoursOverview } from '@monprojetpro/module-parcours'
+import { ParcoursOverview, getParcours } from '@monprojetpro/module-parcours'
+import { LabHistoryView } from '@monprojetpro/module-core-dashboard'
 // rebuild
 
 export default async function ClientParcoursPage() {
@@ -14,7 +15,7 @@ export default async function ClientParcoursPage() {
 
   const { data: client } = await supabase
     .from('clients')
-    .select('id, first_name, client_configs(dashboard_type, lab_mode_available, one_mode_available)')
+    .select('id, first_name, client_configs(dashboard_type, lab_mode_available, one_mode_available, elio_lab_enabled)')
     .eq('auth_user_id', user.id)
     .single()
 
@@ -25,7 +26,7 @@ export default async function ClientParcoursPage() {
   // sur 'lab'), on le renvoie à sa home One. Résolveur centralisé partagé.
   const cfgRelation = (client as { client_configs?: unknown }).client_configs
   const cfg = (Array.isArray(cfgRelation) ? cfgRelation[0] : cfgRelation) as
-    | { dashboard_type?: string; lab_mode_available?: boolean; one_mode_available?: boolean }
+    | { dashboard_type?: string; lab_mode_available?: boolean; one_mode_available?: boolean; elio_lab_enabled?: boolean }
     | null
     | undefined
   const { activeMode } = resolveClientMode({
@@ -37,6 +38,37 @@ export default async function ClientParcoursPage() {
 
   if (activeMode !== 'lab') {
     redirect('/')
+  }
+
+  // Niveau d'accès Lab (ADR-01) : un client gradué (dashboard_type='one') qui n'a PAS
+  // Élio Lab réactivé ne voit son Lab qu'en CONSULTATION (historique lecture seule).
+  // Élio Lab réactivé OU client Lab natif → parcours entier interactif.
+  const isGraduated = cfg?.dashboard_type === 'one'
+  const labReadOnly = isGraduated && !(cfg?.elio_lab_enabled ?? false)
+
+  if (labReadOnly) {
+    const parcoursRes = await getParcours({ clientId: client.id })
+    const p = parcoursRes.data
+    const historyParcours = p
+      ? {
+          id: p.id,
+          status: p.status,
+          startedAt: p.createdAt,
+          completedAt: p.completedAt,
+          steps: p.steps.map((s) => ({
+            id: s.id,
+            name: s.title,
+            completedAt: s.completedAt,
+            documentId: null,
+          })),
+        }
+      : null
+
+    return (
+      <div className="flex flex-col gap-6 p-6">
+        <LabHistoryView parcours={historyParcours} />
+      </div>
+    )
   }
 
   return (
