@@ -177,12 +177,16 @@ function ClientHeader({
   logoUrl,
   activeMode,
   labModeAvailable,
+  oneLocked,
+  labLocked,
   userInitials,
 }: {
   authUserId: string
   logoUrl?: string | null
   activeMode: 'lab' | 'one'
   labModeAvailable: boolean
+  oneLocked: boolean
+  labLocked: boolean
   userInitials: string
 }) {
   const accentFrom = activeMode === 'lab' ? '#7c3aed' : '#16a34a'
@@ -207,7 +211,7 @@ function ClientHeader({
 
       {/* Centre — toggle Lab / One */}
       <div className="absolute left-1/2 -translate-x-1/2">
-        <ModeToggle currentMode={activeMode} labModeAvailable={labModeAvailable} />
+        <ModeToggle currentMode={activeMode} labModeAvailable={labModeAvailable} oneLocked={oneLocked} labLocked={labLocked} />
       </div>
 
       {/* Droite — cloche + avatar */}
@@ -317,7 +321,7 @@ export default async function DashboardLayout({
   // ADR-01 Révision 2 — Le mode actif est piloté par cookie navigateur, clampé aux
   // modes réellement disponibles (résolveur centralisé, source unique de vérité).
   const cookieStore = await cookies()
-  const { activeMode } = resolveClientMode({
+  const { activeMode, oneLocked, labLocked } = resolveClientMode({
     dashboardType: clientConfig?.dashboard_type,
     labModeAvailable,
     oneModeAvailable: clientConfig?.one_mode_available ?? false,
@@ -364,6 +368,8 @@ export default async function DashboardLayout({
             logoUrl={logoUrl}
             activeMode={activeMode}
             labModeAvailable={labModeAvailable}
+            oneLocked={oneLocked}
+            labLocked={labLocked}
             userInitials={userInitials}
           />
         }

@@ -1,24 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { ModeToggle } from './mode-toggle'
 
-const mockSetActiveViewMode = vi.fn(() => Promise.resolve())
-
-vi.mock('./mode-toggle-action', () => ({
-  setActiveViewMode: (mode: 'lab' | 'one') => mockSetActiveViewMode(mode),
-}))
-
-vi.mock('./mode-toggle-constants', () => ({
-  MODE_TOGGLE_COOKIE: 'mpp_active_view',
-}))
-
 describe('ModeToggle', () => {
-  const originalReplace = window.location.replace
   const mockReplace = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Stub window.location.replace (JSDOM ne le supporte pas nativement sur nav)
+    // JSDOM ne supporte pas nativement la navigation — on stub replace.
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: { ...window.location, replace: mockReplace },
@@ -26,72 +15,49 @@ describe('ModeToggle', () => {
     mockReplace.mockClear()
   })
 
-  it('exports ModeToggle component', () => {
-    expect(ModeToggle).toBeDefined()
-  })
-
-  it('does NOT render when labModeAvailable is false', () => {
-    const { container } = render(
-      <ModeToggle currentMode="one" labModeAvailable={false} />
-    )
+  it('ne rend rien si labModeAvailable=false (One direct, pas de toggle)', () => {
+    const { container } = render(<ModeToggle currentMode="one" labModeAvailable={false} />)
     expect(container.firstChild).toBeNull()
   })
 
-  it('renders both Mode Lab and Mode One buttons when labModeAvailable is true', () => {
-    render(<ModeToggle currentMode="one" labModeAvailable={true} />)
+  it('affiche les deux boutons quand le toggle est visible', () => {
+    render(<ModeToggle currentMode="one" labModeAvailable />)
     expect(screen.getByText('Mode Lab')).toBeDefined()
     expect(screen.getByText('Mode One')).toBeDefined()
   })
 
-  it('marks the current mode button as aria-pressed=true', () => {
-    render(<ModeToggle currentMode="lab" labModeAvailable={true} />)
-    const labBtn = screen.getByText('Mode Lab')
-    const oneBtn = screen.getByText('Mode One')
-    expect(labBtn.getAttribute('aria-pressed')).toBe('true')
-    expect(oneBtn.getAttribute('aria-pressed')).toBe('false')
+  it('marque le mode actif avec aria-pressed=true', () => {
+    render(<ModeToggle currentMode="lab" labModeAvailable />)
+    expect(screen.getByText('Mode Lab').getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByText('Mode One').getAttribute('aria-pressed')).toBe('false')
   })
 
-  it('calls setActiveViewMode server action when toggling to a new mode', async () => {
-    render(<ModeToggle currentMode="one" labModeAvailable={true} />)
-    fireEvent.click(screen.getByText('Mode Lab'))
-    await waitFor(() => {
-      expect(mockSetActiveViewMode).toHaveBeenCalledWith('lab')
-    })
+  it('bascule vers un mode disponible → navigation', () => {
+    render(<ModeToggle currentMode="lab" labModeAvailable />)
+    fireEvent.click(screen.getByText('Mode One'))
+    expect(mockReplace).toHaveBeenCalledWith('/')
   })
 
-  it('reloads to / via window.location.replace after the server action resolves', async () => {
-    render(<ModeToggle currentMode="one" labModeAvailable={true} />)
-    fireEvent.click(screen.getByText('Mode Lab'))
-    await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/')
-    })
-  })
-
-  it('calls onToggle callback with the new mode', () => {
+  it('appelle onToggle avec le nouveau mode', () => {
     const onToggle = vi.fn()
-    render(
-      <ModeToggle currentMode="one" labModeAvailable={true} onToggle={onToggle} />
-    )
-    fireEvent.click(screen.getByText('Mode Lab'))
-    expect(onToggle).toHaveBeenCalledWith('lab')
+    render(<ModeToggle currentMode="lab" labModeAvailable onToggle={onToggle} />)
+    fireEvent.click(screen.getByText('Mode One'))
+    expect(onToggle).toHaveBeenCalledWith('one')
   })
 
-  it('does nothing when clicking the already active mode', () => {
+  it('clic sur le mode déjà actif → ne fait rien', () => {
     const onToggle = vi.fn()
-    render(
-      <ModeToggle currentMode="lab" labModeAvailable={true} onToggle={onToggle} />
-    )
+    render(<ModeToggle currentMode="lab" labModeAvailable onToggle={onToggle} />)
     fireEvent.click(screen.getByText('Mode Lab'))
     expect(onToggle).not.toHaveBeenCalled()
-    expect(mockSetActiveViewMode).not.toHaveBeenCalled()
     expect(mockReplace).not.toHaveBeenCalled()
   })
 
-  it('switches the active button after a click', () => {
-    render(<ModeToggle currentMode="one" labModeAvailable={true} />)
-    const labBtn = screen.getByText('Mode Lab')
-    expect(labBtn.getAttribute('aria-pressed')).toBe('false')
-    fireEvent.click(labBtn)
-    expect(labBtn.getAttribute('aria-pressed')).toBe('true')
+  it('clic sur Mode One VERROUILLÉ → message teasing, aucune navigation', () => {
+    render(<ModeToggle currentMode="lab" labModeAvailable oneLocked />)
+    expect(screen.queryByText(/futur espace One/i)).toBeNull()
+    fireEvent.click(screen.getByText('Mode One'))
+    expect(screen.queryByText(/futur espace One/i)).not.toBeNull()
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 })
