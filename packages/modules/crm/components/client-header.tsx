@@ -1,19 +1,17 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { Badge, Button, Switch, showSuccess, showError } from '@monprojetpro/ui'
+import { Badge, Button } from '@monprojetpro/ui'
 import { CalendarDays } from 'lucide-react'
 import type { Client } from '../types/crm.types'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ClientStatusBadge } from './client-status-badge'
-import { toggleAccess } from '../actions/toggle-access'
 
 interface ClientHeaderProps {
   client: Client
   onEdit?: () => void
   dashboardType?: string
+  /** Conservé pour compat appelant — non utilisé ici (l'activation Lab vit dans l'onglet Lab). */
   hasActiveParcours?: boolean
 }
 
@@ -32,31 +30,16 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function ClientHeader({ client, onEdit, dashboardType, hasActiveParcours = false }: ClientHeaderProps) {
+export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProps) {
   const fullName = client.firstName ? `${client.firstName} ${client.name}` : client.name
   const creationDate = format(new Date(client.createdAt), 'd MMMM yyyy', { locale: fr })
   const initials = getInitials(fullName)
 
-  const [isPending, startTransition] = useTransition()
-  const queryClient = useQueryClient()
-
+  // Lecture seule : le header reflète l'état d'accès, il ne le pilote pas.
+  // L'activation/désactivation Lab & One vit dans l'onglet Lab (section ① Activation),
+  // avec son garde-fou de confirmation. Évite le doublon d'action et la divergence de comportement.
   const labEnabled = dashboardType === 'lab'
-  const oneEnabled = dashboardType === 'one' || dashboardType === 'lab'
-
-  const handleToggle = (accessType: 'lab' | 'one', enabled: boolean) => {
-    startTransition(async () => {
-      const result = await toggleAccess({ clientId: client.id, accessType, enabled })
-      if (result.error) {
-        showError(result.error.message)
-        return
-      }
-      const label = accessType === 'lab' ? 'Lab' : 'One'
-      showSuccess(`Accès ${label} ${enabled ? 'activé' : 'désactivé'}`)
-      await queryClient.invalidateQueries({ queryKey: ['client', client.id] })
-      await queryClient.invalidateQueries({ queryKey: ['clients'] })
-      await queryClient.invalidateQueries({ queryKey: ['client-parcours', client.id] })
-    })
-  }
+  const oneOnly = dashboardType === 'one'
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -87,6 +70,12 @@ export function ClientHeader({ client, onEdit, dashboardType, hasActiveParcours 
                 Lab actif
               </span>
             )}
+            {oneOnly && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-0.5 text-xs font-medium text-green-400 border border-green-500/30">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                One actif
+              </span>
+            )}
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground ml-1">
               <CalendarDays className="h-3 w-3" />
               Client depuis le {creationDate}
@@ -94,37 +83,8 @@ export function ClientHeader({ client, onEdit, dashboardType, hasActiveParcours 
           </div>
         </div>
 
-        {/* Actions header droite */}
+        {/* Actions header droite — lecture seule, l'activation Lab/One vit dans l'onglet Lab */}
         <div className="flex items-center gap-4 shrink-0 mt-1">
-          {/* Toggles accès compacts */}
-          {dashboardType && (
-            <div className="flex items-center gap-3 border border-border rounded-lg px-3 py-2">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Lab</span>
-                <Switch
-                  checked={labEnabled}
-                  onCheckedChange={(checked: boolean) => handleToggle('lab', checked)}
-                  disabled={isPending}
-                  aria-label="Accès Lab"
-                  data-testid="header-toggle-lab"
-                  className="scale-75"
-                />
-              </div>
-              <div className="w-px h-4 bg-border" />
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">One</span>
-                <Switch
-                  checked={oneEnabled}
-                  onCheckedChange={(checked: boolean) => handleToggle('one', checked)}
-                  disabled={isPending}
-                  aria-label="Accès One"
-                  data-testid="header-toggle-one"
-                  className="scale-75"
-                />
-              </div>
-            </div>
-          )}
-
           {/* Modifier */}
           {onEdit && (
             <Button onClick={onEdit} variant="outline" size="sm">
