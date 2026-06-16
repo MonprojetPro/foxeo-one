@@ -94,10 +94,25 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
       newDashboardType = 'one'
     }
 
-    // Update client_configs
+    // Update client_configs. Activer le Lab = rendre Élio Lab + le mode Lab réellement
+    // disponibles (mêmes flags que l'activation par paiement, cf. pennylane-paid-handlers).
+    // Sinon « Lab activé » mais Élio Lab muet côté client.
+    const configUpdate: {
+      dashboard_type: string
+      lab_mode_available?: boolean
+      elio_lab_enabled?: boolean
+    } = { dashboard_type: newDashboardType }
+    if (newLabOn) {
+      configUpdate.lab_mode_available = true
+      configUpdate.elio_lab_enabled = true
+    } else {
+      // Lab désactivé : Élio Lab coupé (cohérent avec la graduation Lab → One).
+      configUpdate.elio_lab_enabled = false
+    }
+
     const { error: updateError } = await supabase
       .from('client_configs')
-      .update({ dashboard_type: newDashboardType })
+      .update(configUpdate)
       .eq('client_id', clientId)
 
     if (updateError) {

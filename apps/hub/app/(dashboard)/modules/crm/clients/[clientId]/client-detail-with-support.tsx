@@ -90,16 +90,16 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         label: 'Lab',
         icon: FlaskConical, color: '#22d3ee',
         content: (
-          <div className="space-y-6">
-            <ClientLabTabContent clientId={client.id} />
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                Configuration Élio par étape
-              </h3>
-              <ClientParcoursAgentsList clientId={client.id} />
-            </div>
-            <LabBillingTab clientId={client.id} clientName={client.name} />
-          </div>
+          <ClientLabTabContent
+            clientId={client.id}
+            billingStatus={
+              labStatus
+                ? { invoiceSent: labStatus.invoiceSent, labPaid: labStatus.labPaid }
+                : undefined
+            }
+            billingSlot={<LabBillingTab clientId={client.id} clientName={client.name} />}
+            elioConfigSlot={<ClientParcoursAgentsList clientId={client.id} />}
+          />
         ),
       },
       {
@@ -122,7 +122,7 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         ),
       },
     ],
-    [client.id, client.company, client.name, client.email]
+    [client.id, client.company, client.name, client.email, labStatus]
   )
 
   return (
