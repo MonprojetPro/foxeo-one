@@ -39,7 +39,7 @@ export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProp
   // L'activation/désactivation Lab & One vit dans l'onglet Lab (section ① Activation),
   // avec son garde-fou de confirmation. Évite le doublon d'action et la divergence de comportement.
   const labEnabled = dashboardType === 'lab'
-  const oneOnly = dashboardType === 'one'
+  const oneEnabled = dashboardType === 'one' || dashboardType === 'lab'
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -64,18 +64,6 @@ export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProp
               suspendedAt={client.suspendedAt}
               archivedAt={client.archivedAt}
             />
-            {labEnabled && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-0.5 text-xs font-medium text-green-400 border border-green-500/30">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                Lab actif
-              </span>
-            )}
-            {oneOnly && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-0.5 text-xs font-medium text-green-400 border border-green-500/30">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                One actif
-              </span>
-            )}
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground ml-1">
               <CalendarDays className="h-3 w-3" />
               Client depuis le {creationDate}
@@ -85,6 +73,34 @@ export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProp
 
         {/* Actions header droite — lecture seule, l'activation Lab/One vit dans l'onglet Lab */}
         <div className="flex items-center gap-4 shrink-0 mt-1">
+          {/* Indicateurs d'accès (lecture seule) — Lab = violet, One = vert ; grisé si inactif */}
+          {dashboardType && (
+            <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                  labEnabled
+                    ? 'bg-violet-500/15 text-violet-300 border-violet-500/30'
+                    : 'bg-muted/40 text-muted-foreground border-transparent'
+                }`}
+                title={labEnabled ? 'Accès Lab actif' : 'Accès Lab inactif'}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${labEnabled ? 'bg-violet-400' : 'bg-muted-foreground/40'}`} />
+                Lab
+              </span>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                  oneEnabled
+                    ? 'bg-green-500/15 text-green-400 border-green-500/30'
+                    : 'bg-muted/40 text-muted-foreground border-transparent'
+                }`}
+                title={oneEnabled ? 'Accès One actif' : 'Accès One inactif'}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${oneEnabled ? 'bg-green-400' : 'bg-muted-foreground/40'}`} />
+                One
+              </span>
+            </div>
+          )}
+
           {/* Modifier */}
           {onEdit && (
             <Button onClick={onEdit} variant="outline" size="sm">
