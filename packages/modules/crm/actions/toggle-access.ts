@@ -108,6 +108,15 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
     } else {
       // Lab désactivé : Élio Lab coupé (cohérent avec la graduation Lab → One).
       configUpdate.elio_lab_enabled = false
+      // Désactivation EXPLICITE de l'accès Lab par l'opérateur → retirer aussi la
+      // disponibilité du Mode Lab. Sinon, côté client, lab_mode_available reste true et
+      // un client dont le cookie de vue est sur 'lab' demeure bloqué en vue Lab (le calcul
+      // activeMode du layout privilégie cookie+lab_mode_available sur dashboard_type).
+      // On ne le fait QUE sur un toggle 'lab' off, pas sur un 'one' off, pour ne pas
+      // écraser le lab_mode_available d'un client gradué (géré par graduate-client).
+      if (accessType === 'lab') {
+        configUpdate.lab_mode_available = false
+      }
     }
 
     const { error: updateError } = await supabase

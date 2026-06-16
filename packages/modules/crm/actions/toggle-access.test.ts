@@ -147,6 +147,62 @@ describe('toggleAccess Server Action', () => {
     expect(result.data?.dashboardType).toBe('lab')
   })
 
+  it('should reset lab_mode_available to false when disabling lab access', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: testOperatorId } },
+      error: null,
+    })
+
+    mockOperatorSingle.mockResolvedValue({
+      data: { id: testOperatorDbId },
+      error: null,
+    })
+
+    // Client actuellement en Lab
+    mockConfigSingle.mockResolvedValue({
+      data: { dashboard_type: 'lab' },
+      error: null,
+    })
+
+    mockUpdateEq.mockResolvedValue({ error: null })
+    mockParcoursUpdateSelect.mockResolvedValue({ data: [], error: null })
+
+    // Capture le payload d'update envoyé à client_configs
+    let capturedUpdate: Record<string, unknown> | null = null
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'operators') {
+        return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockOperatorSingle })) })) }
+      }
+      if (table === 'client_configs') {
+        return {
+          select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockConfigSingle })) })),
+          update: vi.fn((payload: Record<string, unknown>) => {
+            capturedUpdate = payload
+            return { eq: mockUpdateEq }
+          }),
+        }
+      }
+      if (table === 'parcours') return { update: mockParcoursUpdate }
+      if (table === 'activity_logs') return { insert: mockActivityInsert }
+      return {}
+    })
+
+    const { toggleAccess } = await import('./toggle-access')
+    const result = await toggleAccess({
+      clientId: testClientId,
+      accessType: 'lab',
+      enabled: false,
+    })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.dashboardType).toBe('one')
+    expect(capturedUpdate).toMatchObject({
+      dashboard_type: 'one',
+      elio_lab_enabled: false,
+      lab_mode_available: false,
+    })
+  })
+
   it('should always return { data, error } format', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: null },
