@@ -59,6 +59,14 @@ export function RealtimeDashboardRefresh({ clientId }: RealtimeDashboardRefreshP
         { event: '*', schema: 'public', table: 'messages', filter: `client_id=eq.${clientId}` },
         refresh,
       )
+      // Accès Lab/One, modules actifs, Élio Lab, graduation : tout vit dans client_configs,
+      // lu en SSR par le layout client. Sans cette écoute, un changement opéré depuis le Hub
+      // ne se voyait qu'après un rechargement manuel (thème, sidebar, toggle Mode, Élio Lab).
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'client_configs', filter: `client_id=eq.${clientId}` },
+        refresh,
+      )
       .subscribe()
 
     return () => {
