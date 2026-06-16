@@ -17,7 +17,7 @@ export default async function ClientHomePage() {
   // Note: client_configs PK is client_id (no id column), density column doesn't exist
   const { data: clientRecord } = await supabase
     .from('clients')
-    .select('id, first_name, name, client_configs(client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, show_lab_teasing, created_at, updated_at)')
+    .select('id, first_name, name, client_configs(client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, show_lab_teasing, lab_mode_available, created_at, updated_at)')
     .eq('auth_user_id', user.id)
     .maybeSingle()
 
@@ -55,11 +55,19 @@ export default async function ClientHomePage() {
       }
 
   // Mode Lab → rediriger vers Mon Parcours (accueil Lab)
+  // IMPORTANT : appliquer le MÊME garde lab_mode_available que layout.tsx et
+  // modules/elio/page.tsx. Sinon, quand l'opérateur révoque l'accès Lab
+  // (lab_mode_available=false) alors que le cookie de vue du client est resté sur
+  // 'lab', la home redirige vers le parcours Lab dans un shell One → incohérence.
+  const labModeAvailable = (configData as { lab_mode_available?: boolean } | null)?.lab_mode_available ?? false
   const cookieStore = await cookies()
   const cookieMode = cookieStore.get(MODE_TOGGLE_COOKIE)?.value
-  const effectiveMode = cookieMode === 'lab' || cookieMode === 'one'
-    ? cookieMode
-    : clientConfig.dashboardType
+  const effectiveMode: 'lab' | 'one' =
+    cookieMode === 'lab' && labModeAvailable
+      ? 'lab'
+      : cookieMode === 'one' && (clientConfig.dashboardType === 'one' || labModeAvailable)
+        ? 'one'
+        : clientConfig.dashboardType
 
   if (effectiveMode === 'lab') {
     redirect('/modules/parcours')
