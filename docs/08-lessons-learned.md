@@ -18,10 +18,22 @@
 | GIT | Git / Workflow | 1 |
 | SEC | Sécurité / Secrets | 1 |
 | UI | Interface / CSS | 1 |
+| DRY | Logique dupliquée / Architecture | 1 |
 
 ---
 
 ## Lecons
+
+### [DRY-001] Une décision dupliquée dans N consumers diverge et casse en cascade → résolveur unique
+- **Date** : 2026-06-16
+- **Projet** : MonprojetPro
+- **Phase** : Bug en cascade puis refonte — modèle Lab/One (toggle de mode côté client)
+- **Categorie** : Logique dupliquée / Architecture (DRY)
+- **Symptome** : MiKL désactive le Lab d'un client depuis le Hub. Selon l'écran : le shell passe bien en One, **mais** la home redirige vers le parcours Lab (One-shell + contenu Lab), et la page `/modules/parcours` reste accessible. Chaque correctif en révélait un autre (4 allers-retours avant stabilisation).
+- **Cause racine** : la même décision « quel mode afficher (lab/one) ? » était **réécrite à la main dans 4 fichiers** (`layout.tsx`, `page.tsx`, `modules/parcours/page.tsx`, `modules/elio/page.tsx`), avec des conditions **subtilement différentes** : le layout appliquait le garde `cookie==='lab' && lab_mode_available`, mais la home et la page parcours honoraient le cookie **sans** ce garde. Tant que tous les flags restaient « ouverts » la divergence était invisible ; dès qu'un flag se fermait (`lab_mode_available=false`), les consumers se contredisaient. S'ajoutaient : (a) un **consumer Realtime oublié** — `client_configs` n'était pas dans la publication `supabase_realtime`, donc aucune propagation live ; (b) un **flag d'ADR jamais implémenté** (`one_mode_available`) qui forçait le code à déduire l'accès One depuis `dashboard_type`, modélisant mal la matrice.
+- **Solution validee** : extraire **un résolveur unique** `resolveClientMode()` dans `@monprojetpro/utils` (entrées : `dashboardType`, `lab_mode_available`, `one_mode_available`, `cookieMode` ; sorties : `activeMode` + `canSwitch` + `labLocked`/`oneLocked`), importé par les 4 consumers ET par le `ModeToggle`. Ajout du flag manquant `one_mode_available` (migration + backfill). Ajout de `client_configs` à la publication Realtime + écoute dans `RealtimeDashboardRefresh`.
+- **Regle a suivre** : dès qu'une **règle de décision** (résolution de mode, calcul de permission, dérivation d'état) doit être lue par **plus d'un endroit**, elle vit dans **une seule fonction pure partagée** — jamais recopiée. Recopier = garantir une divergence future silencieuse. Corollaire : (1) toute table lue en SSR et mutée ailleurs doit être dans `supabase_realtime` + écoutée ; (2) un flag décrit dans un ADR mais absent du schéma est une dette — l'implémenter ou acter explicitement sa non-implémentation, jamais le contourner en silence.
+
 
 ### [UI-001] `field-sizing-content` sur un textarea le fait déborder hors de son conteneur
 - **Date** : 2026-06-05
