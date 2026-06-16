@@ -217,6 +217,19 @@
 
 ---
 
+### [UI-002] Prop optionnel oublié chez un consumer → composant partagé devient une coquille morte
+- **Date** : 2026-06-16
+- **Projet** : MonprojetPro — Module Documents
+- **Categorie** : UI / Composants partagés
+- **Symptome** : Dans le dialogue « Gestion des documents » (fiche client CRM), impossible de lire un document — le nom n'était pas cliquable. La même liste fonctionnait pourtant sur les pages plein-écran Hub/One.
+- **Cause racine** : `DocumentList` rend le nom en lien viewer **uniquement si** le prop optionnel `viewerBaseHref` est fourni ; sinon en `<span>` inerte. `client-documents-tab.tsx` appelait `DocumentsPageClient` sans ce prop → aucune voie de lecture. Même classe que les « consumers oubliés » Realtime/RGPD : la feature est branchée à un endroit et morte à un autre.
+- **Solution validee** : Découpler la lecture du prop optionnel — bouton « Lire » (aperçu EN PLACE via `DocumentPreviewModal`) présent partout, + nom cliquable (lien si `viewerBaseHref`, sinon aperçu). Une capacité essentielle (lire) ne doit pas dépendre d'un prop qu'un consumer peut oublier.
+- **Bonus** : Un `header` fourni en **fonction** à `DataTable` ne s'affiche pas — la table rend `{column.header}` brut (pas d'appel). Passer du JSX, pas une fonction.
+- **Prevention** : Pour un composant partagé, lister ses consumers (grep) avant de livrer et vérifier que la fonction cœur marche dans CHAQUE contexte d'appel, pas seulement le principal. Un prop optionnel qui désactive une capacité essentielle est un piège — préférer un défaut fonctionnel.
+- **Agents impliques** : SPARK (dev), CERBÈRE (gate sécu — RAS), ATLAS (documentation)
+
+---
+
 ### [RSC-003] Constantes exportées depuis un fichier `'use client'` arrivent `undefined` au RSC
 - **Date** : 2026-04-23
 - **Projet** : MonprojetPro (apps/client — toggle Mode Lab/One)
