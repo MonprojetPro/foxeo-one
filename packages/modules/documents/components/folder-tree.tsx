@@ -9,6 +9,9 @@ import { CreateFolderDialog } from './create-folder-dialog'
 import { useFolderMutations } from '../hooks/use-folder-mutations'
 import { useUndoableAction } from '../hooks/use-undo-action'
 
+/** 'sidebar' = colonne verticale (défaut). 'horizontal' = barre de pilules au-dessus de la liste. */
+type FolderTreeLayout = 'sidebar' | 'horizontal'
+
 interface FolderTreeProps {
   folders: DocumentFolder[]
   selectedFolderId: string | null
@@ -16,6 +19,24 @@ interface FolderTreeProps {
   clientId: string
   operatorId: string
   isOperator?: boolean
+  layout?: FolderTreeLayout
+}
+
+// ── Classes selon le layout ──────────────────────────────────────────────────
+
+function itemClass(layout: FolderTreeLayout, isSelected: boolean, extra = ''): string {
+  if (layout === 'horizontal') {
+    return cn(
+      'group inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm cursor-pointer whitespace-nowrap hover:bg-accent transition-colors',
+      isSelected ? 'bg-accent text-accent-foreground border-primary/50' : 'border-border',
+      extra
+    )
+  }
+  return cn(
+    'group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer hover:bg-accent',
+    isSelected && 'bg-accent text-accent-foreground',
+    extra
+  )
 }
 
 interface FolderItemProps {
@@ -24,17 +45,15 @@ interface FolderItemProps {
   onSelect: () => void
   onRename: (folder: DocumentFolder) => void
   onDelete: (folder: DocumentFolder) => void
+  layout: FolderTreeLayout
 }
 
-function FolderItem({ folder, isSelected, onSelect, onRename, onDelete }: FolderItemProps) {
+function FolderItem({ folder, isSelected, onSelect, onRename, onDelete, layout }: FolderItemProps) {
   const [showActions, setShowActions] = useState(false)
 
   return (
     <div
-      className={cn(
-        'group flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent',
-        isSelected && 'bg-accent text-accent-foreground'
-      )}
+      className={itemClass(layout, isSelected)}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
       onClick={onSelect}
@@ -45,7 +64,7 @@ function FolderItem({ folder, isSelected, onSelect, onRename, onDelete }: Folder
       ) : (
         <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
-      <span className="flex-1 text-sm truncate">{folder.name}</span>
+      <span className={cn('text-sm truncate', layout === 'sidebar' && 'flex-1')}>{folder.name}</span>
       {showActions && (
         <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
           <Button
@@ -81,6 +100,7 @@ export function FolderTree({
   clientId,
   operatorId,
   isOperator = false,
+  layout = 'sidebar',
 }: FolderTreeProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [folderToDelete, setFolderToDelete] = useState<DocumentFolder | null>(null)
@@ -136,14 +156,16 @@ export function FolderTree({
     setFolderToDelete(null)
   }
 
+  const containerClass =
+    layout === 'horizontal'
+      ? 'flex flex-wrap items-center gap-2'
+      : 'flex flex-col gap-1'
+
   return (
-    <div className="flex flex-col gap-1" data-testid="folder-tree">
+    <div className={containerClass} data-testid="folder-tree">
       {/* Tous les documents */}
       <div
-        className={cn(
-          'flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent text-sm font-medium',
-          selectedFolderId === null && 'bg-accent text-accent-foreground'
-        )}
+        className={itemClass(layout, selectedFolderId === null, 'font-medium')}
         onClick={() => onSelectFolder(null)}
         data-testid="folder-all"
       >
@@ -153,10 +175,7 @@ export function FolderTree({
 
       {/* Non classés */}
       <div
-        className={cn(
-          'flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent text-sm',
-          selectedFolderId === 'uncategorized' && 'bg-accent text-accent-foreground'
-        )}
+        className={itemClass(layout, selectedFolderId === 'uncategorized')}
         onClick={() => onSelectFolder('uncategorized')}
         data-testid="folder-uncategorized"
       >
@@ -176,6 +195,7 @@ export function FolderTree({
             setRenameDialogOpen(true)
           }}
           onDelete={(f) => setFolderToDelete(f)}
+          layout={layout}
         />
       ))}
 
@@ -183,7 +203,10 @@ export function FolderTree({
       <Button
         variant="ghost"
         size="sm"
-        className="mt-1 justify-start gap-2 text-muted-foreground hover:text-foreground"
+        className={cn(
+          'gap-2 text-muted-foreground hover:text-foreground',
+          layout === 'horizontal' ? 'rounded-full border border-dashed' : 'mt-1 justify-start'
+        )}
         onClick={() => setCreateDialogOpen(true)}
         data-testid="new-folder-btn"
       >

@@ -152,25 +152,25 @@ export function DocumentsPageClient({
         </div>
       )}
 
-      <div className="flex gap-4">
-        {/* Arborescence dossiers — colonne gauche */}
-        <aside className="w-64 shrink-0" data-testid="folder-tree-aside">
-          {foldersPending ? (
-            <FolderTreeSkeleton />
-          ) : (
-            <FolderTree
-              folders={folders}
-              selectedFolderId={activeFolderId}
-              onSelectFolder={setActiveFolderId}
-              clientId={clientId}
-              operatorId={operatorId}
-              isOperator={isOperator}
-            />
-          )}
-        </aside>
+      {/* Dossiers — barre horizontale au-dessus (libère toute la largeur pour la liste) */}
+      <div data-testid="folder-tree-bar">
+        {foldersPending ? (
+          <FolderTreeSkeleton layout="horizontal" />
+        ) : (
+          <FolderTree
+            folders={folders}
+            selectedFolderId={activeFolderId}
+            onSelectFolder={setActiveFolderId}
+            clientId={clientId}
+            operatorId={operatorId}
+            isOperator={isOperator}
+            layout="horizontal"
+          />
+        )}
+      </div>
 
-        {/* Contenu principal — colonne droite */}
-        <div className="flex-1 flex flex-col gap-4 min-w-0">
+      {/* Contenu principal — pleine largeur */}
+      <div className="flex flex-col gap-4 min-w-0">
           <DocumentSearch
             value={searchQuery}
             onChange={setSearchQuery}
@@ -252,7 +252,6 @@ export function DocumentsPageClient({
             />
           )}
         </div>
-      </div>
     </div>
   )
 }
