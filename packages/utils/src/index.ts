@@ -63,3 +63,9 @@ export {
   type CommunicationProfileInput,
 } from './defaults'
 export { readFileContent } from './read-file-content'
+export {
+  resolveClientMode,
+  type ClientMode,
+  type ClientModeInput,
+  type ResolvedClientMode,
+} from './client-mode'

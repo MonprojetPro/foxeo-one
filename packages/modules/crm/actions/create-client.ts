@@ -101,6 +101,8 @@ export async function createClient(
         client_id: clientData.id,
         active_modules: ['core-dashboard', 'chat', 'documents', 'visio'],
         dashboard_type: 'one',
+        // Client One direct : Mode One débloqué, pas d'accès Lab (cf. matrice ADR-01).
+        one_mode_available: true,
       })
 
     if (configError) {

@@ -181,6 +181,7 @@ export type Database = {
           elio_config: Json
           parcours_config: Json
           lab_mode_available: boolean
+          one_mode_available: boolean
           elio_lab_enabled: boolean
           created_at: string
           updated_at: string
@@ -195,6 +196,7 @@ export type Database = {
           elio_config?: Json
           parcours_config?: Json
           lab_mode_available?: boolean
+          one_mode_available?: boolean
           elio_lab_enabled?: boolean
           created_at?: string
           updated_at?: string
@@ -209,6 +211,7 @@ export type Database = {
           elio_config?: Json
           parcours_config?: Json
           lab_mode_available?: boolean
+          one_mode_available?: boolean
           elio_lab_enabled?: boolean
           created_at?: string
           updated_at?: string

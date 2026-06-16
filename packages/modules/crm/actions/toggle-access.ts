@@ -100,8 +100,14 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
     const configUpdate: {
       dashboard_type: string
       lab_mode_available?: boolean
+      one_mode_available?: boolean
       elio_lab_enabled?: boolean
     } = { dashboard_type: newDashboardType }
+    // La switch « Accès One » du Hub pilote directement one_mode_available (ADR-01) :
+    // le Mode One n'est plus implicitement déduit de l'accès Lab.
+    if (accessType === 'one') {
+      configUpdate.one_mode_available = enabled
+    }
     if (newLabOn) {
       configUpdate.lab_mode_available = true
       configUpdate.elio_lab_enabled = true

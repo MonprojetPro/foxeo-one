@@ -34,7 +34,7 @@ const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
   supportMani,   // Lab + One → /modules/support
 ]
 import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
-import { CURRENT_IA_POLICY_VERSION } from '@monprojetpro/utils'
+import { CURRENT_IA_POLICY_VERSION, resolveClientMode } from '@monprojetpro/utils'
 import { NotificationBadge } from '@monprojetpro/modules-notifications'
 import { PresenceProvider } from '@monprojetpro/modules-chat'
 import { LogoutButton } from './logout-button'
@@ -248,12 +248,14 @@ export default async function DashboardLayout({
           active_modules: string[] | null
           custom_branding: CustomBranding | null
           lab_mode_available: boolean | null
+          one_mode_available: boolean | null
         }
       | Array<{
           dashboard_type: string
           active_modules: string[] | null
           custom_branding: CustomBranding | null
           lab_mode_available: boolean | null
+          one_mode_available: boolean | null
         }>
       | null
   }
@@ -266,7 +268,7 @@ export default async function DashboardLayout({
   {
     const { data } = await supabase
       .from('clients')
-      .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, custom_branding, lab_mode_available)')
+      .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, custom_branding, lab_mode_available, one_mode_available)')
       .eq('auth_user_id', user.id)
       .maybeSingle()
     clientRecord = (data as ClientRecord | null) ?? null
@@ -309,24 +311,18 @@ export default async function DashboardLayout({
   const configRelation = clientRecord?.client_configs
   const clientConfig = Array.isArray(configRelation) ? configRelation[0] : configRelation
 
-  const dashboardType: 'lab' | 'one' = (clientConfig?.dashboard_type === 'one' ? 'one' : 'lab')
   const labModeAvailable = clientConfig?.lab_mode_available ?? false
   const activeModules: string[] = clientConfig?.active_modules ?? ['core-dashboard']
 
-  // ADR-01 Révision 2 — Le mode actif est piloté par cookie navigateur.
-  // dashboard_type reste le statut canonique. Le cookie ne peut activer le Mode Lab
-  // que si le client a effectivement lab_mode_available === true.
+  // ADR-01 Révision 2 — Le mode actif est piloté par cookie navigateur, clampé aux
+  // modes réellement disponibles (résolveur centralisé, source unique de vérité).
   const cookieStore = await cookies()
-  const cookieView = cookieStore.get(MODE_TOGGLE_COOKIE)?.value
-  const cookieMode: 'lab' | 'one' | null =
-    cookieView === 'lab' || cookieView === 'one' ? cookieView : null
-
-  const activeMode: 'lab' | 'one' =
-    cookieMode === 'lab' && labModeAvailable
-      ? 'lab'
-      : cookieMode === 'one' && (dashboardType === 'one' || labModeAvailable)
-        ? 'one'
-        : dashboardType
+  const { activeMode } = resolveClientMode({
+    dashboardType: clientConfig?.dashboard_type,
+    labModeAvailable,
+    oneModeAvailable: clientConfig?.one_mode_available ?? false,
+    cookieMode: cookieStore.get(MODE_TOGGLE_COOKIE)?.value,
+  })
 
   const density = activeMode === 'one' ? 'comfortable' : 'spacious'
 

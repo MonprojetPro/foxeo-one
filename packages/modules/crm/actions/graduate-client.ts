@@ -94,6 +94,8 @@ export async function graduateClient(
         graduation_source: 'lab',
         // ADR-01 Révision 2 — Toggle Mode Lab/One disponible + Élio Lab off par défaut
         lab_mode_available: true,
+        // Mode One débloqué par la graduation (le client garde aussi l'accès Lab).
+        one_mode_available: true,
         elio_lab_enabled: false,
       })
       .eq('client_id', clientId)

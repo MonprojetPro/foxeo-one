@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { CoreDashboard, getTeasingEligibility } from '@monprojetpro/module-core-dashboard'
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
+import { resolveClientMode } from '@monprojetpro/utils'
 import type { ClientConfig } from '@monprojetpro/types'
 
 export default async function ClientHomePage() {
@@ -17,7 +18,7 @@ export default async function ClientHomePage() {
   // Note: client_configs PK is client_id (no id column), density column doesn't exist
   const { data: clientRecord } = await supabase
     .from('clients')
-    .select('id, first_name, name, client_configs(client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, show_lab_teasing, lab_mode_available, created_at, updated_at)')
+    .select('id, first_name, name, client_configs(client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, show_lab_teasing, lab_mode_available, one_mode_available, created_at, updated_at)')
     .eq('auth_user_id', user.id)
     .maybeSingle()
 
@@ -54,20 +55,17 @@ export default async function ClientHomePage() {
         updatedAt: new Date().toISOString(),
       }
 
-  // Mode Lab → rediriger vers Mon Parcours (accueil Lab)
-  // IMPORTANT : appliquer le MÊME garde lab_mode_available que layout.tsx et
-  // modules/elio/page.tsx. Sinon, quand l'opérateur révoque l'accès Lab
-  // (lab_mode_available=false) alors que le cookie de vue du client est resté sur
-  // 'lab', la home redirige vers le parcours Lab dans un shell One → incohérence.
-  const labModeAvailable = (configData as { lab_mode_available?: boolean } | null)?.lab_mode_available ?? false
+  // Mode Lab → rediriger vers Mon Parcours (accueil Lab). Résolveur centralisé
+  // (même source de vérité que layout.tsx / parcours / Élio) : le cookie ne peut
+  // activer un mode que s'il est réellement disponible.
+  const cfgFlags = configData as { lab_mode_available?: boolean; one_mode_available?: boolean } | null
   const cookieStore = await cookies()
-  const cookieMode = cookieStore.get(MODE_TOGGLE_COOKIE)?.value
-  const effectiveMode: 'lab' | 'one' =
-    cookieMode === 'lab' && labModeAvailable
-      ? 'lab'
-      : cookieMode === 'one' && (clientConfig.dashboardType === 'one' || labModeAvailable)
-        ? 'one'
-        : clientConfig.dashboardType
+  const { activeMode: effectiveMode } = resolveClientMode({
+    dashboardType: clientConfig.dashboardType,
+    labModeAvailable: cfgFlags?.lab_mode_available ?? false,
+    oneModeAvailable: cfgFlags?.one_mode_available ?? false,
+    cookieMode: cookieStore.get(MODE_TOGGLE_COOKIE)?.value,
+  })
 
   if (effectiveMode === 'lab') {
     redirect('/modules/parcours')
