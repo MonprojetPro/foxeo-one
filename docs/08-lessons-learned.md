@@ -230,6 +230,18 @@
 
 ---
 
+### [UI-003] Menu/dropdown : rogné par `overflow-auto`, puis non cliquable dans un dialogue Radix modal
+- **Date** : 2026-06-16
+- **Projet** : MonprojetPro — Module Documents
+- **Categorie** : UI / Portals & overlays
+- **Symptome** : (1) Le menu ⋯ d'une ligne de tableau s'affichait **tronqué**. (2) Une fois rendu via un portail, ses éléments étaient **visibles mais non cliquables** dans le dialogue « Gestion des documents ».
+- **Cause racine** : (1) Le menu en `position:absolute` était rogné par le conteneur `overflow-auto` de la `DataTable`. (2) Porté sur `document.body` pour échapper à l'overflow, il se retrouvait **hors du contenu** d'un dialogue Radix **modal**, qui applique `pointer-events:none` à tout l'extérieur du dialogue → clics ignorés.
+- **Solution validee** : Rendre le menu dans un **portal** en `position:fixed` (coordonnées calculées depuis le bouton, ouverture vers le haut si peu de place, fermeture au scroll/resize/clic extérieur) **ET** forcer `style={{ pointerEvents: 'auto' }}` sur le conteneur du menu.
+- **Prevention** : Tout dropdown/menu dans un conteneur scrollable → portal + `position:fixed`. Tout élément porté hors d'un dialogue Radix modal → `pointer-events:auto` explicite (sinon non cliquable). Vérifier le clic réel, pas seulement l'affichage.
+- **Agents impliques** : SPARK (dev), ATLAS
+
+---
+
 ### [RT-001] Realtime ne livre pas un changement qui fait SORTIR une ligne de la visibilité RLS
 - **Date** : 2026-06-16
 - **Projet** : MonprojetPro — Module Documents
