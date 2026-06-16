@@ -26,6 +26,7 @@ export { DocumentExportMenu } from './components/document-export-menu'
 
 // Hooks
 export { useDocuments } from './hooks/use-documents'
+export { useDocumentsRealtime } from './hooks/use-documents-realtime'
 export { useDocumentViewer } from './hooks/use-document-viewer'
 export { useShareDocument } from './hooks/use-share-document'
 export { useFolders } from './hooks/use-folders'

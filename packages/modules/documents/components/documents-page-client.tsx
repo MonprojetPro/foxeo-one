@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { useDocuments } from '../hooks/use-documents'
+import { useDocumentsRealtime } from '../hooks/use-documents-realtime'
 import { useFolders } from '../hooks/use-folders'
 import { useUndoableAction } from '../hooks/use-undo-action'
 import { restoreDocument } from '../actions/restore-document'
@@ -52,6 +53,10 @@ export function DocumentsPageClient({
     deleteDocument,
     isDeleting,
   } = useDocuments(clientId)
+
+  // Sync temps-réel : rafraîchit la liste quand un doc change (partage/retrait/ajout/suppr),
+  // y compris au retrait de partage que la RLS masquerait à un postgres_changes (broadcast DB).
+  useDocumentsRealtime(clientId)
 
   const { execute: executeUndo } = useUndoableAction()
 
