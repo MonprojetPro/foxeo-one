@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { DataTable, type ColumnDef } from '@monprojetpro/ui'
 import { Badge, Button, Checkbox } from '@monprojetpro/ui'
-import { FolderInput, Trash2 } from 'lucide-react'
+import { Eye, MoreVertical, Trash2 } from 'lucide-react'
 import { formatFileSize } from '@monprojetpro/utils'
 import { DocumentIcon } from './document-icon'
 import { DocumentShareButton } from './document-share-button'
 import { DocumentSyncBadge } from './document-sync-badge'
 import { DocumentExportMenu } from './document-export-menu'
+import { DocumentPreviewModal } from './document-preview-modal'
 import { useShareDocument } from '../hooks/use-share-document'
 import { useFolderMutations } from '../hooks/use-folder-mutations'
 import type { Document } from '../types/document.types'
@@ -27,19 +28,34 @@ interface DocumentListProps {
   folders?: DocumentFolder[]
 }
 
-interface DocumentMoveDropdownProps {
+interface DocumentActionsMenuProps {
   doc: Document
-  folders: DocumentFolder[]
-  onMove: (folderId: string | null) => void
-  isPending: boolean
+  /** Si fourni (+ onMove), affiche la section « Déplacer vers ». */
+  folders?: DocumentFolder[]
+  onMove?: (folderId: string | null) => void
+  isMovePending?: boolean
+  /** Si fourni, affiche l'action « Supprimer ». */
+  onDelete?: (documentId: string) => void
+  isDeleting?: boolean
 }
 
-function DocumentMoveDropdown({ doc, folders, onMove, isPending }: DocumentMoveDropdownProps) {
+/**
+ * Menu d'actions secondaires « ⋯ » regroupant Déplacer + Supprimer en un seul point,
+ * pour éviter d'étaler les boutons sur plusieurs colonnes (cause du scroll latéral — retour MiKL).
+ * S'ouvre vers le HAUT quand l'espace sous le bouton est insuffisant.
+ */
+function DocumentActionsMenu({
+  doc,
+  folders,
+  onMove,
+  isMovePending = false,
+  onDelete,
+  isDeleting = false,
+}: DocumentActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
-  // Ouvre le menu vers le HAUT quand il manque de place sous le bouton (sinon il sort de
-  // l'écran et il faut scroller pour le voir — cf. retour MiKL).
   const [dropUp, setDropUp] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const canMove = !!folders && !!onMove
 
   useEffect(() => {
     if (!isOpen) return
@@ -69,11 +85,11 @@ function DocumentMoveDropdown({ doc, folders, onMove, isPending }: DocumentMoveD
         size="icon"
         className="h-8 w-8 text-muted-foreground"
         onClick={handleToggle}
-        disabled={isPending}
-        aria-label={`Déplacer ${doc.name}`}
-        data-testid={`move-doc-${doc.id}`}
+        disabled={isMovePending || isDeleting}
+        aria-label={`Actions pour ${doc.name}`}
+        data-testid={`actions-doc-${doc.id}`}
       >
-        <FolderInput className="h-4 w-4" />
+        <MoreVertical className="h-4 w-4" />
       </Button>
       {isOpen && (
         <div
@@ -82,29 +98,46 @@ function DocumentMoveDropdown({ doc, folders, onMove, isPending }: DocumentMoveD
             dropUp ? 'bottom-full mb-1' : 'top-full mt-1',
           ].join(' ')}
         >
-          <p className="px-3 py-1 text-xs font-medium text-muted-foreground">Déplacer vers</p>
-          <button
-            type="button"
-            className="w-full rounded px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors"
-            onClick={() => { onMove(null); setIsOpen(false) }}
-            disabled={isPending}
-          >
-            Non classé
-          </button>
-          {folders.map((folder) => (
+          {canMove && (
+            <>
+              <p className="px-3 py-1 text-xs font-medium text-muted-foreground">Déplacer vers</p>
+              <button
+                type="button"
+                className="w-full rounded px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors"
+                onClick={() => { onMove?.(null); setIsOpen(false) }}
+                disabled={isMovePending}
+              >
+                Non classé
+              </button>
+              {folders!.map((folder) => (
+                <button
+                  key={folder.id}
+                  type="button"
+                  className={[
+                    'w-full rounded px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors',
+                    doc.folderId === folder.id ? 'text-muted-foreground' : '',
+                  ].join(' ')}
+                  onClick={() => { onMove?.(folder.id); setIsOpen(false) }}
+                  disabled={isMovePending || doc.folderId === folder.id}
+                >
+                  {folder.name}
+                </button>
+              ))}
+            </>
+          )}
+          {canMove && onDelete && <div className="my-1 h-px bg-border" />}
+          {onDelete && (
             <button
-              key={folder.id}
               type="button"
-              className={[
-                'w-full rounded px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors',
-                doc.folderId === folder.id ? 'text-muted-foreground' : '',
-              ].join(' ')}
-              onClick={() => { onMove(folder.id); setIsOpen(false) }}
-              disabled={isPending || doc.folderId === folder.id}
+              className="flex w-full items-center gap-2 rounded px-3 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10 transition-colors"
+              onClick={() => { onDelete(doc.id); setIsOpen(false) }}
+              disabled={isDeleting}
+              data-testid={`delete-doc-${doc.id}`}
             >
-              {folder.name}
+              <Trash2 className="h-3.5 w-3.5" />
+              Supprimer
             </button>
-          ))}
+          )}
         </div>
       )}
     </div>
@@ -135,6 +168,7 @@ export function DocumentList({
   folders,
 }: DocumentListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [previewDocId, setPreviewDocId] = useState<string | null>(null)
   const { shareBatch, isBatchSharing } = useShareDocument(clientId ?? '')
   const { useMoveDocument } = useFolderMutations(clientId ?? '')
 
@@ -178,7 +212,9 @@ export function DocumentList({
       ? [
           {
             id: 'select',
-            header: () => (
+            // JSX inline (et non une fonction) : la DataTable rend `column.header` directement
+            // — un header-fonction n'est pas un ReactNode valide et ne s'affichait pas.
+            header: (
               <Checkbox
                 checked={filteredDocuments.length > 0 && selectedIds.size === filteredDocuments.length}
                 onCheckedChange={toggleAll}
@@ -220,15 +256,24 @@ export function DocumentList({
             {doc.name}
           </a>
         ) : (
-          <span className="font-medium truncate max-w-xs" title={doc.name}>
+          // Pas de page viewer dédiée (ex: dialogue « Gestion des documents » du CRM) :
+          // le nom ouvre l'aperçu EN PLACE plutôt qu'un texte mort non cliquable.
+          <button
+            type="button"
+            className="font-medium truncate max-w-xs text-left text-primary hover:underline"
+            title={`Lire ${doc.name}`}
+            onClick={(e) => { e.stopPropagation(); setPreviewDocId(doc.id) }}
+            data-testid={`doc-link-${doc.id}`}
+          >
             {doc.name}
-          </span>
+          </button>
         ),
     },
     {
       id: 'tags',
       header: 'Tags',
       accessorKey: 'tags',
+      className: 'hidden sm:table-cell',
       cell: (doc) => (
         <div className="flex flex-wrap gap-1">
           {doc.tags.slice(0, 2).map((tag) => (
@@ -248,6 +293,7 @@ export function DocumentList({
       id: 'size',
       header: 'Taille',
       accessorKey: 'fileSize',
+      className: 'hidden lg:table-cell',
       cell: (doc) => (
         <span className="text-muted-foreground text-sm">
           {formatFileSize(doc.fileSize)}
@@ -258,8 +304,9 @@ export function DocumentList({
       id: 'date',
       header: 'Date',
       accessorKey: 'createdAt',
+      className: 'hidden md:table-cell',
       cell: (doc) => (
-        <span className="text-muted-foreground text-sm">
+        <span className="text-muted-foreground text-sm whitespace-nowrap">
           {formatDate(doc.createdAt)}
         </span>
       ),
@@ -278,72 +325,59 @@ export function DocumentList({
           } satisfies ColumnDef<Document>,
         ]
       : []),
-    ...(showBatchActions && clientId
-      ? [
-          {
-            id: 'share',
-            header: '',
-            accessorKey: 'id' as const,
-            cell: (doc: Document) => (
-              <DocumentShareButton document={doc} clientId={clientId} />
-            ),
-          } satisfies ColumnDef<Document>,
-        ]
-      : []),
     ...(isOperator
       ? [
           {
             id: 'sync',
             header: 'Sync BMAD',
             accessorKey: 'lastSyncedAt' as const,
+            className: 'hidden xl:table-cell',
             cell: (doc: Document) => (
               <DocumentSyncBadge lastSyncedAt={doc.lastSyncedAt} />
             ),
           } satisfies ColumnDef<Document>,
         ]
       : []),
-    ...(folders && clientId
-      ? [
-          {
-            id: 'move',
-            header: '',
-            accessorKey: 'id' as const,
-            cell: (doc: Document) => (
-              <DocumentMoveDropdown
-                doc={doc}
-                folders={folders}
-                onMove={(folderId) => useMoveDocument.mutate({ documentId: doc.id, folderId })}
-                isPending={useMoveDocument.isPending}
-              />
-            ),
-          } satisfies ColumnDef<Document>,
-        ]
-      : []),
-    ...(onDelete
-      ? [
-          {
-            id: 'actions',
-            header: '',
-            accessorKey: 'id' as const,
-            cell: (doc: Document) => (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete(doc.id)
-                }}
-                disabled={isDeleting}
-                aria-label={`Supprimer ${doc.name}`}
-                data-testid={`delete-doc-${doc.id}`}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            ),
-          } satisfies ColumnDef<Document>,
-        ]
-      : []),
+    // Colonne d'actions UNIQUE, alignée à droite : Lire (toujours) + Partage (opérateur)
+    // + menu ⋯ (Déplacer / Supprimer). Regroupe ce qui était éparpillé sur 3 colonnes
+    // → supprime le scroll latéral (retour MiKL).
+    {
+      id: 'actions',
+      header: '',
+      accessorKey: 'id' as const,
+      className: 'text-right',
+      cell: (doc: Document) => (
+        <div className="flex items-center justify-end gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={(e) => { e.stopPropagation(); setPreviewDocId(doc.id) }}
+            aria-label={`Lire ${doc.name}`}
+            data-testid={`read-doc-${doc.id}`}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          {showBatchActions && clientId && (
+            <DocumentShareButton document={doc} clientId={clientId} compact />
+          )}
+          {((folders && clientId) || onDelete) && (
+            <DocumentActionsMenu
+              doc={doc}
+              folders={folders && clientId ? folders : undefined}
+              onMove={
+                folders && clientId
+                  ? (folderId) => useMoveDocument.mutate({ documentId: doc.id, folderId })
+                  : undefined
+              }
+              isMovePending={useMoveDocument.isPending}
+              onDelete={onDelete}
+              isDeleting={isDeleting}
+            />
+          )}
+        </div>
+      ),
+    } satisfies ColumnDef<Document>,
   ]
 
   return (
@@ -383,6 +417,10 @@ export function DocumentList({
         columns={columns}
         data={filteredDocuments}
         emptyMessage={searchQuery.trim() ? 'Aucun document trouvé' : 'Aucun document'}
+      />
+      <DocumentPreviewModal
+        documentId={previewDocId}
+        onClose={() => setPreviewDocId(null)}
       />
     </div>
   )

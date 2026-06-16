@@ -108,4 +108,18 @@ describe('DocumentShareButton', () => {
     fireEvent.click(screen.getByTestId('alert-cancel'))
     expect(mockUnshare).not.toHaveBeenCalled()
   })
+
+  it('mode compact : icône seule, sans libellé texte (privé)', async () => {
+    const { DocumentShareButton } = await import('./document-share-button')
+    render(<DocumentShareButton document={PRIVATE_DOC} clientId="client-1" compact />, { wrapper: Wrapper })
+    expect(screen.queryByText('Partager')).toBeNull()
+    expect(screen.getByTestId('share-btn-doc-1')).toBeDefined()
+  })
+
+  it('mode compact : icône seule, sans libellé texte (partagé)', async () => {
+    const { DocumentShareButton } = await import('./document-share-button')
+    render(<DocumentShareButton document={SHARED_DOC} clientId="client-1" compact />, { wrapper: Wrapper })
+    expect(screen.queryByText('Retirer le partage')).toBeNull()
+    expect(screen.getByTestId('unshare-btn-doc-1')).toBeDefined()
+  })
 })

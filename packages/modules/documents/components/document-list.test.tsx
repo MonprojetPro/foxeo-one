@@ -70,6 +70,12 @@ vi.mock('./document-share-button', () => ({
   ),
 }))
 
+// Mock DocumentPreviewModal (sinon Dialog non mocké + useDocumentViewer feraient échouer le rendu)
+vi.mock('./document-preview-modal', () => ({
+  DocumentPreviewModal: ({ documentId }: { documentId: string | null }) =>
+    documentId ? <div data-testid="preview-open">{documentId}</div> : null,
+}))
+
 // Mock use-share-document
 const mockShareBatch = vi.fn()
 vi.mock('../hooks/use-share-document', () => ({
@@ -143,6 +149,35 @@ describe('DocumentList', () => {
     render(<DocumentList documents={MOCK_DOCS} />, { wrapper: Wrapper })
     expect(screen.getByText('rapport.pdf')).toBeDefined()
     expect(screen.getByText('photo.png')).toBeDefined()
+  })
+
+  // === Lecture / aperçu ===
+
+  it('affiche un bouton « Lire » sur chaque ligne', () => {
+    render(<DocumentList documents={MOCK_DOCS} />, { wrapper: Wrapper })
+    expect(screen.getByTestId('read-doc-doc-1')).toBeDefined()
+    expect(screen.getByTestId('read-doc-doc-2')).toBeDefined()
+  })
+
+  it('ouvre l\'aperçu au clic sur le bouton Lire', () => {
+    render(<DocumentList documents={MOCK_DOCS} />, { wrapper: Wrapper })
+    fireEvent.click(screen.getByTestId('read-doc-doc-1'))
+    expect(screen.getByTestId('preview-open').textContent).toBe('doc-1')
+  })
+
+  it('rend le nom en bouton d\'aperçu quand viewerBaseHref est absent', () => {
+    render(<DocumentList documents={MOCK_DOCS} />, { wrapper: Wrapper })
+    fireEvent.click(screen.getByTestId('doc-link-doc-2'))
+    expect(screen.getByTestId('preview-open').textContent).toBe('doc-2')
+  })
+
+  it('rend le nom en lien quand viewerBaseHref est fourni', () => {
+    render(
+      <DocumentList documents={MOCK_DOCS} viewerBaseHref="/modules/documents/client-1" />,
+      { wrapper: Wrapper }
+    )
+    const link = screen.getByTestId('doc-link-doc-1') as HTMLAnchorElement
+    expect(link.getAttribute('href')).toBe('/modules/documents/client-1/doc-1')
   })
 
   // Batch actions tests
