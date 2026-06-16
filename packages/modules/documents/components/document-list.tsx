@@ -124,7 +124,10 @@ function DocumentActionsMenu({
       {isOpen && pos && createPortal(
         <div
           ref={menuRef}
-          style={{ position: 'fixed', right: pos.right, top: pos.top, bottom: pos.bottom }}
+          // pointerEvents:'auto' indispensable : le menu est porté sur <body>, hors du contenu
+          // d'un éventuel dialogue Radix modal (ex: « Gestion des documents » du CRM) qui met
+          // pointer-events:none sur tout l'extérieur → sinon les éléments ne sont pas cliquables.
+          style={{ position: 'fixed', right: pos.right, top: pos.top, bottom: pos.bottom, pointerEvents: 'auto' }}
           className="z-[60] min-w-[190px] max-h-[280px] overflow-y-auto rounded-md border bg-popover p-1 shadow-lg"
         >
           {/* Télécharger — toujours disponible */}
