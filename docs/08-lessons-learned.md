@@ -230,6 +230,30 @@
 
 ---
 
+### [RT-001] Realtime ne livre pas un changement qui fait SORTIR une ligne de la visibilité RLS
+- **Date** : 2026-06-16
+- **Projet** : MonprojetPro — Module Documents
+- **Categorie** : Realtime / RLS
+- **Symptome** : Retirer le partage d'un document (Hub) ne se synchronisait jamais côté client (Lab) — même en changeant d'onglet ; seul un rechargement complet le faisait disparaître.
+- **Cause racine** : la policy `documents_select_merged` ne montre au client que `visibility='shared'`. Au passage `shared → private`, le client perd l'accès SELECT à la ligne. Or Supabase Realtime applique la RLS **sur la ligne livrée (état après UPDATE)** : la nouvelle ligne `private` échoue la RLS → l'event `postgres_changes` n'est **jamais envoyé** au client. Donc un abonnement `postgres_changes` côté client ne peut PAS détecter un retrait de visibilité.
+- **Solution validee** : **Broadcast depuis la base** (`realtime.send` dans un trigger `AFTER INSERT/UPDATE/DELETE`) sur un canal par client `documents:<clientId>`. Le broadcast n'est PAS filtré par la visibilité RLS de la ligne → il atteint le client dans tous les cas (partage, retrait, ajout, suppression). Le client invalide alors son cache TanStack Query ; le refetch RLS-filtré renvoie l'état correct. Trigger rendu résilient (`EXCEPTION WHEN OTHERS THEN NULL`) pour ne JAMAIS bloquer le DML si le broadcast échoue.
+- **Prevention** : Dès qu'un changement peut faire SORTIR une ligne de la visibilité d'un consumer (unshare, soft-delete, changement de tenant/statut), ne pas compter sur `postgres_changes` côté ce consumer → broadcast DB (ou signal via une table que le consumer voit toujours, ex. `notifications`).
+- **Agents impliques** : SPARK (dev), CERBÈRE (sécu), ATLAS
+
+---
+
+### [SEC-RLS-002] Policy `visibility='shared'` sans contrôle de propriétaire = fuite inter-locataires
+- **Date** : 2026-06-16
+- **Projet** : MonprojetPro — Module Documents
+- **Categorie** : Sécurité / RLS
+- **Symptome** : (trouvé en revue, non signalé) La policy SELECT client `documents_select_merged` contenait une branche `visibility='shared' AND deleted_at IS NULL` **sans condition de propriété** → tout client authentifié pouvait lire les documents partagés de TOUS les autres clients via l'API directe (PostgREST). L'app ne l'exploitait pas (filtre `client_id` côté requête) mais l'exposition RLS était réelle.
+- **Cause racine** : une branche permissive `OR (visibility=...)` sans rattachement au `auth.uid()` ouvre la lecture à tous les rôles `authenticated`.
+- **Solution validee** : restreindre la branche au propriétaire : `AND client_id IN (SELECT id FROM clients WHERE auth_user_id = (SELECT auth.uid()))`. Opérateurs non affectés (policy `documents_select_operator` séparée, combinée en OR).
+- **Prevention** : Toute branche de policy basée sur un attribut de la ligne (statut, visibilité, type) doit AUSSI ancrer la propriété/tenant via `auth.uid()`. Auditer les policies `OR (<attribut> = ...)` sans clause d'appartenance. Le filtrage applicatif (`.eq('client_id', ...)`) ne remplace JAMAIS la RLS.
+- **Agents impliques** : CERBÈRE (détection), SPARK (fix), ATLAS
+
+---
+
 ### [RSC-003] Constantes exportées depuis un fichier `'use client'` arrivent `undefined` au RSC
 - **Date** : 2026-04-23
 - **Projet** : MonprojetPro (apps/client — toggle Mode Lab/One)
