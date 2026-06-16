@@ -191,4 +191,38 @@
   summary {
     cursor: pointer;
   }
+
+  /* « Feeling app » : pas de sélection de texte (ni curseur I-beam / caret) sur le
+     CHROME de l'interface — titres, libellés, en-têtes de tableau, éléments cliquables,
+     navigation/sidebar. Les DONNÉES (p, td, spans de contenu) restent sélectionnables et
+     COPIABLES par défaut, tout comme les champs de saisie et le contenu de document. */
+  h1, h2, h3, h4, h5, h6,
+  label,
+  th,
+  button,
+  a,
+  summary,
+  nav,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="menuitemcheckbox"],
+  [role="menuitemradio"],
+  [role="option"],
+  [data-slot="sidebar"],
+  [data-sidebar] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Toujours sélectionnable / copiable : saisie, contenu éditable, contenu de document,
+     et l'utilitaire `.select-text` à poser ponctuellement sur une donnée à copier. */
+  input,
+  textarea,
+  [contenteditable="true"],
+  .prose, .prose *,
+  .select-text, .select-text * {
+    -webkit-user-select: text;
+    user-select: text;
+  }
 }
