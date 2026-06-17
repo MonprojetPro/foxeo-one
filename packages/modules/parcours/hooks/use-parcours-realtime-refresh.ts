@@ -23,7 +23,12 @@ export function useParcoursRealtimeRefresh(clientId: string | undefined): void {
 
     const supabase = createBrowserSupabaseClient()
 
-    const invalidate = () => {
+    // SONDE DIAGNOSTIQUE (temporaire) — à retirer une fois la cause confirmée.
+    console.log('[PARCOURS-RT] montage hook, clientId =', clientId)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const invalidate = (payload: any) => {
+      console.log('[PARCOURS-RT] event reçu →', payload?.table, payload?.eventType, payload?.new ?? payload)
       queryClient.invalidateQueries({ queryKey: ['parcours', clientId] })
     }
 
@@ -45,6 +50,7 @@ export function useParcoursRealtimeRefresh(clientId: string | undefined): void {
         invalidate,
       )
       .subscribe((status, err) => {
+        console.log('[PARCOURS-RT] subscribe status =', status, err ?? '')
         if (status === 'CHANNEL_ERROR') {
           console.error('[PARCOURS:OVERVIEW-REALTIME] Channel error:', err)
         }
