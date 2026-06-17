@@ -14,6 +14,10 @@ export const LOW_CONFIDENCE_PATTERNS: RegExp[] = [
   /je ne dispose pas/i,
   /hors de mon périmètre/i,
   /je ne suis pas en mesure/i,
+  // Renvoi explicite vers MiKL : un verbe de renvoi suivi de « MiKL » à courte distance.
+  // Déclenche le bouton « Ouvrir le chat avec MiKL ». Ne matche pas « MiKL a validé… »
+  // (pas de verbe de renvoi devant).
+  /(contact|parl|demand|orient|adress|[ée]cri|joind|voir avec|rapproch)[^.!?\n]{0,30}mikl/i,
 ]
 
 export function detectLowConfidence(response: string): boolean {

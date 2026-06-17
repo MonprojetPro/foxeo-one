@@ -42,6 +42,22 @@ describe('detectLowConfidence (Story 8.7 — Task 10)', () => {
     it('Task 10.1 — insensible à la casse', () => {
       expect(detectLowConfidence('JE NE SUIS PAS SÛR.')).toBe(true)
     })
+
+    it('détecte le renvoi explicite "contactez MiKL"', () => {
+      expect(detectLowConfidence('Pour cela, je vous invite à contacter MiKL directement.')).toBe(true)
+    })
+
+    it('détecte le renvoi "parlez-en à MiKL"', () => {
+      expect(detectLowConfidence('Le mieux est d\'en parler à MiKL via le chat.')).toBe(true)
+    })
+
+    it('détecte "demandez à MiKL"', () => {
+      expect(detectLowConfidence('Je vous suggère de demander à MiKL pour ce point.')).toBe(true)
+    })
+
+    it('ne détecte PAS une simple mention de MiKL sans renvoi', () => {
+      expect(detectLowConfidence('MiKL a validé votre étape 2, bravo !')).toBe(false)
+    })
   })
 
   describe('ne détecte pas de faible confiance pour des réponses sûres', () => {

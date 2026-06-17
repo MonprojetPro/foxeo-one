@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { Zap, MessageCircle, SlidersHorizontal, PenLine, Mic, Paperclip, Send, Loader2, FileText } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useElioChat } from '../hooks/use-elio-chat'
@@ -147,6 +148,10 @@ function ElioChatSimple({
 
   const headerLabel = HEADER_LABELS[dashboardType]
 
+  // Le Concierge ne sait pas / renvoie vers MiKL → bouton d'action directe vers le chat MiKL.
+  const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
+  const showMiklButton = dashboardType !== 'hub' && Boolean(lastAssistant?.metadata?.needsEscalation)
+
   return (
     <div
       className={`flex flex-col h-full bg-background text-foreground ${paletteClass}`}
@@ -168,6 +173,22 @@ function ElioChatSimple({
         {error && !isLoading && <ElioErrorMessage error={error} onRetry={retrySend} />}
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
+      {showMiklButton && (
+        <div className="px-4 pb-2 shrink-0">
+          <Link
+            href="/modules/chat"
+            className={[
+              'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium',
+              'bg-primary text-primary-foreground hover:bg-primary/90 transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2',
+              focusRing,
+            ].join(' ')}
+          >
+            <MessageCircle className="h-4 w-4" aria-hidden="true" />
+            Ouvrir le chat avec MiKL
+          </Link>
+        </div>
+      )}
       <ChatInput
         inputRef={inputRef}
         value={inputValue}
