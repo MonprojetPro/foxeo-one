@@ -71,8 +71,24 @@ export default async function ClientParcoursPage() {
     )
   }
 
+  // Agents Lab coupés par l'opérateur (client Lab natif) → bannière de pause au-dessus
+  // du parcours. L'espace/historique reste consultable, mais Élio ne répond plus.
+  const labAgentsOff = !(cfg?.elio_lab_enabled ?? false)
+
   return (
     <div className="flex flex-col gap-6 p-6">
+      {labAgentsOff && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+          <span className="mt-0.5 text-amber-400" aria-hidden="true">⏸️</span>
+          <div>
+            <p className="text-sm font-medium text-foreground">Agents Élio Lab en pause</p>
+            <p className="text-xs text-muted-foreground">
+              MiKL a mis vos agents en pause. Vous gardez l&apos;accès à votre parcours et à votre
+              historique, mais les agents ne répondent pas pour le moment.
+            </p>
+          </div>
+        </div>
+      )}
       <ParcoursOverview clientId={client.id} clientFirstName={client.first_name} />
     </div>
   )

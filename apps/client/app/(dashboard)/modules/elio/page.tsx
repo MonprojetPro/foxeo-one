@@ -18,7 +18,7 @@ export default async function ElioClientPage({ searchParams }: PageProps) {
 
   const { data: clientRecord } = await supabase
     .from('clients')
-    .select('id, client_configs(dashboard_type, lab_mode_available, one_mode_available)')
+    .select('id, client_configs(dashboard_type, lab_mode_available, one_mode_available, elio_lab_enabled)')
     .eq('auth_user_id', user.id)
     .maybeSingle()
 
@@ -34,12 +34,22 @@ export default async function ElioClientPage({ searchParams }: PageProps) {
     cookieMode: cookieStore.get(MODE_TOGGLE_COOKIE)?.value,
   })
 
+  // Agents Lab coupés par l'opérateur (elio_lab_enabled=false) → Élio Lab en veille.
+  // L'espace/historique reste accessible ; seule la conversation est mise en pause.
+  const labAgentsOff = effectiveMode === 'lab' && (configData?.elio_lab_enabled ?? false) === false
+
   // Guard consentement IA (RGPD) — si le client n'a pas consenti, Élio reste en veille.
   const iaConsentGranted = clientId ? await hasIaConsent(clientId) : false
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
-      {iaConsentGranted ? (
+      {labAgentsOff ? (
+        <ElioVeille
+          title="Élio Lab est en pause"
+          body="Les agents Élio Lab ont été mis en pause par MiKL. Vous gardez l'accès à votre espace et à tout votre historique, mais la conversation avec les agents est suspendue pour le moment."
+          ctaHref=""
+        />
+      ) : iaConsentGranted ? (
         <ElioChat
           dashboardType={effectiveMode}
           clientId={clientId}
