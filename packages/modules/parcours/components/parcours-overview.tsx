@@ -92,7 +92,7 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
       </div>
 
       {/* Panel Élio — message contextuel */}
-      <ElioParcoursPanel clientFirstName={clientFirstName} currentStep={currentStep} allCompleted={allCompleted} />
+      <ElioParcoursPanel clientFirstName={clientFirstName} currentStep={currentStep} allCompleted={allCompleted} agentsPaused={agentsPaused} />
 
       {/* Story 9.3 — Bouton abandon discret en bas de page */}
       {canAbandon && (

@@ -7,6 +7,8 @@ interface ElioParcoursPanelProps {
   clientFirstName?: string | null
   currentStep?: ParcoursStep | null
   allCompleted?: boolean
+  /** Agents Lab coupés par MiKL → message de pause cohérent, sans CTA « Continuer ». */
+  agentsPaused?: boolean
 }
 
 /**
@@ -14,8 +16,30 @@ interface ElioParcoursPanelProps {
  * 3 états : parcours non démarré, étape en cours, toutes étapes complètes.
  * Le bouton "Parler à Élio" redirige vers le Chat Élio Lab.
  */
-export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted }: ElioParcoursPanelProps) {
+export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted, agentsPaused = false }: ElioParcoursPanelProps) {
   const firstName = clientFirstName || 'vous'
+
+  // Agents coupés → message cohérent avec l'état de pause (pas d'invitation à continuer).
+  if (agentsPaused) {
+    return (
+      <div className="bg-[#141414] border border-amber-500/30 rounded-xl p-5">
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-10 h-10 rounded-full bg-[#1a1a1a] text-amber-400 flex items-center justify-center text-[15px] font-bold shrink-0"
+            aria-hidden="true"
+          >
+            E
+          </div>
+          <span className="text-[13px] font-semibold text-amber-400 tracking-[0.02em]">Élio Lab — en pause</span>
+        </div>
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 mt-3 text-sm text-[#e5e7eb] leading-relaxed">
+          Bonjour {firstName} ! Élio Lab est en pause — MiKL a suspendu les agents pour le moment.
+          Vous gardez l&apos;accès à tout votre parcours et à votre historique ; la conversation
+          reprendra dès leur réactivation.
+        </div>
+      </div>
+    )
+  }
 
   const isPendingReview = currentStep?.status === 'pending_review'
   const isRejected = currentStep?.status === 'rejected'
