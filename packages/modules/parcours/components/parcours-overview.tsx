@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { cn } from '@monprojetpro/utils'
 import { useParcours } from '../hooks/use-parcours'
 import { useUnreadInjections } from '../hooks/use-unread-injections'
 import { ParcoursProgressBar } from './parcours-progress-bar'
@@ -12,11 +13,13 @@ import { AbandonParcoursDialog } from './abandon-parcours-dialog'
 interface ParcoursOverviewProps {
   clientId: string
   clientFirstName?: string | null
+  /** Agents Lab coupés par MiKL → parcours grisé / non interactif (en pause). */
+  agentsPaused?: boolean
 }
 
 const ABANDONABLE_STATUSES = ['en_cours', 'in_progress', 'not_started', 'suspendu']
 
-export function ParcoursOverview({ clientId, clientFirstName }: ParcoursOverviewProps) {
+export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = false }: ParcoursOverviewProps) {
   const { data: parcours, isPending, error } = useParcours(clientId)
   const { unreadByStep } = useUnreadInjections(clientId)
   const [abandonDialogOpen, setAbandonDialogOpen] = useState(false)
@@ -77,8 +80,11 @@ export function ParcoursOverview({ clientId, clientFirstName }: ParcoursOverview
         progressPercent={parcours.progressPercent}
       />
 
-      {/* Grille 3 colonnes — design Lovable (remplace la timeline verticale) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Grille 3 colonnes — grisée/non interactive si les agents sont en pause */}
+      <div className={cn(
+        'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity',
+        agentsPaused && 'opacity-50 pointer-events-none'
+      )}>
         {parcours.steps.map((step) => (
           <ParcoursStepCard key={step.id} step={step} unreadCount={unreadByStep[step.id] ?? 0} isAbandoned={isAbandoned} />
         ))}

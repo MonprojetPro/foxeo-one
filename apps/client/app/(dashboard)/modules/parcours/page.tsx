@@ -89,7 +89,7 @@ export default async function ClientParcoursPage() {
           </div>
         </div>
       )}
-      <ParcoursOverview clientId={client.id} clientFirstName={client.first_name} />
+      <ParcoursOverview clientId={client.id} clientFirstName={client.first_name} agentsPaused={labAgentsOff} />
     </div>
   )
 }

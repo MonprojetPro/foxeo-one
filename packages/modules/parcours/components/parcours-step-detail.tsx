@@ -27,6 +27,8 @@ interface ParcoursStepDetailProps {
   nextStep?: AdjacentStep | null
   clientId?: string
   isPaused?: boolean
+  /** Agents Lab coupés par MiKL → chat d'étape en pause + bouton Générer masqué. */
+  agentsPaused?: boolean
   agentImagePath?: string | null
   /** Consentement au traitement IA (RGPD). Si false, le chat d'étape Élio est en veille. */
   iaConsentGranted?: boolean
@@ -65,7 +67,7 @@ const stepStatusConfig: Record<ParcoursStepStatus, StepConfig> = {
   },
 }
 
-export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false, agentImagePath = null, iaConsentGranted = true }: ParcoursStepDetailProps) {
+export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clientId, isPaused = false, agentImagePath = null, iaConsentGranted = true, agentsPaused = false }: ParcoursStepDetailProps) {
   const [messageCount, setMessageCount] = useState(0)
   const [mobileTab, setMobileTab] = useState<MobileTab>('step')
 
@@ -217,13 +219,14 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
               stepNumber={step.stepNumber}
               clientId={clientId}
               iaConsentGranted={iaConsentGranted}
+              agentsPaused={agentsPaused}
               onMessagesLoaded={setMessageCount}
               onAgentConfigLoaded={undefined}
             />
           )}
 
-          {/* Bouton Générer mon document — désactivé si parcours en pause */}
-          {clientId && config.showGenerateButton && !isPaused && (
+          {/* Bouton Générer mon document — masqué si parcours en pause ou agents coupés */}
+          {clientId && config.showGenerateButton && !isPaused && !agentsPaused && (
             <GenerateDocumentButton
               stepId={step.id}
               stepStatus={step.status}

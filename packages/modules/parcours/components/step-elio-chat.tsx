@@ -23,6 +23,8 @@ interface StepElioChatProps {
   clientId: string
   /** Consentement au traitement IA (RGPD). Si false, Élio reste en veille dans l'étape. */
   iaConsentGranted?: boolean
+  /** Agents Lab coupés par MiKL (global ou cet agent désactivé) → chat en pause, sans saisie. */
+  agentsPaused?: boolean
   onMessagesLoaded?: (count: number) => void
   onAgentConfigLoaded?: (config: { imagePath: string | null; name: string }) => void
 }
@@ -91,7 +93,7 @@ function withSteering(roadmap: string | null, agentPrompt: string | null): strin
   return base.length > 0 ? base + STEP_SUBMISSION_INVITATION : undefined
 }
 
-export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConsentGranted = true, onMessagesLoaded, onAgentConfigLoaded }: StepElioChatProps) {
+export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConsentGranted = true, agentsPaused = false, onMessagesLoaded, onAgentConfigLoaded }: StepElioChatProps) {
   const [chatStatus, setChatStatus] = useState<ChatStatus>('idle')
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [messages, setMessages] = useState<ElioMessagePersisted[]>([])
@@ -321,6 +323,29 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
   )
 
   const disabledMessage = getDisabledMessage(stepStatus)
+
+  // Agents Lab coupés par MiKL → chat en pause, sans saisie (pas d'erreur rouge après coup).
+  // Les messages déjà échangés restent visibles plus haut dans la page ; ici on remplace
+  // la zone de saisie par un état clair.
+  if (agentsPaused) {
+    return (
+      <section
+        className="mt-6 overflow-hidden rounded-xl border border-amber-500/30 bg-amber-500/5 p-6"
+        aria-label={`Agents Élio Lab en pause — Étape ${stepNumber}`}
+      >
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1a1a1a]">
+            <Bot className="h-5 w-5 text-amber-400" aria-hidden="true" />
+          </div>
+          <h3 className="text-sm font-semibold text-[#e5e7eb]">Élio Lab est en pause</h3>
+          <p className="max-w-md text-xs leading-relaxed text-[#6b7280]">
+            MiKL a mis les agents Élio Lab en pause. Vous gardez l&apos;accès à votre parcours
+            et à votre historique, mais la conversation est suspendue pour le moment.
+          </p>
+        </div>
+      </section>
+    )
+  }
 
   // Guard consentement IA (RGPD) — Élio en veille dans l'étape tant que le client n'a pas
   // consenti. Le parcours reste accessible ; seul l'accompagnement IA est suspendu.

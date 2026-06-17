@@ -20,11 +20,16 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
 
   const { data: client } = await supabase
     .from('clients')
-    .select('id')
+    .select('id, client_configs(elio_lab_enabled)')
     .eq('auth_user_id', user.id)
     .single()
 
   if (!client) notFound()
+
+  // Agents Lab coupés par MiKL (global) → chat d'étape en pause.
+  const cfgRel = (client as { client_configs?: unknown }).client_configs
+  const cfg = (Array.isArray(cfgRel) ? cfgRel[0] : cfgRel) as { elio_lab_enabled?: boolean } | null | undefined
+  const globalAgentsOff = (cfg?.elio_lab_enabled ?? false) === false
 
   const { data: parcours } = await getParcours({ clientId: client.id })
   if (!parcours) notFound()
@@ -33,6 +38,9 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
 
   const step = parcours.steps.find(s => s.stepNumber === stepNum)
   if (!step) notFound()
+
+  // Pause si les agents sont coupés globalement OU si CET agent est désactivé (Lot B).
+  const agentsPaused = globalAgentsOff || step.isEnabled === false
 
   const prevStep = parcours.steps.find(s => s.stepNumber === stepNum - 1) ?? null
   const nextStep = parcours.steps.find(s => s.stepNumber === stepNum + 1) ?? null
@@ -56,6 +64,7 @@ export default async function ParcoursStepDetailPage({ params }: ParcoursStepDet
       isPaused={isPaused}
       agentImagePath={agentConfig?.agentImagePath ?? null}
       iaConsentGranted={iaConsentGranted}
+      agentsPaused={agentsPaused}
     />
   )
 }
