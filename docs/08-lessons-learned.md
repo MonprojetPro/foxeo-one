@@ -655,3 +655,15 @@
 - **Regle a suivre** : Pour un interstitiel/redirection forcé déclenché par une condition de données (consentement, onboarding, statut), préférer `redirect()` dans un layout/page serveur plutôt qu'une redirection middleware. ⚠️ Le re-consentement **CGU** (`checkConsentVersion`) garde ce même bug latent (jamais déclenché car rarement activé) — à migrer de la même façon avant tout bump de `CURRENT_CGU_VERSION`.
 - **Leçon connexe (KIT COMPLET / RGPD)** : un consentement « tracé en base » n'a aucune valeur tant qu'il n'est pas **branché sur tous ses consumers**. Ici `ia_processing` était enregistré mais aucun gate ne vérifiait `hasIaConsent()` → Élio continuait d'appeler Claude malgré un refus (coquille vide juridique). Recenser les consumers d'une décision avant de la livrer. À noter aussi : la politique affichée annonçait **DeepSeek** alors que le code appelait **Claude/Anthropic** → un texte légal doit refléter le code réel.
 - **Agents impliques** : FIX, SPARK, ATLAS
+
+---
+
+### [RSC-008] `router.refresh()` ne rafraîchit PAS le cache TanStack Query (consumer figé en Realtime)
+- **Date** : 2026-06-17
+- **Projet** : MonprojetPro
+- **Categorie** : Next.js Server/Client (RSC) + Realtime
+- **Symptome** : Couper/réactiver un agent du parcours depuis le Hub se voyait côté client **seulement après rechargement manuel** (« il faut réactualiser »). La donnée changeait bien en base, l'event Realtime arrivait, mais la grille « Mon Parcours » restait figée ~30s.
+- **Cause racine** : deux mécanismes de rafraîchissement coexistent et ne couvrent pas la même chose. `RealtimeDashboardRefresh` recevait bien l'event `client_parcours_agents` et appelait `router.refresh()` — mais `router.refresh()` ne re-fetch que les **Server Components (RSC)**. La grille était rendue par `useParcours` (**TanStack Query**, `staleTime 30s`), un cache **client** que `router.refresh()` **n'invalide jamais**. Le consumer TanStack n'avait aucune invalidation Realtime propre.
+- **Solution** : hook dédié `useParcoursRealtimeRefresh(clientId)` branché sur le composant, abonné à `client_parcours_agents` / `parcours` / `step_submissions` (filtrés `client_id`), qui appelle `queryClient.invalidateQueries({ queryKey: ['parcours', clientId] })`. Mise à jour instantanée. La table était déjà dans la publication Realtime (preuve : `RealtimeDashboardRefresh` recevait déjà les events) → aucune migration.
+- **Regle a suivre** : **`router.refresh()` ≠ invalidation TanStack Query.** Pour CHAQUE consumer d'une donnée modifiée à distance, identifier son mode : SSR → `router.refresh()` suffit ; **TanStack Query → il FAUT un `invalidateQueries` Realtime dédié** (le SSR refresh ne le touche pas). Ne jamais supposer qu'un `RealtimeDashboardRefresh` global couvre les grilles rendues en TanStack.
+- **Agents impliques** : SPARK, ATLAS
