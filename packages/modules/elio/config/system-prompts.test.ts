@@ -197,11 +197,11 @@ describe('buildSystemPrompt', () => {
   })
 
   describe('Story 8.7 — Élio One enrichi', () => {
-    it('Task 5 — inclut la cartographie navigation One dans le prompt', () => {
+    it('Task 5 — inclut la cartographie navigation One (en libellés d\'onglets, pas d\'URL)', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
       expect(prompt).toContain('Navigation dashboard One')
-      expect(prompt).toContain('/modules/documents')
-      expect(prompt).toContain('/modules/facturation')
+      expect(prompt).toContain('Documents')
+      expect(prompt).toContain('Comptabilité')
     })
 
     it('Task 4.4 — inclut le message pour module non activé', () => {
