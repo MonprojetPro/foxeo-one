@@ -324,29 +324,6 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
 
   const disabledMessage = getDisabledMessage(stepStatus)
 
-  // Agents Lab coupés par MiKL → chat en pause, sans saisie (pas d'erreur rouge après coup).
-  // Les messages déjà échangés restent visibles plus haut dans la page ; ici on remplace
-  // la zone de saisie par un état clair.
-  if (agentsPaused) {
-    return (
-      <section
-        className="mt-6 overflow-hidden rounded-xl border border-amber-500/30 bg-amber-500/5 p-6"
-        aria-label={`Agents Élio Lab en pause — Étape ${stepNumber}`}
-      >
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1a1a1a]">
-            <Bot className="h-5 w-5 text-amber-400" aria-hidden="true" />
-          </div>
-          <h3 className="text-sm font-semibold text-[#e5e7eb]">Élio Lab est en pause</h3>
-          <p className="max-w-md text-xs leading-relaxed text-[#6b7280]">
-            MiKL a mis les agents Élio Lab en pause. Vous gardez l&apos;accès à votre parcours
-            et à votre historique, mais la conversation est suspendue pour le moment.
-          </p>
-        </div>
-      </section>
-    )
-  }
-
   // Guard consentement IA (RGPD) — Élio en veille dans l'étape tant que le client n'a pas
   // consenti. Le parcours reste accessible ; seul l'accompagnement IA est suspendu.
   if (!iaConsentGranted) {
@@ -479,31 +456,42 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
         </div>
       )}
 
-      {/* Input */}
-      <div className="border-t border-[#2d2d2d] bg-[#141414] p-3 flex gap-2 items-end">
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={isInputDisabled && !isSending ? 'Lecture seule' : 'Écrivez votre message…'}
-          disabled={isInputDisabled}
-          rows={1}
-          className="flex-1 resize-none bg-[#1a1a1a] border border-[#2d2d2d] rounded-lg px-3 py-2 text-sm text-[#f9fafb] placeholder-[#6b7280] focus:outline-none focus:border-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ maxHeight: '120px', minHeight: '36px' }}
-          aria-label="Message à Élio"
-        />
-        <button
-          onClick={handleSend}
-          disabled={isInputDisabled || !input.trim()}
-          className="shrink-0 w-8 h-8 rounded-lg bg-[#7c3aed] hover:bg-[#8b4df0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
-          aria-label="Envoyer"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white">
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-          </svg>
-        </button>
-      </div>
+      {/* Saisie — ou encart « en pause » si les agents sont coupés (historique conservé ci-dessus) */}
+      {agentsPaused ? (
+        <div className="border-t border-amber-500/30 bg-amber-500/5 p-3 flex items-center gap-2.5">
+          <Bot className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+          <p className="text-xs leading-relaxed text-[#9ca3af]">
+            <span className="font-medium text-[#e5e7eb]">Élio Lab est en pause.</span>{' '}
+            MiKL a suspendu les agents. Vous gardez l&apos;accès à votre historique ci-dessus,
+            mais la conversation est fermée pour le moment.
+          </p>
+        </div>
+      ) : (
+        <div className="border-t border-[#2d2d2d] bg-[#141414] p-3 flex gap-2 items-end">
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={isInputDisabled && !isSending ? 'Lecture seule' : 'Écrivez votre message…'}
+            disabled={isInputDisabled}
+            rows={1}
+            className="flex-1 resize-none bg-[#1a1a1a] border border-[#2d2d2d] rounded-lg px-3 py-2 text-sm text-[#f9fafb] placeholder-[#6b7280] focus:outline-none focus:border-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ maxHeight: '120px', minHeight: '36px' }}
+            aria-label="Message à Élio"
+          />
+          <button
+            onClick={handleSend}
+            disabled={isInputDisabled || !input.trim()}
+            className="shrink-0 w-8 h-8 rounded-lg bg-[#7c3aed] hover:bg-[#8b4df0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+            aria-label="Envoyer"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-white">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+            </svg>
+          </button>
+        </div>
+      )}
     </section>
   )
 }

@@ -80,10 +80,11 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
         progressPercent={parcours.progressPercent}
       />
 
-      {/* Grille 3 colonnes — grisée/non interactive si les agents sont en pause */}
+      {/* Grille 3 colonnes — légèrement grisée si en pause, MAIS cartes cliquables
+          (consultation de l'historique toujours possible). */}
       <div className={cn(
         'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 transition-opacity',
-        agentsPaused && 'opacity-50 pointer-events-none'
+        agentsPaused && 'opacity-70'
       )}>
         {parcours.steps.map((step) => (
           <ParcoursStepCard key={step.id} step={step} unreadCount={unreadByStep[step.id] ?? 0} isAbandoned={isAbandoned} />
