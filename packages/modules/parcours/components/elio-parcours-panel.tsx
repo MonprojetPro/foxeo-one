@@ -9,14 +9,19 @@ interface ElioParcoursPanelProps {
   allCompleted?: boolean
   /** Agents du parcours coupés par MiKL → le Concierge reste dispo, message adapté. */
   agentsPaused?: boolean
+  /**
+   * Ouvre la pop-up de chat avec le Concierge. Fourni par l'app (orchestration de la
+   * Dialog au niveau page). Si absent (rendu isolé/test), le bouton renvoie vers /modules/elio.
+   */
+  onAskConcierge?: () => void
 }
 
 /**
  * ElioParcoursPanel — Bandeau UNIQUE d'Élio, le Concierge, sur la home « Mon Parcours ».
  *
- * C'est la SEULE voix qui s'adresse au client sur cette page : il porte le bonjour,
- * l'étape en cours et le message contextuel. Il remplace l'ancien trio (titre « Bonjour »
- * + bannière de pause en haut de page + ancien panel « Message du jour »).
+ * Présentation façon « carte d'agent » : avatar du Concierge à DROITE, avec un bouton
+ * « Pose-moi une question » dessous (ouvre la pop-up de chat). À GAUCHE : son nom, le
+ * bonjour et le message de CONTEXTE actuel (étape en cours, agents en pause…).
  *
  * ⚠️ Le Concierge ≠ les agents du parcours (Élio Go-to-Market, Cible, Business, Legit…).
  * Quand les agents sont en pause, le Concierge le dit mais reste disponible pour les questions.
@@ -26,14 +31,14 @@ export function ElioParcoursPanel({
   currentStep,
   allCompleted,
   agentsPaused = false,
+  onAskConcierge,
 }: ElioParcoursPanelProps) {
-  const firstName = clientFirstName || 'vous'
   const greeting = `Bonjour${clientFirstName ? `, ${clientFirstName}` : ''} ! 👋`
 
   const isPendingReview = currentStep?.status === 'pending_review'
   const isRejected = currentStep?.status === 'rejected'
 
-  // Message contextuel (sans répéter le bonjour, déjà affiché au-dessus).
+  // Message de CONTEXTE actuel (porte l'info d'étape, plus de label « Étape en cours » séparé).
   const message = agentsPaused
     ? `Les agents de ton parcours sont en pause — MiKL les a suspendus pour le moment. Tu gardes l'accès à tout ton parcours et à ton historique. Moi, le Concierge, je reste là pour répondre à tes questions.`
     : allCompleted
@@ -43,12 +48,13 @@ export function ElioParcoursPanel({
         : isRejected
           ? `MiKL a examiné votre soumission pour l'étape ${currentStep!.stepNumber} (${currentStep!.title}) et vous a laissé un feedback. Consultez l'historique, corrigez votre document et resoumettez.`
           : currentStep
-            ? `Vous progressez bien. Votre étape ${currentStep.stepNumber} (${currentStep.title}) attend votre attention. Cliquez sur « Continuer » pour que l'agent de l'étape vous guide.`
+            ? `Vous êtes à l'étape ${currentStep.stepNumber} : « ${currentStep.title} ». Cliquez sur « Continuer » pour que l'agent de l'étape vous guide.`
             : 'Bienvenue dans votre parcours. Commencez par l\'étape 1 pour démarrer !'
 
-  // CTA contextuel.
-  const cta = agentsPaused
-    ? { href: '/modules/elio', label: 'Poser une question à Élio →' }
+  // CTA secondaire (action parcours) — distinct du bouton « Pose-moi une question » (Concierge).
+  // Masqué quand les agents sont en pause (pas d'invitation à avancer).
+  const parcoursCta = agentsPaused
+    ? null
     : allCompleted
       ? { href: '/modules/parcours', label: 'Voir mon parcours →' }
       : isPendingReview
@@ -67,39 +73,63 @@ export function ElioParcoursPanel({
   const ctaClass = agentsPaused
     ? 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'
     : 'border-[#a78bfa] text-[#a78bfa] hover:bg-[#1e1557]'
+  const askBtnClass = agentsPaused
+    ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25'
+    : 'bg-[#1e1557] border-[#a78bfa]/60 text-[#a78bfa] hover:bg-[#2a1f6b]'
+
+  const askLabel = 'Pose-moi une question'
 
   return (
     <div className={`bg-[#141414] border ${accentBorder} rounded-xl p-5`}>
-      <div className="flex items-center gap-3">
-        {/* Avatar du Concierge (image dédiée, distincte des agents du parcours). */}
-        <img
-          src="/elio/elio-lab.png"
-          alt="Élio, le Concierge"
-          className="w-12 h-12 rounded-full object-cover shrink-0 ring-1 ring-white/10 bg-[#1a1a1a]"
-        />
-        <div className="min-w-0">
-          <p className={`text-[14px] font-semibold ${roleColor} tracking-[0.01em] leading-tight`}>
+      <div className="flex items-start justify-between gap-4">
+        {/* GAUCHE — identité + contexte */}
+        <div className="min-w-0 flex-1">
+          <p className={`text-[15px] font-semibold ${roleColor} tracking-[0.01em] leading-tight`}>
             Élio, le Concierge
           </p>
           <p className="text-[12px] text-[#9ca3af] leading-tight">Ton assistant Lab</p>
+
+          <div className={`${messageBox} border rounded-xl p-4 mt-3 text-sm text-[#e5e7eb] leading-relaxed`}>
+            <p className="text-[15px] font-semibold text-[#f9fafb]">{greeting}</p>
+            <p className="mt-2">{message}</p>
+          </div>
+
+          {parcoursCta && (
+            <Link
+              href={parcoursCta.href}
+              className={`inline-flex items-center mt-3 border ${ctaClass} text-sm px-4 py-2 rounded-lg transition-colors`}
+              aria-label={parcoursCta.label}
+            >
+              {parcoursCta.label}
+            </Link>
+          )}
+        </div>
+
+        {/* DROITE — avatar du Concierge + bouton « Pose-moi une question » */}
+        <div className="flex flex-col items-center gap-2 shrink-0 w-[120px]">
+          <img
+            src="/elio/elio-lab.png"
+            alt="Élio, le Concierge"
+            className="w-24 h-24 object-contain drop-shadow-[0_0_12px_rgba(167,139,250,0.25)]"
+          />
+          {onAskConcierge ? (
+            <button
+              type="button"
+              onClick={onAskConcierge}
+              className={`w-full border ${askBtnClass} text-[13px] font-medium px-3 py-2 rounded-lg transition-colors`}
+            >
+              {askLabel}
+            </button>
+          ) : (
+            <Link
+              href="/modules/elio"
+              className={`w-full text-center border ${askBtnClass} text-[13px] font-medium px-3 py-2 rounded-lg transition-colors`}
+            >
+              {askLabel}
+            </Link>
+          )}
         </div>
       </div>
-
-      <div className={`${messageBox} border rounded-xl p-4 mt-3 text-sm text-[#e5e7eb] leading-relaxed`}>
-        <p className="text-[15px] font-semibold text-[#f9fafb]">{greeting}</p>
-        {currentStep && !allCompleted && (
-          <p className="text-[12px] text-[#9ca3af] mt-0.5">Étape en cours : {currentStep.title}</p>
-        )}
-        <p className="mt-2">{message}</p>
-      </div>
-
-      <Link
-        href={cta.href}
-        className={`inline-flex items-center mt-3 border ${ctaClass} text-sm px-4 py-2 rounded-lg transition-colors`}
-        aria-label={cta.label}
-      >
-        {cta.label}
-      </Link>
     </div>
   )
 }

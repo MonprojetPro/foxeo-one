@@ -116,15 +116,32 @@ describe('ParcoursOverview', () => {
     expect(screen.getByText(/impossible de charger votre parcours/i)).toBeDefined()
   })
 
-  it('renders greeting and current step subtitle', () => {
+  it('renders greeting and current step context in the Concierge message', () => {
     mockUseParcours.mockReturnValue({ data: mockParcours, isPending: false, error: null })
 
     const { container } = render(<ParcoursOverview clientId={CLIENT_ID} />)
-    // Greeting header
+    // Greeting porté par le bandeau Concierge
     expect(container.textContent).toContain('Bonjour')
-    // Current step shown as subtitle (step 2 in mock)
-    expect(container.textContent).toContain('Étape en cours')
+    // Le nom du Concierge est affiché (voix unique)
+    expect(container.textContent).toContain('Élio, le Concierge')
+    // L'étape courante apparaît dans le message de contexte (plus de label « Étape en cours »)
     expect(container.textContent).toContain('Étape 2')
+  })
+
+  it('renders the "Pose-moi une question" button', () => {
+    mockUseParcours.mockReturnValue({ data: mockParcours, isPending: false, error: null })
+
+    render(<ParcoursOverview clientId={CLIENT_ID} />)
+    expect(screen.getByText(/Pose-moi une question/i)).toBeDefined()
+  })
+
+  it('calls onAskConcierge when the question button is clicked', () => {
+    mockUseParcours.mockReturnValue({ data: mockParcours, isPending: false, error: null })
+    const onAsk = vi.fn()
+
+    render(<ParcoursOverview clientId={CLIENT_ID} onAskConcierge={onAsk} />)
+    screen.getByText(/Pose-moi une question/i).click()
+    expect(onAsk).toHaveBeenCalledOnce()
   })
 
   it('renders greeting with first name when provided', () => {

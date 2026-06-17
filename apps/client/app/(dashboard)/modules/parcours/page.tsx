@@ -1,11 +1,12 @@
 // rebuild: chat-markdown-renderer
 import { notFound, redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
 import { resolveClientMode } from '@monprojetpro/utils'
-import { ParcoursOverview, getParcours } from '@monprojetpro/module-parcours'
+import { getParcours } from '@monprojetpro/module-parcours'
 import { LabHistoryView } from '@monprojetpro/module-core-dashboard'
+import { ParcoursPageClient } from './parcours-page-client'
 // rebuild
 
 export default async function ClientParcoursPage() {
@@ -72,13 +73,22 @@ export default async function ClientParcoursPage() {
   }
 
   // Agents du parcours coupés par l'opérateur (client Lab natif). L'état « en pause » n'est
-  // plus une bannière séparée : il est porté par le bandeau UNIQUE d'Élio le Concierge
-  // (dans ParcoursOverview), seule voix qui s'adresse au client sur cette page.
+  // plus une bannière séparée : il est porté par le bandeau UNIQUE d'Élio le Concierge,
+  // seule voix qui s'adresse au client sur cette page.
   const labAgentsOff = !(cfg?.elio_lab_enabled ?? false)
+
+  // Consentement IA — le Concierge (pop-up de chat) ne peut répondre que si accordé.
+  const iaConsentGranted = await hasIaConsent(client.id)
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <ParcoursOverview clientId={client.id} clientFirstName={client.first_name} agentsPaused={labAgentsOff} />
+      <ParcoursPageClient
+        clientId={client.id}
+        clientFirstName={client.first_name}
+        userId={user.id}
+        agentsPaused={labAgentsOff}
+        iaConsentGranted={iaConsentGranted}
+      />
     </div>
   )
 }

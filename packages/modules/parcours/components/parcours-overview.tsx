@@ -15,11 +15,13 @@ interface ParcoursOverviewProps {
   clientFirstName?: string | null
   /** Agents Lab coupés par MiKL → parcours grisé / non interactif (en pause). */
   agentsPaused?: boolean
+  /** Ouvre la pop-up de chat du Concierge (orchestrée par l'app). */
+  onAskConcierge?: () => void
 }
 
 const ABANDONABLE_STATUSES = ['en_cours', 'in_progress', 'not_started', 'suspendu']
 
-export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = false }: ParcoursOverviewProps) {
+export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = false, onAskConcierge }: ParcoursOverviewProps) {
   const { data: parcours, isPending, error } = useParcours(clientId)
   const { unreadByStep } = useUnreadInjections(clientId)
   const [abandonDialogOpen, setAbandonDialogOpen] = useState(false)
@@ -68,6 +70,7 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
         currentStep={currentStep}
         allCompleted={allCompleted}
         agentsPaused={agentsPaused}
+        onAskConcierge={onAskConcierge}
       />
 
       {/* Progress bar — Claude Design */}
