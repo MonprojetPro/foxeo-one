@@ -36,11 +36,12 @@ export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProp
   const initials = getInitials(fullName)
 
   // Lecture seule : le header reflète l'état d'accès réel (vrais flags), il ne le pilote pas.
-  // Lab = has_lab (permanent une fois accordé) ; One = accès One ouvert. L'activation vit
-  // dans l'onglet Lab (section ① Activation). Fallback sur dashboardType si flags absents.
-  const labEnabled = client.config?.labModeAvailable ?? (dashboardType === 'lab')
+  // Lab a 3 états : agents actifs (violet) / espace présent mais agents coupés = historique
+  // (grisé) / pas de Lab (pastille masquée). One = accès One ouvert (vert / grisé).
+  const hasLab = client.config?.labModeAvailable ?? (dashboardType === 'lab')
+  const labAgentsOn = client.config?.elioLabEnabled ?? false
   const oneEnabled = client.config?.oneModeAvailable ?? (dashboardType === 'one')
-  const hasAnyAccess = labEnabled || oneEnabled || Boolean(dashboardType)
+  const hasAnyAccess = hasLab || oneEnabled
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -77,28 +78,28 @@ export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProp
           {/* Indicateurs d'accès (lecture seule) — Lab = violet, One = vert ; grisé si inactif */}
           {hasAnyAccess && (
             <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2">
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
-                  labEnabled
-                    ? 'bg-violet-500/15 text-violet-300 border-violet-500/30'
-                    : 'bg-muted/40 text-muted-foreground border-transparent'
-                }`}
-                title={labEnabled ? 'Accès Lab actif' : 'Accès Lab inactif'}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${labEnabled ? 'bg-violet-400' : 'bg-muted-foreground/40'}`} />
-                Lab
-              </span>
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
-                  oneEnabled
-                    ? 'bg-green-500/15 text-green-400 border-green-500/30'
-                    : 'bg-muted/40 text-muted-foreground border-transparent'
-                }`}
-                title={oneEnabled ? 'Accès One actif' : 'Accès One inactif'}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full ${oneEnabled ? 'bg-green-400' : 'bg-muted-foreground/40'}`} />
-                One
-              </span>
+              {hasLab && (
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                    labAgentsOn
+                      ? 'bg-violet-500/15 text-violet-300 border-violet-500/30'
+                      : 'bg-muted/40 text-muted-foreground border-transparent'
+                  }`}
+                  title={labAgentsOn ? 'Lab — agents actifs' : 'Lab — historique (agents coupés)'}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${labAgentsOn ? 'bg-violet-400' : 'bg-muted-foreground/40'}`} />
+                  {labAgentsOn ? 'Lab' : 'Lab · historique'}
+                </span>
+              )}
+              {oneEnabled && (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border bg-green-500/15 text-green-400 border-green-500/30"
+                  title="Accès One ouvert"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                  One
+                </span>
+              )}
             </div>
           )}
 
