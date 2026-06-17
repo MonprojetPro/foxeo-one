@@ -22,27 +22,38 @@ import { toggleAccess } from '../actions/toggle-access'
 
 interface AccessTogglesProps {
   clientId: string
-  dashboardType: string
+  /** has_lab — le client a un espace Lab (permanent une fois accordé). */
+  labModeAvailable: boolean
+  /** Agents Élio Lab actifs (communication). C'est CE levier que la switch « Agents Lab » pilote. */
+  elioLabEnabled: boolean
+  /** Accès One ouvert. */
+  oneModeAvailable: boolean
   hasActiveParcours: boolean
 }
 
-export function AccessToggles({ clientId, dashboardType, hasActiveParcours }: AccessTogglesProps) {
+export function AccessToggles({
+  clientId,
+  labModeAvailable,
+  elioLabEnabled,
+  oneModeAvailable,
+  hasActiveParcours,
+}: AccessTogglesProps) {
   const [confirmDialog, setConfirmDialog] = useState<{ type: 'lab' | 'one'; show: boolean }>({ type: 'lab', show: false })
   const [isPending, startTransition] = useTransition()
   const queryClient = useQueryClient()
 
-  // Lab ON = dashboardType 'lab' (Lab implies both accesses active, Lab is the priority)
-  // One ON = dashboardType 'one' OR 'lab' (One is always accessible when Lab is active)
-  const labEnabled = dashboardType === 'lab'
-  const oneEnabled = dashboardType === 'one' || dashboardType === 'lab'
+  // Les switches lisent les VRAIS flags (plus de dérivation depuis dashboard_type) :
+  //  - « Agents Lab » = elio_lab_enabled (couper/réactiver la communication ; l'espace Lab reste).
+  //  - « Accès One »  = one_mode_available (ouvrir/fermer).
+  const agentsEnabled = elioLabEnabled
+  const oneEnabled = oneModeAvailable
 
   const handleToggle = (accessType: 'lab' | 'one', enabled: boolean) => {
-    // If disabling, show confirmation
+    // À la désactivation, on confirme (couper les agents suspend le parcours en cours).
     if (!enabled) {
       setConfirmDialog({ type: accessType, show: true })
       return
     }
-
     executeToggle(accessType, enabled)
   }
 
@@ -55,9 +66,9 @@ export function AccessToggles({ clientId, dashboardType, hasActiveParcours }: Ac
         return
       }
 
-      const label = accessType === 'lab' ? 'Lab' : 'One'
+      const label = accessType === 'lab' ? 'Agents Lab' : 'Accès One'
       const action = enabled ? 'activé' : 'désactivé'
-      showSuccess(`Accès ${label} ${action}`)
+      showSuccess(`${label} ${action}`)
 
       if (result.data?.parcoursSuspended) {
         showSuccess('Le parcours Lab a été suspendu')
@@ -74,7 +85,7 @@ export function AccessToggles({ clientId, dashboardType, hasActiveParcours }: Ac
     setConfirmDialog({ type: 'lab', show: false })
   }
 
-  const dashboardLabel = confirmDialog.type === 'lab' ? 'Lab' : 'One'
+  const dialogLabel = confirmDialog.type === 'lab' ? 'les agents Lab' : 'l’accès One'
 
   return (
     <>
@@ -84,19 +95,43 @@ export function AccessToggles({ clientId, dashboardType, hasActiveParcours }: Ac
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* Espace Lab — statut permanent (lecture seule) */}
+            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+              <div>
+                <p className="text-sm font-medium">Espace Lab</p>
+                <p className="text-xs text-muted-foreground">
+                  {labModeAvailable
+                    ? 'Actif — historique accessible en permanence'
+                    : 'Aucun espace Lab (le client n’est jamais passé par le Lab)'}
+                </p>
+              </div>
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                  labModeAvailable
+                    ? 'bg-violet-500/15 text-violet-300 border-violet-500/30'
+                    : 'bg-muted/40 text-muted-foreground border-transparent'
+                }`}
+              >
+                {labModeAvailable ? 'Permanent' : 'Inexistant'}
+              </span>
+            </div>
+
+            {/* Agents Lab — communication (le vrai levier on/off) */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Accès Lab</p>
-                <p className="text-xs text-muted-foreground">Dashboard d&apos;incubation client</p>
+                <p className="text-sm font-medium">Agents Lab</p>
+                <p className="text-xs text-muted-foreground">Communication avec les agents Élio Lab</p>
               </div>
               <Switch
-                checked={labEnabled}
+                checked={agentsEnabled}
                 onCheckedChange={(checked: boolean) => handleToggle('lab', checked)}
-                disabled={isPending}
-                aria-label="Activer l'accès Lab"
+                disabled={isPending || !labModeAvailable}
+                aria-label="Activer les agents Lab"
                 data-testid="toggle-lab"
               />
             </div>
+
+            {/* Accès One */}
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Accès One</p>
@@ -118,11 +153,16 @@ export function AccessToggles({ clientId, dashboardType, hasActiveParcours }: Ac
       <Dialog open={confirmDialog.show} onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, show: open }))}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Désactiver l&apos;accès {dashboardLabel}</DialogTitle>
+            <DialogTitle>Désactiver {dialogLabel}</DialogTitle>
             <DialogDescription>
-              Le client perdra l&apos;accès à son dashboard {dashboardLabel}.
-              {confirmDialog.type === 'lab' && hasActiveParcours && (
-                <> Le parcours Lab en cours sera suspendu (pas supprimé).</>
+              {confirmDialog.type === 'lab' ? (
+                <>
+                  Le client ne pourra plus échanger avec les agents Élio Lab. Son espace Lab et son
+                  historique restent accessibles.
+                  {hasActiveParcours && <> Le parcours Lab en cours sera suspendu (pas supprimé).</>}
+                </>
+              ) : (
+                <>Le client perdra l&apos;accès à son dashboard One.</>
               )}
             </DialogDescription>
           </DialogHeader>

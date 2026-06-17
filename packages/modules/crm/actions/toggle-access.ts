@@ -54,10 +54,10 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
       return errorResponse('Opérateur non trouvé', 'NOT_FOUND')
     }
 
-    // Get current client config
+    // Get current client config — on lit les VRAIS flags (plus de dérivation depuis dashboard_type)
     const { data: config, error: configError } = await supabase
       .from('client_configs')
-      .select('dashboard_type')
+      .select('dashboard_type, lab_mode_available, one_mode_available, elio_lab_enabled')
       .eq('client_id', clientId)
       .single()
 
@@ -65,63 +65,31 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
       return errorResponse('Configuration client non trouvée', 'NOT_FOUND')
     }
 
-    // Derive current access state from dashboard_type
-    // 'lab' means both Lab and One are accessible (Lab takes priority)
-    // 'one' means only One is accessible
-    // 'hub' means operator-only view — neither Lab nor One active for client
-    const currentLabOn = config.dashboard_type === 'lab'
-    const currentOneOn = config.dashboard_type === 'one' || config.dashboard_type === 'lab'
+    // Modèle 3 leviers (cf. docs/lab-one-lifecycle.md) :
+    //  - accessType 'lab'  = AGENTS Lab (couper / réactiver la communication). L'espace Lab
+    //    (has_lab = lab_mode_available) est PERMANENT une fois accordé — jamais remis à false.
+    //  - accessType 'one'  = ouvrir / fermer l'accès One (réversible).
+    const newOneOn = accessType === 'one' ? enabled : config.one_mode_available
+    // dashboard_type = mode par défaut au login : One s'il est ouvert, sinon Lab.
+    const newDashboardType = newOneOn ? 'one' : 'lab'
 
-    // Apply toggle
-    let newLabOn = currentLabOn
-    let newOneOn = currentOneOn
-
-    if (accessType === 'lab') {
-      newLabOn = enabled
-    } else {
-      newOneOn = enabled
-    }
-
-    // Determine new dashboard_type from combined state
-    let newDashboardType: string
-    if (newLabOn) {
-      // Lab ON always means dashboard_type = 'lab' (implies One access too)
-      newDashboardType = 'lab'
-    } else if (newOneOn) {
-      newDashboardType = 'one'
-    } else {
-      // Both OFF — keep last dashboard_type but suspend client
-      newDashboardType = 'one'
-    }
-
-    // Update client_configs. Activer le Lab = rendre Élio Lab + le mode Lab réellement
-    // disponibles (mêmes flags que l'activation par paiement, cf. pennylane-paid-handlers).
-    // Sinon « Lab activé » mais Élio Lab muet côté client.
     const configUpdate: {
       dashboard_type: string
       lab_mode_available?: boolean
       one_mode_available?: boolean
       elio_lab_enabled?: boolean
     } = { dashboard_type: newDashboardType }
-    // La switch « Accès One » du Hub pilote directement one_mode_available (ADR-01) :
-    // le Mode One n'est plus implicitement déduit de l'accès Lab.
+
     if (accessType === 'one') {
+      // Ouvrir / fermer le One.
       configUpdate.one_mode_available = enabled
-    }
-    if (newLabOn) {
-      configUpdate.lab_mode_available = true
-      configUpdate.elio_lab_enabled = true
     } else {
-      // Lab désactivé : Élio Lab coupé (cohérent avec la graduation Lab → One).
-      configUpdate.elio_lab_enabled = false
-      // Désactivation EXPLICITE de l'accès Lab par l'opérateur → retirer aussi la
-      // disponibilité du Mode Lab. Sinon, côté client, lab_mode_available reste true et
-      // un client dont le cookie de vue est sur 'lab' demeure bloqué en vue Lab (le calcul
-      // activeMode du layout privilégie cookie+lab_mode_available sur dashboard_type).
-      // On ne le fait QUE sur un toggle 'lab' off, pas sur un 'one' off, pour ne pas
-      // écraser le lab_mode_available d'un client gradué (géré par graduate-client).
-      if (accessType === 'lab') {
-        configUpdate.lab_mode_available = false
+      // Agents Lab : couper (off) ou réactiver (on) la communication.
+      configUpdate.elio_lab_enabled = enabled
+      // Réactiver implique que le client a un Lab → on garantit has_lab.
+      // On NE remet JAMAIS lab_mode_available à false (permanence : l'espace + l'historique restent à vie).
+      if (enabled) {
+        configUpdate.lab_mode_available = true
       }
     }
 
@@ -139,22 +107,12 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
       )
     }
 
-    // Handle Both-OFF: suspend the client
-    let clientSuspended = false
-    if (!newLabOn && !newOneOn) {
-      const { error: suspendError } = await supabase
-        .from('clients')
-        .update({ status: 'suspended' })
-        .eq('id', clientId)
+    // Permanence : l'espace Lab restant toujours accessible (historique à vie), il n'y a
+    // plus de cas « aucun accès » → plus de suspension auto. La suspension d'un client est
+    // une action de cycle de vie distincte (ClientLifecycleActions).
+    const clientSuspended = false
 
-      if (suspendError) {
-        console.error('[CRM:TOGGLE_ACCESS] Client suspend error:', suspendError)
-      } else {
-        clientSuspended = true
-      }
-    }
-
-    // Handle parcours suspension/reactivation when Lab is toggled
+    // Handle parcours suspension/reactivation when Lab agents are toggled
     let parcoursSuspended = false
     if (accessType === 'lab') {
       if (!enabled) {

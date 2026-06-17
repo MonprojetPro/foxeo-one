@@ -147,7 +147,7 @@ describe('toggleAccess Server Action', () => {
     expect(result.data?.dashboardType).toBe('lab')
   })
 
-  it('should reset lab_mode_available to false when disabling lab access', async () => {
+  it('coupe les agents Lab SANS retirer lab_mode_available (permanence)', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: testOperatorId } },
       error: null,
@@ -158,9 +158,9 @@ describe('toggleAccess Server Action', () => {
       error: null,
     })
 
-    // Client actuellement en Lab
+    // Client Lab : espace présent, agents actifs, One fermé
     mockConfigSingle.mockResolvedValue({
-      data: { dashboard_type: 'lab' },
+      data: { dashboard_type: 'lab', lab_mode_available: true, one_mode_available: false, elio_lab_enabled: true },
       error: null,
     })
 
@@ -195,12 +195,14 @@ describe('toggleAccess Server Action', () => {
     })
 
     expect(result.error).toBeNull()
-    expect(result.data?.dashboardType).toBe('one')
+    // One fermé → mode par défaut = lab ; agents coupés ; espace Lab conservé.
+    expect(result.data?.dashboardType).toBe('lab')
     expect(capturedUpdate).toMatchObject({
-      dashboard_type: 'one',
+      dashboard_type: 'lab',
       elio_lab_enabled: false,
-      lab_mode_available: false,
     })
+    // PERMANENCE : on ne remet jamais lab_mode_available à false.
+    expect((capturedUpdate as Record<string, unknown>)?.lab_mode_available).toBeUndefined()
   })
 
   it('should always return { data, error } format', async () => {

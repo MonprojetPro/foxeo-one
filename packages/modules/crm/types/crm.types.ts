@@ -12,6 +12,10 @@ export const ClientConfig = z.object({
   dashboardType: z.enum(['one', 'lab']),
   themeVariant: z.string().nullable().optional(),
   parcoursConfig: z.record(z.unknown()).optional(),
+  // ADR-01 / lab-one-lifecycle — leviers d'accès (canoniques, ne plus dériver de dashboardType)
+  labModeAvailable: z.boolean().optional(),
+  oneModeAvailable: z.boolean().optional(),
+  elioLabEnabled: z.boolean().optional(),
   // Story 9.4 — Subscription tier
   subscriptionTier: z.enum(['base', 'essentiel', 'agentique']).nullable().optional(),
   tierChangedAt: z.string().datetime({ offset: true }).nullable().optional(),

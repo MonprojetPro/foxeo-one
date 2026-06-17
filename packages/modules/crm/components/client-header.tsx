@@ -35,11 +35,12 @@ export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProp
   const creationDate = format(new Date(client.createdAt), 'd MMMM yyyy', { locale: fr })
   const initials = getInitials(fullName)
 
-  // Lecture seule : le header reflète l'état d'accès, il ne le pilote pas.
-  // L'activation/désactivation Lab & One vit dans l'onglet Lab (section ① Activation),
-  // avec son garde-fou de confirmation. Évite le doublon d'action et la divergence de comportement.
-  const labEnabled = dashboardType === 'lab'
-  const oneEnabled = dashboardType === 'one' || dashboardType === 'lab'
+  // Lecture seule : le header reflète l'état d'accès réel (vrais flags), il ne le pilote pas.
+  // Lab = has_lab (permanent une fois accordé) ; One = accès One ouvert. L'activation vit
+  // dans l'onglet Lab (section ① Activation). Fallback sur dashboardType si flags absents.
+  const labEnabled = client.config?.labModeAvailable ?? (dashboardType === 'lab')
+  const oneEnabled = client.config?.oneModeAvailable ?? (dashboardType === 'one')
+  const hasAnyAccess = labEnabled || oneEnabled || Boolean(dashboardType)
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -74,7 +75,7 @@ export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProp
         {/* Actions header droite — lecture seule, l'activation Lab/One vit dans l'onglet Lab */}
         <div className="flex items-center gap-4 shrink-0 mt-1">
           {/* Indicateurs d'accès (lecture seule) — Lab = violet, One = vert ; grisé si inactif */}
-          {dashboardType && (
+          {hasAnyAccess && (
             <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2">
               <span
                 className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${

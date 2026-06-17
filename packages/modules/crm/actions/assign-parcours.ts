@@ -109,6 +109,9 @@ export async function assignParcours(input: AssignParcoursInput): Promise<Action
       .from('client_configs')
       .update({
         dashboard_type: 'lab',
+        // Ouvrir un Lab = accorder l'espace (has_lab, permanent) + activer les agents.
+        lab_mode_available: true,
+        elio_lab_enabled: true,
         parcours_config: {
           parcoursId: parcours.id,
           templateId,

@@ -11,137 +11,77 @@ vi.mock('../actions/toggle-access', () => ({
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
+    defaultOptions: { queries: { retry: false } },
   })
-
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   )
 }
 
-describe('AccessToggles', () => {
-  it('should render Lab and One toggles', () => {
-    render(
-      <AccessToggles
-        clientId="550e8400-e29b-41d4-a716-446655440001"
-        dashboardType="lab"
-        hasActiveParcours={false}
-      />,
-      { wrapper: createWrapper() }
-    )
+const CLIENT_ID = '550e8400-e29b-41d4-a716-446655440001'
 
-    expect(screen.getByText('Accès Lab')).toBeInTheDocument()
+// Profil Lab actif : espace Lab présent, agents actifs, One fermé
+function renderLab(hasActiveParcours = false) {
+  return render(
+    <AccessToggles
+      clientId={CLIENT_ID}
+      labModeAvailable
+      elioLabEnabled
+      oneModeAvailable={false}
+      hasActiveParcours={hasActiveParcours}
+    />,
+    { wrapper: createWrapper() }
+  )
+}
+
+describe('AccessToggles', () => {
+  it('rend les leviers Agents Lab et Accès One', () => {
+    renderLab()
+    expect(screen.getByText('Agents Lab')).toBeInTheDocument()
     expect(screen.getByText('Accès One')).toBeInTheDocument()
   })
 
-  it('should render Switch elements (role=switch)', () => {
-    render(
-      <AccessToggles
-        clientId="550e8400-e29b-41d4-a716-446655440001"
-        dashboardType="lab"
-        hasActiveParcours={false}
-      />,
-      { wrapper: createWrapper() }
-    )
-
-    const switches = screen.getAllByRole('switch')
-    expect(switches).toHaveLength(2)
+  it('rend 2 switches', () => {
+    renderLab()
+    expect(screen.getAllByRole('switch')).toHaveLength(2)
   })
 
-  it('should show both toggles ON when dashboardType is lab', () => {
-    render(
-      <AccessToggles
-        clientId="550e8400-e29b-41d4-a716-446655440001"
-        dashboardType="lab"
-        hasActiveParcours={false}
-      />,
-      { wrapper: createWrapper() }
-    )
-
-    const labToggle = screen.getByTestId('toggle-lab')
-    const oneToggle = screen.getByTestId('toggle-one')
-
-    // Lab ON → both toggles should be checked
-    expect(labToggle).toHaveAttribute('aria-checked', 'true')
-    expect(oneToggle).toHaveAttribute('aria-checked', 'true')
+  it('reflète les vrais flags : agents ON (elioLabEnabled), One OFF (oneModeAvailable)', () => {
+    renderLab()
+    expect(screen.getByTestId('toggle-lab')).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByTestId('toggle-one')).toHaveAttribute('aria-checked', 'false')
   })
 
-  it('should show only One ON when dashboardType is one', () => {
+  it('One ON quand oneModeAvailable=true', () => {
     render(
-      <AccessToggles
-        clientId="550e8400-e29b-41d4-a716-446655440001"
-        dashboardType="one"
-        hasActiveParcours={false}
-      />,
+      <AccessToggles clientId={CLIENT_ID} labModeAvailable elioLabEnabled={false} oneModeAvailable hasActiveParcours={false} />,
       { wrapper: createWrapper() }
     )
-
-    const labToggle = screen.getByTestId('toggle-lab')
-    const oneToggle = screen.getByTestId('toggle-one')
-
-    expect(labToggle).toHaveAttribute('aria-checked', 'false')
-    expect(oneToggle).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByTestId('toggle-one')).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByTestId('toggle-lab')).toHaveAttribute('aria-checked', 'false')
   })
 
-  it('should show confirmation dialog when disabling access', () => {
-    render(
-      <AccessToggles
-        clientId="550e8400-e29b-41d4-a716-446655440001"
-        dashboardType="lab"
-        hasActiveParcours={false}
-      />,
-      { wrapper: createWrapper() }
-    )
-
-    // Click Lab toggle to disable it (currently ON)
-    const labToggle = screen.getByTestId('toggle-lab')
-    fireEvent.click(labToggle)
-
-    // Confirmation dialog should appear
-    expect(screen.getByText(/perdra l'accès/)).toBeInTheDocument()
+  it('affiche le statut « Espace Lab » permanent', () => {
+    renderLab()
+    expect(screen.getByText('Espace Lab')).toBeInTheDocument()
+    expect(screen.getByText(/historique accessible en permanence/)).toBeInTheDocument()
   })
 
-  it('should mention parcours suspension in confirmation when active parcours exists', () => {
-    render(
-      <AccessToggles
-        clientId="550e8400-e29b-41d4-a716-446655440001"
-        dashboardType="lab"
-        hasActiveParcours={true}
-      />,
-      { wrapper: createWrapper() }
-    )
+  it('confirmation à la coupure des agents Lab', () => {
+    renderLab()
+    fireEvent.click(screen.getByTestId('toggle-lab'))
+    expect(screen.getByText('Désactiver les agents Lab')).toBeInTheDocument()
+  })
 
-    const labToggle = screen.getByTestId('toggle-lab')
-    fireEvent.click(labToggle)
-
+  it('mentionne la suspension du parcours si un parcours est actif', () => {
+    renderLab(true)
+    fireEvent.click(screen.getByTestId('toggle-lab'))
     expect(screen.getByText(/parcours Lab en cours sera suspendu/)).toBeInTheDocument()
   })
 
-  it('should have data-testid attribute', () => {
-    render(
-      <AccessToggles
-        clientId="550e8400-e29b-41d4-a716-446655440001"
-        dashboardType="lab"
-        hasActiveParcours={false}
-      />,
-      { wrapper: createWrapper() }
-    )
-
+  it('a le data-testid access-toggles + titre', () => {
+    renderLab()
     expect(screen.getByTestId('access-toggles')).toBeInTheDocument()
-  })
-
-  it('should have card title "Accès dashboards"', () => {
-    render(
-      <AccessToggles
-        clientId="550e8400-e29b-41d4-a716-446655440001"
-        dashboardType="lab"
-        hasActiveParcours={false}
-      />,
-      { wrapper: createWrapper() }
-    )
-
     expect(screen.getByText('Accès dashboards')).toBeInTheDocument()
   })
 })

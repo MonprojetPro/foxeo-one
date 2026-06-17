@@ -67,6 +67,9 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
           dashboard_type,
           theme_variant,
           parcours_config,
+          lab_mode_available,
+          one_mode_available,
+          elio_lab_enabled,
           subscription_tier,
           tier_changed_at
         )
@@ -125,6 +128,9 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
             dashboardType: configRaw.dashboard_type as string,
             themeVariant: configRaw.theme_variant as string | null,
             parcoursConfig: configRaw.parcours_config as Record<string, unknown> | undefined,
+            labModeAvailable: (configRaw.lab_mode_available as boolean | null) ?? false,
+            oneModeAvailable: (configRaw.one_mode_available as boolean | null) ?? false,
+            elioLabEnabled: (configRaw.elio_lab_enabled as boolean | null) ?? false,
             subscriptionTier: (configRaw.subscription_tier as 'base' | 'essentiel' | 'agentique' | null) ?? null,
             tierChangedAt: (configRaw.tier_changed_at as string | null) ?? null,
           }
