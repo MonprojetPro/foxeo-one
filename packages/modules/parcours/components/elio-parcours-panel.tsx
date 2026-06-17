@@ -108,7 +108,7 @@ export function ElioParcoursPanel({
         {/* DROITE — avatar du Concierge + bouton « Pose-moi une question » */}
         <div className="flex flex-col items-center gap-2 shrink-0 w-[120px]">
           <img
-            src="/elio/elio-lab.png"
+            src="/elio/elio-concierge.png"
             alt="Élio, le Concierge"
             className="w-24 h-24 object-contain drop-shadow-[0_0_12px_rgba(167,139,250,0.25)]"
           />
