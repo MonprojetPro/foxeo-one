@@ -23,6 +23,20 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: () => ({ data: {}, isLoading: false, error: null }),
 }))
 
+// Le hook useParcoursRealtimeRefresh appelle createBrowserSupabaseClient dans un useEffect.
+vi.mock('@monprojetpro/supabase', () => {
+  const channel = {
+    on() { return channel },
+    subscribe() { return channel },
+  }
+  return {
+    createBrowserSupabaseClient: () => ({
+      channel: () => channel,
+      removeChannel: vi.fn(),
+    }),
+  }
+})
+
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, unknown>
   return {

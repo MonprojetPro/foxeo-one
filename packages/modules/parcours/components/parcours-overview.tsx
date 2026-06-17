@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { cn } from '@monprojetpro/utils'
 import { useParcours } from '../hooks/use-parcours'
 import { useUnreadInjections } from '../hooks/use-unread-injections'
+import { useParcoursRealtimeRefresh } from '../hooks/use-parcours-realtime-refresh'
 import { ParcoursProgressBar } from './parcours-progress-bar'
 import { ParcoursStepCard } from './parcours-step-card'
 import { ElioParcoursPanel } from './elio-parcours-panel'
@@ -25,6 +26,10 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
   const { data: parcours, isPending, error } = useParcours(clientId)
   const { unreadByStep } = useUnreadInjections(clientId)
   const [abandonDialogOpen, setAbandonDialogOpen] = useState(false)
+
+  // Mise à jour instantanée quand MiKL coupe/réactive un agent depuis le Hub
+  // (invalide la query ['parcours', clientId] — le router.refresh() SSR ne suffit pas).
+  useParcoursRealtimeRefresh(clientId)
 
   if (isPending) {
     return <ParcoursOverviewSkeleton />
