@@ -17,6 +17,17 @@
 
 ---
 
+## 0bis. Élio Lab (assistant) ≠ Agents du parcours (NE PAS CONFONDRE)
+
+| | **Élio Lab — l'assistant** | **Les agents du parcours** |
+|---|---|---|
+| Rôle | Assistant du dashboard Lab : répond aux **questions produit**, oriente le client, connaît le produit par cœur. | Les **étapes d'incubation** (Élio Go-to-Market, Cible, Business, Legit, Recap…). |
+| Surface | Chat libre `/modules/elio` | Chat **par étape** du parcours |
+| Coupé par « Agents du parcours » (OFF) ? | **Non — reste TOUJOURS dispo** (sauf consentement IA). | **Oui — mis en pause.** |
+| Flag | (consentement IA seulement) | `elio_lab_enabled` (le levier B ci-dessous) |
+
+Techniquement : le garde `elio_lab_enabled` dans `send-to-elio` ne s'applique qu'aux appels **avec `systemPromptOverride`** (= agent de parcours) ; le chat libre de l'assistant n'en passe pas → jamais bloqué.
+
 ## 1. Les 3 leviers de pilotage (à NE PLUS confondre)
 
 Le bug historique venait de 2 flags fourre-tout. Le modèle correct = **3 leviers indépendants** :
