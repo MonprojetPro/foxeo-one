@@ -85,7 +85,6 @@ export default async function ClientParcoursPage() {
       <ParcoursPageClient
         clientId={client.id}
         clientFirstName={client.first_name}
-        userId={user.id}
         agentsPaused={labAgentsOff}
         iaConsentGranted={iaConsentGranted}
       />

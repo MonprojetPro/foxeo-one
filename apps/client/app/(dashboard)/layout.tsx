@@ -28,7 +28,7 @@ const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
   parcoursMani,  // Lab uniquement → /modules/parcours
   chatMani,      // Lab + One → /modules/chat
   docsMani,      // Lab + One → /modules/documents
-  elioMani,      // Lab + One → widget sidebar (One) / /modules/elio (Lab)
+  elioMani,      // One → widget sidebar + /modules/elio. Lab → Concierge en pop-up éphémère (depuis Mon Parcours)
   visioMani,     // Lab + One → /modules/visio
   facturationMani, // One → /modules/facturation
   supportMani,   // Lab + One → /modules/support

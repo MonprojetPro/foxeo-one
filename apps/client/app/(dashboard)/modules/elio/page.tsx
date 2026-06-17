@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { cookies } from 'next/headers'
 import { ElioChat } from '@monprojetpro/module-elio'
@@ -33,6 +34,13 @@ export default async function ElioClientPage({ searchParams }: PageProps) {
     oneModeAvailable: configData?.one_mode_available ?? false,
     cookieMode: cookieStore.get(MODE_TOGGLE_COOKIE)?.value,
   })
+
+  // En mode Lab, le chat persistant avec historique « ne sert à rien » : le Concierge
+  // s'utilise en pop-up ÉPHÉMÈRE depuis « Mon Parcours ». On supprime donc cette page
+  // côté Lab (redirection). Elle reste l'interface Élio de One (historique nécessaire).
+  if (effectiveMode === 'lab') {
+    redirect('/modules/parcours')
+  }
 
   // NB : Élio Lab (l'ASSISTANT du dashboard) reste TOUJOURS disponible, même quand MiKL
   // coupe les agents du parcours (elio_lab_enabled). Seul le consentement IA le met en veille.
