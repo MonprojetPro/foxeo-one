@@ -30,12 +30,12 @@ export function ElioParcoursPanel({ clientFirstName, currentStep, allCompleted, 
           >
             E
           </div>
-          <span className="text-[13px] font-semibold text-amber-400 tracking-[0.02em]">Élio Lab — en pause</span>
+          <span className="text-[13px] font-semibold text-amber-400 tracking-[0.02em]">Parcours — agents en pause</span>
         </div>
         <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 mt-3 text-sm text-[#e5e7eb] leading-relaxed">
-          Bonjour {firstName} ! Élio Lab est en pause — MiKL a suspendu les agents pour le moment.
-          Vous gardez l&apos;accès à tout votre parcours et à votre historique ; la conversation
-          reprendra dès leur réactivation.
+          Bonjour {firstName} ! Les agents de ton parcours sont en pause — MiKL les a suspendus
+          pour le moment. Tu gardes l&apos;accès à tout ton parcours et à ton historique ; la
+          conversation reprendra dès leur réactivation.
         </div>
       </div>
     )

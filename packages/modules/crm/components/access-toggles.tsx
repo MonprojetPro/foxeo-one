@@ -66,7 +66,7 @@ export function AccessToggles({
         return
       }
 
-      const label = accessType === 'lab' ? 'Agents Lab' : 'Accès One'
+      const label = accessType === 'lab' ? 'Agents du parcours' : 'Accès One'
       const action = enabled ? 'activé' : 'désactivé'
       showSuccess(`${label} ${action}`)
 
@@ -85,7 +85,7 @@ export function AccessToggles({
     setConfirmDialog({ type: 'lab', show: false })
   }
 
-  const dialogLabel = confirmDialog.type === 'lab' ? 'les agents Lab' : 'l’accès One'
+  const dialogLabel = confirmDialog.type === 'lab' ? 'les agents du parcours' : 'l’accès One'
 
   return (
     <>
@@ -116,11 +116,12 @@ export function AccessToggles({
               </span>
             </div>
 
-            {/* Agents Lab — communication (le vrai levier on/off) */}
+            {/* Agents du parcours — communication (le vrai levier on/off).
+                NB : distinct d'Élio Lab, l'assistant du dashboard, qui reste toujours dispo. */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Agents Lab</p>
-                <p className="text-xs text-muted-foreground">Communication avec les agents Élio Lab</p>
+                <p className="text-sm font-medium">Agents du parcours</p>
+                <p className="text-xs text-muted-foreground">Communication avec les agents Élio des étapes (Élio Lab l&apos;assistant reste dispo)</p>
               </div>
               <Switch
                 checked={agentsEnabled}
@@ -157,9 +158,9 @@ export function AccessToggles({
             <DialogDescription>
               {confirmDialog.type === 'lab' ? (
                 <>
-                  Le client ne pourra plus échanger avec les agents Élio Lab. Son espace Lab et son
-                  historique restent accessibles.
-                  {hasActiveParcours && <> Le parcours Lab en cours sera suspendu (pas supprimé).</>}
+                  Le client ne pourra plus échanger avec les agents de son parcours. Son espace Lab,
+                  son historique et l&apos;assistant Élio Lab restent accessibles.
+                  {hasActiveParcours && <> Le parcours en cours sera suspendu (pas supprimé).</>}
                 </>
               ) : (
                 <>Le client perdra l&apos;accès à son dashboard One.</>

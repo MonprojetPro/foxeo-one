@@ -233,7 +233,7 @@ describe('sendToElio', () => {
     expect(result.data?.content).toBeTruthy()
   })
 
-  it('retourne ELIO_LAB_DISABLED si elio_lab_enabled=false pour un message Lab', async () => {
+  it('retourne ELIO_LAB_DISABLED si elio_lab_enabled=false pour un AGENT DE PARCOURS (systemPromptOverride)', async () => {
     const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockResolvedValueOnce({
       auth: {
@@ -264,7 +264,8 @@ describe('sendToElio', () => {
       functions: { invoke: mockInvoke },
     } as never)
 
-    const result = await sendToElio('lab', 'Bonjour Élio', 'client-1')
+    // systemPromptOverride (5e arg) = appel d'un agent de parcours → soumis au flag agents.
+    const result = await sendToElio('lab', 'Bonjour Élio', 'client-1', undefined, 'Tu es un agent de parcours.')
     expect(result.data).toBeNull()
     expect(result.error?.code).toBe('ELIO_LAB_DISABLED')
   })

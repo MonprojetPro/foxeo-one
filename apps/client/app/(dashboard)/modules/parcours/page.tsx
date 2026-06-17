@@ -81,10 +81,11 @@ export default async function ClientParcoursPage() {
         <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
           <span className="mt-0.5 text-amber-400" aria-hidden="true">⏸️</span>
           <div>
-            <p className="text-sm font-medium text-foreground">Agents Élio Lab en pause</p>
+            <p className="text-sm font-medium text-foreground">Agents de ton parcours en pause</p>
             <p className="text-xs text-muted-foreground">
-              MiKL a mis vos agents en pause. Vous gardez l&apos;accès à votre parcours et à votre
-              historique, mais les agents ne répondent pas pour le moment.
+              MiKL a mis les agents de ton parcours en pause. Tu gardes l&apos;accès à ton parcours
+              et à ton historique, mais ils ne répondent pas pour le moment. (Élio reste dispo pour
+              tes questions.)
             </p>
           </div>
         </div>

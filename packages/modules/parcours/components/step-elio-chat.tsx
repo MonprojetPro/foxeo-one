@@ -461,9 +461,9 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
         <div className="border-t border-amber-500/30 bg-amber-500/5 p-3 flex items-center gap-2.5">
           <Bot className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
           <p className="text-xs leading-relaxed text-[#9ca3af]">
-            <span className="font-medium text-[#e5e7eb]">Élio Lab est en pause.</span>{' '}
-            MiKL a suspendu les agents. Vous gardez l&apos;accès à votre historique ci-dessus,
-            mais la conversation est fermée pour le moment.
+            <span className="font-medium text-[#e5e7eb]">Cet agent est en pause.</span>{' '}
+            MiKL a suspendu les agents de ton parcours. Tu gardes l&apos;accès à ton historique
+            ci-dessus, mais la conversation est fermée pour le moment.
           </p>
         </div>
       ) : (

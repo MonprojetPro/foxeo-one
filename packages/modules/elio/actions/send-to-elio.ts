@@ -488,10 +488,11 @@ export async function sendToElio(
     return response
   }
 
-  // 3bis. Guard Élio Lab — couper les agents (elio_lab_enabled=false) STOPPE toute
-  // communication Lab, y compris le chat d'étape du parcours (cf. lab-one-lifecycle.md :
-  // « les agents ne répondent plus »). Plus de bypass step chat : le flag est souverain.
-  if (dashboardType === 'lab' && clientId) {
+  // 3bis. Guard AGENTS DU PARCOURS — elio_lab_enabled=false met en pause les agents du
+  // PARCOURS Lab (chat d'étape), PAS Élio Lab l'assistant (questions sur le dashboard, qui
+  // reste disponible). On distingue par `systemPromptOverride` : seul le chat d'étape en
+  // passe un (agent de parcours). cf. docs/lab-one-lifecycle.md.
+  if (dashboardType === 'lab' && clientId && systemPromptOverride) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: labConfig } = await (supabase as any)
       .from('client_configs')
@@ -501,7 +502,7 @@ export async function sendToElio(
 
     if (labConfig && labConfig.elio_lab_enabled === false) {
       return errorResponse(
-        'Élio Lab est désactivé pour ce client. Contactez MiKL pour le réactiver.',
+        'Les agents de ton parcours sont en pause. Contacte MiKL pour les réactiver.',
         'ELIO_LAB_DISABLED'
       )
     }

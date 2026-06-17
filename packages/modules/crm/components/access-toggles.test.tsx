@@ -35,9 +35,9 @@ function renderLab(hasActiveParcours = false) {
 }
 
 describe('AccessToggles', () => {
-  it('rend les leviers Agents Lab et Accès One', () => {
+  it('rend les leviers Agents du parcours et Accès One', () => {
     renderLab()
-    expect(screen.getByText('Agents Lab')).toBeInTheDocument()
+    expect(screen.getByText('Agents du parcours')).toBeInTheDocument()
     expect(screen.getByText('Accès One')).toBeInTheDocument()
   })
 
@@ -67,16 +67,16 @@ describe('AccessToggles', () => {
     expect(screen.getByText(/historique accessible en permanence/)).toBeInTheDocument()
   })
 
-  it('confirmation à la coupure des agents Lab', () => {
+  it('confirmation à la coupure des agents du parcours', () => {
     renderLab()
     fireEvent.click(screen.getByTestId('toggle-lab'))
-    expect(screen.getByText('Désactiver les agents Lab')).toBeInTheDocument()
+    expect(screen.getByText('Désactiver les agents du parcours')).toBeInTheDocument()
   })
 
   it('mentionne la suspension du parcours si un parcours est actif', () => {
     renderLab(true)
     fireEvent.click(screen.getByTestId('toggle-lab'))
-    expect(screen.getByText(/parcours Lab en cours sera suspendu/)).toBeInTheDocument()
+    expect(screen.getByText(/parcours en cours sera suspendu/)).toBeInTheDocument()
   })
 
   it('a le data-testid access-toggles + titre', () => {
