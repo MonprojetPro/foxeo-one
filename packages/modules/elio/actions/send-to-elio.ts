@@ -488,9 +488,10 @@ export async function sendToElio(
     return response
   }
 
-  // 3bis. Guard Élio Lab — MiKL peut désactiver elio_lab_enabled après graduation (ADR-01 Révision 2)
-  // Bypass autorisé pour le chat embarqué dans une étape de parcours (step chat)
-  if (dashboardType === 'lab' && clientId && !agentOverrides?.skipLabEnabledCheck) {
+  // 3bis. Guard Élio Lab — couper les agents (elio_lab_enabled=false) STOPPE toute
+  // communication Lab, y compris le chat d'étape du parcours (cf. lab-one-lifecycle.md :
+  // « les agents ne répondent plus »). Plus de bypass step chat : le flag est souverain.
+  if (dashboardType === 'lab' && clientId) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: labConfig } = await (supabase as any)
       .from('client_configs')
