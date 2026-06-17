@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@monprojetpro/ui'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronUp, ChevronDown, Power, PowerOff } from 'lucide-react'
 import { getClientParcoursAgents } from '../actions/get-client-parcours-agents'
 import { reorderParcoursStep } from '../actions/reorder-parcours-step'
+import { toggleAgentEnabled } from '../actions/toggle-agent-enabled'
 import { LaunchParcoursModal } from './launch-parcours-modal'
 import { AddStepModal } from './add-step-modal'
 import { InjectStepContextPanel } from '@monprojetpro/module-elio'
@@ -77,6 +78,12 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
     }
   }
 
+  async function handleToggleEnabled(stepId: string, enabled: boolean) {
+    await toggleAgentEnabled({ stepId, clientId, enabled })
+    invalidate()
+    queryClient.invalidateQueries({ queryKey: ['client-parcours', clientId] })
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-3" aria-label="Chargement du parcours">
@@ -141,6 +148,7 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
         <ol className="space-y-2">
           {(steps as ClientParcoursAgentWithDetails[]).map((step, index) => {
             const pendingCount = contextCounts?.[step.id] ?? 0
+            const enabled = step.isEnabled !== false
             const isFirst = index === 0
             const isLast = index === (steps as ClientParcoursAgentWithDetails[]).length - 1
             const isReordering = reordering === step.id
@@ -148,7 +156,9 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
             return (
               <li
                 key={step.id}
-                className="flex items-center gap-4 rounded-xl border border-border bg-card p-4"
+                className={`flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-opacity ${
+                  enabled ? '' : 'opacity-50'
+                }`}
               >
                 {/* Numéro étape — position réelle dans la liste */}
                 <div
@@ -191,13 +201,32 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
                   </span>
                 )}
 
-                {/* Statut */}
-                <span
-                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CLASSES[step.status]}`}
-                  aria-label={`Statut : ${STATUS_LABELS[step.status]}`}
+                {/* Statut (+ pastille désactivé) */}
+                {enabled ? (
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_CLASSES[step.status]}`}
+                    aria-label={`Statut : ${STATUS_LABELS[step.status]}`}
+                  >
+                    {STATUS_LABELS[step.status]}
+                  </span>
+                ) : (
+                  <span
+                    className="shrink-0 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+                    aria-label="Agent désactivé"
+                  >
+                    Désactivé
+                  </span>
+                )}
+
+                {/* Activer / désactiver l'agent */}
+                <button
+                  onClick={() => handleToggleEnabled(step.id, !enabled)}
+                  aria-label={enabled ? 'Désactiver cet agent' : 'Réactiver cet agent'}
+                  title={enabled ? 'Désactiver cet agent' : 'Réactiver cet agent'}
+                  className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  {STATUS_LABELS[step.status]}
-                </span>
+                  {enabled ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4 text-emerald-400" />}
+                </button>
 
                 {/* Boutons réordonnancement */}
                 <div className="flex shrink-0 flex-col gap-0.5">

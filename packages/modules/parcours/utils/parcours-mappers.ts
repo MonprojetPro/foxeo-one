@@ -27,6 +27,7 @@ export function toParcoursStep(db: ParcoursStepDB): ParcoursStep {
     briefAssets: db.brief_assets ?? [],
     oneTeasingMessage: db.one_teasing_message ?? null,
     status: db.status,
+    isEnabled: true,
     completedAt: db.completed_at,
     validationRequired: db.validation_required,
     validationId: db.validation_id,

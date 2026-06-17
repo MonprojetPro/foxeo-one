@@ -79,6 +79,8 @@ export interface ParcoursStep {
   briefAssets: string[]
   oneTeasingMessage: string | null
   status: ParcoursStepStatus
+  /** Agent actif (true) ou désactivé-grisé par l'opérateur (false). */
+  isEnabled: boolean
   completedAt: string | null
   validationRequired: boolean
   validationId: string | null
@@ -298,6 +300,8 @@ export interface ClientParcoursAgentDB {
   step_order: number
   step_label: string
   status: ClientParcoursAgentStatus
+  /** Agent actif (true) ou désactivé-grisé par l'opérateur (false). Orthogonal à status. */
+  is_enabled: boolean
   created_at: string
   updated_at: string
 }
@@ -309,6 +313,7 @@ export interface ClientParcoursAgent {
   stepOrder: number
   stepLabel: string
   status: ClientParcoursAgentStatus
+  isEnabled: boolean
   createdAt: string
   updatedAt: string
 }

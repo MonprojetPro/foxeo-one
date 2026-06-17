@@ -74,6 +74,7 @@ export { useStepSubmissionStatus } from './hooks/use-step-submission-status'
 
 // Actions
 export { getParcours } from './actions/get-parcours'
+export { toggleAgentEnabled } from './actions/toggle-agent-enabled'
 export { updateStepStatus } from './actions/update-step-status'
 export { completeStep } from './actions/complete-step'
 export { skipStep } from './actions/skip-step'

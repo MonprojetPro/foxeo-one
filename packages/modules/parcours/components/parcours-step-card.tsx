@@ -18,6 +18,31 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
     router.push(`/modules/parcours/steps/${step.stepNumber}`)
   }
 
+  // ÉTAT DÉSACTIVÉ — l'opérateur a écarté cet agent : grisé, non interactif.
+  // `=== false` explicite : un step sans le champ (legacy/mock) est considéré actif.
+  if (step.isEnabled === false) {
+    return (
+      <div
+        className={cn(
+          'h-[158px] flex flex-col rounded-[14px] p-[18px] opacity-40 grayscale',
+          'bg-[#0d0d0d] border border-dashed border-[#374151]',
+          className
+        )}
+        aria-label={`Étape ${step.stepNumber}: ${step.title} — désactivée`}
+      >
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center bg-muted/50 text-[#6b7280] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+            Désactivée
+          </span>
+          <span className="text-[11px] text-[#6b7280]">Étape {step.stepNumber}</span>
+        </div>
+        <div className="mt-3.5 text-[16px] font-medium text-[#6b7280] leading-snug line-through">{step.title}</div>
+        <div className="flex-1" />
+        <div className="text-[11px] text-[#6b7280] italic">Non incluse dans ce parcours</div>
+      </div>
+    )
+  }
+
   // ÉTAT EN PAUSE — parcours abandonné : cartes cliquables (consultation) mais badge orange visible
   if (isAbandoned) {
     return (

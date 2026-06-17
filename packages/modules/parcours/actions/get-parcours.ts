@@ -93,6 +93,7 @@ export async function getParcours(
           briefAssets: [],
           oneTeasingMessage: null,
           status: displayStatus,
+          isEnabled: (row as { is_enabled?: boolean }).is_enabled ?? true,
           completedAt: null,
           validationRequired: false,
           validationId: null,
@@ -102,8 +103,11 @@ export async function getParcours(
         }
       })
 
-      const completedSteps = steps.filter(s => s.status === 'completed').length
-      const totalSteps = steps.length
+      // Les agents désactivés (is_enabled=false) sont EXCLUS du calcul de complétion :
+      // ils ne comptent pas et ne bloquent donc pas la graduation.
+      const enabledSteps = steps.filter(s => s.isEnabled)
+      const completedSteps = enabledSteps.filter(s => s.status === 'completed').length
+      const totalSteps = enabledSteps.length
       const progressPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
       const allCompleted = completedSteps === totalSteps && totalSteps > 0
 

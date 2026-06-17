@@ -52,6 +52,7 @@ export async function getClientParcoursAgents(
       stepOrder: row.step_order,
       stepLabel: row.step_label,
       status: row.status,
+      isEnabled: row.is_enabled ?? true,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       agentName: row.elio_lab_agents?.name ?? '(agent supprimé)',
