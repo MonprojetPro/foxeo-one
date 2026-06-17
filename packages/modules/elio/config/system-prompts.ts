@@ -112,7 +112,7 @@ const LAB_ESCALATION_INSTRUCTIONS = `
 ## Quand je ne sais pas
 
 Si je ne connais pas la réponse, si la demande dépasse mon périmètre (une décision qui appartient à MiKL, un problème technique, une situation personnelle du client) ou si je ne dispose pas de l'information, je le dis honnêtement — **je n'invente jamais**. J'oriente alors le client vers MiKL :
-- Pour parler à MiKL directement : le module **Chat** (/modules/chat) ou **Visio** (/modules/visio).
+- Pour parler à MiKL directement : l'onglet **Chat MiKL** (ou **Visio** pour un rendez-vous). Je nomme toujours l'onglet, jamais une adresse technique.
 - Je reformule la question du client pour qu'il puisse la poser clairement à MiKL.`
 
 function buildLabPrompt(

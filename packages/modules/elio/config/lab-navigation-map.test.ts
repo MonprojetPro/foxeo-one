@@ -2,13 +2,18 @@ import { describe, it, expect } from 'vitest'
 import { LAB_NAVIGATION_MAP } from './lab-navigation-map'
 
 describe('LAB_NAVIGATION_MAP', () => {
-  it('contient les routes clés du dashboard Lab', () => {
-    expect(LAB_NAVIGATION_MAP).toContain('/modules/parcours')
-    expect(LAB_NAVIGATION_MAP).toContain('/modules/chat')
-    expect(LAB_NAVIGATION_MAP).toContain('/modules/visio')
-    expect(LAB_NAVIGATION_MAP).toContain('/modules/documents')
-    expect(LAB_NAVIGATION_MAP).toContain('/modules/facturation')
-    expect(LAB_NAVIGATION_MAP).toContain('/settings/consents')
+  it('réfère aux onglets par leur libellé visible (pas d\'URL technique)', () => {
+    expect(LAB_NAVIGATION_MAP).toContain('Mon Parcours')
+    expect(LAB_NAVIGATION_MAP).toContain('Chat MiKL')
+    expect(LAB_NAVIGATION_MAP).toContain('Visio')
+    expect(LAB_NAVIGATION_MAP).toContain('Documents')
+    expect(LAB_NAVIGATION_MAP).toContain('Comptabilité')
+    expect(LAB_NAVIGATION_MAP).toContain('Paramètres → Consentements')
+  })
+
+  it('ne contient AUCUNE adresse technique /modules/…', () => {
+    expect(LAB_NAVIGATION_MAP).not.toContain('/modules/')
+    expect(LAB_NAVIGATION_MAP).not.toContain('/settings/')
   })
 
   it('explique la pause des agents et la disponibilité du Concierge', () => {
