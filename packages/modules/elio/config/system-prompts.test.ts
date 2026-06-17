@@ -52,6 +52,44 @@ describe('buildSystemPrompt', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })
       expect(prompt).toContain('vouvoyez le client')
     })
+
+    // Élio, le Concierge — assistant Lab distinct des agents du parcours
+    it('présente Élio comme le Concierge du dashboard Lab', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })
+      expect(prompt).toContain('Concierge')
+    })
+
+    it('distingue explicitement le Concierge des agents du parcours', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })
+      expect(prompt).toContain("Vous n'êtes PAS les agents du parcours")
+    })
+
+    it('inclut la navigation du dashboard Lab (et jamais celle de One)', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })
+      expect(prompt).toContain('Navigation du dashboard Lab')
+      expect(prompt).not.toContain('Navigation dashboard One')
+    })
+
+    it('inclut la règle d\'escalade vers MiKL (n\'invente jamais)', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })
+      expect(prompt).toContain('Quand je ne sais pas')
+      expect(prompt).toContain('MiKL')
+    })
+
+    it('injecte l\'état du parcours si fourni', () => {
+      const prompt = buildSystemPrompt({
+        dashboardType: 'lab',
+        communicationProfile: profileDefaut,
+        labParcoursState: '- Progression : 2/4 étape(s) terminée(s).',
+      })
+      expect(prompt).toContain('Où en est le client dans son parcours')
+      expect(prompt).toContain('2/4')
+    })
+
+    it('n\'inclut pas la section état parcours si non fournie', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'lab', communicationProfile: profileDefaut })
+      expect(prompt).not.toContain('Où en est le client dans son parcours')
+    })
   })
 
   describe('Dashboard One', () => {

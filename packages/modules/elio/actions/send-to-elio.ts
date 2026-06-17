@@ -20,6 +20,7 @@ import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
 import type { ElioModuleDoc } from '@monprojetpro/types'
 import { loadModuleDocumentation } from './load-module-documentation'
 import { logTokenUsage } from './log-token-usage'
+import { getLabParcoursContext } from './get-lab-parcours-context'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
 
@@ -508,7 +509,45 @@ export async function sendToElio(
     }
   }
 
-  // 4. Cas général (Lab, Hub sans intent spécifique) : construire le system prompt et appeler le LLM
+  // 3ter. Chemin ASSISTANT LAB — Élio, le Concierge (chat libre du dashboard Lab).
+  // Identifié par : dashboardType='lab', clientId présent, AUCUN systemPromptOverride
+  // (un override = agent de parcours, déjà géré au 3bis). Le Concierge connaît le dash
+  // (navigation injectée dans le prompt) + l'état live du parcours du client, et propose
+  // une escalade vers MiKL quand sa confiance est basse (comme One — cf. detectLowConfidence).
+  if (dashboardType === 'lab' && clientId && !systemPromptOverride) {
+    const labParcoursState = await getLabParcoursContext(clientId)
+
+    // Profil de communication du client (tutoiement, ton…) — stocké dans
+    // client_configs.elio_config.communication_profile, comme pour le chemin One.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: labClientConfig } = await (supabase as any)
+      .from('client_configs')
+      .select('elio_config')
+      .eq('client_id', clientId)
+      .maybeSingle() as { data: { elio_config: unknown } | null }
+    const labElioConfigJson = (labClientConfig?.elio_config as Record<string, unknown>) ?? {}
+    const labCommunicationProfile =
+      (labElioConfigJson.communication_profile as CommunicationProfileFR66 | undefined) ??
+      DEFAULT_COMMUNICATION_PROFILE_FR66
+
+    const labSystemPrompt = buildSystemPrompt({
+      dashboardType: 'lab',
+      communicationProfile: labCommunicationProfile,
+      customInstructions: elioConfig?.customInstructions,
+      labParcoursState,
+    })
+
+    const labResponse = await callLLM(supabase, labSystemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
+
+    // Faible confiance → signaler l'escalade vers MiKL (le chat affiche alors le bandeau).
+    if (labResponse.data && detectLowConfidence(labResponse.data.content)) {
+      labResponse.data.metadata = { ...labResponse.data.metadata, needsEscalation: true }
+    }
+
+    return labResponse
+  }
+
+  // 4. Cas général (Hub sans intent spécifique, Lab sans clientId) : construire le system prompt et appeler le LLM
   // Un systemPromptOverride peut être fourni pour les chats spécifiques (ex: StepElioChat, Story 14.4)
   const systemPrompt = systemPromptOverride ?? buildSystemPrompt({
     dashboardType,

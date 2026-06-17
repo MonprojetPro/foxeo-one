@@ -96,7 +96,8 @@ export const PALETTE_FOCUS_RING: Record<DashboardType, string> = {
 
 export const HEADER_LABELS: Record<DashboardType, string> = {
   hub: 'Élio Hub — Votre assistant',
-  lab: 'Élio Lab — Votre accompagnateur',
+  // Lab : l'assistant du dashboard = « Élio, le Concierge » (distinct des agents du parcours).
+  lab: 'Élio, le Concierge — Votre assistant Lab',
   one: 'Élio — Votre assistant',
 }
 
@@ -523,7 +524,8 @@ function ElioChatPersisted({
 
       // Story 8.7 — Task 10 : proposer escalade si confiance basse
       // CR fix HIGH-1: capturer les messages AVANT le clear pour l'escalade
-      if (elioMsg.metadata?.needsEscalation && dashboardType === 'one') {
+      // Lab : Élio le Concierge escalade aussi vers MiKL quand il ne sait pas.
+      if (elioMsg.metadata?.needsEscalation && (dashboardType === 'one' || dashboardType === 'lab')) {
         const recentMsgs = [...localMessages, userMsg, { ...elioMsg, id: makeId() }]
           .slice(-4)
           .map((m) => `${m.role === 'user' ? 'Vous' : 'Élio'}: ${m.content}`)

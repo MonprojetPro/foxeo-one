@@ -59,19 +59,16 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
         </div>
       )}
 
-      {/* Header — Claude Design : greeting + étape en cours */}
-      <div>
-        <h1 className="text-[24px] font-bold text-[#f9fafb] tracking-[-0.02em]">
-          Bonjour{clientFirstName ? `, ${clientFirstName}` : ''} ! 👋
-        </h1>
-        <p className="text-[13px] text-[#9ca3af] mt-1.5">
-          {currentStep
-            ? `Étape en cours : ${currentStep.title}`
-            : allCompleted
-              ? 'Toutes les étapes sont complètes — graduation proche !'
-              : (parcours.description ?? 'Mon Parcours d\'incubation')}
-        </p>
-      </div>
+      {/* Bandeau UNIQUE — Élio, le Concierge : seule voix qui s'adresse au client.
+          Porte le bonjour + l'étape en cours + le message contextuel (y compris l'état
+          « agents en pause »). Remplace l'ancien titre « Bonjour » et l'ancienne bannière
+          de pause en haut de page. */}
+      <ElioParcoursPanel
+        clientFirstName={clientFirstName}
+        currentStep={currentStep}
+        allCompleted={allCompleted}
+        agentsPaused={agentsPaused}
+      />
 
       {/* Progress bar — Claude Design */}
       <ParcoursProgressBar
@@ -90,9 +87,6 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
           <ParcoursStepCard key={step.id} step={step} unreadCount={unreadByStep[step.id] ?? 0} isAbandoned={isAbandoned} />
         ))}
       </div>
-
-      {/* Panel Élio — message contextuel */}
-      <ElioParcoursPanel clientFirstName={clientFirstName} currentStep={currentStep} allCompleted={allCompleted} agentsPaused={agentsPaused} />
 
       {/* Story 9.3 — Bouton abandon discret en bas de page */}
       {canAbandon && (

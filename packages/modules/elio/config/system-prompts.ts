@@ -3,6 +3,7 @@ import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
 import { HUB_FEATURES_DOCUMENTATION } from './hub-features-documentation'
 import { HUB_DATABASE_SCHEMAS } from './hub-database-schemas'
 import { ONE_NAVIGATION_MAP } from './one-navigation-map'
+import { LAB_NAVIGATION_MAP } from './lab-navigation-map'
 
 /** Message upsell Élio One → One+ (AC1 — Story 8.9a) */
 export const UPSELL_ONE_PLUS_MESSAGE =
@@ -27,6 +28,12 @@ interface SystemPromptOptions {
   // Story 8.7: contexte héritage Lab
   labBriefs?: string | null
   parcoursContext?: string | null
+  /**
+   * État live du parcours du client (résumé textuel : étape en cours, progression,
+   * agents en pause…). Injecté dans le prompt du Concierge Lab pour qu'il sache
+   * « où en est » le client sans halluciner. cf. send-to-elio.ts (chemin assistant Lab).
+   */
+  labParcoursState?: string | null
 }
 
 const TECHNICAL_LEVEL_INSTRUCTIONS: Record<string, string> = {
@@ -96,21 +103,45 @@ Exemple : "Client préfère les listes à puces", "Client frustré par les quest
 
 Ces observations aideront à affiner son profil de communication.`
 
-function buildLabPrompt(profile: CommunicationProfileFR66, stepContext?: string): string {
+/**
+ * Règle d'escalade — quand le Concierge ne sait pas, il oriente vers MiKL plutôt
+ * que d'inventer. Les formulations d'incertitude ici sont alignées avec
+ * detect-low-confidence.ts (qui déclenche le bandeau d'escalade côté chat).
+ */
+const LAB_ESCALATION_INSTRUCTIONS = `
+## Quand je ne sais pas
+
+Si je ne connais pas la réponse, si la demande dépasse mon périmètre (une décision qui appartient à MiKL, un problème technique, une situation personnelle du client) ou si je ne dispose pas de l'information, je le dis honnêtement — **je n'invente jamais**. J'oriente alors le client vers MiKL :
+- Pour parler à MiKL directement : le module **Chat** (/modules/chat) ou **Visio** (/modules/visio).
+- Je reformule la question du client pour qu'il puisse la poser clairement à MiKL.`
+
+function buildLabPrompt(
+  profile: CommunicationProfileFR66,
+  stepContext?: string,
+  parcoursState?: string | null,
+): string {
   let prompt = `${BASE_PROMPT}
 
 **Contexte : Dashboard Lab (Incubation)**
-Vous accompagnez un entrepreneur dans son parcours d'incubation MonprojetPro Lab.
-Votre rôle est de guider, questionner et aider à structurer les briefs d'étapes.
+Vous êtes **Élio, le Concierge** du dashboard Lab : l'assistant unique qui connaît la plateforme MonprojetPro par cœur et accompagne un entrepreneur dans son parcours d'incubation MonprojetPro Lab. Votre rôle est de répondre aux questions du client sur le fonctionnement de son espace, de l'orienter dans son dashboard, et de lui expliquer où il en est dans son parcours.
+
+**IMPORTANT — Vous n'êtes PAS les agents du parcours.**
+Les étapes du parcours (Élio Go-to-Market, Élio Cible, Élio Business, Élio Legit, etc.) sont des **agents distincts**, chacun dédié au coaching d'une étape précise. Vous, le Concierge, êtes l'assistant général du dashboard : vous restez disponible pour les questions produit **même quand les agents du parcours sont en pause**. Si le client veut travailler une étape de son parcours, invitez-le à l'ouvrir depuis « Mon Parcours » (/modules/parcours) — c'est l'agent de l'étape qui le guidera, pas vous.
 
 **Profil de communication du client :**
-${buildProfileInstructions(profile)}${LAB_OBSERVATION_INSTRUCTIONS}`
+${buildProfileInstructions(profile)}
+
+**${LAB_NAVIGATION_MAP}**${LAB_OBSERVATION_INSTRUCTIONS}${LAB_ESCALATION_INSTRUCTIONS}`
+
+  if (parcoursState) {
+    prompt += `\n\n## Où en est le client dans son parcours (état actuel)\n${parcoursState}`
+  }
 
   if (stepContext) {
     prompt += `\n\n**Étape active :**\n${stepContext}`
   }
 
-  prompt += `\n\nCapacités disponibles : guidage parcours, questions adaptées au profil, génération de briefs.`
+  prompt += `\n\nCapacités disponibles : réponses aux questions sur le dashboard et le parcours, orientation dans les modules, escalade vers MiKL quand nécessaire.`
 
   return prompt
 }
@@ -207,13 +238,14 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
     customInstructions,
     labBriefs,
     parcoursContext,
+    labParcoursState,
   } = options
 
   let prompt: string
 
   switch (dashboardType) {
     case 'lab':
-      prompt = buildLabPrompt(communicationProfile, activeStepContext)
+      prompt = buildLabPrompt(communicationProfile, activeStepContext, labParcoursState)
       break
     case 'one':
       prompt = buildOnePrompt(communicationProfile, tier, activeModulesDocs, labBriefs, parcoursContext)
