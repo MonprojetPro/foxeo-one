@@ -2,7 +2,19 @@
 
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button } from '@monprojetpro/ui'
+import {
+  Button,
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+  showError,
+  showSuccess,
+} from '@monprojetpro/ui'
 import { ChevronUp, ChevronDown, Power, PowerOff, RotateCcw } from 'lucide-react'
 import { getClientParcoursAgents } from '../actions/get-client-parcours-agents'
 import { reorderParcoursStep } from '../actions/reorder-parcours-step'
@@ -85,23 +97,25 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
     queryClient.invalidateQueries({ queryKey: ['client-parcours', clientId] })
   }
 
-  const [reopening, setReopening] = useState<string | null>(null)
+  // Agent ciblé par la modale de réouverture (null = fermée).
+  const [reopenTarget, setReopenTarget] = useState<{ id: string; label: string } | null>(null)
+  const [reopening, setReopening] = useState(false)
 
-  async function handleReopen(agentId: string) {
-    if (!window.confirm('Rouvrir cet agent ? Le client pourra soumettre une nouvelle version de son document. Les agents suivants ne sont pas affectés.')) {
-      return
-    }
-    setReopening(agentId)
+  async function confirmReopen() {
+    if (!reopenTarget) return
+    setReopening(true)
     try {
-      const result = await reopenAgent({ agentId, clientId })
+      const result = await reopenAgent({ agentId: reopenTarget.id, clientId })
       if (result.error) {
-        window.alert(`Impossible de rouvrir l'agent : ${result.error.message}`)
+        showError(`Impossible de rouvrir l'agent : ${result.error.message}`)
         return
       }
+      showSuccess(`« ${reopenTarget.label} » rouvert — le client peut re-soumettre.`)
       invalidate()
       queryClient.invalidateQueries({ queryKey: ['client-parcours', clientId] })
+      setReopenTarget(null)
     } finally {
-      setReopening(null)
+      setReopening(false)
     }
   }
 
@@ -242,8 +256,7 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
                 {/* Rouvrir un agent déjà terminé → le client peut re-soumettre */}
                 {enabled && step.status === 'completed' && (
                   <button
-                    onClick={() => handleReopen(step.id)}
-                    disabled={reopening === step.id}
+                    onClick={() => setReopenTarget({ id: step.id, label: step.stepLabel })}
                     aria-label="Rouvrir cet agent (le client pourra re-soumettre)"
                     title="Rouvrir cet agent (le client pourra re-soumettre)"
                     className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
@@ -331,6 +344,31 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
           }}
         />
       )}
+
+      {/* Modale de confirmation — réouverture d'un agent terminé */}
+      <AlertDialog open={!!reopenTarget} onOpenChange={(open) => !open && setReopenTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rouvrir « {reopenTarget?.label} » ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Le client pourra soumettre une nouvelle version de son document pour cet agent.
+              Les agents suivants ne sont pas affectés. Le client en sera notifié.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={reopening}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                confirmReopen()
+              }}
+              disabled={reopening}
+            >
+              {reopening ? 'Réouverture…' : 'Rouvrir cet agent'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
