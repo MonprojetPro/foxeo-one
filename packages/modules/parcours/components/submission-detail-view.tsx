@@ -8,7 +8,6 @@ import { Separator, Skeleton } from '@monprojetpro/ui'
 import { getSubmissionById } from '../actions/get-submission-by-id'
 import { SubmissionStatusBadge } from './submission-status-badge'
 import { ValidateSubmissionForm } from './validate-submission-form'
-import { ReopenStepButton } from './reopen-step-button'
 import type { StepSubmissionWithStep } from '../types/parcours.types'
 
 interface SubmissionDetailViewProps {
@@ -138,20 +137,9 @@ export function SubmissionDetailView({
         </>
       )}
 
-      {/* Bouton réouverture — seulement si étape approuvée et showValidationForm (Hub MiKL) */}
-      {showValidationForm && submission.status === 'approved' && (
-        <>
-          <Separator />
-          <div>
-            <h3 className="text-sm font-semibold mb-3 text-muted-foreground">Actions avancées</h3>
-            <ReopenStepButton
-              stepId={submission.parcoursStepId}
-              clientId={clientId}
-              stepNumber={submission.stepNumber}
-            />
-          </div>
-        </>
-      )}
+      {/* Réouverture d'un agent terminé → désormais dans la liste des agents du parcours
+          (Hub → fiche client → onglet parcours), via reopenAgent sur le nouveau modèle
+          client_parcours_agents. L'ancien bouton (sur parcours_steps) a été retiré. */}
     </div>
   )
 }

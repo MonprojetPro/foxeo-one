@@ -39,9 +39,6 @@ export { GenerateDocumentButton } from './components/generate-document-button'
 // Components — Feedback Injection MiKL (Story 14.9)
 export { FeedbackInjectionForm } from './components/feedback-injection-form'
 
-// Components — Réouverture étape (Story 14.10)
-export { ReopenStepButton } from './components/reopen-step-button'
-
 // Components — Assemblage Parcours Client (Story 14.3)
 export { ClientParcoursAgentsList } from './components/client-parcours-agents-list'
 export { LaunchParcoursModal } from './components/launch-parcours-modal'
@@ -75,6 +72,7 @@ export { useStepSubmissionStatus } from './hooks/use-step-submission-status'
 // Actions
 export { getParcours } from './actions/get-parcours'
 export { toggleAgentEnabled } from './actions/toggle-agent-enabled'
+export { reopenAgent } from './actions/reopen-agent'
 export { updateStepStatus } from './actions/update-step-status'
 export { completeStep } from './actions/complete-step'
 export { skipStep } from './actions/skip-step'

@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@monprojetpro/ui'
-import { ChevronUp, ChevronDown, Power, PowerOff } from 'lucide-react'
+import { ChevronUp, ChevronDown, Power, PowerOff, RotateCcw } from 'lucide-react'
 import { getClientParcoursAgents } from '../actions/get-client-parcours-agents'
 import { reorderParcoursStep } from '../actions/reorder-parcours-step'
 import { toggleAgentEnabled } from '../actions/toggle-agent-enabled'
+import { reopenAgent } from '../actions/reopen-agent'
 import { LaunchParcoursModal } from './launch-parcours-modal'
 import { AddStepModal } from './add-step-modal'
 import { InjectStepContextPanel } from '@monprojetpro/module-elio'
@@ -82,6 +83,26 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
     await toggleAgentEnabled({ stepId, clientId, enabled })
     invalidate()
     queryClient.invalidateQueries({ queryKey: ['client-parcours', clientId] })
+  }
+
+  const [reopening, setReopening] = useState<string | null>(null)
+
+  async function handleReopen(agentId: string) {
+    if (!window.confirm('Rouvrir cet agent ? Le client pourra soumettre une nouvelle version de son document. Les agents suivants ne sont pas affectés.')) {
+      return
+    }
+    setReopening(agentId)
+    try {
+      const result = await reopenAgent({ agentId, clientId })
+      if (result.error) {
+        window.alert(`Impossible de rouvrir l'agent : ${result.error.message}`)
+        return
+      }
+      invalidate()
+      queryClient.invalidateQueries({ queryKey: ['client-parcours', clientId] })
+    } finally {
+      setReopening(null)
+    }
   }
 
   if (isLoading) {
@@ -216,6 +237,19 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
                   >
                     Désactivé
                   </span>
+                )}
+
+                {/* Rouvrir un agent déjà terminé → le client peut re-soumettre */}
+                {enabled && step.status === 'completed' && (
+                  <button
+                    onClick={() => handleReopen(step.id)}
+                    disabled={reopening === step.id}
+                    aria-label="Rouvrir cet agent (le client pourra re-soumettre)"
+                    title="Rouvrir cet agent (le client pourra re-soumettre)"
+                    className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
                 )}
 
                 {/* Activer / désactiver l'agent */}
