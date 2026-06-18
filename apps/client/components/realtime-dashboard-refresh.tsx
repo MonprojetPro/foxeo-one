@@ -69,8 +69,24 @@ export function RealtimeDashboardRefresh({ clientId }: RealtimeDashboardRefreshP
       )
       .subscribe()
 
+    // ⚠️ RSC-009 : la RLS de client_configs (et parcours/agents) référence d'autres tables
+    // → Realtime ne délivre PAS les UPDATE postgres_changes ci-dessus. On double donc avec un
+    // BROADCAST DB (triggers broadcast_*_change → realtime.send) qui, lui, passe toujours.
+    // Couper le Lab globalement (elio_lab_enabled), graduation, modules… → router.refresh() en direct.
+    const broadcastChannel = supabase
+      .channel(`client_configs:${clientId}`)
+      .on('broadcast', { event: 'client_configs_changed' }, refresh)
+      .subscribe()
+
+    const parcoursBroadcast = supabase
+      .channel(`parcours:${clientId}`)
+      .on('broadcast', { event: 'parcours_changed' }, refresh)
+      .subscribe()
+
     return () => {
       supabase.removeChannel(parcoursChannel)
+      supabase.removeChannel(broadcastChannel)
+      supabase.removeChannel(parcoursBroadcast)
     }
   }, [clientId, router])
 
