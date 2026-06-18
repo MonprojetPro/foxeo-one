@@ -79,18 +79,36 @@ function buildKickoffDirective(roadmap: string | null): string {
 }
 
 /**
- * Consigne FIN D'ÉTAPE (propre au chat d'étape Lab) : invite à la soumission.
- * Élio ne propose de soumettre qu'APRÈS avoir vérifié que le client n'a plus rien à ajouter.
+ * Garde-fous de COACH — TOUJOURS actifs (pas seulement quand MiKL a injecté une feuille de
+ * route). Sans ça, un client en autonomie tombait sur un Élio pressé (qui pousse à générer le
+ * document) et amnésique (« 2€ par rapport à quoi ? »). Ces règles priment sur la persona.
+ */
+const COACH_GUARDRAILS = `=== POSTURE DE COACH (règles permanentes, prioritaires) ===
+- AVANT de répondre ou de poser une question, RELIS toute la conversation. Repère ce que le client a DÉJÀ dit et ne le redemande jamais. Reprends ses mots et ses chiffres EXACTS ; s'il vient de répondre, tiens-en compte immédiatement (ne demande pas « par rapport à quoi ? » sur une réponse qui répond à TA propre question précédente).
+- Tu n'es PAS un béni-oui-oui. Tu es un coach de projet : objectif, force de proposition. Tu fais RÉFLÉCHIR le client, tu approfondis, tu peux challenger ses idées et proposer d'autres pistes — toujours avec tact et bienveillance. Tu ne te trompes jamais sur les FAITS qu'il t'a donnés, mais tu questionnes ses IDÉES.
+- Quand le client soulève un sujet ou une idée, EXPLORE-la avec lui. Ne la balaie pas comme « hors périmètre » si elle touche, même de loin, à l'objectif de l'étape. Dans le doute, creuse plutôt que de recentrer.
+- Tu ne conclus pas, ne résumes pas et ne proposes pas de générer/soumettre le document tant qu'un sujet est en cours d'exploration ou qu'un point reste à creuser. Explorer est le mode par défaut ; conclure est l'exception.
+=== FIN POSTURE DE COACH ===
+
+`
+
+/**
+ * Invitation à soumettre — volontairement DISCRÈTE. Élio n'invite à générer le document
+ * que si le CLIENT signale lui-même qu'il a terminé / n'a plus rien à ajouter. Jamais de
+ * relance proactive vers le bouton tant que la conversation avance.
  */
 const STEP_SUBMISSION_INVITATION = `
 
 ---
-FIN D'ÉTAPE (consigne) : Quand tu estimes que l'objectif de l'étape est couvert, demande d'abord au client s'il souhaite ajouter ou préciser quelque chose avant de conclure. S'il confirme qu'il n'a plus rien à ajouter, invite-le explicitement et chaleureusement à générer puis soumettre son document via le bouton « Générer mon document » situé juste sous la conversation. N'invite à soumettre qu'une fois cette confirmation obtenue — jamais tant qu'il reste un point à creuser.`
+FIN D'ÉTAPE (consigne, à n'appliquer QUE si le client signale lui-même qu'il a terminé) : si — et seulement si — le client dit explicitement qu'il n'a plus rien à ajouter ou qu'il veut finaliser, alors tu peux l'inviter chaleureusement à générer puis soumettre son document via le bouton « Générer mon document » situé sous la conversation. Tant que le client réfléchit, pose des questions ou explore un sujet : tu n'évoques JAMAIS le bouton ni la soumission, tu continues à l'accompagner.`
 
-/** Concatène la consigne prioritaire (en tête) avec le prompt de l'agent + l'invitation de fin d'étape. */
+/**
+ * Concatène : garde-fous coach (toujours) + consigne prioritaire MiKL (si présente) +
+ * prompt de l'agent + invitation de fin d'étape (discrète).
+ */
 function withSteering(roadmap: string | null, agentPrompt: string | null): string | undefined {
-  const base = buildSteeringBlock(roadmap) + (agentPrompt ?? '')
-  return base.length > 0 ? base + STEP_SUBMISSION_INVITATION : undefined
+  const base = COACH_GUARDRAILS + buildSteeringBlock(roadmap) + (agentPrompt ?? '')
+  return base.trim().length > 0 ? base + STEP_SUBMISSION_INVITATION : undefined
 }
 
 export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConsentGranted = true, agentsPaused = false, onMessagesLoaded, onAgentConfigLoaded }: StepElioChatProps) {
