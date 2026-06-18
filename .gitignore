@@ -68,3 +68,6 @@ _backups/
 .claude/helpers/
 .claude/skills/
 .claude/settings.json
+
+# QA Élio — transcripts régénérables
+scripts/elio-qa/transcripts/
