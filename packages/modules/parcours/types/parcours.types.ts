@@ -119,6 +119,19 @@ export interface ParcoursWithSteps extends Parcours {
   totalSteps: number
   completedSteps: number
   progressPercent: number
+  /**
+   * Dernier « mot d'Élio le Concierge » (LOT F) — message proactif sur-mesure lié au
+   * dernier événement (réouverture, validation…). Le bandeau l'affiche en priorité ;
+   * fallback sur les phrases d'état si absent. null = aucun mot encore.
+   */
+  conciergeWord?: ConciergeWord | null
+}
+
+export interface ConciergeWord {
+  body: string
+  eventType: string
+  agentLabel: string | null
+  createdAt: string
 }
 
 export interface CompleteStepResult {

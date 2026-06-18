@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { ParcoursStep } from '../types/parcours.types'
+import type { ParcoursStep, ConciergeWord } from '../types/parcours.types'
 
 interface ElioParcoursPanelProps {
   clientFirstName?: string | null
@@ -9,6 +9,11 @@ interface ElioParcoursPanelProps {
   allCompleted?: boolean
   /** Agents du parcours coupés par MiKL → le Concierge reste dispo, message adapté. */
   agentsPaused?: boolean
+  /**
+   * Dernier « mot d'Élio » vivant (LOT F) — message proactif sur-mesure lié au dernier
+   * événement. Prioritaire sur les phrases d'état (sauf pause). null = on retombe sur l'état.
+   */
+  conciergeWord?: ConciergeWord | null
   /**
    * Ouvre la pop-up de chat avec le Concierge. Fourni par l'app (orchestration de la
    * Dialog au niveau page). Si absent (rendu isolé/test), le bouton renvoie vers /modules/elio.
@@ -31,6 +36,7 @@ export function ElioParcoursPanel({
   currentStep,
   allCompleted,
   agentsPaused = false,
+  conciergeWord,
   onAskConcierge,
 }: ElioParcoursPanelProps) {
   const greeting = `Bonjour${clientFirstName ? `, ${clientFirstName}` : ''} ! 👋`
@@ -38,10 +44,13 @@ export function ElioParcoursPanel({
   const isPendingReview = currentStep?.status === 'pending_review'
   const isRejected = currentStep?.status === 'rejected'
 
-  // Message de CONTEXTE actuel (porte l'info d'étape, plus de label « Étape en cours » séparé).
+  // Message de CONTEXTE actuel. Priorité : pause (état système important) > mot d'Élio vivant
+  // (dernier événement, LOT F) > phrases d'état (fallback).
   const message = agentsPaused
     ? `Les agents de ton parcours sont en pause — MiKL les a suspendus pour le moment. Tu gardes l'accès à tout ton parcours et à ton historique. Moi, le Concierge, je reste là pour répondre à tes questions.`
-    : allCompleted
+    : conciergeWord?.body
+      ? conciergeWord.body
+      : allCompleted
       ? 'Ton parcours est terminé 🎉 MiKL va étudier tout cela et revenir vers toi au plus vite. Tu peux toujours le contacter via le chat si tu as besoin.'
       : isPendingReview
         ? `Votre document pour l'étape ${currentStep!.stepNumber} (${currentStep!.title}) est en cours d'examen par MiKL. S'il a besoin de précisions, il vous contactera dans le chat — sinon vous serez notifié dès la décision.`

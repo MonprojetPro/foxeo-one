@@ -123,6 +123,24 @@ export async function getParcours(
       const isAbandoned = parcoursRow?.status === 'abandoned'
       const parcoursStatus = isAbandoned ? 'abandoned' : (allCompleted ? 'termine' : 'en_cours')
 
+      // Dernier « mot d'Élio le Concierge » (LOT F) — message proactif lié au dernier événement.
+      const { data: lastWord } = await supabase
+        .from('client_concierge_messages')
+        .select('body, event_type, agent_label, created_at')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const conciergeWord = lastWord
+        ? {
+            body: lastWord.body as string,
+            eventType: lastWord.event_type as string,
+            agentLabel: (lastWord.agent_label as string | null) ?? null,
+            createdAt: lastWord.created_at as string,
+          }
+        : null
+
       const result: ParcoursWithSteps = {
         id: clientId,
         clientId,
@@ -138,6 +156,7 @@ export async function getParcours(
         totalSteps,
         completedSteps,
         progressPercent,
+        conciergeWord,
       }
 
       return successResponse(result)

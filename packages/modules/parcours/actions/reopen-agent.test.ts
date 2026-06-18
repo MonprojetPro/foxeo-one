@@ -47,6 +47,13 @@ vi.mock('@monprojetpro/supabase', () => ({
   })),
 }))
 
+// Le « mot d'Élio » vivant est testé séparément (generate-concierge-word.test.ts).
+// Ici on l'isole : on vérifie juste qu'il est déclenché, sans appeler l'IA.
+const mockGenerateConciergeWord = vi.fn().mockResolvedValue({ data: { body: 'ok', source: 'ai' }, error: null })
+vi.mock('./generate-concierge-word', () => ({
+  generateConciergeWord: (...args: unknown[]) => mockGenerateConciergeWord(...args),
+}))
+
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const AGENT_ID = '00000000-0000-0000-0000-0000000000a1'
@@ -157,6 +164,15 @@ describe('reopenAgent — success workflow', () => {
     const { reopenAgent } = await import('./reopen-agent')
     await reopenAgent({ agentId: AGENT_ID, clientId: CLIENT_ID })
     expect(mockAgentUpdate).toHaveBeenCalledTimes(1)
+  })
+
+  it('triggers a living Élio word for the reopened agent', async () => {
+    const { reopenAgent } = await import('./reopen-agent')
+    await reopenAgent({ agentId: AGENT_ID, clientId: CLIENT_ID, reason: 'Affine ton positionnement' })
+    expect(mockGenerateConciergeWord).toHaveBeenCalledWith(
+      CLIENT_ID,
+      expect.objectContaining({ type: 'agent_reopened', agentLabel: 'Élio Go-to-Market', reason: 'Affine ton positionnement' })
+    )
   })
 
   it('logs the reopen in activity_logs', async () => {

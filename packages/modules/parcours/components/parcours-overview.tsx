@@ -75,6 +75,7 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
         currentStep={currentStep}
         allCompleted={allCompleted}
         agentsPaused={agentsPaused}
+        conciergeWord={parcours.conciergeWord}
         onAskConcierge={onAskConcierge}
       />
 

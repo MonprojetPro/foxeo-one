@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { generateConciergeWord } from './generate-concierge-word'
 
 interface ReopenAgentInput {
   /** id de la row client_parcours_agents (nouveau modèle). */
@@ -102,6 +103,18 @@ export async function reopenAgent(
           : `MiKL a rouvert cette étape. Tu peux soumettre une nouvelle version de ton document.`,
         link: '/modules/parcours',
       })
+    }
+
+    // « Mot d'Élio » vivant (LOT F) — best-effort : ne JAMAIS faire échouer la réouverture
+    // si la génération IA échoue. L'INSERT déclenche le broadcast → le bandeau client se met à jour.
+    try {
+      await generateConciergeWord(clientId, {
+        type: 'agent_reopened',
+        agentLabel: agent.step_label,
+        reason,
+      })
+    } catch (e) {
+      console.error('[PARCOURS:REOPEN_AGENT] Mot d\'Élio non généré (ignoré):', e)
     }
 
     // Journal d'activité (cohérent avec toggleAgentEnabled).
