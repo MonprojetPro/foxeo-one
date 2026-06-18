@@ -46,7 +46,7 @@
 ## LOT F — Élio Concierge vivant (moteur IA sur événement) — EN COURS
 > Validé MiKL 2026-06-18. Moteur choisi : IA générée sur événement (Haiku via Edge Function `elio-chat`), fallback templaté. Le bandeau passe d'un arbre de phrases en dur à « le dernier mot d'Élio ».
 - ✅ **Incrément 1** : table `client_concierge_messages` (+ broadcast), action `generateConciergeWord` (Haiku + fallback), lecture dans `getParcours` (`conciergeWord`), bandeau qui l'affiche en priorité, branché sur l'événement **réouverture d'agent**. RLS : lecture client (son parcours) / opérateur ; insert opérateur ou client-propre.
-- ⏳ **Incrément 2** : brancher validation, refus, soumission, jalons de parcours (Hub + client + milestones).
+- ✅ **Incrément 2** : événements branchés — soumission client (`submission_sent`), validation (`submission_approved`), refus/révision (`submission_revision`), parcours terminé (`parcours_completed`, détecté à l'approbation de la dernière étape enabled). Côté validation-hub : helper `notify-concierge.ts` (import dynamique de `generateConciergeWord`, best-effort, ne touche que le nouveau modèle `step_submission`).
 - ⏳ **Incrément 3** : relances proactives d'inactivité (cron Edge Function).
 
 ## Différé (gros chantier ultérieur)

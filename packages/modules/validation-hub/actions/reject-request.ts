@@ -6,6 +6,7 @@ import type { ActionResponse } from '@monprojetpro/types'
 import { toCamelCase } from '@monprojetpro/utils'
 import { z } from 'zod'
 import type { ValidationRequest } from '../types/validation.types'
+import { notifyConciergeOfDecision } from '../utils/notify-concierge'
 
 const rejectRequestSchema = z.object({
   requestId: z.string().uuid('requestId doit être un UUID valide'),
@@ -56,6 +57,9 @@ export async function rejectRequest(
       console.error('[VALIDATION-HUB:REJECT] Error:', error)
       return errorResponse('Erreur lors du refus', 'DB_ERROR', error)
     }
+
+    // « Mot d'Élio » vivant (LOT F) — retour constructif sur la révision (best-effort).
+    await notifyConciergeOfDecision(supabase, data, 'rejected')
 
     return successResponse(toCamelCase(data) as ValidationRequest)
   } catch (err) {

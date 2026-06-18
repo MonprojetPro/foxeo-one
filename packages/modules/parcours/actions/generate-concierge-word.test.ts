@@ -89,3 +89,36 @@ describe('generateConciergeWord', () => {
     expect(result.error?.code).toBe('DATABASE_ERROR')
   })
 })
+
+describe('generateConciergeWord — événements Incrément 2', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockInsert.mockReturnValue({ error: null })
+    // Force le fallback templaté pour vérifier les messages déterministes de chaque événement.
+    mockInvoke.mockResolvedValue({ data: null, error: { message: 'forced fallback' } })
+  })
+
+  const CASES = [
+    { event: { type: 'submission_sent', agentLabel: 'Élio Cible' }, expectIn: 'Élio Cible' },
+    { event: { type: 'submission_approved', agentLabel: 'Élio Cible' }, expectIn: 'Élio Cible' },
+    { event: { type: 'submission_revision', agentLabel: 'Élio Cible', comment: 'précise ta cible' }, expectIn: 'Élio Cible' },
+    { event: { type: 'parcours_completed' }, expectIn: 'parcours' },
+  ] as const
+
+  for (const { event, expectIn } of CASES) {
+    it(`génère un fallback cohérent pour ${event.type}`, async () => {
+      const { generateConciergeWord } = await import('./generate-concierge-word')
+      const result = await generateConciergeWord(CLIENT_ID, event)
+      expect(result.error).toBeNull()
+      expect(result.data?.source).toBe('template')
+      expect(result.data?.body).toContain(expectIn)
+      expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ event_type: event.type }))
+    })
+  }
+
+  it('stocke agent_label=null pour un événement sans agent (parcours_completed)', async () => {
+    const { generateConciergeWord } = await import('./generate-concierge-word')
+    await generateConciergeWord(CLIENT_ID, { type: 'parcours_completed' })
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ agent_label: null }))
+  })
+})

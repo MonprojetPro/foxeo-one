@@ -7,6 +7,7 @@ import { toCamelCase } from '@monprojetpro/utils'
 import { z } from 'zod'
 import type { ValidationRequest } from '../types/validation.types'
 import { archiveValidatedBriefAsDocument } from '../utils/archive-validated-brief'
+import { notifyConciergeOfDecision } from '../utils/notify-concierge'
 
 const approveRequestSchema = z.object({
   requestId: z.string().uuid('requestId doit être un UUID valide'),
@@ -57,6 +58,9 @@ export async function approveRequest(
 
     // Archive le brief validé dans le module Documents (best-effort, ne bloque jamais la validation)
     await archiveValidatedBriefAsDocument(supabase, data)
+
+    // « Mot d'Élio » vivant (LOT F) — félicitation / parcours terminé (best-effort).
+    await notifyConciergeOfDecision(supabase, data, 'approved')
 
     return successResponse(toCamelCase(data) as ValidationRequest)
   } catch (err) {

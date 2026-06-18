@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { generateConciergeWord } from './generate-concierge-word'
 import type { SubmitStepResult } from '../types/parcours.types'
 
 /**
@@ -124,6 +125,13 @@ export async function submitGeneratedDocument(
         body: `${client.name} a soumis son document pour : ${stepTitle}`,
         link: `/modules/validation/submissions/${submission.id}`,
       })
+    }
+
+    // « Mot d'Élio » vivant (LOT F) — accusé de réception sur-mesure, best-effort.
+    try {
+      await generateConciergeWord(client.id, { type: 'submission_sent', agentLabel: stepTitle })
+    } catch (e) {
+      console.error('[PARCOURS:SUBMIT_GENERATED_DOC] Mot d\'Élio non généré (ignoré):', e)
     }
 
     console.log('[PARCOURS:SUBMIT_GENERATED_DOC] Soumission créée:', submission.id)
