@@ -42,7 +42,7 @@ export function ElioParcoursPanel({
   const message = agentsPaused
     ? `Les agents de ton parcours sont en pause — MiKL les a suspendus pour le moment. Tu gardes l'accès à tout ton parcours et à ton historique. Moi, le Concierge, je reste là pour répondre à tes questions.`
     : allCompleted
-      ? 'Bravo, toutes vos étapes sont complètes. Votre graduation vers One arrive bientôt !'
+      ? 'Ton parcours est terminé 🎉 MiKL va étudier tout cela et revenir vers toi au plus vite. Tu peux toujours le contacter via le chat si tu as besoin.'
       : isPendingReview
         ? `Votre document pour l'étape ${currentStep!.stepNumber} (${currentStep!.title}) est en cours d'examen par MiKL. S'il a besoin de précisions, il vous contactera dans le chat — sinon vous serez notifié dès la décision.`
         : isRejected
@@ -56,7 +56,7 @@ export function ElioParcoursPanel({
   const parcoursCta = agentsPaused
     ? null
     : allCompleted
-      ? { href: '/modules/parcours', label: 'Voir mon parcours →' }
+      ? null // Parcours terminé : le parcours complet est déjà affiché juste en dessous → CTA redondant.
       : isPendingReview
         ? { href: '/modules/parcours', label: 'Voir l\'historique →' }
         : isRejected
