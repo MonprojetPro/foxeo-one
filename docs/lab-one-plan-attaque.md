@@ -43,11 +43,11 @@
 - Impacts à traiter : `get-parcours.ts` (statut visuel : plus de `pending`/`locked` en libre, tout `active`), `approve_validation_request` (ne PAS auto-activer « la prochaine » en libre), UI cartes parcours client (toutes cliquables en libre), UI Hub (sélecteur de mode par client), calcul de complétion (inchangé : tous les agents enabled terminés).
 - Décisions ouvertes à cadrer avant dev : où stocker le flag ? bascule de mode en cours de parcours autorisée ? rendu visuel du mode libre côté client ?
 
-## LOT F — Élio Concierge vivant (moteur IA sur événement) — EN COURS
+## LOT F — Élio Concierge vivant (moteur IA sur événement) — ✅ COMPLET (2026-06-18)
 > Validé MiKL 2026-06-18. Moteur choisi : IA générée sur événement (Haiku via Edge Function `elio-chat`), fallback templaté. Le bandeau passe d'un arbre de phrases en dur à « le dernier mot d'Élio ».
 - ✅ **Incrément 1** : table `client_concierge_messages` (+ broadcast), action `generateConciergeWord` (Haiku + fallback), lecture dans `getParcours` (`conciergeWord`), bandeau qui l'affiche en priorité, branché sur l'événement **réouverture d'agent**. RLS : lecture client (son parcours) / opérateur ; insert opérateur ou client-propre.
 - ✅ **Incrément 2** : événements branchés — soumission client (`submission_sent`), validation (`submission_approved`), refus/révision (`submission_revision`), parcours terminé (`parcours_completed`, détecté à l'approbation de la dernière étape enabled). Côté validation-hub : helper `notify-concierge.ts` (import dynamique de `generateConciergeWord`, best-effort, ne touche que le nouveau modèle `step_submission`).
-- ⏳ **Incrément 3** : relances proactives d'inactivité (cron Edge Function).
+- ✅ **Incrément 3** : relances proactives d'inactivité. Fonction SQL `find_inactive_parcours_clients` (agent actif idle > 7j, Lab non en pause, parcours non abandonné, anti-spam cooldown 7j) + Edge Function `concierge-inactivity-relance` (IA Haiku via elio-chat + fallback, insère bandeau + notification cloche) + pg_cron quotidien 8h. Testé en prod (relance IA générée + nettoyée).
 
 ## Différé (gros chantier ultérieur)
 - One « construction → livré » + module « Suivi de l'outil » (screenshots/messages Hub→client).
