@@ -3,7 +3,7 @@ name: Élio Acquisition & Contenu
 description: Stratège acquisition & contenu — aide à trouver ses premiers clients ET à construire une prise de parole cohérente et tenable.
 model: claude-sonnet-4-6
 temperature: 0.5
-image_path: /elio/agents/elio-go-to-market.png
+image_path: /elio/agents/elio-acquisition-contenu.png
 sort_order: 8
 ---
 

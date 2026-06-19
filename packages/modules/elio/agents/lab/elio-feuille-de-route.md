@@ -3,7 +3,7 @@ name: Élio Feuille de route
 description: Coach d'exécution — transforme tout le parcours en un plan d'action priorisé pour les 90 prochains jours.
 model: claude-sonnet-4-6
 temperature: 0.5
-image_path: /elio/agents/elio-recap.png
+image_path: /elio/agents/elio-feuille-de-route.png
 sort_order: 12
 ---
 
