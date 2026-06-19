@@ -113,8 +113,10 @@ describe('launchClientParcours Server Action', () => {
       steps: [{ agentId: AGENT_ID_A, stepLabel: 'Étape 1' }],
     })
     expect(result.error).toBeNull()
-    // Pas d'insert notif (le seul insert est sur client_parcours_agents)
-    const notifCall = mockInsert.mock.calls.find(call => !Array.isArray(call[0]))
+    // Pas de NOTIFICATION client (le mot d'Élio Concierge, lui, peut s'insérer séparément)
+    const notifCall = mockInsert.mock.calls.find(
+      call => !Array.isArray(call[0]) && call[0]?.recipient_type === 'client'
+    )
     expect(notifCall).toBeUndefined()
   })
 

@@ -20,6 +20,8 @@ export type ConciergeEvent =
   | { type: 'submission_approved'; agentLabel: string; comment?: string }
   | { type: 'submission_revision'; agentLabel: string; comment?: string }
   | { type: 'parcours_completed'; agentLabel?: string }
+  | { type: 'parcours_started'; agentLabel: string }
+  | { type: 'parcours_updated'; agentLabel: string; addedCount: number }
 
 function buildEventPrompt(event: ConciergeEvent): string {
   switch (event.type) {
@@ -39,6 +41,10 @@ function buildEventPrompt(event: ConciergeEvent): string {
       } Écris le mot d'Élio qui présente ce retour de façon constructive et bienveillante (ce n'est pas un échec, c'est une étape normale), et invite le client à consulter le feedback puis à resoumettre.`
     case 'parcours_completed':
       return `Événement : le client vient de faire valider sa DERNIÈRE étape — son parcours d'incubation Lab est désormais complet. Écris le mot d'Élio qui le félicite chaleureusement pour avoir bouclé tout son parcours et lui indique que MiKL va étudier l'ensemble et revenir vers lui pour la suite.`
+    case 'parcours_started':
+      return `Événement : le parcours d'incubation Lab du client vient d'être mis en place. Sa toute première étape s'intitule « ${event.agentLabel} ». Écris le mot d'Élio qui souhaite la bienvenue au client dans son parcours et l'invite chaleureusement à démarrer par cette première étape, à son rythme.`
+    case 'parcours_updated':
+      return `Événement : le parcours du client vient d'être enrichi de ${event.addedCount} nouvelle${event.addedCount > 1 ? 's' : ''} étape${event.addedCount > 1 ? 's' : ''}. La prochaine s'intitule « ${event.agentLabel} ». Écris le mot d'Élio qui informe le client que son parcours s'est étoffé et l'invite à découvrir ce qui l'attend, sans pression.`
   }
 }
 
@@ -55,6 +61,10 @@ function buildFallback(event: ConciergeEvent): string {
       return `MiKL a relu ton document pour « ${event.agentLabel} » et t'a laissé un retour pour l'améliorer. Jette-y un œil, ajuste, et resoumets : c'est une étape tout à fait normale.`
     case 'parcours_completed':
       return `Félicitations, tu as bouclé tout ton parcours ! 🎉 MiKL va étudier l'ensemble et revenir vers toi pour la suite. Je reste à tes côtés.`
+    case 'parcours_started':
+      return `Bienvenue dans ton parcours d'incubation ! On démarre avec « ${event.agentLabel} » — prends le temps qu'il te faut, je t'accompagne à chaque étape.`
+    case 'parcours_updated':
+      return `Ton parcours s'enrichit : ${event.addedCount} nouvelle${event.addedCount > 1 ? 's' : ''} étape${event.addedCount > 1 ? 's' : ''} t'attend${event.addedCount > 1 ? 'ent' : ''}, à commencer par « ${event.agentLabel} ». Je reste à tes côtés.`
   }
 }
 

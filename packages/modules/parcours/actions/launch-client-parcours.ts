@@ -3,6 +3,7 @@
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { LaunchClientParcoursInput } from '../types/parcours.types'
+import { generateConciergeWord } from './generate-concierge-word'
 
 export async function launchClientParcours(
   input: LaunchClientParcoursInput
@@ -63,6 +64,17 @@ export async function launchClientParcours(
         body: `Découvrez l'étape 1 : ${steps[0].stepLabel}. Élio vous accompagne dès maintenant.`,
         link: '/modules/parcours/steps/1',
       })
+    }
+
+    // « Mot d'Élio » vivant — best-effort : on NOURRIT le Concierge pour qu'il accueille
+    // le client dans son parcours fraîchement lancé. Ne JAMAIS faire échouer le lancement.
+    try {
+      await generateConciergeWord(clientId, {
+        type: 'parcours_started',
+        agentLabel: steps[0].stepLabel,
+      })
+    } catch (e) {
+      console.error('[PARCOURS:LAUNCH_CLIENT_PARCOURS] Mot d\'Élio non généré (ignoré):', e)
     }
 
     return successResponse({ count: rows.length })

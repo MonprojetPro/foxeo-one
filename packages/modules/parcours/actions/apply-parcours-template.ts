@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { ApplyParcoursTemplateInput } from '../types/parcours.types'
 import { getParcoursTemplate } from '../templates/parcours-templates'
+import { generateConciergeWord } from './generate-concierge-word'
 
 /**
  * Applique un « circuit type » (parcours préinstallé) à un client.
@@ -168,6 +169,25 @@ export async function applyParcoursTemplate(
           link: '/modules/parcours/steps/1',
         })
       }
+    }
+
+    // « Mot d'Élio » vivant — best-effort : on NOURRIT le Concierge pour qu'il puisse parler
+    // au client du parcours fraîchement installé (ou enrichi). Ne JAMAIS faire échouer l'action.
+    try {
+      if (mode === 'append' && hadSteps) {
+        await generateConciergeWord(clientId, {
+          type: 'parcours_updated',
+          agentLabel: rows[0].step_label,
+          addedCount: rows.length,
+        })
+      } else {
+        await generateConciergeWord(clientId, {
+          type: 'parcours_started',
+          agentLabel: rows[0].step_label,
+        })
+      }
+    } catch (e) {
+      console.error('[PARCOURS:APPLY_TEMPLATE] Mot d\'Élio non généré (ignoré):', e)
     }
 
     return successResponse({ count: rows.length, skipped })
