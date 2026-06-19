@@ -43,11 +43,17 @@ export { FeedbackInjectionForm } from './components/feedback-injection-form'
 export { ClientParcoursAgentsList } from './components/client-parcours-agents-list'
 export { LaunchParcoursModal } from './components/launch-parcours-modal'
 export { AddStepModal } from './components/add-step-modal'
+export { ApplyTemplateModal } from './components/apply-template-modal'
 
 // Actions — Assemblage Parcours Client (Story 14.3)
 export { launchClientParcours } from './actions/launch-client-parcours'
 export { getClientParcoursAgents } from './actions/get-client-parcours-agents'
 export { addParcoursStep } from './actions/add-parcours-step'
+
+// Circuits types (parcours préinstallés)
+export { applyParcoursTemplate } from './actions/apply-parcours-template'
+export { PARCOURS_TEMPLATES, getParcoursTemplate } from './templates/parcours-templates'
+export type { ParcoursTemplate } from './templates/parcours-templates'
 
 // Actions — Nourrir Élio (Story 14.6)
 export { getStepContextCounts } from './actions/get-step-context-counts'

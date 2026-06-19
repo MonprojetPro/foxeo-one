@@ -40,15 +40,18 @@ serve(async (req) => {
       )
     }
 
-    // Étape 3 : construire les messages avec historique
+    // Étape 3 : construire les messages avec historique.
+    // Garde-fou anti-doublon : le step-chat persiste le message user AVANT d'appeler
+    // cette fonction, donc l'historique se termine parfois déjà par ce même message.
+    // Dans ce cas on ne le ré-ajoute pas (sinon Claude voit la question écrite 2× de suite).
     type HistoryMsg = { role: string; content: string }
-    const messages = [
-      ...(history as HistoryMsg[]).map((msg) => ({
-        role: msg.role === 'assistant' ? 'assistant' : 'user',
-        content: msg.content,
-      })),
-      { role: 'user', content: message },
-    ]
+    const mapped = (history as HistoryMsg[]).map((msg) => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content,
+    }))
+    const last = mapped[mapped.length - 1]
+    const alreadyAppended = last && last.role === 'user' && last.content === message
+    const messages = alreadyAppended ? mapped : [...mapped, { role: 'user', content: message }]
 
     console.log('[ELIO] Appel Claude model:', model, '— historique:', history.length, 'messages')
 

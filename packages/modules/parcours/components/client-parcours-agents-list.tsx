@@ -22,6 +22,7 @@ import { toggleAgentEnabled } from '../actions/toggle-agent-enabled'
 import { reopenAgent } from '../actions/reopen-agent'
 import { LaunchParcoursModal } from './launch-parcours-modal'
 import { AddStepModal } from './add-step-modal'
+import { ApplyTemplateModal } from './apply-template-modal'
 import { InjectStepContextPanel } from '@monprojetpro/module-elio'
 import { getStepContextCounts } from '../actions/get-step-context-counts'
 import type { ClientParcoursAgentWithDetails, ClientParcoursAgentStatus } from '../types/parcours.types'
@@ -52,6 +53,7 @@ interface ActivePanel {
 export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListProps) {
   const [showLaunchModal, setShowLaunchModal] = useState(false)
   const [showAddStepModal, setShowAddStepModal] = useState(false)
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [activePanel, setActivePanel] = useState<ActivePanel | null>(null)
   const [reordering, setReordering] = useState<string | null>(null)
   const queryClient = useQueryClient()
@@ -152,14 +154,24 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
           )}
         </div>
         {hasSteps && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAddStepModal(true)}
-            aria-label="Ajouter une étape au parcours"
-          >
-            + Ajouter une étape
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTemplateModal(true)}
+              aria-label="Installer un circuit type"
+            >
+              Installer un circuit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddStepModal(true)}
+              aria-label="Ajouter une étape au parcours"
+            >
+              + Ajouter une étape
+            </Button>
+          </div>
         )}
       </div>
 
@@ -169,12 +181,21 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
           <p className="text-sm text-muted-foreground mb-4">
             Aucun parcours configuré pour ce client.
           </p>
-          <Button
-            onClick={() => setShowLaunchModal(true)}
-            aria-label="Lancer le Lab et composer le parcours"
-          >
-            Lancer le Lab
-          </Button>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button
+              onClick={() => setShowLaunchModal(true)}
+              aria-label="Lancer le Lab et composer le parcours"
+            >
+              Lancer le Lab
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowTemplateModal(true)}
+              aria-label="Installer un circuit type"
+            >
+              Installer un circuit type
+            </Button>
+          </div>
         </div>
       )}
 
@@ -340,6 +361,18 @@ export function ClientParcoursAgentsList({ clientId }: ClientParcoursAgentsListP
           onClose={() => setShowAddStepModal(false)}
           onAdded={() => {
             setShowAddStepModal(false)
+            invalidate()
+          }}
+        />
+      )}
+
+      {showTemplateModal && (
+        <ApplyTemplateModal
+          clientId={clientId}
+          hasExistingSteps={!!hasSteps}
+          onClose={() => setShowTemplateModal(false)}
+          onApplied={() => {
+            setShowTemplateModal(false)
             invalidate()
           }}
         />

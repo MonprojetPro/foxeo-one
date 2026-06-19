@@ -427,6 +427,18 @@ export const AddParcoursStepInput = z.object({
 })
 export type AddParcoursStepInput = z.infer<typeof AddParcoursStepInput>
 
+// --- Circuits types (parcours préinstallés) ---
+
+export const ParcoursTemplateApplyModeValues = ['replace', 'append'] as const
+export type ParcoursTemplateApplyMode = typeof ParcoursTemplateApplyModeValues[number]
+
+export const ApplyParcoursTemplateInput = z.object({
+  clientId: z.string().uuid('clientId invalide'),
+  templateKey: z.string().min(1, 'Le circuit est requis'),
+  mode: z.enum(ParcoursTemplateApplyModeValues),
+})
+export type ApplyParcoursTemplateInput = z.infer<typeof ApplyParcoursTemplateInput>
+
 // --- Réouverture d'étape (Story 14.10) ---
 
 export const ReopenStepInput = z.object({
