@@ -128,7 +128,7 @@ describe('handleLabOnboardingPaid', () => {
     mockSupabase = makeMockSupabase()
   })
 
-  it('creates auth user + activates Lab config for new client', async () => {
+  it('creates auth user + activates Lab config for new client, WITHOUT sending email (LOT C)', async () => {
     const deps = makeDeps(mockSupabase.supabase)
     const result = await handleLabOnboardingPaid(deps, makeQuote())
 
@@ -145,10 +145,21 @@ describe('handleLabOnboardingPaid', () => {
         elio_lab_enabled: true,
       })
     )
-    expect(deps.sendDirectEmail).toHaveBeenCalledWith(
-      'welcome-lab',
-      'acme@example.com',
-      expect.objectContaining({ temporaryPassword: 'TEMP-PASSWORD-01' })
+    // LOT C — pas de changement de mot de passe forcé : le client le définit via le lien.
+    expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ password_change_required: false })
+    )
+    // LOT C — aucun email au paiement : il partira au lancement du parcours.
+    expect(deps.sendDirectEmail).not.toHaveBeenCalled()
+    // MiKL est invité à configurer le parcours, lien vers la fiche client.
+    // notifyMiKL insère un tableau (une ligne par opérateur).
+    expect(mockSupabase.mocks.notificationsInsert).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recipient_type: 'operator',
+          link: '/modules/crm/clients/client-uuid-1',
+        }),
+      ])
     )
   })
 
@@ -199,17 +210,6 @@ describe('handleLabOnboardingPaid', () => {
     expect(deps.sendDirectEmail).not.toHaveBeenCalled()
   })
 
-  it('continues and alerts MiKL when email sending fails', async () => {
-    const deps = makeDeps(mockSupabase.supabase, {
-      sendDirectEmail: vi.fn().mockResolvedValue({ success: false, error: 'SMTP down' }),
-    })
-    const result = await handleLabOnboardingPaid(deps, makeQuote())
-
-    expect(result.error).toBeNull()
-    expect(result.data?.action).toBe('lab_activated')
-    // Deux notifications : l'alerte email KO + la notification "paiement reçu"
-    expect(mockSupabase.mocks.notificationsInsert).toHaveBeenCalledTimes(2)
-  })
 })
 
 describe('handleOneDepositPaid', () => {

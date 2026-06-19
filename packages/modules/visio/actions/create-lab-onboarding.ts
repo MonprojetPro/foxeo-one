@@ -117,8 +117,11 @@ export async function createLabOnboarding(
           to: clientEmail,
           template: 'welcome-lab',
           data: {
+            // NB: flow legacy (Story 5.4, ancienne table `parcours`, prospect sans compte
+            // auth). On aligne juste la clé sur le nouveau template welcome-lab (LOT C).
+            // À réconcilier avec le pattern d'invitation generateLink ultérieurement.
             clientName,
-            parcoursName: template.name,
+            firstStepLabel: template.name,
             activationLink: `${process.env.NEXT_PUBLIC_CLIENT_URL ?? ''}/activate?client_id=${client.id}`,
           },
         }),

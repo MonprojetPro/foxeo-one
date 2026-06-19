@@ -4,8 +4,8 @@ import { welcomeLabEmailTemplate } from './welcome-lab'
 describe('welcomeLabEmailTemplate', () => {
   const data = {
     clientName: 'Alice Dupont',
-    parcoursName: 'Parcours Complet',
-    activationLink: 'https://lab.monprojet-pro.com/activate?client_id=123',
+    firstStepLabel: 'Identité de marque',
+    activationLink: 'https://app.monprojet-pro.com/api/auth/callback?next=/reset-password&code=abc',
   }
 
   it('includes client name', () => {
@@ -13,19 +13,24 @@ describe('welcomeLabEmailTemplate', () => {
     expect(html).toContain('Alice Dupont')
   })
 
-  it('includes parcours name', () => {
+  it('includes the first step label', () => {
     const html = welcomeLabEmailTemplate(data)
-    expect(html).toContain('Parcours Complet')
+    expect(html).toContain('Identité de marque')
   })
 
-  it('includes activation link', () => {
+  it('includes the activation (password-setup) link', () => {
     const html = welcomeLabEmailTemplate(data)
-    expect(html).toContain('https://lab.monprojet-pro.com/activate?client_id=123')
+    expect(html).toContain('https://app.monprojet-pro.com/api/auth/callback?next=/reset-password&amp;code=abc')
   })
 
-  it('contains CTA button text', () => {
+  it('contains the password-setup CTA button text', () => {
     const html = welcomeLabEmailTemplate(data)
-    expect(html).toContain('Activer mon espace Lab')
+    expect(html).toContain('Définir mon mot de passe')
+  })
+
+  it('never embeds a plaintext temporary password', () => {
+    const html = welcomeLabEmailTemplate(data)
+    expect(html.toLowerCase()).not.toContain('mot de passe temporaire')
   })
 
   it('escapes HTML in client name to prevent XSS', () => {

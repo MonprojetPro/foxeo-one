@@ -207,7 +207,7 @@ describe('handleDirectEmail', () => {
       {
         to: 'prospect@example.com',
         template: 'welcome-lab',
-        data: { clientName: 'Alice', parcoursName: 'Parcours Complet', activationLink: 'https://lab.monprojet-pro.com/activate' },
+        data: { clientName: 'Alice', firstStepLabel: 'Identité de marque', activationLink: 'https://app.monprojet-pro.com/auth/callback?next=/reset-password' },
       },
       config
     )
@@ -247,7 +247,7 @@ describe('handleDirectEmail', () => {
       {
         to: 'prospect@example.com',
         template: 'welcome-lab',
-        data: { clientName: 'Bob', parcoursName: 'Parcours', activationLink: 'https://link' },
+        data: { clientName: 'Bob', firstStepLabel: 'Étape 1', activationLink: 'https://link' },
       },
       config
     )

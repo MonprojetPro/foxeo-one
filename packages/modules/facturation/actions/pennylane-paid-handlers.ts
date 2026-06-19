@@ -40,7 +40,8 @@ export interface HandlerDeps {
 async function notifyMiKL(
   supabase: SupabaseClient,
   title: string,
-  body: string
+  body: string,
+  link = '/modules/facturation'
 ): Promise<void> {
   const { data: operators } = await supabase
     .from('operators')
@@ -56,7 +57,7 @@ async function notifyMiKL(
       body,
       recipient_type: 'operator',
       recipient_id: op.auth_user_id,
-      link: '/modules/facturation',
+      link,
     }))
 
   if (rows.length > 0) {
@@ -104,7 +105,11 @@ async function logActivity(
 
 async function createAuthAndSetFlag(
   deps: HandlerDeps,
-  client: { id: string; email: string }
+  client: { id: string; email: string },
+  // Lab (LOT C) crée le compte mais le client définit son mot de passe via le lien
+  // d'invitation envoyé au lancement du parcours → pas de changement forcé au login.
+  // One conserve l'ancien flux (mot de passe temporaire communiqué) → true.
+  requirePasswordChange = true
 ): Promise<
   | { userId: string; tempPassword: string; error: null }
   | { userId: null; tempPassword: null; error: { code: string; message: string } }
@@ -127,7 +132,7 @@ async function createAuthAndSetFlag(
     .from('clients')
     .update({
       auth_user_id: authResult.userId,
-      password_change_required: true,
+      password_change_required: requirePasswordChange,
     })
     .eq('id', client.id)
 
@@ -194,15 +199,20 @@ export async function handleLabOnboardingPaid(
     await notifyMiKL(
       deps.supabase,
       `Paiement Lab reçu — ${client.name}`,
-      `Accès Lab réactivé pour le client existant.`
+      `Accès Lab réactivé. Configure (ou mets à jour) le parcours du client.`,
+      `/modules/crm/clients/${client.id}`
     )
     return { data: { action: 'lab_reactivated', clientId: client.id }, error: null }
   }
 
-  const authResult = await createAuthAndSetFlag(deps, {
-    id: client.id,
-    email: client.email as string,
-  })
+  // LOT C — Le compte est créé, mais AUCUN email n'est envoyé au paiement.
+  // L'email de bienvenue (avec lien « définis ton mot de passe ») part au LANCEMENT
+  // du parcours, quand MiKL l'a assemblé. Donc pas de mot de passe forcé ici non plus.
+  const authResult = await createAuthAndSetFlag(
+    deps,
+    { id: client.id, email: client.email as string },
+    false
+  )
   if (authResult.error) return { data: null, error: authResult.error }
 
   const { error: configError } = await deps.supabase
@@ -226,39 +236,22 @@ export async function handleLabOnboardingPaid(
     }
   }
 
-  const emailResult = await deps.sendDirectEmail('welcome-lab', client.email as string, {
-    clientName: (client.name as string) ?? 'Cher(e) client(e)',
-    parcoursName: 'MonprojetPro Lab',
-    activationLink: `${process.env.NEXT_PUBLIC_CLIENT_URL ?? 'https://app.monprojet-pro.com'}/login`,
-    temporaryPassword: authResult.tempPassword,
-  })
-
-  if (!emailResult.success) {
-    // Non-bloquant : compte cree, MiKL peut communiquer manuellement le mot de passe
-    console.error('[FACTURATION:LAB_PAID] Email send failed:', emailResult.error)
-    await notifyMiKL(
-      deps.supabase,
-      `⚠️ Email Lab non envoye — ${client.name}`,
-      `Compte cree mais email d invitation en echec. Mot de passe temporaire a communiquer manuellement.`
-    )
-  }
-
   await markQuotePaid(deps.supabase, quote.pennylane_quote_id)
   await logActivity(deps.supabase, 'lab_access_activated', client.id, {
     pennylane_quote_id: quote.pennylane_quote_id,
-    email_sent: emailResult.success,
+    parcours_pending: true,
   })
   await notifyMiKL(
     deps.supabase,
     `Paiement Lab reçu — ${client.name}`,
-    `Compte cree et email envoye.`
+    `Compte créé. Configure le parcours du client : l'email de bienvenue partira au lancement.`,
+    `/modules/crm/clients/${client.id}`
   )
 
   return {
     data: {
       action: 'lab_activated',
       clientId: client.id,
-      tempPassword: authResult.tempPassword,
     },
     error: null,
   }

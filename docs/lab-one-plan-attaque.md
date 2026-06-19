@@ -25,10 +25,15 @@
 - ✅ D2 (complétion) : déjà calculée sur `client_parcours_agents` dans `get-parcours.ts`. Graduation = action MANUELLE de MiKL (`graduateClient`), jamais auto au 100 % → rouvrir un agent ne déclenche aucune graduation.
 - (Reste différé si besoin : RPC `approve_validation_request` saut explicite des agents `is_enabled=false`.)
 
-## LOT C — Séquencement « définir agents → valider → email »
-- `pennylane-paid-handlers.ts` : créer compte + flags, PAS d'email ; notifier MiKL « configure le parcours ».
-- `launch-client-parcours.ts` : envoyer welcome-lab après l'INSERT (avec la vraie étape 1) ; template `welcome-lab.ts` enrichi.
-- Tests maj.
+## LOT C — Séquencement « définir agents → valider → email » — ✅ FAIT (2026-06-19)
+> Choix MiKL : email d'invitation « définis ton mot de passe » (lien à usage unique), pas de mot de passe en clair.
+- ✅ `pennylane-paid-handlers.ts` : paiement Lab → crée compte + flags, PLUS d'email ; `password_change_required=false` (le client définit son mdp via le lien) ; notif MiKL « configure le parcours » avec lien `/modules/crm/clients/{id}`.
+- ✅ `launch-client-parcours.ts` : après l'INSERT, si client jamais connecté (`first_login_at` null) → `sendWelcomeLabInvite` (helper) avec la vraie 1ʳᵉ étape. Best-effort (n'échoue jamais le lancement) ; alerte l'opérateur si l'email KO. Client déjà actif (parcours additionnel) = couvert par notif + mot d'Élio, pas de mail.
+- ✅ Helper `utils/send-welcome-lab-invite.ts` : `admin.generateLink` (recovery) → lien à usage unique → email branché `welcome-lab` via Edge Function `send-email`. Redirect `/auth/callback?next=/reset-password`.
+- ✅ Template `welcome-lab.ts` (+ copie inline `index.ts`) refondu : CTA « Définir mon mot de passe », vraie 1ʳᵉ étape, plus aucun mdp en clair.
+- ✅ Route `/auth/callback` créée (app client) — corrige aussi « mot de passe oublié » qui pointait vers une route inexistante.
+- ✅ Tests : welcome-lab, launch-client-parcours, pennylane-paid-handlers, send-welcome-lab-invite.
+- ⚠️ Reste à vérifier (MiKL/dashboard Supabase) : l'URL `…/auth/callback` doit être dans les Redirect URLs autorisées Supabase. Dette : `create-lab-onboarding.ts` (flow legacy post-visio, ancienne table `parcours`) à réconcilier avec ce pattern ; ancienne route `/api/auth/callback` redondante à consolider.
 
 ## LOT D — Onglet « Pilote / Cockpit » (Hub)
 - `client-cockpit-tab.tsx` (accès Lab/One, progression parcours, validations, instance One) + raccourcis `onNavigateToTab` ; export barrel.

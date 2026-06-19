@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { LaunchClientParcoursInput } from '../types/parcours.types'
 import { generateConciergeWord } from './generate-concierge-word'
+import { sendWelcomeLabInvite } from '../utils/send-welcome-lab-invite'
 
 export async function launchClientParcours(
   input: LaunchClientParcoursInput
@@ -49,11 +50,17 @@ export async function launchClientParcours(
     // doit s'animer dès le lancement côté Hub (Realtime).
     const { data: clientRow } = await supabase
       .from('clients')
-      .select('auth_user_id')
+      .select('auth_user_id, email, name, first_login_at')
       .eq('id', clientId)
       .maybeSingle()
 
-    const clientAuthUserId = (clientRow as { auth_user_id: string | null } | null)?.auth_user_id
+    const client = clientRow as {
+      auth_user_id: string | null
+      email: string | null
+      name: string | null
+      first_login_at: string | null
+    } | null
+    const clientAuthUserId = client?.auth_user_id
 
     if (clientAuthUserId) {
       await supabase.from('notifications').insert({
@@ -75,6 +82,35 @@ export async function launchClientParcours(
       })
     } catch (e) {
       console.error('[PARCOURS:LAUNCH_CLIENT_PARCOURS] Mot d\'Élio non généré (ignoré):', e)
+    }
+
+    // LOT C — Email de bienvenue Lab envoyé MAINTENANT (après définition du parcours),
+    // et non plus au paiement. Uniquement pour un client qui ne s'est JAMAIS connecté
+    // (first_login_at null) : il reçoit un lien pour définir son mot de passe. Un client
+    // déjà actif (parcours additionnel) est couvert par la notif + le mot d'Élio ci-dessus.
+    // Best-effort : on ne fait JAMAIS échouer le lancement si l'email échoue.
+    if (client?.email && !client.first_login_at) {
+      try {
+        const invite = await sendWelcomeLabInvite({
+          email: client.email,
+          clientName: client.name ?? 'Cher(e) client(e)',
+          firstStepLabel: steps[0].stepLabel,
+        })
+        if (!invite.success) {
+          console.error('[PARCOURS:LAUNCH_CLIENT_PARCOURS] Email invitation KO:', invite.error)
+          // Prévenir l'opérateur qui a lancé le parcours (lui seul peut agir).
+          await supabase.from('notifications').insert({
+            recipient_type: 'operator',
+            recipient_id: user.id,
+            type: 'alert',
+            title: '⚠️ Email d\'invitation Lab non envoyé',
+            body: `Le parcours est lancé mais l'email d'invitation au client n'a pas pu être envoyé (${invite.error ?? 'erreur inconnue'}). Tu peux le relancer manuellement.`,
+            link: `/modules/crm/clients/${clientId}`,
+          })
+        }
+      } catch (e) {
+        console.error('[PARCOURS:LAUNCH_CLIENT_PARCOURS] Email invitation exception (ignorée):', e)
+      }
     }
 
     return successResponse({ count: rows.length })

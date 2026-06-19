@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockGetUser = vi.fn()
 const mockInsert = vi.fn()
 const mockClientsSelectSingle = vi.fn()
+const mockSendInvite = vi.fn()
 
 // from() router : selon la table appelée, on retourne la chaîne attendue.
 const mockFrom = vi.fn((table: string) => {
@@ -15,7 +16,7 @@ const mockFrom = vi.fn((table: string) => {
       }),
     }
   }
-  // client_parcours_agents + notifications utilisent .insert()
+  // client_parcours_agents + notifications + client_concierge_messages → .insert()
   return { insert: mockInsert }
 })
 
@@ -24,6 +25,11 @@ vi.mock('@monprojetpro/supabase', () => ({
     auth: { getUser: mockGetUser },
     from: mockFrom,
   })),
+}))
+
+// LOT C — l'envoi de l'invitation est isolé dans un util mocké ici.
+vi.mock('../utils/send-welcome-lab-invite', () => ({
+  sendWelcomeLabInvite: mockSendInvite,
 }))
 
 const CLIENT_ID = '00000000-0000-0000-0000-000000000001'
@@ -35,7 +41,17 @@ describe('launchClientParcours Server Action', () => {
     vi.clearAllMocks()
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-id' } }, error: null })
     mockInsert.mockResolvedValue({ error: null })
-    mockClientsSelectSingle.mockResolvedValue({ data: { auth_user_id: 'auth-client-1' }, error: null })
+    // Par défaut : client jamais connecté (first_login_at null) → invitation attendue.
+    mockClientsSelectSingle.mockResolvedValue({
+      data: {
+        auth_user_id: 'auth-client-1',
+        email: 'client@example.com',
+        name: 'ACME SARL',
+        first_login_at: null,
+      },
+      error: null,
+    })
+    mockSendInvite.mockResolvedValue({ success: true })
   })
 
   it('returns UNAUTHORIZED when not authenticated', async () => {
@@ -118,6 +134,78 @@ describe('launchClientParcours Server Action', () => {
       call => !Array.isArray(call[0]) && call[0]?.recipient_type === 'client'
     )
     expect(notifCall).toBeUndefined()
+  })
+
+  // ── LOT C — Email d'invitation au lancement ──────────────────────────────────
+
+  it('sends the welcome-lab invite to a first-time client (first_login_at null)', async () => {
+    const { launchClientParcours } = await import('./launch-client-parcours')
+    await launchClientParcours({
+      clientId: CLIENT_ID,
+      steps: [
+        { agentId: AGENT_ID_A, stepLabel: 'Identité de marque' },
+        { agentId: AGENT_ID_B, stepLabel: 'Positionnement' },
+      ],
+    })
+
+    expect(mockSendInvite).toHaveBeenCalledTimes(1)
+    expect(mockSendInvite).toHaveBeenCalledWith({
+      email: 'client@example.com',
+      clientName: 'ACME SARL',
+      firstStepLabel: 'Identité de marque',
+    })
+  })
+
+  it('does NOT send the invite if the client already logged in (additional parcours)', async () => {
+    mockClientsSelectSingle.mockResolvedValue({
+      data: {
+        auth_user_id: 'auth-client-1',
+        email: 'client@example.com',
+        name: 'ACME SARL',
+        first_login_at: '2026-06-01T10:00:00Z',
+      },
+      error: null,
+    })
+    const { launchClientParcours } = await import('./launch-client-parcours')
+    await launchClientParcours({
+      clientId: CLIENT_ID,
+      steps: [{ agentId: AGENT_ID_A, stepLabel: 'Étape 1' }],
+    })
+    expect(mockSendInvite).not.toHaveBeenCalled()
+  })
+
+  it('does NOT send the invite when the client has no email', async () => {
+    mockClientsSelectSingle.mockResolvedValue({
+      data: { auth_user_id: 'auth-client-1', email: null, name: 'ACME SARL', first_login_at: null },
+      error: null,
+    })
+    const { launchClientParcours } = await import('./launch-client-parcours')
+    await launchClientParcours({
+      clientId: CLIENT_ID,
+      steps: [{ agentId: AGENT_ID_A, stepLabel: 'Étape 1' }],
+    })
+    expect(mockSendInvite).not.toHaveBeenCalled()
+  })
+
+  it('does not fail the launch and alerts the operator when the invite fails', async () => {
+    mockSendInvite.mockResolvedValue({ success: false, error: 'SMTP down' })
+    const { launchClientParcours } = await import('./launch-client-parcours')
+    const result = await launchClientParcours({
+      clientId: CLIENT_ID,
+      steps: [{ agentId: AGENT_ID_A, stepLabel: 'Étape 1' }],
+    })
+
+    expect(result.error).toBeNull()
+    // Une notification opérateur (alerte) doit être insérée vers l'opérateur courant.
+    const operatorAlert = mockInsert.mock.calls.find(
+      call => !Array.isArray(call[0]) && call[0]?.recipient_type === 'operator' && call[0]?.type === 'alert'
+    )
+    expect(operatorAlert).toBeDefined()
+    expect(operatorAlert![0]).toMatchObject({
+      recipient_type: 'operator',
+      recipient_id: 'user-id',
+      link: `/modules/crm/clients/${CLIENT_ID}`,
+    })
   })
 
   it('returns DB_ERROR when insert fails', async () => {

@@ -48,7 +48,7 @@ export async function handleDirectEmail(
 
   switch (input.template) {
     case 'welcome-lab': {
-      const d = input.data as { clientName: string; parcoursName: string; activationLink: string }
+      const d = input.data as { clientName: string; firstStepLabel: string; activationLink: string }
       subject = 'Bienvenue dans MonprojetPro Lab !'
       html = welcomeLabEmailTemplate(d)
       break
