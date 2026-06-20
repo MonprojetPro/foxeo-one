@@ -29,7 +29,7 @@ export type HandlerResult =
 export interface HandlerDeps {
   supabase: SupabaseClient
   sendDirectEmail: (
-    template: 'welcome-lab' | 'welcome-one' | 'final-payment-confirmation',
+    template: 'welcome-lab' | 'welcome-one' | 'welcome-venture' | 'final-payment-confirmation',
     to: string,
     data: Record<string, unknown>
   ) => Promise<{ success: boolean; error?: string }>
@@ -74,6 +74,38 @@ async function markQuotePaid(
     .from('quote_metadata')
     .update({ paid_at: now, processed_at: now })
     .eq('pennylane_quote_id', pennylaneQuoteId)
+}
+
+// Relie le paiement du devis Lab au statut Lab côté client : pose lab_paid (lu par
+// getClientLabStatus / cockpit / déduction Lab -199€ sur un futur devis One).
+async function markLabPaidOnClient(
+  supabase: SupabaseClient,
+  clientId: string,
+  amountHt: number | null
+): Promise<void> {
+  const update: Record<string, unknown> = {
+    lab_paid: true,
+    lab_paid_at: new Date().toISOString(),
+  }
+  if (amountHt != null) update.lab_amount = amountHt
+  const { error } = await supabase.from('clients').update(update).eq('id', clientId)
+  if (error) console.warn('[FACTURATION:LAB_PAID] clients.lab_paid update failed:', error)
+}
+
+// 1er mail de bienvenue, envoyé AU PAIEMENT (chaleureux, annonce le 2e mail).
+// Best-effort : n'échoue jamais le webhook.
+async function sendVentureWelcome(
+  deps: HandlerDeps,
+  client: { name: string | null; email: string }
+): Promise<void> {
+  try {
+    const res = await deps.sendDirectEmail('welcome-venture', client.email, {
+      clientName: client.name ?? 'Cher(e) client(e)',
+    })
+    if (!res.success) console.warn('[FACTURATION:LAB_PAID] welcome-venture email failed:', res.error)
+  } catch (err) {
+    console.warn('[FACTURATION:LAB_PAID] welcome-venture email threw:', err)
+  }
 }
 
 function isAlreadyProcessed(quote: QuoteMetadataRow): boolean {
@@ -191,7 +223,9 @@ export async function handleLabOnboardingPaid(
       })
       .eq('client_id', client.id)
 
+    await markLabPaidOnClient(deps.supabase, client.id, quote.total_amount_ht)
     await markQuotePaid(deps.supabase, quote.pennylane_quote_id)
+    await sendVentureWelcome(deps, { name: client.name as string | null, email: client.email as string })
     await logActivity(deps.supabase, 'lab_access_activated', client.id, {
       pennylane_quote_id: quote.pennylane_quote_id,
       reused_existing_account: true,
@@ -236,7 +270,9 @@ export async function handleLabOnboardingPaid(
     }
   }
 
+  await markLabPaidOnClient(deps.supabase, client.id, quote.total_amount_ht)
   await markQuotePaid(deps.supabase, quote.pennylane_quote_id)
+  await sendVentureWelcome(deps, { name: client.name as string | null, email: client.email as string })
   await logActivity(deps.supabase, 'lab_access_activated', client.id, {
     pennylane_quote_id: quote.pennylane_quote_id,
     parcours_pending: true,
@@ -244,7 +280,7 @@ export async function handleLabOnboardingPaid(
   await notifyMiKL(
     deps.supabase,
     `Paiement Lab reçu — ${client.name}`,
-    `Compte créé. Configure le parcours du client : l'email de bienvenue partira au lancement.`,
+    `Compte créé, 1er mail de bienvenue envoyé. Configure le parcours : le mail d'accès partira au lancement.`,
     `/modules/crm/clients/${client.id}`
   )
 

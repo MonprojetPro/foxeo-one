@@ -1,8 +1,20 @@
-# Cadrage — Relier le Lab au flux Comptabilité (devis → signature → paiement)
+# Cadrage — Relier le Lab au flux Comptabilité
 
-> Cadrage du 2026-06-20 (MiKL + MAX). But : afficher un vrai statut Lab basé sur le
-> cycle de vie d'un **devis** (incl. « en attente de signature »), en réutilisant le
-> flux comptabilité Pennylane déjà construit.
+> Cadrage du 2026-06-20 (MiKL + MAX).
+>
+> ⚠️ **DÉCISION FINALE (2026-06-20)** : on **abandonne** l'idée d'un statut « devis en
+> attente de signature » côté Lab. Le devis, la signature et les relances sont gérés
+> **dans la section Comptabilité**, à part. Le Lab est **déclenché au PAIEMENT validé**
+> (comme prévu à l'origine). Ce qu'on relie : paiement d'un devis `lab_onboarding` →
+> activation Lab + statut + 1er mail de bienvenue.
+>
+> **Implémenté (commit suivant)** :
+> 1. `handleLabOnboardingPaid` pose `clients.lab_paid=true` + `lab_paid_at` (+ `lab_amount`).
+> 2. 1er mail `welcome-venture` envoyé AU PAIEMENT (le mail d'accès reste au lancement parcours).
+> 3. Cohérence : `getClientLabStatus.labPaid` → l'onglet Lab affiche « payé — actif ».
+>
+> Les sections 3-5 ci-dessous documentent l'exploration initiale (incl. la piste signature
+> finalement écartée) — conservées pour mémoire.
 
 ## 1. État des lieux (vérifié en code + prod)
 

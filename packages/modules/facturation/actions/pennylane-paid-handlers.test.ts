@@ -128,7 +128,7 @@ describe('handleLabOnboardingPaid', () => {
     mockSupabase = makeMockSupabase()
   })
 
-  it('creates auth user + activates Lab config for new client, WITHOUT sending email (LOT C)', async () => {
+  it('creates auth user + activates Lab config for new client + sends venture welcome email', async () => {
     const deps = makeDeps(mockSupabase.supabase)
     const result = await handleLabOnboardingPaid(deps, makeQuote())
 
@@ -149,8 +149,17 @@ describe('handleLabOnboardingPaid', () => {
     expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ password_change_required: false })
     )
-    // LOT C — aucun email au paiement : il partira au lancement du parcours.
-    expect(deps.sendDirectEmail).not.toHaveBeenCalled()
+    // Le 1er mail de bienvenue « aventure » part AU PAIEMENT (le mail d'accès, lui,
+    // partira au lancement du parcours — LOT C).
+    expect(deps.sendDirectEmail).toHaveBeenCalledWith(
+      'welcome-venture',
+      'acme@example.com',
+      expect.objectContaining({ clientName: expect.any(String) })
+    )
+    // lab_paid posé sur le client (relie le paiement au statut Lab).
+    expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ lab_paid: true })
+    )
     // MiKL est invité à configurer le parcours, lien vers la fiche client.
     // notifyMiKL insère un tableau (une ligne par opérateur).
     expect(mockSupabase.mocks.notificationsInsert).toHaveBeenCalledWith(
@@ -183,7 +192,15 @@ describe('handleLabOnboardingPaid', () => {
 
     expect(result.data?.action).toBe('lab_reactivated')
     expect(deps.createAuthUser).not.toHaveBeenCalled()
-    expect(deps.sendDirectEmail).not.toHaveBeenCalled()
+    // Même sur réactivation, le mail de bienvenue « aventure » part au paiement.
+    expect(deps.sendDirectEmail).toHaveBeenCalledWith(
+      'welcome-venture',
+      expect.any(String),
+      expect.objectContaining({ clientName: expect.any(String) })
+    )
+    expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ lab_paid: true })
+    )
     expect(mockSupabase.mocks.configUpdate).toHaveBeenCalled()
   })
 

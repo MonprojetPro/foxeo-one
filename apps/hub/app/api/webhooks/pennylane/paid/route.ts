@@ -46,7 +46,7 @@ function extractIds(body: unknown): { invoiceId: string | null; quoteId: string 
 }
 
 async function sendDirectEmail(
-  template: 'welcome-lab' | 'welcome-one' | 'final-payment-confirmation',
+  template: 'welcome-lab' | 'welcome-one' | 'welcome-venture' | 'final-payment-confirmation',
   to: string,
   data: Record<string, unknown>
 ): Promise<{ success: boolean; error?: string }> {

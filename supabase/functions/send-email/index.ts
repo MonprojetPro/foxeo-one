@@ -114,6 +114,11 @@ function welcomeOneEmailTemplate(d: { clientName: string; activationLink: string
   return baseTemplate({ title: 'Votre espace One est prêt !', body, ctaUrl: d.activationLink, ctaText: 'Accéder à mon espace' })
 }
 
+function welcomeVentureEmailTemplate(d: { clientName: string }): string {
+  const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>🎉 Quelle joie de vous compter parmi nous — <strong>bienvenue dans l'aventure MonprojetPro&nbsp;!</strong></p><p>Votre paiement est bien reçu, c'est officiel : on embarque ensemble. 🚀</p><p>Dans les prochains jours, vous recevrez un <strong>second email</strong> avec tout ce qu'il faut pour démarrer : votre accès personnel et la première étape de votre parcours.</p><p>En attendant, on s'occupe de tout : on <strong>paramètre votre espace aux petits oignons</strong> pour qu'il soit parfaitement adapté à votre projet.</p><p>À très vite,<br/>L'équipe MonprojetPro</p>`
+  return baseTemplate({ title: 'Bienvenue dans l’aventure MonprojetPro !', body })
+}
+
 function finalPaymentConfirmationEmailTemplate(d: { clientName: string }): string {
   const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>✅ Nous confirmons la réception de votre paiement final.</p><p>Votre projet est maintenant entièrement livré et payé. Merci pour votre confiance !</p>`
   return baseTemplate({ title: 'Projet livré et payé en intégralité', body })
@@ -262,7 +267,7 @@ async function handleSendEmail(notificationId: string, config: SendEmailConfig):
   }
 }
 
-type DirectEmailTemplate = 'welcome-lab' | 'welcome-one' | 'final-payment-confirmation' | 'prospect-resources'
+type DirectEmailTemplate = 'welcome-lab' | 'welcome-one' | 'welcome-venture' | 'final-payment-confirmation' | 'prospect-resources'
 
 async function handleDirectEmail(input: { to: string; template: DirectEmailTemplate; data: Record<string, unknown> }, config: SendEmailConfig): Promise<{ success: boolean; error?: string }> {
   let subject: string
@@ -270,6 +275,7 @@ async function handleDirectEmail(input: { to: string; template: DirectEmailTempl
   switch (input.template) {
     case 'welcome-lab': { const d = input.data as { clientName: string; firstStepLabel: string; activationLink: string }; subject = 'Bienvenue dans MonprojetPro Lab !'; html = welcomeLabEmailTemplate(d); break }
     case 'welcome-one': { const d = input.data as { clientName: string; activationLink: string; temporaryPassword: string | null }; subject = 'Votre espace MonprojetPro One est prêt'; html = welcomeOneEmailTemplate(d); break }
+    case 'welcome-venture': { const d = input.data as { clientName: string }; subject = 'Bienvenue dans l’aventure MonprojetPro !'; html = welcomeVentureEmailTemplate(d); break }
     case 'final-payment-confirmation': { const d = input.data as { clientName: string }; subject = 'Projet livré — MonprojetPro'; html = finalPaymentConfirmationEmailTemplate(d); break }
     case 'prospect-resources': { const d = input.data as { links: Array<{ name: string; url: string }> }; subject = 'Vos ressources MonprojetPro'; html = prospectResourcesEmailTemplate(d); break }
     default: return { success: false, error: `Unknown direct template: ${input.template}` }
