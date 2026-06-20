@@ -1,7 +1,7 @@
 'use client'
 
-import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions } from '@monprojetpro/modules-crm'
-import { ClientSupportTab } from '@monprojetpro/modules-support'
+import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, ClientCockpitTab, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions } from '@monprojetpro/modules-crm'
+import { ClientSupportTab, useSupportTickets } from '@monprojetpro/modules-support'
 import { SubmissionsList, ClientParcoursAgentsList } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
 import { LabBillingTab, getClientLabStatus } from '@monprojetpro/modules-facturation'
@@ -11,7 +11,7 @@ import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
 import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings } from 'lucide-react'
+import { Gauge, Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings } from 'lucide-react'
 
 interface ClientDetailWithSupportProps {
   client: Client
@@ -40,8 +40,20 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
 
   const labActive = labStatus?.dashboardActivated ?? false
 
+  // Compteur de tickets support ouverts pour le bloc « À traiter » du cockpit.
+  const { data: supportTickets } = useSupportTickets({ clientId: client.id })
+  const supportOpenCount = (supportTickets ?? []).filter(
+    (t) => t.status === 'open' || t.status === 'in_progress'
+  ).length
+
   const extraTabs: ExtraTab[] = useMemo(
     () => [
+      {
+        value: 'pilote',
+        label: 'Pilote',
+        icon: Gauge, color: '#22d3ee',
+        content: <ClientCockpitTab clientId={client.id} supportOpenCount={supportOpenCount} />,
+      },
       {
         value: 'emails',
         label: 'Emails',
@@ -122,7 +134,7 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         ),
       },
     ],
-    [client.id, client.company, client.name, client.email, labStatus]
+    [client.id, client.company, client.name, client.email, labStatus, supportOpenCount]
   )
 
   return (

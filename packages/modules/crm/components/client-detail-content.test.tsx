@@ -73,10 +73,11 @@ describe('ClientDetailContent', () => {
   it('should render all tabs', () => {
     renderWithQueryClient(<ClientDetailContent client={mockClient} />)
 
-    expect(screen.getByRole('tab', { name: /informations/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /historique/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /documents/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /échanges/i })).toBeInTheDocument()
+    // La barre d'onglets est rendue en boutons avec aria-label (pas en role="tab").
+    expect(screen.getByRole('button', { name: /infos/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /historique/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /documents/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /échanges/i })).toBeInTheDocument()
   })
 
   it('should render edit buttons for active client', () => {

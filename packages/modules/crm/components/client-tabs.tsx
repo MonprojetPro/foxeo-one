@@ -1,14 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import {
   type LucideIcon,
   User, Clock, FolderOpen, MessageSquare, Zap,
   Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings,
-  MessageCircle, Code2, Pause, Lock,
+  MessageCircle, Code2, Pause, Lock, Gauge,
 } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
+import { useClientTabNav } from '../hooks/use-client-tab-nav'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Button, showSuccess } from '@monprojetpro/ui'
 import { ClientInfoTab } from './client-info-tab'
 import { ClientTimeline } from './client-timeline'
@@ -121,21 +122,15 @@ export function ClientTabs({
   allModules = [],
 }: ClientTabsProps) {
   const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
 
-  const activeTab = searchParams.get('tab') || 'informations'
+  // Onglet « Pilote » (cockpit) par défaut s'il est présent, sinon « Infos ».
+  const hasPilote = extraTabs.some((t) => t.value === 'pilote')
+  const { activeTab, navigateToTab } = useClientTabNav(hasPilote ? 'pilote' : 'informations')
 
   // Dialog states
   const [suspendOpen, setSuspendOpen] = useState(false)
   const [closeOpen, setCloseOpen] = useState(false)
   const [cursorOpen, setCursorOpen] = useState(false)
-
-  function handleTabChange(value: string) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('tab', value)
-    router.push(`${pathname}?${params.toString()}`)
-  }
 
   // Cursor integration
   const clientSlug = buildClientSlug(client.name, client.company)
@@ -166,6 +161,8 @@ export function ClientTabs({
   const extraTabValues = new Set(extraTabs.map((t) => t.value))
 
   const allItems: IconItem[] = [
+    // 0 — Pilote        cyan — cockpit (vue d'ensemble), 1ʳᵉ position quand présent
+    ...(extraTabValues.has('pilote')         ? [{ type: 'tab' as const, value: 'pilote',        label: 'Pilote',      Icon: Gauge,         color: '#22d3ee' }] : []),
     // 1 — Infos         teal
     { type: 'tab',    value: 'informations',  label: 'Infos',       Icon: User,          color: '#3ecfa0' },
     // 2 — Cursor        violet
@@ -216,7 +213,7 @@ export function ClientTabs({
               alwaysFilled={item.alwaysFilled ?? ['administration', 'suspendre', 'cloturer'].includes(item.value)}
               onClick={
                 item.type === 'tab'
-                  ? () => handleTabChange(item.value)
+                  ? () => navigateToTab(item.value)
                   : item.onClick
               }
             />

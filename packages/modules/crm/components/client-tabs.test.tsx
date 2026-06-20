@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ClientTabs } from './client-tabs'
+import { ClientTabs, type ExtraTab } from './client-tabs'
+import type { Client } from '../types/crm.types'
 
-// Mock Next.js navigation
+// Mock Next.js navigation (consommé par useClientTabNav)
 const mockPush = vi.fn()
 const mockUseSearchParams = vi.fn(() => new URLSearchParams())
 const mockUsePathname = vi.fn(() => '/modules/crm/clients/123')
@@ -15,65 +16,72 @@ vi.mock('next/navigation', () => ({
   usePathname: () => mockUsePathname(),
 }))
 
-// Helper to render with QueryClient
+const mockClient: Client = {
+  id: '550e8400-e29b-41d4-a716-446655440001',
+  operatorId: '550e8400-e29b-41d4-a716-4466554400aa',
+  name: 'Jean Test',
+  company: 'Test SARL',
+  email: 'jean@test.fr',
+  clientType: 'lab',
+  status: 'active',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+} as Client
+
 function renderWithQueryClient(ui: React.ReactElement) {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
+    defaultOptions: { queries: { retry: false } },
   })
-  return render(
-    <QueryClientProvider client={queryClient}>
-      {ui}
-    </QueryClientProvider>
-  )
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>)
 }
 
 describe('ClientTabs', () => {
-  const mockClientId = '550e8400-e29b-41d4-a716-446655440001'
-
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it('should render all 4 tabs', () => {
-    renderWithQueryClient(<ClientTabs clientId={mockClientId} />)
-
-    expect(screen.getByRole('tab', { name: /informations/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /historique/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /documents/i })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: /échanges/i })).toBeInTheDocument()
-  })
-
-  it('should activate "Informations" tab by default when no query param', () => {
     mockUseSearchParams.mockReturnValue(new URLSearchParams())
-
-    renderWithQueryClient(<ClientTabs clientId={mockClientId} />)
-
-    const informationsTab = screen.getByRole('tab', { name: /informations/i })
-    expect(informationsTab).toHaveAttribute('data-state', 'active')
   })
 
-  it('should activate tab based on URL query param', () => {
+  it('affiche les onglets de base (boutons avec aria-label)', () => {
+    renderWithQueryClient(<ClientTabs client={mockClient} />)
+
+    expect(screen.getByRole('button', { name: /infos/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /historique/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /documents/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /échanges/i })).toBeInTheDocument()
+  })
+
+  it('active « Infos » par défaut quand aucun param et pas de cockpit', () => {
+    renderWithQueryClient(<ClientTabs client={mockClient} />)
+
+    expect(screen.getByRole('button', { name: /infos/i })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('active l\'onglet correspondant au param d\'URL', () => {
     mockUseSearchParams.mockReturnValue(new URLSearchParams('tab=historique'))
 
-    renderWithQueryClient(<ClientTabs clientId={mockClientId} />)
+    renderWithQueryClient(<ClientTabs client={mockClient} />)
 
-    const historiqueTab = screen.getByRole('tab', { name: /historique/i })
-    expect(historiqueTab).toHaveAttribute('data-state', 'active')
+    expect(screen.getByRole('button', { name: /historique/i })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('should update URL when switching tabs', async () => {
+  it('met à jour l\'URL au changement d\'onglet', async () => {
     const user = userEvent.setup()
-    mockUseSearchParams.mockReturnValue(new URLSearchParams())
+    renderWithQueryClient(<ClientTabs client={mockClient} />)
 
-    renderWithQueryClient(<ClientTabs clientId={mockClientId} />)
-
-    const historiqueTab = screen.getByRole('tab', { name: /historique/i })
-    await user.click(historiqueTab)
+    await user.click(screen.getByRole('button', { name: /historique/i }))
 
     expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('tab=historique'))
+  })
+
+  it('affiche l\'onglet « Pilote » en 1ʳᵉ position et l\'active par défaut quand présent', () => {
+    const extraTabs: ExtraTab[] = [
+      { value: 'pilote', label: 'Pilote', content: <div>Cockpit</div> },
+    ]
+    renderWithQueryClient(<ClientTabs client={mockClient} extraTabs={extraTabs} />)
+
+    const pilote = screen.getByRole('button', { name: /pilote/i })
+    expect(pilote).toBeInTheDocument()
+    expect(pilote).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Cockpit')).toBeInTheDocument()
   })
 })
