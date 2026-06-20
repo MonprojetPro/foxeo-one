@@ -5,8 +5,9 @@ import { type ActionResponse, successResponse, errorResponse } from '@monprojetp
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/** Seuil d'inactivité aligné sur le moteur de relance LOT F (find_inactive_parcours_clients). */
-export const INACTIVITY_THRESHOLD_DAYS = 7
+// Seuil d'inactivité aligné sur le moteur de relance LOT F (find_inactive_parcours_clients).
+// Local (non exporté) : un fichier 'use server' ne peut exporter que des fonctions async.
+const INACTIVITY_THRESHOLD_DAYS = 7
 
 export type ClientActivitySnapshot = {
   /** Première connexion du client (clients.first_login_at). Null = jamais connecté. */
