@@ -700,3 +700,16 @@
 - **Solution** : retirer le `export` → constante locale au fichier (`const INACTIVITY_THRESHOLD_DAYS = 7`). Build reconfirmé `EXIT_CODE=0`.
 - **Regle a suivre** : (1) Dans un fichier `'use server'`, n'exporter QUE des fonctions async (+ types) — toute constante/objet partagé va dans un fichier `constants.ts`/`types.ts` séparé, ou reste local. (2) Pour toute story touchant un fichier `'use server'` ou un export de package, **lancer `next build` (ou `turbo run build --filter=...`) avant le push** — les tests ciblés et tsc ne suffisent pas à garantir un déploiement Vercel vert.
 - **Agents impliques** : SPARK, ATLAS
+
+---
+
+### [RLS-010] fn_get_operator_id() renvoie toujours NULL → policies opérateur cassées (Soumissions vide, activité fausse)
+- **Date** : 2026-06-20
+- **Projet** : MonprojetPro
+- **Categorie** : Supabase RLS
+- **Symptome** : Onglet « Soumissions » du Hub vide alors que le Validation Hub affiche bien la soumission ; « dernière activité » du cockpit figée la veille. Bref, l'opérateur ne voyait pas des données pourtant présentes (13 step_submissions en base).
+- **Diagnostic (TILT, requêtes MCP sur la vraie base)** : (1) step_submissions a bien 13 lignes dont une du jour ; (2) la policy SELECT de step_submissions = `client_id IN (clients WHERE operator_id = fn_get_operator_id())` ; (3) `fn_get_operator_id()` lit `auth.users.raw_app_meta_data->>'operator_id'` — **NULL pour tous les opérateurs** (aucun n'a cette clé). Donc la clause opérateur ne matche jamais → 0 ligne lisible côté Hub.
+- **Cause racine** : deux mécanismes de détection opérateur cohabitent. Le bon = `is_operator()` / `is_operator(operator_id)` (EXISTS dans la table `operators` WHERE auth_user_id = auth.uid()) — utilisé par `clients`, `validation_requests` (qui marchent). Le cassé = `fn_get_operator_id()` (via raw_app_meta_data jamais renseigné) — utilisé par `step_submissions` (SELECT+UPDATE) et `activity_logs` (SELECT).
+- **Solution** : migration `20260620120000` — remplacer `fn_get_operator_id()` par `is_operator()` (join via clients) dans les 3 policies. WITH CHECK inchangés (NULL). Vérifié : `is_operator('00000000-0000-0000-0000-000000000001')` matche bien l'opérateur MiKL.
+- **Regle a suivre** : pour toute policy RLS « accès opérateur », utiliser **`is_operator(operator_id)`** (table `operators`), **jamais** `fn_get_operator_id()` (raw_app_meta_data non peuplé). Si un onglet Hub affiche « vide » alors que la donnée existe : suspecter la RLS opérateur AVANT le code — comparer la policy à celle d'une table qui marche (`clients`/`validation_requests`), et vérifier en MCP que la donnée est bien là.
+- **Agents impliques** : CERBÈRE (détection), SPARK, ATLAS
