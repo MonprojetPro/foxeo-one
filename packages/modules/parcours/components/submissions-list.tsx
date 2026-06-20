@@ -75,7 +75,7 @@ export function SubmissionsList({ clientId, statusFilter }: SubmissionsListProps
                     href={
                       submission.validationRequestId
                         ? `/modules/validation-hub/${submission.validationRequestId}`
-                        : `/modules/crm/clients/${clientId}/submissions/${submission.id}`
+                        : `/modules/validation-hub`
                     }
                     aria-label={`Voir la soumission du ${format(new Date(submission.submittedAt), 'dd MMM yyyy', { locale: fr })}`}
                   >

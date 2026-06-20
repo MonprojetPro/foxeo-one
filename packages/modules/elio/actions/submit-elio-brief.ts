@@ -108,7 +108,7 @@ export async function submitElioBrief(
         type: 'alert',
         title: `Nouveau brief Élio — ${client.name}`,
         body: `Étape ${step.step_number}: ${step.title}`,
-        link: `/modules/crm/clients/${client.id}/submissions/${submission.id}`,
+        link: `/modules/validation-hub`,
       })
     }
     notifs.push({

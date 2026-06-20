@@ -120,7 +120,7 @@ export async function submitStep(
         type: 'alert',
         title: `Nouvelle soumission — ${client.name}`,
         body: `Étape ${step.step_number}: ${step.title}`,
-        link: `/modules/crm/clients/${client.id}/submissions/${submission.id}`,
+        link: `/modules/validation-hub`,
       })
     }
     notifs.push({

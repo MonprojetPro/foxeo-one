@@ -123,7 +123,7 @@ export async function submitGeneratedDocument(
         type: 'alert',
         title: `Nouvelle soumission — ${stepTitle}`,
         body: `${client.name} a soumis son document pour : ${stepTitle}`,
-        link: `/modules/validation/submissions/${submission.id}`,
+        link: `/modules/validation-hub`,
       })
     }
 
