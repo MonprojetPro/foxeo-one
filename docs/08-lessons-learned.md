@@ -686,3 +686,17 @@
   Le broadcast contourne la RLS par-ligne ; la donnée réelle reste re-fetchée via une requête serveur RLS-protégée (aucune fuite : le payload est un simple signal de refetch).
 - **Regle a suivre** : Pour du Realtime sur une table dont la **RLS référence une autre table** (sous-requête) : ne PAS compter sur `postgres_changes` (surtout pour les UPDATE). **Utiliser le broadcast DB** (`realtime.send` dans un trigger, canal public par client, payload = simple ping de refetch). Et pour diagnostiquer un « SUBSCRIBED mais rien » : sonder `subscribe status` + présence d'`event reçu`, et vérifier que le DML est bien commité avant d'accuser la délivrance.
 - **Agents impliques** : SPARK, ATLAS
+
+---
+
+### [BUILD-001] Un fichier `'use server'` ne peut exporter QUE des fonctions async — un `export const` casse le build Next (invisible en tsc/vitest)
+- **Date** : 2026-06-20
+- **Projet** : MonprojetPro
+- **Categorie** : Next.js Server Actions / build
+- **Symptome** : LOT D livré, tests verts (vitest) et tsc « OK » en local, mais les déploiements Vercel passaient en **Error** (rouge) → l'ancien code restait en ligne → MiKL ne voyait pas le nouvel onglet « Pilote ».
+- **Diagnostic (TILT, build local avant fix)** : `npx turbo run build --filter=@monprojetpro/hub` → `Build failed because of webpack errors`, caret pointant sur `export const INACTIVITY_THRESHOLD_DAYS = 7` dans `get-client-activity-snapshot.ts` (fichier `'use server'`).
+- **Cause racine** : un module avec la directive `'use server'` ne peut **exporter que des fonctions async**. Tout `export const`/`export let`/valeur non-fonction est rejeté par le compilateur Next (règle webpack/SWC, **pas** tsc). Les **types** restent exportables (ex. `get-client-instance.ts` exporte `type ClientInstanceStatus` sans souci).
+- **Pourquoi non détecté avant le push** : ni `vitest` ni `tsc --noEmit` n'appliquent la contrainte `'use server'` ; seul `next build` la voit. Les 717 erreurs `never` (types Supabase non générés en local) noient par ailleurs tout signal tsc utile.
+- **Solution** : retirer le `export` → constante locale au fichier (`const INACTIVITY_THRESHOLD_DAYS = 7`). Build reconfirmé `EXIT_CODE=0`.
+- **Regle a suivre** : (1) Dans un fichier `'use server'`, n'exporter QUE des fonctions async (+ types) — toute constante/objet partagé va dans un fichier `constants.ts`/`types.ts` séparé, ou reste local. (2) Pour toute story touchant un fichier `'use server'` ou un export de package, **lancer `next build` (ou `turbo run build --filter=...`) avant le push** — les tests ciblés et tsc ne suffisent pas à garantir un déploiement Vercel vert.
+- **Agents impliques** : SPARK, ATLAS
