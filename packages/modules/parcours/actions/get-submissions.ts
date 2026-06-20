@@ -24,12 +24,14 @@ function mapSubmission(db: StepSubmissionDB): StepSubmission {
 function mapSubmissionWithStep(
   db: StepSubmissionDB,
   step?: { stepNumber: number; stepTitle: string },
+  validationRequestId?: string | null,
 ): StepSubmissionWithStep {
   return {
     ...mapSubmission(db),
     stepNumber: step?.stepNumber ?? 0,
     stepTitle: step?.stepTitle ?? '',
     parcoursId: '',
+    validationRequestId: validationRequestId ?? null,
   }
 }
 
@@ -91,7 +93,42 @@ export async function getSubmissions(
       }
     }
 
-    const submissions = rows.map((r) => mapSubmissionWithStep(r, stepById.get(r.parcours_step_id)))
+    // Associer chaque soumission à sa demande de validation (Validation Hub) :
+    // même step_id, créées ensemble → on apparie par created_at le plus proche.
+    const vrByStep = new Map<string, { id: string; created_at: string }[]>()
+    if (stepIds.length > 0) {
+      const { data: requests } = await supabase
+        .from('validation_requests')
+        .select('id, step_id, created_at')
+        .in('step_id', stepIds)
+      for (const r of requests ?? []) {
+        const list = vrByStep.get(r.step_id as string) ?? []
+        list.push({ id: r.id as string, created_at: r.created_at as string })
+        vrByStep.set(r.step_id as string, list)
+      }
+    }
+
+    function matchValidationRequest(stepId: string, submittedAt: string | null): string | null {
+      const list = vrByStep.get(stepId)
+      if (!list || list.length === 0) return null
+      if (!submittedAt) return list[0].id
+      const target = new Date(submittedAt).getTime()
+      let best = list[0]
+      let bestDiff = Math.abs(new Date(best.created_at).getTime() - target)
+      for (const r of list.slice(1)) {
+        const diff = Math.abs(new Date(r.created_at).getTime() - target)
+        if (diff < bestDiff) { best = r; bestDiff = diff }
+      }
+      return best.id
+    }
+
+    const submissions = rows.map((r) =>
+      mapSubmissionWithStep(
+        r,
+        stepById.get(r.parcours_step_id),
+        matchValidationRequest(r.parcours_step_id, r.submitted_at ?? r.created_at),
+      ),
+    )
 
     console.log('[PARCOURS:GET_SUBMISSIONS] Récupérées:', submissions.length)
 

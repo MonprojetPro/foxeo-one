@@ -179,6 +179,8 @@ export interface StepSubmissionWithStep extends StepSubmission {
   stepNumber: number
   stepTitle: string
   parcoursId: string
+  /** Demande de validation correspondante (Validation Hub) — pour le lien « Voir ». */
+  validationRequestId?: string | null
 }
 
 // --- Zod Schemas for Submissions ---
