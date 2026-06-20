@@ -18,6 +18,7 @@ import {
   showSuccess,
   showError,
 } from '@monprojetpro/ui'
+import { Lock } from 'lucide-react'
 import { toggleAccess } from '../actions/toggle-access'
 
 interface AccessTogglesProps {
@@ -98,15 +99,19 @@ export function AccessToggles({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Espace Lab — statut permanent (lecture seule) — masqué en mode agents-only */}
+            {/* Espace Lab — statut permanent (lecture seule, non désactivable) — masqué en mode agents-only */}
             {!showOnlyAgents && (
               <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
                 <div>
-                  <p className="text-sm font-medium">Espace Lab</p>
+                  <p className="flex items-center gap-1.5 text-sm font-medium">
+                    <Lock className="h-3 w-3 text-muted-foreground" />
+                    Espace Lab
+                    <span className="text-xs font-normal text-muted-foreground">— statut, lecture seule</span>
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {labModeAvailable
-                      ? 'Actif — historique accessible en permanence'
-                      : 'Aucun espace Lab (le client n’est jamais passé par le Lab)'}
+                      ? 'Acquis définitivement — l’historique reste accessible même si les agents sont coupés (non désactivable).'
+                      : 'Aucun espace Lab (le client n’est jamais passé par le Lab).'}
                   </p>
                 </div>
                 <span

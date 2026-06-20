@@ -61,10 +61,11 @@ describe('AccessToggles', () => {
     expect(screen.getByTestId('toggle-lab')).toHaveAttribute('aria-checked', 'false')
   })
 
-  it('affiche le statut « Espace Lab » permanent', () => {
+  it('affiche le statut « Espace Lab » permanent (lecture seule)', () => {
     renderLab()
-    expect(screen.getByText('Espace Lab')).toBeInTheDocument()
-    expect(screen.getByText(/historique accessible en permanence/)).toBeInTheDocument()
+    expect(screen.getByText(/Espace Lab/)).toBeInTheDocument()
+    expect(screen.getByText(/statut, lecture seule/)).toBeInTheDocument()
+    expect(screen.getByText(/l’historique reste accessible/)).toBeInTheDocument()
   })
 
   it('confirmation à la coupure des agents du parcours', () => {
