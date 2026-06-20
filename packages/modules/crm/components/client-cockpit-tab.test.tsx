@@ -10,7 +10,11 @@ const clientData = {
   id: CLIENT_ID,
   name: 'Jean Test',
   company: 'Test SARL',
+  email: 'jean@test.fr',
+  phone: '0600000000',
+  sector: 'Tech',
   status: 'active',
+  clientType: 'lab',
   createdAt: '2026-01-01T00:00:00.000Z',
   config: { dashboardType: 'lab', labModeAvailable: true, elioLabEnabled: true, oneModeAvailable: false, subscriptionTier: 'base' },
 }
@@ -34,10 +38,12 @@ vi.mock('../hooks/use-client-pending-validations', () => ({ useClientPendingVali
 vi.mock('../hooks/use-client-activity-snapshot', () => ({ useClientActivitySnapshot: () => ({ data: state.activity }) }))
 vi.mock('../hooks/use-client-instance', () => ({ useClientInstance: () => ({ data: state.instance }) }))
 vi.mock('../hooks/use-client-tab-nav', () => ({ useClientTabNav: () => ({ activeTab: 'pilote', navigateToTab: mockNavigate }) }))
+vi.mock('../hooks/use-client-cockpit-realtime', () => ({ useClientCockpitRealtime: () => {} }))
 
 // Enfants avec hooks propres → stubs
 vi.mock('./access-toggles', () => ({ AccessToggles: () => <div data-testid="access-toggles-stub" /> }))
 vi.mock('./graduation-dialog', () => ({ GraduationDialog: () => <div data-testid="graduation-dialog-stub" /> }))
+vi.mock('./client-notes-section', () => ({ ClientNotesSection: () => <div data-testid="notes-stub" /> }))
 
 const parcoursEnCours = {
   status: 'en_cours',
@@ -105,5 +111,17 @@ describe('ClientCockpitTab', () => {
   it('affiche « pas encore d\'instance One » sans instance', () => {
     render(<ClientCockpitTab clientId={CLIENT_ID} />)
     expect(screen.getByText(/Pas encore d'instance One/i)).toBeInTheDocument()
+  })
+
+  it('rapatrie Contact et Notes depuis l\'ex-onglet Info', () => {
+    render(<ClientCockpitTab clientId={CLIENT_ID} />)
+    expect(screen.getByText('Contact')).toBeInTheDocument()
+    expect(screen.getByText('jean@test.fr')).toBeInTheDocument()
+    expect(screen.getByTestId('notes-stub')).toBeInTheDocument()
+  })
+
+  it('affiche le slot impersonation fourni par le parent', () => {
+    render(<ClientCockpitTab clientId={CLIENT_ID} impersonationSlot={<button>Prendre la main</button>} />)
+    expect(screen.getByRole('button', { name: /Prendre la main/i })).toBeInTheDocument()
   })
 })

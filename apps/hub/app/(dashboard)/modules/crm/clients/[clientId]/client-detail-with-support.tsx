@@ -5,7 +5,7 @@ import { ClientSupportTab, useSupportTickets } from '@monprojetpro/modules-suppo
 import { SubmissionsList, ClientParcoursAgentsList } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
 import { LabBillingTab, getClientLabStatus } from '@monprojetpro/modules-facturation'
-import { ClientExportButton } from '@monprojetpro/module-admin'
+import { ClientExportButton, ImpersonationButton } from '@monprojetpro/module-admin'
 import { ClientEmailTab } from '@monprojetpro/modules-email'
 import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
 import type { Client } from '@monprojetpro/modules-crm'
@@ -52,7 +52,13 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         value: 'pilote',
         label: 'Pilote',
         icon: Gauge, color: '#22d3ee',
-        content: <ClientCockpitTab clientId={client.id} supportOpenCount={supportOpenCount} />,
+        content: (
+          <ClientCockpitTab
+            clientId={client.id}
+            supportOpenCount={supportOpenCount}
+            impersonationSlot={<ImpersonationButton clientId={client.id} clientName={client.name} />}
+          />
+        ),
       },
       {
         value: 'emails',

@@ -4,14 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   type LucideIcon,
-  User, Clock, FolderOpen, MessageSquare, Zap,
+  Clock, FolderOpen, MessageSquare, Zap,
   Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings,
   MessageCircle, Code2, Pause, Lock, Gauge,
 } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Button, showSuccess } from '@monprojetpro/ui'
-import { ClientInfoTab } from './client-info-tab'
 import { ClientTimeline } from './client-timeline'
 import { ClientDocumentsTab } from './client-documents-tab'
 import { ClientExchangesTab } from './client-exchanges-tab'
@@ -34,7 +33,6 @@ export interface ExtraTab {
 
 interface ClientTabsProps {
   client: Client
-  onEdit?: () => void
   extraTabs?: ExtraTab[]
   activeModules?: string[]
   allModules?: ModuleManifest[]
@@ -116,16 +114,14 @@ function TabPill({
 
 export function ClientTabs({
   client,
-  onEdit,
   extraTabs = [],
   activeModules = [],
   allModules = [],
 }: ClientTabsProps) {
   const router = useRouter()
 
-  // Onglet « Pilote » (cockpit) par défaut s'il est présent, sinon « Infos ».
-  const hasPilote = extraTabs.some((t) => t.value === 'pilote')
-  const { activeTab, navigateToTab } = useClientTabNav(hasPilote ? 'pilote' : 'informations')
+  // Le cockpit « Pilote » est l'onglet d'accueil de la fiche client (fusion de l'ex-onglet Infos).
+  const { activeTab, navigateToTab } = useClientTabNav('pilote')
 
   // Dialog states
   const [suspendOpen, setSuspendOpen] = useState(false)
@@ -161,10 +157,8 @@ export function ClientTabs({
   const extraTabValues = new Set(extraTabs.map((t) => t.value))
 
   const allItems: IconItem[] = [
-    // 0 — Pilote        cyan — cockpit (vue d'ensemble), 1ʳᵉ position quand présent
+    // 0 — Pilote        cyan — cockpit (vue d'ensemble + contact/notes), onglet d'accueil
     ...(extraTabValues.has('pilote')         ? [{ type: 'tab' as const, value: 'pilote',        label: 'Pilote',      Icon: Gauge,         color: '#22d3ee' }] : []),
-    // 1 — Infos         teal
-    { type: 'tab',    value: 'informations',  label: 'Infos',       Icon: User,          color: '#3ecfa0' },
     // 2 — Cursor        violet
     { type: 'action', value: 'cursor',        label: 'Cursor',      Icon: Code2,         color: '#818cf8', onClick: handleOpenCursor },
     // 3 — Chat          sky
@@ -223,7 +217,6 @@ export function ClientTabs({
 
       {/* Tab content */}
       <div>
-        {activeTab === 'informations' && <ClientInfoTab clientId={client.id} onEdit={onEdit} />}
         {activeTab === 'historique'   && <ClientTimeline clientId={client.id} />}
         {activeTab === 'documents'    && <ClientDocumentsTab clientId={client.id} />}
         {activeTab === 'echanges'     && <ClientExchangesTab clientId={client.id} />}

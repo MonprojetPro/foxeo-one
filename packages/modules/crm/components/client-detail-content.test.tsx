@@ -74,7 +74,7 @@ describe('ClientDetailContent', () => {
     renderWithQueryClient(<ClientDetailContent client={mockClient} />)
 
     // La barre d'onglets est rendue en boutons avec aria-label (pas en role="tab").
-    expect(screen.getByRole('button', { name: /infos/i })).toBeInTheDocument()
+    // L'onglet « Infos » a été fusionné dans le cockpit Pilote → il n'existe plus.
     expect(screen.getByRole('button', { name: /historique/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /documents/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /échanges/i })).toBeInTheDocument()

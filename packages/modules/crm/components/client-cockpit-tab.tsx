@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   Card, CardContent, CardHeader, CardTitle, Badge, Button, Separator,
 } from '@monprojetpro/ui'
 import {
   AlertCircle, CheckCircle2, TrendingUp, Activity, Zap, GraduationCap,
   ArrowRight, ClipboardList, Bot, FolderOpen, FlaskConical, CircleSlash,
+  Mail, Phone, Briefcase, Globe, CreditCard,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -16,29 +17,25 @@ import { useClientPendingValidations } from '../hooks/use-client-pending-validat
 import { useClientActivitySnapshot } from '../hooks/use-client-activity-snapshot'
 import { useClientInstance } from '../hooks/use-client-instance'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
+import { useClientCockpitRealtime } from '../hooks/use-client-cockpit-realtime'
 import { AccessToggles } from './access-toggles'
 import { ParcoursStatusBadge } from './parcours-status-badge'
 import { GraduationDialog } from './graduation-dialog'
+import { ClientNotesSection } from './client-notes-section'
+import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
+import type { SubscriptionTier } from '../types/subscription.types'
 
 interface ClientCockpitTabProps {
   clientId: string
   /** Tickets support ouverts — passé par le parent Hub (module support, pas d'import cross-module). */
   supportOpenCount?: number
+  /** Bouton « Prendre la main » (module admin) — injecté par le parent Hub. */
+  impersonationSlot?: ReactNode
 }
 
 function fmtDate(value: string | null | undefined): string {
   if (!value) return '—'
   return format(new Date(value), 'd MMM yyyy', { locale: fr })
-}
-
-/** En-tête de section léger. */
-function Eyebrow({ Icon, label }: { Icon: typeof Activity; label: string }) {
-  return (
-    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-      <Icon className="h-3.5 w-3.5" />
-      {label}
-    </div>
-  )
 }
 
 /** Ligne « à traiter » : compteur + raccourci vers l'onglet dédié. */
@@ -63,13 +60,16 @@ function TodoRow({
   )
 }
 
-export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTabProps) {
+export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot }: ClientCockpitTabProps) {
   const { data: client } = useClient(clientId)
   const { data: parcours } = useClientParcours(clientId)
   const { data: pendingValidations } = useClientPendingValidations(clientId)
   const { data: activity } = useClientActivitySnapshot(clientId)
   const { data: instance } = useClientInstance(clientId)
   const { navigateToTab } = useClientTabNav('pilote')
+
+  // Rafraîchissement live (soumission / validation / progression) via broadcast DB.
+  useClientCockpitRealtime(clientId)
 
   const [graduationOpen, setGraduationOpen] = useState(false)
 
@@ -79,6 +79,8 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
 
   const dashboardType = client.config?.dashboardType ?? 'lab'
   const isLabClient = dashboardType === 'lab'
+  const isOneClient = dashboardType === 'one'
+  const hasGraduated = !!client.config?.graduationSource
   const hasActiveParcours = parcours?.status === 'en_cours'
   const parcoursAbandoned = parcours?.status === 'abandoned'
 
@@ -98,6 +100,12 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
   const abandonCount = parcoursAbandoned ? 1 : 0
   const supportCount = supportOpenCount ?? 0
   const totalTodo = pendingCount + abandonCount + supportCount
+
+  // ── Abonnement (rapatrié de l'onglet Info) ──
+  const currentTier: SubscriptionTier = (client.config?.subscriptionTier as SubscriptionTier) ?? 'base'
+  const tierInfo = TIER_INFO[currentTier]
+  const tierBadgeClass = TIER_BADGE_CLASSES[currentTier]
+  const showAbonnement = isOneClient && (hasGraduated || client.clientType === 'direct_one')
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -121,6 +129,7 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
             {client.config?.subscriptionTier && (
               <Badge variant="outline" className="capitalize">{client.config.subscriptionTier}</Badge>
             )}
+            {client.status === 'active' && impersonationSlot}
           </div>
         </CardContent>
       </Card>
@@ -247,6 +256,64 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
         </CardContent>
       </Card>
 
+      {/* ──────────── Contact (rapatrié de Info) ──────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Contact</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <div className="flex items-center gap-2">
+            <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="truncate">{client.email}</span>
+          </div>
+          {client.phone && (
+            <div className="flex items-center gap-2">
+              <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <span>{client.phone}</span>
+            </div>
+          )}
+          {client.sector && (
+            <div className="flex items-center gap-2">
+              <Briefcase className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <span>{client.sector}</span>
+            </div>
+          )}
+          {client.website && (
+            <div className="flex items-center gap-2">
+              <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <a href={client.website} target="_blank" rel="noopener noreferrer" className="truncate text-primary hover:underline">
+                {client.website}
+              </a>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ──────────── Abonnement (rapatrié de Info — clients One gradués / direct_one) ──────────── */}
+      {showAbonnement && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <CreditCard className="h-4 w-4 text-blue-400" />
+              Abonnement
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Tier</span>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tierBadgeClass}`}>{tierInfo.name}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Mensuel</span>
+              <span className="font-medium">{tierInfo.price}</span>
+            </div>
+            <Button variant="ghost" size="sm" className="px-0 text-blue-300" onClick={() => navigateToTab('administration')}>
+              Gérer l'abonnement <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ──────────── E — Accès (toggles inline, pleine largeur) ──────────── */}
       <div className="lg:col-span-2">
         <AccessToggles
@@ -282,9 +349,6 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
 
           {/* Raccourcis navigation */}
           <div className="flex flex-wrap gap-2">
-            <Eyebrow Icon={ArrowRight} label="Aller à" />
-          </div>
-          <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => navigateToTab('submissions')}>
               <ClipboardList className="mr-1.5 h-4 w-4" /> Soumissions
             </Button>
@@ -303,6 +367,11 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
           </div>
         </CardContent>
       </Card>
+
+      {/* ──────────── Notes privées (rapatrié de Info, pleine largeur) ──────────── */}
+      <div className="lg:col-span-2">
+        <ClientNotesSection clientId={clientId} />
+      </div>
 
       {/* Dialog graduation */}
       {isLabClient && parcours && (

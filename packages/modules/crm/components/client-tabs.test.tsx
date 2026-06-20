@@ -41,19 +41,14 @@ describe('ClientTabs', () => {
     mockUseSearchParams.mockReturnValue(new URLSearchParams())
   })
 
-  it('affiche les onglets de base (boutons avec aria-label)', () => {
+  it('affiche les onglets de base (boutons avec aria-label) — plus d\'onglet Infos', () => {
     renderWithQueryClient(<ClientTabs client={mockClient} />)
 
-    expect(screen.getByRole('button', { name: /infos/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /historique/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /documents/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /échanges/i })).toBeInTheDocument()
-  })
-
-  it('active « Infos » par défaut quand aucun param et pas de cockpit', () => {
-    renderWithQueryClient(<ClientTabs client={mockClient} />)
-
-    expect(screen.getByRole('button', { name: /infos/i })).toHaveAttribute('aria-pressed', 'true')
+    // L'onglet Infos a été fusionné dans le cockpit Pilote.
+    expect(screen.queryByRole('button', { name: /^infos$/i })).not.toBeInTheDocument()
   })
 
   it('active l\'onglet correspondant au param d\'URL', () => {

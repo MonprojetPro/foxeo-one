@@ -45,7 +45,6 @@ export function ClientDetailContent({ client: initialClient, extraTabs, dashboar
         />
         <ClientTabs
           client={displayClient}
-          onEdit={isArchived ? undefined : () => setIsEditDialogOpen(true)}
           extraTabs={extraTabs}
         />
       </div>
