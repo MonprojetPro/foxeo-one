@@ -35,9 +35,13 @@
 - ✅ Tests : welcome-lab, launch-client-parcours, pennylane-paid-handlers, send-welcome-lab-invite.
 - ⚠️ Reste à vérifier (MiKL/dashboard Supabase) : l'URL `…/auth/callback` doit être dans les Redirect URLs autorisées Supabase. Dette : `create-lab-onboarding.ts` (flow legacy post-visio, ancienne table `parcours`) à réconcilier avec ce pattern ; ancienne route `/api/auth/callback` redondante à consolider.
 
-## LOT D — Onglet « Pilote / Cockpit » (Hub)
-- `client-cockpit-tab.tsx` (accès Lab/One, progression parcours, validations, instance One) + raccourcis `onNavigateToTab` ; export barrel.
-- Onglet « Pilote » en 1ʳᵉ position (`client-detail-with-support.tsx`, `client-tabs.tsx`) ; option : onglet par défaut. Hook `useClientTabNav` (DRY).
+## LOT D — Onglet « Pilote / Cockpit » (Hub) — ✅ FAIT (2026-06-20)
+- ✅ `client-cockpit-tab.tsx` : cards A (statut) + B (progression) + C (à traiter : validations/abandon/support) + D (activité & inactivité) + E (accès toggles inline) + F (instance One) + bouton Graduer + raccourcis. 100 % hooks CRM ; le compteur support est passé en prop par le parent Hub (pas d'import cross-module).
+- ✅ Hook `useClientTabNav` (DRY) : source unique du `?tab=`, partagée par `ClientTabs` (barre) et le cockpit (raccourcis).
+- ✅ Onglet « Pilote » en 1ʳᵉ position **et par défaut** (`client-tabs.tsx`, `client-detail-with-support.tsx`) ; export barrel.
+- ✅ Action `getClientActivitySnapshot` (1ʳᵉ connexion + dernière activité + inactivité >7j alignée sur le moteur LOT F).
+- ✅ Tests : get-client-activity-snapshot, client-cockpit-tab, client-tabs (réécrit), client-detail-content (corrigé). Commit `08b6614`.
+- ℹ️ Le « dernier mot d'Élio » (conciergeWord) reste dans l'onglet Lab : il vient du module `parcours`, l'exposer dans le cockpit CRM violerait la règle no-import-cross-module.
 
 ## LOT E — Mode « Parcours tracé » vs « Parcours libre » (option définie par MiKL) — À FAIRE
 > Idée validée MiKL 2026-06-18. Option choisie PAR MiKL, par client (depuis le Hub), pas par le client.
