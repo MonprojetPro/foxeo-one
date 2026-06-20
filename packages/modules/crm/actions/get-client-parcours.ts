@@ -53,12 +53,13 @@ export async function getClientParcours(clientId: string): Promise<ActionRespons
     // Lire client_parcours_agents pour un décompte réel des étapes
     const { data: agents } = await supabase
       .from('client_parcours_agents')
-      .select('id, step_order, status')
+      .select('id, step_order, step_label, status')
       .eq('client_id', clientId)
       .order('step_order', { ascending: true })
 
     const derivedStages = (agents ?? []).map((a) => ({
       key: a.id as string,
+      label: (a.step_label as string | null) ?? null,
       active: (a.status as string) !== 'skipped',
       status: (
         a.status === 'active' || a.status === 'pending_review' ? 'in_progress'

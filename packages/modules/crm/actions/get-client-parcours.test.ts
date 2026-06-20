@@ -9,11 +9,14 @@ vi.mock('next/cache', () => ({
 }))
 
 // Mock Supabase
+// Deux requêtes : (1) parcours: select→eq→in→order→limit→maybeSingle
+//                 (2) client_parcours_agents: select→eq→order (awaité directement)
 const mockMaybeSingle = vi.fn()
 const mockLimit = vi.fn(() => ({ maybeSingle: mockMaybeSingle }))
-const mockOrder = vi.fn(() => ({ limit: mockLimit }))
+// order = chaînable (.limit, 1ʳᵉ requête) ET awaitable (2ᵉ requête → liste d'agents)
+const mockOrder = vi.fn(() => ({ limit: mockLimit, then: (resolve: (v: unknown) => void) => resolve({ data: [], error: null }) }))
 const mockIn = vi.fn(() => ({ order: mockOrder }))
-const mockEq = vi.fn(() => ({ in: mockIn }))
+const mockEq = vi.fn(() => ({ in: mockIn, order: mockOrder }))
 const mockSelect = vi.fn(() => ({ eq: mockEq }))
 const mockFrom = vi.fn(() => ({ select: mockSelect }))
 const mockGetUser = vi.fn()

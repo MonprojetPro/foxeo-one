@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import {
-  Card, CardContent, CardHeader, CardTitle, Badge, Button, Separator,
+  Card, CardContent, CardHeader, CardTitle, Badge, Button,
 } from '@monprojetpro/ui'
 import {
   AlertCircle, CheckCircle2, TrendingUp, Activity, Zap, GraduationCap,
-  ArrowRight, ClipboardList, Bot, FolderOpen, FlaskConical, CircleSlash,
-  Mail, Phone, Briefcase, Globe, CreditCard,
+  ArrowRight, CircleSlash, CreditCard, FlaskConical, ExternalLink,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -29,13 +28,26 @@ interface ClientCockpitTabProps {
   clientId: string
   /** Tickets support ouverts — passé par le parent Hub (module support, pas d'import cross-module). */
   supportOpenCount?: number
-  /** Bouton « Prendre la main » (module admin) — injecté par le parent Hub. */
-  impersonationSlot?: ReactNode
 }
 
 function fmtDate(value: string | null | undefined): string {
   if (!value) return '—'
   return format(new Date(value), 'd MMM yyyy', { locale: fr })
+}
+
+/** Petit bouton-icône de raccourci vers un autre onglet, posé dans l'en-tête d'une carte. */
+function TabShortcut({ onClick, title }: { onClick: () => void; title: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+    >
+      <ExternalLink className="h-4 w-4" />
+    </button>
+  )
 }
 
 /** Ligne « à traiter » : compteur + raccourci vers l'onglet dédié. */
@@ -60,7 +72,7 @@ function TodoRow({
   )
 }
 
-export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot }: ClientCockpitTabProps) {
+export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTabProps) {
   const { data: client } = useClient(clientId)
   const { data: parcours } = useClientParcours(clientId)
   const { data: pendingValidations } = useClientPendingValidations(clientId)
@@ -94,6 +106,9 @@ export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot
   const currentStage =
     activeStages.find((s) => s.status === 'in_progress') ??
     activeStages.find((s) => s.status === 'pending')
+  const currentStageLabel = currentStage
+    ? (currentStage.label ?? `Étape ${activeStages.indexOf(currentStage) + 1} sur ${activeStages.length}`)
+    : null
 
   // ── À traiter (C) ──
   const pendingCount = pendingValidations?.count ?? 0
@@ -101,39 +116,16 @@ export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot
   const supportCount = supportOpenCount ?? 0
   const totalTodo = pendingCount + abandonCount + supportCount
 
-  // ── Abonnement (rapatrié de l'onglet Info) ──
+  // ── Abonnement (clients One gradués / direct_one) ──
   const currentTier: SubscriptionTier = (client.config?.subscriptionTier as SubscriptionTier) ?? 'base'
   const tierInfo = TIER_INFO[currentTier]
   const tierBadgeClass = TIER_BADGE_CLASSES[currentTier]
   const showAbonnement = isOneClient && (hasGraduated || client.clientType === 'direct_one')
 
+  const canGraduate = isLabClient && !!parcours
+
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      {/* ──────────── A — En-tête statut (pleine largeur) ──────────── */}
-      <Card className="lg:col-span-2">
-        <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-6">
-          <div>
-            <h2 className="text-lg font-semibold">{client.name}</h2>
-            {client.company && <p className="text-sm text-muted-foreground">{client.company}</p>}
-            <p className="mt-1 text-xs text-muted-foreground">
-              Client depuis le {fmtDate(client.createdAt)}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={isLabClient ? 'secondary' : 'default'}>
-              {isLabClient ? 'Mode Lab' : 'Mode One'}
-            </Badge>
-            <Badge variant={client.status === 'active' ? 'default' : 'outline'}>
-              {client.status === 'active' ? 'Actif' : client.status}
-            </Badge>
-            {client.config?.subscriptionTier && (
-              <Badge variant="outline" className="capitalize">{client.config.subscriptionTier}</Badge>
-            )}
-            {client.status === 'active' && impersonationSlot}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* ──────────── C — À traiter maintenant ──────────── */}
       <Card>
         <CardHeader className="pb-3">
@@ -166,7 +158,10 @@ export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot
               <TrendingUp className="h-4 w-4 text-cyan-400" />
               Progression
             </span>
-            {parcours && <ParcoursStatusBadge status={parcours.status} />}
+            <span className="flex items-center gap-2">
+              {parcours && <ParcoursStatusBadge status={parcours.status} />}
+              <TabShortcut onClick={() => navigateToTab('lab-billing')} title="Ouvrir l'onglet Lab" />
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -179,14 +174,11 @@ export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot
               <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div className="h-full rounded-full bg-cyan-500 transition-all" style={{ width: `${progressPct}%` }} />
               </div>
-              {currentStage && (
+              {currentStageLabel && (
                 <p className="text-xs text-muted-foreground">
-                  Étape en cours : <span className="font-medium text-foreground">{currentStage.key}</span>
+                  Étape en cours : <span className="font-medium text-foreground">{currentStageLabel}</span>
                 </p>
               )}
-              <Button variant="ghost" size="sm" className="px-0 text-cyan-300" onClick={() => navigateToTab('lab-billing')}>
-                Voir le parcours détaillé <ArrowRight className="ml-1 h-3.5 w-3.5" />
-              </Button>
             </>
           ) : (
             <p className="text-sm text-muted-foreground">Aucun parcours assigné.</p>
@@ -222,15 +214,18 @@ export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot
         </CardContent>
       </Card>
 
-      {/* ──────────── F — Instance One ──────────── */}
+      {/* ──────────── F — Instance One (+ graduation) ──────────── */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Zap className="h-4 w-4 text-blue-400" />
-            Instance One
+          <CardTitle className="flex items-center justify-between gap-2 text-base">
+            <span className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-blue-400" />
+              Instance One
+            </span>
+            {instance && <TabShortcut onClick={() => navigateToTab('modules')} title="Ouvrir l'onglet One" />}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+        <CardContent className="space-y-3 text-sm">
           {instance ? (
             <>
               <div className="flex items-center justify-between">
@@ -243,9 +238,6 @@ export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot
                 <span className="text-muted-foreground">Modules actifs</span>
                 <span className="font-medium">{instance.activeModules.length}</span>
               </div>
-              <Button variant="ghost" size="sm" className="px-0 text-blue-300" onClick={() => navigateToTab('modules')}>
-                Gérer les modules One <ArrowRight className="ml-1 h-3.5 w-3.5" />
-              </Button>
             </>
           ) : (
             <p className="flex items-center gap-2 text-muted-foreground">
@@ -253,43 +245,22 @@ export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot
               Pas encore d'instance One.
             </p>
           )}
-        </CardContent>
-      </Card>
 
-      {/* ──────────── Contact (rapatrié de Info) ──────────── */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Contact</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <div className="flex items-center gap-2">
-            <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span className="truncate">{client.email}</span>
-          </div>
-          {client.phone && (
-            <div className="flex items-center gap-2">
-              <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span>{client.phone}</span>
-            </div>
-          )}
-          {client.sector && (
-            <div className="flex items-center gap-2">
-              <Briefcase className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span>{client.sector}</span>
-            </div>
-          )}
-          {client.website && (
-            <div className="flex items-center gap-2">
-              <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <a href={client.website} target="_blank" rel="noopener noreferrer" className="truncate text-primary hover:underline">
-                {client.website}
-              </a>
-            </div>
+          {/* Graduation Lab → One (l'action qui crée le One) */}
+          {canGraduate && (
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={() => setGraduationOpen(true)}
+              data-testid="cockpit-graduate-button"
+            >
+              <GraduationCap className="mr-1.5 h-4 w-4" /> Graduer vers One
+            </Button>
           )}
         </CardContent>
       </Card>
 
-      {/* ──────────── Abonnement (rapatrié de Info — clients One gradués / direct_one) ──────────── */}
+      {/* ──────────── Abonnement (clients One gradués / direct_one) ──────────── */}
       {showAbonnement && (
         <Card>
           <CardHeader className="pb-3">
@@ -325,50 +296,7 @@ export function ClientCockpitTab({ clientId, supportOpenCount, impersonationSlot
         />
       </div>
 
-      {/* ──────────── Actions & raccourcis (pleine largeur) ──────────── */}
-      <Card className="lg:col-span-2">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Actions rapides</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Graduer Lab → One */}
-          {isLabClient && parcours && (
-            <>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4 text-emerald-400" />
-                  <span className="text-sm">Faire passer ce client en mode One</span>
-                </div>
-                <Button size="sm" onClick={() => setGraduationOpen(true)} data-testid="cockpit-graduate-button">
-                  Graduer vers One
-                </Button>
-              </div>
-              <Separator />
-            </>
-          )}
-
-          {/* Raccourcis navigation */}
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigateToTab('submissions')}>
-              <ClipboardList className="mr-1.5 h-4 w-4" /> Soumissions
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigateToTab('lab-billing')}>
-              <FlaskConical className="mr-1.5 h-4 w-4" /> Lab
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigateToTab('elio-config')}>
-              <Bot className="mr-1.5 h-4 w-4" /> Élio
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigateToTab('documents')}>
-              <FolderOpen className="mr-1.5 h-4 w-4" /> Documents
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigateToTab('modules')}>
-              <Zap className="mr-1.5 h-4 w-4" /> One
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ──────────── Notes privées (rapatrié de Info, pleine largeur) ──────────── */}
+      {/* ──────────── Notes privées (pleine largeur) ──────────── */}
       <div className="lg:col-span-2">
         <ClientNotesSection clientId={clientId} />
       </div>

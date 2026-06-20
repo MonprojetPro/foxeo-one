@@ -1,16 +1,21 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { Badge, Button } from '@monprojetpro/ui'
-import { CalendarDays } from 'lucide-react'
+import { CalendarDays, Mail, Phone, Briefcase, Globe } from 'lucide-react'
 import type { Client } from '../types/crm.types'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ClientStatusBadge } from './client-status-badge'
+import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
+import type { SubscriptionTier } from '../types/subscription.types'
 
 interface ClientHeaderProps {
   client: Client
   onEdit?: () => void
   dashboardType?: string
+  /** Actions additionnelles à droite (ex. bouton « Se connecter comme » — module admin, injecté par le Hub). */
+  headerActionsSlot?: ReactNode
   /** Conservé pour compat appelant — non utilisé ici (l'activation Lab vit dans l'onglet Lab). */
   hasActiveParcours?: boolean
 }
@@ -30,10 +35,15 @@ function getInitials(name: string): string {
     .toUpperCase()
 }
 
-export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProps) {
+export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot }: ClientHeaderProps) {
   const fullName = client.firstName ? `${client.firstName} ${client.name}` : client.name
   const creationDate = format(new Date(client.createdAt), 'd MMMM yyyy', { locale: fr })
   const initials = getInitials(fullName)
+
+  // Tier d'abonnement (rapatrié de l'ex-carte d'en-tête du cockpit).
+  const tier = client.config?.subscriptionTier as SubscriptionTier | undefined
+  const tierInfo = tier ? TIER_INFO[tier] : null
+  const tierBadgeClass = tier ? TIER_BADGE_CLASSES[tier] : ''
 
   // Lecture seule : le header reflète l'état d'accès réel (vrais flags), il ne le pilote pas.
   // Lab a 3 états : agents actifs (violet) / espace présent mais agents coupés = historique
@@ -66,10 +76,31 @@ export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProp
               suspendedAt={client.suspendedAt}
               archivedAt={client.archivedAt}
             />
+            {tierInfo && (
+              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tierBadgeClass}`}>{tierInfo.name}</span>
+            )}
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground ml-1">
               <CalendarDays className="h-3 w-3" />
               Client depuis le {creationDate}
             </span>
+          </div>
+
+          {/* Contact (rapatrié de l'ex-onglet Info) */}
+          <div className="flex items-center gap-x-4 gap-y-1 mt-2 flex-wrap text-xs text-muted-foreground">
+            <a href={`mailto:${client.email}`} className="flex items-center gap-1.5 hover:text-foreground">
+              <Mail className="h-3 w-3" /> {client.email}
+            </a>
+            {client.phone && (
+              <span className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {client.phone}</span>
+            )}
+            {client.sector && (
+              <span className="flex items-center gap-1.5"><Briefcase className="h-3 w-3" /> {client.sector}</span>
+            )}
+            {client.website && (
+              <a href={client.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-foreground">
+                <Globe className="h-3 w-3" /> {client.website}
+              </a>
+            )}
           </div>
         </div>
 
@@ -102,6 +133,9 @@ export function ClientHeader({ client, onEdit, dashboardType }: ClientHeaderProp
               )}
             </div>
           )}
+
+          {/* Action injectée par le Hub (ex. « Se connecter comme ») */}
+          {headerActionsSlot}
 
           {/* Modifier */}
           {onEdit && (

@@ -21,11 +21,14 @@ function mapSubmission(db: StepSubmissionDB): StepSubmission {
   }
 }
 
-function mapSubmissionWithStep(db: StepSubmissionDB): StepSubmissionWithStep {
+function mapSubmissionWithStep(
+  db: StepSubmissionDB,
+  step?: { stepNumber: number; stepTitle: string },
+): StepSubmissionWithStep {
   return {
     ...mapSubmission(db),
-    stepNumber: 0,
-    stepTitle: '',
+    stepNumber: step?.stepNumber ?? 0,
+    stepTitle: step?.stepTitle ?? '',
     parcoursId: '',
   }
 }
@@ -70,7 +73,25 @@ export async function getSubmissions(
       return errorResponse('Échec récupération soumissions', 'DATABASE_ERROR', error)
     }
 
-    const submissions = (data as StepSubmissionDB[]).map(mapSubmissionWithStep)
+    const rows = (data as StepSubmissionDB[]) ?? []
+
+    // Enrichir avec le libellé/numéro d'étape (client_parcours_agents) — sinon « Étape 0 — ».
+    const stepIds = [...new Set(rows.map((r) => r.parcours_step_id).filter(Boolean))]
+    const stepById = new Map<string, { stepNumber: number; stepTitle: string }>()
+    if (stepIds.length > 0) {
+      const { data: agents } = await supabase
+        .from('client_parcours_agents')
+        .select('id, step_order, step_label')
+        .in('id', stepIds)
+      for (const a of agents ?? []) {
+        stepById.set(a.id as string, {
+          stepNumber: (a.step_order as number | null) ?? 0,
+          stepTitle: (a.step_label as string | null) ?? '',
+        })
+      }
+    }
+
+    const submissions = rows.map((r) => mapSubmissionWithStep(r, stepById.get(r.parcours_step_id)))
 
     console.log('[PARCOURS:GET_SUBMISSIONS] Récupérées:', submissions.length)
 

@@ -102,13 +102,15 @@ export function ClientLabTabContent({
           </CardContent>
         </Card>
 
-        {/* Agents Lab / Accès One — lit les vrais flags (espace Lab permanent) */}
+        {/* Onglet Lab : uniquement le levier « couper les agents du parcours ».
+            L'accès global Lab/One est piloté depuis le cockpit Pilote. */}
         <AccessToggles
           clientId={clientId}
           labModeAvailable={client.config?.labModeAvailable ?? false}
           elioLabEnabled={client.config?.elioLabEnabled ?? false}
           oneModeAvailable={client.config?.oneModeAvailable ?? false}
           hasActiveParcours={hasActiveParcours}
+          showOnlyAgents
         />
 
         {/* Facturation = sous-statut optionnel de l'activation (plus un bloc isolé en bas) */}

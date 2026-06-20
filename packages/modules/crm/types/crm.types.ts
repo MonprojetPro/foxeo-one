@@ -181,6 +181,7 @@ export type ParcoursStage = z.infer<typeof ParcoursStage>
 // Active stage (in parcours.active_stages)
 export const ActiveStage = z.object({
   key: z.string().min(1),
+  label: z.string().nullable().optional(),
   active: z.boolean(),
   status: StageStatusEnum,
 })

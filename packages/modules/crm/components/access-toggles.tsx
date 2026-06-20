@@ -29,6 +29,8 @@ interface AccessTogglesProps {
   /** Accès One ouvert. */
   oneModeAvailable: boolean
   hasActiveParcours: boolean
+  /** Onglet Lab : n'affiche que le toggle « Agents du parcours » (l'accès global vit dans le Pilote). */
+  showOnlyAgents?: boolean
 }
 
 export function AccessToggles({
@@ -37,6 +39,7 @@ export function AccessToggles({
   elioLabEnabled,
   oneModeAvailable,
   hasActiveParcours,
+  showOnlyAgents = false,
 }: AccessTogglesProps) {
   const [confirmDialog, setConfirmDialog] = useState<{ type: 'lab' | 'one'; show: boolean }>({ type: 'lab', show: false })
   const [isPending, startTransition] = useTransition()
@@ -91,30 +94,32 @@ export function AccessToggles({
     <>
       <Card data-testid="access-toggles">
         <CardHeader>
-          <CardTitle>Accès dashboards</CardTitle>
+          <CardTitle>{showOnlyAgents ? 'Agents du parcours' : 'Accès dashboards'}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Espace Lab — statut permanent (lecture seule) */}
-            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-              <div>
-                <p className="text-sm font-medium">Espace Lab</p>
-                <p className="text-xs text-muted-foreground">
-                  {labModeAvailable
-                    ? 'Actif — historique accessible en permanence'
-                    : 'Aucun espace Lab (le client n’est jamais passé par le Lab)'}
-                </p>
+            {/* Espace Lab — statut permanent (lecture seule) — masqué en mode agents-only */}
+            {!showOnlyAgents && (
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
+                <div>
+                  <p className="text-sm font-medium">Espace Lab</p>
+                  <p className="text-xs text-muted-foreground">
+                    {labModeAvailable
+                      ? 'Actif — historique accessible en permanence'
+                      : 'Aucun espace Lab (le client n’est jamais passé par le Lab)'}
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                    labModeAvailable
+                      ? 'bg-violet-500/15 text-violet-300 border-violet-500/30'
+                      : 'bg-muted/40 text-muted-foreground border-transparent'
+                  }`}
+                >
+                  {labModeAvailable ? 'Permanent' : 'Inexistant'}
+                </span>
               </div>
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
-                  labModeAvailable
-                    ? 'bg-violet-500/15 text-violet-300 border-violet-500/30'
-                    : 'bg-muted/40 text-muted-foreground border-transparent'
-                }`}
-              >
-                {labModeAvailable ? 'Permanent' : 'Inexistant'}
-              </span>
-            </div>
+            )}
 
             {/* Agents du parcours — communication (le vrai levier on/off).
                 NB : distinct d'Élio Lab, l'assistant du dashboard, qui reste toujours dispo. */}
@@ -132,20 +137,22 @@ export function AccessToggles({
               />
             </div>
 
-            {/* Accès One */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Accès One</p>
-                <p className="text-xs text-muted-foreground">Dashboard business client</p>
+            {/* Accès One — masqué en mode agents-only (piloté depuis le Pilote) */}
+            {!showOnlyAgents && (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Accès One</p>
+                  <p className="text-xs text-muted-foreground">Dashboard business client</p>
+                </div>
+                <Switch
+                  checked={oneEnabled}
+                  onCheckedChange={(checked: boolean) => handleToggle('one', checked)}
+                  disabled={isPending}
+                  aria-label="Activer l'accès One"
+                  data-testid="toggle-one"
+                />
               </div>
-              <Switch
-                checked={oneEnabled}
-                onCheckedChange={(checked: boolean) => handleToggle('one', checked)}
-                disabled={isPending}
-                aria-label="Activer l'accès One"
-                data-testid="toggle-one"
-              />
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>

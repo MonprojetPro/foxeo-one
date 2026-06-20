@@ -52,13 +52,7 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         value: 'pilote',
         label: 'Pilote',
         icon: Gauge, color: '#22d3ee',
-        content: (
-          <ClientCockpitTab
-            clientId={client.id}
-            supportOpenCount={supportOpenCount}
-            impersonationSlot={<ImpersonationButton clientId={client.id} clientName={client.name} />}
-          />
-        ),
+        content: <ClientCockpitTab clientId={client.id} supportOpenCount={supportOpenCount} />,
       },
       {
         value: 'emails',
@@ -149,6 +143,11 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
       extraTabs={extraTabs}
       dashboardType={client.config?.dashboardType}
       hasActiveParcours={labActive}
+      headerActionsSlot={
+        client.status === 'active'
+          ? <ImpersonationButton clientId={client.id} clientName={client.name} />
+          : undefined
+      }
     />
   )
 }

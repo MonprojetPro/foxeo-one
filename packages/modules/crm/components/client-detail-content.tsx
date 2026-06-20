@@ -14,9 +14,11 @@ interface ClientDetailContentProps {
   extraTabs?: ExtraTab[]
   dashboardType?: string
   hasActiveParcours?: boolean
+  /** Actions header injectées par le Hub (ex. « Se connecter comme »). */
+  headerActionsSlot?: React.ReactNode
 }
 
-export function ClientDetailContent({ client: initialClient, extraTabs, dashboardType, hasActiveParcours }: ClientDetailContentProps) {
+export function ClientDetailContent({ client: initialClient, extraTabs, dashboardType, hasActiveParcours, headerActionsSlot }: ClientDetailContentProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   // Use TanStack Query with initialData from Server Component
@@ -42,6 +44,7 @@ export function ClientDetailContent({ client: initialClient, extraTabs, dashboar
           onEdit={isArchived ? undefined : () => setIsEditDialogOpen(true)}
           dashboardType={dashboardType}
           hasActiveParcours={hasActiveParcours}
+          headerActionsSlot={headerActionsSlot}
         />
         <ClientTabs
           client={displayClient}

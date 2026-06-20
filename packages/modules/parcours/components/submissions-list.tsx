@@ -72,7 +72,7 @@ export function SubmissionsList({ clientId, statusFilter }: SubmissionsListProps
               <td className="py-3">
                 <Button asChild variant="ghost" size="sm">
                   <Link
-                    href={`submissions/${submission.id}`}
+                    href={`/modules/crm/clients/${clientId}/submissions/${submission.id}`}
                     aria-label={`Voir la soumission du ${format(new Date(submission.submittedAt), 'dd MMM yyyy', { locale: fr })}`}
                   >
                     <Eye className="w-4 h-4 mr-1" aria-hidden="true" />

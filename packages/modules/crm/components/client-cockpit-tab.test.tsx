@@ -48,8 +48,8 @@ vi.mock('./client-notes-section', () => ({ ClientNotesSection: () => <div data-t
 const parcoursEnCours = {
   status: 'en_cours',
   activeStages: [
-    { key: 'Vision', active: true, status: 'completed' },
-    { key: 'Acquisition', active: true, status: 'in_progress' },
+    { key: 'id-1', label: 'Élio Vision', active: true, status: 'completed' },
+    { key: 'id-2', label: 'Élio Cible', active: true, status: 'in_progress' },
   ],
 }
 
@@ -60,12 +60,6 @@ describe('ClientCockpitTab', () => {
     state.pending = { count: 0 }
     state.activity = { firstLoginAt: '2026-01-02T00:00:00Z', lastActivityAt: '2026-06-19T00:00:00Z', daysSinceActivity: 1, isInactive: false }
     state.instance = null
-  })
-
-  it('affiche l\'en-tête statut (nom, mode Lab)', () => {
-    render(<ClientCockpitTab clientId={CLIENT_ID} />)
-    expect(screen.getByText('Jean Test')).toBeInTheDocument()
-    expect(screen.getByText('Mode Lab')).toBeInTheDocument()
   })
 
   it('montre « Rien à traiter » quand aucune tâche', () => {
@@ -95,11 +89,11 @@ describe('ClientCockpitTab', () => {
     expect(screen.getByText(/Inactif depuis 20 jours/i)).toBeInTheDocument()
   })
 
-  it('affiche la progression du parcours', () => {
+  it('affiche la progression du parcours avec le vrai libellé d\'étape', () => {
     state.parcours = parcoursEnCours
     render(<ClientCockpitTab clientId={CLIENT_ID} />)
     expect(screen.getByText(/1 \/ 2 \(50%\)/)).toBeInTheDocument()
-    expect(screen.getByText('Acquisition')).toBeInTheDocument()
+    expect(screen.getByText('Élio Cible')).toBeInTheDocument()
   })
 
   it('propose la graduation pour un client Lab avec parcours', () => {
@@ -113,15 +107,8 @@ describe('ClientCockpitTab', () => {
     expect(screen.getByText(/Pas encore d'instance One/i)).toBeInTheDocument()
   })
 
-  it('rapatrie Contact et Notes depuis l\'ex-onglet Info', () => {
+  it('affiche les notes privées (rapatriées dans le cockpit)', () => {
     render(<ClientCockpitTab clientId={CLIENT_ID} />)
-    expect(screen.getByText('Contact')).toBeInTheDocument()
-    expect(screen.getByText('jean@test.fr')).toBeInTheDocument()
     expect(screen.getByTestId('notes-stub')).toBeInTheDocument()
-  })
-
-  it('affiche le slot impersonation fourni par le parent', () => {
-    render(<ClientCockpitTab clientId={CLIENT_ID} impersonationSlot={<button>Prendre la main</button>} />)
-    expect(screen.getByRole('button', { name: /Prendre la main/i })).toBeInTheDocument()
   })
 })
