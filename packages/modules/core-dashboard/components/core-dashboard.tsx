@@ -100,20 +100,24 @@ export function CoreDashboard({ clientConfig, clientName, showTeasing = false }:
       {hasElio && (
         <section aria-label="Élio — suggestion">
           <div className="bg-[#141414] border border-[#2d2d2d] rounded-xl p-5 flex gap-4 items-start">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#16a34a] to-[#4ade80] flex items-center justify-center text-white font-bold text-[15px] shrink-0">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-[15px] shrink-0"
+              style={{ background: 'linear-gradient(135deg, var(--brand-accent, #16a34a), color-mix(in srgb, var(--brand-accent, #16a34a) 60%, white))' }}
+            >
               E
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12.5px] text-[#4ade80] font-semibold tracking-[0.02em] mb-2.5">
+              <p className="text-[12.5px] font-semibold tracking-[0.02em] mb-2.5" style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 80%, white)' }}>
                 Élio — Votre assistant
               </p>
-              <div className="bg-[rgba(22,163,74,0.1)] border border-[rgba(22,163,74,0.3)] rounded-xl px-3.5 py-3 text-[13.5px] text-[#e5e7eb] leading-[1.55]">
-                Bonjour{clientName ? <> <strong className="text-[#4ade80]">{clientName}</strong></> : ''}&nbsp;! Je suis votre assistant IA. Je peux vous aider à gérer votre activité, rédiger des documents ou répondre à vos questions.
+              <div className="rounded-xl px-3.5 py-3 text-[13.5px] text-[#e5e7eb] leading-[1.55]" style={{ background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--brand-accent, #16a34a) 30%, transparent)' }}>
+                Bonjour{clientName ? <> <strong style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 80%, white)' }}>{clientName}</strong></> : ''}&nbsp;! Je suis votre assistant IA. Je peux vous aider à gérer votre activité, rédiger des documents ou répondre à vos questions.
               </div>
               <div className="mt-3.5">
                 <Link
                   href="/modules/elio"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#16a34a] hover:bg-[#15b866] text-white text-[13px] font-semibold px-[18px] py-2.5 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-xl text-white text-[13px] font-semibold px-[18px] py-2.5 transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: 'var(--brand-accent, #16a34a)' }}
                 >
                   Parler à Élio
                 </Link>
@@ -151,10 +155,17 @@ function ModuleCard({ moduleId }: { moduleId: string }) {
 
   return (
     <Link href={meta.href} className="block group" aria-label={`Ouvrir le module ${meta.label}`}>
-      <div className="h-[140px] rounded-2xl bg-[rgba(22,163,74,0.05)] border border-[#16a34a] flex flex-col items-center justify-center gap-2.5 transition-transform group-hover:-translate-y-0.5 group-focus-visible:ring-2 group-focus-visible:ring-[#4ade80] group-focus-visible:ring-offset-1">
+      <div
+        className="h-[140px] rounded-2xl flex flex-col items-center justify-center gap-2.5 transition-transform group-hover:-translate-y-0.5 group-focus-visible:ring-2 group-focus-visible:ring-offset-1"
+        style={{
+          background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 5%, transparent)',
+          border: '1px solid var(--brand-accent, #16a34a)',
+          // ring color for focus-visible via CSS variable
+        }}
+      >
         <span className="text-3xl" aria-hidden="true">{meta.icon}</span>
-        <span className="text-[13.5px] font-semibold text-[#4ade80]">{meta.label}</span>
-        <span className="text-[11px] text-[#4ade80]">Ouvrir →</span>
+        <span className="text-[13.5px] font-semibold" style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 80%, white)' }}>{meta.label}</span>
+        <span className="text-[11px]" style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 80%, white)' }}>Ouvrir →</span>
       </div>
     </Link>
   )

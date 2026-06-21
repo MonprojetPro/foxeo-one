@@ -177,6 +177,7 @@ async function computeChatBadge(
 function ClientHeader({
   authUserId,
   logoUrl,
+  displayName,
   activeMode,
   labModeAvailable,
   oneLocked,
@@ -185,29 +186,44 @@ function ClientHeader({
 }: {
   authUserId: string
   logoUrl?: string | null
+  displayName?: string | null
   activeMode: 'lab' | 'one'
   labModeAvailable: boolean
   oneLocked: boolean
   labLocked: boolean
   userInitials: string
 }) {
-  const accentFrom = activeMode === 'lab' ? '#7c3aed' : '#16a34a'
-  const accentTo   = activeMode === 'lab' ? '#a78bfa' : '#4ade80'
-  const accentText = activeMode === 'lab' ? '#a78bfa' : '#4ade80'
+  // Couleurs Lab : violet fixe (pas de personnalisation brand côté Lab)
+  // Couleurs One : via var(--brand-accent) qui vaut la couleur client ou le vert par défaut
+  const labAccentFrom = '#7c3aed'
+  const labAccentTo   = '#a78bfa'
+  const avatarGradient = activeMode === 'lab'
+    ? `linear-gradient(135deg, ${labAccentFrom}, ${labAccentTo})`
+    : 'linear-gradient(135deg, var(--brand-accent, #16a34a), color-mix(in srgb, var(--brand-accent, #16a34a) 60%, white))'
+
+  // Nom affiché dans le header : priorité → displayName custom → logo → rien (logo suffit)
+  const brandName = displayName ?? (activeMode === 'lab' ? 'MonprojetPro Lab' : 'MonprojetPro One')
 
   return (
     <div className="flex w-full items-center justify-between relative">
-      {/* Gauche — logo */}
-      <div className="flex items-center" style={{ width: 220 }}>
+      {/* Gauche — logo + displayName */}
+      <div className="flex items-center gap-2" style={{ width: 220 }}>
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt="Logo" className="h-8 w-auto object-contain" />
+          <img src={logoUrl} alt={brandName} className="h-8 w-auto object-contain" />
         ) : activeMode === 'lab' ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logos/logo-lab.png" alt="MonprojetPro Lab" className="w-auto object-contain" style={{ height: '60px' }} />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logos/logo-one.png" alt="MonprojetPro One" className="w-auto object-contain" style={{ height: '60px' }} />
+        )}
+        {/* displayName personnalisé : affiché seulement quand défini ET pas de logo custom
+            (quand il y a un logo, le logo porte déjà l'identité de marque) */}
+        {displayName && !logoUrl && (
+          <span className="text-sm font-semibold truncate max-w-[120px]" title={displayName}>
+            {displayName}
+          </span>
         )}
       </div>
 
@@ -221,7 +237,7 @@ function ClientHeader({
         {authUserId && <NotificationBadge recipientId={authUserId} />}
         <div
           className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white font-bold text-[12px] tracking-[0.5px] shrink-0 cursor-default"
-          style={{ background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})` }}
+          style={{ background: avatarGradient }}
           title="Compte"
           aria-label="Avatar utilisateur"
         >
@@ -336,6 +352,7 @@ export default async function DashboardLayout({
   const customBranding = (clientConfig?.custom_branding ?? null) as CustomBranding | null
   const accentColor = customBranding?.accentColor ?? null
   const logoUrl = customBranding?.logoUrl ?? null
+  const displayName = customBranding?.displayName ?? null
 
   // Badges sidebar — calculés côté serveur, propagés via prop (Kit Complet).
   // Realtime branché via `RealtimeDashboardRefresh` qui écoute aussi `messages`.
@@ -350,9 +367,15 @@ export default async function DashboardLayout({
   if (chatBadge) sidebarBadges.chat = chatBadge
 
   // Build accent color CSS override style
-  const accentStyle: React.CSSProperties = accentColor
-    ? ({ '--accent': accentColor } as React.CSSProperties)
-    : {}
+  // --brand-accent : couleur personnalisée du client, utilisée partout dans le dashboard One
+  // --accent       : variable Tailwind standard (surcharge pour les composants UI shadcn/radix)
+  // Fallback : vert One #16a34a quand pas de couleur définie
+  const ONE_DEFAULT_ACCENT = '#16a34a'
+  const effectiveAccent = accentColor ?? ONE_DEFAULT_ACCENT
+  const accentStyle: React.CSSProperties = {
+    '--brand-accent': effectiveAccent,
+    ...(accentColor ? { '--accent': accentColor } : {}),
+  } as React.CSSProperties
 
   return (
     <div style={accentStyle}>
@@ -368,6 +391,7 @@ export default async function DashboardLayout({
           <ClientHeader
             authUserId={user?.id ?? ''}
             logoUrl={logoUrl}
+            displayName={displayName}
             activeMode={activeMode}
             labModeAvailable={labModeAvailable}
             oneLocked={oneLocked}

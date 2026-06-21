@@ -48,7 +48,7 @@ describe('ClientBrandingForm', () => {
     )
     const colorInput = container.querySelector('input[type="color"]')
     expect(colorInput).toBeTruthy()
-    expect((colorInput as HTMLInputElement)?.value).toBe('#f7931e')
+    expect((colorInput as HTMLInputElement)?.value).toBe('#16a34a')
   })
 
   it('renders with initial branding values', () => {
@@ -93,21 +93,35 @@ describe('ClientBrandingForm', () => {
     await waitFor(() => {
       expect(mockUpdateClientBranding).toHaveBeenCalledWith('c-1', expect.objectContaining({
         displayName: null,
-        accentColor: '#F7931E',
+        accentColor: '#16a34a',
       }))
     })
   })
 
-  it('calls updateClientBranding with null values on reset', async () => {
+  it('calls updateClientBranding with null values on reset (after confirmation)', async () => {
     const { container } = render(
       createElement(ClientBrandingForm, {
         clientId: 'c-1',
         initialBranding: { logoUrl: 'https://logo.png', displayName: 'ACME', accentColor: '#FF5733', updatedAt: '2026-01-01' },
       }),
     )
+    // 1er click : ouvre la confirmation
     const resetBtn = container.querySelector('[data-testid="btn-rinitialiser"]')
     expect(resetBtn).toBeTruthy()
     fireEvent.click(resetBtn!)
+
+    // Attendre que le bouton "Confirmer" apparaisse
+    await waitFor(() => {
+      expect(container.textContent).toContain('Confirmer')
+    })
+
+    // 2ème click : confirme la réinitialisation
+    const confirmBtn = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Confirmer'
+    )
+    expect(confirmBtn).toBeTruthy()
+    fireEvent.click(confirmBtn!)
+
     await waitFor(() => {
       expect(mockUpdateClientBranding).toHaveBeenCalledWith('c-1', {
         logoUrl: null,
@@ -218,7 +232,7 @@ describe('ClientBrandingForm', () => {
     fireEvent.click(saveBtn!)
 
     const { showError } = await import('@monprojetpro/ui')
-    expect(showError).toHaveBeenCalledWith("Couleur d'accent invalide. Format attendu : #RRGGBB (ex: #F7931E)")
+    expect(showError).toHaveBeenCalledWith("Couleur d'accent invalide. Format attendu : #RRGGBB (ex: #16a34a)")
     expect(mockUpdateClientBranding).not.toHaveBeenCalled()
   })
 })
