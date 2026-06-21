@@ -60,6 +60,11 @@ vi.mock('@monprojetpro/ui', async (importOriginal) => {
   }
 })
 
+// Pop-up d'intro Concierge → stub (sa logique localStorage/Dialog est testée à part).
+vi.mock('./parcours-mode-intro-dialog', () => ({
+  ParcoursModeIntroDialog: () => null,
+}))
+
 const CLIENT_ID = '00000000-0000-0000-0000-000000000001'
 
 const mockParcours: ParcoursWithSteps = {
@@ -71,6 +76,7 @@ const mockParcours: ParcoursWithSteps = {
   status: 'in_progress',
   completedAt: null,
   abandonmentReason: null,
+  parcoursMode: 'tracee',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
   steps: [

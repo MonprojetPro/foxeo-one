@@ -10,6 +10,7 @@ import { ParcoursProgressBar } from './parcours-progress-bar'
 import { ParcoursStepCard } from './parcours-step-card'
 import { ElioParcoursPanel } from './elio-parcours-panel'
 import { AbandonParcoursDialog } from './abandon-parcours-dialog'
+import { ParcoursModeIntroDialog } from './parcours-mode-intro-dialog'
 
 interface ParcoursOverviewProps {
   clientId: string
@@ -56,8 +57,20 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
   ) ?? null
   const allCompleted = parcours.completedSteps > 0 && parcours.completedSteps === parcours.totalSteps
 
+  // Pop-up d'accueil du Concierge : explique les règles du parcours (tracé/libre) à la
+  // découverte + à chaque changement de mode. Pas sur un parcours en pause (abandonné).
+  const showModeIntro = parcours.steps.length > 0 && !isAbandoned
+
   return (
     <div className="space-y-6">
+      {showModeIntro && (
+        <ParcoursModeIntroDialog
+          clientId={clientId}
+          mode={parcours.parcoursMode}
+          clientFirstName={clientFirstName}
+        />
+      )}
+
       {/* Story 9.3 — Parcours abandonné : message pause */}
       {isAbandoned && (
         <div className="rounded-lg border border-warning/30 bg-warning/10 p-6 text-center space-y-2">

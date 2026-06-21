@@ -57,6 +57,7 @@
 - ✅ UX client : bandeau « Parcours libre » dans `parcours-overview` ; cartes déjà toutes cliquables.
 - ✅ Realtime : `use-parcours-realtime-refresh` écoute aussi `client_configs:{clientId}` (la bascule de mode sans changement d'étape rafraîchit quand même le bandeau).
 - ✅ **Mémoire partagée** (`getParcoursMemory`) : digest des soumissions validées des AUTRES étapes injecté dans le system prompt de chaque agent (« dossier du client », actif dans les 2 modes) → plus de répétitions entre agents.
+- ✅ **Pop-up d'accueil Concierge** (`ParcoursModeIntroDialog`) : à la découverte du parcours + à chaque changement de mode, Élio Concierge (avatar) explique les règles. Limite assumée du libre (mémoire = docs validés) **transparente pour le client** : la pop-up l'invite à faire valider ses étapes pour qu'Élio relie l'ensemble. Persistance localStorage (clé par mode).
 - ✅ Complétion / graduation : inchangée (tous les agents enabled terminés).
 - ✅ Tests : set-parcours-mode, get-parcours-memory, launch-client-parcours (mode libre), cockpit, step-elio-chat. Build turbo vert.
 

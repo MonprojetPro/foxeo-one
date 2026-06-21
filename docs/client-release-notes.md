@@ -9,6 +9,7 @@
 **Concrètement :**
 - En mode libre, toutes les étapes disponibles sont cliquables et soumissibles en parallèle
 - Élio s'appuie sur tes documents déjà validés pour t'accompagner plus efficacement, sans répétitions
+- À la découverte de ton parcours (et si MiKL change le mode), **Élio le Concierge t'accueille avec une pop-up** qui t'explique les règles du parcours — et, en mode libre, te rappelle de faire valider tes étapes pour qu'Élio relie l'ensemble de ton projet
 
 ## 2026-05-11 — Génération de document corrigée (parcours Lab)
 
