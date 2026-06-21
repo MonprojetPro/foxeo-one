@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockGetUser = vi.fn()
 const mockInsert = vi.fn()
 const mockClientsSelectSingle = vi.fn()
+const mockConfigSelectSingle = vi.fn()
 const mockSendInvite = vi.fn()
 
 // from() router : selon la table appelée, on retourne la chaîne attendue.
@@ -12,6 +13,16 @@ const mockFrom = vi.fn((table: string) => {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           maybeSingle: mockClientsSelectSingle,
+        }),
+      }),
+    }
+  }
+  // LOT E — lecture du mode de parcours sur client_configs avant l'INSERT.
+  if (table === 'client_configs') {
+    return {
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: mockConfigSelectSingle,
         }),
       }),
     }
@@ -41,6 +52,8 @@ describe('launchClientParcours Server Action', () => {
     vi.clearAllMocks()
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-id' } }, error: null })
     mockInsert.mockResolvedValue({ error: null })
+    // Défaut : mode tracé (étape 1 active, suivantes pending).
+    mockConfigSelectSingle.mockResolvedValue({ data: { parcours_mode: 'tracee' }, error: null })
     // Par défaut : client jamais connecté (first_login_at null) → invitation attendue.
     mockClientsSelectSingle.mockResolvedValue({
       data: {
@@ -99,6 +112,24 @@ describe('launchClientParcours Server Action', () => {
     // Kit Complet : étape 1 = active (sinon le client ne peut rien faire), suivantes = pending
     expect(insertedSteps[0].status).toBe('active')
     expect(insertedSteps[1].status).toBe('pending')
+  })
+
+  it('LOT E — en mode libre, TOUTES les étapes sont insérées en active', async () => {
+    mockConfigSelectSingle.mockResolvedValue({ data: { parcours_mode: 'libre' }, error: null })
+    const { launchClientParcours } = await import('./launch-client-parcours')
+    const result = await launchClientParcours({
+      clientId: CLIENT_ID,
+      steps: [
+        { agentId: AGENT_ID_A, stepLabel: 'Identité de marque' },
+        { agentId: AGENT_ID_B, stepLabel: 'Positionnement' },
+      ],
+    })
+
+    expect(result.error).toBeNull()
+    const stepsInsertCall = mockInsert.mock.calls.find(call => Array.isArray(call[0]))
+    const insertedSteps = stepsInsertCall![0]
+    expect(insertedSteps[0].status).toBe('active')
+    expect(insertedSteps[1].status).toBe('active')
   })
 
   it('inserts a notification for the client when parcours is launched', async () => {

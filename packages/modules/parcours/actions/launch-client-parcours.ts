@@ -25,14 +25,22 @@ export async function launchClientParcours(
 
     const { clientId, steps } = parsed.data
 
-    // 1ère étape en 'active' (le client peut démarrer immédiatement),
-    // étapes suivantes en 'pending' (verrouillées jusqu'à validation de l'étape précédente).
+    // LOT E — Le mode de séquençage (client_configs.parcours_mode) décide des statuts initiaux :
+    //   • 'libre'  : TOUTES les étapes sont 'active' dès le départ (navigables en parallèle).
+    //   • 'tracee' : 1ère étape 'active', suivantes 'pending' (déverrouillage à la validation).
+    const { data: cfgRow } = await supabase
+      .from('client_configs')
+      .select('parcours_mode')
+      .eq('client_id', clientId)
+      .maybeSingle()
+    const isLibre = (cfgRow as { parcours_mode?: string } | null)?.parcours_mode === 'libre'
+
     const rows = steps.map((step, index) => ({
       client_id: clientId,
       elio_lab_agent_id: step.agentId,
       step_order: index + 1,
       step_label: step.stepLabel,
-      status: (index === 0 ? 'active' : 'pending') as 'active' | 'pending',
+      status: (isLibre || index === 0 ? 'active' : 'pending') as 'active' | 'pending',
     }))
 
     const { error: insertError } = await supabase

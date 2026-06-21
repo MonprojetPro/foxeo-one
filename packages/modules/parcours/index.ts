@@ -77,6 +77,7 @@ export { useStepSubmissionStatus } from './hooks/use-step-submission-status'
 
 // Actions
 export { getParcours } from './actions/get-parcours'
+export { getParcoursMemory, type ParcoursMemory } from './actions/get-parcours-memory'
 export { toggleAgentEnabled } from './actions/toggle-agent-enabled'
 export { reopenAgent } from './actions/reopen-agent'
 export { generateConciergeWord, type ConciergeEvent } from './actions/generate-concierge-word'

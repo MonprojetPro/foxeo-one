@@ -42,11 +42,24 @@ export function useParcoursRealtimeRefresh(clientId: string | undefined): void {
         }
       })
 
+    // LOT E — Le mode de parcours (tracé/libre) vit dans client_configs. Une bascule par MiKL
+    // qui ne touche AUCUNE étape (ex : re-verrouillage no-op) ne déclenche pas le canal parcours.
+    // On écoute donc aussi le broadcast client_configs pour rafraîchir le bandeau + l'état des cartes.
+    const configChannel = supabase
+      .channel(`client_configs:${clientId}`)
+      .on('broadcast', { event: 'client_configs_changed' }, invalidate)
+      .subscribe((status: string, err?: Error) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[PARCOURS:REALTIME] client_configs channel error:', err)
+        }
+      })
+
     // Reconnexion : rafraîchir au retour en ligne.
     window.addEventListener('online', invalidate)
 
     return () => {
       supabase.removeChannel(channel)
+      supabase.removeChannel(configChannel)
       window.removeEventListener('online', invalidate)
     }
   }, [clientId, queryClient])

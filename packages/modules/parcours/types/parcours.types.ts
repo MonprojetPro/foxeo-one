@@ -114,11 +114,19 @@ export type SkipStepInput = z.infer<typeof SkipStepInput>
 
 // --- Result Types ---
 
+export type ParcoursMode = 'tracee' | 'libre'
+
 export interface ParcoursWithSteps extends Parcours {
   steps: ParcoursStep[]
   totalSteps: number
   completedSteps: number
   progressPercent: number
+  /**
+   * LOT E — mode de séquençage du parcours (choisi par MiKL).
+   *   • 'tracee' : étapes séquentielles (une active à la fois).
+   *   • 'libre'  : toutes les étapes activées navigables en parallèle.
+   */
+  parcoursMode: ParcoursMode
   /**
    * Dernier « mot d'Élio le Concierge » (LOT F) — message proactif sur-mesure lié au
    * dernier événement (réouverture, validation…). Le bandeau l'affiche en priorité ;

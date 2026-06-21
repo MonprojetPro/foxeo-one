@@ -19,6 +19,7 @@ export { ClientDetailContent } from './components/client-detail-content'
 export { AssignParcoursDialog } from './components/assign-parcours-dialog'
 export { ParcoursStageList } from './components/parcours-stage-list'
 export { AccessToggles } from './components/access-toggles'
+export { ParcoursModeSelector } from './components/parcours-mode-selector'
 export { ParcoursStatusBadge } from './components/parcours-status-badge'
 export { CursorButton } from './components/cursor-button'
 export { ClientNotesSection } from './components/client-notes-section'
@@ -84,6 +85,7 @@ export { getParcoursTemplates } from './actions/get-parcours-templates'
 export { assignParcours } from './actions/assign-parcours'
 export { getClientParcours } from './actions/get-client-parcours'
 export { toggleAccess } from './actions/toggle-access'
+export { setParcoursMode } from './actions/set-parcours-mode'
 export { suspendParcours } from './actions/suspend-parcours'
 export { createClientNote } from './actions/create-client-note'
 export { getClientNotes } from './actions/get-client-notes'
@@ -154,6 +156,8 @@ export type {
   ActiveStage,
   AssignParcoursInput,
   ToggleAccessInput,
+  SetParcoursModeInput,
+  ParcoursMode,
   ParcoursTemplateDB,
   ParcoursDB,
   ClientNote,

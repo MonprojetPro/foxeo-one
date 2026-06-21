@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Bot } from 'lucide-react'
 import { ChatMarkdownRenderer } from './chat-markdown-renderer'
 import { getOrCreateStepConversation } from '../actions/get-or-create-step-conversation'
+import { getParcoursMemory } from '../actions/get-parcours-memory'
 import { markInjectionsRead } from '../actions/mark-injections-read'
 import {
   getMessages,
@@ -105,11 +106,19 @@ const STEP_SUBMISSION_INVITATION = `
 FIN D'ÉTAPE (consigne, à n'appliquer QUE si le client signale lui-même qu'il a terminé) : si — et seulement si — le client dit explicitement qu'il n'a plus rien à ajouter ou qu'il veut finaliser, alors tu peux l'inviter chaleureusement à générer puis soumettre son document via le bouton « Générer mon document » situé sous la conversation. Tant que le client réfléchit, pose des questions ou explore un sujet : tu n'évoques JAMAIS le bouton ni la soumission, tu continues à l'accompagner.`
 
 /**
- * Concatène : garde-fous coach (toujours) + consigne prioritaire MiKL (si présente) +
- * prompt de l'agent + invitation de fin d'étape (discrète).
+ * Concatène : garde-fous coach (toujours) + mémoire partagée du parcours (LOT E, si présente) +
+ * consigne prioritaire MiKL (si présente) + prompt de l'agent + invitation de fin d'étape (discrète).
+ *
+ * La mémoire partagée (« dossier du client ») arrive juste après les garde-fous coach pour que
+ * l'agent connaisse les faits déjà établis dans les autres étapes AVANT de poser ses questions.
  */
-function withSteering(roadmap: string | null, agentPrompt: string | null): string | undefined {
-  const base = COACH_GUARDRAILS + buildSteeringBlock(roadmap) + (agentPrompt ?? '')
+function withSteering(
+  memory: string | null,
+  roadmap: string | null,
+  agentPrompt: string | null
+): string | undefined {
+  const base =
+    COACH_GUARDRAILS + (memory ?? '') + buildSteeringBlock(roadmap) + (agentPrompt ?? '')
   return base.trim().length > 0 ? base + STEP_SUBMISSION_INVITATION : undefined
 }
 
@@ -129,6 +138,8 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
 
   // Feuille de route cachée injectée par MiKL (oriente Élio, jamais montrée au client)
   const [steeringInstruction, setSteeringInstruction] = useState<string | null>(null)
+  // LOT E — mémoire partagée du parcours (« dossier du client ») injectée dans le system prompt.
+  const [parcoursMemory, setParcoursMemory] = useState<string | null>(null)
   const kickoffStartedRef = useRef(false)
 
   const [input, setInput] = useState('')
@@ -181,16 +192,21 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
       const { conversationId: convId } = convResult.data
       setConversationId(convId)
 
-      // Charger l'historique + config agent en parallèle
-      const [messagesResult, configResult] = await Promise.all([
+      // Charger l'historique + config agent + mémoire partagée de parcours en parallèle
+      const [messagesResult, configResult, memoryResult] = await Promise.all([
         getMessages(convId),
         getEffectiveStepConfig({ stepId, stepNumber, clientId }),
+        getParcoursMemory(clientId, stepId),
       ])
 
       if (cancelled) return
 
       const existingMessages = messagesResult.data ?? []
       setMessages(existingMessages)
+
+      // Mémoire partagée (« dossier du client ») — best-effort : si KO, l'agent fonctionne sans.
+      const memoryBlock = memoryResult.data?.block ?? null
+      setParcoursMemory(memoryBlock)
 
       const cfg = configResult.data
       if (cfg) {
@@ -229,7 +245,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
           buildKickoffDirective(cfg.steeringInstruction),
           clientId,
           undefined,
-          withSteering(cfg.steeringInstruction, cfg.systemPrompt),
+          withSteering(memoryBlock, cfg.steeringInstruction, cfg.systemPrompt),
           {
             ...(cfg.model ? { model: cfg.model } : {}),
             ...(cfg.temperature !== undefined ? { temperature: cfg.temperature } : {}),
@@ -306,7 +322,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
       content,
       clientId,
       undefined,
-      withSteering(steeringInstruction, systemPromptOverride),
+      withSteering(parcoursMemory, steeringInstruction, systemPromptOverride),
       overrides
     )
 
@@ -330,7 +346,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
     setMessages((prev) => [...prev, assistantMsg])
     setIsSending(false)
     setTimeout(() => inputRef.current?.focus(), 0)
-  }, [input, conversationId, isSending, clientId, systemPromptOverride, agentModel, agentTemperature, steeringInstruction])
+  }, [input, conversationId, isSending, clientId, systemPromptOverride, agentModel, agentTemperature, steeringInstruction, parcoursMemory])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

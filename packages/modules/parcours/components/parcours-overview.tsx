@@ -86,6 +86,21 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
         progressPercent={parcours.progressPercent}
       />
 
+      {/* LOT E — Mode libre : bandeau explicatif. Le client peut traiter les étapes
+          dans l'ordre qu'il veut (pas de verrou séquentiel). Masqué si parcours en pause. */}
+      {parcours.parcoursMode === 'libre' && !isAbandoned && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-[rgba(124,58,237,0.35)] bg-[rgba(124,58,237,0.08)] px-4 py-3">
+          <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#a78bfa]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <p className="text-xs leading-relaxed text-[#c4b5fd]">
+            <span className="font-semibold text-[#e5e7eb]">Parcours libre.</span>{' '}
+            Toutes les étapes sont ouvertes : avance dans l&apos;ordre que tu veux, en parallèle si tu
+            préfères. Élio garde en mémoire ce que tu as déjà établi dans les autres étapes.
+          </p>
+        </div>
+      )}
+
       {/* Grille 3 colonnes — légèrement grisée si en pause, MAIS cartes cliquables
           (consultation de l'historique toujours possible). */}
       <div className={cn(

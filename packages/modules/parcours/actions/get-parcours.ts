@@ -54,6 +54,15 @@ export async function getParcours(
       .order('step_order', { ascending: true })
 
     if (!agentStepsError && agentSteps && agentSteps.length > 0) {
+      // LOT E — mode de séquençage du parcours (pilote le statut visuel + le bandeau client).
+      const { data: cfgRow } = await supabase
+        .from('client_configs')
+        .select('parcours_mode')
+        .eq('client_id', clientId)
+        .maybeSingle()
+      const parcoursMode: import('../types/parcours.types').ParcoursMode =
+        (cfgRow as { parcours_mode?: string } | null)?.parcours_mode === 'libre' ? 'libre' : 'tracee'
+
       // Récupérer la dernière soumission par étape pour afficher le bon statut dans le panel Élio
       const stepIds = agentSteps.map((s) => s.id)
       const { data: latestSubmissions } = await supabase
@@ -76,9 +85,14 @@ export async function getParcours(
 
         // Statut visuel dérivé :
         // - current + dernière soumission rejected → carte orange "À corriger"
+        // - LOT E mode libre : une étape encore 'locked' (pending) est en réalité disponible
+        //   (navigable en parallèle) → on l'affiche comme 'current' pour la rendre engageante.
         // - sinon baseStatus
         let displayStatus: ParcoursStepStatus = baseStatus
-        if (baseStatus === 'current' && latestSubStatus === 'rejected') {
+        if (parcoursMode === 'libre' && baseStatus === 'locked') {
+          displayStatus = 'current'
+        }
+        if (displayStatus === 'current' && latestSubStatus === 'rejected') {
           displayStatus = 'rejected'
         }
 
@@ -156,6 +170,7 @@ export async function getParcours(
         totalSteps,
         completedSteps,
         progressPercent,
+        parcoursMode,
         conciergeWord,
       }
 
@@ -196,6 +211,8 @@ export async function getParcours(
       totalSteps,
       completedSteps,
       progressPercent,
+      // Ancien système (parcours_steps) : toujours séquentiel.
+      parcoursMode: 'tracee' as const,
     })
   } catch (error) {
     console.error('[PARCOURS:GET_PARCOURS] Unexpected error:', error)

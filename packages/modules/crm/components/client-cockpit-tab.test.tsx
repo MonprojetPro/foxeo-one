@@ -42,6 +42,7 @@ vi.mock('../hooks/use-client-cockpit-realtime', () => ({ useClientCockpitRealtim
 
 // Enfants avec hooks propres → stubs
 vi.mock('./access-toggles', () => ({ AccessToggles: () => <div data-testid="access-toggles-stub" /> }))
+vi.mock('./parcours-mode-selector', () => ({ ParcoursModeSelector: () => <div data-testid="parcours-mode-selector-stub" /> }))
 vi.mock('./graduation-dialog', () => ({ GraduationDialog: () => <div data-testid="graduation-dialog-stub" /> }))
 vi.mock('./client-notes-section', () => ({ ClientNotesSection: () => <div data-testid="notes-stub" /> }))
 

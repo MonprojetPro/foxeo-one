@@ -16,6 +16,8 @@ export const ClientConfig = z.object({
   labModeAvailable: z.boolean().optional(),
   oneModeAvailable: z.boolean().optional(),
   elioLabEnabled: z.boolean().optional(),
+  // LOT E — mode de séquençage du parcours
+  parcoursMode: z.enum(['tracee', 'libre']).optional(),
   // Story 9.4 — Subscription tier
   subscriptionTier: z.enum(['base', 'essentiel', 'agentique']).nullable().optional(),
   tierChangedAt: z.string().datetime({ offset: true }).nullable().optional(),
@@ -240,6 +242,17 @@ export const ToggleAccessInput = z.object({
 })
 
 export type ToggleAccessInput = z.infer<typeof ToggleAccessInput>
+
+// LOT E — Mode de séquençage du parcours (choisi par MiKL, par client, depuis le Hub).
+export const ParcoursModeEnum = z.enum(['tracee', 'libre'])
+export type ParcoursMode = z.infer<typeof ParcoursModeEnum>
+
+export const SetParcoursModeInput = z.object({
+  clientId: z.string().uuid(),
+  mode: ParcoursModeEnum,
+})
+
+export type SetParcoursModeInput = z.infer<typeof SetParcoursModeInput>
 
 // DB types (snake_case)
 export type ParcoursTemplateDB = {

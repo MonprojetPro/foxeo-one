@@ -43,14 +43,22 @@
 - ✅ Tests : get-client-activity-snapshot, client-cockpit-tab, client-tabs (réécrit), client-detail-content (corrigé). Commit `08b6614`.
 - ℹ️ Le « dernier mot d'Élio » (conciergeWord) reste dans l'onglet Lab : il vient du module `parcours`, l'exposer dans le cockpit CRM violerait la règle no-import-cross-module.
 
-## LOT E — Mode « Parcours tracé » vs « Parcours libre » (option définie par MiKL) — À FAIRE
+## LOT E — Mode « Parcours tracé » vs « Parcours libre » (option définie par MiKL) — ✅ FAIT (2026-06-21)
 > Idée validée MiKL 2026-06-18. Option choisie PAR MiKL, par client (depuis le Hub), pas par le client.
-- Flag de mode au niveau parcours/client : `parcours_mode TEXT CHECK ('tracee','libre') DEFAULT 'tracee'`
-  (sur `client_configs` ou colonne dédiée — à trancher au moment du dev).
-- **Tracé** (= comportement actuel) : étapes séquentielles, une `active` à la fois, déverrouillage à l'approbation. La réouverture (LOT B) est le mécanisme de retour en arrière.
-- **Libre** : tous les agents définis sont navigables/soumissibles en parallèle (pas de verrou séquentiel). Le client avance sur plusieurs étapes en même temps, dans l'ordre qu'il veut. L'**agent recap** fait la synthèse finale quel que soit l'ordre.
-- Impacts à traiter : `get-parcours.ts` (statut visuel : plus de `pending`/`locked` en libre, tout `active`), `approve_validation_request` (ne PAS auto-activer « la prochaine » en libre), UI cartes parcours client (toutes cliquables en libre), UI Hub (sélecteur de mode par client), calcul de complétion (inchangé : tous les agents enabled terminés).
-- Décisions ouvertes à cadrer avant dev : où stocker le flag ? bascule de mode en cours de parcours autorisée ? rendu visuel du mode libre côté client ?
+> Décisions actées au dev (2026-06-21) : flag sur `client_configs` ; bascule à chaud autorisée à tout moment ; UX libre = toutes les étapes « disponibles » + bandeau ; **+ mémoire partagée de parcours** (les agents Élio connaissent les étapes déjà validées).
+- ✅ Migration `client_configs.parcours_mode TEXT CHECK ('tracee','libre') DEFAULT 'tracee'` (broadcast realtime déjà actif sur la table).
+- ✅ **Tracé** (= comportement actuel) : étapes séquentielles, une `active` à la fois, déverrouillage à l'approbation. La réouverture (LOT B) est le mécanisme de retour en arrière.
+- ✅ **Libre** : toutes les étapes activées (`is_enabled=true`) sont `active` → navigables/soumissibles en parallèle. L'agent recap fait la synthèse quel que soit l'ordre.
+- ✅ Action `setParcoursMode` (CRM) : écrit le flag + **resynchronise les statuts à chaud** (libre = pending→active ; tracé = re-verrouille en séquentiel, 1ʳᵉ non terminée garde le focus). Log d'activité.
+- ✅ `launch-client-parcours.ts` : statuts initiaux selon le mode (libre = toutes active).
+- ✅ RPC `approve_validation_request` mode-aware : n'auto-active « la prochaine pending » qu'en tracé (+ saute désormais les `is_enabled=false`). `search_path=public` préservé (gate CERBÈRE).
+- ✅ `get-parcours.ts` : expose `parcoursMode` ; en libre une étape `locked` (pending) s'affiche « disponible » (current).
+- ✅ UI Hub : `ParcoursModeSelector` dans le cockpit (Pilote), visible pour tout client ayant un espace Lab (pré-réglable avant lancement), avec confirmation de bascule.
+- ✅ UX client : bandeau « Parcours libre » dans `parcours-overview` ; cartes déjà toutes cliquables.
+- ✅ Realtime : `use-parcours-realtime-refresh` écoute aussi `client_configs:{clientId}` (la bascule de mode sans changement d'étape rafraîchit quand même le bandeau).
+- ✅ **Mémoire partagée** (`getParcoursMemory`) : digest des soumissions validées des AUTRES étapes injecté dans le system prompt de chaque agent (« dossier du client », actif dans les 2 modes) → plus de répétitions entre agents.
+- ✅ Complétion / graduation : inchangée (tous les agents enabled terminés).
+- ✅ Tests : set-parcours-mode, get-parcours-memory, launch-client-parcours (mode libre), cockpit, step-elio-chat. Build turbo vert.
 
 ## LOT F — Élio Concierge vivant (moteur IA sur événement) — ✅ COMPLET (2026-06-18)
 > Validé MiKL 2026-06-18. Moteur choisi : IA générée sur événement (Haiku via Edge Function `elio-chat`), fallback templaté. Le bandeau passe d'un arbre de phrases en dur à « le dernier mot d'Élio ».

@@ -713,3 +713,15 @@
 - **Solution** : migration `20260620120000` — remplacer `fn_get_operator_id()` par `is_operator()` (join via clients) dans les 3 policies. WITH CHECK inchangés (NULL). Vérifié : `is_operator('00000000-0000-0000-0000-000000000001')` matche bien l'opérateur MiKL.
 - **Regle a suivre** : pour toute policy RLS « accès opérateur », utiliser **`is_operator(operator_id)`** (table `operators`), **jamais** `fn_get_operator_id()` (raw_app_meta_data non peuplé). Si un onglet Hub affiche « vide » alors que la donnée existe : suspecter la RLS opérateur AVANT le code — comparer la policy à celle d'une table qui marche (`clients`/`validation_requests`), et vérifier en MCP que la donnée est bien là.
 - **Agents impliques** : CERBÈRE (détection), SPARK, ATLAS
+
+---
+
+### [SEC-002] `CREATE OR REPLACE FUNCTION` efface le `search_path` figé (régression sécu silencieuse)
+- **Date** : 2026-06-21
+- **Projet** : MonprojetPro
+- **Categorie** : Supabase / sécurité fonctions
+- **Symptome** : (anticipé, pas un incident) — au LOT E, besoin de modifier le corps de la RPC `approve_validation_request` (SECURITY DEFINER). Un simple `CREATE OR REPLACE` aurait réintroduit la vuln que la migration `security_fix_function_search_path` avait corrigée.
+- **Cause racine** : en Postgres, `CREATE OR REPLACE FUNCTION` qui ne répète pas la clause `SET search_path = ...` **réinitialise `proconfig` à NULL** → la fonction SECURITY DEFINER redevient vulnérable au search_path hijacking. Le réglage posé par un `ALTER FUNCTION ... SET search_path` antérieur est perdu au replace.
+- **Solution** : avant le replace, lire `pg_proc.proconfig` (`SELECT proname, proconfig FROM pg_proc WHERE proname = '...'`) et **ré-inclure la même clause** dans la définition : `... $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;`. Vérifier après coup que `proconfig` vaut toujours `["search_path=public"]` et qu'il n'y a pas de surcharge en double (sinon PostgREST 300).
+- **Regle a suivre** : pour CHAQUE `CREATE OR REPLACE FUNCTION` sur une fonction SECURITY DEFINER existante → check `proconfig` AVANT, re-déclarer `SET search_path` DANS la définition, re-check `proconfig` APRÈS. Gate CERBÈRE permanente.
+- **Agents impliques** : CERBÈRE (gate), SPARK, ATLAS

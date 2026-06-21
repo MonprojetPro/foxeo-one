@@ -16,6 +16,11 @@ vi.mock('../actions/get-or-create-step-conversation', () => ({
   }),
 }))
 
+// LOT E — mémoire partagée (best-effort) : mockée pour éviter l'appel serveur en jsdom.
+vi.mock('../actions/get-parcours-memory', () => ({
+  getParcoursMemory: vi.fn().mockResolvedValue({ data: { block: null, stepCount: 0 }, error: null }),
+}))
+
 vi.mock('@monprojetpro/module-elio', () => ({
   getMessages: vi.fn().mockResolvedValue({ data: [], error: null }),
   saveElioMessage: vi.fn().mockResolvedValue({ data: {}, error: null }),

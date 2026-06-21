@@ -1,5 +1,15 @@
 # Release Notes Client — MonprojetPro
 
+## 2026-06-21 — Parcours libre + Élio se souvient de tout ton parcours
+
+**Ce qui change pour toi :** Selon ce que MiKL configure pour ton projet, ton parcours peut désormais fonctionner en **mode libre** : toutes tes étapes sont ouvertes en même temps et tu avances dans l'ordre que tu veux (un bandeau te l'indique en haut de « Mon parcours »). Le mode « tracé » (une étape après l'autre) reste possible — c'est MiKL qui choisit.
+
+**En plus :** quel que soit le mode, **Élio garde maintenant en mémoire ce que tu as déjà validé dans les autres étapes**. Il ne te redemande plus des informations déjà données ailleurs et assure la cohérence d'ensemble de ton projet.
+
+**Concrètement :**
+- En mode libre, toutes les étapes disponibles sont cliquables et soumissibles en parallèle
+- Élio s'appuie sur tes documents déjà validés pour t'accompagner plus efficacement, sans répétitions
+
 ## 2026-05-11 — Génération de document corrigée (parcours Lab)
 
 **Ce qui change pour toi :** Le bouton "Générer mon document" dans chaque étape de ton parcours fonctionne à nouveau. Élio synthétise ta conversation et produit un document structuré que tu peux soumettre directement à MiKL pour validation.

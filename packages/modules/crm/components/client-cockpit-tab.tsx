@@ -18,6 +18,7 @@ import { useClientInstance } from '../hooks/use-client-instance'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
 import { useClientCockpitRealtime } from '../hooks/use-client-cockpit-realtime'
 import { AccessToggles } from './access-toggles'
+import { ParcoursModeSelector } from './parcours-mode-selector'
 import { ParcoursStatusBadge } from './parcours-status-badge'
 import { GraduationDialog } from './graduation-dialog'
 import { ClientNotesSection } from './client-notes-section'
@@ -283,6 +284,17 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* ──────────── Mode du parcours (tracé / libre) — pour tout client ayant un espace Lab.
+           Visible même avant le lancement, pour que MiKL puisse pré-régler le mode. ──────────── */}
+      {client.config?.labModeAvailable && (
+        <div className="lg:col-span-2">
+          <ParcoursModeSelector
+            clientId={clientId}
+            mode={client.config?.parcoursMode ?? 'tracee'}
+          />
+        </div>
       )}
 
       {/* ──────────── E — Accès (toggles inline, pleine largeur) ──────────── */}
