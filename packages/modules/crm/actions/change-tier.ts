@@ -68,7 +68,7 @@ export async function changeClientTier(input: {
     // 5. Fetch current client_config
     const { data: config, error: configError } = await supabase
       .from('client_configs')
-      .select('id, subscription_tier, elio_tier, elio_proactive_alerts')
+      .select('subscription_tier, elio_tier, elio_proactive_alerts')
       .eq('client_id', clientId)
       .single()
 
@@ -109,7 +109,6 @@ export async function changeClientTier(input: {
       .from('client_configs')
       .update(updatePayload)
       .eq('client_id', clientId)
-      .eq('id', config.id)
 
     if (updateError) {
       console.error('[CRM:CHANGE_TIER] Update error:', updateError)

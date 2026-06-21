@@ -79,10 +79,10 @@ export async function injectElioDocumentation(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: config, error: configError } = await (supabase as any)
       .from('client_configs')
-      .select('id, elio_module_docs')
+      .select('elio_module_docs')
       .eq('client_id', clientId)
       .single() as {
-        data: { id: string; elio_module_docs: ElioModuleDoc[] | null } | null
+        data: { elio_module_docs: ElioModuleDoc[] | null } | null
         error: unknown
       }
 
@@ -109,7 +109,7 @@ export async function injectElioDocumentation(
     const { error: updateError } = await (supabase as any)
       .from('client_configs')
       .update({ elio_module_docs: updatedDocs })
-      .eq('id', config.id)
+      .eq('client_id', clientId)
 
     if (updateError) {
       console.error('[CRM:INJECT_ELIO_DOC] Update error:', updateError)

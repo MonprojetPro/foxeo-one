@@ -61,9 +61,10 @@ export async function updateClientBranding(
     }
 
     // Fetch current branding
+    // NB: la PK de client_configs est `client_id` (pas de colonne `id`).
     const { data: config, error: configError } = await supabase
       .from('client_configs')
-      .select('id, custom_branding')
+      .select('custom_branding')
       .eq('client_id', clientId)
       .single()
 
@@ -84,7 +85,7 @@ export async function updateClientBranding(
     const { error: updateError } = await supabase
       .from('client_configs')
       .update({ custom_branding: updatedBranding })
-      .eq('id', config.id)
+      .eq('client_id', clientId)
 
     if (updateError) {
       console.error('[CRM:UPDATE_BRANDING] Update error:', updateError)

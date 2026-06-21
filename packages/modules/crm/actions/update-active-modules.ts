@@ -70,7 +70,7 @@ export async function updateActiveModules(
     // Fetch current active_modules
     const { data: config, error: configError } = await supabase
       .from('client_configs')
-      .select('id, active_modules')
+      .select('active_modules')
       .eq('client_id', clientId)
       .single()
 
@@ -92,7 +92,7 @@ export async function updateActiveModules(
     const { error: updateError } = await supabase
       .from('client_configs')
       .update({ active_modules: newModules })
-      .eq('id', config.id)
+      .eq('client_id', clientId)
 
     if (updateError) {
       console.error('[CRM:UPDATE_ACTIVE_MODULES] Update error:', updateError)
