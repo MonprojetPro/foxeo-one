@@ -1,7 +1,10 @@
-'use client'
-
 /**
  * Registre unique des événements d'activité client.
+ *
+ * ⚠️ PAS de directive 'use client' : ce module est importé À LA FOIS par
+ * `get-activity-logs.ts` (Server Action) et `client-timeline.tsx` (Client Component).
+ * Un 'use client' transformerait ses exports en client-references et ferait planter
+ * l'appel serveur (« Impossible de charger l'historique »). Module neutre = OK des 2 côtés.
  *
  * Source de vérité pour les libellés, icônes, onglets cibles et enrichissement
  * du metadata. Consommé par :
