@@ -62,7 +62,22 @@ export async function approveRequest(
     // « Mot d'Élio » vivant (LOT F) — félicitation / parcours terminé (best-effort).
     await notifyConciergeOfDecision(supabase, data, 'approved')
 
-    return successResponse(toCamelCase(data) as ValidationRequest)
+    // Journal d'activité — best-effort, ne bloque jamais la validation principale
+    const approvedData = toCamelCase(data) as ValidationRequest
+    await supabase.from('activity_logs').insert({
+      actor_type: 'operator',
+      actor_id: operator.id,
+      action: 'submission_approved',
+      entity_type: 'client',
+      entity_id: approvedData.clientId,
+      metadata: {
+        requestId,
+        stepName: approvedData.title ?? null,
+        comment: comment ?? null,
+      },
+    })
+
+    return successResponse(approvedData)
   } catch (err) {
     console.error('[VALIDATION-HUB:APPROVE] Unexpected error:', err)
     return errorResponse('Erreur inattendue', 'INTERNAL_ERROR', err)

@@ -61,7 +61,22 @@ export async function rejectRequest(
     // « Mot d'Élio » vivant (LOT F) — retour constructif sur la révision (best-effort).
     await notifyConciergeOfDecision(supabase, data, 'rejected')
 
-    return successResponse(toCamelCase(data) as ValidationRequest)
+    // Journal d'activité — best-effort, ne bloque jamais le refus principal
+    const rejectedData = toCamelCase(data) as ValidationRequest
+    await supabase.from('activity_logs').insert({
+      actor_type: 'operator',
+      actor_id: operator.id,
+      action: 'submission_rejected',
+      entity_type: 'client',
+      entity_id: rejectedData.clientId,
+      metadata: {
+        requestId,
+        stepName: rejectedData.title ?? null,
+        comment,
+      },
+    })
+
+    return successResponse(rejectedData)
   } catch (err) {
     console.error('[VALIDATION-HUB:REJECT] Unexpected error:', err)
     return errorResponse('Erreur inattendue', 'INTERNAL_ERROR', err)

@@ -134,6 +134,20 @@ export async function submitGeneratedDocument(
       console.error('[PARCOURS:SUBMIT_GENERATED_DOC] Mot d\'Élio non généré (ignoré):', e)
     }
 
+    // Journal d'activité — best-effort, ne bloque jamais la soumission
+    await supabase.from('activity_logs').insert({
+      actor_type: 'client',
+      actor_id: client.id,
+      action: 'submission_sent',
+      entity_type: 'client',
+      entity_id: client.id,
+      metadata: {
+        submissionId: submission.id,
+        stepId: input.stepId,
+        stepName: stepTitle,
+      },
+    })
+
     console.log('[PARCOURS:SUBMIT_GENERATED_DOC] Soumission créée:', submission.id)
 
     return successResponse({ submissionId: submission.id })

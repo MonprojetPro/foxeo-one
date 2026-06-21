@@ -89,13 +89,15 @@ export async function suspendParcours(
       .single()
 
     if (operator) {
+      // entity_type='client' + entity_id=clientId pour que l'event apparaisse
+      // dans la timeline de la fiche client (filtre entity_type='client' dans getActivityLogs)
       await supabase.from('activity_logs').insert({
         actor_type: 'operator',
         actor_id: operator.id,
         action: `parcours_${action === 'suspend' ? 'suspended' : 'reactivated'}`,
-        entity_type: 'parcours',
-        entity_id: parcoursId,
-        metadata: { clientId: updated.client_id },
+        entity_type: 'client',
+        entity_id: updated.client_id,
+        metadata: { parcoursId, clientId: updated.client_id },
       })
     }
 

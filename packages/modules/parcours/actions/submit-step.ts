@@ -132,6 +132,20 @@ export async function submitStep(
     })
     await supabase.from('notifications').insert(notifs)
 
+    // Journal d'activité — best-effort, ne bloque jamais la soumission
+    await supabase.from('activity_logs').insert({
+      actor_type: 'client',
+      actor_id: client.id,
+      action: 'submission_sent',
+      entity_type: 'client',
+      entity_id: client.id,
+      metadata: {
+        submissionId: submission.id,
+        stepId: input.stepId,
+        stepName: step.title ?? null,
+      },
+    })
+
     console.log('[PARCOURS:SUBMIT] Soumission créée:', submission.id)
 
     return successResponse({ submissionId: submission.id })

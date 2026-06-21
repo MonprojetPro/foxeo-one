@@ -117,14 +117,14 @@ export async function reopenAgent(
       console.error('[PARCOURS:REOPEN_AGENT] Mot d\'Élio non généré (ignoré):', e)
     }
 
-    // Journal d'activité (cohérent avec toggleAgentEnabled).
+    // Journal d'activité — entity_type='client' pour visibilité dans la timeline client
     await supabase.from('activity_logs').insert({
       actor_type: 'operator',
       actor_id: operator.id,
       action: 'parcours_agent_reopened',
-      entity_type: 'client_parcours_agent',
-      entity_id: agentId,
-      metadata: { clientId, reason: reason ?? null },
+      entity_type: 'client',
+      entity_id: clientId,
+      metadata: { agentId, agentLabel: agent.step_label, reason: reason ?? null },
     })
 
     return successResponse({ agentId, status: 'active' as const })

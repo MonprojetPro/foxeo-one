@@ -126,7 +126,11 @@ export const ActivityLog = z.object({
   eventType: ActivityLogTypeEnum,
   eventData: z.record(z.unknown()).optional(),
   description: z.string(),
-  createdAt: z.string().datetime({ offset: true })
+  createdAt: z.string().datetime({ offset: true }),
+  // Acteur de l'événement (actor_type en DB)
+  actorType: z.enum(['client', 'operator', 'system', 'elio']).optional(),
+  // Libellé FR de l'acteur, calculé côté serveur
+  actorLabel: z.string().optional(),
 })
 
 export type ActivityLog = z.infer<typeof ActivityLog>

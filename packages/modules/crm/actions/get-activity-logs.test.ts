@@ -5,7 +5,8 @@ import type { ActivityLog } from '../types/crm.types'
 // Mock Supabase server client
 const mockRange = vi.fn()
 const mockOrder = vi.fn(() => ({ range: mockRange }))
-const mockEq = vi.fn(() => ({ order: mockOrder }))
+const mockEq2 = vi.fn(() => ({ order: mockOrder }))
+const mockEq = vi.fn(() => ({ eq: mockEq2 }))
 const mockSelect = vi.fn(() => ({ eq: mockEq }))
 const mockFrom = vi.fn(() => ({ select: mockSelect }))
 const mockGetUser = vi.fn()
@@ -55,19 +56,23 @@ describe('getActivityLogs Server Action', () => {
       data: [
         {
           id: '550e8400-e29b-41d4-a716-446655440010',
-          client_id: '550e8400-e29b-41d4-a716-446655440001',
-          event_type: 'status_changed',
-          event_data: { from: 'lab-actif', to: 'one-actif' },
-          description: 'Statut change de Lab actif a One actif',
-          created_at: '2024-01-20T10:00:00Z',
+          actor_type: 'operator',
+          actor_id: '550e8400-e29b-41d4-a716-446655440000',
+          action: 'status_changed',
+          entity_type: 'client',
+          entity_id: '550e8400-e29b-41d4-a716-446655440001',
+          metadata: { from: 'lab-actif', to: 'one-actif' },
+          created_at: '2024-01-20T10:00:00+00:00',
         },
         {
           id: '550e8400-e29b-41d4-a716-446655440011',
-          client_id: '550e8400-e29b-41d4-a716-446655440001',
-          event_type: 'client_created',
-          event_data: null,
-          description: 'Client cree',
-          created_at: '2024-01-15T10:00:00Z',
+          actor_type: 'system',
+          actor_id: null,
+          action: 'client_created',
+          entity_type: 'client',
+          entity_id: '550e8400-e29b-41d4-a716-446655440001',
+          metadata: null,
+          created_at: '2024-01-15T10:00:00+00:00',
         },
       ],
       error: null,
@@ -85,7 +90,9 @@ describe('getActivityLogs Server Action', () => {
     expect(firstLog).toHaveProperty('eventType', 'status_changed')
     expect(firstLog).toHaveProperty('eventData')
     expect(firstLog).toHaveProperty('description')
-    expect(firstLog).toHaveProperty('createdAt', '2024-01-20T10:00:00Z')
+    expect(firstLog).toHaveProperty('createdAt', '2024-01-20T10:00:00+00:00')
+    expect(firstLog).toHaveProperty('actorType', 'operator')
+    expect(firstLog).toHaveProperty('actorLabel', 'par toi')
 
     // Verify snake_case fields are NOT present
     expect(firstLog).not.toHaveProperty('client_id')

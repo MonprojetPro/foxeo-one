@@ -54,13 +54,14 @@ export async function toggleAgentEnabled(
       return errorResponse('Impossible de modifier l\'agent', 'DATABASE_ERROR', updateError)
     }
 
+    // entity_type='client' + entity_id=clientId pour visibilité dans la timeline client
     await supabase.from('activity_logs').insert({
       actor_type: 'operator',
       actor_id: operator.id,
       action: `parcours_agent_${enabled ? 'enabled' : 'disabled'}`,
-      entity_type: 'client_parcours_agent',
-      entity_id: stepId,
-      metadata: { clientId, enabled },
+      entity_type: 'client',
+      entity_id: clientId,
+      metadata: { stepId, enabled },
     })
 
     return successResponse({ stepId, enabled })
