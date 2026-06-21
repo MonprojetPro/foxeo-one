@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, type KeyboardEvent } from 'react'
+import { useState, useRef, type KeyboardEvent, type CSSProperties } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Send, Loader2, ExternalLink, Bot, MessageCircle, PenLine, HelpCircle, Lock } from 'lucide-react'
 import { newConversation, sendToElio, saveElioMessage } from '@monprojetpro/module-elio'
@@ -42,10 +42,25 @@ const MODES: {
   },
 ]
 
-const MODE_ACTIVE: Record<OneMode, string> = {
-  'question': 'bg-[rgba(22,163,74,0.18)] border-[rgba(22,163,74,0.5)] text-[#4ade80]',
-  'brouillon': 'bg-[rgba(74,222,128,0.15)] border-[rgba(74,222,128,0.4)] text-[#86efac]',
-  'aide': 'bg-[rgba(22,163,74,0.12)] border-[rgba(22,163,74,0.35)] text-[#4ade80]',
+// Les classes Tailwind avec couleurs fixes sont remplacées par des styles inline
+// pour permettre à var(--brand-accent) de prendre le dessus.
+// MODE_ACTIVE n'est plus utilisé comme classes Tailwind mais comme styles CSS.
+const MODE_ACTIVE_STYLE: Record<OneMode, CSSProperties> = {
+  'question': {
+    background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 18%, transparent)',
+    border: '1px solid color-mix(in srgb, var(--brand-accent, #16a34a) 50%, transparent)',
+    color: 'var(--brand-accent, #4ade80)',
+  },
+  'brouillon': {
+    background: 'color-mix(in srgb, var(--brand-accent, #4ade80) 15%, transparent)',
+    border: '1px solid color-mix(in srgb, var(--brand-accent, #4ade80) 40%, transparent)',
+    color: 'color-mix(in srgb, var(--brand-accent, #86efac) 80%, white)',
+  },
+  'aide': {
+    background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 12%, transparent)',
+    border: '1px solid color-mix(in srgb, var(--brand-accent, #16a34a) 35%, transparent)',
+    color: 'var(--brand-accent, #4ade80)',
+  },
 }
 
 interface OneElioBoxProps {
@@ -92,7 +107,8 @@ export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
           </p>
           <Link
             href="/settings/consents"
-            className="self-start text-[10px] text-[#4ade80] hover:underline"
+            style={{ color: 'var(--brand-accent, #4ade80)' }}
+            className="self-start text-[10px] hover:underline"
           >
             Activer Élio →
           </Link>
@@ -150,15 +166,16 @@ export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
     <div className="flex flex-col gap-2 px-2 pb-2">
       {/* Header Élio + lien page complète */}
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-1.5">
-          <Bot className="h-3.5 w-3.5 text-[#4ade80]" />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#4ade80]">
+        <div className="flex items-center gap-1.5" style={{ color: 'var(--brand-accent, #4ade80)' }}>
+          <Bot className="h-3.5 w-3.5" />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em]">
             Élio
           </span>
         </div>
         <Link
           href={lastConvId ? `/modules/elio?conv=${lastConvId}` : '/modules/elio'}
-          className="flex items-center gap-0.5 text-[10px] text-[#6b7280] hover:text-[#4ade80] transition-colors"
+          style={{ color: '#6b7280' }}
+          className="flex items-center gap-0.5 text-[10px] transition-colors hover:[color:var(--brand-accent,#4ade80)]"
           title="Ouvrir la conversation complète"
         >
           Ouvrir
@@ -176,10 +193,11 @@ export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
                 setMode(m.id)
                 textareaRef.current?.focus()
               }}
+              style={mode === m.id ? MODE_ACTIVE_STYLE[m.id] : undefined}
               className={[
                 'h-7 w-7 rounded-full border flex items-center justify-center transition-all duration-150 cursor-pointer',
                 mode === m.id
-                  ? MODE_ACTIVE[m.id]
+                  ? ''
                   : 'bg-transparent border-[#2d2d2d] text-[#6b7280] hover:border-[#4d4d4d] hover:text-[#9ca3af]',
               ].join(' ')}
               aria-label={m.label}
@@ -198,8 +216,14 @@ export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
 
       {/* Chargement */}
       {isLoading && (
-        <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[rgba(22,163,74,0.05)] border border-[rgba(22,163,74,0.2)]">
-          <Loader2 className="h-3 w-3 text-[#4ade80] animate-spin shrink-0" />
+        <div
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg"
+          style={{
+            background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 5%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--brand-accent, #16a34a) 20%, transparent)',
+          }}
+        >
+          <Loader2 className="h-3 w-3 animate-spin shrink-0" style={{ color: 'var(--brand-accent, #4ade80)' }} />
           <span className="text-[11px] text-[#6b7280] italic">Élio réfléchit…</span>
         </div>
       )}
@@ -213,13 +237,20 @@ export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
 
       {/* Dernière réponse */}
       {!isLoading && lastReply && (
-        <div className="rounded-lg bg-[rgba(22,163,74,0.06)] border border-[rgba(22,163,74,0.2)] px-3 py-2 flex flex-col gap-1.5">
+        <div
+          className="rounded-lg px-3 py-2 flex flex-col gap-1.5"
+          style={{
+            background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 6%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--brand-accent, #16a34a) 20%, transparent)',
+          }}
+        >
           <p className="text-[11px] text-[#e5e7eb] line-clamp-3 leading-relaxed">
             {lastReply}
           </p>
           <Link
             href={lastConvId ? `/modules/elio?conv=${lastConvId}` : '/modules/elio'}
-            className="self-end text-[10px] text-[#4ade80] hover:underline flex items-center gap-0.5"
+            style={{ color: 'var(--brand-accent, #4ade80)' }}
+            className="self-end text-[10px] hover:underline flex items-center gap-0.5"
           >
             Voir dans Élio
             <ExternalLink className="h-2.5 w-2.5" />
@@ -229,21 +260,23 @@ export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
 
       {/* Zone de saisie */}
       <div
-        className={[
-          'relative rounded-2xl border transition-all duration-200',
-          isFocused
-            ? 'border-[rgba(22,163,74,0.5)] shadow-[0_0_0_1px_rgba(22,163,74,0.15),0_0_16px_rgba(22,163,74,0.1)]'
-            : 'border-[#2d2d2d]',
-          'bg-[#111]',
-        ].join(' ')}
+        className="relative rounded-2xl transition-all duration-200 bg-[#111]"
+        style={{
+          border: isFocused
+            ? '1px solid color-mix(in srgb, var(--brand-accent, #16a34a) 50%, transparent)'
+            : '1px solid #2d2d2d',
+          boxShadow: isFocused
+            ? '0 0 0 1px color-mix(in srgb, var(--brand-accent, #16a34a) 15%, transparent), 0 0 16px color-mix(in srgb, var(--brand-accent, #16a34a) 10%, transparent)'
+            : 'none',
+        }}
       >
         {/* Glow line bas */}
         <div
           className={[
             'absolute inset-x-3 bottom-0 h-px rounded-full transition-opacity duration-200',
-            'bg-gradient-to-r from-transparent via-[rgba(22,163,74,0.6)] to-transparent',
             isFocused ? 'opacity-100' : 'opacity-0',
           ].join(' ')}
+          style={{ background: 'linear-gradient(to right, transparent, color-mix(in srgb, var(--brand-accent, #16a34a) 60%, transparent), transparent)' }}
         />
 
         <textarea
@@ -271,11 +304,14 @@ export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
             onClick={() => void handleSend()}
             disabled={!input.trim() || isLoading}
             aria-label="Envoyer"
+            style={{
+              backgroundColor: 'var(--brand-accent, #16a34a)',
+              color: 'var(--brand-accent-fg, #ffffff)',
+            }}
             className={[
               'h-6 w-6 rounded-full flex items-center justify-center cursor-pointer',
               'transition-all duration-200',
-              'bg-[#16a34a] text-white',
-              'hover:bg-[#15b866] hover:shadow-[0_0_8px_rgba(22,163,74,0.4)]',
+              'hover:opacity-90',
               'disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none',
             ].join(' ')}
           >

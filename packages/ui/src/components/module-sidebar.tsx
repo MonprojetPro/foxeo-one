@@ -62,9 +62,11 @@ export function ModuleSidebar({ target, modules, elioWidget, badges }: ModuleSid
   const pathname = usePathname()
   const isLab = target === 'client-lab'
   const isOne = target === 'client-one'
-  const activeColor = isLab ? '#a78bfa' : '#4ade80'
-  const activeBg = isLab ? '#1e1557' : 'rgba(22,163,74,0.1)'
-  const activeBorder = isLab ? '#7c3aed' : '#16a34a'
+  // Mode One : on utilise les variables CSS injectées par le layout (--brand-accent) pour suivre
+  // la couleur custom du client. Mode Lab : violet fixe (pas de personnalisation brand Lab).
+  const activeColor = isLab ? '#a78bfa' : 'var(--brand-accent, #4ade80)'
+  const activeBg = isLab ? '#1e1557' : 'color-mix(in srgb, var(--brand-accent, #16a34a) 10%, transparent)'
+  const activeBorder = isLab ? '#7c3aed' : 'var(--brand-accent, #16a34a)'
 
   // En mode One, Élio sort de la liste principale (widget dédié en bas via elioWidget prop)
   const mainModules = isOne ? modules.filter(m => m.id !== 'elio') : modules

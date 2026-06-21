@@ -109,10 +109,11 @@ export function ModeToggle({
           type="button"
           onClick={() => handleClick('one')}
           aria-pressed={mode === 'one'}
+          style={mode === 'one' ? { backgroundColor: 'var(--brand-accent, #16a34a)', color: 'var(--brand-accent-fg, #ffffff)' } : undefined}
           className={cn(
             'flex-1 inline-flex items-center justify-center gap-1 rounded-full text-[12px] font-semibold tracking-[0.04em] uppercase transition-all duration-200',
             mode === 'one'
-              ? 'bg-[#16a34a] text-white'
+              ? ''
               : 'text-[#6b7280] hover:text-white',
             oneLocked && mode !== 'one' && 'opacity-70'
           )}

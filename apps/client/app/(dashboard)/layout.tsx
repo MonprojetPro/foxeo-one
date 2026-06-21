@@ -367,13 +367,34 @@ export default async function DashboardLayout({
   if (chatBadge) sidebarBadges.chat = chatBadge
 
   // Build accent color CSS override style
-  // --brand-accent : couleur personnalisée du client, utilisée partout dans le dashboard One
-  // --accent       : variable Tailwind standard (surcharge pour les composants UI shadcn/radix)
+  // --brand-accent     : couleur personnalisée du client, utilisée partout dans le dashboard One
+  // --brand-accent-fg  : foreground sur fond accent (blanc si bon contraste, noir sinon)
+  // --brand-accent-muted : version très transparente pour les fonds d'éléments secondaires
+  // --accent           : variable Tailwind standard (surcharge pour les composants UI shadcn/radix)
   // Fallback : vert One #16a34a quand pas de couleur définie
   const ONE_DEFAULT_ACCENT = '#16a34a'
   const effectiveAccent = accentColor ?? ONE_DEFAULT_ACCENT
+
+  // Calcul du foreground (blanc ou noir) selon la luminance de l'accent — WCAG AA large (ratio ≥ 3.0)
+  function computeAccentFg(hex: string): string {
+    const hexClean = hex.replace('#', '')
+    if (hexClean.length !== 6) return '#ffffff'
+    const r = parseInt(hexClean.slice(0, 2), 16) / 255
+    const g = parseInt(hexClean.slice(2, 4), 16) / 255
+    const b = parseInt(hexClean.slice(4, 6), 16) / 255
+    const toLinear = (c: number) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+    const lum = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
+    const contrastVsWhite = (1 + 0.05) / (lum + 0.05)
+    return contrastVsWhite >= 3.0 ? '#ffffff' : '#000000'
+  }
+
+  const accentFg = computeAccentFg(effectiveAccent)
+
   const accentStyle: React.CSSProperties = {
     '--brand-accent': effectiveAccent,
+    '--brand-accent-fg': accentFg,
+    '--brand-accent-muted': `color-mix(in srgb, ${effectiveAccent} 12%, transparent)`,
+    '--brand-accent-border': `color-mix(in srgb, ${effectiveAccent} 30%, transparent)`,
     ...(accentColor ? { '--accent': accentColor } : {}),
   } as React.CSSProperties
 
