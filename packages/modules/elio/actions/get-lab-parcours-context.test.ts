@@ -54,6 +54,17 @@ describe('getLabParcoursContext', () => {
     expect(ctx).toContain('Élio Cible')
     expect(ctx).toContain('Étape en cours')
     expect(ctx).not.toContain('EN PAUSE')
+    // Défaut (pas de parcours_mode) → tracé
+    expect(ctx).toContain('TRACÉ')
+  })
+
+  it('indique le mode LIBRE quand parcours_mode=libre', async () => {
+    agentsData.value = [
+      { step_order: 1, step_label: 'Élio Cible', status: 'active', is_enabled: true },
+    ]
+    cfgData.value = { elio_lab_enabled: true, parcours_mode: 'libre' }
+    const ctx = await getLabParcoursContext('client-1')
+    expect(ctx).toContain('LIBRE')
   })
 
   it('signale les agents en pause quand elio_lab_enabled=false', async () => {

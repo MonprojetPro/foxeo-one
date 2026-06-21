@@ -35,11 +35,12 @@ export async function getLabParcoursContext(clientId: string): Promise<string | 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: cfg } = await (supabase as any)
       .from('client_configs')
-      .select('elio_lab_enabled')
+      .select('elio_lab_enabled, parcours_mode')
       .eq('client_id', clientId)
-      .maybeSingle() as { data: { elio_lab_enabled: boolean | null } | null }
+      .maybeSingle() as { data: { elio_lab_enabled: boolean | null; parcours_mode: string | null } | null }
 
     const agentsPaused = cfg?.elio_lab_enabled === false
+    const isLibre = cfg?.parcours_mode === 'libre'
 
     // Les agents désactivés (is_enabled=false) ne comptent pas dans la progression.
     const enabled = agents.filter((a) => a.is_enabled !== false)
@@ -49,6 +50,11 @@ export async function getLabParcoursContext(clientId: string): Promise<string | 
     const allCompleted = total > 0 && completed === total
 
     const lines: string[] = []
+    lines.push(
+      isLibre
+        ? '- Mode du parcours : LIBRE (toutes les étapes activées sont ouvertes ; le client avance dans l\'ordre qu\'il veut, en parallèle s\'il le souhaite).'
+        : '- Mode du parcours : TRACÉ (séquentiel : une étape à la fois, la suivante se débloque à la validation par MiKL).'
+    )
     lines.push(`- Progression : ${completed}/${total} étape(s) terminée(s).`)
 
     if (current) {
