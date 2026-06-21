@@ -28,4 +28,8 @@ export const PREF_LABELS: Record<
     label: 'Paiements',
     description: 'Informations relatives à votre abonnement',
   },
+  tool_update: {
+    label: "Suivi de l'outil",
+    description: "Mises à jour et évolutions de la plateforme MonprojetPro",
+  },
 }

@@ -17,6 +17,7 @@ import { manifest as docsMani } from '@monprojetpro/module-documents/manifest'
 import { manifest as visioMani } from '@monprojetpro/module-visio/manifest'
 import { manifest as facturationMani } from '@monprojetpro/modules-facturation/manifest'
 import { manifest as supportMani } from '@monprojetpro/modules-support/manifest'
+import { manifest as suiviOutilMani } from '@monprojetpro/module-suivi-outil/manifest'
 import { coreDashboardManifest as coreMani } from '@monprojetpro/module-core-dashboard/manifest'
 import type { ModuleManifest } from '@monprojetpro/types'
 
@@ -32,6 +33,7 @@ const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
   visioMani,     // Lab + One → /modules/visio
   facturationMani, // One → /modules/facturation
   supportMani,   // Lab + One → /modules/support
+  suiviOutilMani, // Lab + One → /modules/suivi-outil
 ]
 import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { CURRENT_IA_POLICY_VERSION, resolveClientMode } from '@monprojetpro/utils'
