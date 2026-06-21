@@ -114,8 +114,8 @@ export { useClientCommunicationProfile } from './hooks/use-communication-profile
 export { integrateObservation, type ObservationTarget } from './actions/integrate-observation'
 export { getElioObservations, type ElioObservation } from './actions/get-elio-observations'
 export { updateClientBranding } from './actions/update-client-branding'
-export { uploadClientLogo } from './actions/upload-client-logo'
 export { getClientBranding } from './actions/get-client-branding'
+export { updateOwnBranding } from './actions/update-own-branding'
 
 // Utils
 export {

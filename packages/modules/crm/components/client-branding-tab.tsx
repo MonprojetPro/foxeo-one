@@ -4,7 +4,15 @@ import { useEffect, useState } from 'react'
 import { Skeleton, showError } from '@monprojetpro/ui'
 import type { CustomBranding } from '@monprojetpro/types'
 import { getClientBranding } from '../actions/get-client-branding'
+import { updateClientBranding } from '../actions/update-client-branding'
 import { ClientBrandingForm } from './client-branding-form'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ClientBrandingTab — utilisé dans le Hub (côté opérateur)
+// Passe l'action opérateur updateClientBranding à ClientBrandingForm via la
+// prop onUpdateBranding. L'upload de logo a été abandonné (2026-06-21) au
+// profit du modèle symbole MPP + nom d'entreprise en texte.
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface ClientBrandingTabProps {
   clientId: string
@@ -52,6 +60,7 @@ export function ClientBrandingTab({ clientId, clientCompanyName }: ClientBrandin
       clientId={clientId}
       initialBranding={branding}
       clientCompanyName={clientCompanyName}
+      onUpdateBranding={updateClientBranding}
     />
   )
 }

@@ -3,16 +3,18 @@ import { render, fireEvent, waitFor } from '@testing-library/react'
 import { createElement } from 'react'
 import { ClientBrandingForm } from './client-branding-form'
 
-const mockUpdateClientBranding = vi.fn()
-const mockUploadClientLogo = vi.fn()
+// ─────────────────────────────────────────────────────────────────────────────
+// ClientBrandingForm tests — v3 (sans upload de logo)
+//
+// Depuis 2026-06-21 : l'upload de logo est abandonné. Le composant gère
+// uniquement le nom d'entreprise (displayName) et la couleur d'accent.
+// La preview montre le symbole MPP + nom.
+//
+// Les actions sont injectées en props — isolation totale et agnostique du
+// contexte (Hub ou client One).
+// ─────────────────────────────────────────────────────────────────────────────
 
-vi.mock('../actions/update-client-branding', () => ({
-  updateClientBranding: (...args: unknown[]) => mockUpdateClientBranding(...args),
-}))
-
-vi.mock('../actions/upload-client-logo', () => ({
-  uploadClientLogo: (...args: unknown[]) => mockUploadClientLogo(...args),
-}))
+const mockUpdateBranding = vi.fn()
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, unknown>
@@ -35,16 +37,27 @@ vi.mock('@monprojetpro/ui', async (importOriginal) => {
   }
 })
 
+/** Props par défaut — injecte le mock onUpdateBranding */
+function defaultProps(overrides: Record<string, unknown> = {}) {
+  return {
+    clientId: 'c-1',
+    onUpdateBranding: mockUpdateBranding,
+    ...overrides,
+  }
+}
+
 describe('ClientBrandingForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUpdateClientBranding.mockResolvedValue({ data: { logoUrl: null, displayName: null, accentColor: null, updatedAt: '2026-01-01' }, error: null })
-    mockUploadClientLogo.mockResolvedValue({ data: { logoUrl: 'https://uploaded.png' }, error: null })
+    mockUpdateBranding.mockResolvedValue({
+      data: { logoUrl: null, displayName: null, accentColor: null, updatedAt: '2026-01-01' },
+      error: null,
+    })
   })
 
-  it('renders with default values when no initial branding', () => {
+  it('renders with default accent color when no initial branding', () => {
     const { container } = render(
-      createElement(ClientBrandingForm, { clientId: 'c-1', clientCompanyName: 'Acme' }),
+      createElement(ClientBrandingForm, defaultProps({ clientCompanyName: 'Acme' })),
     )
     const colorInput = container.querySelector('input[type="color"]')
     expect(colorInput).toBeTruthy()
@@ -53,69 +66,62 @@ describe('ClientBrandingForm', () => {
 
   it('renders with initial branding values', () => {
     const { container } = render(
-      createElement(ClientBrandingForm, {
-        clientId: 'c-1',
-        initialBranding: { logoUrl: 'https://logo.png', displayName: 'ACME Corp', accentColor: '#FF5733', updatedAt: '2026-01-01' },
-      }),
+      createElement(ClientBrandingForm, defaultProps({
+        initialBranding: { logoUrl: null, displayName: 'ACME Corp', accentColor: '#FF5733', updatedAt: '2026-01-01' },
+      })),
     )
     const textInputs = container.querySelectorAll('input[type="text"], input[data-testid]')
     const nameInput = Array.from(textInputs).find((el) => (el as HTMLInputElement).value === 'ACME Corp')
     expect(nameInput).toBeTruthy()
   })
 
-  it('shows logo preview when initial logoUrl exists', () => {
+  it('shows company name in preview', () => {
     const { container } = render(
-      createElement(ClientBrandingForm, {
-        clientId: 'c-1',
-        initialBranding: { logoUrl: 'https://logo.png', displayName: null, accentColor: null, updatedAt: '2026-01-01' },
-      }),
+      createElement(ClientBrandingForm, defaultProps({ clientCompanyName: 'Acme' })),
     )
-    const img = container.querySelector('img[alt="Aperçu logo"]')
-    expect(img).toBeTruthy()
-    expect((img as HTMLImageElement)?.src).toContain('logo.png')
-  })
-
-  it('updates preview name in real-time when displayName changes', () => {
-    const { container } = render(
-      createElement(ClientBrandingForm, { clientId: 'c-1', clientCompanyName: 'Acme' }),
-    )
-    // Initial preview shows company name
     expect(container.textContent).toContain('Acme')
   })
 
-  it('calls updateClientBranding on save', async () => {
+  it('does not render file upload input', () => {
     const { container } = render(
-      createElement(ClientBrandingForm, { clientId: 'c-1', clientCompanyName: 'Acme' }),
+      createElement(ClientBrandingForm, defaultProps()),
+    )
+    const fileInput = container.querySelector('input[type="file"]')
+    expect(fileInput).toBeNull()
+  })
+
+  it('calls onUpdateBranding with displayName and accentColor on save', async () => {
+    const { container } = render(
+      createElement(ClientBrandingForm, defaultProps({ clientCompanyName: 'Acme' })),
     )
     const saveBtn = container.querySelector('[data-testid="btn-sauvegarder"]')
     expect(saveBtn).toBeTruthy()
     fireEvent.click(saveBtn!)
     await waitFor(() => {
-      expect(mockUpdateClientBranding).toHaveBeenCalledWith('c-1', expect.objectContaining({
+      expect(mockUpdateBranding).toHaveBeenCalledWith('c-1', expect.objectContaining({
         displayName: null,
         accentColor: '#16a34a',
       }))
     })
+    // Ne doit PAS inclure logoUrl dans le payload (plus de gestion logo)
+    const callArg = mockUpdateBranding.mock.calls[0][1]
+    expect(callArg).not.toHaveProperty('logoUrl')
   })
 
-  it('calls updateClientBranding with null values on reset (after confirmation)', async () => {
+  it('calls onUpdateBranding with null values on reset (after confirmation)', async () => {
     const { container } = render(
-      createElement(ClientBrandingForm, {
-        clientId: 'c-1',
-        initialBranding: { logoUrl: 'https://logo.png', displayName: 'ACME', accentColor: '#FF5733', updatedAt: '2026-01-01' },
-      }),
+      createElement(ClientBrandingForm, defaultProps({
+        initialBranding: { logoUrl: null, displayName: 'ACME', accentColor: '#FF5733', updatedAt: '2026-01-01' },
+      })),
     )
-    // 1er click : ouvre la confirmation
     const resetBtn = container.querySelector('[data-testid="btn-rinitialiser"]')
     expect(resetBtn).toBeTruthy()
     fireEvent.click(resetBtn!)
 
-    // Attendre que le bouton "Confirmer" apparaisse
     await waitFor(() => {
       expect(container.textContent).toContain('Confirmer')
     })
 
-    // 2ème click : confirme la réinitialisation
     const confirmBtn = Array.from(container.querySelectorAll('button')).find(
       (b) => b.textContent?.trim() === 'Confirmer'
     )
@@ -123,95 +129,35 @@ describe('ClientBrandingForm', () => {
     fireEvent.click(confirmBtn!)
 
     await waitFor(() => {
-      expect(mockUpdateClientBranding).toHaveBeenCalledWith('c-1', {
-        logoUrl: null,
+      expect(mockUpdateBranding).toHaveBeenCalledWith('c-1', {
         displayName: null,
         accentColor: null,
       })
     })
   })
 
-  it('uploads logo before saving branding when file selected', async () => {
+  it('renders preview section with symbol placeholder and displayName', () => {
     const { container } = render(
-      createElement(ClientBrandingForm, { clientId: 'c-1' }),
-    )
-    const fileInput = container.querySelector('input[type="file"]')
-    expect(fileInput).toBeTruthy()
-
-    const pngFile = new File(['data'], 'test.png', { type: 'image/png' })
-    fireEvent.change(fileInput!, { target: { files: [pngFile] } })
-
-    const saveBtn = container.querySelector('[data-testid="btn-sauvegarder"]')
-    fireEvent.click(saveBtn!)
-
-    await waitFor(() => {
-      expect(mockUploadClientLogo).toHaveBeenCalledWith('c-1', expect.any(FormData))
-      expect(mockUpdateClientBranding).toHaveBeenCalledWith('c-1', expect.objectContaining({
-        logoUrl: 'https://uploaded.png',
-      }))
-    })
-  })
-
-  it('shows error when upload fails', async () => {
-    mockUploadClientLogo.mockResolvedValue({ data: null, error: { message: 'Upload failed', code: 'STORAGE_ERROR' } })
-
-    const { container } = render(
-      createElement(ClientBrandingForm, { clientId: 'c-1' }),
-    )
-    const fileInput = container.querySelector('input[type="file"]')
-    const pngFile = new File(['data'], 'test.png', { type: 'image/png' })
-    fireEvent.change(fileInput!, { target: { files: [pngFile] } })
-
-    const saveBtn = container.querySelector('[data-testid="btn-sauvegarder"]')
-    fireEvent.click(saveBtn!)
-
-    const { showError } = await import('@monprojetpro/ui')
-    await waitFor(() => {
-      expect(showError).toHaveBeenCalledWith('Upload failed')
-    })
-  })
-
-  it('validates file type client-side on change', async () => {
-    const { container } = render(
-      createElement(ClientBrandingForm, { clientId: 'c-1' }),
-    )
-    const fileInput = container.querySelector('input[type="file"]')
-    const jpgFile = new File(['data'], 'test.jpg', { type: 'image/jpeg' })
-    fireEvent.change(fileInput!, { target: { files: [jpgFile] } })
-
-    const { showError } = await import('@monprojetpro/ui')
-    expect(showError).toHaveBeenCalledWith('Format non supporté. Utilisez PNG ou SVG.')
-  })
-
-  it('validates file size client-side on change', async () => {
-    const { container } = render(
-      createElement(ClientBrandingForm, { clientId: 'c-1' }),
-    )
-    const fileInput = container.querySelector('input[type="file"]')
-    const bigFile = new File([new ArrayBuffer(3 * 1024 * 1024)], 'big.png', { type: 'image/png' })
-    fireEvent.change(fileInput!, { target: { files: [bigFile] } })
-
-    const { showError } = await import('@monprojetpro/ui')
-    expect(showError).toHaveBeenCalledWith('Le fichier dépasse 2 Mo.')
-  })
-
-  it('renders preview section with accent color background', () => {
-    const { container } = render(
-      createElement(ClientBrandingForm, {
-        clientId: 'c-1',
+      createElement(ClientBrandingForm, defaultProps({
         initialBranding: { logoUrl: null, displayName: 'Test Co', accentColor: '#FF0000', updatedAt: '2026-01-01' },
-      }),
+      })),
     )
     expect(container.textContent).toContain('Aperçu')
     expect(container.textContent).toContain('Test Co')
   })
 
+  it('shows placeholder text in preview when no displayName', () => {
+    const { container } = render(
+      createElement(ClientBrandingForm, defaultProps()),
+    )
+    expect(container.textContent).toContain('Votre nom ici')
+  })
+
   it('disables buttons while saving', async () => {
-    // Make the update hang
-    mockUpdateClientBranding.mockImplementation(() => new Promise(() => {}))
+    mockUpdateBranding.mockImplementation(() => new Promise(() => {}))
 
     const { container } = render(
-      createElement(ClientBrandingForm, { clientId: 'c-1' }),
+      createElement(ClientBrandingForm, defaultProps()),
     )
     const saveBtn = container.querySelector('[data-testid="btn-sauvegarder"]')
     fireEvent.click(saveBtn!)
@@ -223,16 +169,48 @@ describe('ClientBrandingForm', () => {
 
   it('shows error when accent color is invalid hex on save', async () => {
     const { container } = render(
-      createElement(ClientBrandingForm, {
-        clientId: 'c-1',
+      createElement(ClientBrandingForm, defaultProps({
         initialBranding: { logoUrl: null, displayName: null, accentColor: 'red', updatedAt: '2026-01-01' },
-      }),
+      })),
     )
     const saveBtn = container.querySelector('[data-testid="btn-sauvegarder"]')
     fireEvent.click(saveBtn!)
 
     const { showError } = await import('@monprojetpro/ui')
     expect(showError).toHaveBeenCalledWith("Couleur d'accent invalide. Format attendu : #RRGGBB (ex: #16a34a)")
-    expect(mockUpdateClientBranding).not.toHaveBeenCalled()
+    expect(mockUpdateBranding).not.toHaveBeenCalled()
+  })
+
+  it('uses custom successMessage when provided', async () => {
+    const { container } = render(
+      createElement(ClientBrandingForm, defaultProps({
+        successMessage: 'Votre apparence a été mise à jour !',
+      })),
+    )
+    const saveBtn = container.querySelector('[data-testid="btn-sauvegarder"]')
+    fireEvent.click(saveBtn!)
+
+    const { showSuccess } = await import('@monprojetpro/ui')
+    await waitFor(() => {
+      expect(showSuccess).toHaveBeenCalledWith('Votre apparence a été mise à jour !')
+    })
+  })
+
+  it('syncs state when initialBranding prop changes', async () => {
+    // Premier rendu sans branding
+    const { container, rerender } = render(
+      createElement(ClientBrandingForm, defaultProps()),
+    )
+    let colorInput = container.querySelector('input[type="color"]')
+    expect((colorInput as HTMLInputElement)?.value).toBe('#16a34a')
+
+    // Mise à jour des props (ex: Hub charge les données en async)
+    rerender(
+      createElement(ClientBrandingForm, defaultProps({
+        initialBranding: { logoUrl: null, displayName: 'Loaded Co', accentColor: '#3b82f6', updatedAt: '2026-01-01' },
+      })),
+    )
+    colorInput = container.querySelector('input[type="color"]')
+    expect((colorInput as HTMLInputElement)?.value).toBe('#3b82f6')
   })
 })

@@ -1,5 +1,8 @@
 import Link from 'next/link'
+import { cookies } from 'next/headers'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
+import { resolveClientMode } from '@monprojetpro/utils'
 import { RestartTourButton } from '../../components/onboarding/restart-tour-button'
 import { ParcoursSettingsSection } from './parcours-settings-section'
 import { DataExportSection } from './data-export-section'
@@ -9,17 +12,51 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   let clientId: string | null = null
+  let isOneMode = false
+
   if (user) {
     const { data: client } = await supabase
       .from('clients')
-      .select('id')
+      .select('id, client_configs(dashboard_type, lab_mode_available, one_mode_available)')
       .eq('auth_user_id', user.id)
       .maybeSingle()
+
     clientId = client?.id ?? null
+
+    // Détecter le mode actif pour afficher conditionnellement la section Apparence
+    if (client) {
+      const configRelation = client.client_configs
+      const clientConfig = Array.isArray(configRelation) ? configRelation[0] : configRelation
+      const cookieStore = await cookies()
+      const { activeMode } = resolveClientMode({
+        dashboardType: clientConfig?.dashboard_type,
+        labModeAvailable: clientConfig?.lab_mode_available ?? false,
+        oneModeAvailable: clientConfig?.one_mode_available ?? false,
+        cookieMode: cookieStore.get(MODE_TOGGLE_COOKIE)?.value,
+      })
+      isOneMode = activeMode === 'one'
+    }
   }
 
   return (
     <div className="space-y-4">
+
+      {/* Apparence — visible en mode One uniquement (branding personnalisé) */}
+      {isOneMode && (
+        <Link
+          href="/settings/appearance"
+          className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+        >
+          <div>
+            <h2 className="text-base font-medium text-foreground">Apparence</h2>
+            <p className="text-sm text-muted-foreground">
+              Personnalisez votre logo, nom affiché et couleur d&apos;accent
+            </p>
+          </div>
+          <span className="text-muted-foreground">&rarr;</span>
+        </Link>
+      )}
+
       <Link
         href="/settings/sessions"
         className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"

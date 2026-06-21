@@ -50,14 +50,12 @@ import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 function ClientSidebar({
   dashboardType,
   activeModules,
-  logoUrl,
   userId,
   badges,
   iaConsentGranted,
 }: {
   dashboardType: string
   activeModules: string[]
-  logoUrl?: string | null
   userId: string
   badges?: Record<string, ModuleSidebarBadge>
   iaConsentGranted: boolean
@@ -176,7 +174,6 @@ async function computeChatBadge(
 
 function ClientHeader({
   authUserId,
-  logoUrl,
   displayName,
   activeMode,
   labModeAvailable,
@@ -185,7 +182,6 @@ function ClientHeader({
   userInitials,
 }: {
   authUserId: string
-  logoUrl?: string | null
   displayName?: string | null
   activeMode: 'lab' | 'one'
   labModeAvailable: boolean
@@ -201,29 +197,32 @@ function ClientHeader({
     ? `linear-gradient(135deg, ${labAccentFrom}, ${labAccentTo})`
     : 'linear-gradient(135deg, var(--brand-accent, #16a34a), color-mix(in srgb, var(--brand-accent, #16a34a) 60%, white))'
 
-  // Nom affiché dans le header : priorité → displayName custom → logo → rien (logo suffit)
-  const brandName = displayName ?? (activeMode === 'lab' ? 'MonprojetPro Lab' : 'MonprojetPro One')
-
   return (
     <div className="flex w-full items-center justify-between relative">
-      {/* Gauche — logo + displayName */}
+      {/* Gauche — logo + displayName
+          Logique (mode One) :
+            - displayName défini → symbole MPP blanc + nom en texte blanc Poppins gras
+            - pas de displayName → logo /logos/logo-one.png (vert, défaut)
+          Mode Lab : logo /logos/logo-lab.png — inchangé */}
       <div className="flex items-center gap-2" style={{ width: 220 }}>
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt={brandName} className="h-8 w-auto object-contain" />
-        ) : activeMode === 'lab' ? (
+        {activeMode === 'lab' ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logos/logo-lab.png" alt="MonprojetPro Lab" className="w-auto object-contain" style={{ height: '60px' }} />
+        ) : displayName ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logos/logo-symbol.png" alt="MonprojetPro" className="w-auto object-contain shrink-0" style={{ height: '36px' }} />
+            <span
+              className="font-bold truncate max-w-[140px] text-white"
+              style={{ fontFamily: 'Poppins, sans-serif', fontSize: '1rem', lineHeight: 1.2 }}
+              title={displayName}
+            >
+              {displayName}
+            </span>
+          </>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logos/logo-one.png" alt="MonprojetPro One" className="w-auto object-contain" style={{ height: '60px' }} />
-        )}
-        {/* displayName personnalisé : affiché seulement quand défini ET pas de logo custom
-            (quand il y a un logo, le logo porte déjà l'identité de marque) */}
-        {displayName && !logoUrl && (
-          <span className="text-sm font-semibold truncate max-w-[120px]" title={displayName}>
-            {displayName}
-          </span>
         )}
       </div>
 
@@ -349,9 +348,10 @@ export default async function DashboardLayout({
   const density = activeMode === 'one' ? 'comfortable' : 'spacious'
 
   // Custom branding (from Hub operator configuration)
+  // Note : logoUrl est conservé dans le type CustomBranding pour rétro-compat DB mais
+  // n'est plus affiché dans le header depuis 2026-06-21 (modèle symbole MPP + nom texte).
   const customBranding = (clientConfig?.custom_branding ?? null) as CustomBranding | null
   const accentColor = customBranding?.accentColor ?? null
-  const logoUrl = customBranding?.logoUrl ?? null
   const displayName = customBranding?.displayName ?? null
 
   // Badges sidebar — calculés côté serveur, propagés via prop (Kit Complet).
@@ -406,12 +406,11 @@ export default async function DashboardLayout({
       <DashboardShell
         density={density}
         sidebar={
-          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} logoUrl={logoUrl} userId={user?.id ?? ''} badges={sidebarBadges} iaConsentGranted={iaConsentGranted} />
+          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} userId={user?.id ?? ''} badges={sidebarBadges} iaConsentGranted={iaConsentGranted} />
         }
         header={
           <ClientHeader
             authUserId={user?.id ?? ''}
-            logoUrl={logoUrl}
             displayName={displayName}
             activeMode={activeMode}
             labModeAvailable={labModeAvailable}
