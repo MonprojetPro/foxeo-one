@@ -5,6 +5,9 @@ import { ClientCockpitTab } from './client-cockpit-tab'
 
 const CLIENT_ID = '550e8400-e29b-41d4-a716-446655440001'
 const mockNavigate = vi.fn()
+const mockRouterPush = vi.fn()
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mockRouterPush }) }))
 
 const clientData = {
   id: CLIENT_ID,
@@ -25,11 +28,13 @@ const state: {
   pending: { count: number }
   activity: unknown
   instance: unknown
+  toolTracking: unknown
 } = {
   parcours: null,
   pending: { count: 0 },
   activity: { firstLoginAt: '2026-01-02T00:00:00Z', lastActivityAt: '2026-06-19T00:00:00Z', daysSinceActivity: 1, isInactive: false },
   instance: null,
+  toolTracking: { postCount: 0, clientCommentCount: 0, lastActivityAt: null },
 }
 
 vi.mock('../hooks/use-client', () => ({ useClient: () => ({ data: clientData }) }))
@@ -39,6 +44,7 @@ vi.mock('../hooks/use-client-activity-snapshot', () => ({ useClientActivitySnaps
 vi.mock('../hooks/use-client-instance', () => ({ useClientInstance: () => ({ data: state.instance }) }))
 vi.mock('../hooks/use-client-tab-nav', () => ({ useClientTabNav: () => ({ activeTab: 'pilote', navigateToTab: mockNavigate }) }))
 vi.mock('../hooks/use-client-cockpit-realtime', () => ({ useClientCockpitRealtime: () => {} }))
+vi.mock('../hooks/use-client-tool-tracking-summary', () => ({ useClientToolTrackingSummary: () => ({ data: state.toolTracking, isLoading: false }) }))
 
 // Enfants avec hooks propres → stubs
 vi.mock('./access-toggles', () => ({ AccessToggles: () => <div data-testid="access-toggles-stub" /> }))
@@ -61,6 +67,7 @@ describe('ClientCockpitTab', () => {
     state.pending = { count: 0 }
     state.activity = { firstLoginAt: '2026-01-02T00:00:00Z', lastActivityAt: '2026-06-19T00:00:00Z', daysSinceActivity: 1, isInactive: false }
     state.instance = null
+    state.toolTracking = { postCount: 0, clientCommentCount: 0, lastActivityAt: null }
   })
 
   it('montre « Rien à traiter » quand aucune tâche', () => {

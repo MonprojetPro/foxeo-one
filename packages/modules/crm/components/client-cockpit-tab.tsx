@@ -1,14 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Card, CardContent, CardHeader, CardTitle, Badge, Button,
 } from '@monprojetpro/ui'
 import {
   AlertCircle, CheckCircle2, TrendingUp, Activity, Zap, GraduationCap,
-  ArrowRight, CircleSlash, CreditCard, FlaskConical, ExternalLink,
+  ArrowRight, CircleSlash, CreditCard, FlaskConical, ExternalLink, Rss,
 } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { useClient } from '../hooks/use-client'
 import { useClientParcours } from '../hooks/use-client-parcours'
@@ -17,6 +18,7 @@ import { useClientActivitySnapshot } from '../hooks/use-client-activity-snapshot
 import { useClientInstance } from '../hooks/use-client-instance'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
 import { useClientCockpitRealtime } from '../hooks/use-client-cockpit-realtime'
+import { useClientToolTrackingSummary } from '../hooks/use-client-tool-tracking-summary'
 import { AccessToggles } from './access-toggles'
 import { ParcoursModeSelector } from './parcours-mode-selector'
 import { ParcoursStatusBadge } from './parcours-status-badge'
@@ -74,11 +76,13 @@ function TodoRow({
 }
 
 export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTabProps) {
+  const router = useRouter()
   const { data: client } = useClient(clientId)
   const { data: parcours } = useClientParcours(clientId)
   const { data: pendingValidations } = useClientPendingValidations(clientId)
   const { data: activity } = useClientActivitySnapshot(clientId)
   const { data: instance } = useClientInstance(clientId)
+  const { data: toolSummary, isLoading: toolSummaryLoading } = useClientToolTrackingSummary(clientId)
   const { navigateToTab } = useClientTabNav('pilote')
 
   // Rafraîchissement live (soumission / validation / progression) via broadcast DB.
@@ -212,6 +216,60 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
               Inactif depuis {activity.daysSinceActivity} jours — relance Concierge automatique active.
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* ──────────── G — Suivi de l'outil ──────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center justify-between gap-2 text-base">
+            <span className="flex items-center gap-2">
+              <Rss className="h-4 w-4 text-emerald-400" />
+              Suivi de l'outil
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          {toolSummaryLoading ? (
+            <div className="space-y-2">
+              <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+            </div>
+          ) : toolSummary && toolSummary.postCount > 0 ? (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Publications</span>
+                <span className="font-medium">{toolSummary.postCount}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Réactions du client</span>
+                <span className="font-medium">{toolSummary.clientCommentCount}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Dernière activité</span>
+                <span className="font-medium">
+                  {toolSummary.lastActivityAt
+                    ? formatDistanceToNow(new Date(toolSummary.lastActivityAt), { addSuffix: true, locale: fr })
+                    : '—'}
+                </span>
+              </div>
+            </>
+          ) : (
+            <p className="flex items-center gap-2 text-muted-foreground">
+              <CircleSlash className="h-4 w-4" />
+              Aucune publication pour l'instant.
+            </p>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full mt-1"
+            onClick={() => router.push(`/modules/suivi-outil/${clientId}`)}
+            data-testid="cockpit-open-suivi-outil"
+          >
+            Ouvrir le suivi
+            <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
         </CardContent>
       </Card>
 
