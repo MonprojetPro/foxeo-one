@@ -16,11 +16,11 @@ vi.mock('@monprojetpro/supabase/server', () => ({
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function makeOperatorUser() {
-  return { id: 'op-uuid', app_metadata: { role: 'operator' } }
+  return { id: 'op-uuid', app_metadata: {} }
 }
 
 function makeClientUser(clientUserId = 'client-auth-uuid') {
-  return { id: clientUserId, app_metadata: { role: 'client' } }
+  return { id: clientUserId, app_metadata: {} }
 }
 
 function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
@@ -35,6 +35,36 @@ function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
     updated_at: new Date().toISOString(),
     ...overrides,
   }
+}
+
+/**
+ * Mocke les accès tables. La détection opérateur se fait via la table `operators`
+ * (le rôle n'est PAS dans app_metadata).
+ * - operator : record renvoyé par from('operators') (null = pas opérateur)
+ * - client   : record renvoyé par from('clients') (null = accès refusé)
+ * - rows     : posts renvoyés par from('tool_posts')
+ */
+function mockTables({
+  operator = null,
+  client = null,
+  rows = [] as unknown[],
+}: { operator?: unknown; client?: unknown; rows?: unknown[] }) {
+  mockFrom.mockImplementation((table: string) => {
+    if (table === 'operators') {
+      return {
+        select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: operator, error: null }) }) }),
+      }
+    }
+    if (table === 'clients') {
+      return {
+        select: () => ({ eq: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: client, error: null }) }) }) }),
+      }
+    }
+    // tool_posts
+    return {
+      select: () => ({ eq: () => ({ order: () => Promise.resolve({ data: rows, error: null }) }) }),
+    }
+  })
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
@@ -54,14 +84,16 @@ describe('getToolPosts', () => {
     expect(result.error?.code).toBe('AUTH_REQUIRED')
   })
 
+  it('refuse un client qui demande un autre clientId (FORBIDDEN)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: makeClientUser() }, error: null })
+    mockTables({ operator: null, client: null }) // ni opérateur, ni propriétaire
+    const result = await getToolPosts('autre-client-uuid')
+    expect(result.error?.code).toBe('FORBIDDEN')
+  })
+
   it('retourne les posts transformés en camelCase pour un opérateur', async () => {
     mockGetUser.mockResolvedValue({ data: { user: makeOperatorUser() }, error: null })
-
-    const rows = [makeRow()]
-    const orderMock = vi.fn().mockResolvedValue({ data: rows, error: null })
-    const eqMock = vi.fn().mockReturnValue({ order: orderMock })
-    const selectMock = vi.fn().mockReturnValue({ eq: eqMock })
-    mockFrom.mockReturnValue({ select: selectMock })
+    mockTables({ operator: { id: 'op-uuid' }, rows: [makeRow()] })
 
     const result = await getToolPosts('client-uuid')
 
@@ -72,14 +104,18 @@ describe('getToolPosts', () => {
     expect(result.data?.[0].imageUrls).toEqual([])
   })
 
+  it('autorise un client propriétaire de son clientId', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: makeClientUser() }, error: null })
+    mockTables({ operator: null, client: { id: 'client-uuid' }, rows: [makeRow()] })
+
+    const result = await getToolPosts('client-uuid')
+    expect(result.error).toBeNull()
+    expect(result.data).toHaveLength(1)
+  })
+
   it('génère les URLs signées pour les images', async () => {
     mockGetUser.mockResolvedValue({ data: { user: makeOperatorUser() }, error: null })
-
-    const rows = [makeRow({ image_paths: ['op-uuid/client-uuid/img.png'] })]
-    const orderMock = vi.fn().mockResolvedValue({ data: rows, error: null })
-    const eqMock = vi.fn().mockReturnValue({ order: orderMock })
-    const selectMock = vi.fn().mockReturnValue({ eq: eqMock })
-    mockFrom.mockReturnValue({ select: selectMock })
+    mockTables({ operator: { id: 'op-uuid' }, rows: [makeRow({ image_paths: ['op-uuid/client-uuid/img.png'] })] })
 
     const signedData = [{ signedUrl: 'https://storage.example.com/signed-url' }]
     const createSignedUrlsMock = vi.fn().mockResolvedValue({ data: signedData, error: null })
@@ -87,20 +123,13 @@ describe('getToolPosts', () => {
 
     const result = await getToolPosts('client-uuid')
 
-    expect(createSignedUrlsMock).toHaveBeenCalledWith(
-      ['op-uuid/client-uuid/img.png'],
-      3600
-    )
+    expect(createSignedUrlsMock).toHaveBeenCalledWith(['op-uuid/client-uuid/img.png'], 3600)
     expect(result.data?.[0].imageUrls).toEqual(['https://storage.example.com/signed-url'])
   })
 
   it('retourne un tableau vide si aucun post', async () => {
     mockGetUser.mockResolvedValue({ data: { user: makeOperatorUser() }, error: null })
-
-    const orderMock = vi.fn().mockResolvedValue({ data: [], error: null })
-    const eqMock = vi.fn().mockReturnValue({ order: orderMock })
-    const selectMock = vi.fn().mockReturnValue({ eq: eqMock })
-    mockFrom.mockReturnValue({ select: selectMock })
+    mockTables({ operator: { id: 'op-uuid' }, rows: [] })
 
     const result = await getToolPosts('client-uuid')
     expect(result.data).toEqual([])

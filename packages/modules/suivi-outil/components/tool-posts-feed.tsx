@@ -32,7 +32,7 @@ function FeedSkeleton() {
   )
 }
 
-function EmptyState() {
+function EmptyState({ isOperator }: { isOperator: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div className="rounded-full bg-white/5 p-4 mb-4">
@@ -40,7 +40,9 @@ function EmptyState() {
       </div>
       <h3 className="text-sm font-medium text-white/60 mb-1">Pas encore de mise à jour</h3>
       <p className="text-xs text-white/40 max-w-xs">
-        Votre opérateur publiera ici l'avancement du développement de votre outil.
+        {isOperator
+          ? "Publiez la première mise à jour ci-dessus : avancement, captures d'écran, prochaines étapes. Le client la verra en temps réel."
+          : "Votre opérateur publiera ici l'avancement du développement de votre outil."}
       </p>
     </div>
   )
@@ -64,7 +66,7 @@ export function ToolPostsFeed({ clientId, isOperator = false }: ToolPostsFeedPro
     )
   }
 
-  if (posts.length === 0) return <EmptyState />
+  if (posts.length === 0) return <EmptyState isOperator={isOperator} />
 
   return (
     <div className="space-y-4">

@@ -21,16 +21,22 @@ export async function getToolPosts(clientId: string): Promise<ActionResponse<Too
   } = await supabase.auth.getUser()
   if (!user || authError) return errorResponse('Non authentifié', 'AUTH_REQUIRED')
 
-  // Vérifier que l'utilisateur est client du bon compte OU opérateur
-  const role = user.app_metadata?.role as string | undefined
-  if (role !== 'operator') {
+  // Opérateur (détecté via la table operators — le rôle n'est PAS dans app_metadata)
+  // OU client propriétaire du clientId demandé.
+  const { data: operatorRecord } = await supabase
+    .from('operators')
+    .select('id')
+    .eq('auth_user_id', user.id)
+    .maybeSingle()
+
+  if (!operatorRecord) {
     // Client : vérifier qu'il s'agit bien de son propre clientId
     const { data: clientRecord } = await supabase
       .from('clients')
       .select('id')
       .eq('auth_user_id', user.id)
       .eq('id', clientId)
-      .single()
+      .maybeSingle()
 
     if (!clientRecord) {
       return errorResponse('Accès non autorisé à ce client', 'FORBIDDEN')
