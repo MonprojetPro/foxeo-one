@@ -17,6 +17,7 @@ export const PREFERENCE_NOTIFICATION_TYPES = [
   'graduation',
   'payment',
   'tool_update',
+  'tool_comment',
 ] as const
 
 export type NotificationPreferenceType = (typeof PREFERENCE_NOTIFICATION_TYPES)[number]

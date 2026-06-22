@@ -32,4 +32,8 @@ export const PREF_LABELS: Record<
     label: "Suivi de l'outil",
     description: "Mises à jour et évolutions de la plateforme MonprojetPro",
   },
+  tool_comment: {
+    label: 'Suivi — réactions',
+    description: 'Réponses et réactions sur les mises à jour de votre outil',
+  },
 }

@@ -7,6 +7,7 @@ import { Pencil, Trash2, X, Check, Loader2 } from 'lucide-react'
 import { useToolPosts } from '../hooks/use-tool-posts'
 import { UpdateToolPostSchema } from '../types/tool-post.types'
 import type { ToolPost } from '../types/tool-post.types'
+import { ToolPostComments } from './tool-post-comments'
 
 interface ToolPostCardProps {
   post: ToolPost
@@ -148,6 +149,9 @@ export function ToolPostCard({ post, isOperator = false, clientId }: ToolPostCar
             ))}
           </div>
         )}
+
+        {/* Commentaires / réactions */}
+        {!isEditing && <ToolPostComments postId={post.id} />}
       </article>
 
       {/* Lightbox simple */}
