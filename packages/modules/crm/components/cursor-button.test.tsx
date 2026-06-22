@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { CursorButton } from './cursor-button'
 
 // Mock clipboard API
@@ -63,11 +63,15 @@ describe('CursorButton', () => {
         <CursorButton clientName="Test Client" folderExists={false} />
       )
 
+      // Click the button to open the dialog
+      const button = screen.getByRole('button', { name: /ouvrir dans cursor/i })
+      fireEvent.click(button)
+
       expect(
         screen.getByText(/le dossier bmad de ce client n'existe pas encore/i)
       ).toBeInTheDocument()
       expect(
-        screen.getByRole('button', { name: /copier le chemin/i })
+        screen.getByRole('button', { name: /copier/i })
       ).toBeInTheDocument()
     })
 
@@ -80,6 +84,10 @@ describe('CursorButton', () => {
         />
       )
 
+      // Click to open dialog
+      const button = screen.getByRole('button', { name: /ouvrir dans cursor/i })
+      fireEvent.click(button)
+
       const codeElement = screen.getByText(/clients\/cafe-francais/)
       expect(codeElement).toBeInTheDocument()
     })
@@ -91,7 +99,11 @@ describe('CursorButton', () => {
         <CursorButton clientName="Test" folderExists={false} />
       )
 
-      const copyButton = screen.getByRole('button', { name: /copier le chemin/i })
+      // Open dialog first
+      const button = screen.getByRole('button', { name: /ouvrir dans cursor/i })
+      fireEvent.click(button)
+
+      const copyButton = screen.getByRole('button', { name: /copier/i })
       fireEvent.click(copyButton)
 
       expect(mockWriteText).toHaveBeenCalled()
@@ -104,7 +116,11 @@ describe('CursorButton', () => {
 
       render(<CursorButton clientName="Test" folderExists={false} />)
 
-      const copyButton = screen.getByRole('button', { name: /copier le chemin/i })
+      // Open dialog first
+      const button = screen.getByRole('button', { name: /ouvrir dans cursor/i })
+      fireEvent.click(button)
+
+      const copyButton = screen.getByRole('button', { name: /copier/i })
 
       // Should not throw
       expect(() => fireEvent.click(copyButton)).not.toThrow()
@@ -119,11 +135,19 @@ describe('CursorButton', () => {
         />
       )
 
+      // Open dialog first
+      const button = screen.getByRole('button', { name: /ouvrir dans cursor/i })
+      fireEvent.click(button)
+
       expect(screen.getByText(/test-company/)).toBeInTheDocument()
     })
 
     it('should use client name for slug if no company', () => {
       render(<CursorButton clientName="Jean Dupont" folderExists={false} />)
+
+      // Open dialog first
+      const button = screen.getByRole('button', { name: /ouvrir dans cursor/i })
+      fireEvent.click(button)
 
       expect(screen.getByText(/jean-dupont/)).toBeInTheDocument()
     })
@@ -136,6 +160,10 @@ describe('CursorButton', () => {
           folderExists={false}
         />
       )
+
+      // Open dialog first
+      const button = screen.getByRole('button', { name: /ouvrir dans cursor/i })
+      fireEvent.click(button)
 
       expect(screen.getByText(/societe-francaise/)).toBeInTheDocument()
     })

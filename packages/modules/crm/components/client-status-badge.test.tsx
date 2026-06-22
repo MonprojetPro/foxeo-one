@@ -25,21 +25,21 @@ describe('ClientStatusBadge', () => {
     render(<ClientStatusBadge status="active" />)
 
     const badge = screen.getByText('Actif')
-    expect(badge.className).toContain('bg-green-500/10')
+    expect(badge.className).toContain('bg-green-500/20')
   })
 
   it('should apply amber classes for suspended status', () => {
     render(<ClientStatusBadge status="suspended" />)
 
     const badge = screen.getByText('Suspendu')
-    expect(badge.className).toContain('bg-amber-500/10')
+    expect(badge.className).toContain('bg-amber-500/20')
   })
 
   it('should apply gray classes for archived status', () => {
     render(<ClientStatusBadge status="archived" />)
 
     const badge = screen.getByText('Archivé')
-    expect(badge.className).toContain('bg-gray-500/10')
+    expect(badge.className).toContain('bg-slate-500/20')
   })
 
   it('should display suspension date when suspendedAt is provided', () => {

@@ -6,7 +6,7 @@ describe('ClientForm', () => {
   it('should render all form fields', () => {
     render(<ClientForm onSubmit={vi.fn()} />)
 
-    expect(screen.getByLabelText(/nom/i)).toBeDefined()
+    expect(screen.getByLabelText(/^nom \*/i)).toBeDefined()
     expect(screen.getByLabelText(/email/i)).toBeDefined()
     expect(screen.getByLabelText(/entreprise/i)).toBeDefined()
     expect(screen.getByLabelText(/t.l.phone/i)).toBeDefined()
@@ -38,7 +38,7 @@ describe('ClientForm', () => {
   it('should show validation error for invalid email', async () => {
     render(<ClientForm onSubmit={vi.fn()} />)
 
-    fireEvent.change(screen.getByLabelText(/nom/i), { target: { value: 'Jean Dupont' } })
+    fireEvent.change(screen.getByLabelText(/^nom \*/i), { target: { value: 'Jean Dupont' } })
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'not-an-email' } })
 
     const submitButton = screen.getByRole('button', { name: /cr.er|enregistrer/i })
@@ -53,7 +53,7 @@ describe('ClientForm', () => {
     const onSubmit = vi.fn()
     render(<ClientForm onSubmit={onSubmit} />)
 
-    fireEvent.change(screen.getByLabelText(/nom/i), { target: { value: 'Jean Dupont' } })
+    fireEvent.change(screen.getByLabelText(/^nom \*/i), { target: { value: 'Jean Dupont' } })
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'jean@acme.com' } })
 
     const submitButton = screen.getByRole('button', { name: /cr.er/i })
@@ -83,7 +83,7 @@ describe('ClientForm', () => {
       />
     )
 
-    expect((screen.getByLabelText(/nom/i) as HTMLInputElement).value).toBe('Jean Dupont')
+    expect((screen.getByLabelText(/^nom \*/i) as HTMLInputElement).value).toBe('Jean Dupont')
     expect((screen.getByLabelText(/email/i) as HTMLInputElement).value).toBe('jean@acme.com')
     expect((screen.getByLabelText(/entreprise/i) as HTMLInputElement).value).toBe('Acme Corp')
     const completRadio = screen.getByDisplayValue('complet') as HTMLInputElement

@@ -31,6 +31,13 @@ const mockFrom = vi.fn((table: string) => {
   if (table === 'client_configs') {
     return { insert: vi.fn().mockResolvedValue({ error: null }) }
   }
+  if (table === 'activity_logs') {
+    // fire-and-forget: insert().then().catch() — must be thenable
+    const thenableMock = {
+      then: vi.fn().mockReturnValue({ catch: vi.fn() }),
+    }
+    return { insert: vi.fn().mockReturnValue(thenableMock) }
+  }
   return {
     select: mockSelectChain,
     insert: mockInsert,

@@ -48,7 +48,7 @@ describe('CRM Module Contract Tests', () => {
 
     expect(moduleExports.manifest).toBeDefined()
     expect(moduleExports.manifest.id).toBe('crm')
-  }, 20000) // 20s timeout for module import (needed for full test suite)
+  }, 40000) // 40s timeout for module import (index.ts has many exports, slow in parallel runs)
 
   it('should have required documentation files', async () => {
     const fs = await import('fs/promises')

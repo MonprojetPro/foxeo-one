@@ -38,7 +38,7 @@ describe('ClientExchangesTab', () => {
   it('should render chat button in empty state', () => {
     renderWithQueryClient(<ClientExchangesTab clientId="550e8400-e29b-41d4-a716-446655440001" />)
 
-    expect(screen.getByRole('button', { name: /ouvrir le chat complet/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /d.marrer une conversation/i })).toBeInTheDocument()
   })
 
   it('should render exchange list when data exists', async () => {
@@ -59,7 +59,8 @@ describe('ClientExchangesTab', () => {
 
     renderWithQueryClient(<ClientExchangesTab clientId="550e8400-e29b-41d4-a716-446655440001" />)
 
-    expect(screen.getByText('Message')).toBeInTheDocument()
+    // "Chat" appears in both the channel grid and the exchange badge — check at least one exists
+    expect(screen.getAllByText('Chat').length).toBeGreaterThan(0)
   })
 
   it('should truncate long exchange content', async () => {
@@ -81,7 +82,7 @@ describe('ClientExchangesTab', () => {
 
     renderWithQueryClient(<ClientExchangesTab clientId="550e8400-e29b-41d4-a716-446655440001" />)
 
-    // Content should be truncated to 100 chars + "..."
-    expect(screen.getByText(/\.\.\.$/)).toBeInTheDocument()
+    // Content should be truncated to 120 chars + "…"
+    expect(screen.getByText(/…$/)).toBeInTheDocument()
   })
 })
