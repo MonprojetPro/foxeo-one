@@ -10,9 +10,14 @@ import {
 } from '../types/tool-post.types'
 import type { ToolPostComment, ToolPostCommentRow } from '../types/tool-post.types'
 
+const MAX_COMMENT_IMAGES = 3
+const BUCKET = 'tool-screenshots'
+const SIGNED_URL_EXPIRY = 3600 // 1 heure
+
 export async function createToolComment(input: {
   postId: string
   body: string
+  imagePaths?: string[]
 }): Promise<ActionResponse<ToolPostComment>> {
   const supabase = await createServerSupabaseClient()
 
@@ -72,12 +77,21 @@ export async function createToolComment(input: {
     postId: input.postId,
     clientId,
     body: input.body,
+    imagePaths: input.imagePaths ?? [],
   })
   if (!parsed.success) {
     return errorResponse(
       parsed.error.errors[0]?.message ?? 'Données invalides',
       'VALIDATION_ERROR',
       parsed.error.flatten()
+    )
+  }
+
+  // Vérification limite images (défense en profondeur côté serveur)
+  if (parsed.data.imagePaths.length > MAX_COMMENT_IMAGES) {
+    return errorResponse(
+      `Maximum ${MAX_COMMENT_IMAGES} images autorisées par commentaire`,
+      'TOO_MANY_IMAGES'
     )
   }
 
@@ -90,6 +104,7 @@ export async function createToolComment(input: {
       author_type: authorType,
       author_id: uid,
       body: parsed.data.body,
+      image_paths: parsed.data.imagePaths,
     })
     .select()
     .single()
@@ -148,5 +163,16 @@ export async function createToolComment(input: {
     console.error('[suivi-outil] Erreur notification commentaire:', notifError)
   }
 
-  return successResponse(rowToToolPostComment(row as ToolPostCommentRow))
+  const commentRow = row as ToolPostCommentRow
+
+  // 6. Générer signed URLs pour les images du commentaire
+  let imageUrls: string[] = []
+  if (commentRow.image_paths && commentRow.image_paths.length > 0) {
+    const { data: signedUrls } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrls(commentRow.image_paths, SIGNED_URL_EXPIRY)
+    imageUrls = (signedUrls ?? []).map((s) => s.signedUrl ?? '')
+  }
+
+  return successResponse(rowToToolPostComment(commentRow, imageUrls))
 }

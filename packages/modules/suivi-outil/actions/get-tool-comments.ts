@@ -6,6 +6,9 @@ import type { ActionResponse } from '@monprojetpro/types'
 import { rowToToolPostComment } from '../types/tool-post.types'
 import type { ToolPostComment, ToolPostCommentRow } from '../types/tool-post.types'
 
+const BUCKET = 'tool-screenshots'
+const SIGNED_URL_EXPIRY = 3600 // 1 heure
+
 export async function getToolComments(postId: string): Promise<ActionResponse<ToolPostComment[]>> {
   if (!postId) return errorResponse('postId requis', 'MISSING_POST_ID')
 
@@ -35,5 +38,22 @@ export async function getToolComments(postId: string): Promise<ActionResponse<To
 
   if (!rows || rows.length === 0) return successResponse([])
 
-  return successResponse((rows as ToolPostCommentRow[]).map(rowToToolPostComment))
+  // Générer signed URLs pour les commentaires qui ont des images
+  const comments: ToolPostComment[] = await Promise.all(
+    (rows as ToolPostCommentRow[]).map(async (row) => {
+      if (!row.image_paths || row.image_paths.length === 0) {
+        return rowToToolPostComment(row, [])
+      }
+
+      const { data: signedUrls } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrls(row.image_paths, SIGNED_URL_EXPIRY)
+
+      const urls = (signedUrls ?? []).map((s) => s.signedUrl ?? '')
+
+      return rowToToolPostComment(row, urls)
+    })
+  )
+
+  return successResponse(comments)
 }

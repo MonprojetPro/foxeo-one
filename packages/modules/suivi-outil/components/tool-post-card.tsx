@@ -151,7 +151,7 @@ export function ToolPostCard({ post, isOperator = false, clientId }: ToolPostCar
         )}
 
         {/* Commentaires / réactions */}
-        {!isEditing && <ToolPostComments postId={post.id} />}
+        {!isEditing && <ToolPostComments postId={post.id} clientId={clientId} />}
       </article>
 
       {/* Lightbox simple */}

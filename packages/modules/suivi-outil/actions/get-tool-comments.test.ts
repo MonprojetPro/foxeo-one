@@ -4,11 +4,17 @@ import { getToolComments } from './get-tool-comments'
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 const mockGetUser = vi.fn()
 const mockFrom = vi.fn()
+const mockStorageCreateSignedUrls = vi.fn()
 
 vi.mock('@monprojetpro/supabase/server', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     from: mockFrom,
+    storage: {
+      from: () => ({
+        createSignedUrls: mockStorageCreateSignedUrls,
+      }),
+    },
   })),
 }))
 
@@ -29,6 +35,7 @@ function makeCommentRow(overrides: Partial<Record<string, unknown>> = {}) {
     author_type: 'client',
     author_id: AUTHOR_ID,
     body: 'Très belle mise à jour !',
+    image_paths: [],
     created_at: new Date(2026, 5, 20, 10, 0, 0).toISOString(),
     ...overrides,
   }
@@ -46,6 +53,7 @@ function setupQueryChain(rows: unknown[]) {
 describe('getToolComments', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockStorageCreateSignedUrls.mockResolvedValue({ data: [], error: null })
   })
 
   it('retourne MISSING_POST_ID si postId absent', async () => {
@@ -71,7 +79,7 @@ describe('getToolComments', () => {
     expect(result.data).toEqual([])
   })
 
-  it('retourne les commentaires transformés en camelCase', async () => {
+  it('retourne les commentaires transformés en camelCase (sans images)', async () => {
     mockGetUser.mockResolvedValue({ data: { user: makeUser() }, error: null })
 
     const rows = [makeCommentRow()]
@@ -86,6 +94,49 @@ describe('getToolComments', () => {
     expect(result.data?.[0].authorType).toBe('client')
     expect(result.data?.[0].authorId).toBe(AUTHOR_ID)
     expect(result.data?.[0].body).toBe('Très belle mise à jour !')
+    expect(result.data?.[0].imagePaths).toEqual([])
+    expect(result.data?.[0].imageUrls).toEqual([])
+  })
+
+  it('génère des signed URLs pour les commentaires avec images', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: makeUser() }, error: null })
+
+    const imagePaths = [`comments/${CLIENT_ID}/img1.png`, `comments/${CLIENT_ID}/img2.png`]
+    const rows = [makeCommentRow({ image_paths: imagePaths })]
+    setupQueryChain(rows)
+
+    mockStorageCreateSignedUrls.mockResolvedValue({
+      data: [
+        { signedUrl: 'https://cdn.example.com/img1.png' },
+        { signedUrl: 'https://cdn.example.com/img2.png' },
+      ],
+      error: null,
+    })
+
+    const result = await getToolComments(POST_ID)
+
+    expect(result.error).toBeNull()
+    expect(result.data).toHaveLength(1)
+    expect(result.data?.[0].imagePaths).toEqual(imagePaths)
+    expect(result.data?.[0].imageUrls).toEqual([
+      'https://cdn.example.com/img1.png',
+      'https://cdn.example.com/img2.png',
+    ])
+    expect(mockStorageCreateSignedUrls).toHaveBeenCalledWith(imagePaths, 3600)
+  })
+
+  it('ne génère pas de signed URLs pour les commentaires sans images', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: makeUser() }, error: null })
+
+    const rows = [makeCommentRow({ image_paths: [] })]
+    setupQueryChain(rows)
+
+    const result = await getToolComments(POST_ID)
+
+    expect(result.error).toBeNull()
+    expect(result.data?.[0].imageUrls).toEqual([])
+    // Storage ne doit pas être appelé si pas d'images
+    expect(mockStorageCreateSignedUrls).not.toHaveBeenCalled()
   })
 
   it('retourne les commentaires dans le bon ordre created_at ASC (oldest first)', async () => {

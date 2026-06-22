@@ -26,7 +26,8 @@ export function useCreateToolComment(postId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (body: string) => createToolComment({ postId, body }),
+    mutationFn: ({ body, imagePaths }: { body: string; imagePaths?: string[] }) =>
+      createToolComment({ postId, body, imagePaths }),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: toolCommentsQueryKey(postId) })
     },

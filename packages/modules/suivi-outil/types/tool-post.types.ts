@@ -57,6 +57,7 @@ export interface ToolPostCommentRow {
   author_type: 'client' | 'operator'
   author_id: string
   body: string
+  image_paths: string[]
   created_at: string
 }
 
@@ -68,6 +69,8 @@ export interface ToolPostComment {
   authorType: 'client' | 'operator'
   authorId: string
   body: string
+  imagePaths: string[]
+  imageUrls: string[]
   createdAt: string
 }
 
@@ -79,11 +82,17 @@ export const ToolPostCommentSchema = z.object({
     .string()
     .min(1, 'Le commentaire est requis')
     .max(2000, 'Commentaire trop long (max 2000 caractères)'),
+  imagePaths: z
+    .array(z.string())
+    .default([]),
 })
 export type ToolPostCommentInput = z.infer<typeof ToolPostCommentSchema>
 
 // ─── Helper: DB row → app model (commentaire) ─────────────────────────────────
-export function rowToToolPostComment(row: ToolPostCommentRow): ToolPostComment {
+export function rowToToolPostComment(
+  row: ToolPostCommentRow,
+  imageUrls: string[] = []
+): ToolPostComment {
   return {
     id: row.id,
     postId: row.post_id,
@@ -91,6 +100,8 @@ export function rowToToolPostComment(row: ToolPostCommentRow): ToolPostComment {
     authorType: row.author_type,
     authorId: row.author_id,
     body: row.body,
+    imagePaths: row.image_paths ?? [],
+    imageUrls,
     createdAt: row.created_at,
   }
 }

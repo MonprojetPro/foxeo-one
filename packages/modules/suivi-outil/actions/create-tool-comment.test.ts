@@ -4,11 +4,17 @@ import { createToolComment } from './create-tool-comment'
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 const mockGetUser = vi.fn()
 const mockFrom = vi.fn()
+const mockStorageCreateSignedUrls = vi.fn()
 
 vi.mock('@monprojetpro/supabase/server', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     from: mockFrom,
+    storage: {
+      from: () => ({
+        createSignedUrls: mockStorageCreateSignedUrls,
+      }),
+    },
   })),
 }))
 
@@ -32,7 +38,10 @@ function makeOperatorUser() {
   return { id: OPERATOR_AUTH_ID, app_metadata: { role: 'operator' } }
 }
 
-function makeFakeComment(authorType: 'client' | 'operator' = 'client') {
+function makeFakeComment(
+  authorType: 'client' | 'operator' = 'client',
+  imagePaths: string[] = []
+) {
   return {
     id: 'comment-uuid-001',
     post_id: POST_ID,
@@ -40,6 +49,7 @@ function makeFakeComment(authorType: 'client' | 'operator' = 'client') {
     author_type: authorType,
     author_id: authorType === 'client' ? CLIENT_AUTH_ID : OPERATOR_AUTH_ID,
     body: 'Super avancement !',
+    image_paths: imagePaths,
     created_at: new Date().toISOString(),
   }
 }
@@ -136,6 +146,7 @@ function setupOperatorMocks() {
 describe('createToolComment', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockStorageCreateSignedUrls.mockResolvedValue({ data: [], error: null })
   })
 
   it('retourne AUTH_REQUIRED si non authentifié', async () => {
@@ -145,7 +156,7 @@ describe('createToolComment', () => {
     expect(result.data).toBeNull()
   })
 
-  it('insère un commentaire valide pour un client', async () => {
+  it('insère un commentaire valide pour un client (sans images)', async () => {
     const { insertSingle } = setupClientMocks()
     insertSingle.mockResolvedValue({ data: makeFakeComment('client'), error: null })
 
@@ -156,6 +167,54 @@ describe('createToolComment', () => {
     expect(result.data?.postId).toBe(POST_ID)
     expect(result.data?.clientId).toBe(CLIENT_ID)
     expect(result.data?.body).toBe('Super avancement !')
+    expect(result.data?.imagePaths).toEqual([])
+    expect(result.data?.imageUrls).toEqual([])
+  })
+
+  it('insère un commentaire avec images et retourne les signed URLs', async () => {
+    const { insertSingle } = setupClientMocks()
+    const imagePaths = [
+      `comments/${CLIENT_ID}/img1.png`,
+      `comments/${CLIENT_ID}/img2.png`,
+    ]
+    insertSingle.mockResolvedValue({
+      data: makeFakeComment('client', imagePaths),
+      error: null,
+    })
+    mockStorageCreateSignedUrls.mockResolvedValue({
+      data: [
+        { signedUrl: 'https://cdn.example.com/img1.png' },
+        { signedUrl: 'https://cdn.example.com/img2.png' },
+      ],
+      error: null,
+    })
+
+    const result = await createToolComment({
+      postId: POST_ID,
+      body: 'Voici mes screenshots',
+      imagePaths,
+    })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.imagePaths).toEqual(imagePaths)
+    expect(result.data?.imageUrls).toEqual([
+      'https://cdn.example.com/img1.png',
+      'https://cdn.example.com/img2.png',
+    ])
+    expect(mockStorageCreateSignedUrls).toHaveBeenCalledWith(imagePaths, 3600)
+  })
+
+  it('retourne TOO_MANY_IMAGES si plus de 3 images fournies', async () => {
+    setupClientMocks()
+
+    const result = await createToolComment({
+      postId: POST_ID,
+      body: 'Test',
+      imagePaths: ['img1.png', 'img2.png', 'img3.png', 'img4.png'],
+    })
+
+    expect(result.error?.code).toBe('TOO_MANY_IMAGES')
+    expect(result.data).toBeNull()
   })
 
   it('insère un commentaire valide pour un opérateur', async () => {
@@ -168,7 +227,7 @@ describe('createToolComment', () => {
     expect(result.data?.authorType).toBe('operator')
   })
 
-  it('retourne VALIDATION_ERROR si body vide', async () => {
+  it('retourne VALIDATION_ERROR si body vide et aucune image', async () => {
     setupClientMocks()
 
     const result = await createToolComment({ postId: POST_ID, body: '' })
