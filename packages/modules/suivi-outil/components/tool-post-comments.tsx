@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Loader2, MessageSquare, Send, Paperclip, X as XIcon } from 'lucide-react'
+import { Loader2, MessageSquare, Send, ImagePlus, X as XIcon } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
@@ -237,11 +237,15 @@ function CommentForm({ postId, clientId }: CommentFormProps) {
           {/* Bouton ajout image */}
           {canAddMore && (
             <label
-              className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-              title={`Ajouter une image (${selectedFiles.length}/${MAX_COMMENT_IMAGES})`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-white/70 border border-white/15 hover:text-white hover:border-white/30 hover:bg-white/10 transition-colors cursor-pointer"
+              title={`Joindre une image (${selectedFiles.length}/${MAX_COMMENT_IMAGES})`}
             >
-              <Paperclip size={12} />
-              <span>{selectedFiles.length > 0 ? `${selectedFiles.length}/${MAX_COMMENT_IMAGES}` : 'Image'}</span>
+              <ImagePlus size={14} />
+              <span>
+                {selectedFiles.length > 0
+                  ? `Ajouter une image (${selectedFiles.length}/${MAX_COMMENT_IMAGES})`
+                  : 'Ajouter une image'}
+              </span>
               <input
                 ref={fileInputRef}
                 type="file"
