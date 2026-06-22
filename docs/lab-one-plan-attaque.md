@@ -68,4 +68,14 @@
 - ✅ **Incrément 3** : relances proactives d'inactivité. Fonction SQL `find_inactive_parcours_clients` (agent actif idle > 7j, Lab non en pause, parcours non abandonné, anti-spam cooldown 7j) + Edge Function `concierge-inactivity-relance` (IA Haiku via elio-chat + fallback, insère bandeau + notification cloche) + pg_cron quotidien 8h. Testé en prod (relance IA générée + nettoyée).
 
 ## Différé (gros chantier ultérieur)
-- One « construction → livré » + module « Suivi de l'outil » (screenshots/messages Hub→client).
+
+### Module « Suivi de l'outil » — ✅ COMPLET (2026-06-22)
+> Screenshots/messages Hub→client. Décisions MiKL : email client à chaque post + toggle client ; commentaires bidirectionnels ; pas d'upload logo (remplacé par symbole MPP + nom).
+- ✅ **G1** — module `suivi-outil` (targets hub + client-one), table `tool_posts` (RLS multi-tenant), bucket privé `tool-screenshots` (signed URLs), realtime, type notif `tool_update`. Hub publie (texte + ≤5 images, édite/supprime) ; client One voit le fil en temps réel + cloche + email + toggle email.
+- ✅ **G2** — table `tool_post_comments` + commentaires bidirectionnels (client/opérateur) sous chaque post, notif `tool_comment` à l'autre partie, realtime des 2 côtés. (Fix RLS : `is_operator(operator_id)`, pas `auth.uid()`.)
+- ✅ **G3** — card « Suivi de l'outil » dans le cockpit Pilote (compteur posts + réactions + dernière activité) + bouton « Ouvrir le suivi » (point d'entrée Hub).
+- ✅ Branding annexe (même chantier) : édition Hub réparée (`client_configs` PK = `client_id`), couleur d'accent sur TOUT le One, branding éditable côté client (Réglages → Apparence, RPC sécurisée), header symbole MPP + nom d'entreprise.
+
+### Reste différé
+- **Phases du One : « en construction » → « livré »** (bascule animée + modules métier réels). Pas encore figé.
+- Dette : 19 tests pré-existants cassés (cursor-button, client-form, client-status-badge, client-exchanges-tab, create-client, manifest) — indépendants, à nettoyer.
