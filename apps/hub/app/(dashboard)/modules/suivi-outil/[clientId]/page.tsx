@@ -23,13 +23,13 @@ export default async function HubSuiviOutilPage({ params }: PageProps) {
 
   const { data: client } = await supabase
     .from('clients')
-    .select('id, first_name, company_name')
+    .select('id, first_name, company')
     .eq('id', clientId)
     .eq('operator_id', operator.id)
     .single()
   if (!client) notFound()
 
-  const clientName = client.first_name ?? client.company_name ?? 'Ce client'
+  const clientName = client.first_name ?? client.company ?? 'Ce client'
 
   return (
     <div className="flex flex-col gap-6 p-6">
