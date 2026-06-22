@@ -18,7 +18,7 @@ vi.mock('@monprojetpro/supabase', () => ({
 const CLIENT_STUB = {
   id: 'client-uuid',
   name: 'Jean Dupont',
-  company_name: 'JD Consulting',
+  company: 'JD Consulting',
   created_at: '2026-01-15T10:00:00Z',
   graduated_at: '2026-03-01T10:00:00Z',
   client_configs: [{ dashboard_type: 'one', active_modules: ['core-dashboard'] }],

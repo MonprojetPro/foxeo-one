@@ -49,7 +49,7 @@ export async function sendGraduationEmail(
     .select(`
       id,
       name,
-      company_name,
+      company,
       created_at,
       graduated_at,
       client_configs(dashboard_type, active_modules),
@@ -107,7 +107,7 @@ export async function sendGraduationEmail(
       clientId,
       variables: {
         clientName: client.name ?? 'Cher(e) client(e)',
-        companyName: client.company_name ?? '',
+        companyName: client.company ?? '',
         labDuration,
         labStepsCompleted,
         graduationDate,

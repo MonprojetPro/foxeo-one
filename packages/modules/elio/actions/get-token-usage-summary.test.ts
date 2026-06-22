@@ -41,8 +41,8 @@ describe('getTokenUsageSummary', () => {
       select: vi.fn().mockReturnThis(),
       in: vi.fn().mockResolvedValue({
         data: [
-          { id: 'client-1', company_name: 'Acme Corp', full_name: null },
-          { id: 'client-2', company_name: null, full_name: 'Jean Dupont' },
+          { id: 'client-1', company: 'Acme Corp', name: null },
+          { id: 'client-2', company: null, name: 'Jean Dupont' },
         ],
         error: null,
       }),

@@ -88,12 +88,12 @@ export async function getTokenUsageSummary(): Promise<ActionResponse<TokenUsageS
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: clientsData } = await (supabase as any)
         .from('clients')
-        .select('id, company_name, full_name')
+        .select('id, company, name')
         .in('id', clientIds)
 
       if (clientsData) {
-        for (const c of clientsData as Array<{ id: string; company_name?: string; full_name?: string }>) {
-          clientNames[c.id] = c.company_name ?? c.full_name ?? c.id
+        for (const c of clientsData as Array<{ id: string; company?: string; name?: string }>) {
+          clientNames[c.id] = c.company ?? c.name ?? c.id
         }
       }
     }
