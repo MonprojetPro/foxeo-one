@@ -267,17 +267,23 @@ async function handleSendEmail(notificationId: string, config: SendEmailConfig):
   }
 }
 
-type DirectEmailTemplate = 'welcome-lab' | 'welcome-one' | 'welcome-venture' | 'final-payment-confirmation' | 'prospect-resources'
+type DirectEmailTemplate = ‘welcome-lab’ | ‘welcome-one’ | ‘welcome-venture’ | ‘final-payment-confirmation’ | ‘prospect-resources’ | ‘tool-update’
+
+function toolUpdateEmailTemplate(d: { clientName: string; body: string; link: string }): string {
+  const bodyHtml = `<p>Bonjour${d.clientName ? ` <strong>${escapeHtml(d.clientName)}</strong>` : ‘’},</p><p>${escapeHtml(d.body)}</p>`
+  return baseTemplate({ title: ‘Nouvelle mise à jour de votre outil’, body: bodyHtml, ctaUrl: d.link, ctaText: ‘Voir la mise à jour’ })
+}
 
 async function handleDirectEmail(input: { to: string; template: DirectEmailTemplate; data: Record<string, unknown> }, config: SendEmailConfig): Promise<{ success: boolean; error?: string }> {
   let subject: string
   let html: string
   switch (input.template) {
-    case 'welcome-lab': { const d = input.data as { clientName: string; firstStepLabel: string; activationLink: string }; subject = 'Bienvenue dans MonprojetPro Lab !'; html = welcomeLabEmailTemplate(d); break }
-    case 'welcome-one': { const d = input.data as { clientName: string; activationLink: string; temporaryPassword: string | null }; subject = 'Votre espace MonprojetPro One est prêt'; html = welcomeOneEmailTemplate(d); break }
-    case 'welcome-venture': { const d = input.data as { clientName: string }; subject = 'Bienvenue dans l’aventure MonprojetPro !'; html = welcomeVentureEmailTemplate(d); break }
-    case 'final-payment-confirmation': { const d = input.data as { clientName: string }; subject = 'Projet livré — MonprojetPro'; html = finalPaymentConfirmationEmailTemplate(d); break }
-    case 'prospect-resources': { const d = input.data as { links: Array<{ name: string; url: string }> }; subject = 'Vos ressources MonprojetPro'; html = prospectResourcesEmailTemplate(d); break }
+    case ‘welcome-lab’: { const d = input.data as { clientName: string; firstStepLabel: string; activationLink: string }; subject = ‘Bienvenue dans MonprojetPro Lab !’; html = welcomeLabEmailTemplate(d); break }
+    case ‘welcome-one’: { const d = input.data as { clientName: string; activationLink: string; temporaryPassword: string | null }; subject = ‘Votre espace MonprojetPro One est prêt’; html = welcomeOneEmailTemplate(d); break }
+    case ‘welcome-venture’: { const d = input.data as { clientName: string }; subject = ‘Bienvenue dans l’aventure MonprojetPro !’; html = welcomeVentureEmailTemplate(d); break }
+    case ‘final-payment-confirmation’: { const d = input.data as { clientName: string }; subject = ‘Projet livré — MonprojetPro’; html = finalPaymentConfirmationEmailTemplate(d); break }
+    case ‘prospect-resources’: { const d = input.data as { links: Array<{ name: string; url: string }> }; subject = ‘Vos ressources MonprojetPro’; html = prospectResourcesEmailTemplate(d); break }
+    case ‘tool-update’: { const d = input.data as { clientName: string; body: string; link: string }; subject = ‘Nouvelle mise à jour de votre outil — MonprojetPro’; html = toolUpdateEmailTemplate(d); break }
     default: return { success: false, error: `Unknown direct template: ${input.template}` }
   }
   try {

@@ -136,24 +136,15 @@ export async function createToolPost(formData: FormData): Promise<ActionResponse
       })
 
       if (prefs.email && clientData.email) {
-        const clientName = clientData.first_name ?? ''
-        const htmlBody = `
-          <h2>Nouvelle mise à jour de votre outil</h2>
-          <p>Bonjour${clientName ? ` ${clientName}` : ''},</p>
-          <p>${body}</p>
-          <p>
-            <a href="https://app.monprojet-pro.com/modules/suivi-outil"
-               style="display:inline-block;padding:10px 20px;background:#16a34a;color:white;text-decoration:none;border-radius:6px;">
-              Voir la mise à jour
-            </a>
-          </p>
-          <p style="font-size:12px;color:#888;">MonprojetPro — <a href="https://app.monprojet-pro.com/modules/suivi-outil">Gérer mes préférences email</a></p>
-        `
         await supabase.functions.invoke('send-email', {
           body: {
             to: clientData.email,
-            subject: title ?? "Mise à jour de votre outil — MonprojetPro",
-            html: htmlBody,
+            template: 'tool-update',
+            data: {
+              clientName: clientData.first_name ?? '',
+              body: title ?? "L'opérateur a publié une nouvelle mise à jour.",
+              link: 'https://app.monprojet-pro.com/modules/suivi-outil',
+            },
           },
         })
       }
