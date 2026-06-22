@@ -44,7 +44,12 @@ export async function createNotification(
       return successResponse(null)
     }
 
-    const { data, error } = await supabase
+    // NB : PAS de `.select()` ici. Une notification cible TOUJOURS un autre
+    // utilisateur (recipient_id ≠ auth.uid()). Or la policy SELECT de
+    // `notifications` est `recipient_id = auth.uid()`. Un INSERT ... RETURNING
+    // appliquerait cette policy SELECT à la ligne retournée → rejet RLS (42501).
+    // On insère donc sans RETURNING (WITH CHECK = true → autorisé).
+    const { error } = await supabase
       .from('notifications')
       .insert({
         recipient_type: recipientType,
@@ -54,10 +59,8 @@ export async function createNotification(
         body: body ?? null,
         link: link ?? null,
       })
-      .select()
-      .single()
 
-    if (error || !data) {
+    if (error) {
       console.error('[NOTIFICATIONS:CREATE] Supabase error:', error)
       return errorResponse(
         'Impossible de créer la notification',
@@ -66,17 +69,7 @@ export async function createNotification(
       )
     }
 
-    return successResponse({
-      id: data.id,
-      recipientType: data.recipient_type as Notification['recipientType'],
-      recipientId: data.recipient_id,
-      type: data.type as Notification['type'],
-      title: data.title,
-      body: data.body,
-      link: data.link,
-      readAt: data.read_at,
-      createdAt: data.created_at,
-    })
+    return successResponse(null)
   } catch (error) {
     console.error('[NOTIFICATIONS:CREATE] Unexpected error:', error)
     return errorResponse(

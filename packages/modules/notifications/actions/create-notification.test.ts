@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockSingle = vi.fn()
-const mockSelect = vi.fn(() => ({ single: mockSingle }))
-const mockInsert = vi.fn(() => ({ select: mockSelect }))
+// `.insert()` est awaité DIRECTEMENT (pas de `.select()` — voir create-notification.ts)
+const mockInsert = vi.fn()
 const mockFrom = vi.fn(() => ({ insert: mockInsert }))
 const mockGetUser = vi.fn()
 
@@ -23,6 +22,7 @@ describe('createNotification', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    mockCheckAllowed.mockResolvedValue({ inapp: true, email: true })
   })
 
   it('should return UNAUTHORIZED when not authenticated', async () => {
@@ -55,22 +55,9 @@ describe('createNotification', () => {
     expect(result.error?.code).toBe('VALIDATION_ERROR')
   })
 
-  it('should create notification and return camelCase result', async () => {
+  it('should insert (without RETURNING) and return success', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null })
-    mockSingle.mockResolvedValue({
-      data: {
-        id: 'n-1',
-        recipient_type: 'operator',
-        recipient_id: '550e8400-e29b-41d4-a716-446655440001',
-        type: 'message',
-        title: 'Test',
-        body: null,
-        link: null,
-        read_at: null,
-        created_at: '2026-02-17T10:00:00Z',
-      },
-      error: null,
-    })
+    mockInsert.mockResolvedValue({ error: null })
 
     const { createNotification } = await import('./create-notification')
     const result = await createNotification({
@@ -81,14 +68,20 @@ describe('createNotification', () => {
     })
 
     expect(result.error).toBeNull()
-    expect(result.data).toHaveProperty('recipientType', 'operator')
-    expect(result.data).toHaveProperty('readAt', null)
-    expect(result.data).not.toHaveProperty('recipient_type')
+    expect(result.data).toBeNull() // pas de RETURNING (RLS SELECT bloquerait la ligne cross-user)
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipient_type: 'operator',
+        recipient_id: '550e8400-e29b-41d4-a716-446655440001',
+        type: 'message',
+        title: 'Test',
+      })
+    )
   })
 
   it('should return DATABASE_ERROR on insert failure', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null })
-    mockSingle.mockResolvedValue({ data: null, error: { message: 'Insert failed' } })
+    mockInsert.mockResolvedValue({ error: { message: 'Insert failed' } })
 
     const { createNotification } = await import('./create-notification')
     const result = await createNotification({
