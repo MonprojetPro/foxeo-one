@@ -3,6 +3,12 @@ import type { CommunicationProfile } from './communication-profile.types'
 
 export type ElioTier = 'lab' | 'one-basic' | 'one-plus'
 
+// Cycle de vie visuel du One (vision v2) :
+//  'construction' = outil sur-mesure en cours de développement → état visuel "en chantier"
+//  'delivered'    = outil livré → cockpits visibles, comportement normal
+// Purement visuel : ne restreint jamais l'accès au socle.
+export type OneStatus = 'construction' | 'delivered'
+
 export type ElioModuleDoc = {
   moduleId: string
   description: string
@@ -41,6 +47,8 @@ export type ClientConfig = {
   // ADR-01 — Mode One débloqué (gradué ou One direct). false = Lab actif non gradué (One verrouillé).
   oneModeAvailable: boolean
   elioLabEnabled: boolean
+  // Vision v2 — état visuel du cycle « en chantier → livré ». Défaut 'construction'.
+  oneStatus?: OneStatus
   createdAt: string
   updatedAt: string
 }

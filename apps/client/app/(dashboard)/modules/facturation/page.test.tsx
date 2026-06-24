@@ -13,6 +13,7 @@ vi.mock('@monprojetpro/supabase', () => ({
 vi.mock('@monprojetpro/modules-facturation', () => ({
   InvoicesList: () => null,
   BillingSummary: () => null,
+  SubscriptionCard: () => null,
 }))
 
 // Story 13.1 — Titre "Comptabilité" sur la page client facturation

@@ -183,6 +183,7 @@ export type Database = {
           lab_mode_available: boolean
           one_mode_available: boolean
           elio_lab_enabled: boolean
+          one_status: 'construction' | 'delivered'
           created_at: string
           updated_at: string
         }
@@ -198,6 +199,7 @@ export type Database = {
           lab_mode_available?: boolean
           one_mode_available?: boolean
           elio_lab_enabled?: boolean
+          one_status?: 'construction' | 'delivered'
           created_at?: string
           updated_at?: string
         }
@@ -213,6 +215,7 @@ export type Database = {
           lab_mode_available?: boolean
           one_mode_available?: boolean
           elio_lab_enabled?: boolean
+          one_status?: 'construction' | 'delivered'
           created_at?: string
           updated_at?: string
         }

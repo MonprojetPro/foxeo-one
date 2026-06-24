@@ -15,9 +15,12 @@ describe('facturation manifest — contract test', () => {
     expect(manifest.navigation).toHaveProperty('position')
   })
 
-  it('targets hub and client-one (no lab)', () => {
+  // Vision One v2 (2026-06-24) — « Comptabilité » sort du socle One : le module ne
+  // cible plus que le Hub (opérateur). L'abonnement MPP du client est rapatrié dans
+  // Paramètres → Mes factures (réutilise les composants, pas le manifest).
+  it('targets hub only (sorti du socle One — vision v2)', () => {
     expect(manifest.targets).toContain('hub')
-    expect(manifest.targets).toContain('client-one')
+    expect(manifest.targets).not.toContain('client-one')
     expect(manifest.targets).not.toContain('client-lab')
   })
 

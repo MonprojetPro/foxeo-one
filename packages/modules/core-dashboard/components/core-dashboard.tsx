@@ -9,6 +9,12 @@ interface CoreDashboardProps {
   clientConfig: ClientConfig
   clientName: string
   showTeasing?: boolean
+  /**
+   * Vision v2 — cycle de vie visuel du One. `true` tant que l'outil sur-mesure
+   * n'est pas livré (one_status = 'construction') : l'accueil affiche un hero
+   * "cockpits à venir". Purement visuel — le socle reste pleinement accessible.
+   */
+  oneInConstruction?: boolean
 }
 
 function formatDateFR(): string {
@@ -34,7 +40,7 @@ const MODULE_META: Record<string, { label: string; icon: string; href: string; d
  * CoreDashboard — Page d'accueil One (et Lab).
  * Layout Claude Design : header, modules actifs, Élio suggestion, activité récente.
  */
-export function CoreDashboard({ clientConfig, clientName, showTeasing = false }: CoreDashboardProps) {
+export function CoreDashboard({ clientConfig, clientName, showTeasing = false, oneInConstruction = false }: CoreDashboardProps) {
   const router = useRouter()
 
   if (!clientConfig) return null
@@ -62,6 +68,10 @@ export function CoreDashboard({ clientConfig, clientName, showTeasing = false }:
         )}
       </div>
 
+      {/* Hero "en chantier" — visible tant que l'outil sur-mesure n'est pas livré (vision v2).
+          Purement visuel : tout le socle ci-dessous reste accessible. */}
+      {oneInConstruction && <ConstructionHero clientName={clientName} />}
+
       {/* Teasing Lab — nouveau parcours */}
       <LabTeasingCard
         show={showTeasing}
@@ -76,7 +86,9 @@ export function CoreDashboard({ clientConfig, clientName, showTeasing = false }:
       {/* Modules actifs */}
       <section aria-label="Vos modules actifs">
         <div className="flex items-baseline justify-between mb-3.5">
-          <h2 className="text-[15px] font-semibold text-[#f9fafb]">Vos modules actifs</h2>
+          <h2 className="text-[15px] font-semibold text-[#f9fafb]">
+            {oneInConstruction ? 'Ton espace, déjà prêt' : 'Vos modules actifs'}
+          </h2>
           <Link href="/modules" className="text-[12px] text-[#9ca3af] hover:text-[#f9fafb] transition-colors">
             Gérer les modules →
           </Link>
@@ -135,6 +147,84 @@ export function CoreDashboard({ clientConfig, clientName, showTeasing = false }:
         </div>
       </section>
     </div>
+  )
+}
+
+/**
+ * ConstructionHero — hero d'accueil "outil en chantier" (vision v2).
+ * Thème One vert via var(--brand-accent), glow subtil, lien vers Suivi de l'outil.
+ * Les "cockpits sur-mesure" sont annoncés comme à venir (ils s'allumeront à la livraison).
+ */
+function ConstructionHero({ clientName }: { clientName: string }) {
+  return (
+    <section aria-label="Outil en cours de construction">
+      <div
+        className="relative overflow-hidden rounded-2xl border p-6"
+        style={{
+          borderColor: 'color-mix(in srgb, var(--brand-accent, #16a34a) 35%, transparent)',
+          background:
+            'linear-gradient(135deg, color-mix(in srgb, var(--brand-accent, #16a34a) 14%, transparent), color-mix(in srgb, var(--brand-accent, #16a34a) 4%, transparent))',
+        }}
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-12 -top-20 h-52 w-52 rounded-full blur-3xl"
+          style={{ background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 28%, transparent)' }}
+        />
+        <div className="relative flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <div
+              className="flex h-11 w-11 items-center justify-center rounded-full text-xl motion-safe:animate-pulse"
+              style={{
+                background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 18%, transparent)',
+                border: '1px solid color-mix(in srgb, var(--brand-accent, #16a34a) 40%, transparent)',
+              }}
+              aria-hidden="true"
+            >
+              🚧
+            </div>
+            <div>
+              <p
+                className="text-[16px] font-bold tracking-[-0.01em]"
+                style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 85%, white)' }}
+              >
+                {clientName ? `${clientName}, ton outil arrive` : 'Ton outil arrive'}
+              </p>
+              <p className="text-[13px] text-[#9ca3af] mt-0.5">
+                MiKL développe ton outil sur-mesure. Ses cockpits s&apos;allumeront ici dès la livraison.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-[13px] leading-[1.55] text-[#cbd5d1] max-w-2xl">
+            En attendant, tout ton espace est déjà opérationnel : échange avec MiKL, partage tes
+            documents, pose tes questions à Élio. Tu peux suivre l&apos;avancement de ton outil à
+            tout moment.
+          </p>
+
+          <div className="flex flex-wrap gap-2.5">
+            <Link
+              href="/modules/suivi-outil"
+              className="inline-flex items-center gap-2 rounded-xl px-[18px] py-2.5 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: 'var(--brand-accent, #16a34a)' }}
+            >
+              Suivre l&apos;avancement
+              <span aria-hidden="true">→</span>
+            </Link>
+            <Link
+              href="/modules/chat"
+              className="inline-flex items-center gap-2 rounded-xl border px-[18px] py-2.5 text-[13px] font-semibold transition-colors hover:bg-white/5"
+              style={{
+                borderColor: 'color-mix(in srgb, var(--brand-accent, #16a34a) 40%, transparent)',
+                color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 85%, white)',
+              }}
+            >
+              Parler à MiKL
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 

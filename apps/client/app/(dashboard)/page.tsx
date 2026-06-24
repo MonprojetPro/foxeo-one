@@ -18,7 +18,7 @@ export default async function ClientHomePage() {
   // Note: client_configs PK is client_id (no id column), density column doesn't exist
   const { data: clientRecord } = await supabase
     .from('clients')
-    .select('id, first_name, name, client_configs(client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, show_lab_teasing, lab_mode_available, one_mode_available, created_at, updated_at)')
+    .select('id, first_name, name, client_configs(client_id, dashboard_type, active_modules, theme_variant, custom_branding, elio_config, elio_tier, show_lab_teasing, lab_mode_available, one_mode_available, one_status, created_at, updated_at)')
     .eq('auth_user_id', user.id)
     .maybeSingle()
 
@@ -71,16 +71,33 @@ export default async function ClientHomePage() {
     redirect('/modules/parcours')
   }
 
-  // On est en mode One — filtrer les modules Lab-only (parcours appartient au Lab, pas à One)
-  const LAB_ONLY_IDS = new Set(['parcours'])
+  // On est en mode One — filtrer les modules qui n'appartiennent pas au socle One affiché :
+  //  • parcours = Lab uniquement (appartient au Lab, pas à One)
+  //  • facturation = sorti du socle One (vision v2 2026-06-24). Même si `active_modules` en
+  //    base le contient encore pour d'anciens clients, on ne l'affiche plus en carte d'accueil
+  //    ni en raccourci : l'abonnement MPP vit désormais dans Paramètres → Mes factures.
+  const HOME_HIDDEN_ONE_IDS = new Set(['parcours', 'facturation'])
   const clientConfigOne = {
     ...clientConfig,
-    activeModules: clientConfig.activeModules.filter(id => !LAB_ONLY_IDS.has(id)),
+    activeModules: clientConfig.activeModules.filter(id => !HOME_HIDDEN_ONE_IDS.has(id)),
   }
 
   // Fetch teasing eligibility server-side (avoids flash UI côté client)
   const teasingResult = clientId ? await getTeasingEligibility(clientId) : null
   const showTeasing = teasingResult?.data?.showTeasing ?? false
 
-  return <CoreDashboard clientConfig={clientConfigOne} clientName={clientName} showTeasing={showTeasing} />
+  // Cycle de vie visuel du One (vision v2) — état "en chantier" tant que l'outil n'est pas livré.
+  // Purement visuel : le socle reste accessible. Le bandeau global est rendu par le layout ;
+  // ici, l'accueil adapte son hero ("cockpits à venir") selon ce même flag.
+  const oneStatus = (configData as { one_status?: string } | null)?.one_status ?? 'construction'
+  const oneInConstruction = oneStatus === 'construction'
+
+  return (
+    <CoreDashboard
+      clientConfig={clientConfigOne}
+      clientName={clientName}
+      showTeasing={showTeasing}
+      oneInConstruction={oneInConstruction}
+    />
+  )
 }

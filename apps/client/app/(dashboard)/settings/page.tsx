@@ -57,6 +57,23 @@ export default async function SettingsPage() {
         </Link>
       )}
 
+      {/* Mes factures — abonnement MPP (vision v2 : rapatrié depuis le module Comptabilité).
+          Visible en mode One uniquement (un client Lab n'a pas d'abonnement à afficher ici). */}
+      {isOneMode && (
+        <Link
+          href="/settings/billing"
+          className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+        >
+          <div>
+            <h2 className="text-base font-medium text-foreground">Mes factures</h2>
+            <p className="text-sm text-muted-foreground">
+              Votre abonnement MonprojetPro et l&apos;historique de vos factures
+            </p>
+          </div>
+          <span className="text-muted-foreground">&rarr;</span>
+        </Link>
+      )}
+
       <Link
         href="/settings/sessions"
         className="flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"

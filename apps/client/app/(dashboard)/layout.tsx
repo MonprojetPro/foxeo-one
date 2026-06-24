@@ -44,6 +44,7 @@ import { ThemeClassSetter } from './theme-class-setter'
 import { RealtimeDashboardRefresh } from '../../components/realtime-dashboard-refresh'
 import { ImpersonationWrapper } from './impersonation-wrapper'
 import { OneElioBox } from '../../components/one-elio-box'
+import { OneConstructionBanner } from '../../components/one-construction-banner'
 import { SessionKeepAlive } from './session-keep-alive'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
@@ -270,6 +271,7 @@ export default async function DashboardLayout({
           custom_branding: CustomBranding | null
           lab_mode_available: boolean | null
           one_mode_available: boolean | null
+          one_status: string | null
         }
       | Array<{
           dashboard_type: string
@@ -277,6 +279,7 @@ export default async function DashboardLayout({
           custom_branding: CustomBranding | null
           lab_mode_available: boolean | null
           one_mode_available: boolean | null
+          one_status: string | null
         }>
       | null
   }
@@ -289,7 +292,7 @@ export default async function DashboardLayout({
   {
     const { data } = await supabase
       .from('clients')
-      .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, custom_branding, lab_mode_available, one_mode_available)')
+      .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, custom_branding, lab_mode_available, one_mode_available, one_status)')
       .eq('auth_user_id', user.id)
       .maybeSingle()
     clientRecord = (data as ClientRecord | null) ?? null
@@ -346,6 +349,12 @@ export default async function DashboardLayout({
   })
 
   const density = activeMode === 'one' ? 'comfortable' : 'spacious'
+
+  // Cycle de vie visuel du One (vision v2) : tant que l'outil sur-mesure n'est pas livré
+  // (one_status = 'construction'), on affiche un bandeau "en chantier" au-dessus du contenu.
+  // Purement visuel : le socle reste entièrement accessible. Concerne uniquement le mode One.
+  const oneStatus = clientConfig?.one_status ?? 'construction'
+  const showConstructionBanner = activeMode === 'one' && oneStatus === 'construction'
 
   // Custom branding (from Hub operator configuration)
   // Note : logoUrl est conservé dans le type CustomBranding pour rétro-compat DB mais
@@ -422,6 +431,7 @@ export default async function DashboardLayout({
       >
         <ImpersonationWrapper>
           <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
+            {showConstructionBanner && <OneConstructionBanner />}
             {children}
           </PresenceProvider>
         </ImpersonationWrapper>
