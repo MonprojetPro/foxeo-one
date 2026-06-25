@@ -44,7 +44,6 @@ import { ThemeClassSetter } from './theme-class-setter'
 import { RealtimeDashboardRefresh } from '../../components/realtime-dashboard-refresh'
 import { ImpersonationWrapper } from './impersonation-wrapper'
 import { OneElioBox } from '../../components/one-elio-box'
-import { OneConstructionBanner } from '../../components/one-construction-banner'
 import { SessionKeepAlive } from './session-keep-alive'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
@@ -191,7 +190,7 @@ function ClientHeader({
   labLocked: boolean
   userInitials: string
   /** One uniquement : true tant que l'outil sur-mesure n'est pas livré (one_status='construction').
-   *  Déclenche l'animation « chantier » discrète du header (bande de rayures + balayage). */
+   *  Déclenche la signature « chantier » du header (rubalise orange/blanc + plot animé). */
   oneInConstruction: boolean
 }) {
   // Couleurs Lab : violet fixe (pas de personnalisation brand côté Lab)
@@ -202,29 +201,45 @@ function ClientHeader({
     ? `linear-gradient(135deg, ${labAccentFrom}, ${labAccentTo})`
     : 'linear-gradient(135deg, var(--brand-accent, #16a34a), color-mix(in srgb, var(--brand-accent, #16a34a) 60%, white))'
 
-  // Animation « chantier » du header — One uniquement, état construction.
-  // Overlay décoratif `absolute inset-0 pointer-events-none` (le wrapper est déjà `relative`).
-  // - une fine bande de rayures « travaux » qui défile lentement, ancrée tout en bas du header
-  // - un balayage lumineux vert très doux qui traverse le header de temps en temps
-  // Discret et chic (Minimal Futuriste), pas un gyrophare. En « livré » : rien (header normal).
+  // Signature « chantier » du header — One uniquement, état construction.
+  // Overlay décoratif `absolute inset-0 pointer-events-none` (le wrapper est déjà `relative`),
+  // zéro layout shift. Code couleur travaux assumé : orange/jaune + blanc (PAS le vert du thème).
+  // - une RUBALISE (ruban de signalisation rayé orange/blanc) qui borde le header en haut ET en bas,
+  //   les rayures défilent lentement → effet ruban qui bouge
+  // - un PLOT de chantier en SVG, posé à droite, qui se balance subtilement (effet « cône qui dodeline »)
+  // Tout en `motion-safe:` → sur prefers-reduced-motion : rubalise statique + cône immobile.
   const showConstructionFx = activeMode === 'one' && oneInConstruction
 
   return (
     <div className="flex w-full items-center justify-between relative">
       {showConstructionFx && (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-          {/* Balayage lumineux vert doux qui traverse le header */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-visible">
+          {/* Rubalise haute — ruban rayé orange/blanc qui défile vers la droite */}
+          <div className="one-hazard-tape one-hazard-tape--top absolute inset-x-0 top-0 h-[5px] motion-safe:[animation:one-hazard-scroll_2.6s_linear_infinite]" />
+          {/* Rubalise basse — défile en sens inverse pour un effet « encadrement vivant » */}
+          <div className="one-hazard-tape one-hazard-tape--bottom absolute inset-x-0 bottom-0 h-[5px] motion-safe:[animation:one-hazard-scroll-rev_2.6s_linear_infinite]" />
+
+          {/* Plot / cône de chantier — posé à droite du header, balancement subtil */}
           <div
-            className="absolute inset-y-0 w-1/3 opacity-0 motion-safe:[animation:one-construction-sheen_7s_ease-in-out_infinite]"
-            style={{
-              background:
-                'linear-gradient(90deg, transparent, color-mix(in srgb, var(--brand-accent, #16a34a) 22%, transparent), transparent)',
-            }}
-          />
-          {/* Fine bande de rayures « travaux » défilant lentement, tout en bas du header */}
-          <div
-            className="one-construction-band absolute inset-x-0 bottom-0 h-[3px] opacity-70 motion-safe:[animation:one-construction-stripes_1.4s_linear_infinite]"
-          />
+            className="absolute bottom-[6px] right-[6px] origin-bottom motion-safe:[animation:one-cone-sway_3.4s_ease-in-out_infinite]"
+            style={{ transformBox: 'fill-box' }}
+          >
+            <svg width="26" height="30" viewBox="0 0 26 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* ombre au sol */}
+              <ellipse cx="13" cy="27.5" rx="11" ry="2.2" fill="rgba(0,0,0,0.35)" />
+              {/* socle */}
+              <rect x="2" y="24" width="22" height="3.6" rx="1.2" fill="#fb923c" />
+              <rect x="2" y="24" width="22" height="1.4" rx="0.7" fill="#fdba74" />
+              {/* corps du cône */}
+              <path d="M13 2 L20 24 H6 Z" fill="#f97316" />
+              {/* bandes réfléchissantes blanches */}
+              <path d="M10.7 9 L15.3 9 L15.9 12 L10.1 12 Z" fill="#fff7ed" />
+              <path d="M9.2 16 L16.8 16 L17.6 19.5 L8.4 19.5 Z" fill="#fff7ed" />
+              {/* pointe + reflet */}
+              <circle cx="13" cy="2.5" r="1.4" fill="#fdba74" />
+              <path d="M13 3 L11 12" stroke="rgba(255,255,255,0.35)" strokeWidth="0.8" strokeLinecap="round" />
+            </svg>
+          </div>
         </div>
       )}
       {/* Gauche — logo + displayName
@@ -459,7 +474,6 @@ export default async function DashboardLayout({
       >
         <ImpersonationWrapper>
           <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
-            {showConstructionBanner && <OneConstructionBanner />}
             {children}
           </PresenceProvider>
         </ImpersonationWrapper>

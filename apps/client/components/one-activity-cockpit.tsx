@@ -1,22 +1,32 @@
 'use client'
 
-import Link from 'next/link'
 import { useMemo } from 'react'
-import { ArrowRight } from 'lucide-react'
+import {
+  AlertCircle,
+  Megaphone,
+  MessageSquare,
+  FileText,
+  Video,
+  CreditCard,
+  CheckCircle2,
+} from 'lucide-react'
 import { formatRelativeDate } from '@monprojetpro/utils'
+import { useToolPosts, useSuiviOutilRealtime } from '@monprojetpro/module-suivi-outil'
+import { useChatMessages, useChatRealtime } from '@monprojetpro/modules-chat'
+import { useDocuments, useDocumentsRealtime } from '@monprojetpro/module-documents'
+import { useMeetings } from '@monprojetpro/module-visio'
+import { useSupportTickets, useSupportTicketsRealtime } from '@monprojetpro/modules-support'
 import {
-  useToolPosts,
-  useSuiviOutilRealtime,
-} from '@monprojetpro/module-suivi-outil'
+  CockpitCard,
+  CockpitMetric,
+  CockpitBigNumber,
+  CockpitEmptyLine,
+  CockpitCardSkeleton,
+} from './one-cockpit-card'
 import {
-  useNotifications,
-  useNotificationsRealtime,
-} from '@monprojetpro/modules-notifications'
-import {
-  toolPostVisual,
-  notificationVisual,
-  type OneActivityVisual,
-} from './one-activity-config'
+  useOneCockpitSummary,
+  useOneCockpitSummaryRealtime,
+} from './use-one-cockpit-summary'
 
 interface OneActivityCockpitProps {
   clientId: string
@@ -24,141 +34,273 @@ interface OneActivityCockpitProps {
   userId: string
 }
 
-/** Élément normalisé de la timeline du cockpit (source agnostique). */
-interface CockpitActivity {
-  id: string
-  title: string
-  detail: string | null
-  createdAt: string
-  href: string
-  visual: OneActivityVisual
+const TIER_LABEL: Record<'one' | 'one_plus', { name: string; price: string }> = {
+  one: { name: 'One', price: '39 €/mois' },
+  one_plus: { name: 'One+', price: '99 €/mois' },
 }
 
-const MAX_ITEMS = 6
+/** Formate une date relative, ou « — » si absente. */
+function rel(date: string | null | undefined): string {
+  return date ? formatRelativeDate(date) : '—'
+}
 
 /**
- * Cockpit d'activités de l'accueil One.
+ * Cockpit de l'accueil One (vision v2) — façon cockpit Hub, adapté à l'usage des fonctionnalités One.
  *
- * Remplace l'ancien `ActivityFeed` (raccourcis statiques bidon) par de VRAIES données,
- * fusionnées depuis deux sources déjà branchées Realtime :
- *   • Suivi de l'outil → useToolPosts + useSuiviOutilRealtime (tool_posts)
- *   • Notifications    → useNotifications + useNotificationsRealtime (notifications)
+ * Grille de cartes thématiques, chacune branchée sur une VRAIE source (zéro coquille vide) :
+ *   • À traiter        → demandes d'évolution en attente (validation_requests) + tickets support ouverts
+ *   • Suivi de l'outil → tool_posts (count + dernière activité)
+ *   • Messages         → messages non lus de MiKL (sender_type='operator', read_at null)
+ *   • Documents        → documents du client (count + dernier livraison)
+ *   • Visio            → prochain RDV planifié (sinon dernier terminé)
+ *   • Mon abonnement   → tier One/One+ (client_configs.elio_tier)
  *
- * Conçu pour s'ÉTENDRE : ajouter une source = pousser ses items normalisés dans `activities`
- * (mêmes champs CockpitActivity) — la grille et le tri par date n'ont pas à changer.
+ * Tout est branché Realtime (suivi-outil, chat, documents, support, validation_requests) — un
+ * chiffre bouge dès que la donnée change, sans rafraîchir la page. Visio n'a pas de Realtime
+ * module (refetch au focus suffit pour un agenda).
  */
-export function OneActivityCockpit({ clientId, userId }: OneActivityCockpitProps) {
-  // ── Sources réelles + Realtime ────────────────────────────────────────────
+export function OneActivityCockpit({ clientId, userId: _userId }: OneActivityCockpitProps) {
+  // ── Realtime : chaque source garde son canal déjà éprouvé ─────────────────
   useSuiviOutilRealtime(clientId)
-  useNotificationsRealtime(userId)
+  useChatRealtime(clientId)
+  useDocumentsRealtime(clientId)
+  useSupportTicketsRealtime()
+  useOneCockpitSummaryRealtime(clientId)
 
+  // ── Sources réelles ────────────────────────────────────────────────────────
   const { posts, isPending: postsPending } = useToolPosts(clientId)
-  const { data: notifications, isPending: notifsPending } = useNotifications(userId)
+  const { messages, isPending: messagesPending } = useChatMessages(clientId)
+  const { documents, isPending: documentsPending } = useDocuments(clientId)
+  const { data: scheduledMeetings, isPending: scheduledPending } = useMeetings({
+    clientId,
+    status: 'scheduled',
+  })
+  const { data: completedMeetings, isPending: completedPending } = useMeetings({
+    clientId,
+    status: 'completed',
+  })
+  const { data: tickets, isPending: ticketsPending } = useSupportTickets({ clientId })
+  const { data: summary, isPending: summaryPending } = useOneCockpitSummary(clientId)
 
-  const isPending = postsPending || notifsPending
+  // ── Dérivés ──────────────────────────────────────────────────────────────
+  const lastPostAt = posts[0]?.createdAt ?? null
 
-  // ── Normalisation + fusion + tri par date décroissante ────────────────────
-  const activities = useMemo<CockpitActivity[]>(() => {
-    const fromPosts: CockpitActivity[] = (posts ?? []).map((p) => ({
-      id: `post-${p.id}`,
-      title: p.title?.trim() || 'Nouvelle actualité de ton outil',
-      detail: p.body ? p.body.slice(0, 120) : null,
-      createdAt: p.createdAt,
-      href: '/modules/suivi-outil',
-      visual: toolPostVisual(),
-    }))
+  const unreadFromMiKL = useMemo(
+    () => messages.filter((m) => m.senderType === 'operator' && !m.readAt).length,
+    [messages]
+  )
 
-    const fromNotifs: CockpitActivity[] = (notifications ?? []).map((n) => ({
-      id: `notif-${n.id}`,
-      title: n.title,
-      detail: n.body,
-      createdAt: n.createdAt,
-      href: n.link || '/modules/notifications',
-      visual: notificationVisual(n.type),
-    }))
+  const lastDocument = useMemo(() => {
+    if (documents.length === 0) return null
+    return [...documents].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0]
+  }, [documents])
 
-    return [...fromPosts, ...fromNotifs]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, MAX_ITEMS)
-  }, [posts, notifications])
+  const nextMeeting = useMemo(() => {
+    const upcoming = (scheduledMeetings ?? [])
+      .filter((m) => new Date(m.scheduledAt).getTime() >= Date.now())
+      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+    return upcoming[0] ?? null
+  }, [scheduledMeetings])
+
+  const lastMeeting = useMemo(() => {
+    const past = (completedMeetings ?? []).sort(
+      (a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime()
+    )
+    return past[0] ?? null
+  }, [completedMeetings])
+
+  const openTickets = useMemo(
+    () => (tickets ?? []).filter((t) => t.status === 'open' || t.status === 'in_progress').length,
+    [tickets]
+  )
+
+  const evolutionPending = summary?.evolutionPendingCount ?? 0
+  const todoCount = evolutionPending + openTickets
+  const tier = summary?.elioTier ?? 'one'
 
   return (
-    <section aria-label="Activité de ton espace">
+    <section aria-label="Cockpit de ton espace One">
       <div className="mb-3.5 flex items-baseline justify-between">
-        <h2 className="text-[15px] font-semibold text-[#f9fafb]">Activité de ton espace</h2>
-        <Link
-          href="/modules/notifications"
-          className="text-[12px] text-[#9ca3af] transition-colors hover:text-[#f9fafb]"
-        >
-          Tout voir →
-        </Link>
+        <h2 className="text-[15px] font-semibold text-[#f9fafb]">Cockpit de ton espace</h2>
       </div>
 
-      <div className="rounded-xl border border-[#2d2d2d] bg-[#141414] p-2">
-        {isPending ? (
-          <CockpitSkeleton />
-        ) : activities.length === 0 ? (
-          <CockpitEmpty />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* ───────────── À traiter ───────────── */}
+        {summaryPending || ticketsPending ? (
+          <CockpitCardSkeleton />
         ) : (
-          <ul className="divide-y divide-[#1f1f1f]">
-            {activities.map((a) => (
-              <li key={a.id}>
-                <Link
-                  href={a.href}
-                  className="group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-white/[0.03]"
-                >
-                  <span
-                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${a.visual.iconClass}`}
-                    aria-hidden="true"
-                  >
-                    <a.visual.Icon className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13.5px] font-medium text-[#f3f4f6]">{a.title}</p>
-                    {a.detail && (
-                      <p className="mt-0.5 line-clamp-1 text-[12px] text-[#9ca3af]">{a.detail}</p>
-                    )}
-                    <p className="mt-1 text-[11px] text-[#6b7280]">
-                      {formatRelativeDate(a.createdAt)}
-                    </p>
-                  </div>
-                  <ArrowRight
-                    className="mt-1 h-3.5 w-3.5 shrink-0 text-[#3d3d3d] transition-colors group-hover:text-[#9ca3af]"
-                    aria-hidden="true"
+          <CockpitCard
+            title="À traiter"
+            Icon={AlertCircle}
+            accent="amber"
+            href={openTickets > 0 ? '/modules/support' : '/modules/elio'}
+            linkLabel={todoCount > 0 ? 'Ouvrir' : 'Tout est à jour'}
+            badge={todoCount}
+          >
+            {todoCount === 0 ? (
+              <div className="flex items-center gap-2 py-1 text-[13px] text-emerald-300">
+                <CheckCircle2 className="h-4 w-4" />
+                Rien à traiter pour le moment.
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {evolutionPending > 0 && (
+                  <CockpitMetric
+                    label="Demande(s) d'évolution en attente"
+                    value={evolutionPending}
+                    emphasis
                   />
-                </Link>
-              </li>
-            ))}
-          </ul>
+                )}
+                {openTickets > 0 && (
+                  <CockpitMetric label="Ticket(s) support ouvert(s)" value={openTickets} emphasis />
+                )}
+              </div>
+            )}
+          </CockpitCard>
+        )}
+
+        {/* ───────────── Suivi de l'outil ───────────── */}
+        {postsPending ? (
+          <CockpitCardSkeleton />
+        ) : (
+          <CockpitCard
+            title="Suivi de l'outil"
+            Icon={Megaphone}
+            accent="emerald"
+            href="/modules/suivi-outil"
+            linkLabel="Ouvrir le suivi"
+          >
+            {posts.length === 0 ? (
+              <CockpitEmptyLine>Aucune publication pour l'instant.</CockpitEmptyLine>
+            ) : (
+              <>
+                <CockpitBigNumber value={posts.length} suffix={posts.length > 1 ? 'publications' : 'publication'} />
+                <div className="mt-2">
+                  <CockpitMetric label="Dernière activité" value={rel(lastPostAt)} />
+                </div>
+              </>
+            )}
+          </CockpitCard>
+        )}
+
+        {/* ───────────── Messages ───────────── */}
+        {messagesPending ? (
+          <CockpitCardSkeleton />
+        ) : (
+          <CockpitCard
+            title="Messages"
+            Icon={MessageSquare}
+            accent="indigo"
+            href="/modules/chat"
+            linkLabel="Ouvrir le chat"
+            badge={unreadFromMiKL}
+          >
+            {unreadFromMiKL > 0 ? (
+              <>
+                <CockpitBigNumber
+                  value={unreadFromMiKL}
+                  suffix={unreadFromMiKL > 1 ? 'non lus' : 'non lu'}
+                />
+                <div className="mt-2">
+                  <CockpitMetric label="De la part de" value="MiKL" />
+                </div>
+              </>
+            ) : (
+              <CockpitEmptyLine>
+                {messages.length === 0
+                  ? 'Aucun message. Écris à MiKL quand tu veux.'
+                  : 'Tu es à jour avec MiKL.'}
+              </CockpitEmptyLine>
+            )}
+          </CockpitCard>
+        )}
+
+        {/* ───────────── Documents ───────────── */}
+        {documentsPending ? (
+          <CockpitCardSkeleton />
+        ) : (
+          <CockpitCard
+            title="Documents"
+            Icon={FileText}
+            accent="sky"
+            href="/modules/documents"
+            linkLabel="Voir mes documents"
+          >
+            {documents.length === 0 ? (
+              <CockpitEmptyLine>Aucun document pour l'instant.</CockpitEmptyLine>
+            ) : (
+              <>
+                <CockpitBigNumber
+                  value={documents.length}
+                  suffix={documents.length > 1 ? 'documents' : 'document'}
+                />
+                {lastDocument && (
+                  <div className="mt-2 space-y-0.5">
+                    <CockpitMetric label="Dernier" value={rel(lastDocument.createdAt)} />
+                    <p className="truncate text-[12px] text-[#9ca3af]">{lastDocument.name}</p>
+                  </div>
+                )}
+              </>
+            )}
+          </CockpitCard>
+        )}
+
+        {/* ───────────── Visio ───────────── */}
+        {scheduledPending || completedPending ? (
+          <CockpitCardSkeleton />
+        ) : (
+          <CockpitCard
+            title="Visio"
+            Icon={Video}
+            accent="violet"
+            href="/modules/visio"
+            linkLabel="Ouvrir la visio"
+          >
+            {nextMeeting ? (
+              <>
+                <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-violet-300/80">
+                  Prochain rendez-vous
+                </p>
+                <p className="truncate text-[14px] font-semibold text-[#f9fafb]">
+                  {nextMeeting.title}
+                </p>
+                <div className="mt-1.5">
+                  <CockpitMetric label="Quand" value={rel(nextMeeting.scheduledAt)} />
+                </div>
+              </>
+            ) : lastMeeting ? (
+              <>
+                <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-[#6b7280]">
+                  Aucun RDV à venir
+                </p>
+                <CockpitMetric label="Dernière visio" value={rel(lastMeeting.scheduledAt)} />
+              </>
+            ) : (
+              <CockpitEmptyLine>Aucune visio planifiée.</CockpitEmptyLine>
+            )}
+          </CockpitCard>
+        )}
+
+        {/* ───────────── Mon abonnement ───────────── */}
+        {summaryPending ? (
+          <CockpitCardSkeleton />
+        ) : (
+          <CockpitCard
+            title="Mon abonnement"
+            Icon={CreditCard}
+            accent="cyan"
+            href="/settings/billing"
+            linkLabel="Mes factures"
+          >
+            <div className="space-y-0.5">
+              <CockpitMetric label="Offre" value={TIER_LABEL[tier].name} emphasis />
+              <CockpitMetric label="Mensuel" value={TIER_LABEL[tier].price} />
+            </div>
+          </CockpitCard>
         )}
       </div>
     </section>
-  )
-}
-
-function CockpitSkeleton() {
-  return (
-    <ul className="divide-y divide-[#1f1f1f]" aria-hidden="true">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <li key={i} className="flex items-start gap-3 p-3">
-          <div className="h-9 w-9 shrink-0 animate-pulse rounded-lg bg-[#1f1f1f]" />
-          <div className="flex-1 space-y-2 py-0.5">
-            <div className="h-3 w-2/3 animate-pulse rounded bg-[#1f1f1f]" />
-            <div className="h-2.5 w-1/3 animate-pulse rounded bg-[#1a1a1a]" />
-          </div>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function CockpitEmpty() {
-  return (
-    <div className="px-4 py-8 text-center">
-      <p className="text-[13px] text-[#9ca3af]">Aucune activité pour le moment.</p>
-      <p className="mt-1 text-[12px] text-[#6b7280]">
-        Les actualités de ton outil et tes notifications apparaîtront ici.
-      </p>
-    </div>
   )
 }

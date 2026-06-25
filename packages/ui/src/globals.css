@@ -227,30 +227,48 @@
   }
 }
 
-/* ── Animation « chantier » du header One (cycle « en chantier → livré ») ──────────
-   Quand le One est en construction (one_status = 'construction'), une fine bande de
-   rayures « travaux » défile lentement sous le header + un léger balayage lumineux.
-   Vert One via var(--brand-accent). Discret, premium (Minimal Futuriste), jamais kitsch.
-   Toute boucle est gardée par `motion-safe:` côté composant → respect prefers-reduced-motion. */
-@keyframes one-construction-stripes {
-  from { background-position: 0 0; }
-  to   { background-position: 28px 0; }
-}
+/* ── Signature « chantier » du header One (cycle « en chantier → livré ») ──────────
+   Quand le One est en construction (one_status = 'construction'), le header est bordé
+   d'une RUBALISE (ruban de signalisation rayé orange/blanc) qui défile, + un PLOT de
+   chantier SVG qui se balance. Code couleur travaux ASSUMÉ (orange/jaune/blanc), pas le
+   vert du thème. Premium (Minimal Futuriste), fun mais soigné.
+   Toutes les boucles sont gardées par `motion-safe:` côté composant → sur
+   prefers-reduced-motion : rubalise figée + cône immobile (aucune animation). */
 
-@keyframes one-construction-sheen {
-  0%   { transform: translateX(-120%); opacity: 0; }
-  18%  { opacity: 1; }
-  60%  { opacity: 0.35; }
-  100% { transform: translateX(120%); opacity: 0; }
-}
-
-.one-construction-band {
+/* Rubalise = rayures hazard à 45° orange/blanc. La largeur du motif (background-size)
+   sert de distance de défilement pour une boucle parfaitement continue. */
+.one-hazard-tape {
   background-image: repeating-linear-gradient(
     -45deg,
-    color-mix(in srgb, var(--brand-accent, #16a34a) 55%, transparent) 0,
-    color-mix(in srgb, var(--brand-accent, #16a34a) 55%, transparent) 7px,
-    transparent 7px,
-    transparent 14px
+    #f97316 0,
+    #f97316 9px,
+    #fef3c7 9px,
+    #fef3c7 18px
   );
-  background-size: 28px 100%;
+  background-size: 25.456px 100%; /* = 18px * √2, pas du motif projeté à l'horizontale */
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.45);
+}
+.one-hazard-tape--top {
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+}
+.one-hazard-tape--bottom {
+  border-bottom-left-radius: 2px;
+  border-bottom-right-radius: 2px;
+}
+
+@keyframes one-hazard-scroll {
+  from { background-position: 0 0; }
+  to   { background-position: 25.456px 0; }
+}
+
+@keyframes one-hazard-scroll-rev {
+  from { background-position: 0 0; }
+  to   { background-position: -25.456px 0; }
+}
+
+/* Balancement subtil du plot de chantier (dodeline gauche-droite depuis sa base). */
+@keyframes one-cone-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50%      { transform: rotate(4deg); }
 }

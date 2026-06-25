@@ -38,14 +38,21 @@ const makeConfig = (overrides: Partial<ClientConfig> = {}): ClientConfig => ({
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('CoreDashboard — accueil One (vision v2)', () => {
-  it('rend le greeting et la grille « Accès rapide » des modules du socle', () => {
+  it('rend le greeting de l’accueil One', () => {
     render(<CoreDashboard clientConfig={makeConfig()} clientName="Camille" />)
     expect(screen.getByText('Bonjour Camille !')).toBeInTheDocument()
-    expect(screen.getByLabelText('Accès à tes modules')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Ouvrir le module Documents/i })).toBeInTheDocument()
   })
 
-  it('injecte le headerSlot fourni par l’app (bandeau Concierge + cockpit)', () => {
+  it('ne rend plus la grille « Accès rapide » (la sidebar assure la navigation)', () => {
+    render(<CoreDashboard clientConfig={makeConfig()} clientName="Camille" />)
+    expect(screen.queryByText('Accès rapide')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Accès à tes modules')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /Ouvrir le module Documents/i })
+    ).not.toBeInTheDocument()
+  })
+
+  it('injecte le headerSlot fourni par l’app (bandeau Élio One + cockpit)', () => {
     render(
       <CoreDashboard
         clientConfig={makeConfig()}
@@ -54,16 +61,6 @@ describe('CoreDashboard — accueil One (vision v2)', () => {
       />
     )
     expect(screen.getByTestId('header-slot')).toBeInTheDocument()
-  })
-
-  it('affiche un message clair quand seul core-dashboard est actif', () => {
-    render(
-      <CoreDashboard
-        clientConfig={makeConfig({ activeModules: ['core-dashboard'] })}
-        clientName="Camille"
-      />
-    )
-    expect(screen.getByText(/Contactez MiKL/i)).toBeInTheDocument()
   })
 
   it('n’empile plus les anciens blocs redondants (Élio coquille vide, activité statique)', () => {

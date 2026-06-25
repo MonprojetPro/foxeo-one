@@ -22,17 +22,19 @@ interface OneHomeProps {
 }
 
 /**
- * Orchestrateur client de l'accueil One (vision v2).
+ * Orchestrateur client de l'accueil One (vision v2 — refonte 2026-06-25).
  *
- * Assemble — au niveau APP, car un module ne peut pas en importer un autre — les briques :
- *   1. Bandeau Élio Concierge One (Realtime, mot proactif)   → OneConciergeBanner
- *   2. Cockpit d'activités réelles (suivi-outil + notifs)    → OneActivityCockpit
- *   3. Accès aux modules du socle                            → CoreDashboard (grille)
+ * Assemble — au niveau APP, car un module ne peut pas en importer un autre — deux briques :
+ *   1. Bandeau « Élio One »                          → OneConciergeBanner (perso One, vert)
+ *   2. Cockpit One (cartes métriques façon Hub)      → OneActivityCockpit (tout branché)
  *
- * Hiérarchie : Concierge → Cockpit → Accès modules. Pleine largeur exploitée.
+ * Plus de hero construction, plus de grille « Accès rapide » (la sidebar joue ce rôle). La
+ * structure est volontairement resserrée : bandeau d'abord, cockpit ensuite, pleine largeur.
  *
- * Le bouton « Poser une question » du bandeau ouvre une pop-up de chat Élio One éphémère
- * (même UX que le Concierge Lab). Le chat persistant complet reste sur /modules/elio.
+ * Le bouton « Poser une question » du bandeau ouvre une pop-up de chat Élio One ÉPHÉMÈRE,
+ * exactement comme le Concierge Lab (`parcours-page-client.tsx`) : `ElioChat` SANS `userId`
+ * → version simple, sans liste de conversations ni historique. Le client pose sa question,
+ * lit la réponse, ferme — la conversation disparaît.
  */
 export function OneHome({
   clientId,
@@ -66,10 +68,12 @@ export function OneHome({
 
       <Dialog open={conciergeOpen} onOpenChange={setConciergeOpen}>
         <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
-          <DialogTitle className="sr-only">Élio, le Concierge</DialogTitle>
+          <DialogTitle className="sr-only">Élio One</DialogTitle>
           <div className="h-[70vh]">
             {iaConsentGranted ? (
-              <ElioChat dashboardType="one" clientId={clientId} userId={userId} />
+              // Pas de userId → chat éphémère (ni historique, ni liste de conversations),
+              // identique au Concierge Lab.
+              <ElioChat dashboardType="one" clientId={clientId} />
             ) : (
               <ElioVeille />
             )}

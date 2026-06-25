@@ -14,11 +14,12 @@ interface OneConciergeBannerProps {
 }
 
 /**
- * Bandeau Élio One « le Concierge » — en tête de l'accueil One.
+ * Bandeau « Élio One » — l'assistant One, en tête de l'accueil.
  *
- * Réplique la structure du bandeau Lab (`ElioParcoursPanel`) — identité + contexte à gauche,
- * avatar + bouton « Pose-moi une question » à droite — mais habillé du thème One vert
- * (`var(--brand-accent, #16a34a)` / `#4ade80`).
+ * Personnalisé pour le One (vision v2) : avatar Élio One (`/elio/elio-one.png`), titre
+ * « Élio One », sous-titre « Ton assistant One ». Réplique la structure du bandeau Lab
+ * (`ElioParcoursPanel`) — identité + contexte à gauche, avatar + bouton « Pose-moi une
+ * question » à droite — mais habillé du thème One vert (`var(--brand-accent, #16a34a)` / `#4ade80`).
  *
  * Le « dernier mot d'Élio » est consommé via TanStack (hydraté SSR) + Realtime
  * (canal `one:{clientId}`). Jamais de bandeau vide : un message d'accueil par défaut prend le
@@ -43,7 +44,7 @@ export function OneConciergeBanner({
       'Je suis là pour t’aider à t’y retrouver — pose-moi une question quand tu veux.'
 
   return (
-    <section aria-label="Élio, le Concierge One">
+    <section aria-label="Élio One — ton assistant">
       <div
         className="relative overflow-hidden rounded-2xl border p-5"
         style={{
@@ -72,7 +73,7 @@ export function OneConciergeBanner({
                 className="text-[15px] font-semibold tracking-[0.01em] leading-tight"
                 style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 85%, white)' }}
               >
-                Élio, le Concierge
+                Élio One
               </p>
             </div>
             <p className="text-[12px] text-[#9ca3af] leading-tight mt-0.5">Ton assistant One</p>
@@ -93,8 +94,8 @@ export function OneConciergeBanner({
           <div className="flex shrink-0 flex-col items-center gap-2 w-[120px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/elio/elio-concierge.png"
-              alt="Élio, le Concierge"
+              src="/elio/elio-one.png"
+              alt="Élio One"
               className="h-24 w-24 object-contain drop-shadow-[0_0_12px_rgba(22,163,74,0.3)]"
             />
             <button
