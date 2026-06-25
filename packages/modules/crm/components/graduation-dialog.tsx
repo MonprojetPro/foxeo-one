@@ -21,16 +21,23 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { differenceInDays } from 'date-fns'
 
+// Catalogue réel des modules activables côté CLIENT ONE (manifests `targets: ['client-one']`).
+// ⚠️ Tenu à jour avec la vision One v2 : « Comptabilité » (facturation) et « Validation Hub »
+// sont des modules HUB (opérateur), JAMAIS activables pour un client → exclus d'ici.
+// « Suivi de l'outil » et « Support » font partie du socle relation One.
 const AVAILABLE_MODULES = [
   { id: 'core-dashboard', label: 'Dashboard' },
   { id: 'chat', label: 'Messagerie' },
   { id: 'documents', label: 'Documents' },
   { id: 'visio', label: 'Visioconférence' },
+  { id: 'suivi-outil', label: "Suivi de l'outil" },
+  { id: 'support', label: 'Support' },
   { id: 'elio', label: 'Élio' },
-  { id: 'validation-hub', label: 'Validation Hub' },
 ]
 
-const DEFAULT_MODULES = ['core-dashboard', 'documents', 'chat']
+// Socle relation par défaut. `elio` est inclus car le tier par défaut (Essentiel) comprend
+// Élio ; il est retiré automatiquement si MiKL choisit « Ponctuel » (cf. handleSelectTier).
+const DEFAULT_MODULES = ['core-dashboard', 'chat', 'documents', 'suivi-outil', 'support', 'elio']
 
 const TIERS: Array<{ value: GraduationTier; label: string; description: string }> = [
   {
@@ -78,6 +85,16 @@ export function GraduationDialog({
   const completedSteps = parcours.activeStages.filter((s) => s.status === 'completed').length
   const totalSteps = parcours.activeStages.filter((s) => s.active).length
   const durationDays = differenceInDays(new Date(), new Date(parcours.startedAt))
+
+  // L'offre IMPLIQUE Élio : Essentiel/Agentique → Élio activé ; Ponctuel → Élio retiré.
+  // Évite l'incohérence « Ponctuel (sans Élio) mais case Élio cochée ».
+  const handleSelectTier = (tier: GraduationTier) => {
+    setSelectedTier(tier)
+    setSelectedModules((prev) => {
+      const withoutElio = prev.filter((m) => m !== 'elio')
+      return tier === 'base' ? withoutElio : [...withoutElio, 'elio']
+    })
+  }
 
   const toggleModule = (moduleId: string) => {
     setSelectedModules((prev) =>
@@ -162,7 +179,7 @@ export function GraduationDialog({
                 <button
                   key={tier.value}
                   type="button"
-                  onClick={() => setSelectedTier(tier.value)}
+                  onClick={() => handleSelectTier(tier.value)}
                   className={[
                     'w-full text-left rounded-lg border p-3 transition-colors',
                     selectedTier === tier.value
