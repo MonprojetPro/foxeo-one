@@ -3,7 +3,7 @@
 import { useState, useRef, type KeyboardEvent, type CSSProperties } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Send, Loader2, ExternalLink, Bot, MessageCircle, PenLine, HelpCircle, Lock } from 'lucide-react'
-import { newConversation, sendToElio, saveElioMessage } from '@monprojetpro/module-elio'
+import { newConversation, sendToElio, saveElioMessage, ELIO_MODEL_MICRO } from '@monprojetpro/module-elio'
 import Link from 'next/link'
 
 type OneMode = 'question' | 'brouillon' | 'aide'
@@ -65,11 +65,17 @@ const MODE_ACTIVE_STYLE: Record<OneMode, CSSProperties> = {
 
 interface OneElioBoxProps {
   userId: string
+  /**
+   * ID du client (clients.id) — INDISPENSABLE pour qu'Élio ait son contexte One (posture
+   * coach, modules actifs, briefs Lab, état de l'outil, escalade). Sans lui, le widget
+   * discutait « à froid » (Élio One v2). Optionnel par sécurité, mais toujours fourni en One.
+   */
+  clientId?: string
   /** Consentement au traitement IA (RGPD). Si false, Élio reste en veille. */
   iaConsentGranted: boolean
 }
 
-export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
+export function OneElioBox({ userId, clientId, iaConsentGranted }: OneElioBoxProps) {
   const queryClient = useQueryClient()
   const [input, setInput] = useState('')
   const [mode, setMode] = useState<OneMode>('question')
@@ -125,19 +131,34 @@ export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
     setErrorMsg(null)
     setIsLoading(true)
 
-    const { data: conv } = await newConversation('one')
-    if (!conv) {
-      setErrorMsg('Impossible de démarrer une conversation')
-      setIsLoading(false)
-      return
+    // Mémoire : on RÉUTILISE la même conversation sur toute la session du widget (au lieu
+    // d'en créer une neuve à chaque envoi). Élio se souvient ainsi des échanges précédents.
+    let convId = lastConvId
+    if (!convId) {
+      const { data: conv } = await newConversation('one')
+      if (!conv) {
+        setErrorMsg('Impossible de démarrer une conversation')
+        setIsLoading(false)
+        return
+      }
+      convId = conv.id
+      setLastConvId(conv.id)
     }
 
-    setLastConvId(conv.id)
-
     const fullMessage = activeMode.prefix + text
-    await saveElioMessage(conv.id, 'user', fullMessage)
+    await saveElioMessage(convId, 'user', fullMessage)
 
-    const { data: reply, error } = await sendToElio('one', fullMessage)
+    // clientId → Élio reçoit tout son contexte One (posture, modules, briefs, état outil).
+    // conversationId → mémoire (historique chargé côté serveur, dédupliqué par l'Edge Function).
+    // model micro (Haiku) → question rapide depuis la sidebar = micro-tâche.
+    const { data: reply, error } = await sendToElio(
+      'one',
+      fullMessage,
+      clientId,
+      undefined,
+      undefined,
+      { conversationId: convId, model: ELIO_MODEL_MICRO },
+    )
     setIsLoading(false)
 
     if (error) {
@@ -146,9 +167,15 @@ export function OneElioBox({ userId, iaConsentGranted }: OneElioBoxProps) {
     }
 
     if (reply) {
-      await saveElioMessage(conv.id, 'assistant', reply.content)
-      setLastReply(reply.content)
-      // Invalider le cache conversations pour que la page Élio reflète la nouvelle conversation
+      // Cas demande d'évolution : la collecte est un flux multi-tours qui vit dans le chat
+      // plein écran → ici le contenu revient vide. On guide le client vers Élio complet.
+      const replyText = reply.content?.trim()
+        ? reply.content
+        : "C'est une demande qui mérite qu'on en discute : ouvre Élio en plein écran et je m'en occupe avec toi."
+
+      await saveElioMessage(convId, 'assistant', replyText)
+      setLastReply(replyText)
+      // Invalider le cache conversations pour que la page Élio reflète la conversation
       void queryClient.invalidateQueries({
         queryKey: ['elio-conversations', userId, 'one'],
       })

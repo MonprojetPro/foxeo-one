@@ -7,6 +7,11 @@ import type { DashboardType, ElioMessage, ElioError } from '../types/elio.types'
 interface UseElioChatOptions {
   dashboardType: DashboardType
   clientId?: string
+  /**
+   * Modèle à utiliser (routage Élio One v2). Optionnel — défaut serveur = Sonnet.
+   * Les surfaces « micro-tâche » (pop-up d'accueil One) passent Haiku.
+   */
+  model?: string
 }
 
 interface UseElioChatReturn {
@@ -22,7 +27,7 @@ function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-export function useElioChat({ dashboardType, clientId }: UseElioChatOptions): UseElioChatReturn {
+export function useElioChat({ dashboardType, clientId, model }: UseElioChatOptions): UseElioChatReturn {
   const [messages, setMessages] = useState<ElioMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<ElioError | null>(null)
@@ -43,10 +48,22 @@ export function useElioChat({ dashboardType, clientId }: UseElioChatOptions): Us
         dashboardType,
       }
 
+      // Mémoire éphémère (Élio One v2) : on transmet les tours précédents en historique
+      // inline (pas de conversation persistée ici), pour qu'Élio se souvienne dans la session
+      // ouverte. `messages` (capturé par la closure) = les tours AVANT le message courant.
+      const inlineHistory = messages.map((m) => ({ role: m.role, content: m.content }))
+
       setMessages((prev) => [...prev, userMessage])
       setIsLoading(true)
 
-      const { data, error: actionError } = await sendToElio(dashboardType, content, clientId)
+      const { data, error: actionError } = await sendToElio(
+        dashboardType,
+        content,
+        clientId,
+        undefined,
+        undefined,
+        { ...(model ? { model } : {}), ...(inlineHistory.length ? { history: inlineHistory } : {}) },
+      )
 
       setIsLoading(false)
 
@@ -59,7 +76,7 @@ export function useElioChat({ dashboardType, clientId }: UseElioChatOptions): Us
         setMessages((prev) => [...prev, data])
       }
     },
-    [dashboardType, clientId, isLoading]
+    [dashboardType, clientId, model, messages, isLoading]
   )
 
   const retrySend = useCallback(async () => {

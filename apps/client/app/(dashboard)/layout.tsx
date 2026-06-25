@@ -51,12 +51,14 @@ function ClientSidebar({
   dashboardType,
   activeModules,
   userId,
+  clientId,
   badges,
   iaConsentGranted,
 }: {
   dashboardType: string
   activeModules: string[]
   userId: string
+  clientId: string
   badges?: Record<string, ModuleSidebarBadge>
   iaConsentGranted: boolean
 }) {
@@ -78,7 +80,7 @@ function ClientSidebar({
   // Widget Élio en bas de sidebar pour One (si le module elio est actif)
   const elioWidget =
     target === 'client-one' && activeModules.includes('elio')
-      ? <OneElioBox userId={userId} iaConsentGranted={iaConsentGranted} />
+      ? <OneElioBox userId={userId} clientId={clientId} iaConsentGranted={iaConsentGranted} />
       : undefined
 
   return (
@@ -457,7 +459,7 @@ export default async function DashboardLayout({
       <DashboardShell
         density={density}
         sidebar={
-          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} userId={user?.id ?? ''} badges={sidebarBadges} iaConsentGranted={iaConsentGranted} />
+          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} userId={user?.id ?? ''} clientId={clientId} badges={sidebarBadges} iaConsentGranted={iaConsentGranted} />
         }
         header={
           <ClientHeader

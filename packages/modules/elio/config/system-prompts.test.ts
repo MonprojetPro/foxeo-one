@@ -96,7 +96,31 @@ describe('buildSystemPrompt', () => {
     it('contient le contexte One dans le prompt', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
       expect(prompt).toContain('Dashboard One')
-      expect(prompt).toContain('outil MonprojetPro One')
+      // Vision v2 : le One est « sa console de pilotage » (et non plus « outil »).
+      expect(prompt).toContain('console de pilotage')
+    })
+
+    // Élio One v2 — posture coach gravée
+    it('inclut la posture coach (faits sacrés + force de proposition) dans le prompt One', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
+      expect(prompt).toContain('Ta posture')
+      expect(prompt).toContain('Les FAITS sont sacrés')
+      expect(prompt).toContain('force de proposition')
+    })
+
+    // Élio One v2 — escalade/anti-hallucination branchée en One (avant : Lab seulement)
+    it('inclut la règle d\'escalade vers MiKL dans le prompt One', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
+      expect(prompt).toContain('Quand je ne sais pas')
+      expect(prompt).toContain('Chat MiKL')
+      expect(prompt).toContain('je n\'invente jamais')
+    })
+
+    // Élio One v2 — deep-linking : la nav One décrit le jeton cliquable
+    it('inclut la consigne de deep-linking cliquable dans le prompt One', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
+      expect(prompt).toContain('[[goto:')
+      expect(prompt).toContain('Liens cliquables')
     })
 
     it('mentionne les capacités One+ pour tier=one_plus', () => {

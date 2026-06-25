@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { CoreDashboard } from '@monprojetpro/module-core-dashboard'
-import { ElioChat, type ConciergeWord } from '@monprojetpro/module-elio'
+import { ElioChat, ELIO_MODEL_MICRO, type ConciergeWord } from '@monprojetpro/module-elio'
 import { Dialog, DialogContent, DialogTitle } from '@monprojetpro/ui'
 import type { ClientConfig } from '@monprojetpro/types'
 import { OneConciergeBanner } from './one-concierge-banner'
@@ -71,9 +71,10 @@ export function OneHome({
           <DialogTitle className="sr-only">Élio One</DialogTitle>
           <div className="h-[70vh]">
             {iaConsentGranted ? (
-              // Pas de userId → chat éphémère (ni historique, ni liste de conversations),
-              // identique au Concierge Lab.
-              <ElioChat dashboardType="one" clientId={clientId} />
+              // Pas de userId → chat éphémère (ni liste de conversations). Mais clientId →
+              // contexte One complet, et model micro (Haiku) → réponse rapide. La mémoire
+              // intra-session est assurée par l'historique inline (cf. useElioChat).
+              <ElioChat dashboardType="one" clientId={clientId} model={ELIO_MODEL_MICRO} />
             ) : (
               <ElioVeille />
             )}

@@ -100,6 +100,13 @@ export { resetElioConfig } from './actions/reset-elio-config'
 // Config — Story 8.1
 export { buildSystemPrompt } from './config/system-prompts'
 
+// Config — Routage modèle (Élio One v2)
+export { ELIO_MODEL_CORE, ELIO_MODEL_MICRO } from './config/models'
+
+// Utils — Deep-linking Élio (Élio One v2)
+export { parseGotoLinks, GOTO_ROUTES } from './utils/parse-goto-links'
+export type { GotoLink } from './utils/parse-goto-links'
+
 // Config — Story 8.5
 export { HUB_FEATURES_DOCUMENTATION } from './config/hub-features-documentation'
 export { HUB_DATABASE_SCHEMAS } from './config/hub-database-schemas'

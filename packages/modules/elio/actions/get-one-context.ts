@@ -24,6 +24,22 @@ export async function getOneContext(clientId: string): Promise<string | null> {
   try {
     const supabase = await createServerSupabaseClient()
 
+    // 0. Identité du client : qui est-il, quelle entreprise, quel besoin initial exprimé.
+    // Donne à Élio One le « qui » avant le « quoi » — il ne repart jamais de zéro.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: client } = await (supabase as any)
+      .from('clients')
+      .select('first_name, name, company, lead_message')
+      .eq('id', clientId)
+      .maybeSingle() as {
+        data: {
+          first_name: string | null
+          name: string | null
+          company: string | null
+          lead_message: string | null
+        } | null
+      }
+
     // 1. Config client : modules actifs, tier, statut du cycle de vie de l'outil.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: cfg } = await (supabase as any)
@@ -63,6 +79,19 @@ export async function getOneContext(clientId: string): Promise<string | null> {
       }
 
     const lines: string[] = []
+
+    // --- Identité du client (le « qui ») ---
+    const identityParts: string[] = []
+    const contactName = [client?.first_name, client?.name].filter(Boolean).join(' ').trim()
+    if (contactName) identityParts.push(`contact : ${contactName}`)
+    if (client?.company?.trim()) identityParts.push(`entreprise : ${client.company.trim()}`)
+    if (identityParts.length > 0) {
+      lines.push(`- Client : ${identityParts.join(', ')}.`)
+    }
+    if (client?.lead_message?.trim()) {
+      // Le message initial du prospect = souvent ses objectifs / son besoin de départ.
+      lines.push(`- Besoin exprimé à l'origine par le client : « ${client.lead_message.trim().slice(0, 600)} »`)
+    }
 
     // --- Cycle de vie de l'outil (en chantier / livré) ---
     if (cfg?.one_status === 'construction') {

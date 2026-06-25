@@ -127,7 +127,7 @@ export async function sendToElio(
   clientId?: string,
   draftContext?: DraftContext,
   systemPromptOverride?: string,
-  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string; skipLabEnabledCheck?: boolean },
+  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string; skipLabEnabledCheck?: boolean; history?: Array<{ role: string; content: string }> },
 ): Promise<ActionResponse<ElioMessage>> {
   if (!message.trim()) {
     return errorResponse('Le message ne peut pas être vide', 'VALIDATION_ERROR')
@@ -303,10 +303,16 @@ export async function sendToElio(
       .eq('status', 'approved') as { data: Array<{ title: string; content: string }> | null }
 
     if (labBriefs && labBriefs.length > 0) {
+      // Briefs Lab COMPLETS (Élio One v2) : l'ancienne troncature à 200 caractères coupait
+      // les objectifs/décisions au milieu. On garde le brief entier, plafonné par sécurité à
+      // ~2000 caractères/brief pour éviter un prompt pathologique sur un brief géant.
+      const MAX_BRIEF_CHARS = 2000
       labBriefsText = labBriefs
         .map((b) => {
           const contentStr = typeof b.content === 'string' ? b.content : JSON.stringify(b.content ?? '')
-          return `- **${b.title}** : ${contentStr.substring(0, 200)}...`
+          const trimmed = contentStr.trim()
+          const body = trimmed.length > MAX_BRIEF_CHARS ? `${trimmed.slice(0, MAX_BRIEF_CHARS)}…` : trimmed
+          return `- **${b.title}** : ${body}`
         })
         .join('\n')
     }
@@ -574,10 +580,15 @@ async function callLLM(
   message: string,
   dashboardType: DashboardType,
   elioConfig: { model?: string; maxTokens?: number; temperature?: number } | null,
-  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string },
+  agentOverrides?: { model?: string; temperature?: number; agentId?: string; conversationId?: string; history?: Array<{ role: string; content: string }> },
   clientId?: string,
 ): Promise<ActionResponse<ElioMessage>> {
-  // Charger l'historique de conversation si conversationId fourni (max 30 messages = 15 tours)
+  // Charger l'historique de conversation pour donner de la mémoire à Élio (max 30 messages
+  // = 15 tours). Deux sources possibles :
+  //  • conversationId → historique persisté en base (chat plein écran, widget sidebar).
+  //  • agentOverrides.history → historique inline fourni par l'appelant (chat éphémère de
+  //    l'accueil One : pas de conversation persistée, mais Élio se souvient quand même dans
+  //    la session ouverte). Ignoré si un conversationId est fourni (la base fait foi).
   let history: Array<{ role: string; content: string }> = []
   if (agentOverrides?.conversationId) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -588,6 +599,8 @@ async function callLLM(
       .order('created_at', { ascending: true })
       .limit(30) as { data: Array<{ role: string; content: string }> | null }
     history = historyRows ?? []
+  } else if (agentOverrides?.history?.length) {
+    history = agentOverrides.history.slice(-30)
   }
 
   const model = agentOverrides?.model ?? elioConfig?.model ?? 'claude-sonnet-4-6'

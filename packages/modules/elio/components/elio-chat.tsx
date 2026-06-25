@@ -81,6 +81,8 @@ interface ElioChatProps {
   parcoursAbandoned?: boolean
   // Conversation à ouvrir directement (ex: depuis le widget sidebar One)
   initialConversationId?: string
+  // Routage modèle (Élio One v2) — micro-tâche (pop-up accueil) = Haiku. Défaut serveur = Sonnet.
+  model?: string
 }
 
 export const PALETTE_CLASSES: Record<DashboardType, string> = {
@@ -113,10 +115,12 @@ function ElioChatSimple({
   dashboardType,
   clientId,
   placeholder,
-}: Pick<ElioChatProps, 'dashboardType' | 'clientId' | 'placeholder'>) {
+  model,
+}: Pick<ElioChatProps, 'dashboardType' | 'clientId' | 'placeholder' | 'model'>) {
   const { messages, isLoading, error, sendMessage, retrySend } = useElioChat({
     dashboardType,
     clientId,
+    model,
   })
 
   const [inputValue, setInputValue] = useState('')
@@ -997,6 +1001,7 @@ export function ElioChat({
   customGreeting,
   parcoursAbandoned = false,
   initialConversationId,
+  model,
 }: ElioChatProps) {
   // Story 9.3 — Désactiver Élio Lab si parcours abandonné
   if (parcoursAbandoned && dashboardType === 'lab') {
@@ -1050,6 +1055,7 @@ export function ElioChat({
       dashboardType={dashboardType}
       clientId={clientId}
       placeholder={resolvedPlaceholder}
+      model={model}
     />
   )
 }

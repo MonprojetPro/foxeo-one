@@ -1,8 +1,11 @@
 'use client'
 
+import Link from 'next/link'
+import { ArrowRight } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { ElioMessage, DashboardType } from '../types/elio.types'
+import { parseGotoLinks } from '../utils/parse-goto-links'
 
 interface ElioMessageProps {
   message: ElioMessage
@@ -13,6 +16,14 @@ interface ElioMessageProps {
 
 export function ElioMessageItem({ message, dashboardType, feedbackSlot, documentSlot }: ElioMessageProps) {
   const isUser = message.role === 'user'
+
+  // Deep-linking (Élio One v2) : Élio peut suggérer un onglet via un jeton [[goto:…]].
+  // On l'extrait pour le rendre en bouton cliquable (côté client uniquement, jamais Hub).
+  // Le texte affiché est nettoyé du jeton brut dans tous les cas.
+  const { text: displayText, links: gotoLinks } =
+    !isUser && dashboardType !== 'hub'
+      ? parseGotoLinks(message.content)
+      : { text: message.content, links: [] }
 
   const paletteClass = {
     hub: 'elio-palette-hub',
@@ -56,8 +67,23 @@ export function ElioMessageItem({ message, dashboardType, feedbackSlot, document
             [&_a]:underline [&_a]:text-primary hover:[&_a]:text-primary/80
             [&_hr]:border-current/20 [&_hr]:my-3">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.content}
+              {displayText}
             </ReactMarkdown>
+          </div>
+        )}
+        {/* Deep-linking : boutons « je t'emmène au bon onglet » */}
+        {!isUser && gotoLinks.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {gotoLinks.map((link) => (
+              <Link
+                key={link.key}
+                href={link.href}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {link.label}
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            ))}
           </div>
         )}
         {documentSlot && (
