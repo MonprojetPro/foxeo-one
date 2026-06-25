@@ -21,6 +21,7 @@ import type { ElioModuleDoc } from '@monprojetpro/types'
 import { loadModuleDocumentation } from './load-module-documentation'
 import { logTokenUsage } from './log-token-usage'
 import { getLabParcoursContext } from './get-lab-parcours-context'
+import { getOneContext } from './get-one-context'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
 
@@ -310,6 +311,10 @@ export async function sendToElio(
         .join('\n')
     }
 
+    // État live du dashboard One (modules actifs, tier, cycle de vie de l'outil, suivi-outil,
+    // support ouvert) — volet réactif : Élio One « au courant » de l'état réel sans halluciner.
+    const oneContextState = await getOneContext(clientId)
+
     // Détecter l'intention avant l'appel LLM (Tasks 2, 3, 7, 8)
     const oneIntent = detectIntent(message)
 
@@ -416,6 +421,7 @@ export async function sendToElio(
         customInstructions: elioConfig?.customInstructions,
         labBriefs: labBriefsText,
         parcoursContext,
+        oneContextState,
       }) + (actionMarkdownDocs ? `\n\n${actionMarkdownDocs}` : '')
 
       const actionResponse = await callLLM(supabase, actionSystemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
@@ -477,6 +483,7 @@ export async function sendToElio(
       customInstructions: elioConfig?.customInstructions,
       labBriefs: labBriefsText,
       parcoursContext,
+      oneContextState,
     }) + (markdownDocs ? `\n\n${markdownDocs}` : '')
 
     const response = await callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)

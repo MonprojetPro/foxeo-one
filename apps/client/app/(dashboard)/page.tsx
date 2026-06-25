@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
-import { CoreDashboard, getTeasingEligibility } from '@monprojetpro/module-core-dashboard'
+import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
+import { getTeasingEligibility } from '@monprojetpro/module-core-dashboard'
+import { getOneConciergeWord } from '@monprojetpro/module-elio'
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
 import { resolveClientMode } from '@monprojetpro/utils'
 import type { ClientConfig } from '@monprojetpro/types'
+import { OneHome } from '../../components/one-home'
 
 export default async function ClientHomePage() {
   const supabase = await createServerSupabaseClient()
@@ -82,22 +84,30 @@ export default async function ClientHomePage() {
     activeModules: clientConfig.activeModules.filter(id => !HOME_HIDDEN_ONE_IDS.has(id)),
   }
 
-  // Fetch teasing eligibility server-side (avoids flash UI côté client)
-  const teasingResult = clientId ? await getTeasingEligibility(clientId) : null
+  // Données SSR de l'accueil, en parallèle (évite les flashs UI côté client) :
+  //  • éligibilité au teasing Lab
+  //  • « dernier mot d'Élio » côté One (hydrate le bandeau Concierge, Realtime ensuite)
+  //  • consentement IA (conditionne le chat Élio dans la pop-up du bandeau)
+  const [teasingResult, initialConciergeWord, iaConsentGranted] = await Promise.all([
+    clientId ? getTeasingEligibility(clientId) : Promise.resolve(null),
+    clientId ? getOneConciergeWord(clientId) : Promise.resolve(null),
+    clientId ? hasIaConsent(clientId) : Promise.resolve(false),
+  ])
   const showTeasing = teasingResult?.data?.showTeasing ?? false
 
-  // Cycle de vie visuel du One (vision v2) — état "en chantier" tant que l'outil n'est pas livré.
-  // Purement visuel : le socle reste accessible. Le bandeau global est rendu par le layout ;
-  // ici, l'accueil adapte son hero ("cockpits à venir") selon ce même flag.
-  const oneStatus = (configData as { one_status?: string } | null)?.one_status ?? 'construction'
-  const oneInConstruction = oneStatus === 'construction'
+  // Cycle de vie visuel du One (vision v2) — l'état "en chantier" est rendu par le bandeau
+  // global du layout (coéquipier). L'accueil ne le duplique plus : il affiche le cockpit
+  // (toujours accessible, le socle ne dépend pas du statut de livraison).
 
   return (
-    <CoreDashboard
-      clientConfig={clientConfigOne}
+    <OneHome
+      clientId={clientId}
+      userId={user.id}
       clientName={clientName}
+      clientConfig={clientConfigOne}
       showTeasing={showTeasing}
-      oneInConstruction={oneInConstruction}
+      initialConciergeWord={initialConciergeWord}
+      iaConsentGranted={iaConsentGranted}
     />
   )
 }

@@ -138,10 +138,13 @@ export async function getParcours(
       const parcoursStatus = isAbandoned ? 'abandoned' : (allCompleted ? 'termine' : 'en_cours')
 
       // Dernier « mot d'Élio le Concierge » (LOT F) — message proactif lié au dernier événement.
+      // Filtre dashboard_context='lab' : la même table sert désormais aussi le One (Vision v2) ;
+      // sans ce filtre, un mot d'Élio One polluerait le bandeau « Mon Parcours » du Lab.
       const { data: lastWord } = await supabase
         .from('client_concierge_messages')
         .select('body, event_type, agent_label, created_at')
         .eq('client_id', clientId)
+        .eq('dashboard_context', 'lab')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()

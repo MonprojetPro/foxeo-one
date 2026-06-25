@@ -37,38 +37,41 @@ const makeConfig = (overrides: Partial<ClientConfig> = {}): ClientConfig => ({
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('CoreDashboard — cycle de vie visuel One (vision v2)', () => {
-  it('affiche le hero "en chantier" quand oneInConstruction = true', () => {
-    render(
-      <CoreDashboard clientConfig={makeConfig()} clientName="Camille" oneInConstruction />
-    )
-    // Le hero annonce l'arrivée de l'outil
-    expect(screen.getByLabelText('Outil en cours de construction')).toBeInTheDocument()
-    expect(screen.getByText(/ton outil arrive/i)).toBeInTheDocument()
-    // CTA vers le suivi de l'outil (apostrophe droite ou typographique)
-    const link = screen.getByRole('link', { name: /suivre l['’]avancement/i })
-    expect(link).toHaveAttribute('href', '/modules/suivi-outil')
-  })
-
-  it('le socle reste accessible en mode chantier (modules toujours rendus)', () => {
-    render(
-      <CoreDashboard clientConfig={makeConfig()} clientName="Camille" oneInConstruction />
-    )
-    // Section modules présente + cartes du socle (chat, documents…) toujours là
-    expect(screen.getByLabelText('Vos modules actifs')).toBeInTheDocument()
+describe('CoreDashboard — accueil One (vision v2)', () => {
+  it('rend le greeting et la grille « Accès rapide » des modules du socle', () => {
+    render(<CoreDashboard clientConfig={makeConfig()} clientName="Camille" />)
+    expect(screen.getByText('Bonjour Camille !')).toBeInTheDocument()
+    expect(screen.getByLabelText('Accès à tes modules')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Ouvrir le module Documents/i })).toBeInTheDocument()
   })
 
-  it('n’affiche PAS le hero "en chantier" quand oneInConstruction = false (livré)', () => {
+  it('injecte le headerSlot fourni par l’app (bandeau Concierge + cockpit)', () => {
     render(
-      <CoreDashboard clientConfig={makeConfig()} clientName="Camille" oneInConstruction={false} />
+      <CoreDashboard
+        clientConfig={makeConfig()}
+        clientName="Camille"
+        headerSlot={<div data-testid="header-slot">slot</div>}
+      />
     )
-    expect(screen.queryByLabelText('Outil en cours de construction')).not.toBeInTheDocument()
-    expect(screen.getByText('Vos modules actifs')).toBeInTheDocument()
+    expect(screen.getByTestId('header-slot')).toBeInTheDocument()
   })
 
-  it('par défaut (prop absente) ne montre pas le hero chantier', () => {
+  it('affiche un message clair quand seul core-dashboard est actif', () => {
+    render(
+      <CoreDashboard
+        clientConfig={makeConfig({ activeModules: ['core-dashboard'] })}
+        clientName="Camille"
+      />
+    )
+    expect(screen.getByText(/Contactez MiKL/i)).toBeInTheDocument()
+  })
+
+  it('n’empile plus les anciens blocs redondants (Élio coquille vide, activité statique)', () => {
     render(<CoreDashboard clientConfig={makeConfig()} clientName="Camille" />)
+    // L'ancien bloc Élio central et le faux « Activité récente » ont été retirés.
+    expect(screen.queryByText('Parler à Élio')).not.toBeInTheDocument()
+    expect(screen.queryByText('Activité récente')).not.toBeInTheDocument()
+    // Le hero « en chantier » vit désormais dans le layout, plus dans le core-dashboard.
     expect(screen.queryByLabelText('Outil en cours de construction')).not.toBeInTheDocument()
   })
 })

@@ -162,3 +162,7 @@ export type {
   ReopenStepInput,
   ReopenStepResult,
 } from './types/parcours.types'
+
+// « Le dernier mot d'Élio le Concierge » — type partagé Lab (get-parcours) ET One
+// (getOneConciergeWord dans @monprojetpro/module-elio). Source de vérité du type ici.
+export type { ConciergeWord } from './types/parcours.types'

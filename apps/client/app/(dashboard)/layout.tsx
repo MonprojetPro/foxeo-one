@@ -181,6 +181,7 @@ function ClientHeader({
   oneLocked,
   labLocked,
   userInitials,
+  oneInConstruction,
 }: {
   authUserId: string
   displayName?: string | null
@@ -189,6 +190,9 @@ function ClientHeader({
   oneLocked: boolean
   labLocked: boolean
   userInitials: string
+  /** One uniquement : true tant que l'outil sur-mesure n'est pas livré (one_status='construction').
+   *  Déclenche l'animation « chantier » discrète du header (bande de rayures + balayage). */
+  oneInConstruction: boolean
 }) {
   // Couleurs Lab : violet fixe (pas de personnalisation brand côté Lab)
   // Couleurs One : via var(--brand-accent) qui vaut la couleur client ou le vert par défaut
@@ -198,8 +202,31 @@ function ClientHeader({
     ? `linear-gradient(135deg, ${labAccentFrom}, ${labAccentTo})`
     : 'linear-gradient(135deg, var(--brand-accent, #16a34a), color-mix(in srgb, var(--brand-accent, #16a34a) 60%, white))'
 
+  // Animation « chantier » du header — One uniquement, état construction.
+  // Overlay décoratif `absolute inset-0 pointer-events-none` (le wrapper est déjà `relative`).
+  // - une fine bande de rayures « travaux » qui défile lentement, ancrée tout en bas du header
+  // - un balayage lumineux vert très doux qui traverse le header de temps en temps
+  // Discret et chic (Minimal Futuriste), pas un gyrophare. En « livré » : rien (header normal).
+  const showConstructionFx = activeMode === 'one' && oneInConstruction
+
   return (
     <div className="flex w-full items-center justify-between relative">
+      {showConstructionFx && (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          {/* Balayage lumineux vert doux qui traverse le header */}
+          <div
+            className="absolute inset-y-0 w-1/3 opacity-0 motion-safe:[animation:one-construction-sheen_7s_ease-in-out_infinite]"
+            style={{
+              background:
+                'linear-gradient(90deg, transparent, color-mix(in srgb, var(--brand-accent, #16a34a) 22%, transparent), transparent)',
+            }}
+          />
+          {/* Fine bande de rayures « travaux » défilant lentement, tout en bas du header */}
+          <div
+            className="one-construction-band absolute inset-x-0 bottom-0 h-[3px] opacity-70 motion-safe:[animation:one-construction-stripes_1.4s_linear_infinite]"
+          />
+        </div>
+      )}
       {/* Gauche — logo + displayName
           Logique (mode One) :
             - displayName défini → symbole MPP blanc + nom en texte blanc Poppins gras
@@ -426,6 +453,7 @@ export default async function DashboardLayout({
             oneLocked={oneLocked}
             labLocked={labLocked}
             userInitials={userInitials}
+            oneInConstruction={showConstructionBanner}
           />
         }
       >

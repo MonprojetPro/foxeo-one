@@ -34,6 +34,15 @@ export { useElioMessages } from './hooks/use-elio-messages'
 // Actions — Story 8.1
 export { sendToElio } from './actions/send-to-elio'
 
+// Actions — Concierge One (Vision One v2)
+export { generateOneConciergeWord } from './actions/generate-one-concierge-word'
+export type { OneConciergeEvent } from './actions/generate-one-concierge-word'
+export { getOneConciergeWord } from './actions/get-one-concierge-word'
+export { getOneContext } from './actions/get-one-context'
+// Réexport du type ConciergeWord (canonique dans module-parcours) pour que l'app cliente
+// l'importe proprement depuis @monprojetpro/module-elio (contrat Concierge One).
+export type { ConciergeWord } from '@monprojetpro/module-parcours'
+
 // Actions — Story 8.2
 export { getConversations } from './actions/get-conversations'
 export { getMessages } from './actions/get-messages'

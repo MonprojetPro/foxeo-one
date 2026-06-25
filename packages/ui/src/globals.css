@@ -226,3 +226,31 @@
     user-select: text;
   }
 }
+
+/* ── Animation « chantier » du header One (cycle « en chantier → livré ») ──────────
+   Quand le One est en construction (one_status = 'construction'), une fine bande de
+   rayures « travaux » défile lentement sous le header + un léger balayage lumineux.
+   Vert One via var(--brand-accent). Discret, premium (Minimal Futuriste), jamais kitsch.
+   Toute boucle est gardée par `motion-safe:` côté composant → respect prefers-reduced-motion. */
+@keyframes one-construction-stripes {
+  from { background-position: 0 0; }
+  to   { background-position: 28px 0; }
+}
+
+@keyframes one-construction-sheen {
+  0%   { transform: translateX(-120%); opacity: 0; }
+  18%  { opacity: 1; }
+  60%  { opacity: 0.35; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+
+.one-construction-band {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--brand-accent, #16a34a) 55%, transparent) 0,
+    color-mix(in srgb, var(--brand-accent, #16a34a) 55%, transparent) 7px,
+    transparent 7px,
+    transparent 14px
+  );
+  background-size: 28px 100%;
+}

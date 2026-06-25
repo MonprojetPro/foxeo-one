@@ -49,42 +49,22 @@ describe('CoreDashboard', () => {
   describe('business logic', () => {
     it('builds quick access modules excluding core-dashboard', () => {
       const config = makeConfig({ activeModules: ['core-dashboard', 'chat', 'documents', 'elio', 'visio'] })
-      const quickAccess = config.activeModules
-        .filter((id) => id !== 'core-dashboard')
-        .slice(0, 4)
+      const quickAccess = config.activeModules.filter((id) => id !== 'core-dashboard')
       expect(quickAccess).toEqual(['chat', 'documents', 'elio', 'visio'])
       expect(quickAccess).not.toContain('core-dashboard')
     })
 
-    it('limits quick access modules to 4', () => {
-      const config = makeConfig({
-        activeModules: ['core-dashboard', 'chat', 'documents', 'elio', 'visio', 'support'],
-      })
-      const quickAccess = config.activeModules
-        .filter((id) => id !== 'core-dashboard')
-        .slice(0, 4)
-      expect(quickAccess).toHaveLength(4)
-    })
-
     it('returns empty quick access when only core-dashboard active', () => {
       const config = makeConfig({ activeModules: ['core-dashboard'] })
-      const quickAccess = config.activeModules
-        .filter((id) => id !== 'core-dashboard')
-        .slice(0, 4)
+      const quickAccess = config.activeModules.filter((id) => id !== 'core-dashboard')
       expect(quickAccess).toHaveLength(0)
     })
 
-    it('uses custom branding displayName when present', () => {
+    it('uses custom branding logoUrl when present', () => {
       const config = makeConfig({
         customBranding: { logoUrl: 'https://example.com/logo.png', displayName: 'ACME', accentColor: null, updatedAt: '2026-01-01T00:00:00Z' },
       })
-      expect(config.customBranding?.displayName).toBe('ACME')
-    })
-
-    it('falls back to MonprojetPro One when no custom branding', () => {
-      const config = makeConfig({ customBranding: undefined })
-      const displayName = config.customBranding?.displayName ?? 'MonprojetPro One'
-      expect(displayName).toBe('MonprojetPro One')
+      expect(config.customBranding?.logoUrl).toBe('https://example.com/logo.png')
     })
 
     it('formats date in French locale', () => {
@@ -139,34 +119,24 @@ describe('CoreDashboard', () => {
           clientName: 'Test',
         })
       )
-      // Le nouveau design n'affiche pas le nom de marque sans logo — vérifier l'absence d'img
       expect(container.querySelector('img')).toBeNull()
     })
 
-    it('renders activity feed when modules are active', () => {
+    it('renders the app headerSlot when provided', () => {
       const { container } = render(
-        CoreDashboard({ clientConfig: makeConfig(), clientName: 'Test' })
+        CoreDashboard({
+          clientConfig: makeConfig(),
+          clientName: 'Test',
+          headerSlot: createElement('div', { 'data-testid': 'slot' }, 'COCKPIT'),
+        })
       )
-      expect(container.textContent).toContain('Activité récente')
-      // L'ActivityFeed affiche les raccourcis vers modules actifs (pas de données fictives)
-      expect(container.textContent).toContain('Chat')
-      expect(container.textContent).toContain('Documents')
+      expect(container.textContent).toContain('COCKPIT')
     })
 
-    it('renders Elio access when elio is in active modules', () => {
+    it('no longer renders the legacy empty Élio block', () => {
       const { container } = render(
         CoreDashboard({
           clientConfig: makeConfig({ activeModules: ['core-dashboard', 'elio'] }),
-          clientName: 'Test',
-        })
-      )
-      expect(container.textContent).toContain('Parler à Élio')
-    })
-
-    it('hides Elio access when elio is not in active modules', () => {
-      const { container } = render(
-        CoreDashboard({
-          clientConfig: makeConfig({ activeModules: ['core-dashboard', 'chat'] }),
           clientName: 'Test',
         })
       )

@@ -34,6 +34,14 @@ interface SystemPromptOptions {
    * « où en est » le client sans halluciner. cf. send-to-elio.ts (chemin assistant Lab).
    */
   labParcoursState?: string | null
+  /**
+   * État live du dashboard One du client (résumé textuel : modules actifs, offre/tier,
+   * cycle de vie de l'outil « en chantier/livré », derniers posts du Suivi de l'outil,
+   * tickets support ouverts). Pendant de labParcoursState pour le One — injecté dans
+   * buildOnePrompt pour qu'Élio One soit « au courant » de l'état de l'outil sans halluciner.
+   * cf. send-to-elio.ts (chemin One) + get-one-context.ts.
+   */
+  oneContextState?: string | null
 }
 
 const TECHNICAL_LEVEL_INSTRUCTIONS: Record<string, string> = {
@@ -159,15 +167,19 @@ function buildOnePrompt(
   modulesDocs?: string | null,
   labBriefs?: string | null,
   parcoursContext?: string | null,
+  oneContextState?: string | null,
 ): string {
   let prompt = `${BASE_PROMPT}
 
 **Contexte : Dashboard One (Outil Business)**
-Vous assistez un entrepreneur dans l'utilisation de son outil MonprojetPro One.
-Répondez aux questions fréquentes, guidez dans les fonctionnalités disponibles.
+Vous assistez un entrepreneur dans l'utilisation de son dashboard MonprojetPro One : sa console de pilotage de ses livrables et son lien permanent avec MiKL. Répondez aux questions fréquentes, guidez dans les fonctionnalités disponibles, et tenez compte de l'état réel de son outil (ci-dessous) pour ne jamais inventer.
 
 **Profil de communication du client :**
 ${buildProfileInstructions(profile)}`
+
+  if (oneContextState) {
+    prompt += `\n\n## État actuel du dashboard One du client (factuel — ne rien inventer au-delà)\n${oneContextState}`
+  }
 
   if (modulesDocs) {
     prompt += `\n\n**Documentation des modules actifs :**\n${modulesDocs}`
@@ -246,6 +258,7 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
     labBriefs,
     parcoursContext,
     labParcoursState,
+    oneContextState,
   } = options
 
   let prompt: string
@@ -255,7 +268,7 @@ export function buildSystemPrompt(options: SystemPromptOptions): string {
       prompt = buildLabPrompt(communicationProfile, activeStepContext, labParcoursState)
       break
     case 'one':
-      prompt = buildOnePrompt(communicationProfile, tier, activeModulesDocs, labBriefs, parcoursContext)
+      prompt = buildOnePrompt(communicationProfile, tier, activeModulesDocs, labBriefs, parcoursContext, oneContextState)
       break
     case 'hub':
       prompt = buildHubPrompt()
