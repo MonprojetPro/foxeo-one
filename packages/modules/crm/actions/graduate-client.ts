@@ -83,7 +83,11 @@ export async function graduateClient(
     }
 
     // 6. Update client_configs — flip dashboard_type + activate toggle + disable Élio Lab
-    const elioTier = tier === 'agentique' ? 'one_plus' : 'one'
+    // ⚠️ Décision MiKL (2026-06-26) : Élio reste NON-agentique quel que soit le tier.
+    // L'agentique IA est désormais du CAS PAR CAS (au devis), jamais incluse via une offre.
+    // One+ = coaching humain (visio), sans effet sur le dash → elio_tier toujours 'one'.
+    // Le choix d'offre reste tracé dans activity_logs (metadata.tier) pour la facturation.
+    const elioTier = 'one'
 
     const { error: configUpdateError } = await supabase
       .from('client_configs')

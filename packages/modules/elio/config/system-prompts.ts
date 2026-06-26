@@ -5,9 +5,14 @@ import { HUB_DATABASE_SCHEMAS } from './hub-database-schemas'
 import { ONE_NAVIGATION_MAP } from './one-navigation-map'
 import { LAB_NAVIGATION_MAP } from './lab-navigation-map'
 
-/** Message upsell Élio One → One+ (AC1 — Story 8.9a) */
+/**
+ * Réponse quand le client demande une automatisation (action sur un module, génération de
+ * document, relance programmée). Décision MiKL (2026-06-26) : l'agentique IA n'est plus un
+ * tier — c'est du sur-mesure au cas par cas (au devis). Plus aucune notion « passez à One+ ».
+ * (Nom de constante conservé pour compat ; utilisée par execute-action.ts + send-to-elio.ts.)
+ */
 export const UPSELL_ONE_PLUS_MESSAGE =
-  "Cette fonctionnalité fait partie de l'offre Élio One+. Contactez MiKL pour en savoir plus !"
+  "Cette automatisation n'est pas disponible telle quelle pour le moment. Parlez-en à MiKL — elle peut être mise en place sur mesure selon votre projet."
 
 /**
  * Consigne de formatage UNIVERSELLE d'Élio — appliquée à TOUS les contextes et agents
@@ -190,7 +195,9 @@ ${buildProfileInstructions(profile)}
 
 function buildOnePrompt(
   profile: CommunicationProfileFR66,
-  tier: ElioTier,
+  // _tier : conservé pour compat de signature, mais le comportement d'Élio One ne dépend
+  // PLUS du tier (décision MiKL 2026-06-26 — l'agentique « One+ » n'existe plus côté dash).
+  _tier: ElioTier,
   modulesDocs?: string | null,
   labBriefs?: string | null,
   parcoursContext?: string | null,
@@ -226,32 +233,15 @@ ${buildProfileInstructions(profile)}${ONE_ESCALATION_INSTRUCTIONS}`
     prompt += `\n\n**Décisions MiKL pendant le Lab :**\n${parcoursContext}`
   }
 
-  if (tier === 'one_plus') {
-    prompt += `\n\n**Tes capacités (Élio One+) :**
-- Répondre aux questions (FAQ)
-- Guider dans le dashboard
-- Collecter des demandes d'évolutions
-- **Exécuter des actions** sur les modules actifs (envoyer rappels, créer événements, etc.)
-- **Générer des documents** (génération de documents)
-- **Envoyer des alertes proactives**
+  // Capacités UNIFORMES (plus de distinction One / One+ agentique — décision MiKL 2026-06-26).
+  // Élio One accompagne (FAQ, guidance, collecte d'évolutions, escalade) ; il n'agit pas à la
+  // place du client. Les automatisations sont du sur-mesure au cas par cas, via MiKL.
+  prompt += `\n\n**Tes capacités :**
+- Répondre aux questions (FAQ) et guider le client dans son dashboard
+- Collecter les demandes d'évolutions du client (transmises à MiKL)
+- Escalader vers MiKL quand c'est utile
 
-**Important pour les actions :**
-- Toujours demander confirmation avant d'exécuter
-- Afficher les détails (liste des entités concernées)
-- Double confirmation pour les actions destructives (suppression)`
-  } else {
-    prompt += `\n\n**Tes capacités (Élio One) :**
-- Répondre aux questions (FAQ)
-- Guider dans le dashboard
-- Collecter des demandes d'évolutions
-
-**Ce que tu NE PEUX PAS faire :**
-- Exécuter des actions sur les modules
-- Générer des documents
-- Envoyer des alertes proactives
-
-Si on te demande une action non disponible, réponds : "${UPSELL_ONE_PLUS_MESSAGE}"`
-  }
+**Ce que tu ne fais pas toi-même :** tu n'exécutes pas d'actions automatiques à la place du client (envois groupés, production de documents, relances programmées). Si le client a besoin d'une automatisation, invite-le chaleureusement à en parler à MiKL — ce sont des mises en place sur mesure, étudiées au cas par cas.`
 
   return prompt
 }

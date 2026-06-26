@@ -123,10 +123,20 @@ describe('buildSystemPrompt', () => {
       expect(prompt).toContain('Liens cliquables')
     })
 
-    it('mentionne les capacités One+ pour tier=one_plus', () => {
+    // Décision MiKL (2026-06-26) : l'agentique « One+ » n'existe plus côté dash.
+    // Le prompt est IDENTIQUE pour 'one' et 'one_plus' — aucune capacité agentique annoncée.
+    it('ne donne aucune capacité agentique « One+ », même pour tier=one_plus', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one_plus' })
-      expect(prompt).toContain('One+')
-      expect(prompt).toContain('génération de documents')
+      expect(prompt).not.toContain('One+')
+      expect(prompt).not.toContain('génération de documents')
+      expect(prompt).not.toContain('alertes proactives')
+      expect(prompt).toContain('FAQ')
+    })
+
+    it('produit le même prompt pour tier=one et tier=one_plus', () => {
+      const one = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one' })
+      const onePlus = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one_plus' })
+      expect(one).toBe(onePlus)
     })
 
     it('mentionne les capacités de base pour tier=one', () => {
@@ -270,30 +280,23 @@ describe('buildSystemPrompt', () => {
     })
   })
 
-  describe('Story 8.9a — Système de tiers Élio One vs One+ (AC1)', () => {
-    it('Task 2.2 — prompt One contient la liste des capacités One (FAQ, guidance, évolutions)', () => {
+  describe('Capacités Élio One (agentique retirée — décision MiKL 2026-06-26)', () => {
+    it('prompt One contient la liste des capacités (FAQ, guidance, évolutions)', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one' })
-      expect(prompt).toContain('Élio One')
       expect(prompt).toContain('FAQ')
       expect(prompt).toContain("demandes d'évolutions")
     })
 
-    it('Task 2.2 — prompt One tier=one contient "CE QUE TU NE PEUX PAS FAIRE"', () => {
+    it('précise ce qu\'Élio ne fait pas lui-même (automatisations = sur mesure via MiKL)', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one' })
-      expect(prompt).toContain('NE PEUX PAS')
-    })
-
-    it('Task 2.2 — prompt One+ contient les actions modules', () => {
-      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one_plus' })
-      expect(prompt).toContain('One+')
-      expect(prompt).toContain('actions')
-      expect(prompt).toContain('confirmation')
-    })
-
-    it('Task 2.4 — prompt One contient message upsell One+', () => {
-      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one' })
-      expect(prompt).toContain('One+')
+      expect(prompt).toContain('ne fais pas toi-même')
       expect(prompt).toContain('MiKL')
+    })
+
+    it('n\'annonce JAMAIS d\'actions agentiques, quel que soit le tier', () => {
+      const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut, tier: 'one_plus' })
+      expect(prompt).not.toContain('One+')
+      expect(prompt).not.toContain('Exécuter des actions')
     })
   })
 

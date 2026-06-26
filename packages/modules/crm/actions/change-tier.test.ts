@@ -127,7 +127,9 @@ describe('changeClientTier', () => {
       expect(mockUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
           subscription_tier: 'agentique',
-          elio_tier: 'one_plus',
+          // elio_tier reste 'one' : l'offre Agentique ne donne plus d'agentique à Élio
+          // (décision MiKL 2026-06-26 — agentique = cas par cas au devis).
+          elio_tier: 'one',
           pending_billing_update: true,
         })
       )
@@ -166,7 +168,7 @@ describe('changeClientTier', () => {
       expect(mockUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
           elio_proactive_alerts: true,
-          elio_tier: 'one_plus',
+          elio_tier: 'one',
         })
       )
     })

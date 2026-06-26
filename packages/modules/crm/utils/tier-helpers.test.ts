@@ -17,8 +17,8 @@ describe('mapTierToElio', () => {
     expect(mapTierToElio('essentiel')).toBe('one')
   })
 
-  it('mappe agentique vers one_plus', () => {
-    expect(mapTierToElio('agentique')).toBe('one_plus')
+  it('mappe agentique vers one (One+ ne donne plus d\'agentique — MiKL 2026-06-26)', () => {
+    expect(mapTierToElio('agentique')).toBe('one')
   })
 })
 

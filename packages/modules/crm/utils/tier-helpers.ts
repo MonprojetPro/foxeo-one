@@ -24,7 +24,12 @@ export const TIER_INFO: Record<SubscriptionTier, TierInfo> = {
 
 /**
  * Mappe un tier d'abonnement vers le tier Élio correspondant.
- * Base → null (pas d'Elio), Essentiel → 'one', Agentique → 'one_plus'
+ * Base → null (pas d'Elio), Essentiel → 'one', Agentique → 'one'.
+ *
+ * ⚠️ Décision MiKL (2026-06-26) : l'offre la plus haute (« Agentique » / One+) ne donne PLUS
+ * de capacité agentique à Élio. L'agentique IA est devenue du CAS PAR CAS (au devis), jamais
+ * incluse via une offre → elio_tier reste 'one' pour que le dash soit identique. ('one_plus'
+ * subsiste dans le type pour un futur réactivable, mais aucun flux ne le produit plus.)
  */
 export function mapTierToElio(tier: SubscriptionTier): ElioTierForSubscription {
   switch (tier) {
@@ -33,7 +38,7 @@ export function mapTierToElio(tier: SubscriptionTier): ElioTierForSubscription {
     case 'essentiel':
       return 'one'
     case 'agentique':
-      return 'one_plus'
+      return 'one'
   }
 }
 
