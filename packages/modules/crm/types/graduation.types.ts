@@ -14,6 +14,13 @@ export const GraduateClientSchema = z.object({
     .array(z.string().min(1))
     .min(1, 'Au moins un module doit être sélectionné'),
   notes: z.string().max(2000, 'Les notes ne peuvent pas dépasser 2000 caractères').optional(),
+  /**
+   * Forçage opérateur : gradue le client MÊME si son parcours n'est pas terminé ou s'il
+   * reste des demandes de validation en attente. Décision MiKL : pouvoir basculer en One
+   * « au cas où » sans attendre la complétion (les garde-fous d'intégrité restent actifs :
+   * client de l'opérateur + pas déjà en One).
+   */
+  force: z.boolean().optional(),
 })
 
 export type GraduateClientInput = z.infer<typeof GraduateClientSchema>

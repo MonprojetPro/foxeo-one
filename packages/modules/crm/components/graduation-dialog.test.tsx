@@ -61,20 +61,28 @@ describe('GraduationDialog', () => {
     expect(screen.getByText('Acme Corp')).toBeDefined()
   })
 
-  it('should pre-select "Essentiel" tier by default', () => {
+  it('should pre-select the "One" tier by default', () => {
     render(<GraduationDialog {...defaultProps} />)
 
-    // The Essentiel tier button should have border-primary styling (selected)
-    const essentialButton = screen.getByText('Essentiel — 49€/mois').closest('button')
-    expect(essentialButton?.className).toContain('border-primary')
+    // The default tier (value 'essentiel' → libellé « One — 39 €/mois ») doit être sélectionné
+    const defaultTierButton = screen.getByText('One — 39 €/mois').closest('button')
+    expect(defaultTierButton?.className).toContain('border-primary')
   })
 
-  it('should show all three tier options', () => {
+  it('should show all three tier options (Ponctuel / One / One+)', () => {
     render(<GraduationDialog {...defaultProps} />)
 
-    expect(screen.getByText('Ponctuel')).toBeDefined()
-    expect(screen.getByText('Essentiel — 49€/mois')).toBeDefined()
-    expect(screen.getByText('Agentique — 99€/mois')).toBeDefined()
+    expect(screen.getByText('Ponctuel — devis projet')).toBeDefined()
+    expect(screen.getByText('One — 39 €/mois')).toBeDefined()
+    expect(screen.getByText('One+ — 99 €/mois')).toBeDefined()
+  })
+
+  it('should let the operator force graduation (parcours non terminé)', () => {
+    render(<GraduationDialog {...defaultProps} />)
+
+    expect(
+      screen.getByText("Graduer même si le parcours n'est pas terminé")
+    ).toBeDefined()
   })
 
   it('should pre-check default modules (core-dashboard, documents, chat)', () => {

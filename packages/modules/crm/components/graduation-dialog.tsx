@@ -39,21 +39,26 @@ const AVAILABLE_MODULES = [
 // Élio ; il est retiré automatiquement si MiKL choisit « Ponctuel » (cf. handleSelectTier).
 const DEFAULT_MODULES = ['core-dashboard', 'chat', 'documents', 'suivi-outil', 'support', 'elio']
 
+// Les 3 offres — alignées sur docs/one-vision-v2-2026-06-24.md (actées 2026-06-24).
+// ⚠️ Les `value` ('base'/'essentiel'/'agentique') restent les identifiants techniques
+// historiques (mapping elio_tier dans graduateClient) — seuls les libellés affichés changent.
+// La 3ᵉ offre n'est PLUS « Agentique IA » (devenue option au devis) : c'est « One+ » dont le
+// SEUL différenciateur est le COACHING HUMAIN (1 visio/mois).
 const TIERS: Array<{ value: GraduationTier; label: string; description: string }> = [
   {
     value: 'base',
-    label: 'Ponctuel',
-    description: 'Accès One sans Élio',
+    label: 'Ponctuel — devis projet',
+    description: 'Outil livré en one-shot, sans abonnement One ni Élio',
   },
   {
     value: 'essentiel',
-    label: 'Essentiel — 49€/mois',
-    description: 'Élio One : FAQ, guidance, collecte évolutions',
+    label: 'One — 39 €/mois',
+    description: 'Élio (assistant), chat & demandes d\'évolution, hébergement + maintenance',
   },
   {
     value: 'agentique',
-    label: 'Agentique — 99€/mois',
-    description: 'Élio One+ : actions modules, génération, alertes proactives',
+    label: 'One+ — 99 €/mois',
+    description: 'Tout One + 1 visio de coaching humain / mois (accompagnement de l\'entrepreneur)',
   },
 ]
 
@@ -79,6 +84,8 @@ export function GraduationDialog({
   const [selectedTier, setSelectedTier] = useState<GraduationTier>('essentiel')
   const [selectedModules, setSelectedModules] = useState<string[]>(DEFAULT_MODULES)
   const [notes, setNotes] = useState('')
+  // Forçage opérateur : graduer même si le parcours n'est pas terminé (cf. graduateClient).
+  const [forceGraduation, setForceGraduation] = useState(false)
   const [isPending, startTransition] = useTransition()
   const queryClient = useQueryClient()
 
@@ -116,6 +123,7 @@ export function GraduationDialog({
         tier: selectedTier,
         activeModules: selectedModules,
         notes: notes.trim() || undefined,
+        force: forceGraduation,
       })
 
       if (result.error) {
@@ -250,6 +258,25 @@ export function GraduationDialog({
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+
+          {/* Forçage — graduer même si le parcours n'est pas terminé */}
+          <label className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={forceGraduation}
+              onChange={(e) => setForceGraduation(e.target.checked)}
+              className="w-4 h-4 mt-0.5 shrink-0"
+            />
+            <span className="text-sm">
+              <span className="font-medium text-amber-600 dark:text-amber-400">
+                Graduer même si le parcours n&apos;est pas terminé
+              </span>
+              <span className="block text-xs text-muted-foreground mt-0.5">
+                Ignore les étapes restantes et les demandes de validation en attente. À utiliser
+                en connaissance de cause (le client garde l&apos;accès Lab via le toggle).
+              </span>
+            </span>
+          </label>
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">

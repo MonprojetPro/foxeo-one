@@ -57,10 +57,10 @@ export async function graduateClient(
     }
 
     const operatorId = operator.id
-    const { clientId, tier, activeModules, notes } = parsed.data
+    const { clientId, tier, activeModules, notes, force } = parsed.data
 
-    // 4. Verify graduation conditions
-    const conditionCheck = await checkGraduationConditions(supabase, clientId, operatorId)
+    // 4. Verify graduation conditions (le forçage opérateur saute les gates de complétion)
+    const conditionCheck = await checkGraduationConditions(supabase, clientId, operatorId, force ?? false)
     if (conditionCheck.error) return conditionCheck
 
     // 5. Update clients table — graduation timestamp + notes
@@ -127,6 +127,7 @@ export async function graduateClient(
       metadata: {
         tier,
         active_modules: activeModules,
+        forced: force ?? false,
       },
     })
 
@@ -156,8 +157,10 @@ export async function graduateClient(
 async function checkGraduationConditions(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   clientId: string,
-  operatorId: string
+  operatorId: string,
+  force: boolean
 ): Promise<ActionResponse<null>> {
+  // --- Garde-fous d'INTÉGRITÉ (toujours actifs, même en forçage) ---
   // Check client belongs to operator and get config
   const { data: clientData, error: clientError } = await supabase
     .from('clients')
@@ -186,6 +189,11 @@ async function checkGraduationConditions(
       'Ce client est déjà en statut One',
       'GRADUATION_CONDITIONS_NOT_MET'
     )
+  }
+
+  // --- Gates de COMPLÉTION (sautés en forçage opérateur « au cas où ») ---
+  if (force) {
+    return { data: null, error: null }
   }
 
   // Check parcours is completed (status = 'termine')
