@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getTeasingEligibility } from '@monprojetpro/module-core-dashboard'
 import { getOneConciergeWord } from '@monprojetpro/module-elio'
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
@@ -87,11 +87,10 @@ export default async function ClientHomePage() {
   // Données SSR de l'accueil, en parallèle (évite les flashs UI côté client) :
   //  • éligibilité au teasing Lab
   //  • « dernier mot d'Élio » côté One (hydrate le bandeau Concierge, Realtime ensuite)
-  //  • consentement IA (conditionne le chat Élio dans la pop-up du bandeau)
-  const [teasingResult, initialConciergeWord, iaConsentGranted] = await Promise.all([
+  // NB : le consentement IA de la pop-up Élio est géré par la pop-up globale (layout).
+  const [teasingResult, initialConciergeWord] = await Promise.all([
     clientId ? getTeasingEligibility(clientId) : Promise.resolve(null),
     clientId ? getOneConciergeWord(clientId) : Promise.resolve(null),
-    clientId ? hasIaConsent(clientId) : Promise.resolve(false),
   ])
   const showTeasing = teasingResult?.data?.showTeasing ?? false
 
@@ -107,7 +106,6 @@ export default async function ClientHomePage() {
       clientConfig={clientConfigOne}
       showTeasing={showTeasing}
       initialConciergeWord={initialConciergeWord}
-      iaConsentGranted={iaConsentGranted}
     />
   )
 }

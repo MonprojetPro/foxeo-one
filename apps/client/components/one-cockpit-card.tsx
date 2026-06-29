@@ -38,8 +38,10 @@ interface CockpitCardProps {
   title: string
   Icon: LucideIcon
   accent: CockpitAccent
-  /** Pied de carte : lien vers le module concerné. */
-  href: string
+  /** Pied de carte : lien vers le module concerné. Ignoré si `onClick` est fourni. */
+  href?: string
+  /** Action de pied alternative au lien (ex : ouvrir la pop-up Élio). Prioritaire sur `href`. */
+  onClick?: () => void
   /** Libellé du lien de pied (défaut « Voir tout → »). */
   linkLabel?: string
   /** Pastille compteur optionnelle à droite du titre (ex : non-lus, à traiter). */
@@ -55,6 +57,7 @@ export function CockpitCard({
   Icon,
   accent,
   href,
+  onClick,
   linkLabel = 'Voir tout',
   badge,
   children,
@@ -98,15 +101,27 @@ export function CockpitCard({
       {/* Corps : métriques */}
       <div className="relative flex-1">{children}</div>
 
-      {/* Pied : lien vers le module */}
-      <Link
-        href={href}
-        className="relative mt-4 inline-flex items-center gap-1 text-[12.5px] font-medium transition-colors"
-        style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 82%, white)' }}
-      >
-        {linkLabel}
-        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-      </Link>
+      {/* Pied : action (bouton → pop-up) ou lien vers le module */}
+      {onClick ? (
+        <button
+          type="button"
+          onClick={onClick}
+          className="relative mt-4 inline-flex items-center gap-1 self-start text-[12.5px] font-medium transition-colors cursor-pointer"
+          style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 82%, white)' }}
+        >
+          {linkLabel}
+          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+        </button>
+      ) : (
+        <Link
+          href={href ?? '#'}
+          className="relative mt-4 inline-flex items-center gap-1 text-[12.5px] font-medium transition-colors"
+          style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 82%, white)' }}
+        >
+          {linkLabel}
+          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      )}
     </div>
   )
 }

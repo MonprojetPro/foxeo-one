@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Send, Loader2, ExternalLink, Bot, MessageCircle, PenLine, HelpCircle, Lock } from 'lucide-react'
 import { newConversation, sendToElio, saveElioMessage, ELIO_MODEL_MICRO } from '@monprojetpro/module-elio'
 import Link from 'next/link'
+import { openElioOnePopup } from './use-elio-one-popup'
 
 type OneMode = 'question' | 'brouillon' | 'aide'
 
@@ -199,15 +200,16 @@ export function OneElioBox({ userId, clientId, iaConsentGranted }: OneElioBoxPro
             Élio
           </span>
         </div>
-        <Link
-          href="/modules/elio"
+        <button
+          type="button"
+          onClick={openElioOnePopup}
           style={{ color: '#6b7280' }}
-          className="flex items-center gap-0.5 text-[10px] transition-colors hover:[color:var(--brand-accent,#4ade80)]"
-          title="Ouvrir Élio en plein écran"
+          className="flex items-center gap-0.5 text-[10px] transition-colors hover:[color:var(--brand-accent,#4ade80)] cursor-pointer"
+          title="Ouvrir Élio en grand"
         >
           Ouvrir
           <ExternalLink className="h-2.5 w-2.5" />
-        </Link>
+        </button>
       </div>
 
       {/* Mode buttons */}
@@ -274,14 +276,15 @@ export function OneElioBox({ userId, clientId, iaConsentGranted }: OneElioBoxPro
           <p className="text-[11px] text-[#e5e7eb] line-clamp-3 leading-relaxed">
             {lastReply}
           </p>
-          <Link
-            href="/modules/elio"
+          <button
+            type="button"
+            onClick={openElioOnePopup}
             style={{ color: 'var(--brand-accent, #4ade80)' }}
-            className="self-end text-[10px] hover:underline flex items-center gap-0.5"
+            className="self-end text-[10px] hover:underline flex items-center gap-0.5 cursor-pointer"
           >
             Voir dans Élio
             <ExternalLink className="h-2.5 w-2.5" />
-          </Link>
+          </button>
         </div>
       )}
 

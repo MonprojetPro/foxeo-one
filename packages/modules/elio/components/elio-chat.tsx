@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState, useCallback, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { Zap, MessageCircle, SlidersHorizontal, PenLine, Mic, Paperclip, Send, Loader2, FileText } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -94,7 +94,9 @@ export const PALETTE_CLASSES: Record<DashboardType, string> = {
 export const PALETTE_FOCUS_RING: Record<DashboardType, string> = {
   hub: 'focus-visible:ring-[oklch(0.7_0.15_190)]',
   lab: 'focus-visible:ring-[oklch(0.6_0.2_280)]',
-  one: 'focus-visible:ring-[oklch(0.7_0.2_50)]',
+  // One = vert de marque (hue ~152). Valeur littérale (pas var(--brand-accent)) pour rester
+  // verte même dans le portail Radix du Dialog, qui est rendu hors de l'arbre `--brand-accent`.
+  one: 'focus-visible:ring-[oklch(0.7_0.17_152)]',
 }
 
 export const HEADER_LABELS: Record<DashboardType, string> = {
@@ -164,6 +166,18 @@ function ElioChatSimple({
 
   const headerLabel = HEADER_LABELS[dashboardType]
 
+  // One : on force la couleur de marque (vert) sur tout ce qui utilise `--primary`
+  // (boutons Envoyer / MiKL / évolution). Indispensable car le thème One met `--primary`
+  // en orange, et le Dialog est rendu hors de l'arbre `--brand-accent` (portail Radix) :
+  // le fallback #16a34a garantit le vert même là. Lab/Hub : aucun override.
+  const oneAccentStyle: CSSProperties | undefined =
+    dashboardType === 'one'
+      ? ({
+          '--primary': 'var(--brand-accent, #16a34a)',
+          '--primary-foreground': 'var(--brand-accent-fg, #ffffff)',
+        } as CSSProperties)
+      : undefined
+
   // Le Concierge ne sait pas / renvoie vers MiKL → bouton d'action directe vers le chat MiKL.
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
   const showMiklButton = dashboardType !== 'hub' && Boolean(lastAssistant?.metadata?.needsEscalation)
@@ -204,6 +218,7 @@ function ElioChatSimple({
     <div
       className={`flex flex-col h-full bg-background text-foreground ${paletteClass}`}
       data-dashboard-type={dashboardType}
+      style={oneAccentStyle}
     >
       <header className="border-b border-border px-4 py-3 shrink-0">
         <h2 className="text-sm font-semibold text-foreground">{headerLabel}</h2>

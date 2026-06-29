@@ -27,6 +27,7 @@ import {
   useOneCockpitSummary,
   useOneCockpitSummaryRealtime,
 } from './use-one-cockpit-summary'
+import { openElioOnePopup } from './use-elio-one-popup'
 
 interface OneActivityCockpitProps {
   clientId: string
@@ -135,7 +136,8 @@ export function OneActivityCockpit({ clientId, userId: _userId }: OneActivityCoc
             title="À traiter"
             Icon={AlertCircle}
             accent="amber"
-            href={openTickets > 0 ? '/modules/support' : '/modules/elio'}
+            href={openTickets > 0 ? '/modules/support' : undefined}
+            onClick={openTickets > 0 ? undefined : openElioOnePopup}
             linkLabel={todoCount > 0 ? 'Ouvrir' : 'Tout est à jour'}
             badge={todoCount}
           >

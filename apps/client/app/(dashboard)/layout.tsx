@@ -44,6 +44,7 @@ import { ThemeClassSetter } from './theme-class-setter'
 import { RealtimeDashboardRefresh } from '../../components/realtime-dashboard-refresh'
 import { ImpersonationWrapper } from './impersonation-wrapper'
 import { OneElioBox } from '../../components/one-elio-box'
+import { ElioOnePopup } from '../../components/elio-one-popup'
 import { SessionKeepAlive } from './session-keep-alive'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
@@ -456,6 +457,10 @@ export default async function DashboardLayout({
       <SessionKeepAlive />
       <RealtimeDashboardRefresh clientId={clientId} />
       <ThemeClassSetter activeMode={activeMode} />
+      {/* Pop-up Élio One UNIQUE — ouvrable de partout (bandeau accueil + widget sidebar). */}
+      {activeMode === 'one' && activeModules.includes('elio') && (
+        <ElioOnePopup clientId={clientId} iaConsentGranted={iaConsentGranted} />
+      )}
       <DashboardShell
         density={density}
         sidebar={
