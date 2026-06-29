@@ -117,6 +117,7 @@ function ElioChatSimple({
   placeholder,
   model,
 }: Pick<ElioChatProps, 'dashboardType' | 'clientId' | 'placeholder' | 'model'>) {
+  const queryClient = useQueryClient()
   const { messages, isLoading, error, sendMessage, retrySend } = useElioChat({
     dashboardType,
     clientId,
@@ -124,6 +125,13 @@ function ElioChatSimple({
   })
 
   const [inputValue, setInputValue] = useState('')
+  // Élio One v2 — demande d'évolution (flux simplifié « pop-up unique partout ») :
+  // quand Élio détecte une demande d'amélioration de l'outil, on n'enchaîne plus 3 questions ;
+  // on propose juste au client un bouton pour transmettre la demande à MiKL (Validation Hub + notif).
+  const [evolutionSubmitted, setEvolutionSubmitted] = useState(false)
+  const [evolutionDismissed, setEvolutionDismissed] = useState(false)
+  const [isSubmittingEvolution, setIsSubmittingEvolution] = useState(false)
+  const [evolutionError, setEvolutionError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -139,6 +147,10 @@ function ElioChatSimple({
     const content = inputValue.trim()
     if (!content || isLoading) return
     setInputValue('')
+    // Nouveau tour → on réarme la proposition d'évolution (la détection porte sur le dernier échange).
+    setEvolutionDismissed(false)
+    setEvolutionSubmitted(false)
+    setEvolutionError(null)
     await sendMessage(content)
   }
 
@@ -155,6 +167,38 @@ function ElioChatSimple({
   // Le Concierge ne sait pas / renvoie vers MiKL → bouton d'action directe vers le chat MiKL.
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
   const showMiklButton = dashboardType !== 'hub' && Boolean(lastAssistant?.metadata?.needsEscalation)
+
+  // Demande d'évolution One : Élio a flairé une demande d'amélioration → on propose de la
+  // transmettre à MiKL. La requête de référence = celle détectée par Élio, sinon le dernier
+  // message utilisateur. Tout reste éphémère côté chat ; seule la demande est persistée (Hub).
+  const evolutionRequest =
+    lastAssistant?.metadata?.evolutionInitialRequest ??
+    [...messages].reverse().find((m) => m.role === 'user')?.content ??
+    ''
+  const showEvolutionButton =
+    dashboardType === 'one' &&
+    Boolean(lastAssistant?.metadata?.evolutionDetected) &&
+    Boolean(clientId) &&
+    evolutionRequest.trim().length > 0 &&
+    !evolutionSubmitted &&
+    !evolutionDismissed
+
+  async function handleSubmitEvolution() {
+    if (!clientId || isSubmittingEvolution || evolutionSubmitted) return
+    const request = evolutionRequest.trim()
+    if (!request) return
+    setIsSubmittingEvolution(true)
+    setEvolutionError(null)
+    const title = request.length > 80 ? `${request.slice(0, 79)}…` : request
+    const { error: submitError } = await submitEvolutionRequest(clientId, title, request)
+    setIsSubmittingEvolution(false)
+    if (submitError) {
+      setEvolutionError("La demande n'a pas pu être transmise. Réessaie dans un instant.")
+      return
+    }
+    setEvolutionSubmitted(true)
+    void queryClient.invalidateQueries({ queryKey: ['validation-requests'] })
+  }
 
   return (
     <div
@@ -177,6 +221,55 @@ function ElioChatSimple({
         {error && !isLoading && <ElioErrorMessage error={error} onRetry={retrySend} />}
         <div ref={messagesEndRef} aria-hidden="true" />
       </div>
+      {showEvolutionButton && (
+        <div className="px-4 pb-2 shrink-0">
+          <div
+            className="rounded-lg border border-border bg-muted p-3 text-sm"
+            role="status"
+            aria-live="polite"
+          >
+            <p className="text-foreground mb-2">
+              On dirait une demande d&apos;amélioration de ton outil. Tu veux que je
+              transmette ta demande à MiKL pour qu&apos;il l&apos;étudie&nbsp;?
+            </p>
+            {evolutionError && (
+              <p className="text-red-400 text-xs mb-2">{evolutionError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={handleSubmitEvolution}
+                disabled={isSubmittingEvolution}
+                className={[
+                  'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium',
+                  'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50',
+                  'focus-visible:outline-none focus-visible:ring-2',
+                  focusRing,
+                ].join(' ')}
+                aria-label="Transmettre la demande à MiKL"
+              >
+                {isSubmittingEvolution ? 'Envoi…' : 'Oui, transmettre à MiKL'}
+              </button>
+              <button
+                onClick={() => setEvolutionDismissed(true)}
+                disabled={isSubmittingEvolution}
+                className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors"
+                aria-label="Ne pas transmettre la demande"
+              >
+                Non merci
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {evolutionSubmitted && (
+        <p
+          className="px-4 pb-2 text-sm text-muted-foreground shrink-0"
+          role="status"
+          aria-live="polite"
+        >
+          ✓ Demande transmise à MiKL
+        </p>
+      )}
       {showMiklButton && (
         <div className="px-4 pb-2 shrink-0">
           <Link

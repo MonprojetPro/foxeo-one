@@ -1,17 +1,12 @@
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { cookies } from 'next/headers'
-import { ElioChat } from '@monprojetpro/module-elio'
+import { ElioChat, ELIO_MODEL_MICRO } from '@monprojetpro/module-elio'
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
 import { resolveClientMode } from '@monprojetpro/utils'
 import { ElioVeille } from '../../../../components/elio-veille'
 
-interface PageProps {
-  searchParams: Promise<{ conv?: string }>
-}
-
-export default async function ElioClientPage({ searchParams }: PageProps) {
-  const { conv: initialConversationId } = await searchParams
+export default async function ElioClientPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -37,11 +32,15 @@ export default async function ElioClientPage({ searchParams }: PageProps) {
 
   // En mode Lab, le chat persistant avec historique « ne sert à rien » : le Concierge
   // s'utilise en pop-up ÉPHÉMÈRE depuis « Mon Parcours ». On supprime donc cette page
-  // côté Lab (redirection). Elle reste l'interface Élio de One (historique nécessaire).
+  // côté Lab (redirection).
   if (effectiveMode === 'lab') {
     redirect('/modules/parcours')
   }
 
+  // One : Élio = pop-up UNIQUE éphémère partout (cohérence avec l'accueil — refonte 2026-06-29).
+  // Pas de `userId` → chat éphémère sans liste de conversations ni historique (donc plus de
+  // couleurs Lab violettes). `clientId` → contexte One complet (posture coach, modules, état
+  // outil) + détection de demande d'évolution. `model` micro (Haiku) → réponse rapide.
   // NB : Élio Lab (l'ASSISTANT du dashboard) reste TOUJOURS disponible, même quand MiKL
   // coupe les agents du parcours (elio_lab_enabled). Seul le consentement IA le met en veille.
   const iaConsentGranted = clientId ? await hasIaConsent(clientId) : false
@@ -49,12 +48,7 @@ export default async function ElioClientPage({ searchParams }: PageProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {iaConsentGranted ? (
-        <ElioChat
-          dashboardType={effectiveMode}
-          clientId={clientId}
-          userId={user.id}
-          initialConversationId={initialConversationId}
-        />
+        <ElioChat dashboardType="one" clientId={clientId} model={ELIO_MODEL_MICRO} />
       ) : (
         <ElioVeille />
       )}

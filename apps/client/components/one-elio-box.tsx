@@ -200,10 +200,10 @@ export function OneElioBox({ userId, clientId, iaConsentGranted }: OneElioBoxPro
           </span>
         </div>
         <Link
-          href={lastConvId ? `/modules/elio?conv=${lastConvId}` : '/modules/elio'}
+          href="/modules/elio"
           style={{ color: '#6b7280' }}
           className="flex items-center gap-0.5 text-[10px] transition-colors hover:[color:var(--brand-accent,#4ade80)]"
-          title="Ouvrir la conversation complète"
+          title="Ouvrir Élio en plein écran"
         >
           Ouvrir
           <ExternalLink className="h-2.5 w-2.5" />
@@ -275,7 +275,7 @@ export function OneElioBox({ userId, clientId, iaConsentGranted }: OneElioBoxPro
             {lastReply}
           </p>
           <Link
-            href={lastConvId ? `/modules/elio?conv=${lastConvId}` : '/modules/elio'}
+            href="/modules/elio"
             style={{ color: 'var(--brand-accent, #4ade80)' }}
             className="self-end text-[10px] hover:underline flex items-center gap-0.5"
           >

@@ -235,40 +235,28 @@
    Toutes les boucles sont gardées par `motion-safe:` côté composant → sur
    prefers-reduced-motion : rubalise figée + cône immobile (aucune animation). */
 
-/* Rubalise = rayures hazard à 45° orange/blanc. La largeur du motif (background-size)
-   sert de distance de défilement pour une boucle parfaitement continue. */
-.one-hazard-tape {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    #f97316 0,
-    #f97316 9px,
-    #fef3c7 9px,
-    #fef3c7 18px
-  );
-  background-size: 25.456px 100%; /* = 18px * √2, pas du motif projeté à l'horizontale */
-  box-shadow: 0 0 6px rgba(249, 115, 22, 0.45);
-}
-.one-hazard-tape--top {
-  border-top-left-radius: 2px;
-  border-top-right-radius: 2px;
-}
-.one-hazard-tape--bottom {
-  border-bottom-left-radius: 2px;
-  border-bottom-right-radius: 2px;
-}
-
-@keyframes one-hazard-scroll {
-  from { background-position: 0 0; }
-  to   { background-position: 25.456px 0; }
-}
-
-@keyframes one-hazard-scroll-rev {
-  from { background-position: 0 0; }
-  to   { background-position: -25.456px 0; }
-}
-
 /* Balancement subtil du plot de chantier (dodeline gauche-droite depuis sa base). */
 @keyframes one-cone-sway {
   0%, 100% { transform: rotate(-4deg); }
   50%      { transform: rotate(4deg); }
+}
+
+/* Bande de rubalise OBLIQUE UNIQUE — habille toute la barre du header One « en chantier ».
+   Rayures à -45° orange / blanc cassé, faible opacité pour que le contenu (logo, toggle,
+   cloche) reste parfaitement lisible par-dessus. La période du motif (22px projetée à
+   31.113px = 22 × √2) sert de distance de défilement pour une boucle continue. */
+.one-hazard-band {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(249, 115, 22, 0.20) 0,
+    rgba(249, 115, 22, 0.20) 11px,
+    rgba(254, 243, 199, 0.16) 11px,
+    rgba(254, 243, 199, 0.16) 22px
+  );
+  background-size: 31.113px 100%;
+}
+
+@keyframes one-hazard-band-scroll {
+  from { background-position: 0 0; }
+  to   { background-position: 31.113px 0; }
 }

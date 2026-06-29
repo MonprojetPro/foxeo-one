@@ -204,52 +204,52 @@ function ClientHeader({
     : 'linear-gradient(135deg, var(--brand-accent, #16a34a), color-mix(in srgb, var(--brand-accent, #16a34a) 60%, white))'
 
   // Signature « chantier » du header — One uniquement, état construction.
-  // Overlay décoratif `absolute inset-0 pointer-events-none` (le wrapper est déjà `relative`),
-  // zéro layout shift. Code couleur travaux assumé : orange/jaune + blanc (PAS le vert du thème).
-  // - une RUBALISE (ruban de signalisation rayé orange/blanc) qui borde le header en haut ET en bas,
-  //   les rayures défilent lentement → effet ruban qui bouge
-  // - un PLOT de chantier en SVG, posé à droite, qui se balance subtilement (effet « cône qui dodeline »)
-  // Tout en `motion-safe:` → sur prefers-reduced-motion : rubalise statique + cône immobile.
+  // Code couleur travaux assumé : orange/jaune + blanc (PAS le vert du thème). Deux éléments :
+  // - une SEULE bande de rubalise oblique (rayures à -45°) en fond de toute la barre, faible
+  //   opacité pour rester lisible, qui défile lentement → effet « barre habillée de chantier ».
+  // - un PLOT de chantier en SVG, posé À GAUCHE à côté du nom de la société, qui se balance.
+  // Tout en `motion-safe:` → sur prefers-reduced-motion : rubalise figée + cône immobile.
   const showConstructionFx = activeMode === 'one' && oneInConstruction
+
+  const constructionCone = (
+    <div
+      aria-hidden="true"
+      className="shrink-0 origin-bottom motion-safe:[animation:one-cone-sway_3.4s_ease-in-out_infinite]"
+      style={{ transformBox: 'fill-box' }}
+    >
+      <svg width="22" height="26" viewBox="0 0 26 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* ombre au sol */}
+        <ellipse cx="13" cy="27.5" rx="11" ry="2.2" fill="rgba(0,0,0,0.35)" />
+        {/* socle */}
+        <rect x="2" y="24" width="22" height="3.6" rx="1.2" fill="#fb923c" />
+        <rect x="2" y="24" width="22" height="1.4" rx="0.7" fill="#fdba74" />
+        {/* corps du cône */}
+        <path d="M13 2 L20 24 H6 Z" fill="#f97316" />
+        {/* bandes réfléchissantes blanches */}
+        <path d="M10.7 9 L15.3 9 L15.9 12 L10.1 12 Z" fill="#fff7ed" />
+        <path d="M9.2 16 L16.8 16 L17.6 19.5 L8.4 19.5 Z" fill="#fff7ed" />
+        {/* pointe + reflet */}
+        <circle cx="13" cy="2.5" r="1.4" fill="#fdba74" />
+        <path d="M13 3 L11 12" stroke="rgba(255,255,255,0.35)" strokeWidth="0.8" strokeLinecap="round" />
+      </svg>
+    </div>
+  )
 
   return (
     <div className="flex w-full items-center justify-between relative">
       {showConstructionFx && (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-visible">
-          {/* Rubalise haute — ruban rayé orange/blanc qui défile vers la droite */}
-          <div className="one-hazard-tape one-hazard-tape--top absolute inset-x-0 top-0 h-[5px] motion-safe:[animation:one-hazard-scroll_2.6s_linear_infinite]" />
-          {/* Rubalise basse — défile en sens inverse pour un effet « encadrement vivant » */}
-          <div className="one-hazard-tape one-hazard-tape--bottom absolute inset-x-0 bottom-0 h-[5px] motion-safe:[animation:one-hazard-scroll-rev_2.6s_linear_infinite]" />
-
-          {/* Plot / cône de chantier — posé à droite du header, balancement subtil */}
-          <div
-            className="absolute bottom-[6px] right-[6px] origin-bottom motion-safe:[animation:one-cone-sway_3.4s_ease-in-out_infinite]"
-            style={{ transformBox: 'fill-box' }}
-          >
-            <svg width="26" height="30" viewBox="0 0 26 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* ombre au sol */}
-              <ellipse cx="13" cy="27.5" rx="11" ry="2.2" fill="rgba(0,0,0,0.35)" />
-              {/* socle */}
-              <rect x="2" y="24" width="22" height="3.6" rx="1.2" fill="#fb923c" />
-              <rect x="2" y="24" width="22" height="1.4" rx="0.7" fill="#fdba74" />
-              {/* corps du cône */}
-              <path d="M13 2 L20 24 H6 Z" fill="#f97316" />
-              {/* bandes réfléchissantes blanches */}
-              <path d="M10.7 9 L15.3 9 L15.9 12 L10.1 12 Z" fill="#fff7ed" />
-              <path d="M9.2 16 L16.8 16 L17.6 19.5 L8.4 19.5 Z" fill="#fff7ed" />
-              {/* pointe + reflet */}
-              <circle cx="13" cy="2.5" r="1.4" fill="#fdba74" />
-              <path d="M13 3 L11 12" stroke="rgba(255,255,255,0.35)" strokeWidth="0.8" strokeLinecap="round" />
-            </svg>
-          </div>
-        </div>
+        <div
+          aria-hidden="true"
+          className="one-hazard-band pointer-events-none absolute inset-0 z-0 rounded-md motion-safe:[animation:one-hazard-band-scroll_3s_linear_infinite]"
+        />
       )}
-      {/* Gauche — logo + displayName
+      {/* Gauche — (cône chantier) + logo + displayName
           Logique (mode One) :
             - displayName défini → symbole MPP blanc + nom en texte blanc Poppins gras
             - pas de displayName → logo /logos/logo-one.png (vert, défaut)
           Mode Lab : logo /logos/logo-lab.png — inchangé */}
-      <div className="flex items-center gap-2" style={{ width: 220 }}>
+      <div className="relative z-10 flex items-center gap-2" style={{ width: 220 }}>
+        {showConstructionFx && constructionCone}
         {activeMode === 'lab' ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logos/logo-lab.png" alt="MonprojetPro Lab" className="w-auto object-contain" style={{ height: '60px' }} />
@@ -272,12 +272,12 @@ function ClientHeader({
       </div>
 
       {/* Centre — toggle Lab / One */}
-      <div className="absolute left-1/2 -translate-x-1/2">
+      <div className="absolute left-1/2 -translate-x-1/2 z-10">
         <ModeToggle currentMode={activeMode} labModeAvailable={labModeAvailable} oneLocked={oneLocked} labLocked={labLocked} />
       </div>
 
       {/* Droite — cloche + avatar */}
-      <div className="flex items-center gap-3.5" style={{ width: 220, justifyContent: 'flex-end' }}>
+      <div className="relative z-10 flex items-center gap-3.5" style={{ width: 220, justifyContent: 'flex-end' }}>
         {authUserId && <NotificationBadge recipientId={authUserId} />}
         <div
           className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white font-bold text-[12px] tracking-[0.5px] shrink-0 cursor-default"
