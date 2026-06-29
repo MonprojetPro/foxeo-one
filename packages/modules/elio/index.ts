@@ -3,6 +3,7 @@ export { manifest } from './manifest'
 
 // Components — Story 8.1 (infrastructure unifiée)
 export { ElioChat } from './components/elio-chat'
+export type { ElioChatSession } from './components/elio-chat'
 export { ElioThinking } from './components/elio-thinking'
 export { ElioErrorMessage } from './components/elio-error-message'
 export { ElioMessageItem } from './components/elio-message'

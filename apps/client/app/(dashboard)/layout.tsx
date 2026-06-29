@@ -45,21 +45,18 @@ import { RealtimeDashboardRefresh } from '../../components/realtime-dashboard-re
 import { ImpersonationWrapper } from './impersonation-wrapper'
 import { OneElioBox } from '../../components/one-elio-box'
 import { ElioOnePopup } from '../../components/elio-one-popup'
+import { ElioOneSessionProvider } from '../../components/elio-one-session'
 import { SessionKeepAlive } from './session-keep-alive'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
 function ClientSidebar({
   dashboardType,
   activeModules,
-  userId,
-  clientId,
   badges,
   iaConsentGranted,
 }: {
   dashboardType: string
   activeModules: string[]
-  userId: string
-  clientId: string
   badges?: Record<string, ModuleSidebarBadge>
   iaConsentGranted: boolean
 }) {
@@ -78,10 +75,11 @@ function ClientSidebar({
     )
   }
 
-  // Widget Élio en bas de sidebar pour One (si le module elio est actif)
+  // Widget Élio en bas de sidebar pour One (si le module elio est actif). Branché sur la
+  // session Élio One partagée (via ElioOneSessionProvider du layout) → continuité avec la pop-up.
   const elioWidget =
     target === 'client-one' && activeModules.includes('elio')
-      ? <OneElioBox userId={userId} clientId={clientId} iaConsentGranted={iaConsentGranted} />
+      ? <OneElioBox iaConsentGranted={iaConsentGranted} />
       : undefined
 
   return (
@@ -452,39 +450,51 @@ export default async function DashboardLayout({
     ...(accentColor ? { '--accent': accentColor } : {}),
   } as React.CSSProperties
 
+  // Élio One actif → widget sidebar + pop-up partagent UNE session éphémère (continuité).
+  const oneElioActive = activeMode === 'one' && activeModules.includes('elio')
+
+  const shell = (
+    <DashboardShell
+      density={density}
+      sidebar={
+        <ClientSidebar dashboardType={activeMode} activeModules={activeModules} badges={sidebarBadges} iaConsentGranted={iaConsentGranted} />
+      }
+      header={
+        <ClientHeader
+          authUserId={user?.id ?? ''}
+          displayName={displayName}
+          activeMode={activeMode}
+          labModeAvailable={labModeAvailable}
+          oneLocked={oneLocked}
+          labLocked={labLocked}
+          userInitials={userInitials}
+          oneInConstruction={showConstructionBanner}
+        />
+      }
+    >
+      <ImpersonationWrapper>
+        <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
+          {children}
+        </PresenceProvider>
+      </ImpersonationWrapper>
+    </DashboardShell>
+  )
+
   return (
     <div style={accentStyle}>
       <SessionKeepAlive />
       <RealtimeDashboardRefresh clientId={clientId} />
       <ThemeClassSetter activeMode={activeMode} />
-      {/* Pop-up Élio One UNIQUE — ouvrable de partout (bandeau accueil + widget sidebar). */}
-      {activeMode === 'one' && activeModules.includes('elio') && (
-        <ElioOnePopup clientId={clientId} iaConsentGranted={iaConsentGranted} />
+      {/* Session Élio One partagée + pop-up UNIQUE : le widget sidebar (dans le shell) et la
+          pop-up consomment la même conversation → « Voir dans Élio » montre l'échange en cours. */}
+      {oneElioActive ? (
+        <ElioOneSessionProvider clientId={clientId}>
+          <ElioOnePopup clientId={clientId} iaConsentGranted={iaConsentGranted} />
+          {shell}
+        </ElioOneSessionProvider>
+      ) : (
+        shell
       )}
-      <DashboardShell
-        density={density}
-        sidebar={
-          <ClientSidebar dashboardType={activeMode} activeModules={activeModules} userId={user?.id ?? ''} clientId={clientId} badges={sidebarBadges} iaConsentGranted={iaConsentGranted} />
-        }
-        header={
-          <ClientHeader
-            authUserId={user?.id ?? ''}
-            displayName={displayName}
-            activeMode={activeMode}
-            labModeAvailable={labModeAvailable}
-            oneLocked={oneLocked}
-            labLocked={labLocked}
-            userInitials={userInitials}
-            oneInConstruction={showConstructionBanner}
-          />
-        }
-      >
-        <ImpersonationWrapper>
-          <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
-            {children}
-          </PresenceProvider>
-        </ImpersonationWrapper>
-      </DashboardShell>
     </div>
   )
 }

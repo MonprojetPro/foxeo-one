@@ -83,6 +83,19 @@ interface ElioChatProps {
   initialConversationId?: string
   // Routage modèle (Élio One v2) — micro-tâche (pop-up accueil) = Haiku. Défaut serveur = Sonnet.
   model?: string
+  // Session éphémère PARTAGÉE (One) : quand fournie, le chat n'utilise pas son propre état
+  // interne mais celui-ci. Permet au widget sidebar et à la pop-up de partager UNE conversation.
+  externalSession?: ElioChatSession
+}
+
+/** Forme d'une session de chat éphémère (= valeur de retour de `useElioChat`). */
+export interface ElioChatSession {
+  messages: ElioMessage[]
+  isLoading: boolean
+  error: ElioError | null
+  sendMessage: (content: string) => Promise<void>
+  retrySend: () => Promise<void>
+  clearError?: () => void
 }
 
 export const PALETTE_CLASSES: Record<DashboardType, string> = {
@@ -118,13 +131,17 @@ function ElioChatSimple({
   clientId,
   placeholder,
   model,
-}: Pick<ElioChatProps, 'dashboardType' | 'clientId' | 'placeholder' | 'model'>) {
+  externalSession,
+}: Pick<ElioChatProps, 'dashboardType' | 'clientId' | 'placeholder' | 'model' | 'externalSession'>) {
   const queryClient = useQueryClient()
-  const { messages, isLoading, error, sendMessage, retrySend } = useElioChat({
+  // Le hook interne est toujours appelé (règle des hooks) mais ignoré si une session externe
+  // partagée est fournie (widget ↔ pop-up = une seule conversation).
+  const internalSession = useElioChat({
     dashboardType,
     clientId,
     model,
   })
+  const { messages, isLoading, error, sendMessage, retrySend } = externalSession ?? internalSession
 
   const [inputValue, setInputValue] = useState('')
   // Élio One v2 — demande d'évolution (flux simplifié « pop-up unique partout ») :
@@ -1110,6 +1127,7 @@ export function ElioChat({
   parcoursAbandoned = false,
   initialConversationId,
   model,
+  externalSession,
 }: ElioChatProps) {
   // Story 9.3 — Désactiver Élio Lab si parcours abandonné
   if (parcoursAbandoned && dashboardType === 'lab') {
@@ -1164,6 +1182,7 @@ export function ElioChat({
       clientId={clientId}
       placeholder={resolvedPlaceholder}
       model={model}
+      externalSession={externalSession}
     />
   )
 }
