@@ -276,7 +276,11 @@ export function RecipeFormModal({
           <DialogTitle>{isEdit ? 'Éditer la recette' : 'Nouvelle recette officielle'}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
+        <form
+          autoComplete="off"
+          onSubmit={(e) => e.preventDefault()}
+          className="flex-1 min-h-0 overflow-y-auto px-6 py-4"
+        >
         {detailLoading ? (
           <div className="space-y-3 py-6">
             <div className="h-10 rounded bg-white/5 animate-pulse" />
@@ -298,7 +302,15 @@ export function RecipeFormModal({
             {/* Nom */}
             <div className="space-y-1.5">
               <Label htmlFor="r-name">Nom *</Label>
-              <Input id="r-name" value={f.name} onChange={(e) => set('name', e.target.value)} />
+              <Input
+                id="r-name"
+                name="mf-recipe-name"
+                autoComplete="off"
+                data-1p-ignore
+                data-lpignore="true"
+                value={f.name}
+                onChange={(e) => set('name', e.target.value)}
+              />
             </div>
 
             {/* Saisons */}
@@ -535,7 +547,7 @@ export function RecipeFormModal({
           </div>
         )}
 
-        </div>
+        </form>
 
         <DialogFooter className="gap-2 px-6 py-4 shrink-0 border-t border-white/10">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={busy}>Annuler</Button>
