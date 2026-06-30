@@ -19,8 +19,8 @@ import {
   SelectValue,
   toast,
 } from '@monprojetpro/ui'
-import { useReports, useModerationActions } from '../hooks/use-moderation'
-import type { MenuFacileReport, ReportStatus } from '../types'
+import { useReports, useModerationActions, useRecipeFull } from '../hooks/use-moderation'
+import type { MenuFacileReport, ReportStatus, OfficialRecipeDetail } from '../types'
 
 const STATUS_FILTERS: { key: ReportStatus | 'all'; label: string }[] = [
   { key: 'all', label: 'Tous' },
@@ -42,6 +42,115 @@ function fmtDate(iso: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Vue « recette complète » (pour juger un signalement)
+// ---------------------------------------------------------------------------
+
+function RecipeFullView({ recipeId }: { recipeId: string }) {
+  const { data, isLoading, error } = useRecipeFull(recipeId, true)
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2 py-2">
+        <div className="h-4 w-1/3 rounded bg-white/5 animate-pulse" />
+        <div className="h-4 rounded bg-white/5 animate-pulse" />
+        <div className="h-4 w-2/3 rounded bg-white/5 animate-pulse" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-md border border-amber-400/30 bg-amber-400/5 p-3 text-xs text-amber-200/90">
+        Impossible d&apos;afficher la recette complète : {(error as Error).message}.
+        <br />
+        L&apos;endpoint <code>GET /recipes/:id</code> n&apos;est peut-être pas encore disponible
+        côté MenuFacile.
+      </div>
+    )
+  }
+  if (!data) return null
+
+  const d: OfficialRecipeDetail = data
+  const diet = [
+    d.is_vegetarian && 'Végétarien',
+    d.is_gluten_free && 'Sans gluten',
+    d.is_lactose_free && 'Sans lactose',
+  ].filter(Boolean) as string[]
+
+  return (
+    <div className="rounded-md border border-white/10 bg-white/[0.03] p-3 space-y-3 text-xs">
+      {/* Meta */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-gray-400">
+        {d.prep_minutes != null && <span>Prépa : {d.prep_minutes} min</span>}
+        {d.cook_minutes != null && <span>Cuisson : {d.cook_minutes} min</span>}
+        {d.rest_minutes != null && <span>Repos : {d.rest_minutes} min</span>}
+        {d.portions != null && <span>Portions : {d.portions}</span>}
+        {d.difficulty && <span>Difficulté : {d.difficulty}</span>}
+        {d.budget && <span>Budget : {d.budget}</span>}
+      </div>
+      {diet.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {diet.map((x) => (
+            <Badge key={x} variant="outline" className="bg-white/5 text-gray-300 border-white/10">
+              {x}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      {/* Ingrédients */}
+      {d.ingredients && d.ingredients.length > 0 && (
+        <div>
+          <p className="text-gray-300 font-medium mb-1">Ingrédients</p>
+          <ul className="list-disc list-inside space-y-0.5 text-gray-400">
+            {d.ingredients.map((ing, i) => (
+              <li key={i}>
+                {[ing.quantity, ing.unit].filter((v) => v != null && v !== '').join(' ')} {ing.name}
+                {ing.aisle ? <span className="text-gray-600"> · {ing.aisle}</span> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Étapes */}
+      {d.steps && d.steps.length > 0 && (
+        <div>
+          <p className="text-gray-300 font-medium mb-1">Étapes</p>
+          <ol className="list-decimal list-inside space-y-1 text-gray-400">
+            {d.steps.map((st, i) => (
+              <li key={i}>{st.text}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+
+      {(d.notes || d.variants_tips) && (
+        <div className="space-y-1 border-t border-white/10 pt-2 text-gray-400">
+          {d.notes && <p><span className="text-gray-300">Notes :</span> {d.notes}</p>}
+          {d.variants_tips && <p><span className="text-gray-300">Astuces :</span> {d.variants_tips}</p>}
+        </div>
+      )}
+
+      {d.source_url && (
+        <a
+          href={d.source_url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-block text-cyan-300 hover:underline"
+        >
+          Source ↗
+        </a>
+      )}
+
+      {(!d.ingredients?.length && !d.steps?.length) && (
+        <p className="text-gray-500">Cette recette n&apos;a ni ingrédients ni étapes renseignés.</p>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Dialog de traitement d'un signalement
 // ---------------------------------------------------------------------------
 
@@ -57,6 +166,7 @@ function ReportActionDialog({
   const { hide, resolve } = useModerationActions()
   const [reason, setReason] = useState('')
   const [newStatus, setNewStatus] = useState<ReportStatus>('reviewed')
+  const [showFull, setShowFull] = useState(false)
 
   const busy = hide.isPending || resolve.isPending
 
@@ -142,10 +252,23 @@ function ReportActionDialog({
               </div>
             </div>
             <div className="mt-3 space-y-1 border-t border-white/10 pt-2 text-xs">
-              <p><span className="text-gray-400">Signalé par :</span> <span className="font-mono">{report.reported_by}</span></p>
+              <p>
+                <span className="text-gray-400">Signalé par :</span>{' '}
+                {report.reporter_name ?? (
+                  <span className="font-mono text-[0.7rem] text-gray-500">{report.reported_by}</span>
+                )}
+              </p>
               <p><span className="text-gray-400">Motif :</span> {report.reason}</p>
               {report.details && <p><span className="text-gray-400">Détails :</span> {report.details}</p>}
             </div>
+          </div>
+
+          {/* Voir la recette complète (pour juger) */}
+          <div className="space-y-2">
+            <Button variant="outline" size="sm" onClick={() => setShowFull((v) => !v)}>
+              {showFull ? 'Masquer la recette complète' : 'Voir la recette complète'}
+            </Button>
+            {showFull && <RecipeFullView recipeId={report.recipe_id} />}
           </div>
 
           <div className="space-y-1.5">

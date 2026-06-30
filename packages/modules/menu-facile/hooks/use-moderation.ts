@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getMenuFacileReports } from '../actions/get-reports'
+import { getRecipeFull } from '../actions/get-recipe'
 import { hideRecipe, banUser, resolveReport } from '../actions/moderation'
-import type { MenuFacileReport, ReportStatus } from '../types'
+import type { MenuFacileReport, ReportStatus, OfficialRecipeDetail } from '../types'
 
 /** Liste des signalements (status optionnel). */
 export function useReports(status?: ReportStatus) {
@@ -13,6 +14,25 @@ export function useReports(status?: ReportStatus) {
       return res.data ?? []
     },
     staleTime: 60 * 1000,
+  })
+}
+
+/**
+ * Détail complet d'une recette signalée (pour juger). N'est appelé que lorsque
+ * `enabled` passe à true (clic sur « Voir la recette complète »). Si l'endpoint
+ * `GET /recipes/:id` n'existe pas encore, la query passe en erreur → message.
+ */
+export function useRecipeFull(id: string | null, enabled: boolean) {
+  return useQuery<OfficialRecipeDetail>({
+    queryKey: ['menu-facile', 'recipe-full', id],
+    enabled: enabled && !!id,
+    retry: false,
+    queryFn: async (): Promise<OfficialRecipeDetail> => {
+      const res = await getRecipeFull(id as string)
+      if (res.error || !res.data) throw new Error(res.error?.message ?? 'Recette introuvable')
+      return res.data
+    },
+    staleTime: 30 * 1000,
   })
 }
 

@@ -59,6 +59,8 @@ export interface MenuFacileReport {
   id: string
   recipe_id: string
   reported_by: string
+  /** Nom lisible du signaleur (foyer/utilisateur) — optionnel, fallback sur l'UUID. */
+  reporter_name?: string | null
   reason: string
   details: string | null
   status: ReportStatus

@@ -17,7 +17,8 @@ Composant MetricsTab (client)
 | Méthode | Endpoint | Usage | Statut module |
 |---------|----------|-------|---------------|
 | GET | `/metrics` | KPIs globaux | ✅ branché |
-| GET | `/reports?status=` | Signalements | ✅ onglet Modération |
+| GET | `/reports?status=` | Signalements (+ `recipe` aperçu, `reporter_name`) | ✅ onglet Modération |
+| GET | `/recipes/:id` | Détail complet d'une recette signalée (pour juger) | ⏳ consommé, attend MenuFacile |
 | POST | `/moderation/hide` | Masquer une recette | ✅ |
 | POST | `/moderation/ban` | Bannir / débannir un user | ✅ |
 | POST | `/moderation/resolve-report` | Résoudre un signalement | ✅ |
