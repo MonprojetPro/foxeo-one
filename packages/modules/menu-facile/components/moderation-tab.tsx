@@ -92,7 +92,7 @@ function ReportActionDialog({
 
   return (
     <Dialog open={!!report} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Traiter le signalement</DialogTitle>
         </DialogHeader>

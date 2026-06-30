@@ -271,11 +271,12 @@ export function RecipeFormModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-2xl max-h-[88vh] p-0 gap-0 flex flex-col overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b border-white/10">
           <DialogTitle>{isEdit ? 'Éditer la recette' : 'Nouvelle recette officielle'}</DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
         {detailLoading ? (
           <div className="space-y-3 py-6">
             <div className="h-10 rounded bg-white/5 animate-pulse" />
@@ -534,7 +535,9 @@ export function RecipeFormModal({
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        </div>
+
+        <DialogFooter className="gap-2 px-6 py-4 shrink-0 border-t border-white/10">
           <Button variant="ghost" size="sm" onClick={onClose} disabled={busy}>Annuler</Button>
           <Button size="sm" onClick={submit} disabled={busy || detailLoading}>
             {busy ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer'}
