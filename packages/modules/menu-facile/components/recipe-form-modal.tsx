@@ -106,10 +106,12 @@ export function RecipeFormModal({
   const isEdit = !!recipe
   const { create, update } = useOfficialRecipeActions()
   const [f, setF] = useState<FormState>(() => initialState(recipe))
-  // En édition, ingrédients/étapes ne sont envoyés QUE si on coche « remplacer »
-  // (sinon le PATCH écraserait les existants avec du vide).
+  // En édition, ingrédients/étapes/régimes ne sont envoyés QUE si on coche
+  // « modifier » (sinon le PATCH écraserait les valeurs existantes — que le
+  // guichet ne nous renvoie pas, faute d'endpoint de détail).
   const [replaceIngredients, setReplaceIngredients] = useState(false)
   const [replaceSteps, setReplaceSteps] = useState(false)
+  const [editDiet, setEditDiet] = useState(false)
 
   const busy = create.isPending || update.isPending
 
@@ -143,15 +145,20 @@ export function RecipeFormModal({
     cook_minutes: numOrUndef(f.cook_minutes),
     rest_minutes: numOrUndef(f.rest_minutes),
     portions: numOrUndef(f.portions),
-    is_vegetarian: f.is_vegetarian,
-    is_gluten_free: f.is_gluten_free,
-    is_lactose_free: f.is_lactose_free,
     difficulty: f.difficulty || undefined,
     budget: f.budget || undefined,
     photo_url: f.photo_url || undefined,
     notes: f.notes || undefined,
     variants_tips: f.variants_tips || undefined,
     source_url: f.source_url || undefined,
+  })
+
+  // Régimes : envoyés tels quels (3 booléens). En édition, on ne les inclut
+  // que si l'utilisateur a explicitement choisi de les modifier.
+  const dietFields = () => ({
+    is_vegetarian: f.is_vegetarian,
+    is_gluten_free: f.is_gluten_free,
+    is_lactose_free: f.is_lactose_free,
   })
 
   const cleanIngredients = () =>
@@ -176,6 +183,7 @@ export function RecipeFormModal({
         name: f.name.trim(),
         seasons: f.seasons,
         ...buildScalars(),
+        ...dietFields(),
         ingredients: cleanIngredients(),
         steps: cleanSteps(),
       }
@@ -195,6 +203,7 @@ export function RecipeFormModal({
       ...buildScalars(),
     }
     if (f.seasons.length > 0) payload.seasons = f.seasons
+    if (editDiet) Object.assign(payload, dietFields())
     if (replaceIngredients) payload.ingredients = cleanIngredients()
     if (replaceSteps) payload.steps = cleanSteps()
 
@@ -218,6 +227,15 @@ export function RecipeFormModal({
         </DialogHeader>
 
         <div className="space-y-4 text-sm">
+          {isEdit && (
+            <div className="rounded-md border border-amber-400/30 bg-amber-400/5 p-3 text-xs text-amber-200/90">
+              MenuFacile ne renvoie pas le détail complet d&apos;une recette : seuls nom, type,
+              format et repas sont pré-remplis. <strong>Les champs laissés vides ne sont pas
+              modifiés.</strong> Pour changer régimes, ingrédients ou étapes, active le bouton
+              « Modifier » correspondant.
+            </div>
+          )}
+
           {/* Nom */}
           <div className="space-y-1.5">
             <Label htmlFor="r-name">Nom *</Label>
@@ -331,19 +349,29 @@ export function RecipeFormModal({
           </div>
 
           {/* Régimes */}
-          <div className="flex flex-wrap gap-6">
-            <label className="flex items-center gap-2">
-              <Switch checked={f.is_vegetarian} onCheckedChange={(v) => set('is_vegetarian', v)} />
-              <span className="text-gray-300">Végétarien</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <Switch checked={f.is_gluten_free} onCheckedChange={(v) => set('is_gluten_free', v)} />
-              <span className="text-gray-300">Sans gluten</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <Switch checked={f.is_lactose_free} onCheckedChange={(v) => set('is_lactose_free', v)} />
-              <span className="text-gray-300">Sans lactose</span>
-            </label>
+          <div className="space-y-2">
+            {isEdit && (
+              <label className="flex items-center gap-2 text-xs text-gray-400">
+                <Switch checked={editDiet} onCheckedChange={setEditDiet} />
+                Modifier les régimes alimentaires
+              </label>
+            )}
+            {(!isEdit || editDiet) && (
+              <div className="flex flex-wrap gap-6">
+                <label className="flex items-center gap-2">
+                  <Switch checked={f.is_vegetarian} onCheckedChange={(v) => set('is_vegetarian', v)} />
+                  <span className="text-gray-300">Végétarien</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <Switch checked={f.is_gluten_free} onCheckedChange={(v) => set('is_gluten_free', v)} />
+                  <span className="text-gray-300">Sans gluten</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <Switch checked={f.is_lactose_free} onCheckedChange={(v) => set('is_lactose_free', v)} />
+                  <span className="text-gray-300">Sans lactose</span>
+                </label>
+              </div>
+            )}
           </div>
 
           {/* Médias / liens */}
