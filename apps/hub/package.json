@@ -17,6 +17,7 @@
     "@monprojetpro/module-core-dashboard": "*",
     "@monprojetpro/module-documents": "*",
     "@monprojetpro/module-elio": "*",
+    "@monprojetpro/module-menu-facile": "*",
     "@monprojetpro/module-parcours": "*",
     "@monprojetpro/module-templates": "*",
     "@monprojetpro/module-visio": "*",

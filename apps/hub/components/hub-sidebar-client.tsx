@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video } from 'lucide-react'
+import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video, ChefHat } from 'lucide-react'
 import { Badge } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
 import { useValidationBadge, useValidationRealtime } from '@monprojetpro/modules-validation-hub'
@@ -21,6 +21,11 @@ const navItems = [
   { icon: Calculator,    label: 'Comptabilité',   href: '/modules/facturation' },
   { icon: Bot,           label: 'Élio',            href: '/elio' },
   { icon: Settings,      label: 'One',              href: '/modules/admin' },
+]
+
+// Section « Produits » — produits externes pilotés depuis le Hub (cockpits).
+const produitItems = [
+  { icon: ChefHat, label: 'MenuFacile', href: '/modules/menu-facile' },
 ]
 
 export function HubSidebarClient({ operatorId, userId }: { operatorId: string; userId: string }) {
@@ -72,6 +77,31 @@ export function HubSidebarClient({ operatorId, userId }: { operatorId: string; u
             </Link>
           )
         })}
+
+        {/* Section Produits — cockpits de produits externes pilotés depuis le Hub */}
+        <div className="pt-4 mt-2">
+          <p className="px-3 pb-1 text-[0.65rem] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+            Produits
+          </p>
+          {produitItems.map((item) => {
+            const isActive = pathname?.startsWith(item.href)
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors font-medium',
+                  isActive
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                )}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1">{item.label}</span>
+              </Link>
+            )
+          })}
+        </div>
       </nav>
 
       {/* Élio Hub — widget bas de sidebar */}
