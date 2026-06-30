@@ -18,9 +18,15 @@ Hub (ce module) ──HTTP + Bearer──▶ guichet admin-api ──▶ base Me
 ## Écrans (page unique à onglets `/modules/menu-facile`)
 
 1. **Tableau de bord** — KPIs (`GET /metrics`) : utilisateurs, recettes, foyers,
-   modération, top recettes. ✅ disponible.
-2. **Modération** — signalements + actions (masquer / bannir / résoudre). 🔜
-3. **Recettes officielles** — liste + création / édition / suppression. 🔜
+   modération, top recettes. ✅
+2. **Modération** — signalements (`GET /reports`) + actions : masquer/réafficher une
+   recette, résoudre un signalement, bannir/débannir un utilisateur. ✅
+3. **Recettes officielles** — liste (`GET /official-recipes`) + création (POST),
+   édition (PATCH), suppression (DELETE), avec ingrédients & étapes dynamiques. ✅
+
+> Note édition : un PATCH ne remplace les ingrédients/étapes que s'ils sont fournis.
+> Le formulaire ne les envoie donc qu'avec le toggle « Remplacer la liste » activé,
+> pour ne jamais écraser l'existant par erreur.
 
 ## Configuration
 

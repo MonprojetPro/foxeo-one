@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { MetricsTab } from './metrics-tab'
+import { ModerationTab } from './moderation-tab'
+import { RecipesTab } from './recipes-tab'
 
 type TabKey = 'metrics' | 'moderation' | 'recipes'
 
@@ -11,19 +13,9 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'recipes', label: 'Recettes officielles' },
 ]
 
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <div className="rounded-lg border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
-      <p className="text-sm text-gray-300">{title}</p>
-      <p className="text-xs text-gray-500 mt-1">Écran en cours de construction — étape suivante.</p>
-    </div>
-  )
-}
-
 /**
  * Cockpit MenuFacile — page unique à onglets (Tableau de bord / Modération / Recettes).
- * Pour l'instant seul « Tableau de bord » est branché (GET /metrics) ; les deux
- * autres onglets sont des placeholders en attendant l'étape 2.
+ * Toute la donnée passe par les Server Actions → guichet admin-api de MenuFacile.
  */
 export function MenuFacileDashboard() {
   const [tab, setTab] = useState<TabKey>('metrics')
@@ -57,8 +49,8 @@ export function MenuFacileDashboard() {
 
       {/* Contenu */}
       {tab === 'metrics' && <MetricsTab />}
-      {tab === 'moderation' && <ComingSoon title="Modération des signalements" />}
-      {tab === 'recipes' && <ComingSoon title="Gestion des recettes officielles" />}
+      {tab === 'moderation' && <ModerationTab />}
+      {tab === 'recipes' && <RecipesTab />}
     </div>
   )
 }
