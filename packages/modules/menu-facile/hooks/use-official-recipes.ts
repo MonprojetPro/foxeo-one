@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   getOfficialRecipes,
+  getOfficialRecipe,
   createOfficialRecipe,
   updateOfficialRecipe,
   deleteOfficialRecipe,
 } from '../actions/official-recipes'
-import type { OfficialRecipeListItem, OfficialRecipeInput } from '../types'
+import type { OfficialRecipeListItem, OfficialRecipeInput, OfficialRecipeDetail } from '../types'
 
 /** Liste des recettes officielles. */
 export function useOfficialRecipes() {
@@ -17,6 +18,25 @@ export function useOfficialRecipes() {
       return res.data ?? []
     },
     staleTime: 60 * 1000,
+  })
+}
+
+/**
+ * Détail complet d'une recette (pour pré-remplir l'édition). N'est appelé que si
+ * `id` est fourni. Si l'endpoint n'existe pas encore côté MenuFacile, la query
+ * passe en erreur → le formulaire bascule en mode sûr (cf. RecipeFormModal).
+ */
+export function useOfficialRecipe(id: string | null) {
+  return useQuery<OfficialRecipeDetail>({
+    queryKey: ['menu-facile', 'official-recipe', id],
+    enabled: !!id,
+    retry: false,
+    queryFn: async (): Promise<OfficialRecipeDetail> => {
+      const res = await getOfficialRecipe(id as string)
+      if (res.error || !res.data) throw new Error(res.error?.message ?? 'Recette introuvable')
+      return res.data
+    },
+    staleTime: 30 * 1000,
   })
 }
 

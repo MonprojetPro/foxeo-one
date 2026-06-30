@@ -2,7 +2,7 @@
 
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { callMenuFacileAdmin, MenuFacileAdminError } from './admin-client'
-import type { OfficialRecipeListItem, OfficialRecipeInput } from '../types'
+import type { OfficialRecipeListItem, OfficialRecipeInput, OfficialRecipeDetail } from '../types'
 
 function toError(err: unknown): ActionResponse<never> {
   if (err instanceof MenuFacileAdminError) {
@@ -19,6 +19,20 @@ export async function getOfficialRecipes(): Promise<ActionResponse<OfficialRecip
   try {
     const data = await callMenuFacileAdmin<OfficialRecipeListItem[]>('/official-recipes')
     return successResponse(data ?? [])
+  } catch (err) {
+    return toError(err)
+  }
+}
+
+/** GET /official-recipes/:id — détail complet d'une recette officielle. */
+export async function getOfficialRecipe(
+  id: string,
+): Promise<ActionResponse<OfficialRecipeDetail>> {
+  try {
+    const data = await callMenuFacileAdmin<OfficialRecipeDetail>(
+      `/official-recipes/${encodeURIComponent(id)}`,
+    )
+    return successResponse(data)
   } catch (err) {
     return toError(err)
   }

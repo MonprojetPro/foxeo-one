@@ -22,6 +22,7 @@ Composant MetricsTab (client)
 | POST | `/moderation/ban` | Bannir / débannir un user | ✅ |
 | POST | `/moderation/resolve-report` | Résoudre un signalement | ✅ |
 | GET | `/official-recipes` | Liste recettes officielles | ✅ onglet Recettes |
+| GET | `/official-recipes/:id` | Détail complet (pré-remplit l'édition) | ⏳ consommé, attend MenuFacile |
 | POST | `/official-recipes` | Créer une recette | ✅ |
 | PATCH | `/official-recipes/:id` | Éditer (remplace ingredients/steps si fournis) | ✅ |
 | DELETE | `/official-recipes/:id` | Supprimer | ✅ |

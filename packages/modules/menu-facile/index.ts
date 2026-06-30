@@ -11,12 +11,13 @@ export { MetricCard } from './components/metric-card'
 // Data
 export { useMenuFacileMetrics } from './hooks/use-menu-facile-metrics'
 export { useReports, useModerationActions } from './hooks/use-moderation'
-export { useOfficialRecipes, useOfficialRecipeActions } from './hooks/use-official-recipes'
+export { useOfficialRecipes, useOfficialRecipe, useOfficialRecipeActions } from './hooks/use-official-recipes'
 export { getMenuFacileMetrics } from './actions/get-metrics'
 export { getMenuFacileReports } from './actions/get-reports'
 export { hideRecipe, banUser, resolveReport } from './actions/moderation'
 export {
   getOfficialRecipes,
+  getOfficialRecipe,
   createOfficialRecipe,
   updateOfficialRecipe,
   deleteOfficialRecipe,
@@ -36,6 +37,7 @@ export type {
   MenuFacileReport,
   ReportedRecipePreview,
   OfficialRecipeListItem,
+  OfficialRecipeDetail,
   RecipeIngredientInput,
   RecipeStepInput,
   OfficialRecipeInput,

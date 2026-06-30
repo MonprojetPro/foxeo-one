@@ -97,6 +97,40 @@ export interface RecipeStepInput {
   position?: number
 }
 
+/**
+ * Détail complet d'une recette officielle, renvoyé par GET /official-recipes/:id.
+ * Permet de pré-remplir intégralement le formulaire d'édition. Champs tolérants
+ * (null/undefined) pour rester robuste aux variations de la réponse.
+ */
+export interface OfficialRecipeDetail {
+  id: string
+  name: string
+  seasons?: Season[]
+  course?: Course
+  recipe_type?: RecipeType
+  meal_type?: MealType
+  prep_minutes?: number | null
+  cook_minutes?: number | null
+  rest_minutes?: number | null
+  portions?: number | null
+  is_vegetarian?: boolean
+  is_gluten_free?: boolean
+  is_lactose_free?: boolean
+  difficulty?: Difficulty | null
+  budget?: Budget | null
+  photo_url?: string | null
+  notes?: string | null
+  variants_tips?: string | null
+  source_url?: string | null
+  is_hidden?: boolean
+  visibility?: string
+  copy_count?: number
+  rating_count?: number
+  created_at?: string
+  ingredients?: RecipeIngredientInput[]
+  steps?: RecipeStepInput[]
+}
+
 /** Corps POST /official-recipes (name + seasons requis) et PATCH (tout optionnel). */
 export interface OfficialRecipeInput {
   name: string
