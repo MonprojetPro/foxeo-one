@@ -34,6 +34,7 @@ export type {
   TopRecipe,
   MenuFacileMetrics,
   MenuFacileReport,
+  ReportedRecipePreview,
   OfficialRecipeListItem,
   RecipeIngredientInput,
   RecipeStepInput,

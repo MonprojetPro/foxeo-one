@@ -40,6 +40,21 @@ export interface MenuFacileMetrics {
 
 // --- GET /reports ----------------------------------------------------------
 
+/**
+ * Aperçu de la recette signalée, embarqué dans GET /reports (Option B).
+ * Tous les champs sont optionnels : le Hub fonctionne même si MenuFacile ne
+ * l'envoie pas encore (rétro-compatible).
+ */
+export interface ReportedRecipePreview {
+  id: string
+  name?: string
+  photo_url?: string | null
+  is_public?: boolean
+  is_hidden?: boolean
+  author_id?: string | null
+  author_name?: string | null
+}
+
 export interface MenuFacileReport {
   id: string
   recipe_id: string
@@ -49,6 +64,8 @@ export interface MenuFacileReport {
   status: ReportStatus
   resolved_at: string | null
   created_at: string
+  /** Aperçu enrichi (Option B) — présent dès que MenuFacile l'expose. */
+  recipe?: ReportedRecipePreview | null
 }
 
 // --- GET /official-recipes -------------------------------------------------

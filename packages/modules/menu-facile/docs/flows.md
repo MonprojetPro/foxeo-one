@@ -30,6 +30,19 @@ Après chaque mutation (modération ou recette), le client invalide les queries
 `reports` / `official-recipes` **et** `metrics` → les compteurs du Tableau de bord
 se mettent à jour immédiatement.
 
+## Aperçu de recette dans les signalements (Option B)
+
+Pour pouvoir **voir** la recette signalée et **bannir l'auteur en un clic**, le Hub
+consomme un champ `recipe` optionnel dans chaque entrée de `GET /reports` :
+
+```
+recipe?: { id, name?, photo_url?, is_public?, is_hidden?, author_id?, author_name? }
+```
+
+Le Hub est rétro-compatible : tant que MenuFacile n'envoie pas ce champ, l'UI affiche
+le `recipe_id` brut et masque le bouton « Bannir l'auteur ». Dès que le champ arrive,
+l'aperçu (photo + nom + statut + auteur) et le bouton apparaissent automatiquement.
+
 ## Réponses
 
 - Succès : `{ data: … }` ou `{ ok: true }`
