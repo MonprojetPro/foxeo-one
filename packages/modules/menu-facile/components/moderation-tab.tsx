@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ShieldCheck, UserX, RefreshCw } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -35,6 +36,13 @@ const STATUS_BADGE: Record<ReportStatus, string> = {
   reviewed: 'bg-sky-400/15 text-sky-300 border-sky-400/30',
   dismissed: 'bg-gray-400/15 text-gray-300 border-gray-400/30',
   acted: 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30',
+}
+
+const STATUS_LABEL: Record<ReportStatus, string> = {
+  pending: 'En attente',
+  reviewed: 'Examiné',
+  dismissed: 'Rejeté',
+  acted: 'Traité',
 }
 
 function fmtDate(iso: string): string {
@@ -447,15 +455,15 @@ export function ModerationTab() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1.5">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                 filter === f.key
-                  ? 'bg-cyan-400/15 text-cyan-300'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                  ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-200'
+                  : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-gray-200'
               }`}
             >
               {f.label}
@@ -464,70 +472,110 @@ export function ModerationTab() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => openBan()}>
+            <UserX className="mr-1.5 h-3.5 w-3.5" />
             Bannir un utilisateur
           </Button>
           <Button variant="ghost" size="sm" disabled={isFetching} onClick={() => refetch()}>
+            <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
             {isFetching ? 'Actualisation…' : 'Actualiser'}
           </Button>
         </div>
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-red-400/30 bg-red-400/5 p-6 text-center">
+        <div className="rounded-2xl border border-red-400/30 bg-red-400/5 p-8 text-center">
           <p className="text-sm text-red-400">Impossible de charger les signalements</p>
           <p className="text-xs text-gray-500 mt-1">{(error as Error).message}</p>
         </div>
+      ) : isLoading ? (
+        <div className="space-y-2.5">
+          <div className="h-16 rounded-xl bg-white/5 animate-pulse" />
+          <div className="h-16 rounded-xl bg-white/5 animate-pulse" />
+          <div className="h-16 rounded-xl bg-white/5 animate-pulse" />
+        </div>
+      ) : !data?.length ? (
+        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-14 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <p className="text-sm text-gray-300">
+            Aucun signalement{filter !== 'all' ? ' dans ce statut' : ''}.
+          </p>
+          <p className="mt-1 text-xs text-gray-500">
+            {filter === 'pending' ? 'Rien à modérer pour le moment — tout est propre.' : 'Change de filtre pour voir les autres signalements.'}
+          </p>
+        </div>
       ) : (
-        <div className="rounded-lg border border-white/10 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/10 text-left text-xs text-gray-400">
-                <th className="px-4 py-2 font-medium">Date</th>
-                <th className="px-4 py-2 font-medium">Recette</th>
-                <th className="px-4 py-2 font-medium">Motif</th>
-                <th className="px-4 py-2 font-medium">Détails</th>
-                <th className="px-4 py-2 font-medium">Statut</th>
-                <th className="px-4 py-2 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-6">
-                    <div className="h-5 rounded bg-white/5 animate-pulse" />
-                  </td>
+        <>
+          {/* Table — desktop */}
+          <div className="hidden overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] md:block">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10 text-left text-xs text-gray-400">
+                  <th className="px-4 py-2.5 font-medium">Date</th>
+                  <th className="px-4 py-2.5 font-medium">Recette</th>
+                  <th className="px-4 py-2.5 font-medium">Motif</th>
+                  <th className="px-4 py-2.5 font-medium">Détails</th>
+                  <th className="px-4 py-2.5 font-medium">Statut</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Action</th>
                 </tr>
-              ) : !data?.length ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-xs text-gray-500">
-                    Aucun signalement{filter !== 'all' ? ' dans ce statut' : ''}.
-                  </td>
-                </tr>
-              ) : (
-                data.map((r) => (
-                  <tr key={r.id} className="border-b border-white/5 last:border-0 align-top">
-                    <td className="px-4 py-2.5 text-gray-400 whitespace-nowrap">{fmtDate(r.created_at)}</td>
-                    <td className="px-4 py-2.5 text-gray-200 max-w-[12rem] truncate">
+              </thead>
+              <tbody>
+                {data.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-b border-white/5 align-top transition-colors last:border-0 hover:bg-cyan-400/[0.04]"
+                  >
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-400">{fmtDate(r.created_at)}</td>
+                    <td className="max-w-[12rem] truncate px-4 py-3 text-gray-200">
                       {r.recipe?.name ?? <span className="font-mono text-xs text-gray-500">{r.recipe_id}</span>}
                     </td>
-                    <td className="px-4 py-2.5 text-white">{r.reason}</td>
-                    <td className="px-4 py-2.5 text-gray-400 max-w-xs truncate">{r.details ?? '—'}</td>
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-3 text-white">{r.reason}</td>
+                    <td className="max-w-xs truncate px-4 py-3 text-gray-400">{r.details ?? '—'}</td>
+                    <td className="px-4 py-3">
                       <Badge variant="outline" className={STATUS_BADGE[r.status]}>
-                        {r.status}
+                        {STATUS_LABEL[r.status]}
                       </Badge>
                     </td>
-                    <td className="px-4 py-2.5 text-right">
+                    <td className="px-4 py-3 text-right">
                       <Button variant="outline" size="sm" onClick={() => setActive(r)}>
                         Traiter
                       </Button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Cards — mobile */}
+          <div className="space-y-3 md:hidden">
+            {data.map((r) => (
+              <div
+                key={r.id}
+                className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-2"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <Badge variant="outline" className={STATUS_BADGE[r.status]}>
+                    {STATUS_LABEL[r.status]}
+                  </Badge>
+                  <span className="text-xs text-gray-500">{fmtDate(r.created_at)}</span>
+                </div>
+                <p className="text-sm text-gray-200">
+                  {r.recipe?.name ?? <span className="font-mono text-xs text-gray-500">{r.recipe_id}</span>}
+                </p>
+                <p className="text-sm text-white">
+                  <span className="text-gray-400">Motif : </span>
+                  {r.reason}
+                </p>
+                {r.details && <p className="text-xs text-gray-400">{r.details}</p>}
+                <Button variant="outline" size="sm" className="w-full" onClick={() => setActive(r)}>
+                  Traiter
+                </Button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       <ReportActionDialog report={active} onClose={() => setActive(null)} onBanAuthor={banAuthor} />
