@@ -29,16 +29,20 @@ Composant MetricsTab (client)
 | DELETE | `/official-recipes/:id` | Supprimer | ✅ |
 | GET | `/contact-messages?status=` | Boîte Aide & Contact | ✅ onglet Messages |
 | POST | `/contact-messages/resolve` | Marquer lu/résolu/rouvrir | ✅ |
-| POST | `/contact-messages/reply` | Réponse in-app au client | ⏳ consommé, attend MenuFacile |
+| GET | `/contact-messages/:id` | Fil complet (bulles user/admin) | ✅ ThreadDialog |
+| POST | `/contact-messages/:id/reply` | Réponse in-app (temps réel) | ✅ body `{ body }` |
 
-## Réponse in-app + ajustement IA (onglet Messages)
+## Messagerie support à deux sens (onglet Messages, v7)
 
-- **Auto-refresh** : messages (30s), signalements (30s), métriques (60s). Pas de
-  Realtime Supabase possible (base MenuFacile externe, accès via guichet HTTP).
-- **Réponse in-app** : `POST /contact-messages/reply` `{ id, reply }` (à livrer côté
-  MenuFacile). Le brouillon peut être **ajusté par l'IA** via le cerveau Élio
-  (edge function `elio-chat` du Hub) — ton chaleureux, corrigé, concis.
-- Fallback `mailto:` conservé tant que l'endpoint reply n'est pas dispo.
+- **Liste des fils** filtrable (status + topic), badge « à traiter » = `metrics.contact.new`.
+- **Ouvrir le fil** → `ThreadDialog` style messagerie : bulles user (gauche) / admin
+  (droite), auto-refresh 15s (les réponses entrantes de l'utilisateur remontent seules).
+- **Répondre** : `POST /contact-messages/:id/reply` `{ body }` → arrive en temps réel
+  dans l'app du client. Le brouillon peut être **ajusté par l'IA** (cerveau Élio,
+  edge function `elio-chat`) avant envoi.
+- Quand l'utilisateur répond, son fil repasse en `new` → remonte dans « à traiter ».
+- **Auto-refresh** : liste messages 30s, signalements 30s, métriques 60s, fil ouvert 15s
+  (base MenuFacile externe → pas de Realtime Supabase via le guichet).
 
 Après chaque mutation (modération ou recette), le client invalide les queries
 `reports` / `official-recipes` **et** `metrics` → les compteurs du Tableau de bord

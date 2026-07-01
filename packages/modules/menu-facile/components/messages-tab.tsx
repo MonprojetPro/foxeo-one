@@ -1,10 +1,23 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Badge, Button, Textarea, toast } from '@monprojetpro/ui'
-import { useContactMessages, useContactActions } from '../hooks/use-contact-messages'
+import {
+  Badge,
+  Button,
+  Textarea,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  toast,
+} from '@monprojetpro/ui'
+import {
+  useContactMessages,
+  useContactActions,
+  useContactThread,
+} from '../hooks/use-contact-messages'
 import { adjustContactReply } from '../actions/adjust-reply'
-import type { ContactMessage, ContactStatus, ContactTopic } from '../types'
+import type { ContactStatus, ContactTopic } from '../types'
 
 const STATUS_FILTERS: { key: ContactStatus | 'all'; label: string }[] = [
   { key: 'new', label: 'Nouveaux' },
@@ -46,13 +59,18 @@ function fmtDate(iso: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Zone de réponse in-app (avec ajustement IA via le cerveau Élio)
+// Fil de discussion (messagerie à deux sens) + réponse ajustée par l'IA
 // ---------------------------------------------------------------------------
 
-function ReplyBox({ message, onClose }: { message: ContactMessage; onClose: () => void }) {
-  const { reply } = useContactActions()
+function ThreadDialog({ messageId, onClose }: { messageId: string | null; onClose: () => void }) {
+  const { data: thread, isLoading, error } = useContactThread(messageId)
+  const { reply, setStatus } = useContactActions()
   const [draft, setDraft] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+
+  const lastUserMessage =
+    thread?.messages?.filter((m) => m.sender === 'user').at(-1)?.body ??
+    thread?.messages?.[0]?.body
 
   const adjust = async () => {
     if (!draft.trim()) {
@@ -63,12 +81,11 @@ function ReplyBox({ message, onClose }: { message: ContactMessage; onClose: () =
     try {
       const res = await adjustContactReply({
         draft,
-        userMessage: message.message,
-        topic: message.topic,
+        userMessage: lastUserMessage,
+        topic: thread?.topic,
       })
-      if (res.error || !res.data) {
-        toast.error(res.error?.message ?? 'Ajustement IA impossible')
-      } else {
+      if (res.error || !res.data) toast.error(res.error?.message ?? 'Ajustement IA impossible')
+      else {
         setDraft(res.data)
         toast.success('Réponse ajustée par l\'IA')
       }
@@ -78,53 +95,125 @@ function ReplyBox({ message, onClose }: { message: ContactMessage; onClose: () =
   }
 
   const send = () => {
-    if (!draft.trim()) {
+    if (!messageId || !draft.trim()) {
       toast.error('La réponse est vide')
       return
     }
     reply.mutate(
-      { id: message.id, reply: draft.trim() },
+      { id: messageId, body: draft.trim() },
       {
         onSuccess: () => {
-          toast.success('Réponse envoyée au client')
-          onClose()
+          toast.success('Réponse envoyée — le client la reçoit en temps réel')
+          setDraft('')
         },
         onError: (e) => toast.error((e as Error).message),
       },
     )
   }
 
+  const markResolved = () => {
+    if (!messageId) return
+    setStatus.mutate(
+      { id: messageId, status: 'resolved' },
+      {
+        onSuccess: () => toast.success('Fil marqué comme résolu'),
+        onError: (e) => toast.error((e as Error).message),
+      },
+    )
+  }
+
   return (
-    <div className="mt-2 space-y-2 rounded-md border border-white/10 bg-white/[0.02] p-3">
-      <Textarea
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        rows={4}
-        placeholder="Écris ta réponse au client (in-app)…"
-      />
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" onClick={send} disabled={reply.isPending || aiLoading}>
-          {reply.isPending ? 'Envoi…' : 'Envoyer la réponse'}
-        </Button>
-        <Button variant="outline" size="sm" onClick={adjust} disabled={aiLoading || reply.isPending}>
-          {aiLoading ? 'Ajustement…' : '✨ Ajuster avec l\'IA'}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onClose} disabled={reply.isPending || aiLoading}>
-          Fermer
-        </Button>
-      </div>
-      <p className="text-[0.65rem] text-gray-600">
-        La réponse arrive directement dans l&apos;app du client (nécessite l&apos;endpoint
-        MenuFacile). Sinon, utilise « Répondre par email ».
-      </p>
-    </div>
+    <Dialog open={!!messageId} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] p-0 gap-0 flex flex-col overflow-hidden">
+        <DialogHeader className="px-5 pt-5 pb-3 shrink-0 border-b border-white/10">
+          <DialogTitle className="flex flex-wrap items-center gap-2">
+            <span>{thread?.household_name ?? 'Fil de discussion'}</span>
+            {thread && (
+              <Badge variant="outline" className={TOPIC_BADGE[thread.topic]}>
+                {TOPIC_LABEL[thread.topic]}
+              </Badge>
+            )}
+            {thread && (
+              <Badge variant="outline" className={STATUS_BADGE[thread.status]}>
+                {STATUS_LABEL[thread.status]}
+              </Badge>
+            )}
+          </DialogTitle>
+          {thread?.user_email && (
+            <p className="text-xs text-gray-500">{thread.user_email}</p>
+          )}
+        </DialogHeader>
+
+        {/* Bulles */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3">
+          {isLoading ? (
+            <>
+              <div className="h-12 w-2/3 rounded-lg bg-white/5 animate-pulse" />
+              <div className="h-12 w-2/3 ml-auto rounded-lg bg-white/5 animate-pulse" />
+            </>
+          ) : error ? (
+            <div className="rounded-md border border-red-400/30 bg-red-400/5 p-3 text-xs text-red-400">
+              Impossible de charger le fil : {(error as Error).message}
+            </div>
+          ) : (
+            thread?.messages?.map((m, i) => {
+              const isAdmin = m.sender === 'admin'
+              return (
+                <div key={i} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                      isAdmin
+                        ? 'bg-cyan-500/15 text-cyan-50 border border-cyan-400/20'
+                        : 'bg-white/5 text-gray-200 border border-white/10'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{m.body}</p>
+                    <p className="mt-1 text-[0.6rem] text-gray-500">
+                      {isAdmin ? 'Toi' : thread?.household_name ?? 'Client'} ·{' '}
+                      {new Date(m.created_at).toLocaleString('fr-FR')}
+                    </p>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* Zone de réponse */}
+        <div className="shrink-0 border-t border-white/10 px-5 py-4 space-y-2">
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={3}
+            placeholder="Écris ta réponse… (elle arrive en temps réel dans l'app du client)"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={send} disabled={reply.isPending || aiLoading}>
+              {reply.isPending ? 'Envoi…' : 'Envoyer'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={adjust} disabled={aiLoading || reply.isPending}>
+              {aiLoading ? 'Ajustement…' : '✨ Ajuster avec l\'IA'}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              onClick={markResolved}
+              disabled={setStatus.isPending || thread?.status === 'resolved'}
+            >
+              Marquer résolu
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
 export function MessagesTab() {
   const [status, setStatus] = useState<ContactStatus | 'all'>('new')
   const [topic, setTopic] = useState<ContactTopic | 'all'>('all')
-  const [replyOpenId, setReplyOpenId] = useState<string | null>(null)
+  const [openThreadId, setOpenThreadId] = useState<string | null>(null)
 
   const { data, isLoading, error, refetch, isFetching } = useContactMessages(
     status === 'all' ? undefined : status,
@@ -225,21 +314,9 @@ export function MessagesTab() {
               )}
 
               <div className="flex flex-wrap gap-2 pt-1">
-                <Button
-                  size="sm"
-                  disabled={setMsgStatus.isPending}
-                  onClick={() => setReplyOpenId((id) => (id === m.id ? null : m.id))}
-                >
-                  {replyOpenId === m.id ? 'Fermer la réponse' : 'Répondre dans l\'app'}
+                <Button size="sm" onClick={() => setOpenThreadId(m.id)}>
+                  Ouvrir le fil
                 </Button>
-                {m.user_email && (
-                  <a
-                    href={`mailto:${m.user_email}?subject=${encodeURIComponent('Votre message à MenuFacile')}`}
-                    className="rounded-md border border-white/10 px-3 py-1.5 text-xs text-cyan-300 hover:bg-white/5"
-                  >
-                    Répondre par email
-                  </a>
-                )}
                 {m.status === 'new' && (
                   <Button variant="outline" size="sm" disabled={setMsgStatus.isPending} onClick={() => mark(m.id, 'read', 'Marqué comme lu')}>
                     Marquer lu
@@ -256,12 +333,12 @@ export function MessagesTab() {
                   </Button>
                 )}
               </div>
-
-              {replyOpenId === m.id && <ReplyBox message={m} onClose={() => setReplyOpenId(null)} />}
             </div>
           ))}
         </div>
       )}
+
+      <ThreadDialog messageId={openThreadId} onClose={() => setOpenThreadId(null)} />
     </div>
   )
 }

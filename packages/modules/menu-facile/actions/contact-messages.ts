@@ -2,7 +2,7 @@
 
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { callMenuFacileAdmin, MenuFacileAdminError } from './admin-client'
-import type { ContactMessage, ContactStatus } from '../types'
+import type { ContactMessage, ContactStatus, ContactThread } from '../types'
 
 function toError(err: unknown): ActionResponse<never> {
   if (err instanceof MenuFacileAdminError) {
@@ -27,6 +27,18 @@ export async function getContactMessages(
   }
 }
 
+/** GET /contact-messages/:id — fil complet (message initial + réponses). */
+export async function getContactThread(id: string): Promise<ActionResponse<ContactThread>> {
+  try {
+    const data = await callMenuFacileAdmin<ContactThread>(
+      `/contact-messages/${encodeURIComponent(id)}`,
+    )
+    return successResponse(data)
+  } catch (err) {
+    return toError(err)
+  }
+}
+
 /** POST /contact-messages/resolve — change le statut d'un message. */
 export async function resolveContactMessage(input: {
   id: string
@@ -44,18 +56,17 @@ export async function resolveContactMessage(input: {
 }
 
 /**
- * POST /contact-messages/reply — envoie une réponse in-app à l'utilisateur.
- * ⏳ En attente de l'endpoint côté MenuFacile : si absent, l'erreur remonte
- * proprement dans l'UI (le bouton mailto reste dispo en secours).
+ * POST /contact-messages/:id/reply — envoie une réponse in-app à l'utilisateur
+ * (v7). La réponse arrive en temps réel dans son app ; le fil repasse en `read`.
  */
 export async function replyToContactMessage(input: {
   id: string
-  reply: string
+  body: string
 }): Promise<ActionResponse<true>> {
   try {
-    await callMenuFacileAdmin('/contact-messages/reply', {
+    await callMenuFacileAdmin(`/contact-messages/${encodeURIComponent(input.id)}/reply`, {
       method: 'POST',
-      body: JSON.stringify(input),
+      body: JSON.stringify({ body: input.body }),
     })
     return successResponse(true)
   } catch (err) {

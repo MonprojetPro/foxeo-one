@@ -12,12 +12,17 @@ export { MetricCard } from './components/metric-card'
 // Data
 export { useMenuFacileMetrics } from './hooks/use-menu-facile-metrics'
 export { useReports, useModerationActions, useRecipeFull } from './hooks/use-moderation'
-export { useContactMessages, useContactActions } from './hooks/use-contact-messages'
+export { useContactMessages, useContactThread, useContactActions } from './hooks/use-contact-messages'
 export { useOfficialRecipes, useOfficialRecipe, useOfficialRecipeActions } from './hooks/use-official-recipes'
 export { getMenuFacileMetrics } from './actions/get-metrics'
 export { getMenuFacileReports } from './actions/get-reports'
 export { getRecipeFull } from './actions/get-recipe'
-export { getContactMessages, resolveContactMessage, replyToContactMessage } from './actions/contact-messages'
+export {
+  getContactMessages,
+  getContactThread,
+  resolveContactMessage,
+  replyToContactMessage,
+} from './actions/contact-messages'
 export { adjustContactReply } from './actions/adjust-reply'
 export { hideRecipe, banUser, resolveReport } from './actions/moderation'
 export {
@@ -40,6 +45,8 @@ export type {
   ContactStatus,
   ContactTopic,
   ContactMessage,
+  ContactThread,
+  ContactThreadMessage,
   TopRecipe,
   MenuFacileMetrics,
   MenuFacileReport,

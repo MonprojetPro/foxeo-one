@@ -58,6 +58,27 @@ export interface ContactMessage {
   household_name: string | null
 }
 
+// --- GET /contact-messages/:id (fil complet, v7) ---------------------------
+
+export interface ContactThreadMessage {
+  sender: 'user' | 'admin'
+  body: string
+  created_at: string
+}
+
+export interface ContactThread {
+  id: string
+  user_id: string
+  household_id: string
+  topic: ContactTopic
+  status: ContactStatus
+  created_at: string
+  resolved_at: string | null
+  user_email: string | null
+  household_name: string | null
+  messages: ContactThreadMessage[]
+}
+
 // --- GET /reports ----------------------------------------------------------
 
 /**
