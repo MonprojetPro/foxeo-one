@@ -21,16 +21,20 @@ export async function adjustContactReply(input: {
 
   const supabase = await createServerSupabaseClient()
 
-  const prompt = `Tu es un agent du support de MenuFacile (application de recettes).
-Reformule et améliore la réponse ci-dessous destinée à un utilisateur.
+  // ⚠️ La fonction elio-chat EXIGE un systemPrompt ET un message non vides
+  // (sinon 400). Les consignes vont donc dans systemPrompt, le contenu dans message.
+  const systemPrompt = `Tu es un agent du support de MenuFacile (application de recettes).
+Ta tâche : reformuler et améliorer un brouillon de réponse destiné à un utilisateur.
 
-**Consignes** :
+Consignes :
 - Ton chaleureux, bienveillant et professionnel, en français, tutoiement.
 - Clair et concis. Corrige l'orthographe, la grammaire et la ponctuation.
-- N'invente aucune information ni promesse non présente dans le brouillon.
-- Réponds UNIQUEMENT avec le texte final de la réponse (aucun préambule ni guillemets).
+- N'invente aucune information ni promesse absente du brouillon.
+- Réponds UNIQUEMENT avec le texte final de la réponse (aucun préambule, aucun guillemet).`
 
-${input.topic ? `Sujet du message : ${input.topic}\n` : ''}${input.userMessage ? `Message de l'utilisateur :\n${input.userMessage}\n\n` : ''}Brouillon à améliorer :
+  const message = `${input.topic ? `Sujet du message : ${input.topic}\n` : ''}${
+    input.userMessage ? `Message de l'utilisateur :\n${input.userMessage}\n\n` : ''
+  }Brouillon à améliorer :
 ${input.draft}`
 
   const controller = new AbortController()
@@ -38,7 +42,7 @@ ${input.draft}`
 
   try {
     const { data, error } = await supabase.functions.invoke('elio-chat', {
-      body: { systemPrompt: '', message: prompt, dashboardType: 'hub' },
+      body: { systemPrompt, message, dashboardType: 'hub' },
       signal: controller.signal,
     })
     clearTimeout(timeoutId)
