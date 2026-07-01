@@ -42,6 +42,27 @@ export interface MenuFacileMetrics {
   contact?: { new: number; total: number }
 }
 
+// --- GET /metrics/timeseries -----------------------------------------------
+
+/**
+ * Un point de la série temporelle (une journée civile). Les champs Priorité 2/3
+ * (DAU, temps de session) sont optionnels : le guichet peut ne pas encore les
+ * fournir, le cockpit s'adapte et n'affiche la courbe que si la donnée existe.
+ */
+export interface MenuFacileTimeseriesPoint {
+  date: string // YYYY-MM-DD
+  new_users: number
+  new_recipes: number
+  recipe_copies: number
+  active_users?: number | null
+  avg_session_minutes?: number | null
+}
+
+export interface MenuFacileTimeseries {
+  range: { from: string; to: string; days: number }
+  series: MenuFacileTimeseriesPoint[]
+}
+
 // --- GET /contact-messages -------------------------------------------------
 
 export interface ContactMessage {

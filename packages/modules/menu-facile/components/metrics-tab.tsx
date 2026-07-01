@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useMenuFacileMetrics } from '../hooks/use-menu-facile-metrics'
 import { MetricCard } from './metric-card'
+import { TimeseriesCharts } from './timeseries-charts'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -246,6 +247,9 @@ export function MetricsTab({ onNavigate }: { onNavigate?: (tab: 'moderation' | '
           </>
         )}
       </div>
+
+      {/* Graphiques (séries temporelles) */}
+      <TimeseriesCharts />
 
       {/* Détail recettes */}
       <section>
