@@ -10,6 +10,8 @@ export type MealType = 'lunch' | 'dinner' | 'both'
 export type Difficulty = 'easy' | 'medium' | 'hard'
 export type Budget = 'low' | 'medium' | 'high'
 export type ReportStatus = 'pending' | 'reviewed' | 'dismissed' | 'acted'
+export type ContactStatus = 'new' | 'read' | 'resolved'
+export type ContactTopic = 'bug' | 'improvement' | 'other'
 
 // --- GET /metrics ----------------------------------------------------------
 
@@ -36,6 +38,24 @@ export interface MenuFacileMetrics {
   ratings: { total: number }
   friendships: { total: number }
   top_recipes: TopRecipe[]
+  /** Boîte Aide & Contact (v6) — optionnel pour rester rétro-compatible. */
+  contact?: { new: number; total: number }
+}
+
+// --- GET /contact-messages -------------------------------------------------
+
+export interface ContactMessage {
+  id: string
+  user_id: string
+  household_id: string
+  topic: ContactTopic
+  message: string
+  user_agent: string | null
+  created_at: string
+  status: ContactStatus
+  resolved_at: string | null
+  user_email: string | null
+  household_name: string | null
 }
 
 // --- GET /reports ----------------------------------------------------------

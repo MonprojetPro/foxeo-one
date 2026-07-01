@@ -28,6 +28,11 @@ Hub (ce module) ──HTTP + Bearer──▶ guichet admin-api ──▶ base Me
 > Le formulaire ne les envoie donc qu'avec le toggle « Remplacer la liste » activé,
 > pour ne jamais écraser l'existant par erreur.
 
+4. **Messages** — boîte Aide & Contact (`GET /contact-messages`) : filtres par statut
+   (nouveaux/lus/résolus) et par sujet (bug/amélioration/autre), marquer lu/résolu/rouvrir
+   (`POST /contact-messages/resolve`), répondre par email (`mailto:`). ✅
+   Le compteur « messages à traiter » remonte aussi sur le Tableau de bord (`metrics.contact`).
+
 ## Configuration
 
 Deux variables d'environnement **côté serveur uniquement** (jamais `NEXT_PUBLIC_`) :

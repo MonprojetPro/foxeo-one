@@ -5,16 +5,19 @@ export { MenuFacileDashboard } from './components/menu-facile-dashboard'
 export { MetricsTab } from './components/metrics-tab'
 export { ModerationTab } from './components/moderation-tab'
 export { RecipesTab } from './components/recipes-tab'
+export { MessagesTab } from './components/messages-tab'
 export { RecipeFormModal } from './components/recipe-form-modal'
 export { MetricCard } from './components/metric-card'
 
 // Data
 export { useMenuFacileMetrics } from './hooks/use-menu-facile-metrics'
 export { useReports, useModerationActions, useRecipeFull } from './hooks/use-moderation'
+export { useContactMessages, useContactActions } from './hooks/use-contact-messages'
 export { useOfficialRecipes, useOfficialRecipe, useOfficialRecipeActions } from './hooks/use-official-recipes'
 export { getMenuFacileMetrics } from './actions/get-metrics'
 export { getMenuFacileReports } from './actions/get-reports'
 export { getRecipeFull } from './actions/get-recipe'
+export { getContactMessages, resolveContactMessage } from './actions/contact-messages'
 export { hideRecipe, banUser, resolveReport } from './actions/moderation'
 export {
   getOfficialRecipes,
@@ -33,6 +36,9 @@ export type {
   Difficulty,
   Budget,
   ReportStatus,
+  ContactStatus,
+  ContactTopic,
+  ContactMessage,
   TopRecipe,
   MenuFacileMetrics,
   MenuFacileReport,

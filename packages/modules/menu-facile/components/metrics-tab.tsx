@@ -124,12 +124,14 @@ export function MetricsTab() {
         </div>
       </section>
 
-      {/* Modération (rappel) */}
+      {/* Modération + Aide & Contact (à traiter) */}
       <section>
-        <SectionTitle>Modération</SectionTitle>
+        <SectionTitle>À traiter</SectionTitle>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {isLoading ? (
             <>
+              <SkeletonCard />
+              <SkeletonCard />
               <SkeletonCard />
               <SkeletonCard />
             </>
@@ -141,6 +143,12 @@ export function MetricsTab() {
                 accent={(data?.moderation.reports_pending ?? 0) > 0}
               />
               <MetricCard label="Signalements (total)" value={nf(data?.moderation.reports_total)} />
+              <MetricCard
+                label="Messages à traiter"
+                value={nf(data?.contact?.new)}
+                accent={(data?.contact?.new ?? 0) > 0}
+              />
+              <MetricCard label="Messages (total)" value={nf(data?.contact?.total)} />
             </>
           )}
         </div>

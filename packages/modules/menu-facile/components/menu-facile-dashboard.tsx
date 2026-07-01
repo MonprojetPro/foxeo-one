@@ -4,13 +4,15 @@ import { useState } from 'react'
 import { MetricsTab } from './metrics-tab'
 import { ModerationTab } from './moderation-tab'
 import { RecipesTab } from './recipes-tab'
+import { MessagesTab } from './messages-tab'
 
-type TabKey = 'metrics' | 'moderation' | 'recipes'
+type TabKey = 'metrics' | 'moderation' | 'recipes' | 'messages'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'metrics', label: 'Tableau de bord' },
   { key: 'moderation', label: 'Modération' },
   { key: 'recipes', label: 'Recettes officielles' },
+  { key: 'messages', label: 'Messages' },
 ]
 
 /**
@@ -51,6 +53,7 @@ export function MenuFacileDashboard() {
       {tab === 'metrics' && <MetricsTab />}
       {tab === 'moderation' && <ModerationTab />}
       {tab === 'recipes' && <RecipesTab />}
+      {tab === 'messages' && <MessagesTab />}
     </div>
   )
 }

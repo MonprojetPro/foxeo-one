@@ -27,6 +27,8 @@ Composant MetricsTab (client)
 | POST | `/official-recipes` | Créer une recette | ✅ |
 | PATCH | `/official-recipes/:id` | Éditer (remplace ingredients/steps si fournis) | ✅ |
 | DELETE | `/official-recipes/:id` | Supprimer | ✅ |
+| GET | `/contact-messages?status=` | Boîte Aide & Contact | ✅ onglet Messages |
+| POST | `/contact-messages/resolve` | Marquer lu/résolu/rouvrir | ✅ |
 
 Après chaque mutation (modération ou recette), le client invalide les queries
 `reports` / `official-recipes` **et** `metrics` → les compteurs du Tableau de bord
