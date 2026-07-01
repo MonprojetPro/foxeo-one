@@ -85,7 +85,7 @@ export function MenuFacileDashboard() {
   const totalAlerts = reportsPending + messagesNew
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 md:p-8 lg:p-10">
       {/* ── Header cockpit ─────────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-cyan-400/[0.06] to-transparent px-5 py-5 sm:px-6">
         {/* Glow décoratif */}
