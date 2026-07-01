@@ -4,6 +4,7 @@ import {
   getContactThread,
   resolveContactMessage,
   replyToContactMessage,
+  deleteContactMessage,
 } from '../actions/contact-messages'
 import type { ContactMessage, ContactStatus, ContactThread } from '../types'
 
@@ -72,5 +73,14 @@ export function useContactActions() {
     onSuccess: (_d, v) => invalidate(v.id),
   })
 
-  return { setStatus, reply }
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await deleteContactMessage(id)
+      if (res.error) throw new Error(res.error.message)
+      return res.data
+    },
+    onSuccess: () => invalidate(),
+  })
+
+  return { setStatus, reply, remove }
 }

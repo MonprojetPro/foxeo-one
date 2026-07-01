@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
   toast,
 } from '@monprojetpro/ui'
 import {
@@ -218,7 +219,8 @@ export function MessagesTab() {
   const { data, isLoading, error, refetch, isFetching } = useContactMessages(
     status === 'all' ? undefined : status,
   )
-  const { setStatus: setMsgStatus } = useContactActions()
+  const { setStatus: setMsgStatus, remove } = useContactActions()
+  const [toDelete, setToDelete] = useState<{ id: string; name: string } | null>(null)
 
   // Le filtre sujet est côté client (le guichet ne filtre que par status).
   const messages = useMemo(
@@ -332,6 +334,14 @@ export function MessagesTab() {
                     Rouvrir
                   </Button>
                 )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto text-gray-500 hover:text-red-300"
+                  onClick={() => setToDelete({ id: m.id, name: m.household_name ?? 'ce message' })}
+                >
+                  Retirer de ma boîte
+                </Button>
               </div>
             </div>
           ))}
@@ -339,6 +349,41 @@ export function MessagesTab() {
       )}
 
       <ThreadDialog messageId={openThreadId} onClose={() => setOpenThreadId(null)} />
+
+      {/* Confirmation retrait boîte Hub */}
+      <Dialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Retirer de ta boîte ?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-400">
+            Le message de « {toDelete?.name} » disparaîtra de ta boîte Hub.
+            L&apos;utilisateur <strong>garde sa copie</strong> de son côté (aucun impact pour lui).
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setToDelete(null)} disabled={remove.isPending}>
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={remove.isPending}
+              onClick={() => {
+                if (!toDelete) return
+                remove.mutate(toDelete.id, {
+                  onSuccess: () => {
+                    toast.success('Message retiré de ta boîte')
+                    setToDelete(null)
+                  },
+                  onError: (e) => toast.error((e as Error).message),
+                })
+              }}
+            >
+              {remove.isPending ? 'Retrait…' : 'Retirer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

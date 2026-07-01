@@ -22,6 +22,7 @@ export {
   getContactThread,
   resolveContactMessage,
   replyToContactMessage,
+  deleteContactMessage,
 } from './actions/contact-messages'
 export { adjustContactReply } from './actions/adjust-reply'
 export { hideRecipe, banUser, resolveReport } from './actions/moderation'

@@ -27,6 +27,21 @@ export async function getContactMessages(
   }
 }
 
+/**
+ * DELETE /contact-messages/:id — retire le message de la boîte Hub (masquage
+ * côté Hub uniquement ; l'utilisateur conserve sa copie).
+ */
+export async function deleteContactMessage(id: string): Promise<ActionResponse<true>> {
+  try {
+    await callMenuFacileAdmin(`/contact-messages/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    })
+    return successResponse(true)
+  } catch (err) {
+    return toError(err)
+  }
+}
+
 /** GET /contact-messages/:id — fil complet (message initial + réponses). */
 export async function getContactThread(id: string): Promise<ActionResponse<ContactThread>> {
   try {
