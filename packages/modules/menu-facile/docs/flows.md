@@ -29,6 +29,16 @@ Composant MetricsTab (client)
 | DELETE | `/official-recipes/:id` | Supprimer | ✅ |
 | GET | `/contact-messages?status=` | Boîte Aide & Contact | ✅ onglet Messages |
 | POST | `/contact-messages/resolve` | Marquer lu/résolu/rouvrir | ✅ |
+| POST | `/contact-messages/reply` | Réponse in-app au client | ⏳ consommé, attend MenuFacile |
+
+## Réponse in-app + ajustement IA (onglet Messages)
+
+- **Auto-refresh** : messages (30s), signalements (30s), métriques (60s). Pas de
+  Realtime Supabase possible (base MenuFacile externe, accès via guichet HTTP).
+- **Réponse in-app** : `POST /contact-messages/reply` `{ id, reply }` (à livrer côté
+  MenuFacile). Le brouillon peut être **ajusté par l'IA** via le cerveau Élio
+  (edge function `elio-chat` du Hub) — ton chaleureux, corrigé, concis.
+- Fallback `mailto:` conservé tant que l'endpoint reply n'est pas dispo.
 
 Après chaque mutation (modération ou recette), le client invalide les queries
 `reports` / `official-recipes` **et** `metrics` → les compteurs du Tableau de bord

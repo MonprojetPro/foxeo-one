@@ -42,3 +42,23 @@ export async function resolveContactMessage(input: {
     return toError(err)
   }
 }
+
+/**
+ * POST /contact-messages/reply — envoie une réponse in-app à l'utilisateur.
+ * ⏳ En attente de l'endpoint côté MenuFacile : si absent, l'erreur remonte
+ * proprement dans l'UI (le bouton mailto reste dispo en secours).
+ */
+export async function replyToContactMessage(input: {
+  id: string
+  reply: string
+}): Promise<ActionResponse<true>> {
+  try {
+    await callMenuFacileAdmin('/contact-messages/reply', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
+    return successResponse(true)
+  } catch (err) {
+    return toError(err)
+  }
+}

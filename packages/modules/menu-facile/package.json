@@ -22,6 +22,7 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
+    "@monprojetpro/supabase": "*",
     "@monprojetpro/types": "*",
     "@monprojetpro/ui": "*",
     "@monprojetpro/utils": "*",

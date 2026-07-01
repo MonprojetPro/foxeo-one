@@ -16,6 +16,7 @@ export function useMenuFacileMetrics() {
       }
       return res.data
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000, // auto-refresh (base MenuFacile externe → pas de Realtime)
   })
 }

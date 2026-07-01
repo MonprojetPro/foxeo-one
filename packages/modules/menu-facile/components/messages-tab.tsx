@@ -1,9 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Badge, Button, toast } from '@monprojetpro/ui'
+import { Badge, Button, Textarea, toast } from '@monprojetpro/ui'
 import { useContactMessages, useContactActions } from '../hooks/use-contact-messages'
-import type { ContactStatus, ContactTopic } from '../types'
+import { adjustContactReply } from '../actions/adjust-reply'
+import type { ContactMessage, ContactStatus, ContactTopic } from '../types'
 
 const STATUS_FILTERS: { key: ContactStatus | 'all'; label: string }[] = [
   { key: 'new', label: 'Nouveaux' },
@@ -44,9 +45,86 @@ function fmtDate(iso: string): string {
   return new Date(iso).toLocaleString('fr-FR')
 }
 
+// ---------------------------------------------------------------------------
+// Zone de réponse in-app (avec ajustement IA via le cerveau Élio)
+// ---------------------------------------------------------------------------
+
+function ReplyBox({ message, onClose }: { message: ContactMessage; onClose: () => void }) {
+  const { reply } = useContactActions()
+  const [draft, setDraft] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+
+  const adjust = async () => {
+    if (!draft.trim()) {
+      toast.error('Écris d\'abord un brouillon à ajuster')
+      return
+    }
+    setAiLoading(true)
+    try {
+      const res = await adjustContactReply({
+        draft,
+        userMessage: message.message,
+        topic: message.topic,
+      })
+      if (res.error || !res.data) {
+        toast.error(res.error?.message ?? 'Ajustement IA impossible')
+      } else {
+        setDraft(res.data)
+        toast.success('Réponse ajustée par l\'IA')
+      }
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const send = () => {
+    if (!draft.trim()) {
+      toast.error('La réponse est vide')
+      return
+    }
+    reply.mutate(
+      { id: message.id, reply: draft.trim() },
+      {
+        onSuccess: () => {
+          toast.success('Réponse envoyée au client')
+          onClose()
+        },
+        onError: (e) => toast.error((e as Error).message),
+      },
+    )
+  }
+
+  return (
+    <div className="mt-2 space-y-2 rounded-md border border-white/10 bg-white/[0.02] p-3">
+      <Textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={4}
+        placeholder="Écris ta réponse au client (in-app)…"
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" onClick={send} disabled={reply.isPending || aiLoading}>
+          {reply.isPending ? 'Envoi…' : 'Envoyer la réponse'}
+        </Button>
+        <Button variant="outline" size="sm" onClick={adjust} disabled={aiLoading || reply.isPending}>
+          {aiLoading ? 'Ajustement…' : '✨ Ajuster avec l\'IA'}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onClose} disabled={reply.isPending || aiLoading}>
+          Fermer
+        </Button>
+      </div>
+      <p className="text-[0.65rem] text-gray-600">
+        La réponse arrive directement dans l&apos;app du client (nécessite l&apos;endpoint
+        MenuFacile). Sinon, utilise « Répondre par email ».
+      </p>
+    </div>
+  )
+}
+
 export function MessagesTab() {
   const [status, setStatus] = useState<ContactStatus | 'all'>('new')
   const [topic, setTopic] = useState<ContactTopic | 'all'>('all')
+  const [replyOpenId, setReplyOpenId] = useState<string | null>(null)
 
   const { data, isLoading, error, refetch, isFetching } = useContactMessages(
     status === 'all' ? undefined : status,
@@ -142,11 +220,18 @@ export function MessagesTab() {
 
               {m.user_agent && (
                 <p className="text-[0.65rem] text-gray-600 truncate" title={m.user_agent}>
-                  {m.user_agent}
+                  Appareil : {m.user_agent}
                 </p>
               )}
 
               <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  size="sm"
+                  disabled={setMsgStatus.isPending}
+                  onClick={() => setReplyOpenId((id) => (id === m.id ? null : m.id))}
+                >
+                  {replyOpenId === m.id ? 'Fermer la réponse' : 'Répondre dans l\'app'}
+                </Button>
                 {m.user_email && (
                   <a
                     href={`mailto:${m.user_email}?subject=${encodeURIComponent('Votre message à MenuFacile')}`}
@@ -171,6 +256,8 @@ export function MessagesTab() {
                   </Button>
                 )}
               </div>
+
+              {replyOpenId === m.id && <ReplyBox message={m} onClose={() => setReplyOpenId(null)} />}
             </div>
           ))}
         </div>

@@ -17,7 +17,8 @@ export { useOfficialRecipes, useOfficialRecipe, useOfficialRecipeActions } from 
 export { getMenuFacileMetrics } from './actions/get-metrics'
 export { getMenuFacileReports } from './actions/get-reports'
 export { getRecipeFull } from './actions/get-recipe'
-export { getContactMessages, resolveContactMessage } from './actions/contact-messages'
+export { getContactMessages, resolveContactMessage, replyToContactMessage } from './actions/contact-messages'
+export { adjustContactReply } from './actions/adjust-reply'
 export { hideRecipe, banUser, resolveReport } from './actions/moderation'
 export {
   getOfficialRecipes,

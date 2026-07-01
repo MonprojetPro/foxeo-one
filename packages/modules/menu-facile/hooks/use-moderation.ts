@@ -13,7 +13,8 @@ export function useReports(status?: ReportStatus) {
       if (res.error) throw new Error(res.error.message)
       return res.data ?? []
     },
-    staleTime: 60 * 1000,
+    staleTime: 20 * 1000,
+    refetchInterval: 30 * 1000, // auto-refresh (base MenuFacile externe → pas de Realtime)
   })
 }
 
