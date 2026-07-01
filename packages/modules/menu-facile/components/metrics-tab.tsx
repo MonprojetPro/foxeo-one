@@ -19,8 +19,12 @@ function nf(n: number | undefined): string {
   return (n ?? 0).toLocaleString('fr-FR')
 }
 
-export function MetricsTab() {
+export function MetricsTab({ onNavigate }: { onNavigate?: (tab: 'moderation' | 'messages') => void }) {
   const { data, isLoading, error, refetch, isFetching } = useMenuFacileMetrics()
+
+  const reportsPending = data?.moderation.reports_pending ?? 0
+  const messagesNew = data?.contact?.new ?? 0
+  const hasAlerts = reportsPending > 0 || messagesNew > 0
 
   if (error) {
     return (
@@ -39,6 +43,43 @@ export function MetricsTab() {
 
   return (
     <div className="space-y-8">
+      {/* Bandeau d'alertes actionnables */}
+      {!isLoading && (
+        hasAlerts ? (
+          <div className="rounded-lg border border-amber-400/30 bg-amber-400/5 p-4">
+            <p className="text-xs font-medium uppercase tracking-wider text-amber-300/80 mb-2">
+              À traiter
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {reportsPending > 0 && (
+                <button
+                  onClick={() => onNavigate?.('moderation')}
+                  className="flex items-center gap-2 rounded-md border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-sm text-amber-100 hover:bg-amber-400/20 transition-colors"
+                >
+                  🚩 <span className="font-semibold">{reportsPending}</span>
+                  signalement{reportsPending > 1 ? 's' : ''} en attente
+                  <span className="text-amber-300/70">→</span>
+                </button>
+              )}
+              {messagesNew > 0 && (
+                <button
+                  onClick={() => onNavigate?.('messages')}
+                  className="flex items-center gap-2 rounded-md border border-cyan-400/30 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100 hover:bg-cyan-400/20 transition-colors"
+                >
+                  ✉️ <span className="font-semibold">{messagesNew}</span>
+                  message{messagesNew > 1 ? 's' : ''} à traiter
+                  <span className="text-cyan-300/70">→</span>
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-sm text-emerald-300/90">
+            ✅ Rien à traiter — aucun signalement ni message en attente.
+          </div>
+        )
+      )}
+
       <div className="flex items-center justify-between">
         <p className="text-xs text-gray-500">
           {data?.generated_at

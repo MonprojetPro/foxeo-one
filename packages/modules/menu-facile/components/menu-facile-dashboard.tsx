@@ -50,7 +50,7 @@ export function MenuFacileDashboard() {
       </div>
 
       {/* Contenu */}
-      {tab === 'metrics' && <MetricsTab />}
+      {tab === 'metrics' && <MetricsTab onNavigate={setTab} />}
       {tab === 'moderation' && <ModerationTab />}
       {tab === 'recipes' && <RecipesTab />}
       {tab === 'messages' && <MessagesTab />}
