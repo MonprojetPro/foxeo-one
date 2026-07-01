@@ -2,6 +2,15 @@
 
 import { useMemo, useState } from 'react'
 import {
+  RefreshCw,
+  Inbox,
+  MessagesSquare,
+  Check,
+  RotateCcw,
+  Sparkles,
+  Send,
+} from 'lucide-react'
+import {
   Badge,
   Button,
   Textarea,
@@ -53,6 +62,12 @@ const STATUS_LABEL: Record<ContactStatus, string> = {
   new: 'Nouveau',
   read: 'Lu',
   resolved: 'Résolu',
+}
+/** Accent latéral de carte par statut. */
+const STATUS_ACCENT: Record<ContactStatus, string> = {
+  new: 'border-l-amber-400/60',
+  read: 'border-l-sky-400/60',
+  resolved: 'border-l-emerald-400/50',
 }
 
 function fmtDate(iso: string): string {
@@ -190,10 +205,12 @@ function ThreadDialog({ messageId, onClose }: { messageId: string | null; onClos
           />
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={send} disabled={reply.isPending || aiLoading}>
+              <Send className="mr-1.5 h-3.5 w-3.5" />
               {reply.isPending ? 'Envoi…' : 'Envoyer'}
             </Button>
             <Button variant="outline" size="sm" onClick={adjust} disabled={aiLoading || reply.isPending}>
-              {aiLoading ? 'Ajustement…' : '✨ Ajuster avec l\'IA'}
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+              {aiLoading ? 'Ajustement…' : 'Ajuster avec l\'IA'}
             </Button>
             <Button
               variant="ghost"
@@ -240,42 +257,41 @@ export function MessagesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1">
+      {/* Barre de filtres regroupée */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center gap-1.5">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f.key}
               onClick={() => setStatus(f.key)}
-              className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                 status === f.key
-                  ? 'bg-cyan-400/15 text-cyan-300'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                  ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-200'
+                  : 'border-white/10 text-gray-400 hover:bg-white/5 hover:text-gray-200'
               }`}
             >
               {f.label}
             </button>
           ))}
+          <span className="mx-1 hidden h-5 w-px bg-white/10 sm:block" />
+          {TOPIC_FILTERS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTopic(t.key)}
+              className={`rounded-lg border px-2.5 py-1 text-[0.7rem] transition-colors ${
+                topic === t.key
+                  ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-200'
+                  : 'border-white/10 text-gray-500 hover:bg-white/5 hover:text-gray-300'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
         <Button variant="ghost" size="sm" disabled={isFetching} onClick={() => refetch()}>
+          <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
           {isFetching ? 'Actualisation…' : 'Actualiser'}
         </Button>
-      </div>
-
-      {/* Filtre sujet */}
-      <div className="flex flex-wrap gap-1">
-        {TOPIC_FILTERS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTopic(t.key)}
-            className={`rounded-md border px-2.5 py-1 text-[0.7rem] transition-colors ${
-              topic === t.key
-                ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-200'
-                : 'border-white/10 text-gray-400 hover:bg-white/5'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
       </div>
 
       {error ? (
@@ -289,14 +305,23 @@ export function MessagesTab() {
           <div className="h-24 rounded-lg bg-white/5 animate-pulse" />
         </div>
       ) : !messages.length ? (
-        <div className="rounded-lg border border-dashed border-white/10 bg-white/[0.02] p-10 text-center text-xs text-gray-500">
-          Aucun message{status !== 'all' ? ' dans ce statut' : ''}
-          {topic !== 'all' ? ` (sujet : ${TOPIC_LABEL[topic]})` : ''}.
+        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-14 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
+            <Inbox className="h-6 w-6" />
+          </div>
+          <p className="text-sm text-gray-300">
+            Aucun message{status !== 'all' ? ' dans ce statut' : ''}
+            {topic !== 'all' ? ` (sujet : ${TOPIC_LABEL[topic]})` : ''}.
+          </p>
+          <p className="mt-1 text-xs text-gray-500">Les messages des utilisateurs MenuFacile apparaîtront ici.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {messages.map((m) => (
-            <div key={m.id} className="rounded-lg border border-white/10 bg-white/[0.03] p-4 space-y-2">
+            <div
+              key={m.id}
+              className={`rounded-xl border border-l-2 border-white/10 bg-white/[0.03] p-4 space-y-2 transition-colors hover:bg-white/[0.05] ${STATUS_ACCENT[m.status]}`}
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className={TOPIC_BADGE[m.topic]}>{TOPIC_LABEL[m.topic]}</Badge>
@@ -317,20 +342,24 @@ export function MessagesTab() {
 
               <div className="flex flex-wrap gap-2 pt-1">
                 <Button size="sm" onClick={() => setOpenThreadId(m.id)}>
+                  <MessagesSquare className="mr-1.5 h-3.5 w-3.5" />
                   Ouvrir le fil
                 </Button>
                 {m.status === 'new' && (
                   <Button variant="outline" size="sm" disabled={setMsgStatus.isPending} onClick={() => mark(m.id, 'read', 'Marqué comme lu')}>
+                    <Check className="mr-1.5 h-3.5 w-3.5" />
                     Marquer lu
                   </Button>
                 )}
                 {m.status !== 'resolved' && (
                   <Button variant="outline" size="sm" disabled={setMsgStatus.isPending} onClick={() => mark(m.id, 'resolved', 'Marqué comme résolu')}>
+                    <Check className="mr-1.5 h-3.5 w-3.5" />
                     Marquer résolu
                   </Button>
                 )}
                 {m.status === 'resolved' && (
                   <Button variant="ghost" size="sm" disabled={setMsgStatus.isPending} onClick={() => mark(m.id, 'new', 'Message rouvert')}>
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
                     Rouvrir
                   </Button>
                 )}
