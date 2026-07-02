@@ -1,13 +1,6 @@
 import { defineConfig } from 'vitest/config'
-import path from 'path'
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      // Stub for openvidu-browser (browser SDK, not installed as npm package in monorepo)
-      'openvidu-browser': path.resolve(__dirname, 'packages/modules/visio/__mocks__/openvidu-browser.ts'),
-    },
-  },
   test: {
     globals: true,
     environment: 'happy-dom',

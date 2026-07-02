@@ -13,7 +13,7 @@ INSERT INTO module_catalog (module_key, name, description, category, kind, setup
 -- === Modules supplementaires (is_default = false) ===
 ('crm', 'CRM', 'Gestion de la relation client — fiches, historique, suivi, onglets modulaires', 'business', 'catalog', 500, 49, false, true, 'packages/modules/crm/manifest.ts'),
 ('facturation', 'Comptabilite', 'Facturation, devis, abonnements — integration Pennylane, suivi paiements', 'business', 'catalog', 800, 79, false, true, 'packages/modules/facturation/manifest.ts'),
-('visio', 'Visioconference', 'Appels video integres — OpenVidu, planification, enregistrement', 'communication', 'catalog', 300, 29, false, true, 'packages/modules/visio/manifest.ts'),
+('visio', 'Visioconference', 'Appels video integres — Google Meet, planification, enregistrement', 'communication', 'catalog', 300, 29, false, true, 'packages/modules/visio/manifest.ts'),
 ('email', 'Email', 'Integration Gmail — lecture, envoi, reponse, gestion threads depuis le Hub', 'communication', 'catalog', 200, 19, false, true, 'packages/modules/email/manifest.ts'),
 ('validation-hub', 'Validation Hub', 'File d attente des demandes client — validation, refus, commentaires, workflows', 'business', 'catalog', 400, 39, false, true, 'packages/modules/validation-hub/manifest.ts'),
 ('analytics', 'Analytics', 'Tableaux de bord analytiques — metriques, tendances, KPIs operateur', 'business', 'catalog', 300, 29, false, true, 'packages/modules/analytics/manifest.ts'),

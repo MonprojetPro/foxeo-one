@@ -31,7 +31,10 @@ export const THRESHOLDS: Record<string, { warn: number; error: number }> = {
   supabase_realtime: { warn: 3000, error: 5000 },
   pennylane: { warn: 1500, error: 2000 },
   cal_com: { warn: 2000, error: 5000 },
-  open_vidu: { warn: 2000, error: 5000 },
+  // Apps Vercel (Hub + client) : SSR + middleware + cold start possibles → seuils larges.
+  vercel_hub: { warn: 3000, error: 8000 },
+  vercel_client: { warn: 3000, error: 8000 },
+  resend: { warn: 1500, error: 3000 },
 }
 
 // Debounce : 15 minutes entre alertes par service

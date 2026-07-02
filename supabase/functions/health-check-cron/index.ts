@@ -22,6 +22,9 @@ interface SystemAlertData {
   last_alert_supabase_storage_at?: string | null
   last_alert_supabase_auth_at?: string | null
   last_alert_supabase_realtime_at?: string | null
+  last_alert_vercel_hub_at?: string | null
+  last_alert_vercel_client_at?: string | null
+  last_alert_resend_at?: string | null
 }
 
 // ── Helpers de timing ─────────────────────────────────────────────────────────
@@ -114,15 +117,14 @@ async function checkPennylane(apiToken: string | undefined): Promise<ServiceChec
     // Service non configuré en dev — skip gracieusement
     return { status: 'ok', latencyMs: 0, error: 'PENNYLANE_API_TOKEN not configured — skipped' }
   }
-  const { ok, latencyMs } = await timedFetch(
-    'https://app.pennylane.com/api/external/v2/me',
-    {
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        Accept: 'application/json',
-      },
-    }
-  )
+  // URL surchargeable via env (sandbox ↔ prod), aligné sur le module facturation.
+  const base = Deno.env.get('PENNYLANE_API_URL') ?? 'https://app.pennylane.com/api/external/v2'
+  const { ok, latencyMs } = await timedFetch(`${base}/me`, {
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      Accept: 'application/json',
+    },
+  })
   return {
     status: evaluateServiceStatus('pennylane', latencyMs, !ok),
     latencyMs,
@@ -134,6 +136,32 @@ async function checkCalCom(): Promise<ServiceCheck> {
   const { ok, latencyMs } = await timedFetch(`${calUrl}/api/health`)
   return {
     status: evaluateServiceStatus('cal_com', latencyMs, !ok),
+    latencyMs,
+  }
+}
+
+// Sonde une app Vercel : un simple GET sur la home. Une redirection vers /login (307)
+// ou une page (200/401) prouve que l'app répond. Seul un 5xx / timeout = en panne.
+// URL surchargeable via env (MONITOR_HUB_URL / MONITOR_CLIENT_URL) pour basculer
+// vers les domaines custom (hub/app.monprojet-pro.com) le jour où ils seront actifs.
+async function checkVercelApp(serviceName: string, url: string): Promise<ServiceCheck> {
+  const { ok, latencyMs } = await timedFetch(url, { redirect: 'manual' }, 10000)
+  return {
+    status: evaluateServiceStatus(serviceName, latencyMs, !ok),
+    latencyMs,
+  }
+}
+
+async function checkResend(apiKey: string | undefined): Promise<ServiceCheck> {
+  if (!apiKey) {
+    return { status: 'ok', latencyMs: 0, error: 'RESEND_API_KEY not configured — skipped' }
+  }
+  // GET /domains : lecture seule (aucun email envoyé), valide la clé + l'API Resend.
+  const { ok, latencyMs } = await timedFetch('https://api.resend.com/domains', {
+    headers: { Authorization: `Bearer ${apiKey}`, Accept: 'application/json' },
+  })
+  return {
+    status: evaluateServiceStatus('resend', latencyMs, !ok),
     latencyMs,
   }
 }
@@ -192,24 +220,34 @@ serve(async (_req: Request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const pennylaneToken = Deno.env.get('PENNYLANE_API_TOKEN')
+  const resendKey = Deno.env.get('RESEND_API_KEY')
+  const hubUrl = Deno.env.get('MONITOR_HUB_URL') ?? 'https://monprojetpro-hub.vercel.app'
+  const clientUrl = Deno.env.get('MONITOR_CLIENT_URL') ?? 'https://monprojetpro-client.vercel.app'
 
   const supabase = createClient(supabaseUrl, serviceKey)
 
   // 1. Exécuter tous les checks en parallèle
-  const [db, storage, auth, realtime, pennylane, calCom] = await Promise.all([
-    checkSupabaseDb(supabaseUrl, serviceKey),
-    checkSupabaseStorage(supabaseUrl, serviceKey),
-    checkSupabaseAuth(supabaseUrl, serviceKey),
-    checkSupabaseRealtime(supabaseUrl, serviceKey),
-    checkPennylane(pennylaneToken),
-    checkCalCom(),
-  ])
+  const [db, storage, auth, realtime, pennylane, calCom, vercelHub, vercelClient, resend] =
+    await Promise.all([
+      checkSupabaseDb(supabaseUrl, serviceKey),
+      checkSupabaseStorage(supabaseUrl, serviceKey),
+      checkSupabaseAuth(supabaseUrl, serviceKey),
+      checkSupabaseRealtime(supabaseUrl, serviceKey),
+      checkPennylane(pennylaneToken),
+      checkCalCom(),
+      checkVercelApp('vercel_hub', hubUrl),
+      checkVercelApp('vercel_client', clientUrl),
+      checkResend(resendKey),
+    ])
 
   const services: Record<string, ServiceCheck> = {
     supabase_db: db,
     supabase_storage: storage,
     supabase_auth: auth,
     supabase_realtime: realtime,
+    vercel_hub: vercelHub,
+    vercel_client: vercelClient,
+    resend,
     pennylane,
     cal_com: calCom,
   }

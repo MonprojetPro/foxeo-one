@@ -23,13 +23,14 @@ const STATUS_LABEL: Record<GlobalStatus | ServiceStatus, string> = {
 }
 
 // ⚠️ Doit refléter EXACTEMENT les services vérifiés par l'Edge Function health-check-cron.
-// OpenVidu retiré : il n'est pas (encore) audité par la fonction → il affichait un « — »
-// permanent trompeur. À réintégrer ici le jour où la fonction le vérifie réellement.
 const SERVICE_DISPLAY: Record<string, string> = {
   supabase_db: 'Supabase DB',
   supabase_storage: 'Supabase Storage',
   supabase_auth: 'Supabase Auth',
   supabase_realtime: 'Supabase Realtime',
+  vercel_hub: 'App Hub (Vercel)',
+  vercel_client: 'App Client (Vercel)',
+  resend: 'Resend (emails)',
   pennylane: 'Pennylane API',
   cal_com: 'Cal.com',
 }

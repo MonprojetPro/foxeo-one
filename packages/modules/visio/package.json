@@ -24,7 +24,6 @@
     "@monprojetpro/ui": "*",
     "@monprojetpro/utils": "*",
     "@tanstack/react-query": "^5.90.0",
-    "openvidu-browser": "^2.30.0",
     "react": "^19.0.0",
     "zod": "*"
   },
