@@ -427,6 +427,26 @@ describe('middleware routing logic', () => {
       expect(MAINTENANCE_EXCLUDED_PATHS).toContain('/maintenance')
       expect(MAINTENANCE_EXCLUDED_PATHS).toContain('/login')
     })
+
+    it('authenticated client on /maintenance is NOT bounced to / (no ERR_TOO_MANY_REDIRECTS loop)', () => {
+      // Régression : /maintenance est dans PUBLIC_PATHS pour rester accessible aux
+      // visiteurs non authentifiés. Mais la règle "user && isPublic → redirect /" doit
+      // EXCLURE /maintenance, sinon un client connecté ping-pong entre / et /maintenance.
+      const pathname = '/maintenance'
+      const user = { id: 'client-1' }
+      const isPublic = isPublicPath(pathname)
+      expect(isPublic).toBe(true)
+
+      const shouldRedirectToHome = !!user && isPublic && pathname !== '/maintenance'
+      expect(shouldRedirectToHome).toBe(false)
+    })
+
+    it('authenticated user on /login is still bounced to / (behaviour preserved)', () => {
+      const pathname = '/login'
+      const user = { id: 'client-1' }
+      const shouldRedirectToHome = !!user && isPublicPath(pathname) && pathname !== '/maintenance'
+      expect(shouldRedirectToHome).toBe(true)
+    })
   })
 
   describe('archived client redirect logic (Story 9.5c)', () => {

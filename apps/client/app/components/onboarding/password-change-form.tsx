@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { Button } from '@monprojetpro/ui'
+import { Button, PasswordInput } from '@monprojetpro/ui'
 import { changeTemporaryPassword } from '../../onboarding/actions/change-temporary-password'
 
 const MIN_LENGTH = 10
@@ -64,15 +64,13 @@ export function PasswordChangeForm({ firstName }: PasswordChangeFormProps) {
             <label htmlFor="new-password" className="text-sm font-medium">
               Nouveau mot de passe
             </label>
-            <input
+            <PasswordInput
               id="new-password"
-              type="password"
               autoComplete="new-password"
               required
               minLength={MIN_LENGTH}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
           </div>
 
@@ -80,15 +78,13 @@ export function PasswordChangeForm({ firstName }: PasswordChangeFormProps) {
             <label htmlFor="confirm-password" className="text-sm font-medium">
               Confirmer le mot de passe
             </label>
-            <input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               autoComplete="new-password"
               required
               minLength={MIN_LENGTH}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className="rounded-md border border-border bg-background px-3 py-2 text-sm"
             />
           </div>
         </div>

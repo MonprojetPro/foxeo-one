@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button, Input, Alert, AlertDescription } from '@monprojetpro/ui'
+import { Button, Input, PasswordInput, Alert, AlertDescription } from '@monprojetpro/ui'
 import { hubLoginAction } from '../actions/auth'
 import { hubLoginSchema } from '../actions/auth-schemas'
 
@@ -87,9 +87,8 @@ export function LoginForm() {
         <label htmlFor="password" className="text-sm font-medium">
           Mot de passe
         </label>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           placeholder="••••••••"
           autoComplete="current-password"
           aria-invalid={!!errors.password}

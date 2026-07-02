@@ -21,23 +21,22 @@ const mockConfig = {
   estimatedDuration: null,
 }
 
+function mockUseMaintenance(config: typeof mockConfig | undefined, isPending = false) {
+  vi.mocked(useMaintenanceModule.useMaintenanceConfig).mockReturnValue({
+    data: config,
+    isPending,
+    isError: false,
+  } as ReturnType<typeof useMaintenanceModule.useMaintenanceConfig>)
+}
+
 describe('MaintenanceMode', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(useMaintenanceModule.useMaintenanceConfig).mockReturnValue({
-      data: mockConfig,
-      isPending: false,
-      isError: false,
-    } as ReturnType<typeof useMaintenanceModule.useMaintenanceConfig>)
+    mockUseMaintenance(mockConfig)
   })
 
   it('renders loading skeletons when pending', () => {
-    vi.mocked(useMaintenanceModule.useMaintenanceConfig).mockReturnValue({
-      data: undefined,
-      isPending: true,
-      isError: false,
-    } as ReturnType<typeof useMaintenanceModule.useMaintenanceConfig>)
-
+    mockUseMaintenance(undefined, true)
     render(<MaintenanceMode />)
     const skeletons = document.querySelectorAll('.animate-pulse')
     expect(skeletons.length).toBeGreaterThan(0)
@@ -63,18 +62,15 @@ describe('MaintenanceMode', () => {
     expect(screen.getByText(/Aperçu/i)).toBeTruthy()
   })
 
-  it('calls toggleMaintenanceMode on save click', async () => {
+  it('activation via toggle asks for confirmation, then saves with enabled: true', async () => {
     vi.mocked(toggleModule.toggleMaintenanceMode).mockResolvedValue({ data: { enabled: true }, error: null })
 
     render(<MaintenanceMode />)
 
-    // Enable toggle
-    const toggle = screen.getByRole('switch')
-    fireEvent.click(toggle)
-
-    // Click save
-    const saveBtn = screen.getByRole('button', { name: /Activer la maintenance/i })
-    fireEvent.click(saveBtn)
+    // Le toggle est l'interrupteur : l'activation déclenche une confirmation
+    fireEvent.click(screen.getByRole('switch'))
+    const confirmBtn = await screen.findByRole('button', { name: /Activer la maintenance/i })
+    fireEvent.click(confirmBtn)
 
     await waitFor(() => {
       expect(vi.mocked(toggleModule.toggleMaintenanceMode)).toHaveBeenCalledWith({
@@ -85,7 +81,48 @@ describe('MaintenanceMode', () => {
     })
   })
 
+  it('deactivation via toggle saves immediately with enabled: false (no confirm)', async () => {
+    mockUseMaintenance({ ...mockConfig, enabled: true })
+    vi.mocked(toggleModule.toggleMaintenanceMode).mockResolvedValue({ data: { enabled: false }, error: null })
+
+    render(<MaintenanceMode />)
+    fireEvent.click(screen.getByRole('switch'))
+
+    await waitFor(() => {
+      expect(vi.mocked(toggleModule.toggleMaintenanceMode)).toHaveBeenCalledWith({
+        enabled: false,
+        message: mockConfig.message,
+        estimatedDuration: null,
+      })
+    })
+  })
+
+  it('save settings button persists message without changing on/off state', async () => {
+    vi.mocked(toggleModule.toggleMaintenanceMode).mockResolvedValue({ data: { enabled: false }, error: null })
+
+    render(<MaintenanceMode />)
+
+    // Réglages non modifiés → bouton désactivé
+    const saveBtn = screen.getByRole('button', { name: /Enregistrer les réglages/i })
+    expect(saveBtn.hasAttribute('disabled')).toBe(true)
+
+    // On modifie le message → bouton actif
+    fireEvent.change(screen.getByLabelText(/Message affiché aux clients/i), {
+      target: { value: 'Retour dans 1 heure' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Enregistrer les réglages/i }))
+
+    await waitFor(() => {
+      expect(vi.mocked(toggleModule.toggleMaintenanceMode)).toHaveBeenCalledWith({
+        enabled: false,
+        message: 'Retour dans 1 heure',
+        estimatedDuration: null,
+      })
+    })
+  })
+
   it('shows error toast on action failure', async () => {
+    mockUseMaintenance({ ...mockConfig, enabled: true })
     vi.mocked(toggleModule.toggleMaintenanceMode).mockResolvedValue({
       data: null,
       error: { message: 'Erreur serveur', code: 'INTERNAL_ERROR' },
@@ -93,11 +130,8 @@ describe('MaintenanceMode', () => {
     const { showError } = await import('@monprojetpro/ui')
 
     render(<MaintenanceMode />)
-    const toggle = screen.getByRole('switch')
-    fireEvent.click(toggle)
-
-    const saveBtn = screen.getByRole('button', { name: /Activer la maintenance/i })
-    fireEvent.click(saveBtn)
+    // Désactivation (pas de confirm) → appel direct qui échoue
+    fireEvent.click(screen.getByRole('switch'))
 
     await waitFor(() => {
       expect(vi.mocked(showError)).toHaveBeenCalledWith('Erreur serveur')

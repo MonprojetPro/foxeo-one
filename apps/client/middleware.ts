@@ -134,8 +134,12 @@ export async function middleware(request: NextRequest) {
     return redirectResponse
   }
 
-  // Authenticated user on login/signup → redirect to dashboard
-  if (user && isPublic) {
+  // Authenticated user on login/signup → redirect to dashboard.
+  // ⚠️ On EXCLUT /maintenance : sinon un client connecté redirigé vers /maintenance
+  // (par le check maintenance ci-dessus) est aussitôt renvoyé vers / → qui le renvoie
+  // vers /maintenance → boucle infinie (ERR_TOO_MANY_REDIRECTS). La page /maintenance
+  // gère elle-même sa sortie : quand la maintenance est coupée, elle redirige vers /.
+  if (user && isPublic && request.nextUrl.pathname !== '/maintenance') {
     const redirectResponse = NextResponse.redirect(new URL('/', request.url))
     setLocaleCookie(redirectResponse, locale)
     return redirectResponse

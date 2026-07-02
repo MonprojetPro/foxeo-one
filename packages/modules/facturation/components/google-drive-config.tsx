@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getGoogleDriveStatus, configureGoogleDrive, updateGoogleDriveFolderId } from '../actions/configure-google-drive'
-import { showSuccess, showError } from '@monprojetpro/ui'
+import { showSuccess, showError, PasswordInput } from '@monprojetpro/ui'
 import { HardDrive, Check, Settings } from 'lucide-react'
 
 export function GoogleDriveConfig() {
@@ -146,23 +146,19 @@ export function GoogleDriveConfig() {
           <>
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Access Token</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={accessToken}
                 onChange={(e) => setAccessToken(e.target.value)}
                 placeholder="Access token Google OAuth"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 data-testid="drive-access-token"
               />
             </div>
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Refresh Token</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={refreshToken}
                 onChange={(e) => setRefreshToken(e.target.value)}
                 placeholder="Refresh token Google OAuth"
-                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 data-testid="drive-refresh-token"
               />
             </div>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button, Input, Alert, AlertDescription } from '@monprojetpro/ui'
+import { Button, PasswordInput, Alert, AlertDescription } from '@monprojetpro/ui'
 import { resetPasswordAction } from '../actions/auth'
 
 const schema = z.object({
@@ -53,9 +53,8 @@ export function ResetPasswordForm() {
         <label htmlFor="password" className="text-sm font-medium">
           Nouveau mot de passe
         </label>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           placeholder="••••••••"
           autoComplete="new-password"
           aria-invalid={!!errors.password}
@@ -70,9 +69,8 @@ export function ResetPasswordForm() {
         <label htmlFor="confirmPassword" className="text-sm font-medium">
           Confirmer le mot de passe
         </label>
-        <Input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           placeholder="••••••••"
           autoComplete="new-password"
           aria-invalid={!!errors.confirmPassword}

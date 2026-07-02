@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Button, Input, Alert, AlertDescription, ConsentCheckbox } from '@monprojetpro/ui'
+import { Button, Input, PasswordInput, Alert, AlertDescription, ConsentCheckbox } from '@monprojetpro/ui'
 import { signupAction } from '../actions/auth'
 import { signupSchema } from '../actions/schemas'
 
@@ -92,9 +92,8 @@ export function SignupForm() {
         <label htmlFor="password" className="text-sm font-medium">
           Mot de passe
         </label>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           placeholder="••••••••"
           autoComplete="new-password"
           aria-invalid={!!errors.password}
@@ -112,9 +111,8 @@ export function SignupForm() {
         <label htmlFor="confirmPassword" className="text-sm font-medium">
           Confirmer le mot de passe
         </label>
-        <Input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           placeholder="••••••••"
           autoComplete="new-password"
           aria-invalid={!!errors.confirmPassword}
