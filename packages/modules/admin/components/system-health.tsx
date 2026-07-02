@@ -22,6 +22,9 @@ const STATUS_LABEL: Record<GlobalStatus | ServiceStatus, string> = {
   error: 'Erreur',
 }
 
+// ⚠️ Doit refléter EXACTEMENT les services vérifiés par l'Edge Function health-check-cron.
+// OpenVidu retiré : il n'est pas (encore) audité par la fonction → il affichait un « — »
+// permanent trompeur. À réintégrer ici le jour où la fonction le vérifie réellement.
 const SERVICE_DISPLAY: Record<string, string> = {
   supabase_db: 'Supabase DB',
   supabase_storage: 'Supabase Storage',
@@ -29,7 +32,6 @@ const SERVICE_DISPLAY: Record<string, string> = {
   supabase_realtime: 'Supabase Realtime',
   pennylane: 'Pennylane API',
   cal_com: 'Cal.com',
-  open_vidu: 'OpenVidu',
 }
 
 function formatLatency(ms: number): string {
@@ -77,6 +79,15 @@ export function SystemHealth() {
   const services = data?.services ?? {}
   const checkedAt = data?.checkedAt
 
+  // Aucune vérification encore enregistrée → NE PAS afficher un faux « OK » vert (trompeur).
+  // On affiche un état neutre « Inconnu — jamais vérifié » tant que le cron n'a rien produit.
+  const hasData = !!checkedAt
+  const bannerClass = hasData
+    ? STATUS_COLORS[globalStatus]
+    : 'text-gray-400 bg-white/5 border-white/10'
+  const bannerDot = hasData ? STATUS_DOT[globalStatus] : 'bg-gray-500'
+  const bannerLabel = hasData ? STATUS_LABEL[globalStatus] : 'Inconnu'
+
   const serviceEntries = Object.entries(SERVICE_DISPLAY).map(([key, label]) => ({
     key,
     label,
@@ -87,21 +98,21 @@ export function SystemHealth() {
     <div className="space-y-6 max-w-2xl">
       {/* Statut global */}
       <div
-        className={`flex items-center justify-between rounded border px-4 py-3 ${STATUS_COLORS[globalStatus]}`}
-        aria-label={`Statut global : ${STATUS_LABEL[globalStatus]}`}
+        className={`flex items-center justify-between rounded border px-4 py-3 ${bannerClass}`}
+        aria-label={`Statut global : ${bannerLabel}`}
       >
         <div className="flex items-center gap-3">
           <span
-            className={`inline-block w-3 h-3 rounded-full ${STATUS_DOT[globalStatus]}`}
+            className={`inline-block w-3 h-3 rounded-full ${bannerDot}`}
             aria-hidden="true"
           />
           <div>
-            <p className="text-sm font-semibold">Statut global : {STATUS_LABEL[globalStatus]}</p>
-            {checkedAt && (
-              <p className="text-xs opacity-70">
-                Dernière vérification : {formatCheckedAt(checkedAt)}
-              </p>
-            )}
+            <p className="text-sm font-semibold">Statut global : {bannerLabel}</p>
+            <p className="text-xs opacity-70">
+              {hasData
+                ? `Dernière vérification : ${formatCheckedAt(checkedAt!)}`
+                : 'Jamais vérifié — lance une vérification.'}
+            </p>
           </div>
         </div>
         <button

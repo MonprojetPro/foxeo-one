@@ -20,7 +20,7 @@ const navItems = [
   { icon: FolderOpen,    label: 'Documents',      href: '/modules/documents' },
   { icon: Calculator,    label: 'Comptabilité',   href: '/modules/facturation' },
   { icon: Bot,           label: 'Élio',            href: '/elio' },
-  { icon: Settings,      label: 'Instances',        href: '/modules/admin' },
+  { icon: Settings,      label: 'One',              href: '/modules/admin' },
   { icon: Wrench,        label: 'Maintenance & Système', href: '/modules/admin/system' },
 ]
 

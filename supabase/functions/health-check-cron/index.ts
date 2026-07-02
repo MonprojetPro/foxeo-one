@@ -165,7 +165,7 @@ async function sendAlertNotification(
     type: 'system',
     title: `Alerte système — ${displayName}`,
     body: `Le service ${displayName} ne répond pas correctement (statut: ${serviceStatus}). Vérifiez le tableau de monitoring.`,
-    link: '/modules/admin',
+    link: '/modules/admin/system',
   })
 
   if (notifError) {

@@ -133,6 +133,22 @@ describe('SystemHealth', () => {
     expect(screen.getByText('1.8s')).toBeTruthy()
   })
 
+  it('affiche "Inconnu — jamais vérifié" quand aucune donnée (pas de faux OK)', () => {
+    vi.mocked(useSystemHealthModule.useSystemHealth).mockReturnValue({
+      data: null,
+      isPending: false,
+      isError: false,
+      triggerRefresh: mockTriggerRefresh,
+      refreshing: false,
+    } as unknown as ReturnType<typeof useSystemHealthModule.useSystemHealth>)
+
+    render(<SystemHealth />)
+    expect(screen.getByText(/Statut global : Inconnu/i)).toBeTruthy()
+    expect(screen.getByText(/Jamais vérifié/i)).toBeTruthy()
+    // Surtout PAS de faux "OK"
+    expect(screen.queryByText(/Statut global : OK/i)).toBeNull()
+  })
+
   it('affiche un message d\'erreur quand la requête échoue', () => {
     vi.mocked(useSystemHealthModule.useSystemHealth).mockReturnValue({
       data: undefined,

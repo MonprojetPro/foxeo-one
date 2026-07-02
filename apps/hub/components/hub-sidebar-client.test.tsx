@@ -157,16 +157,11 @@ describe('HubSidebarClient', () => {
     expect(hrefs).toContain('/elio')
   })
 
-  // Réorg sidebar — « One » renommé « Instances » + entrée dédiée « Maintenance & Système »
-  it('renders "Instances" nav item linking to /modules/admin', () => {
+  // Réorg sidebar — « One » conservé + entrée dédiée « Maintenance & Système »
+  it('renders "One" nav item linking to /modules/admin', () => {
     render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
-    const link = screen.getByRole('link', { name: /Instances/i })
+    const link = screen.getByRole('link', { name: 'One' })
     expect(link).toHaveAttribute('href', '/modules/admin')
-  })
-
-  it('does NOT render the old "One" nav label', () => {
-    render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
-    expect(screen.queryByText('One')).not.toBeInTheDocument()
   })
 
   it('renders "Maintenance & Système" nav item linking to /modules/admin/system', () => {
