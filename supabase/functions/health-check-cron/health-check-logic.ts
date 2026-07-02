@@ -18,10 +18,17 @@ export interface HealthCheckResult {
 
 // Seuils par service (ms)
 export const THRESHOLDS: Record<string, { warn: number; error: number }> = {
-  supabase_db: { warn: 300, error: 500 },
+  // Recalibré : un aller-retour REST depuis l'Edge Function mesure ~130–400 ms
+  // (sauts réseau inclus). Les seuils 300/500 faisaient clignoter la DB en « degraded »
+  // sans vraie dégradation. Une vraie lenteur (>1,5 s) reste détectée.
+  supabase_db: { warn: 800, error: 1500 },
   supabase_storage: { warn: 1000, error: 2000 },
   supabase_auth: { warn: 500, error: 1000 },
-  supabase_realtime: { warn: 500, error: 1000 },
+  // Recalibré : l'endpoint de check Realtime (/realtime/v1/channels) répond
+  // normalement en ~2 s. Les anciens seuils (500/1000) le faisaient passer en
+  // « error » en permanence alors que le Realtime fonctionne. Une vraie panne
+  // reste détectée via le timeout (5 s → error).
+  supabase_realtime: { warn: 3000, error: 5000 },
   pennylane: { warn: 1500, error: 2000 },
   cal_com: { warn: 2000, error: 5000 },
   open_vidu: { warn: 2000, error: 5000 },

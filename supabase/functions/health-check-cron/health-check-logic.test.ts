@@ -15,11 +15,12 @@ describe('evaluateServiceStatus', () => {
   })
 
   it('retourne "degraded" si latence entre warn et error', () => {
-    expect(evaluateServiceStatus('supabase_db', 400, false)).toBe('degraded')
+    // supabase_db recalibré : warn 800 / error 1500
+    expect(evaluateServiceStatus('supabase_db', 1000, false)).toBe('degraded')
   })
 
   it('retourne "error" si latence >= seuil error', () => {
-    expect(evaluateServiceStatus('supabase_db', 600, false)).toBe('error')
+    expect(evaluateServiceStatus('supabase_db', 1600, false)).toBe('error')
   })
 
   it('retourne "error" si failed=true indépendamment de la latence', () => {
