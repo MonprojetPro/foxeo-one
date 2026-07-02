@@ -6,6 +6,7 @@ import { AgendaItem } from '../../components/dashboard/agenda-item'
 import { MessageItem } from '../../components/dashboard/message-item'
 import { AlertItem } from '../../components/dashboard/alert-item'
 import { DashboardCard } from '../../components/dashboard/dashboard-card'
+import { SystemHealthAlert } from '@monprojetpro/module-admin'
 import { getClientsBreakdown } from '../../actions/get-clients-breakdown'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -277,6 +278,9 @@ export default async function HubHomePage() {
           En ligne
         </span>
       </div>
+
+      {/* Alerte système — s'affiche uniquement si un voyant du monitoring est orange/rouge (Realtime) */}
+      <SystemHealthAlert />
 
       {/* Encart Coût IA */}
       {tokenSummary && (
