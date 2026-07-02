@@ -21,12 +21,19 @@ const mockUseValidationBadge = vi.fn(() => ({
 }))
 vi.mock('@monprojetpro/modules-validation-hub', () => ({
   useValidationBadge: (...args: unknown[]) => mockUseValidationBadge(...args),
+  useValidationRealtime: vi.fn(),
 }))
 
 // Mock facturation hook
 const mockUsePendingRemindersCount = vi.fn(() => ({ pendingCount: 0 }))
 vi.mock('@monprojetpro/modules-facturation', () => ({
   usePendingRemindersCount: () => mockUsePendingRemindersCount(),
+}))
+
+// Mock chat hooks (badge messages non lus + realtime)
+vi.mock('@monprojetpro/modules-chat', () => ({
+  useConversations: vi.fn(() => ({ data: [] })),
+  useConversationsRealtime: vi.fn(),
 }))
 
 // Mock ElioQueryBox to avoid loading @monprojetpro/module-elio
@@ -148,5 +155,23 @@ describe('HubSidebarClient', () => {
     const links = screen.getAllByRole('link')
     const hrefs = links.map((l) => l.getAttribute('href'))
     expect(hrefs).toContain('/elio')
+  })
+
+  // Réorg sidebar — « One » renommé « Instances » + entrée dédiée « Maintenance & Système »
+  it('renders "Instances" nav item linking to /modules/admin', () => {
+    render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
+    const link = screen.getByRole('link', { name: /Instances/i })
+    expect(link).toHaveAttribute('href', '/modules/admin')
+  })
+
+  it('does NOT render the old "One" nav label', () => {
+    render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
+    expect(screen.queryByText('One')).not.toBeInTheDocument()
+  })
+
+  it('renders "Maintenance & Système" nav item linking to /modules/admin/system', () => {
+    render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
+    const link = screen.getByRole('link', { name: /Maintenance & Système/i })
+    expect(link).toHaveAttribute('href', '/modules/admin/system')
   })
 })

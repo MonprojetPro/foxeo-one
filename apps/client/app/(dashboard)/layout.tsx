@@ -42,6 +42,7 @@ import { PresenceProvider } from '@monprojetpro/modules-chat'
 import { LogoutButton } from './logout-button'
 import { ThemeClassSetter } from './theme-class-setter'
 import { RealtimeDashboardRefresh } from '../../components/realtime-dashboard-refresh'
+import { MaintenanceRealtimeGuard } from '../../components/maintenance-realtime-guard'
 import { ImpersonationWrapper } from './impersonation-wrapper'
 import { OneElioBox } from '../../components/one-elio-box'
 import { ElioOnePopup } from '../../components/elio-one-popup'
@@ -484,6 +485,9 @@ export default async function DashboardLayout({
     <div style={accentStyle}>
       <SessionKeepAlive />
       <RealtimeDashboardRefresh clientId={clientId} />
+      {/* Bascule maintenance instantanée : redirige le client vers /maintenance dès que
+          MiKL active le mode depuis le Hub (sans rechargement). */}
+      <MaintenanceRealtimeGuard />
       <ThemeClassSetter activeMode={activeMode} />
       {/* Session Élio One partagée + pop-up UNIQUE : le widget sidebar (dans le shell) et la
           pop-up consomment la même conversation → « Voir dans Élio » montre l'échange en cours. */}

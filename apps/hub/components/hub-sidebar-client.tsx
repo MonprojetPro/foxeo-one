@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video, ChefHat } from 'lucide-react'
+import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video, ChefHat, Wrench } from 'lucide-react'
 import { Badge } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
 import { useValidationBadge, useValidationRealtime } from '@monprojetpro/modules-validation-hub'
@@ -20,7 +20,8 @@ const navItems = [
   { icon: FolderOpen,    label: 'Documents',      href: '/modules/documents' },
   { icon: Calculator,    label: 'Comptabilité',   href: '/modules/facturation' },
   { icon: Bot,           label: 'Élio',            href: '/elio' },
-  { icon: Settings,      label: 'One',              href: '/modules/admin' },
+  { icon: Settings,      label: 'Instances',        href: '/modules/admin' },
+  { icon: Wrench,        label: 'Maintenance & Système', href: '/modules/admin/system' },
 ]
 
 // Section « Produits » — produits externes pilotés depuis le Hub (cockpits).
@@ -49,7 +50,11 @@ export function HubSidebarClient({ operatorId, userId }: { operatorId: string; u
         {navItems.map((item) => {
           const isActive = item.href === '/'
             ? pathname === '/'
-            : pathname?.startsWith(item.href)
+            : item.href === '/modules/admin'
+              // « Instances » ne doit pas rester actif sur la sous-route /modules/admin/system
+              // (« Maintenance & Système »), qui partage le même préfixe.
+              ? !!pathname?.startsWith('/modules/admin') && !pathname.startsWith('/modules/admin/system')
+              : pathname?.startsWith(item.href)
           const badge =
             item.href === '/modules/validation-hub' ? pendingCount
             : item.href === '/modules/facturation' ? reminderCount

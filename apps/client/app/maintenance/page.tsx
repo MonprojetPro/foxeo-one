@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { MaintenanceRealtimeGuard } from '../../components/maintenance-realtime-guard'
 
 async function getMaintenanceInfo(): Promise<{ active: boolean; message: string; estimatedDuration: string | null }> {
   try {
@@ -45,6 +46,8 @@ export default async function MaintenancePage() {
 
   return (
     <div className="min-h-screen bg-[#020402] flex items-center justify-center px-4">
+      {/* Sortie de maintenance instantanée : renvoie le client sur / dès que MiKL coupe le mode. */}
+      <MaintenanceRealtimeGuard />
       <div className="max-w-md w-full text-center space-y-6">
         {/* Logo placeholder */}
         <div className="text-5xl" aria-hidden="true">🔧</div>
