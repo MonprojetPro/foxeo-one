@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import {
+  sendGraduationEmail,
+  sendGraduationNotification,
+} from '@monprojetpro/modules-notifications'
+import {
   GraduateClientSchema,
   type GraduateClientInput,
   type GraduationResult,
@@ -61,7 +65,14 @@ export async function graduateClient(
 
     // 4. Verify graduation conditions (le forçage opérateur saute les gates de complétion)
     const conditionCheck = await checkGraduationConditions(supabase, clientId, operatorId, force ?? false)
-    if (conditionCheck.error) return conditionCheck
+    if (conditionCheck.error) {
+      return errorResponse(
+        conditionCheck.error.message,
+        conditionCheck.error.code,
+        conditionCheck.error.details
+      )
+    }
+    const clientName = conditionCheck.data?.clientName ?? 'Client'
 
     // 5. Update clients table — graduation timestamp + notes
     const { error: clientUpdateError } = await supabase
@@ -140,7 +151,45 @@ export async function graduateClient(
       // Non-blocking — graduation succeeded
     }
 
-    // 8. Revalidate cache
+    // 8. Notifications + email de graduation (non bloquant — la graduation est déjà effective)
+    try {
+      const notifResult = await sendGraduationNotification({
+        clientId,
+        clientName,
+        operatorId,
+        modulesCount: activeModules.length,
+        tier,
+      })
+
+      if (notifResult.error) {
+        console.error(
+          '[CRM:GRADUATE_CLIENT] Graduation notification error (non-blocking):',
+          notifResult.error
+        )
+      }
+
+      // ⚠️ La notification client `type: 'graduation'` créée ci-dessus déclenche DÉJÀ
+      // l'email de graduation via le trigger DB `trg_send_email_on_notification`
+      // (→ Edge Function send-email déployée). sendGraduationEmail n'est donc appelée
+      // qu'en FALLBACK, si cette notification n'a pas pu être créée — sinon le client
+      // recevrait l'email de graduation en double.
+      if (notifResult.error || !notifResult.data?.clientNotified) {
+        const emailResult = await sendGraduationEmail({ clientId })
+        if (emailResult.error) {
+          console.error(
+            '[CRM:GRADUATE_CLIENT] Graduation email error (non-blocking):',
+            emailResult.error
+          )
+        }
+      }
+    } catch (notificationError) {
+      console.error(
+        '[CRM:GRADUATE_CLIENT] Graduation notification/email failed (non-blocking):',
+        notificationError
+      )
+    }
+
+    // 9. Revalidate cache
     revalidatePath('/modules/crm')
     revalidatePath(`/modules/crm/clients/${clientId}`)
 
@@ -163,12 +212,12 @@ async function checkGraduationConditions(
   clientId: string,
   operatorId: string,
   force: boolean
-): Promise<ActionResponse<null>> {
+): Promise<ActionResponse<{ clientName: string | null }>> {
   // --- Garde-fous d'INTÉGRITÉ (toujours actifs, même en forçage) ---
   // Check client belongs to operator and get config
   const { data: clientData, error: clientError } = await supabase
     .from('clients')
-    .select('id, operator_id')
+    .select('id, operator_id, name')
     .eq('id', clientId)
     .eq('operator_id', operatorId)
     .single()
@@ -197,7 +246,7 @@ async function checkGraduationConditions(
 
   // --- Gates de COMPLÉTION (sautés en forçage opérateur « au cas où ») ---
   if (force) {
-    return { data: null, error: null }
+    return successResponse({ clientName: clientData.name ?? null })
   }
 
   // Check parcours is completed (status = 'termine')
@@ -244,5 +293,5 @@ async function checkGraduationConditions(
     )
   }
 
-  return { data: null, error: null }
+  return successResponse({ clientName: clientData.name ?? null })
 }

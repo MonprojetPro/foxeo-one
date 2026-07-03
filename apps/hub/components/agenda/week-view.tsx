@@ -1,5 +1,5 @@
 'use client'
-import { CalendarEvent, CalendarFilter } from "./agenda-types";
+import { CalendarEvent } from "./agenda-types";
 import { EventCard } from "./event-card";
 import { format, isSameDay, addDays, startOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -9,18 +9,15 @@ const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 7h → 22h
 interface WeekViewProps {
   currentDate: Date;
   events: CalendarEvent[];
-  filters: CalendarFilter;
   onEventClick: (e: CalendarEvent) => void;
-  onLaunch: (e: CalendarEvent) => void;
   onSlotClick?: (date: Date, hour: number) => void;
 }
 
-export function WeekView({ currentDate, events, filters, onEventClick, onLaunch, onSlotClick }: WeekViewProps) {
+export function WeekView({ currentDate, events, onEventClick, onSlotClick }: WeekViewProps) {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const today = new Date();
-  const filteredEvents = events.filter((e) => filters[e.source]);
-  const getEventsForDay = (day: Date) => filteredEvents.filter((e) => isSameDay(e.date, day));
+  const getEventsForDay = (day: Date) => events.filter((e) => isSameDay(e.date, day));
 
   return (
     <div className="h-full overflow-y-auto">
@@ -52,7 +49,7 @@ export function WeekView({ currentDate, events, filters, onEventClick, onLaunch,
                     const height = (durationMinutes / 60) * 64;
                     return (
                       <div key={event.id} className="absolute left-0.5 right-0.5 z-10" style={{ top: `${topOffset}px`, height: `${height}px` }}>
-                        <EventCard event={event} onClick={onEventClick} onLaunch={onLaunch} />
+                        <EventCard event={event} onClick={onEventClick} />
                       </div>
                     );
                   })}

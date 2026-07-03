@@ -8,17 +8,15 @@ import { AgendaSidebarPanel } from "./agenda-sidebar-panel";
 import { WeekView } from "./week-view";
 import { DayView } from "./day-view";
 import { MonthView } from "./month-view";
-import { LaunchDialog } from "./launch-dialog";
 import { NewRdvDialog } from "./new-rdv-dialog";
 import { CalendarSettings } from "./calendar-settings";
-import { MOCK_EVENTS } from "./agenda-mock-data";
-import { CalendarEvent, ViewMode, SOURCE_DOT_COLORS, SOURCE_LABELS } from "./agenda-types";
+import { CalendarEvent, ViewMode, SOURCE_LABELS } from "./agenda-types";
 import { getGoogleCalendarEvents, getCalcomBookings, getCalendarStatus, getIcalEvents, deleteGoogleCalendarEvent, type ExternalCalendarEvent, type CalendarStatus } from "../../app/(dashboard)/modules/agenda/actions/calendar";
 import { useSearchParams } from "next/navigation";
 
 // Filtre dynamique : une entrée par compte Google connecté + calcom
 interface DynamicFilter {
-  key: string;       // "monprojetpro" | "perso" | "calcom" | label du compte Google
+  key: string;       // "calcom" | "google:{label}" | "ical:{label}"
   label: string;
   color: string;     // hex ou classe Tailwind
   enabled: boolean;
@@ -56,22 +54,14 @@ function getWindowForView(date: Date, viewMode: ViewMode): { from: string; to: s
   return { from: startOfMonth(date).toISOString(), to: endOfMonth(date).toISOString() };
 }
 
-const BASE_FILTERS: DynamicFilter[] = [
-  { key: "monprojetpro", label: SOURCE_LABELS.monprojetpro, color: "#06b6d4", enabled: true },
-  { key: "perso", label: SOURCE_LABELS.perso, color: "#22c55e", enabled: true },
-];
-
 export function AgendaPage({ userId }: { userId: string }) {
   const searchParams = useSearchParams();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("week");
-  const [baseEvents] = useState<CalendarEvent[]>(MOCK_EVENTS);
   const [externalEvents, setExternalEvents] = useState<CalendarEvent[]>([]);
-  const [localEvents, setLocalEvents] = useState<CalendarEvent[]>([]);
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus>({ googleAccounts: [], calcom: false, icalFeeds: [] });
-  const [filters, setFilters] = useState<DynamicFilter[]>(BASE_FILTERS);
+  const [filters, setFilters] = useState<DynamicFilter[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [launchEvent, setLaunchEvent] = useState<CalendarEvent | null>(null);
   const [showNewRdv, setShowNewRdv] = useState(false);
   const [newRdvSlot, setNewRdvSlot] = useState<{ date: Date; hour: number } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -83,11 +73,6 @@ export function AgendaPage({ userId }: { userId: string }) {
   // Reconstruire les filtres dynamiques quand le status change
   const rebuildFilters = useCallback((status: CalendarStatus) => {
     setFilters(prev => {
-      const base = BASE_FILTERS.map(f => ({
-        ...f,
-        enabled: prev.find(p => p.key === f.key)?.enabled ?? true,
-      }));
-
       const googleFilters: DynamicFilter[] = status.googleAccounts.map(a => ({
         key: `google:${a.label}`,
         label: a.label,
@@ -109,7 +94,7 @@ export function AgendaPage({ userId }: { userId: string }) {
         enabled: prev.find(p => p.key === `ical:${f.label}`)?.enabled ?? true,
       }));
 
-      return [...base, ...googleFilters, ...calcomFilter, ...icalFilters];
+      return [...googleFilters, ...calcomFilter, ...icalFilters];
     });
   }, []);
 
@@ -195,13 +180,11 @@ export function AgendaPage({ userId }: { userId: string }) {
   // Filtrer les événements selon les filtres actifs
   const enabledKeys = new Set(filters.filter(f => f.enabled).map(f => f.key));
 
-  const allEvents = [...baseEvents, ...externalEvents, ...localEvents].filter(e => {
-    if (e.source === "monprojetpro") return enabledKeys.has("monprojetpro");
-    if (e.source === "perso") return enabledKeys.has("perso");
+  const allEvents = externalEvents.filter(e => {
     if (e.source === "calcom") return enabledKeys.has("calcom");
     if (e.source === "google") {
       const matchingFilter = filters.find(f => f.key.startsWith("google:") && e.customColor === f.color);
-      return matchingFilter ? matchingFilter.enabled : enabledKeys.has("monprojetpro");
+      return matchingFilter ? matchingFilter.enabled : true;
     }
     if (e.source === "ical") {
       const matchingFilter = filters.find(f => f.key.startsWith("ical:") && e.customColor === f.color);
@@ -233,15 +216,6 @@ export function AgendaPage({ userId }: { userId: string }) {
   };
 
   const handleEventClick = (event: CalendarEvent) => { setSelectedEvent(event); setShowPopover(true); };
-
-  const handleDeleteEvent = (id: string) => {
-    setLocalEvents(prev => prev.filter(e => e.id !== id));
-    setExternalEvents(prev => prev.filter(e => e.id !== id));
-    setShowPopover(false); setSelectedEvent(null);
-    toast.success("Événement supprimé");
-  };
-
-  const handleCreateEvent = (event: CalendarEvent) => setLocalEvents(prev => [...prev, event]);
 
   const toggleFilter = (key: string) => {
     setFilters(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f));
@@ -303,9 +277,9 @@ export function AgendaPage({ userId }: { userId: string }) {
 
         {/* Calendar View */}
         <div className="flex-1 min-h-0 overflow-hidden">
-          {viewMode === "week" && <WeekView currentDate={currentDate} events={allEvents} filters={{ monprojetpro: true, perso: true, google: true, calcom: true }} onEventClick={handleEventClick} onLaunch={setLaunchEvent} onSlotClick={(date, hour) => setNewRdvSlot({ date, hour })} />}
-          {viewMode === "day" && <DayView currentDate={currentDate} events={allEvents} filters={{ monprojetpro: true, perso: true, google: true, calcom: true }} onEventClick={handleEventClick} onLaunch={setLaunchEvent} onSlotClick={(date, hour) => setNewRdvSlot({ date, hour })} />}
-          {viewMode === "month" && <MonthView currentDate={currentDate} events={allEvents} filters={{ monprojetpro: true, perso: true, google: true, calcom: true }} onEventClick={handleEventClick} onLaunch={setLaunchEvent} />}
+          {viewMode === "week" && <WeekView currentDate={currentDate} events={allEvents} onEventClick={handleEventClick} onSlotClick={(date, hour) => setNewRdvSlot({ date, hour })} />}
+          {viewMode === "day" && <DayView currentDate={currentDate} events={allEvents} onEventClick={handleEventClick} onSlotClick={(date, hour) => setNewRdvSlot({ date, hour })} />}
+          {viewMode === "month" && <MonthView currentDate={currentDate} events={allEvents} onEventClick={handleEventClick} />}
         </div>
       </main>
 
@@ -324,14 +298,10 @@ export function AgendaPage({ userId }: { userId: string }) {
               )}
               <p className="text-[10px] text-muted-foreground">{SOURCE_LABELS[selectedEvent.source]}</p>
             </div>
-            <div className="flex gap-1.5 pt-1">
-              <Button variant="outline" size="sm" className="text-[11px] h-7 flex-1"
-                onClick={() => { setEditEvent(selectedEvent); setShowPopover(false); }}>Modifier</Button>
-              {(selectedEvent.source === "monprojetpro" || selectedEvent.source === "perso") && (
-                <Button variant="outline" size="sm" className="text-[11px] h-7 flex-1 text-destructive hover:text-destructive"
-                  onClick={() => handleDeleteEvent(selectedEvent.id)}>Supprimer</Button>
-              )}
-              {selectedEvent.source === "google" && (
+            {selectedEvent.source === "google" && (
+              <div className="flex gap-1.5 pt-1">
+                <Button variant="outline" size="sm" className="text-[11px] h-7 flex-1"
+                  onClick={() => { setEditEvent(selectedEvent); setShowPopover(false); }}>Modifier</Button>
                 <Button variant="outline" size="sm" className="text-[11px] h-7 flex-1 text-destructive hover:text-destructive"
                   onClick={async () => {
                     const label = calendarStatus.googleAccounts.find(a => a.color === selectedEvent.customColor)?.label ?? calendarStatus.googleAccounts[0]?.label ?? "";
@@ -342,22 +312,17 @@ export function AgendaPage({ userId }: { userId: string }) {
                     setSelectedEvent(null);
                     await loadExternalEvents();
                   }}>Supprimer</Button>
-              )}
-              {selectedEvent.source === "monprojetpro" && (
-                <Button size="sm" className="text-[11px] h-7 flex-1"
-                  onClick={() => { setShowPopover(false); setLaunchEvent(selectedEvent); }}>Lancer</Button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      <LaunchDialog event={launchEvent} open={!!launchEvent} onClose={() => setLaunchEvent(null)} />
       <NewRdvDialog
         open={showNewRdv || !!newRdvSlot}
         onClose={() => { setShowNewRdv(false); setNewRdvSlot(null); }}
-        onCreateEvent={handleCreateEvent}
         onRefreshEvents={loadExternalEvents}
+        onOpenSettings={() => { setShowNewRdv(false); setNewRdvSlot(null); setShowSettings(true); }}
         initialDate={newRdvSlot?.date ?? currentDate}
         initialHour={newRdvSlot?.hour}
         googleAccounts={calendarStatus.googleAccounts}
@@ -365,7 +330,6 @@ export function AgendaPage({ userId }: { userId: string }) {
       <NewRdvDialog
         open={!!editEvent}
         onClose={() => setEditEvent(null)}
-        onCreateEvent={handleCreateEvent}
         onRefreshEvents={loadExternalEvents}
         googleAccounts={calendarStatus.googleAccounts}
         editEvent={editEvent ?? undefined}

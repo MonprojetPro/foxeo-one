@@ -235,7 +235,9 @@ describe('buildSystemPrompt', () => {
       const prompt = buildSystemPrompt({ dashboardType: 'one', communicationProfile: profileDefaut })
       expect(prompt).toContain('Navigation dashboard One')
       expect(prompt).toContain('Documents')
-      expect(prompt).toContain('Comptabilité')
+      expect(prompt).toContain("Suivi de l'outil")
+      // Refonte 2026-07-03 : plus d'onglet Comptabilité côté One (factures → Paramètres → Mes factures)
+      expect(prompt).not.toContain('**Comptabilité**')
     })
 
     it('Task 4.4 — inclut le message pour module non activé', () => {

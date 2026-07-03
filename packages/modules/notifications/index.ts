@@ -23,6 +23,8 @@ export { getNotificationPrefs } from './actions/get-notification-prefs'
 export { updateNotificationPrefs } from './actions/update-notification-prefs'
 export { setOperatorOverride } from './actions/set-operator-override'
 export { checkNotificationAllowed } from './actions/check-notification-allowed'
+export { sendGraduationNotification } from './actions/send-graduation-notification'
+export { sendGraduationEmail } from './actions/send-email'
 
 // Components (prefs)
 export { NotificationPrefsPage } from './components/notification-prefs-page'

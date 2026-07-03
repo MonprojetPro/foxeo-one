@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { newConversation, sendToElio, saveElioMessage } from "@monprojetpro/module-elio";
 import { createGoogleCalendarEvent } from "@/app/(dashboard)/modules/agenda/actions/calendar";
+import type { CalendarEvent } from "./agenda-types";
 
 interface DynamicFilter {
   key: string;

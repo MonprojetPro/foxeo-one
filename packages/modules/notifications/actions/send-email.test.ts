@@ -1,103 +1,93 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { interpolateTemplate } from './send-email'
 
 const mockSingle = vi.fn()
+const mockInsert = vi.fn()
 const mockFrom = vi.fn()
-const mockInvoke = vi.fn()
 
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
-    auth: {
-      getUser: vi.fn(async () => ({ data: { user: { id: 'op-id' } }, error: null })),
-    },
     from: mockFrom,
-    functions: { invoke: mockInvoke },
   })),
 }))
 
 const CLIENT_STUB = {
   id: 'client-uuid',
+  auth_user_id: 'auth-user-uuid',
   name: 'Jean Dupont',
-  company: 'JD Consulting',
-  created_at: '2026-01-15T10:00:00Z',
-  graduated_at: '2026-03-01T10:00:00Z',
-  client_configs: [{ dashboard_type: 'one', active_modules: ['core-dashboard'] }],
-  client_instances: [{ instance_url: 'https://jean.monprojet-pro.com', active_modules: ['core-dashboard', 'chat'], tier: 'essentiel' }],
-  step_submissions: [{ id: 'sub-1' }, { id: 'sub-2' }, { id: 'sub-3' }],
 }
-
-describe('interpolateTemplate', () => {
-  it('remplace les variables {{key}} par leurs valeurs', () => {
-    const template = 'Bonjour {{clientName}}, bienvenue dans {{product}} !'
-    const result = interpolateTemplate(template, { clientName: 'Marie', product: 'MonprojetPro One' })
-    expect(result).toBe('Bonjour Marie, bienvenue dans MonprojetPro One !')
-  })
-
-  it('préserve {{key}} si la variable est absente', () => {
-    const template = 'Bonjour {{name}} !'
-    const result = interpolateTemplate(template, {})
-    expect(result).toBe('Bonjour {{name}} !')
-  })
-
-  it('remplace toutes les occurrences', () => {
-    const template = '{{x}} + {{x}} = double {{x}}'
-    const result = interpolateTemplate(template, { x: '2' })
-    expect(result).toBe('2 + 2 = double 2')
-  })
-})
 
 describe('sendGraduationEmail', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
 
-    mockFrom.mockReturnValue({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({ single: mockSingle })),
-      })),
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'clients') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({ single: mockSingle })),
+          })),
+        }
+      }
+      if (table === 'notifications') {
+        return { insert: mockInsert }
+      }
+      return {}
     })
     mockSingle.mockResolvedValue({ data: CLIENT_STUB, error: null })
-    mockInvoke.mockResolvedValue({ data: { sent: true }, error: null })
+    mockInsert.mockResolvedValue({ error: null })
   })
 
-  it('retourne sent: true quand la Edge Function réussit', async () => {
+  it('retourne sent: true quand la notification graduation est créée', async () => {
     const { sendGraduationEmail } = await import('./send-email')
     const result = await sendGraduationEmail({ clientId: 'client-uuid' })
     expect(result.error).toBeNull()
     expect(result.data?.sent).toBe(true)
   })
 
-  it('appelle la Edge Function send-graduation-email sans clientEmail', async () => {
+  it('insère une notification type graduation adressée au auth_user_id (pas clients.id), avec title non vide', async () => {
     const { sendGraduationEmail } = await import('./send-email')
     await sendGraduationEmail({ clientId: 'client-uuid' })
-    expect(mockInvoke).toHaveBeenCalledWith(
-      'send-graduation-email',
-      expect.objectContaining({
-        body: expect.objectContaining({ clientId: 'client-uuid' }),
-      })
-    )
-    // Vérifie que clientEmail n'est PAS envoyé (l'email est géré par auth.users côté Edge Function)
-    const invokeBody = mockInvoke.mock.calls[0][1].body
-    expect(invokeBody).not.toHaveProperty('clientEmail')
+
+    expect(mockInsert).toHaveBeenCalledTimes(1)
+    const inserted = mockInsert.mock.calls[0][0]
+    expect(inserted).toMatchObject({
+      recipient_type: 'client',
+      recipient_id: 'auth-user-uuid', // convention : auth_user_id, jamais clients.id
+      type: 'graduation', // présent dans la liste CHECK de notifications.type
+    })
+    expect(typeof inserted.title).toBe('string')
+    expect(inserted.title.length).toBeGreaterThan(0) // title NOT NULL
   })
 
-  it('envoie labDuration et labStepsCompleted calculés (pas hardcodés)', async () => {
+  it("n'appelle PAS .select() après l'insert (RLS SELECT owner-only → 42501 sinon)", async () => {
     const { sendGraduationEmail } = await import('./send-email')
     await sendGraduationEmail({ clientId: 'client-uuid' })
-    const variables = mockInvoke.mock.calls[0][1].body.variables
-    // created_at: 2026-01-15, graduated_at: 2026-03-01 = ~45 jours
-    expect(variables.labDuration).toContain('jour')
-    expect(variables.labDuration).not.toBe('—')
-    expect(variables.labStepsCompleted).toBe('3') // 3 step_submissions in stub
+
+    // insert() est awaité directement — pas de chaînage .select()
+    const insertReturn = await mockInsert.mock.results[0].value
+    expect(insertReturn).toEqual({ error: null })
   })
 
-  it('retourne sent: false si la Edge Function échoue (non-bloquant)', async () => {
-    mockInvoke.mockResolvedValueOnce({ data: null, error: new Error('Resend error') })
+  it("retourne sent: false (non-bloquant) si l'insert de la notification échoue", async () => {
+    mockInsert.mockResolvedValueOnce({ error: { message: 'RLS error', code: '42501' } })
     const { sendGraduationEmail } = await import('./send-email')
     const result = await sendGraduationEmail({ clientId: 'client-uuid' })
     // Non-bloquant : error=null, sent=false
     expect(result.error).toBeNull()
     expect(result.data?.sent).toBe(false)
+  })
+
+  it('retourne sent: false (non-bloquant) si le client n\'a pas de auth_user_id', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: { ...CLIENT_STUB, auth_user_id: null },
+      error: null,
+    })
+    const { sendGraduationEmail } = await import('./send-email')
+    const result = await sendGraduationEmail({ clientId: 'client-uuid' })
+    expect(result.error).toBeNull()
+    expect(result.data?.sent).toBe(false)
+    expect(mockInsert).not.toHaveBeenCalled()
   })
 
   it('retourne VALIDATION_ERROR si clientId vide', async () => {

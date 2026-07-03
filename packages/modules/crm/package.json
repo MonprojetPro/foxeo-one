@@ -26,6 +26,7 @@
     "@monprojetpro/ui": "*",
     "@monprojetpro/utils": "*",
     "@monprojetpro/supabase": "*",
+    "@monprojetpro/modules-notifications": "*",
     "@tanstack/react-query": "^5.90.0",
     "@hookform/resolvers": "^3.9.0",
     "react-hook-form": "^7.71.0",

@@ -725,3 +725,13 @@
 - **Solution** : avant le replace, lire `pg_proc.proconfig` (`SELECT proname, proconfig FROM pg_proc WHERE proname = '...'`) et **ré-inclure la même clause** dans la définition : `... $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;`. Vérifier après coup que `proconfig` vaut toujours `["search_path=public"]` et qu'il n'y a pas de surcharge en double (sinon PostgREST 300).
 - **Regle a suivre** : pour CHAQUE `CREATE OR REPLACE FUNCTION` sur une fonction SECURITY DEFINER existante → check `proconfig` AVANT, re-déclarer `SET search_path` DANS la définition, re-check `proconfig` APRÈS. Gate CERBÈRE permanente.
 - **Agents impliques** : CERBÈRE (gate), SPARK, ATLAS
+
+### [SEC-003] REVOKE FROM anon ne suffit pas — le grant PUBLIC implicite laisse la RPC exécutable
+- **Date** : 2026-07-03
+- **Projet** : MonprojetPro
+- **Categorie** : Supabase / sécurité fonctions
+- **Symptome** : après `REVOKE EXECUTE ON FUNCTION approve_validation_request FROM anon`, l'ACL (`pg_proc.proacl`) contenait encore `=X/postgres` = grant **PUBLIC** par défaut de Postgres sur les fonctions → `anon` héritait toujours du droit d'exécution malgré le REVOKE ciblé.
+- **Cause racine** : Postgres accorde EXECUTE à PUBLIC par défaut à la création d'une fonction. Révoquer un rôle précis (anon) ne retire pas l'héritage via PUBLIC.
+- **Solution** : migration complémentaire `REVOKE EXECUTE ... FROM PUBLIC;` (sans risque si `authenticated`/`service_role` ont leurs grants explicites). Vérifier ensuite `proacl` : ni `anon=`, ni entrée commençant par `=X`.
+- **Regle a suivre** : pour verrouiller une RPC : (1) `REVOKE ... FROM PUBLIC` ET `FROM anon`, (2) grants explicites aux rôles voulus, (3) vérif `proacl`. ⚠️ Probable dette générale : la plupart des 32 fonctions SECURITY DEFINER du schéma ont ce grant PUBLIC implicite (cf. docs/audit-2026-07-03-a-etudier.md §⑤.4).
+- **Agents impliques** : CERBÈRE, SPARK, ATLAS

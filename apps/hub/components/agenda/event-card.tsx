@@ -6,10 +6,9 @@ interface EventCardProps {
   event: CalendarEvent;
   compact?: boolean;
   onClick: (event: CalendarEvent) => void;
-  onLaunch?: (event: CalendarEvent) => void;
 }
 
-export function EventCard({ event, compact, onClick, onLaunch }: EventCardProps) {
+export function EventCard({ event, compact, onClick }: EventCardProps) {
   const colorClasses = SOURCE_COLORS[event.source];
   const pad = (n: number) => n.toString().padStart(2, "0");
   const timeStr = `${pad(event.startHour)}:${pad(event.startMinute)} - ${pad(event.endHour)}:${pad(event.endMinute)}`;
@@ -48,25 +47,11 @@ export function EventCard({ event, compact, onClick, onLaunch }: EventCardProps)
       <p className="text-[10px] opacity-70">{timeStr}</p>
       <p className="text-xs font-medium leading-tight">{event.title}</p>
       {event.subtitle && <p className="text-[10px] opacity-70 mt-0.5">{event.subtitle}</p>}
-      <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-        {event.clientType === "lab" && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#E07856]/20 text-[#E07856] font-medium">Lab</span>
-        )}
-        {event.clientType === "one" && (
-          <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#F7931E]/20 text-[#F7931E] font-medium">One</span>
-        )}
-        {event.source === "google" && (
+      {event.source === "google" && (
+        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
           <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#F7931E]/20 text-[#F7931E] font-medium">Google</span>
-        )}
-        {event.source === "monprojetpro" && onLaunch && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onLaunch(event); }}
-            className="ml-auto text-[10px] px-2 py-0.5 rounded bg-primary/20 text-primary hover:bg-primary/30 font-medium transition-colors"
-          >
-            Lancer →
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

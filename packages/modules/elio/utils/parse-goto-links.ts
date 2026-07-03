@@ -10,20 +10,28 @@
  * Volontairement sans dépendance React : testable isolément, réutilisable côté UI.
  */
 
-/** Mapping CLE de navigation → route réelle du dashboard client. */
+/**
+ * Mapping CLE de navigation → route réelle du dashboard client.
+ *
+ * ⚠️ Chaque clé DOIT pointer vers une page qui EXISTE côté client, sinon le bouton mène au
+ * catch-all « module non déployé » ou à un 404. Les clés autorisées sont annoncées à Élio
+ * dans ONE_NAVIGATION_MAP (seul le prompt One émet des jetons ; les clés communes — chat,
+ * visio, documents, support, tableau-de-bord — restent valides en mode Lab).
+ *
+ * Nettoyage 2026-07-03 : retrait des destinations mortes (`elio` : la page a été remplacée
+ * par la pop-up unique et le rendu goto est un simple <Link> — pas d'ouverture de pop-up ;
+ * `crm`, `agenda`, `membres`, `sms`, `presences` : aucune page client n'existe) ; remap
+ * `facturation` → Paramètres → Mes factures (le module Comptabilité ne cible plus le One).
+ */
 export const GOTO_ROUTES: Record<string, string> = {
   'tableau-de-bord': '/',
   chat: '/modules/chat',
-  visio: '/modules/visio',
-  elio: '/modules/elio',
   documents: '/modules/documents',
-  facturation: '/modules/facturation',
-  crm: '/modules/crm',
+  visio: '/modules/visio',
+  'suivi-outil': '/modules/suivi-outil',
   support: '/modules/support',
-  agenda: '/modules/agenda',
-  membres: '/modules/membres',
-  sms: '/modules/sms',
-  presences: '/modules/presences',
+  parametres: '/settings',
+  facturation: '/settings/billing', // « Mes factures » — abonnement MPP + historique des factures
 }
 
 export interface GotoLink {

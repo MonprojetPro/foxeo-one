@@ -7,30 +7,32 @@ import {
   errorResponse,
 } from '@monprojetpro/types'
 
-/**
- * Interpole les variables dans un template HTML.
- * Remplace {{variable}} par la valeur correspondante.
- */
-export function interpolateTemplate(
-  template: string,
-  variables: Record<string, string>
-): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
-    return variables[key] ?? `{{${key}}}`
-  })
-}
-
 export interface GraduationEmailInput {
   clientId: string
 }
 
 /**
- * Server Action — Envoie l'email de graduation via Supabase Edge Function.
+ * Server Action — Envoie l'email de graduation via l'Edge Function `send-email`
+ * (déjà déployée), en reproduisant le pattern standard du repo :
  *
- * Appelle la fonction Edge 'send-graduation-email' qui gère l'envoi Resend.
- * L'envoi email est non-bloquant : une erreur d'envoi est loggée mais ne
- * bloque pas la graduation (AC : "ne bloque pas l'action").
- * Retourne toujours { data, error } — jamais throw.
+ * INSERT d'une notification `type: 'graduation'` → le trigger DB
+ * `trg_send_email_on_notification` (migrations 00024 + 20260610162608) invoque
+ * automatiquement `send-email` avec `{ notificationId }`, qui rend le template
+ * graduation (personnalisé en base via `email_templates.graduation`, sinon HTML
+ * intégré) et envoie via Resend. Les préférences email du client
+ * (`email_notifications_enabled`) sont respectées côté Edge Function.
+ *
+ * ⚠️ Ne PAS appeler en plus de `sendGraduationNotification` pour le même client :
+ * la notification client créée par cette dernière déclenche DÉJÀ l'email de
+ * graduation via le même trigger. Cette action sert de voie explicite/fallback
+ * quand la notification in-app n'a pas pu être créée (sinon email en double).
+ *
+ * Convention notifications (règle projet) : recipient_id = auth_user_id
+ * (jamais clients.id), type présent dans la liste CHECK, title NOT NULL,
+ * INSERT sans `.select()` (la policy SELECT est owner-only → 42501 sinon).
+ *
+ * L'envoi est non-bloquant : une erreur est loggée mais ne bloque pas la
+ * graduation. Retourne toujours { data, error } — jamais throw.
  */
 export async function sendGraduationEmail(
   input: GraduationEmailInput
@@ -43,19 +45,10 @@ export async function sendGraduationEmail(
 
   const supabase = await createServerSupabaseClient()
 
-  // Charger les infos du client pour construire l'email
+  // Charger le client pour résoudre son auth_user_id (destinataire)
   const { data: client, error: clientError } = await supabase
     .from('clients')
-    .select(`
-      id,
-      name,
-      company,
-      created_at,
-      graduated_at,
-      client_configs(dashboard_type, active_modules),
-      client_instances(instance_url, active_modules, tier),
-      step_submissions(id)
-    `)
+    .select('id, auth_user_id, name')
     .eq('id', clientId)
     .single()
 
@@ -64,61 +57,27 @@ export async function sendGraduationEmail(
     return errorResponse('Client introuvable', 'NOT_FOUND', clientError)
   }
 
-  // Calcul durée Lab (de la création du client à la graduation)
-  const graduatedAt = client.graduated_at ? new Date(client.graduated_at) : new Date()
-  const graduationDate = graduatedAt.toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  if (!client.auth_user_id) {
+    // Client sans compte auth (pas encore activé) → pas d'email possible
+    console.error(
+      '[NOTIFICATIONS:EMAIL:GRADUATION] Client sans auth_user_id, email non envoyé:',
+      clientId
+    )
+    return successResponse({ sent: false })
+  }
+
+  // INSERT sans .select() — le trigger DB invoque l'Edge Function send-email
+  const { error: insertError } = await supabase.from('notifications').insert({
+    recipient_type: 'client',
+    recipient_id: client.auth_user_id,
+    type: 'graduation',
+    title: 'Félicitations ! Votre espace MonprojetPro One est prêt !',
+    body: 'Votre parcours Lab est terminé. Découvrez votre nouvel espace One.',
+    link: '/',
   })
 
-  const instance = Array.isArray(client.client_instances)
-    ? client.client_instances[0]
-    : client.client_instances
-  const instanceUrl = instance?.instance_url ?? 'https://app.monprojet-pro.com'
-
-  const modules: string[] = Array.isArray(instance?.active_modules)
-    ? instance.active_modules
-    : ['core-dashboard']
-
-  const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-  const modulesHtml = modules
-    .map((m: string) => `<span class="module-tag">${escapeHtml(m)}</span>`)
-    .join('\n        ')
-
-  // Calcul durée Lab (created_at → graduated_at)
-  const createdAt = (client as Record<string, unknown>).created_at
-    ? new Date((client as Record<string, unknown>).created_at as string)
-    : null
-  const labDurationDays = createdAt
-    ? Math.max(1, Math.round((graduatedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)))
-    : null
-  const labDuration = labDurationDays
-    ? `${labDurationDays} jour${labDurationDays > 1 ? 's' : ''}`
-    : '—'
-
-  // Nombre d'étapes Lab soumises
-  const submissions = Array.isArray(client.step_submissions) ? client.step_submissions : []
-  const labStepsCompleted = submissions.length > 0 ? String(submissions.length) : '—'
-
-  // Appel Edge Function pour envoi email (Resend)
-  const { error: fnError } = await supabase.functions.invoke('send-graduation-email', {
-    body: {
-      clientId,
-      variables: {
-        clientName: client.name ?? 'Cher(e) client(e)',
-        companyName: client.company ?? '',
-        labDuration,
-        labStepsCompleted,
-        graduationDate,
-        modules: modulesHtml,
-        instanceUrl,
-      },
-    },
-  })
-
-  if (fnError) {
-    console.error('[NOTIFICATIONS:EMAIL:GRADUATION] Edge function error:', fnError)
+  if (insertError) {
+    console.error('[NOTIFICATIONS:EMAIL:GRADUATION] Notification insert error:', insertError)
     // Non-bloquant : on log mais on retourne succès partiel
     return successResponse({ sent: false })
   }

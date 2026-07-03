@@ -13,6 +13,13 @@ const mockParcoursMaybeSingle = vi.fn()
 const mockActivityInsert = vi.fn().mockResolvedValue({ error: null })
 const mockClientsUpdate = vi.fn()
 const mockConfigUpdate = vi.fn()
+const mockSendGraduationNotification = vi.fn()
+const mockSendGraduationEmail = vi.fn()
+
+vi.mock('@monprojetpro/modules-notifications', () => ({
+  sendGraduationNotification: (input: unknown) => mockSendGraduationNotification(input),
+  sendGraduationEmail: (input: unknown) => mockSendGraduationEmail(input),
+}))
 
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
@@ -102,6 +109,13 @@ describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', (
     mockConfigUpdate.mockReturnValue({
       eq: vi.fn(() => ({ error: null })),
     })
+
+    // Graduation notifications (non-blocking)
+    mockSendGraduationNotification.mockResolvedValue({
+      data: { clientNotified: true, operatorNotified: true },
+      error: null,
+    })
+    mockSendGraduationEmail.mockResolvedValue({ data: { sent: true }, error: null })
   })
 
   it('should return INVALID_INPUT for invalid UUID', async () => {
@@ -274,6 +288,48 @@ describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', (
     await graduateClient(validInput)
 
     expect(touchedClientInstances).toBe(false)
+  })
+
+  it('should send graduation notification (client + operator) after successful graduation', async () => {
+    const { graduateClient } = await import('./graduate-client')
+    const result = await graduateClient(validInput)
+
+    expect(result.error).toBeNull()
+    expect(mockSendGraduationNotification).toHaveBeenCalledTimes(1)
+    expect(mockSendGraduationNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: CLIENT_UUID,
+        operatorId: OPERATOR_UUID,
+        modulesCount: 2,
+        tier: 'essentiel',
+      })
+    )
+    // La notification client type 'graduation' déclenche déjà l'email via le
+    // trigger DB → send-email. Pas de fallback appelé = pas d'email en double.
+    expect(mockSendGraduationEmail).not.toHaveBeenCalled()
+  })
+
+  it('should fall back to sendGraduationEmail when the client notification could not be created', async () => {
+    mockSendGraduationNotification.mockResolvedValueOnce({
+      data: { clientNotified: false, operatorNotified: true },
+      error: null,
+    })
+
+    const { graduateClient } = await import('./graduate-client')
+    const result = await graduateClient(validInput)
+
+    expect(result.error).toBeNull()
+    expect(mockSendGraduationEmail).toHaveBeenCalledWith({ clientId: CLIENT_UUID })
+  })
+
+  it('should still succeed when graduation notifications throw (non-blocking)', async () => {
+    mockSendGraduationNotification.mockRejectedValueOnce(new Error('boom'))
+
+    const { graduateClient } = await import('./graduate-client')
+    const result = await graduateClient(validInput)
+
+    expect(result.error).toBeNull()
+    expect(result.data?.status).toBe('graduated')
   })
 
   it('should return GRADUATION_ERROR when clients update fails and rollback', async () => {

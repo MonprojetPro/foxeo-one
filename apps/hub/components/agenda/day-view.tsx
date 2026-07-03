@@ -1,5 +1,5 @@
 'use client'
-import { CalendarEvent, CalendarFilter } from "./agenda-types";
+import { CalendarEvent } from "./agenda-types";
 import { EventCard } from "./event-card";
 import { isSameDay } from "date-fns";
 
@@ -8,14 +8,12 @@ const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 7h → 22h
 interface DayViewProps {
   currentDate: Date;
   events: CalendarEvent[];
-  filters: CalendarFilter;
   onEventClick: (e: CalendarEvent) => void;
-  onLaunch: (e: CalendarEvent) => void;
   onSlotClick?: (date: Date, hour: number) => void;
 }
 
-export function DayView({ currentDate, events, filters, onEventClick, onLaunch, onSlotClick }: DayViewProps) {
-  const filteredEvents = events.filter((e) => filters[e.source] && isSameDay(e.date, currentDate));
+export function DayView({ currentDate, events, onEventClick, onSlotClick }: DayViewProps) {
+  const filteredEvents = events.filter((e) => isSameDay(e.date, currentDate));
 
   return (
     <div className="h-full overflow-y-auto">
@@ -34,7 +32,7 @@ export function DayView({ currentDate, events, filters, onEventClick, onLaunch, 
                   const height = (durationMinutes / 60) * 64;
                   return (
                     <div key={event.id} className="absolute left-1 right-1 z-10" style={{ top: `${topOffset}px`, height: `${height}px` }}>
-                      <EventCard event={event} onClick={onEventClick} onLaunch={onLaunch} />
+                      <EventCard event={event} onClick={onEventClick} />
                     </div>
                   );
                 })}

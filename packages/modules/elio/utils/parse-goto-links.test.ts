@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseGotoLinks } from './parse-goto-links'
+import { parseGotoLinks, GOTO_ROUTES } from './parse-goto-links'
 
 describe('parseGotoLinks', () => {
   it('retourne le texte intact et aucun lien quand il n\'y a pas de jeton', () => {
@@ -10,15 +10,15 @@ describe('parseGotoLinks', () => {
 
   it('extrait un jeton valide et le retire du texte', () => {
     const { text, links } = parseGotoLinks(
-      'Vos factures sont dans Comptabilité. [[goto:facturation|Ouvrir ma comptabilité]]'
+      'Vos factures sont dans Paramètres → Mes factures. [[goto:facturation|Voir mes factures]]'
     )
     expect(links).toHaveLength(1)
     expect(links[0]).toEqual({
       key: 'facturation',
-      label: 'Ouvrir ma comptabilité',
-      href: '/modules/facturation',
+      label: 'Voir mes factures',
+      href: '/settings/billing',
     })
-    expect(text).toBe('Vos factures sont dans Comptabilité.')
+    expect(text).toBe('Vos factures sont dans Paramètres → Mes factures.')
     expect(text).not.toContain('[[goto')
   })
 
@@ -47,5 +47,35 @@ describe('parseGotoLinks', () => {
       '[[goto:chat|Chat MiKL]] ou [[goto:visio|Réserver une visio]]'
     )
     expect(links.map((l) => l.key)).toEqual(['chat', 'visio'])
+  })
+
+  it('gère les clés à tiret (suivi-outil)', () => {
+    const { links } = parseGotoLinks('L\'avancement est là. [[goto:suivi-outil|Voir le suivi]]')
+    expect(links[0]?.href).toBe('/modules/suivi-outil')
+  })
+
+  it('ignore les anciennes clés mortes (elio, crm, agenda, membres, sms, presences) et retire leurs jetons', () => {
+    for (const key of ['elio', 'crm', 'agenda', 'membres', 'sms', 'presences']) {
+      const { text, links } = parseGotoLinks(`Va voir [[goto:${key}|Ouvrir]]`)
+      expect(links).toEqual([])
+      expect(text).not.toContain('[[goto')
+    }
+  })
+
+  it('GOTO_ROUTES ne référence que des pages client existantes', () => {
+    // Pages réelles de apps/client/app/(dashboard) — si une page bouge, mettre à jour ici ET GOTO_ROUTES.
+    const EXISTING_CLIENT_ROUTES = new Set([
+      '/',
+      '/modules/chat',
+      '/modules/documents',
+      '/modules/visio',
+      '/modules/suivi-outil',
+      '/modules/support',
+      '/settings',
+      '/settings/billing',
+    ])
+    for (const [key, route] of Object.entries(GOTO_ROUTES)) {
+      expect(EXISTING_CLIENT_ROUTES.has(route), `clé "${key}" → route inconnue "${route}"`).toBe(true)
+    }
   })
 })

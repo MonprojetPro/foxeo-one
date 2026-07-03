@@ -16,7 +16,7 @@ interface MeetingRow {
   title: string | null
   scheduled_at: string | null
   status: string
-  session_id: string | null
+  meet_uri: string | null
   clients: { company: string } | { company: string }[] | null
 }
 
@@ -121,7 +121,7 @@ async function getHubStats(operatorId: string) {
 
   const { data: meetings } = await supabase
     .from('meetings')
-    .select('id, title, scheduled_at, status, session_id, clients(company)')
+    .select('id, title, scheduled_at, status, meet_uri, clients(company)')
     .eq('operator_id', operatorId)
     .gte('scheduled_at', todayStart.toISOString())
     .lte('scheduled_at', todayEnd.toISOString())
@@ -420,8 +420,8 @@ export default async function HubHomePage() {
                   time={formatTime(m.scheduled_at)}
                   title={m.title ?? 'Réunion'}
                   detail={getClientName(m.clients) || undefined}
-                  actionLabel={m.session_id ? 'Rejoindre' : undefined}
-                  actionHref={m.session_id ? `/modules/visio/${m.session_id}` : undefined}
+                  actionLabel={m.meet_uri ? 'Rejoindre' : 'Détails'}
+                  actionHref={`/modules/visio/${m.id}`}
                   badgeText={isLive ? 'En cours' : isSoon ? `Dans ${minsUntil} min` : undefined}
                 />
               )

@@ -1,5 +1,5 @@
 'use client'
-import { CalendarEvent, CalendarFilter } from "./agenda-types";
+import { CalendarEvent } from "./agenda-types";
 import { EventCard } from "./event-card";
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -7,18 +7,15 @@ import { fr } from "date-fns/locale";
 interface MonthViewProps {
   currentDate: Date;
   events: CalendarEvent[];
-  filters: CalendarFilter;
   onEventClick: (e: CalendarEvent) => void;
-  onLaunch: (e: CalendarEvent) => void;
 }
 
-export function MonthView({ currentDate, events, filters, onEventClick, onLaunch }: MonthViewProps) {
+export function MonthView({ currentDate, events, onEventClick }: MonthViewProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
   const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
   const today = new Date();
-  const filteredEvents = events.filter((e) => filters[e.source]);
 
   const days: Date[] = [];
   let d = calStart;
@@ -44,7 +41,7 @@ export function MonthView({ currentDate, events, filters, onEventClick, onLaunch
       {weeks.map((week, wi) => (
         <div key={wi} className="grid grid-cols-7 min-h-[100px]">
           {week.map((day) => {
-            const dayEvents = filteredEvents.filter((e) => isSameDay(e.date, day));
+            const dayEvents = events.filter((e) => isSameDay(e.date, day));
             const inMonth = isSameMonth(day, currentDate);
             const isToday = isSameDay(day, today);
             return (
@@ -54,7 +51,7 @@ export function MonthView({ currentDate, events, filters, onEventClick, onLaunch
                 </p>
                 <div className="space-y-0.5">
                   {dayEvents.slice(0, 3).map((event) => (
-                    <EventCard key={event.id} event={event} compact onClick={onEventClick} onLaunch={onLaunch} />
+                    <EventCard key={event.id} event={event} compact onClick={onEventClick} />
                   ))}
                   {dayEvents.length > 3 && (
                     <p className="text-[9px] text-muted-foreground">+{dayEvents.length - 3} autres</p>

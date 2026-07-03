@@ -7,8 +7,12 @@ describe('LAB_NAVIGATION_MAP', () => {
     expect(LAB_NAVIGATION_MAP).toContain('Chat MiKL')
     expect(LAB_NAVIGATION_MAP).toContain('Visio')
     expect(LAB_NAVIGATION_MAP).toContain('Documents')
-    expect(LAB_NAVIGATION_MAP).toContain('Comptabilité')
+    expect(LAB_NAVIGATION_MAP).toContain('Paramètres → Mes factures')
     expect(LAB_NAVIGATION_MAP).toContain('Paramètres → Consentements')
+  })
+
+  it('ne décrit plus Comptabilité comme un onglet du menu (module retiré du client)', () => {
+    expect(LAB_NAVIGATION_MAP).not.toContain('**Comptabilité**')
   })
 
   it('ne contient AUCUNE adresse technique /modules/…', () => {
