@@ -20,6 +20,12 @@ const KINDS = [
   { value: 'custom', label: 'Sur-mesure' },
 ]
 
+const FAMILIES = [
+  { value: '', label: 'Toutes familles' },
+  { value: 'relation', label: '🔵 Relation (socle)' },
+  { value: 'cockpit', label: '🟢 Cockpit (devis)' },
+]
+
 export function CatalogFilters({ filters, onChange }: CatalogFiltersProps) {
   return (
     <div className="flex flex-wrap gap-3">
@@ -43,6 +49,18 @@ export function CatalogFilters({ filters, onChange }: CatalogFiltersProps) {
         {KINDS.map((k) => (
           <option key={k.value} value={k.value} className="bg-gray-900">
             {k.label}
+          </option>
+        ))}
+      </select>
+
+      <select
+        value={filters.family ?? ''}
+        onChange={(e) => onChange({ ...filters, family: (e.target.value || undefined) as 'relation' | 'cockpit' | undefined })}
+        className="rounded border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white"
+      >
+        {FAMILIES.map((f) => (
+          <option key={f.value} value={f.value} className="bg-gray-900">
+            {f.label}
           </option>
         ))}
       </select>

@@ -54,6 +54,13 @@ export { useClientModules, useToggleClientModule, useApplyClientModuleConfig } f
 export { useCatalogAnalytics } from './hooks/use-catalog-analytics'
 export type { CatalogAnalyticsEntry } from './hooks/use-catalog-analytics'
 
+// Clients One — vision v2 (remplace la vue « Instances One », provisioning abandonné)
+export { ClientsOneList } from './components/clients-one-list'
+export { listOneClients } from './actions/list-one-clients'
+export type { OneClientEntry } from './actions/list-one-clients'
+export { setOneStatus } from './actions/set-one-status'
+export { useOneClients, useSetOneStatus, useApplyOneSetup, ONE_SETUP_MODULES } from './hooks/use-one-clients'
+
 // Impersonation (Story 13.3)
 export { startImpersonation } from './actions/start-impersonation'
 export type { ImpersonationResult } from './actions/start-impersonation'

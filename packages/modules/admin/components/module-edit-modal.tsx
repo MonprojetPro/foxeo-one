@@ -20,8 +20,8 @@ export function ModuleEditModal({ module, onClose }: ModuleEditModalProps) {
     description: module?.description ?? '',
     category: module?.category ?? 'business',
     kind: module?.kind ?? 'custom',
+    family: module?.family ?? 'cockpit' as 'relation' | 'cockpit',
     setup_price_ht: module?.setup_price_ht ?? 0,
-    monthly_price_ht: module?.monthly_price_ht ?? null as number | null,
     is_default: module?.is_default ?? false,
     is_active: module?.is_active ?? true,
     requires_modules: module?.requires_modules ?? [],
@@ -35,7 +35,8 @@ export function ModuleEditModal({ module, onClose }: ModuleEditModalProps) {
       {
         ...(module?.id ? { id: module.id } : {}),
         ...formData,
-        monthly_price_ht: formData.monthly_price_ht,
+        // Vision v2 : plus d'abonnement à la carte par module — offres One/One+ fixes
+        monthly_price_ht: null,
         manifest_path: module?.manifest_path ?? null,
       },
       {
@@ -123,31 +124,27 @@ export function ModuleEditModal({ module, onClose }: ModuleEditModalProps) {
             </div>
           </div>
 
-          {/* Prices */}
+          {/* Famille + prix setup */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-sm text-gray-400">Prix setup HT (€)</label>
+              <label className="mb-1 block text-sm text-gray-400">Famille (vision v2)</label>
+              <select
+                value={formData.family}
+                onChange={(e) => updateField('family', e.target.value as 'relation' | 'cockpit')}
+                className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+              >
+                <option value="relation" className="bg-gray-900">🔵 Relation — socle universel</option>
+                <option value="cockpit" className="bg-gray-900">🟢 Cockpit — sur-mesure au devis</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-gray-400">Prix setup HT (€) — base devis</label>
               <input
                 type="number"
                 min={0}
                 step={0.01}
                 value={formData.setup_price_ht}
                 onChange={(e) => updateField('setup_price_ht', parseFloat(e.target.value) || 0)}
-                className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-gray-400">Prix mensuel HT (€)</label>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
-                value={formData.monthly_price_ht ?? ''}
-                onChange={(e) => {
-                  const val = e.target.value
-                  updateField('monthly_price_ht', val === '' ? null : parseFloat(val) || 0)
-                }}
-                placeholder="Pas d'abonnement"
                 className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
               />
             </div>

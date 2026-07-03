@@ -1,24 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import { InstancesList, CatalogList, CatalogAnalyticsWidgets } from '@monprojetpro/module-admin'
+import { ClientsOneList, CatalogList, CatalogAnalyticsWidgets } from '@monprojetpro/module-admin'
 
-type AdminTab = 'catalog' | 'catalog-analytics' | 'instances'
+// Vision One v2 (2026-06-24) : le Hub ne provisionne plus d'« instances » (abandonné).
+// Il pilote des CLIENTS One (offre, cycle chantier → livré, modules) et le catalogue
+// FORGE des briques réutilisables.
+type AdminTab = 'clients-one' | 'catalog' | 'catalog-analytics'
 
 const TABS: { id: AdminTab; label: string }[] = [
+  { id: 'clients-one', label: 'Clients One' },
   { id: 'catalog', label: 'Catalogue modules' },
   { id: 'catalog-analytics', label: 'Analytics catalogue' },
-  { id: 'instances', label: 'Instances One' },
 ]
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<AdminTab>('instances')
+  const [activeTab, setActiveTab] = useState<AdminTab>('clients-one')
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-white">Instances &amp; Catalogue</h1>
-        <p className="text-sm text-gray-400">Provisioning des instances One et catalogue des modules</p>
+        <h1 className="text-xl font-semibold text-white">One — Clients &amp; Catalogue</h1>
+        <p className="text-sm text-gray-400">
+          Pilotage des clients One (offre, chantier → livré, modules) et catalogue FORGE des briques
+        </p>
       </div>
 
       {/* Tabs */}
@@ -41,9 +46,9 @@ export default function AdminPage() {
 
       {/* Tab content */}
       <div>
+        {activeTab === 'clients-one' && <ClientsOneList />}
         {activeTab === 'catalog' && <CatalogList />}
         {activeTab === 'catalog-analytics' && <CatalogAnalyticsWidgets />}
-        {activeTab === 'instances' && <InstancesList />}
       </div>
     </div>
   )

@@ -14,6 +14,8 @@ export interface ModuleCatalogEntry {
   description: string | null
   category: string
   kind: 'catalog' | 'custom'
+  /** Vision v2 : 'relation' = socle universel | 'cockpit' = brique sur-mesure au devis */
+  family: 'relation' | 'cockpit'
   setup_price_ht: number
   monthly_price_ht: number | null
   is_default: boolean
@@ -27,6 +29,7 @@ export interface ModuleCatalogEntry {
 export interface ListModuleCatalogFilters {
   category?: string
   kind?: 'catalog' | 'custom'
+  family?: 'relation' | 'cockpit'
   isActive?: boolean
 }
 
@@ -58,6 +61,9 @@ export async function listModuleCatalog(
     }
     if (filters?.kind) {
       query = query.eq('kind', filters.kind)
+    }
+    if (filters?.family) {
+      query = query.eq('family', filters.family)
     }
     if (filters?.isActive !== undefined) {
       query = query.eq('is_active', filters.isActive)

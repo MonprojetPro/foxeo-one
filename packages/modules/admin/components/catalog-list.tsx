@@ -14,6 +14,18 @@ function formatPrice(price: number | null): string {
   return `${price.toLocaleString('fr-FR')}€`
 }
 
+function FamilyBadge({ family }: { family: 'relation' | 'cockpit' }) {
+  return family === 'relation' ? (
+    <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/15 px-2 py-0.5 text-xs font-medium text-blue-300" title="Socle universel — inclus dans l'abonnement One/One+">
+      🔵 Relation
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-300" title="Brique sur-mesure — facturée au devis">
+      🟢 Cockpit
+    </span>
+  )
+}
+
 function CategoryBadge({ category }: { category: string }) {
   const colors: Record<string, string> = {
     business: 'bg-blue-500/20 text-blue-300',
@@ -82,12 +94,12 @@ export function CatalogList() {
           <thead>
             <tr className="border-b border-white/10 bg-white/5 text-left text-gray-400">
               <th className="px-4 py-3 font-medium">Module</th>
+              <th className="px-4 py-3 font-medium">Famille</th>
               <th className="px-4 py-3 font-medium">Catégorie</th>
               <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium text-right">Setup HT</th>
-              <th className="px-4 py-3 font-medium text-right">Mensuel HT</th>
+              <th className="px-4 py-3 font-medium text-right" title="Base de chiffrage pour les devis — les offres One/One+ sont des abonnements fixes">Setup HT (devis)</th>
               <th className="px-4 py-3 font-medium text-center">Clients</th>
-              <th className="px-4 py-3 font-medium text-center">Défaut</th>
+              <th className="px-4 py-3 font-medium text-center" title="Inclus dans le socle One">Socle</th>
               <th className="px-4 py-3 font-medium text-center">Actif</th>
               <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
@@ -105,6 +117,9 @@ export function CatalogList() {
                   )}
                 </td>
                 <td className="px-4 py-3">
+                  <FamilyBadge family={mod.family} />
+                </td>
+                <td className="px-4 py-3">
                   <CategoryBadge category={mod.category} />
                 </td>
                 <td className="px-4 py-3">
@@ -113,12 +128,10 @@ export function CatalogList() {
                   </Badge>
                 </td>
                 <td className="px-4 py-3 text-right text-white">
-                  {formatPrice(mod.setup_price_ht)}
-                </td>
-                <td className="px-4 py-3 text-right text-white">
-                  {formatPrice(mod.monthly_price_ht)}
-                  {mod.monthly_price_ht !== null && mod.monthly_price_ht > 0 && (
-                    <span className="text-gray-500">/mois</span>
+                  {mod.family === 'relation' && mod.is_default ? (
+                    <span className="text-xs text-gray-500" title="Inclus dans l'abonnement One/One+">Inclus</span>
+                  ) : (
+                    formatPrice(mod.setup_price_ht)
                   )}
                 </td>
                 <td className="px-4 py-3 text-center text-sm text-white">

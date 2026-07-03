@@ -7,28 +7,33 @@ import {
   errorResponse,
 } from '@monprojetpro/types'
 
-/** Manifests connus du monorepo — source de verite code */
+/**
+ * Manifests connus du monorepo — source de verite code.
+ *
+ * Doctrine FORGE (vision v2 2026-06-24 + purge 2026-07-03) : le catalogue ne liste
+ * QUE les briques client réellement développées. Les outils internes du Hub
+ * (admin, analytics, crm, email, templates, validation-hub) n'entrent PAS au rayon —
+ * leur code vit dans packages/modules/ mais ils ne sont pas des modules vendables.
+ * `family` : 'relation' = socle universel (lien client ↔ MiKL) | 'cockpit' = brique
+ * sur-mesure au devis.
+ */
 const KNOWN_MANIFESTS: Array<{
   module_key: string
   name: string
   category: string
+  family: 'relation' | 'cockpit'
   manifest_path: string
 }> = [
-  { module_key: 'core-dashboard', name: 'Dashboard', category: 'business', manifest_path: 'packages/modules/core-dashboard/manifest.ts' },
-  { module_key: 'chat', name: 'Chat', category: 'communication', manifest_path: 'packages/modules/chat/manifest.ts' },
-  { module_key: 'documents', name: 'Documents', category: 'business', manifest_path: 'packages/modules/documents/manifest.ts' },
-  { module_key: 'elio', name: 'Élio — Assistant IA', category: 'integration', manifest_path: 'packages/modules/elio/manifest.ts' },
-  { module_key: 'crm', name: 'CRM', category: 'business', manifest_path: 'packages/modules/crm/manifest.ts' },
-  { module_key: 'facturation', name: 'Comptabilité', category: 'business', manifest_path: 'packages/modules/facturation/manifest.ts' },
-  { module_key: 'visio', name: 'Visioconférence', category: 'communication', manifest_path: 'packages/modules/visio/manifest.ts' },
-  { module_key: 'email', name: 'Email', category: 'communication', manifest_path: 'packages/modules/email/manifest.ts' },
-  { module_key: 'validation-hub', name: 'Validation Hub', category: 'business', manifest_path: 'packages/modules/validation-hub/manifest.ts' },
-  { module_key: 'analytics', name: 'Analytics', category: 'business', manifest_path: 'packages/modules/analytics/manifest.ts' },
-  { module_key: 'templates', name: 'Templates', category: 'business', manifest_path: 'packages/modules/templates/manifest.ts' },
-  { module_key: 'notifications', name: 'Notifications', category: 'integration', manifest_path: 'packages/modules/notifications/manifest.ts' },
-  { module_key: 'parcours', name: 'Parcours Lab', category: 'business', manifest_path: 'packages/modules/parcours/manifest.ts' },
-  { module_key: 'support', name: 'Support', category: 'communication', manifest_path: 'packages/modules/support/manifest.ts' },
-  { module_key: 'admin', name: 'Administration', category: 'integration', manifest_path: 'packages/modules/admin/manifest.ts' },
+  { module_key: 'core-dashboard', name: 'Dashboard', category: 'business', family: 'relation', manifest_path: 'packages/modules/core-dashboard/manifest.ts' },
+  { module_key: 'chat', name: 'Chat', category: 'communication', family: 'relation', manifest_path: 'packages/modules/chat/manifest.ts' },
+  { module_key: 'documents', name: 'Documents', category: 'business', family: 'relation', manifest_path: 'packages/modules/documents/manifest.ts' },
+  { module_key: 'elio', name: 'Élio — Assistant IA', category: 'integration', family: 'relation', manifest_path: 'packages/modules/elio/manifest.ts' },
+  { module_key: 'facturation', name: 'Comptabilité', category: 'business', family: 'cockpit', manifest_path: 'packages/modules/facturation/manifest.ts' },
+  { module_key: 'visio', name: 'Visioconférence', category: 'communication', family: 'relation', manifest_path: 'packages/modules/visio/manifest.ts' },
+  { module_key: 'notifications', name: 'Notifications', category: 'integration', family: 'relation', manifest_path: 'packages/modules/notifications/manifest.ts' },
+  { module_key: 'parcours', name: 'Parcours Lab', category: 'business', family: 'relation', manifest_path: 'packages/modules/parcours/manifest.ts' },
+  { module_key: 'support', name: 'Support', category: 'communication', family: 'relation', manifest_path: 'packages/modules/support/manifest.ts' },
+  { module_key: 'suivi-outil', name: 'Suivi de l\'outil', category: 'communication', family: 'relation', manifest_path: 'packages/modules/suivi-outil/manifest.ts' },
 ]
 
 export interface SyncResult {
@@ -81,6 +86,7 @@ export async function syncModuleCatalogFromManifests(): Promise<ActionResponse<S
             description: null,
             category: manifest.category,
             kind: 'catalog',
+            family: manifest.family,
             manifest_path: manifest.manifest_path,
           })
 

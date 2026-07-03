@@ -15,6 +15,7 @@ const UpsertModuleCatalogInput = z.object({
   description: z.string().max(1000).nullable().optional(),
   category: z.enum(['business', 'communication', 'integration']),
   kind: z.enum(['catalog', 'custom']),
+  family: z.enum(['relation', 'cockpit']).default('relation'),
   setup_price_ht: z.number().min(0).default(0),
   monthly_price_ht: z.number().min(0).nullable().optional(),
   is_default: z.boolean().default(false),
