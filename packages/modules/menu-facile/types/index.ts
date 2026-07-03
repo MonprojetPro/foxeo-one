@@ -195,6 +195,35 @@ export interface OfficialRecipeDetail {
   steps?: RecipeStepInput[]
 }
 
+// --- GET/PUT /home-banner (Encart libre d'accueil) -------------------------
+
+export type BannerTextColor = 'light' | 'dark'
+
+/**
+ * Encart libre affiché en tête de l'accueil de l'appli MenuFacile.
+ * - AVEC `image_url` → grande bannière (image en fond + voile réglable + texte).
+ * - SANS `image_url` → bloc coloré dégradé vert→tangerine (le voile et
+ *   `text_color` sont alors ignorés côté appli).
+ * Contrat aligné sur le guichet admin-api : GET renvoie l'objet complet,
+ * PUT accepte un corps PARTIEL (seuls les champs modifiés).
+ */
+export interface HomeBanner {
+  enabled: boolean
+  title: string
+  body: string
+  image_url: string
+  link_url: string
+  link_label: string
+  /** Intensité du voile 0–100 (défaut 65). N'agit que sur la bannière image. */
+  overlay_strength: number
+  /** Couleur du texte sur bannière image (défaut « light »). */
+  text_color: BannerTextColor
+  updated_at?: string
+}
+
+/** Corps PUT /home-banner — partiel : uniquement les champs modifiés. */
+export type HomeBannerInput = Partial<Omit<HomeBanner, 'updated_at'>>
+
 /** Corps POST /official-recipes (name + seasons requis) et PATCH (tout optionnel). */
 export interface OfficialRecipeInput {
   name: string

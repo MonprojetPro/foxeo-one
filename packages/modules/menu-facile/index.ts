@@ -8,9 +8,11 @@ export { RecipesTab } from './components/recipes-tab'
 export { MessagesTab } from './components/messages-tab'
 export { RecipeFormModal } from './components/recipe-form-modal'
 export { MetricCard } from './components/metric-card'
+export { HomeBannerTab } from './components/home-banner-tab'
 
 // Data
 export { useMenuFacileMetrics } from './hooks/use-menu-facile-metrics'
+export { useHomeBanner, useHomeBannerActions } from './hooks/use-home-banner'
 export { useReports, useModerationActions, useRecipeFull } from './hooks/use-moderation'
 export { useContactMessages, useContactThread, useContactActions } from './hooks/use-contact-messages'
 export { useOfficialRecipes, useOfficialRecipe, useOfficialRecipeActions } from './hooks/use-official-recipes'
@@ -33,6 +35,8 @@ export {
   updateOfficialRecipe,
   deleteOfficialRecipe,
 } from './actions/official-recipes'
+export { getHomeBanner, updateHomeBanner } from './actions/home-banner'
+export { uploadBannerImage } from './actions/upload-banner-image'
 
 // Types (le helper serveur `callMenuFacileAdmin` n'est PAS ré-exporté : server-only).
 export type {
@@ -57,4 +61,7 @@ export type {
   RecipeIngredientInput,
   RecipeStepInput,
   OfficialRecipeInput,
+  HomeBanner,
+  HomeBannerInput,
+  BannerTextColor,
 } from './types'
