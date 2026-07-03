@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ActivityLogs, MaintenanceMode, SystemHealth, WebhooksPlaceholder, ApiPlaceholder } from '@monprojetpro/module-admin'
+import { ActivityLogs, MaintenanceMode, SystemHealth, BackupStatus, WebhooksPlaceholder, ApiPlaceholder } from '@monprojetpro/module-admin'
 
 type SystemTab = 'maintenance' | 'logs' | 'monitoring' | 'backups' | 'webhooks' | 'api'
 
@@ -49,11 +49,7 @@ export default function SystemPage() {
         {activeTab === 'maintenance' && <MaintenanceMode />}
         {activeTab === 'logs' && <ActivityLogs />}
         {activeTab === 'monitoring' && <SystemHealth />}
-        {activeTab === 'backups' && (
-          <div className="rounded bg-white/5 border border-white/10 px-6 py-8 text-center text-sm text-gray-500">
-            Module Backups — disponible Story 12.2
-          </div>
-        )}
+        {activeTab === 'backups' && <BackupStatus />}
         {activeTab === 'webhooks' && <WebhooksPlaceholder />}
         {activeTab === 'api' && <ApiPlaceholder />}
       </div>
