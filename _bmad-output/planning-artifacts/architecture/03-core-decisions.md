@@ -73,13 +73,12 @@ Aucun cas gris autorisé.
 | Décision | Choix | Rationale |
 |----------|-------|-----------|
 | **CI/CD frontend** | Vercel (auto-deploy Git) + GitHub Actions (lint, tests) | Push → checks → deploy auto |
-| **Environnements** | 3 : development (local), preview (Vercel PR), production | Supabase : 1 projet dev + N projets prod (1 Lab + 1 par client One) |
-| **Déploiement Lab** | Instance unique Vercel → `lab.monprojet-pro.com` | Multi-tenant, DB partagée, RLS inter-client |
-| **Déploiement One** | Instance Vercel par client → `{slug}.monprojet-pro.com` | Instance dédiée, DB propre, propriété client |
-| **Déploiement Hub** | Instance unique Vercel → `hub.monprojet-pro.com` | Communique avec Lab et instances One via API/webhooks |
+| **Environnements** | 3 : development (local), preview (Vercel PR), production | Supabase : 1 projet dev + 1 projet prod partagé (Hub + Lab + One). *(Révisé 2026-07-06 — ADR-01 Rév. 2 : plus de projet par client One ; seule l'offre ① Ponctuel produit un standalone dédié via le kit de sortie)* |
+| **Déploiement Lab + One** | Déploiement unique Vercel `apps/client` → `app.monprojet-pro.com` | Multi-tenant (RLS), DB partagée. Lab et One servis par le même déploiement ; la graduation est une bascule de flag `dashboard_type`, pas un provisioning *(Révisé 2026-07-06 — ADR-01 Rév. 2 + vision One v2)* |
+| **Déploiement Hub** | Instance unique Vercel → `hub.monprojet-pro.com` | Communique avec l'app client via la base Supabase partagée (+ Realtime) |
 | **VPS services** | Docker Compose sur VPS unique (Scaleway/OVH) | OpenVidu + Cal.com. Intégrés dès le MVP |
 | **Facturation SaaS** | Pennylane API v2 (Cloud) | Facturation, devis, abonnements, comptabilité, conformité facturation électronique sept. 2026. Synchronisation par polling (Edge Function cron 5min) — pas de webhooks publics disponibles |
-| **Monitoring usage** | Supabase Edge Function (cron) + alertes seuils | Surveillance capacité par instance One (60%/80%/95%) |
+| **Monitoring usage** | Supabase Edge Function (cron) + alertes seuils | Surveillance santé système globale (health-check cron 5 min) — plus de monitoring « par instance » *(Révisé 2026-07-06)* |
 | **Monitoring app** | Vercel Analytics + Supabase Dashboard + Sentry | 3 outils gratuits/low-cost, couvrent l'essentiel |
 | **Env variables** | .env.local (dev) + Vercel Env (prod) + Supabase Vault (secrets) | Jamais de secrets dans le code |
 

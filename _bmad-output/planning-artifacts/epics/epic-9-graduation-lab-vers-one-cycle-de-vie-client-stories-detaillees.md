@@ -1,5 +1,13 @@
 # Epic 9 : Graduation Lab vers One & Cycle de Vie Client — Stories detaillees
 
+> ⚠️ **PARTIELLEMENT OBSOLÈTE (note du 2026-07-06)** — Ce document décrit le modèle
+> « provisioning d'une instance dédiée » ABANDONNÉ par l'ADR-01 Rév. 2 (2026-04-13) et la
+> Vision One v2 (2026-06-24, `docs/one-vision-v2-2026-06-24.md`). Réalité implémentée :
+> graduation = bascule du flag `dashboard_type` (même déploiement, même base, RLS) ; pas de
+> transfert d'instance ni de propriété du code (le client accède via abonnement One/One+).
+> Conserver ce fichier uniquement comme trace historique des stories — ne pas s'en servir
+> comme référence d'architecture.
+
 **Objectif :** Les clients transitent de Lab vers One avec **provisioning d'une instance dediee** (Supabase + Vercel) et migration complete du contexte. MiKL gere le cycle de vie complet (abandon parcours, changement tier abonnement, export RGPD, transfert instance, retention donnees).
 
 **FRs couverts:** FR74, FR75, FR76, FR88, FR91, FR92, FR93, **FR157, FR161, FR166, FR167, FR168**

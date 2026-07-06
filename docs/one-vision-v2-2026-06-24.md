@@ -152,7 +152,7 @@ qu'il génère derrière**. → Le One ② peut être volontairement **peu cher*
 
 1. **Sources de métriques** des cockpits : décidées **projet par projet** (pas de choix figé pour éviter les coquilles vides).
 2. **Posture exacte d'Élio One** : préciser la frontière « assistant d'usage des outils » vs « collecteur de demandes d'évolution ».
-3. **Nettoyage doc** : mettre à jour `epic-list.md` (contredit l'ADR-01 : parle encore d'instances dédiées).
+3. ~~**Nettoyage doc** : mettre à jour `epic-list.md` (contredit l'ADR-01 : parle encore d'instances dédiées).~~ ✅ **Fait le 2026-07-06** : `epic-list.md` réaligné (Epics 1, 9, 10, 12 + note de révision), `architecture/03-core-decisions.md` corrigé (tableau déploiement multi-tenant unique), note d'obsolescence en tête de `epic-9-...-stories-detaillees.md`. Les rapports datés (readiness, impact-assessment) sont conservés tels quels comme archives.
 4. **Plan de construction** : par quoi on commence pour matérialiser cette vision (socle propre + 1er cockpit type ?).
 ```
 

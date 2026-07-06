@@ -1,7 +1,15 @@
 # Epic List
 
+> **Révision 2026-07-06** — aligné sur l'ADR-01 Rév. 2 (2026-04-13) et la Vision One v2
+> (2026-06-24, `docs/one-vision-v2-2026-06-24.md`). Les formulations « instance dédiée par
+> client », « provisioning », « le client est propriétaire de son code » sont OBSOLÈTES :
+> Lab ET One sont multi-tenant (RLS) sur un déploiement unique ; la graduation est un
+> changement de flag ; le client accède au One via abonnement (One 39€ / One+ 99€) et ne
+> possède pas l'outil. Seule l'offre ① Ponctuel produit un standalone dédié (dès le départ).
+> Les listes de FRs sont conservées telles quelles comme références historiques du PRD.
+
 ## Epic 1 : Fondation Plateforme & Authentification
-MiKL et les clients peuvent acceder aux dashboards MonprojetPro de maniere securisee avec isolation des donnees, design responsive et dark mode "Minimal Futuriste". Setup monorepo + packages partages, migrations Supabase, dashboard shell avec module registry, auth (2FA MiKL, login client), RLS Lab, middleware, CGU/consentements, multi-device, etats vides, messages confirmation, robustesse. **Modele dual** : Lab multi-tenant (RLS) + One instance par client. Communication Hub↔Instances via API REST + HMAC.
+MiKL et les clients peuvent acceder aux dashboards MonprojetPro de maniere securisee avec isolation des donnees, design responsive et dark mode "Minimal Futuriste". Setup monorepo + packages partages, migrations Supabase, dashboard shell avec module registry, auth (2FA MiKL, login client), RLS Lab, middleware, CGU/consentements, multi-device, etats vides, messages confirmation, robustesse. **Modèle unique multi-tenant** : Lab et One servis par le même déploiement `apps/client` (isolation RLS), Hub et app client sur la même base Supabase partagée.
 **FRs couverts:** FR52, FR53, FR54, FR55, FR56, FR73, FR82, FR108, FR112, FR113, FR114, FR117, FR118, FR119, FR134, FR140, FR141, FR142, FR143, FR151, FR152, **FR155**
 
 ## Epic 2 : Gestion de la Relation Client (CRM Hub)
@@ -33,19 +41,19 @@ MiKL et les clients beneficient d'une assistance IA contextuelle adaptee a leur 
 **FRs couverts:** FR21, FR22, FR23, FR24, FR25, FR44, FR45, FR46, FR47, FR48, FR49, FR50, FR51, FR66, FR67, FR68, FR69, FR83, FR87, FR122, FR123, FR124, FR125, FR126
 
 ## Epic 9 : Graduation Lab vers One & Cycle de Vie Client
-Les clients transitent de Lab vers One avec **provisioning d'une instance dediee** (Supabase + Vercel) et migration complete du contexte. MiKL gere le cycle de vie complet (abandon, changement tier, export RGPD, retention). **Le client quitte One** avec code + DB + documentation. Lab = propriete MonprojetPro (client recupere uniquement ses documents).
+Les clients transitent de Lab vers One par **simple bascule de flag** (`dashboard_type` lab→one) : même déploiement, même base, même session — seuls le jeu d'onglets et le thème changent (transition animée). MiKL gere le cycle de vie complet (abandon, changement d'offre One/One+, export RGPD, retention). **Kit de sortie Lab uniquement** : le client peut repartir à tout moment avec ses documents validés (self-service). Pas de kit de sortie One (vision v2) : le client accède à son One via abonnement et ne possède pas l'outil.
 **FRs couverts:** FR74, FR75, FR76, FR88, FR91, FR92, FR93, **FR157, FR161, FR166, FR167, FR168**
 
-## Epic 10 : Dashboard One & Modules Commerciaux
-Les clients etablis accedent a un dashboard personnalise **deploye sur leur instance dediee** avec des modules metier activables (signature Yousign, calendrier sync, branding, site web, SEO, reseaux sociaux, maintenance). **Le client est proprietaire** de son code et de ses donnees.
+## Epic 10 : Dashboard One & Modules
+Les clients etablis accedent a leur dashboard One **sur le déploiement multi-tenant unique** : console de pilotage de leurs livrables + canal de lien permanent avec MiKL (vision v2). Modules organisés en deux familles : 🔵 **Relation** (socle universel inclus dans l'abonnement : dashboard, chat, documents, visio, support, Élio, suivi de l'outil, notifications) et 🟢 **Cockpit** (briques sur-mesure au devis, bibliothèque FORGE). Cycle de vie visuel « en chantier → livré ». Le client accède via abonnement ; il ne devient propriétaire d'un outil standalone que via l'offre ① Ponctuel.
 **FRs couverts:** FR38, FR39, FR40, FR41, FR42, FR43, FR139, **FR154**
 
 ## Epic 11 : Facturation & Abonnements
 MiKL et les clients gerent devis, factures et abonnements via Pennylane API v2 (SaaS) avec Stripe connecte pour les paiements CB. Synchronisation par polling intelligent (Edge Function cron 5min). Inclut le forfait Lab a 199€ (paiement unique, deduction setup One). Conformite facturation electronique sept. 2026 geree nativement par Pennylane.
 **FRs couverts:** FR77, FR78, FR94, FR95, FR96, FR97, FR98, **FR169, FR170**
 
-## Epic 12 : Administration, Analytics, Templates & Monitoring Instances
-MiKL pilote la plateforme avec outils d'administration, **monitoring des instances One** (usage, seuils, upgrade), analytics, templates personnalisables, **verification documentation obligatoire** et preparation des integrations futures. **Provisioning** de nouvelles instances One depuis le Hub.
+## Epic 12 : Administration, Analytics, Templates & Pilotage One
+MiKL pilote la plateforme avec outils d'administration, **vue « Clients One »** (offre One/One+, bascule chantier→livré, setup modules en 1 clic), **catalogue FORGE** des briques réutilisables (familles Relation/Cockpit), analytics, templates personnalisables, **verification documentation obligatoire** et preparation des integrations futures. (Le provisioning d'instances dédiées est abandonné — ADR-01 Rév. 2 + vision v2.)
 **FRs couverts:** FR102, FR103, FR104, FR105, FR115, FR116, FR120, FR121, FR137, FR138, FR147, FR148, **FR155, FR156, FR158, FR159, FR160, FR162, FR163, FR164, FR165**
 
 ---
