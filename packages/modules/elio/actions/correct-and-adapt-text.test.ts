@@ -79,6 +79,25 @@ describe('correctAndAdaptText (Story 8.6 — Task 2)', () => {
     expect(typeof result.data).toBe('string')
   })
 
+  it('Fix systemPrompt vide — envoie un systemPrompt NON vide et le texte dans message', async () => {
+    mockInvoke.mockResolvedValueOnce({ data: { content: 'ok' }, error: null })
+
+    const { correctAndAdaptText } = await import('./correct-and-adapt-text')
+    await correctAndAdaptText('Thomas', 'texte à corriger')
+
+    expect(mockInvoke).toHaveBeenCalledWith(
+      'elio-chat',
+      expect.objectContaining({
+        body: expect.objectContaining({
+          systemPrompt: expect.stringContaining('assistant de rédaction'),
+          message: expect.stringContaining('texte à corriger'),
+        }),
+      }),
+    )
+    const body = mockInvoke.mock.calls[0]![1].body as { systemPrompt: string }
+    expect(body.systemPrompt.length).toBeGreaterThan(0)
+  })
+
   it('Task 2.2 — retourne CLIENT_NOT_FOUND si aucun client trouvé', async () => {
     const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockImplementationOnce(async () => ({

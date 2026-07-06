@@ -267,6 +267,38 @@ describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', (
     })
   })
 
+  it('écrit elio_tier=one_plus + subscription_tier=agentique pour une graduation One+ (grille v2, Contrat 6)', async () => {
+    let capturedConfigUpdate: Record<string, unknown> | null = null
+    mockConfigUpdate.mockImplementation((payload: Record<string, unknown>) => {
+      capturedConfigUpdate = payload
+      return { eq: vi.fn(() => ({ error: null })) }
+    })
+
+    const { graduateClient } = await import('./graduate-client')
+    await graduateClient({ ...validInput, tier: 'agentique' })
+
+    expect(capturedConfigUpdate).toMatchObject({
+      elio_tier: 'one_plus',
+      subscription_tier: 'agentique',
+    })
+  })
+
+  it('écrit elio_tier=one + subscription_tier=essentiel pour une graduation One', async () => {
+    let capturedConfigUpdate: Record<string, unknown> | null = null
+    mockConfigUpdate.mockImplementation((payload: Record<string, unknown>) => {
+      capturedConfigUpdate = payload
+      return { eq: vi.fn(() => ({ error: null })) }
+    })
+
+    const { graduateClient } = await import('./graduate-client')
+    await graduateClient(validInput)
+
+    expect(capturedConfigUpdate).toMatchObject({
+      elio_tier: 'one',
+      subscription_tier: 'essentiel',
+    })
+  })
+
   it('should NOT touch the deprecated client_instances table (multi-tenant model)', async () => {
     let touchedClientInstances = false
     const { createServerSupabaseClient } = await import('@monprojetpro/supabase')

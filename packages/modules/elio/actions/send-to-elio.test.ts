@@ -334,7 +334,10 @@ describe('sendToElio — Story 8.9b — generate_document (One+)', () => {
     // Default mock: maybeSingle returns { data: null } → tier = 'one'
     const result = await sendToElio('one', 'Génère une attestation de présence pour Marie', 'client-1')
     expect(result.error).toBeNull()
-    expect(result.data?.content).toContain('One+')
+    // Fix pré-existant : depuis la décision MiKL 2026-06-26, UPSELL_ONE_PLUS_MESSAGE
+    // ne mentionne plus « One+ » — l'automatisation est du sur-mesure via MiKL.
+    expect(result.data?.content).toContain('sur mesure')
+    expect(result.data?.content).toContain('MiKL')
   })
 
   it('Task 9.2 — message non reconnu comme generate_document sur One passe au LLM normal', async () => {

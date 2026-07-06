@@ -15,7 +15,7 @@ MiKL (Hub)
   │   ├─ googleMeetClient.spaces.create({ config: { accessType: 'TRUSTED' } })
   │   ├─ Récupère meetingUri + meet_space_name
   │   ├─ INSERT meetings (status='scheduled', meet_uri, meet_space_name)
-  │   └─ Notification client (type='meeting_scheduled')
+  │   └─ Notification client (type='system' — 'meeting_scheduled' n'est pas dans la CHECK notifications)
   │
   └─ Liste se rafraîchit (TanStack Query invalidation)
 ```
@@ -85,14 +85,34 @@ MiKL (Hub) — après la visio Google Meet
 Client (Lab ou One)
   │
   ├─ Onglet Visio → widget Cal.com intégré
+  │   └─ (One+) Bandeau au-dessus du widget : « Il te reste N séance(s) incluse(s) »
+  │       ou « crédit épuisé — prochaine séance 45 € »
   │
   ├─ Sélectionne un créneau dans l'agenda MiKL
   │
-  ├─ Cal.com envoie webhook → calcom-webhook [Edge Function]
-  │   ├─ createMeeting() avec les données Cal.com
-  │   └─ Notification client + MiKL
+  ├─ Cal.com envoie webhook → calcom-webhook [Edge Function, service_role]
+  │   ├─ INSERT meetings (status='scheduled', metadata.calcomUid)
+  │   ├─ Si client One+ (elio_tier='one_plus') → séance de COACHING :
+  │   │   ├─ UPDATE meetings.type='coaching'
+  │   │   ├─ get_coaching_balance() > 0 → ledger -1 (session_booked)
+  │   │   └─ sinon → INSERT billable_items (coaching_session, 4500 cts, pending)
+  │   └─ Notification client (type='system', wording adapté : incluse / hors forfait 45 €)
   │
-  └─ Meeting apparaît dans "Prochain meeting" côté client
+  └─ Meeting apparaît côté client (cockpit One : carte Visio + carte Coaching, en Realtime)
+```
+
+## Flow 6bis : Annulation d'un RDV Cal.com
+
+```
+Cal.com envoie webhook BOOKING_CANCELLED → calcom-webhook [Edge Function]
+  │
+  ├─ Retrouve le meeting via metadata.calcomUid → UPDATE status='cancelled'
+  │
+  ├─ Si type='coaching' :
+  │   ├─ Séance débitée (ledger session_booked) → recrédit +1 (session_cancelled)
+  │   └─ Séance hors forfait → billable_items.status='cancelled'
+  │
+  └─ Notification client (« RDV annulé », mention du recrédit le cas échéant)
 ```
 
 ## Flow 7 : Prise de RDV côté client — Pas de créneau disponible

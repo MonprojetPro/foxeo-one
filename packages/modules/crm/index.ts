@@ -55,6 +55,7 @@ export { ClientBrandingTab } from './components/client-branding-tab'
 export { ClientLabTabContent } from './components/client-lab-tab-content'
 export { ClientAdminTabContent } from './components/client-admin-tab-content'
 export { ClientCockpitTab } from './components/client-cockpit-tab'
+export { CoachingCreditsPanel } from './components/coaching-credits-panel'
 
 // Hooks
 export { useClients } from './hooks/use-clients'
@@ -116,6 +117,13 @@ export { getElioObservations, type ElioObservation } from './actions/get-elio-ob
 export { updateClientBranding } from './actions/update-client-branding'
 export { getClientBranding } from './actions/get-client-branding'
 export { updateOwnBranding } from './actions/update-own-branding'
+export {
+  getCoachingCreditsInfo,
+  setCoachingMonthlyCredits,
+  addCoachingCredits,
+  type CoachingCreditsInfo,
+  type CoachingLedgerEntry,
+} from './actions/coaching-credits'
 
 // Utils
 export {

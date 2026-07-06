@@ -12,6 +12,7 @@ import {
   type GraduateClientInput,
   type GraduationResult,
 } from '../types/graduation.types'
+import { mapTierToElio } from '../utils/tier-helpers'
 
 /**
  * Graduate a client from Lab to One.
@@ -94,17 +95,20 @@ export async function graduateClient(
     }
 
     // 6. Update client_configs — flip dashboard_type + activate toggle + disable Élio Lab
-    // ⚠️ Décision MiKL (2026-06-26) : Élio reste NON-agentique quel que soit le tier.
-    // L'agentique IA est désormais du CAS PAR CAS (au devis), jamais incluse via une offre.
-    // One+ = coaching humain (visio), sans effet sur le dash → elio_tier toujours 'one'.
-    // Le choix d'offre reste tracé dans activity_logs (metadata.tier) pour la facturation.
-    const elioTier = 'one'
+    // Grille v2 (Contrat 6, chantier 2026-07-06) : l'offre choisie à la graduation écrit
+    // le VRAI elio_tier — One (essentiel) → 'one', One+ (agentique) → 'one_plus' (coaching
+    // humain 1 visio/mois + crédits), Ponctuel (base) → null (pas d'Élio ni d'abonnement).
+    // L'agentique IA reste du cas par cas au devis (décision MiKL 2026-06-26) — 'one_plus'
+    // n'active AUCUNE capacité agentique, uniquement le volet coaching.
+    // subscription_tier est écrit aussi (source de la facturation One — grille v2).
+    const elioTier = mapTierToElio(tier)
 
     const { error: configUpdateError } = await supabase
       .from('client_configs')
       .update({
         dashboard_type: 'one',
         elio_tier: elioTier,
+        subscription_tier: tier,
         active_modules: activeModules,
         graduation_source: 'lab',
         // ADR-01 Révision 2 — Toggle Mode Lab/One disponible + Élio Lab off par défaut

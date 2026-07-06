@@ -17,8 +17,8 @@ describe('mapTierToElio', () => {
     expect(mapTierToElio('essentiel')).toBe('one')
   })
 
-  it('mappe agentique vers one (One+ ne donne plus d\'agentique — MiKL 2026-06-26)', () => {
-    expect(mapTierToElio('agentique')).toBe('one')
+  it('mappe agentique vers one_plus (grille v2 Contrat 6 — One+ = coaching humain, 2026-07-06)', () => {
+    expect(mapTierToElio('agentique')).toBe('one_plus')
   })
 })
 
@@ -32,8 +32,8 @@ describe('TIER_INFO', () => {
     expect(TIER_INFO.base.elio).toBe('Aucun')
   })
 
-  it('essentiel a le bon prix', () => {
-    expect(TIER_INFO.essentiel.price).toBe('49€/mois')
+  it('essentiel a le bon prix (grille v2 — One 39 €/mois)', () => {
+    expect(TIER_INFO.essentiel.price).toBe('39€/mois')
     expect(TIER_INFO.essentiel.elio).toBe('Elio One')
   })
 

@@ -22,6 +22,8 @@ import { loadModuleDocumentation } from './load-module-documentation'
 import { logTokenUsage } from './log-token-usage'
 import { getLabParcoursContext } from './get-lab-parcours-context'
 import { getOneContext } from './get-one-context'
+import { getLlmConfig } from './llm-config'
+import { DEFAULT_LLM_CONFIG } from '../types/llm-config.types'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
 
@@ -603,7 +605,24 @@ async function callLLM(
     history = agentOverrides.history.slice(-30)
   }
 
-  const model = agentOverrides?.model ?? elioConfig?.model ?? 'claude-sonnet-4-6'
+  // Config LLM multi-provider (Contrat 2) — profil `default`, fallback défauts Anthropic.
+  // Priorités du modèle : agentOverrides (explicite) > config client (Orpheus, uniquement
+  // si provider anthropic — un modèle claude-* n'a pas de sens chez un autre provider) >
+  // modèle du profil. Le Hub utilise DEFAULT_ELIO_CONFIG (pas une vraie config client) :
+  // la comparaison référentielle l'exclut, il suit donc le profil global.
+  const { data: llmConfig } = await getLlmConfig()
+  const llmProfile = llmConfig?.default ?? DEFAULT_LLM_CONFIG.default
+  const clientConfiguredModel =
+    elioConfig && (elioConfig as unknown) !== DEFAULT_ELIO_CONFIG ? elioConfig.model : undefined
+  const model =
+    agentOverrides?.model ??
+    (llmProfile.provider === 'anthropic' ? clientConfiguredModel : undefined) ??
+    llmProfile.model
+  const provider = {
+    name: llmProfile.provider,
+    ...(llmProfile.baseUrl ? { baseUrl: llmProfile.baseUrl } : {}),
+    apiKeyEnv: llmProfile.apiKeyEnv,
+  }
   // Anthropic Claude 4 : temperature strictement dans [0..1]
   const rawTemp = agentOverrides?.temperature ?? elioConfig?.temperature ?? 1.0
   const temperature = Math.min(1.0, Math.max(0, rawTemp))
@@ -623,6 +642,7 @@ async function callLLM(
         history,
         dashboardType,
         model,
+        provider,
         maxTokens: elioConfig?.maxTokens ?? 8192,
         temperature,
       },

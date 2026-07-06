@@ -1,4 +1,19 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+// Agent Élio Hub (chantier 2026-07-06) — coupe la chaîne d'imports serveur
+// (elio-chat → elio-hub-agent → hub-tools → menu-facile admin-client → server-only)
+// qui casserait la collecte du test. En prod Next.js, la frontière 'use server'
+// fait ce travail ; sous vitest on mocke, comme pour les autres actions.
+vi.mock('../actions/elio-hub-agent', () => ({
+  sendToElioHubAgent: vi.fn(async () => ({ data: null, error: null })),
+  confirmElioHubAction: vi.fn(async () => ({ data: null, error: null })),
+  rejectElioHubAction: vi.fn(async () => ({ data: null, error: null })),
+  getElioHubActions: vi.fn(async () => ({ data: [], error: null })),
+}))
+vi.mock('../hooks/use-elio-hub-actions', () => ({
+  useElioHubActions: () => ({ actions: [], isLoading: false, refetch: vi.fn() }),
+}))
+
 import {
   PALETTE_CLASSES,
   PALETTE_FOCUS_RING,

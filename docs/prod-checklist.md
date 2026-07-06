@@ -46,7 +46,8 @@
 
 À déployer via `npx supabase functions deploy <name>` ou via le MCP Supabase :
 
-- [ ] **`billing-sync`** — polling Pennylane (factures, devis à étendre dans une story future). Cron pg_cron toutes les 5 min à activer après déploiement.
+- [ ] **`billing-sync`** — polling Pennylane (factures, customers, **abonnements** depuis le chantier 2026-07-06 + pose de `client_id` sur toutes les rows). Cron pg_cron toutes les 5 min à activer après déploiement — voir section crons ci-dessous.
+- [ ] **`monthly-billing`** — accrual crédits coaching One+ + facturation des séances hors forfait (chantier 2026-07-06). Cron pg_cron le 1er du mois — voir section crons ci-dessous.
 - [ ] **`send-email`** — envoi des emails transactionnels via Resend (welcome-lab, welcome-one, final-payment-confirmation, validation, graduation, etc.). **CRITIQUE pour la story 13.4 — sans elle, aucun email d'invitation n'est envoyé.**
 - [ ] **`calcom-webhook`** — réception webhook Cal.com (rendez-vous prospect)
 - [ ] **`check-inactivity`** — détection clients Lab inactifs (cron quotidien)
@@ -71,20 +72,47 @@ Via `supabase secrets set` ou dashboard Supabase → Settings → Edge Functions
 - [ ] `EMAIL_FROM` — adresse expéditeur Resend (`MonprojetPro <contact@monprojet-pro.com>` — seule adresse valable du site)
 - [ ] `APP_URL` — URL de l'app cliente (ex: `https://app.monprojet-pro.com`)
 
-### Cron pg_cron à activer après déploiement billing-sync
+### Crons pg_cron facturation à activer (chantier 2026-07-06)
 
-Dans Supabase Studio → SQL Editor :
+> ⚠️ **VÉRIFIÉ EN PROD LE 2026-07-06 : `billing-sync-cron` n'a JAMAIS été planifié**
+> (absent de `cron.job`). La sync Pennylane ne tourne donc que sur déclenchement
+> manuel (`triggerBillingSync`). Les deux crons ci-dessous sont à créer.
+
+Dans Supabase Studio → SQL Editor (remplacer `<ANON_KEY>` par la clé anon du projet —
+même header Authorization que les crons existants type `health-check-cron-5min`) :
+
+**① billing-sync — toutes les 5 minutes :**
 ```sql
 SELECT cron.schedule(
   'billing-sync-cron',
   '*/5 * * * *',
   $$SELECT net.http_post(
     url:='https://mpgpwcpeqfwknohhqdmd.supabase.co/functions/v1/billing-sync',
-    headers:='{"Authorization":"Bearer <SERVICE_ROLE_KEY>","Content-Type":"application/json"}'::jsonb,
+    headers:='{"Authorization":"Bearer <ANON_KEY>","Content-Type":"application/json"}'::jsonb,
     body:='{}'::jsonb
   )$$
 );
 ```
+
+**② monthly-billing — le 1er du mois à 6h Europe/Paris :**
+
+pg_cron tourne en **UTC** : `0 5 1 * *` = 05:00 UTC = 6h Paris en hiver (CET) /
+7h en été (CEST). Pas de gestion DST dans pg_cron — l'heure exacte n'est pas
+critique (accrual + facturation mensuelle idempotentes).
+
+```sql
+SELECT cron.schedule(
+  'monthly-billing-cron',
+  '0 5 1 * *',
+  $$SELECT net.http_post(
+    url:='https://mpgpwcpeqfwknohhqdmd.supabase.co/functions/v1/monthly-billing',
+    headers:='{"Authorization":"Bearer <ANON_KEY>","Content-Type":"application/json"}'::jsonb,
+    body:='{}'::jsonb
+  )$$
+);
+```
+
+Vérification après création : `SELECT jobname, schedule FROM cron.job ORDER BY jobname;`
 
 ---
 

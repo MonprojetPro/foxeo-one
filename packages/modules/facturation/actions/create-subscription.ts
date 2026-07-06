@@ -4,46 +4,23 @@ import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
+import {
+  PLAN_MONTHLY_PRICE,
+  PLAN_LABEL,
+  PLAN_COMMERCIAL_NAME,
+  PLAN_TIER,
+  type SubscriptionPlan,
+  type RecurringPeriod,
+  type PaymentMethod,
+} from '../config/subscription-plans'
 import type { ActionResponse } from '@monprojetpro/types'
 import type { LineItem, PennylaneBillingSubscription } from '../types/billing.types'
 
 // ============================================================
-// Constantes locales — évite import inter-module depuis CRM
-// ============================================================
-
-export type SubscriptionPlan = 'ponctuel' | 'essentiel' | 'agentique'
-export type RecurringPeriod = 'monthly' | 'quarterly' | 'yearly'
-export type PaymentMethod = 'cb' | 'virement' | 'sepa'
-
-// Prix mensuel de base par plan (null = ponctuel variable)
-export const PLAN_MONTHLY_PRICE: Record<SubscriptionPlan, number | null> = {
-  ponctuel: null,
-  essentiel: 49,
-  agentique: 99,
-}
-
-// Mapping plan MonprojetPro → label Pennylane (1ère ligne)
-export const PLAN_LABEL: Record<SubscriptionPlan, string> = {
-  ponctuel: 'Forfait ponctuel',
-  essentiel: 'Abonnement Essentiel',
-  agentique: 'Abonnement Agentique',
-}
-
-export type ExtraModule = {
-  id: string
-  label: string
-  monthlyPrice: number
-}
-
-export const AVAILABLE_EXTRAS: ExtraModule[] = [
-  { id: 'visio', label: 'Module Visio', monthlyPrice: 19 },
-  { id: 'crm', label: 'Module CRM avancé', monthlyPrice: 15 },
-  { id: 'documents', label: 'Module Documents+', monthlyPrice: 10 },
-  { id: 'analytics', label: 'Module Analytics', monthlyPrice: 20 },
-]
-
-// ============================================================
 // createSubscription — crée un abonnement récurrent Pennylane
+// Grille v2 (Contrat 6) : One 39 € (essentiel), One+ 99 € (agentique).
+// Constantes de grille : ../config/subscription-plans.ts
+// (fichier 'use server' = exports async uniquement)
 // ============================================================
 
 export type CreateSubscriptionInput = {
@@ -51,7 +28,6 @@ export type CreateSubscriptionInput = {
   plan: SubscriptionPlan
   frequency: RecurringPeriod
   startDate: string // YYYY-MM-DD
-  extras: string[] // IDs des modules extras sélectionnés
   paymentMethod: PaymentMethod
   customAmount?: number | null // pour plan ponctuel (montant variable)
 }
@@ -80,7 +56,7 @@ export async function createSubscription(
 
   // ID corrompu ('undefined', non-numérique) → re-création automatique
   if (pennylaneCustomerId && isNaN(parseInt(pennylaneCustomerId, 10))) {
-    await supabase.from('clients').update({ pennylane_customer_id: null }).eq('id', clientId)
+    await supabase.from('clients').update({ pennylane_customer_id: null }).eq('id', input.clientId)
     pennylaneCustomerId = null
   }
 
@@ -105,35 +81,19 @@ export async function createSubscription(
     await supabase.from('clients').update({ pennylane_customer_id: pennylaneCustomerId }).eq('id', input.clientId)
   }
 
-  // Construire les line_items
+  // Construire les line_items — grille v2 : une seule ligne (plus d'extras)
   const basePrice = PLAN_MONTHLY_PRICE[input.plan] ?? (input.customAmount ?? 0)
-  const lineItems: LineItem[] = []
-
-  // Ligne 1 : forfait de base
-  lineItems.push({
-    label: PLAN_LABEL[input.plan],
-    description: null,
-    quantity: 1,
-    unit: 'mois',
-    unitPrice: basePrice,
-    vatRate: 'FR_200',
-    total: basePrice,
-  })
-
-  // Lignes extras : 1 ligne par module sélectionné
-  for (const extraId of input.extras) {
-    const extra = AVAILABLE_EXTRAS.find((e) => e.id === extraId)
-    if (!extra) continue
-    lineItems.push({
-      label: extra.label,
+  const lineItems: LineItem[] = [
+    {
+      label: PLAN_LABEL[input.plan],
       description: null,
       quantity: 1,
       unit: 'mois',
-      unitPrice: extra.monthlyPrice,
+      unitPrice: basePrice,
       vatRate: 'FR_200',
-      total: extra.monthlyPrice,
-    })
-  }
+      total: basePrice,
+    },
+  ]
 
   // POST /billing_subscriptions
   const subscriptionResult = await pennylaneClient.post<{
@@ -156,16 +116,10 @@ export async function createSubscription(
   const createdSub = subscriptionResult.data.billing_subscription
 
   // Mettre à jour client_configs.subscription_tier + pending_billing_update: false
-  const tierMap: Record<SubscriptionPlan, string> = {
-    ponctuel: 'base',
-    essentiel: 'essentiel',
-    agentique: 'agentique',
-  }
-
   const { error: configError } = await supabase
     .from('client_configs')
     .update({
-      subscription_tier: tierMap[input.plan],
+      subscription_tier: PLAN_TIER[input.plan],
       pending_billing_update: false,
     })
     .eq('client_id', input.clientId)
@@ -179,8 +133,8 @@ export async function createSubscription(
   if (clientAuthUserId) {
     const { error: notifError } = await supabase.from('notifications').insert({
       type: 'payment',
-      title: `Abonnement créé — ${PLAN_LABEL[input.plan]}`,
-      body: `Votre abonnement ${input.frequency === 'monthly' ? 'mensuel' : input.frequency === 'quarterly' ? 'trimestriel' : 'annuel'} est actif.`,
+      title: `Abonnement ${PLAN_COMMERCIAL_NAME[input.plan]} activé`,
+      body: `Votre abonnement ${PLAN_COMMERCIAL_NAME[input.plan]} ${input.frequency === 'monthly' ? 'mensuel' : input.frequency === 'quarterly' ? 'trimestriel' : 'annuel'} est actif.`,
       recipient_type: 'client',
       recipient_id: clientAuthUserId,
       link: '/modules/facturation',
@@ -205,7 +159,6 @@ export async function createSubscription(
       client_id: input.clientId,
       plan: input.plan,
       frequency: input.frequency,
-      extras: input.extras,
       payment_method: input.paymentMethod,
     },
   })

@@ -1,0 +1,3 @@
+[functions.monthly-billing]
+# Appelée uniquement par pg_cron avec un Bearer JWT (pattern health-check-cron).
+verify_jwt = true

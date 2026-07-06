@@ -20,6 +20,8 @@ import { saveElioMessage } from '../actions/save-elio-message'
 import { updateConversationTitle } from '../actions/update-conversation-title'
 import { deleteConversation } from '../actions/delete-conversation'
 import { sendToElio } from '../actions/send-to-elio'
+import { sendToElioHubAgent } from '../actions/elio-hub-agent'
+import { HubActionCards } from './hub-action-card'
 import { escalateToMiKL } from '../actions/escalate-to-mikl'
 import { submitEvolutionRequest } from '../actions/submit-evolution-request'
 import { getNextQuestion, processResponse, isCancel, type EvolutionCollectionData } from '../utils/evolution-collection'
@@ -633,8 +635,75 @@ function ElioChatPersisted({
 
     setIsLoading(true)
 
-    // Envoyer à Élio
-    const { data: elioMsg, error: sendError } = await sendToElio(dashboardType, content, clientId)
+    // ── Hub : boucle agent Élio Hub (outils réels + garde-fou, Contrat 4) ──────
+    if (dashboardType === 'hub') {
+      const { data: agentResult, error: agentError } = await sendToElioHubAgent({
+        conversationId: convId,
+        message: content,
+      })
+      setIsLoading(false)
+
+      if (agentError) {
+        setError(agentError as ElioError)
+        return
+      }
+
+      if (agentResult) {
+        const assistantContent =
+          agentResult.content.trim() ||
+          'Proposition enregistrée — la carte de validation est juste en dessous.'
+
+        // Metadata persistée en snake_case (relue camelCase via toCamelCase)
+        const persistedMetadata: Record<string, unknown> = {}
+        if (agentResult.pendingActions.length > 0) {
+          persistedMetadata.hub_action_ids = agentResult.pendingActions.map((a) => a.id)
+        }
+        if (agentResult.toolsUsed.length > 0) {
+          persistedMetadata.hub_tools_used = agentResult.toolsUsed
+        }
+        await saveElioMessage(convId, 'assistant', assistantContent, persistedMetadata)
+
+        setLocalMessages((prev) => [
+          ...prev,
+          {
+            id: makeId(),
+            role: 'assistant',
+            content: assistantContent,
+            createdAt: new Date().toISOString(),
+            dashboardType,
+            metadata: {
+              hubActionIds: agentResult.pendingActions.map((a) => a.id),
+              hubToolsUsed: agentResult.toolsUsed,
+            },
+          },
+        ])
+        // Rafraîchir les cartes d'action (les rows viennent d'être créées côté serveur)
+        void queryClient.invalidateQueries({ queryKey: ['elio-hub-actions', convId] })
+      }
+
+      const newHubCount = userMessageCount + 1
+      setUserMessageCount(newHubCount)
+      if (newHubCount === 1) {
+        void generateConversationTitle(convId, [content]).then(() => {
+          void invalidateConversations()
+        })
+      }
+      await invalidateMessages(convId)
+      setLocalMessages([])
+      return
+    }
+
+    // ── Lab / One : chemin sendToElio classique ─────────────────────────────────
+    // Fix mémoire : on passe le conversationId courant pour que callLLM charge
+    // l'historique persisté (avant : chaque message repartait de zéro).
+    const { data: elioMsg, error: sendError } = await sendToElio(
+      dashboardType,
+      content,
+      clientId,
+      undefined,
+      undefined,
+      { conversationId: convId },
+    )
     setIsLoading(false)
 
     if (sendError) {
@@ -802,14 +871,27 @@ function ElioChatPersisted({
                   />
                 ) : undefined
 
+              // Agent Élio Hub : outils consultés (ligne discrète) + cartes d'action garde-fou
+              const toolsUsed = dashboardType === 'hub' ? (msg.metadata?.hubToolsUsed ?? []) : []
+              const hubActionIds = dashboardType === 'hub' ? (msg.metadata?.hubActionIds ?? []) : []
+
               return (
-                <ElioMessageItem
-                  key={msg.id}
-                  message={msg}
-                  dashboardType={dashboardType}
-                  feedbackSlot={feedbackSlot}
-                  documentSlot={documentSlot}
-                />
+                <div key={msg.id}>
+                  <ElioMessageItem
+                    message={msg}
+                    dashboardType={dashboardType}
+                    feedbackSlot={feedbackSlot}
+                    documentSlot={documentSlot}
+                  />
+                  {toolsUsed.length > 0 && (
+                    <p className="mt-1 text-[11px] text-muted-foreground/70" title={toolsUsed.join(', ')}>
+                      🔍 {toolsUsed.length} outil{toolsUsed.length > 1 ? 's' : ''} consulté{toolsUsed.length > 1 ? 's' : ''}
+                    </p>
+                  )}
+                  {hubActionIds.length > 0 && (
+                    <HubActionCards conversationId={activeConversationId} actionIds={hubActionIds} />
+                  )}
+                </div>
               )
             })}
             {isLoading && <ElioThinking dashboardType={dashboardType} />}

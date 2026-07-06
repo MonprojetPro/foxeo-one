@@ -44,9 +44,20 @@ supabase secrets set PENNYLANE_API_TOKEN=your_token_here
 2. Appelle `/changelogs/customer_invoices?start_date={last_sync_at}` (pagination cursor)
 3. Appelle `/changelogs/customers?start_date={last_sync_at}`
 4. Batch fetch des entités modifiées (max 100 IDs par requête)
-5. UPSERT dans `billing_sync` (`entity_type + pennylane_id` = clé unique)
-6. Soft delete pour `operation: 'delete'` (status → 'deleted')
-7. Met à jour `billing_sync_state.last_sync_at`
+5. **Subscriptions (chantier 2026-07-06)** : Pennylane n'expose pas de changelog
+   `/changelogs/billing_subscriptions` → fetch direct **paginé complet** de
+   `/billing_subscriptions` à chaque sync (volumétrie faible). Pas de soft delete
+   pour cette entité (un abonnement arrêté remonte en `stopped`/`finished`).
+6. **Résolution `client_id`** : chaque UPSERT résout `pennylane_customer_id` →
+   `clients.id` (cache Map par run, y compris les miss). Sans `client_id`, les
+   rows sont invisibles côté client (RLS `billing_sync_select_owner`) et pour
+   les hooks filtrés par client.
+7. UPSERT dans `billing_sync` (`entity_type + pennylane_id` = clé unique)
+8. Soft delete pour `operation: 'delete'` (status → 'deleted') — invoice/customer
+9. Met à jour `billing_sync_state.last_sync_at`
+
+La logique pure (résolution client_id, montants subscription) vit dans
+`sync-logic.ts`, testée par vitest (`sync-logic.test.ts`).
 
 ## Gestion des erreurs
 

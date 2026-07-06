@@ -20,7 +20,9 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "*",
+    "@monprojetpro/module-menu-facile": "*",
     "@monprojetpro/module-parcours": "*",
+    "@monprojetpro/modules-facturation": "*",
     "@monprojetpro/supabase": "*",
     "@monprojetpro/types": "*",
     "@monprojetpro/ui": "*",

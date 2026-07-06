@@ -3,13 +3,9 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
-vi.mock('../actions/create-subscription', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../actions/create-subscription')>()
-  return {
-    ...actual,
-    createSubscription: vi.fn().mockResolvedValue({ data: 'pl-sub-1', error: null }),
-  }
-})
+vi.mock('../actions/create-subscription', () => ({
+  createSubscription: vi.fn().mockResolvedValue({ data: 'pl-sub-1', error: null }),
+}))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>()
@@ -36,7 +32,7 @@ const mockClients: ClientWithPennylane[] = [
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('SubscriptionForm', () => {
+describe('SubscriptionForm — grille v2', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCreateSubscription.mockResolvedValue({ data: 'pl-sub-1', error: null })
@@ -47,6 +43,20 @@ describe('SubscriptionForm', () => {
     expect(screen.getByTestId('plan-ponctuel')).toBeInTheDocument()
     expect(screen.getByTestId('plan-essentiel')).toBeInTheDocument()
     expect(screen.getByTestId('plan-agentique')).toBeInTheDocument()
+  })
+
+  it('displays commercial labels One / One+ with v2 prices', () => {
+    render(<SubscriptionForm clients={mockClients} />)
+    expect(screen.getByTestId('plan-essentiel')).toHaveTextContent('One')
+    expect(screen.getByTestId('plan-essentiel')).toHaveTextContent('39 €/mois')
+    expect(screen.getByTestId('plan-agentique')).toHaveTextContent('One+')
+    expect(screen.getByTestId('plan-agentique')).toHaveTextContent('99 €/mois')
+  })
+
+  it('does not render the obsolete extras section', () => {
+    render(<SubscriptionForm clients={mockClients} />)
+    expect(screen.queryByTestId('extra-visio')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Modules supplémentaires/)).not.toBeInTheDocument()
   })
 
   it('renders all frequency options', () => {
@@ -70,22 +80,22 @@ describe('SubscriptionForm', () => {
     expect(screen.getByTestId('custom-amount')).toBeInTheDocument()
   })
 
-  it('calculates total monthly = base + selected extras', async () => {
+  it('shows 39 €/mois total for default One plan', () => {
     render(<SubscriptionForm clients={mockClients} />)
-    // Default plan: essentiel = 49€/mois
-    expect(screen.getByTestId('base-monthly')).toHaveTextContent('49.00')
-    expect(screen.getByTestId('total-monthly')).toHaveTextContent('49.00')
+    expect(screen.getByTestId('total-monthly')).toHaveTextContent('39.00')
+  })
 
-    // Select visio extra (+19€)
-    fireEvent.click(screen.getByTestId('extra-visio'))
-    expect(screen.getByTestId('total-monthly')).toHaveTextContent('68.00')
+  it('shows 99 €/mois total when One+ is selected', () => {
+    render(<SubscriptionForm clients={mockClients} />)
+    fireEvent.click(screen.getByTestId('plan-agentique'))
+    expect(screen.getByTestId('total-monthly')).toHaveTextContent('99.00')
   })
 
   it('calculates total for quarterly period (monthly * 3)', () => {
     render(<SubscriptionForm clients={mockClients} />)
-    // essentiel = 49€/mois
+    // One = 39 €/mois → 117 € / trimestre
     fireEvent.click(screen.getByTestId('frequency-quarterly'))
-    expect(screen.getByTestId('total-period')).toHaveTextContent('147.00')
+    expect(screen.getByTestId('total-period')).toHaveTextContent('117.00')
   })
 
   it('shows error when submitting without selecting a client', async () => {
@@ -97,7 +107,7 @@ describe('SubscriptionForm', () => {
     expect(mockCreateSubscription).not.toHaveBeenCalled()
   })
 
-  it('calls createSubscription with correct parameters on valid submit', async () => {
+  it('calls createSubscription with correct parameters on valid submit (no extras)', async () => {
     render(<SubscriptionForm clients={mockClients} />)
 
     fireEvent.change(screen.getByTestId('client-select'), {
@@ -112,10 +122,12 @@ describe('SubscriptionForm', () => {
           plan: 'essentiel',
           frequency: 'monthly',
           paymentMethod: 'cb',
-          extras: [],
         })
       )
     })
+    // Grille v2 : plus de champ extras dans l'input
+    const callArg = mockCreateSubscription.mock.calls[0][0] as Record<string, unknown>
+    expect(callArg).not.toHaveProperty('extras')
   })
 
   it('shows success toast after successful subscription creation', async () => {
@@ -147,6 +159,20 @@ describe('SubscriptionForm', () => {
 
     await waitFor(() => {
       expect(mockShowError).toHaveBeenCalledWith('Pennylane error')
+    })
+  })
+
+  it('calls onSuccess callback after successful creation', async () => {
+    const onSuccess = vi.fn()
+    render(<SubscriptionForm clients={mockClients} onSuccess={onSuccess} />)
+
+    fireEvent.change(screen.getByTestId('client-select'), {
+      target: { value: 'client-1' },
+    })
+    fireEvent.click(screen.getByTestId('create-subscription-btn'))
+
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalled()
     })
   })
 

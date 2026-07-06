@@ -11,11 +11,13 @@ const ELIO_TIMEOUT_MS = 60_000
 
 /**
  * Construit le prompt de génération de brouillon.
+ * Split system/user : l'edge function elio-chat renvoie 400 si systemPrompt est vide,
+ * l'instruction système vit donc dans systemPrompt, le contenu variable dans message.
  */
 function buildDraftPrompt(
   input: GenerateDraftInput,
   profile: CommunicationProfile | null,
-): string {
+): { systemPrompt: string; message: string } {
   const { toneLabel, lengthLabel } = getProfileLabels(profile)
 
   const typeInstructions: Record<string, string> = {
@@ -29,16 +31,9 @@ function buildDraftPrompt(
       ? `\n**Contexte récent** :\n${input.recentContext.join('\n')}\n`
       : ''
 
-  return `Tu es un assistant de rédaction professionnelle pour MiKL (opérateur MonprojetPro).
+  const systemPrompt = `Tu es un assistant de rédaction professionnelle pour MiKL (opérateur MonprojetPro).
 
 **Tâche** : ${typeInstructions[input.draftType]}
-
-**Client** : ${input.clientName}
-**Sujet / Demande** : ${input.subject}
-${contextBlock}
-**Profil de communication du client** :
-- Ton : ${toneLabel}
-- Longueur : ${lengthLabel}
 
 **Instructions** :
 1. Génère un brouillon complet et professionnel
@@ -52,6 +47,15 @@ ${contextBlock}
 ---
 
 [Note sur le profil utilisé]`
+
+  const message = `**Client** : ${input.clientName}
+**Sujet / Demande** : ${input.subject}
+${contextBlock}
+**Profil de communication du client** :
+- Ton : ${toneLabel}
+- Longueur : ${lengthLabel}`
+
+  return { systemPrompt, message }
 }
 
 /**
@@ -131,8 +135,8 @@ export async function generateDraft(
     )
   }
 
-  // 4. Construire le prompt
-  const prompt = buildDraftPrompt({ ...input, recentContext: contextLines }, profile)
+  // 4. Construire le prompt (system + message — jamais de systemPrompt vide)
+  const { systemPrompt, message } = buildDraftPrompt({ ...input, recentContext: contextLines }, profile)
 
   // 5. Appeler Élio Edge Function avec timeout
   const controller = new AbortController()
@@ -141,8 +145,8 @@ export async function generateDraft(
   try {
     const { data, error: fnError } = await supabase.functions.invoke('elio-chat', {
       body: {
-        systemPrompt: '',
-        message: prompt,
+        systemPrompt,
+        message,
         dashboardType: 'hub',
       },
       signal: controller.signal,

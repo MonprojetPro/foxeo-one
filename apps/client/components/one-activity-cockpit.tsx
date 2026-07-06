@@ -9,12 +9,13 @@ import {
   Video,
   CreditCard,
   CheckCircle2,
+  HeartHandshake,
 } from 'lucide-react'
 import { formatRelativeDate } from '@monprojetpro/utils'
 import { useToolPosts, useSuiviOutilRealtime } from '@monprojetpro/module-suivi-outil'
 import { useChatMessages, useChatRealtime } from '@monprojetpro/modules-chat'
 import { useDocuments, useDocumentsRealtime } from '@monprojetpro/module-documents'
-import { useMeetings } from '@monprojetpro/module-visio'
+import { useMeetings, useCoachingInfo, useCoachingRealtime } from '@monprojetpro/module-visio'
 import { useSupportTickets, useSupportTicketsRealtime } from '@monprojetpro/modules-support'
 import {
   CockpitCard,
@@ -54,11 +55,12 @@ function rel(date: string | null | undefined): string {
  *   • Messages         → messages non lus de MiKL (sender_type='operator', read_at null)
  *   • Documents        → documents du client (count + dernier livraison)
  *   • Visio            → prochain RDV planifié (sinon dernier terminé)
+ *   • Coaching (One+)  → solde de crédits + prochaine séance coaching (ledger + meetings)
  *   • Mon abonnement   → tier One/One+ (client_configs.elio_tier)
  *
- * Tout est branché Realtime (suivi-outil, chat, documents, support, validation_requests) — un
- * chiffre bouge dès que la donnée change, sans rafraîchir la page. Visio n'a pas de Realtime
- * module (refetch au focus suffit pour un agenda).
+ * Tout est branché Realtime (suivi-outil, chat, documents, support, validation_requests,
+ * coaching_credit_ledger + meetings pour la carte Coaching) — un chiffre bouge dès que la
+ * donnée change, sans rafraîchir la page.
  */
 export function OneActivityCockpit({ clientId, userId: _userId }: OneActivityCockpitProps) {
   // ── Realtime : chaque source garde son canal déjà éprouvé ─────────────────
@@ -120,6 +122,12 @@ export function OneActivityCockpit({ clientId, userId: _userId }: OneActivityCoc
   const evolutionPending = summary?.evolutionPendingCount ?? 0
   const todoCount = evolutionPending + openTickets
   const tier = summary?.elioTier ?? 'one'
+
+  // ── Coaching One+ (carte visible seulement en tier one_plus) ─────────────
+  const isOnePlus = tier === 'one_plus'
+  // Realtime : ledger de crédits + meetings (réservation/annulation Cal.com) — no-op si non One+
+  useCoachingRealtime(isOnePlus ? clientId : undefined)
+  const { data: coaching, isPending: coachingPending } = useCoachingInfo(clientId, isOnePlus)
 
   return (
     <section aria-label="Cockpit de ton espace One">
@@ -284,6 +292,45 @@ export function OneActivityCockpit({ clientId, userId: _userId }: OneActivityCoc
             )}
           </CockpitCard>
         )}
+
+        {/* ───────────── Coaching (One+ uniquement) ───────────── */}
+        {isOnePlus &&
+          (coachingPending ? (
+            <CockpitCardSkeleton />
+          ) : (
+            <CockpitCard
+              title="Coaching"
+              Icon={HeartHandshake}
+              accent="rose"
+              href="/modules/visio"
+              linkLabel="Réserver une séance"
+              badge={coaching?.balance ?? 0}
+            >
+              <div className="space-y-0.5">
+                <CockpitMetric
+                  label="Séances incluses restantes"
+                  value={coaching?.balance ?? 0}
+                  emphasis
+                />
+                {coaching?.nextSessionAt ? (
+                  <>
+                    <CockpitMetric label="Prochaine séance" value={rel(coaching.nextSessionAt)} />
+                    {coaching.nextSessionTitle && (
+                      <p className="truncate text-[12px] text-[#9ca3af]">
+                        {coaching.nextSessionTitle}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <CockpitEmptyLine>
+                    {(coaching?.balance ?? 0) > 0
+                      ? 'Aucune séance planifiée — réserve ton créneau.'
+                      : 'Crédit épuisé — prochaine séance : 45 € (hors forfait).'}
+                  </CockpitEmptyLine>
+                )}
+              </div>
+            </CockpitCard>
+          ))}
 
         {/* ───────────── Mon abonnement ───────────── */}
         {summaryPending ? (

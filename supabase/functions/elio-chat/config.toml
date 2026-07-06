@@ -1,2 +1,6 @@
 [functions.elio-chat]
-verify_jwt = false
+# Fix sécu (chantier Élio Hub 2026-07-06) : la fonction était publique (verify_jwt = false).
+# Les callers Server Actions passent le JWT user via supabase.functions.invoke ;
+# les Edge Functions internes (detect-overdue-invoices, concierge-inactivity-relance)
+# passent le service role en Authorization Bearer — les deux passent verify_jwt.
+verify_jwt = true

@@ -57,16 +57,20 @@ export async function createMeeting(
       .single()
 
     // Notification au destinataire (best-effort — ne bloque pas)
+    // Shape corrigée (chantier 2026-07-06) : recipient_type/body/link requis, et type 'system'
+    // ('meeting_scheduled' n'est pas dans la CHECK notifications_type_check → notif perdue).
     if (clientRecord?.auth_user_id) {
-      await supabase.from('notifications').insert({
+      const { error: notifError } = await supabase.from('notifications').insert({
+        recipient_type: 'client',
         recipient_id: clientRecord.auth_user_id,
-        type: 'meeting_scheduled',
+        type: 'system',
         title: 'Nouveau meeting planifié',
-        message: `Un meeting "${parsed.data.title}" a été planifié.`,
-        metadata: { meetingId: (data as MeetingDB).id },
-      }).catch((err) => {
-        console.error('[VISIO:CREATE_MEETING] Notification error (non-blocking):', err)
+        body: `Un meeting "${parsed.data.title}" a été planifié.`,
+        link: '/modules/visio',
       })
+      if (notifError) {
+        console.error('[VISIO:CREATE_MEETING] Notification error (non-blocking):', notifError)
+      }
     }
 
     return successResponse(toMeeting(data as MeetingDB))

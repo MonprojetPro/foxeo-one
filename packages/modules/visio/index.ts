@@ -24,12 +24,15 @@ export type { ProspectDocument } from './components/send-resources-form'
 
 // Hooks
 export { useMeetings } from './hooks/use-meetings'
+export { useCoachingInfo, useCoachingRealtime, coachingInfoKey } from './hooks/use-coaching'
 export { useMeetingRecordings } from './hooks/use-meeting-recordings'
 export { usePostMeetingDialog } from './hooks/use-post-meeting-dialog'
 export type { PostMeetingDialogState, UsePostMeetingDialogReturn } from './hooks/use-post-meeting-dialog'
 
 // Actions
 export { getMeetings } from './actions/get-meetings'
+export { getCoachingInfo } from './actions/get-coaching-info'
+export type { ClientCoachingInfo } from './actions/get-coaching-info'
 export { createMeeting } from './actions/create-meeting'
 export { startMeeting } from './actions/start-meeting'
 export { endMeeting } from './actions/end-meeting'

@@ -10,7 +10,7 @@ export const TIER_INFO: Record<SubscriptionTier, TierInfo> = {
   },
   essentiel: {
     name: 'Essentiel',
-    price: '49€/mois',
+    price: '39€/mois',
     elio: 'Elio One',
     description: 'Maintenance continue, mises à jour, Elio One assistant',
   },
@@ -18,18 +18,18 @@ export const TIER_INFO: Record<SubscriptionTier, TierInfo> = {
     name: 'Agentique',
     price: '99€/mois',
     elio: 'Elio One+',
-    description: 'Maintenance continue, mises à jour, Elio One+ agentif',
+    description: 'Tout One + 1 visio de coaching humain / mois (One+)',
   },
 }
 
 /**
  * Mappe un tier d'abonnement vers le tier Élio correspondant.
- * Base → null (pas d'Elio), Essentiel → 'one', Agentique → 'one'.
+ * Base → null (pas d'Elio), Essentiel (One) → 'one', Agentique (One+) → 'one_plus'.
  *
- * ⚠️ Décision MiKL (2026-06-26) : l'offre la plus haute (« Agentique » / One+) ne donne PLUS
- * de capacité agentique à Élio. L'agentique IA est devenue du CAS PAR CAS (au devis), jamais
- * incluse via une offre → elio_tier reste 'one' pour que le dash soit identique. ('one_plus'
- * subsiste dans le type pour un futur réactivable, mais aucun flux ne le produit plus.)
+ * Grille v2 (Contrat 6, chantier 2026-07-06 — validé MiKL) : `elio_tier` identifie
+ * désormais l'OFFRE commerciale (One 39 € / One+ 99 €). One+ = coaching humain
+ * (1 visio/mois, crédits coaching) — PAS d'agentique IA (toujours au devis,
+ * décision MiKL 2026-06-26). Le dash One+ affiche en plus la carte Coaching.
  */
 export function mapTierToElio(tier: SubscriptionTier): ElioTierForSubscription {
   switch (tier) {
@@ -38,7 +38,7 @@ export function mapTierToElio(tier: SubscriptionTier): ElioTierForSubscription {
     case 'essentiel':
       return 'one'
     case 'agentique':
-      return 'one'
+      return 'one_plus'
   }
 }
 

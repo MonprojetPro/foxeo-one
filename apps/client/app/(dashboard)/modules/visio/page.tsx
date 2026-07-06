@@ -49,6 +49,24 @@ export default async function ClientVisioPage() {
     }
   }
 
+  // Coaching One+ — solde de crédits affiché au-dessus du widget de réservation.
+  // Défensif : si la migration coaching n'est pas encore déployée, on masque le bandeau.
+  let coachingBanner: { balance: number } | null = null
+  const { data: config } = await supabase
+    .from('client_configs')
+    .select('elio_tier')
+    .eq('client_id', client.id)
+    .maybeSingle()
+
+  if (config?.elio_tier === 'one_plus') {
+    const { data: balance, error: balanceError } = await supabase.rpc('get_coaching_balance', {
+      p_client_id: client.id,
+    })
+    if (!balanceError && typeof balance === 'number') {
+      coachingBanner = { balance }
+    }
+  }
+
   const { data: meetings } = await getMeetings({ clientId: client.id })
   const allMeetings = meetings ?? []
 
@@ -92,6 +110,29 @@ export default async function ClientVisioPage() {
       {/* Prise de RDV */}
       <div className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">Prendre rendez-vous</h2>
+        {coachingBanner && (
+          <div
+            className={`rounded-xl border p-4 text-sm ${
+              coachingBanner.balance > 0
+                ? 'border-green-500/30 bg-green-500/10 text-green-300'
+                : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+            }`}
+            data-testid="coaching-credits-banner"
+          >
+            {coachingBanner.balance > 0 ? (
+              <>
+                <span className="font-semibold">Coaching One+ :</span> il te reste{' '}
+                {coachingBanner.balance} séance{coachingBanner.balance > 1 ? 's' : ''} incluse
+                {coachingBanner.balance > 1 ? 's' : ''} dans ton abonnement.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold">Coaching One+ :</span> ton crédit inclus est
+                épuisé — prochaine séance : 45 €, ajoutés à ta prochaine facture.
+              </>
+            )}
+          </div>
+        )}
         {calcomUrl ? (
           <>
             <CalcomBookingWidget

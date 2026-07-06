@@ -10,24 +10,18 @@ const ELIO_TIMEOUT_MS = 60_000
 
 /**
  * Construit le prompt de correction adapté au profil de communication.
+ * Split system/user : l'edge function elio-chat renvoie 400 si systemPrompt est vide,
+ * l'instruction système vit donc dans systemPrompt, le contenu variable dans message.
  */
 function buildCorrectionPrompt(
   originalText: string,
   profile: CommunicationProfile | null,
-): string {
+): { systemPrompt: string; message: string } {
   const { toneLabel, lengthLabel, styleLabel } = getProfileLabels(profile)
 
-  return `Tu es un assistant de rédaction professionnelle.
+  const systemPrompt = `Tu es un assistant de rédaction professionnelle.
 
-**Tâche** : Corrige et adapte le texte suivant au profil de communication du client.
-
-**Texte original** :
-${originalText}
-
-**Profil de communication du client** :
-- Ton : ${toneLabel}
-- Longueur des messages : ${lengthLabel}
-- Style d'interaction : ${styleLabel}
+**Tâche** : Corrige et adapte le texte fourni au profil de communication du client.
 
 **Instructions** :
 1. Corrige l'orthographe, la grammaire et la ponctuation
@@ -40,6 +34,16 @@ ${originalText}
 ---
 
 [Explication des changements]`
+
+  const message = `**Texte original** :
+${originalText}
+
+**Profil de communication du client** :
+- Ton : ${toneLabel}
+- Longueur des messages : ${lengthLabel}
+- Style d'interaction : ${styleLabel}`
+
+  return { systemPrompt, message }
 }
 
 /**
@@ -100,8 +104,8 @@ export async function correctAndAdaptText(
     ? toCommunicationProfile(profileData as CommunicationProfileDB)
     : null
 
-  // 3. Construire le prompt
-  const prompt = buildCorrectionPrompt(originalText, profile)
+  // 3. Construire le prompt (system + message — jamais de systemPrompt vide)
+  const { systemPrompt, message } = buildCorrectionPrompt(originalText, profile)
 
   // 4. Appeler Élio Edge Function avec timeout
   const controller = new AbortController()
@@ -110,8 +114,8 @@ export async function correctAndAdaptText(
   try {
     const { data, error: fnError } = await supabase.functions.invoke('elio-chat', {
       body: {
-        systemPrompt: '',
-        message: prompt,
+        systemPrompt,
+        message,
         dashboardType: 'hub',
       },
       signal: controller.signal,

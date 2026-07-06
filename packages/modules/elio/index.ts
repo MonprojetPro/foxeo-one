@@ -264,4 +264,45 @@ export { TokenByClientCard } from './components/token-by-client-card'
 export { TokenTrendChart } from './components/token-trend-chart'
 
 // Utils — Story 14.11
-export { calculateCostEur, getModelPricing, formatCostEur } from './utils/token-cost-calculator'
+export { calculateCostEur, calculateTokenCost, getModelPricing, formatCostEur } from './utils/token-cost-calculator'
+export type { TokenCostResult } from './utils/token-cost-calculator'
+
+// Actions — Chantier Élio Hub (config LLM multi-provider, Contrat 2)
+export { getLlmConfig, setLlmConfig } from './actions/llm-config'
+
+// Actions — Chantier Élio Hub (boucle agent + garde-fou, Contrats 3 & 4)
+export {
+  sendToElioHubAgent,
+  confirmElioHubAction,
+  rejectElioHubAction,
+  getElioHubActions,
+} from './actions/elio-hub-agent'
+
+// Components + hook — Chantier Élio Hub (cartes d'action garde-fou)
+export { HubActionCards } from './components/hub-action-card'
+export { useElioHubActions } from './hooks/use-elio-hub-actions'
+
+// Types — Chantier Élio Hub (Contrats 3 & 4)
+export type {
+  ElioHubAction,
+  ElioHubActionStatus,
+  HubAgentPendingAction,
+  HubAgentResult,
+  HubReadToolName,
+  HubActionToolName,
+} from './types/elio-hub-agent.types'
+export {
+  HUB_READ_TOOL_NAMES,
+  HUB_ACTION_TOOL_NAMES,
+  isHubReadTool,
+  isHubActionTool,
+} from './types/elio-hub-agent.types'
+
+// Types — Config LLM multi-provider (Contrat 2)
+export {
+  LlmConfigSchema,
+  LlmProfileSchema,
+  DEFAULT_LLM_CONFIG,
+  LLM_CONFIG_KEY,
+} from './types/llm-config.types'
+export type { LlmConfig, LlmProfile, LlmProviderName } from './types/llm-config.types'

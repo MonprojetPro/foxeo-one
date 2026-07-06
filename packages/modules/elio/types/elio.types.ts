@@ -135,6 +135,11 @@ export interface ElioMessageMetadata {
   generatedDocument?: boolean        // document généré par Élio dans ce message
   // Story 14.5: message injecté par MiKL dans le contexte de l'étape (fond orange)
   injectedByMikl?: boolean
+  // Agent Élio Hub (chantier 2026-07-06) : cartes d'action garde-fou attachées au message
+  // (ids de rows elio_hub_actions) + outils consultés pendant la génération.
+  // Stockés snake_case en base (hub_action_ids / hub_tools_used), lus camelCase (toCamelCase).
+  hubActionIds?: string[]
+  hubToolsUsed?: string[]
 }
 
 // Story 8.7 — Task 3.1 : Structure documentation module actif (injectée par MiKL, Story 10.3)

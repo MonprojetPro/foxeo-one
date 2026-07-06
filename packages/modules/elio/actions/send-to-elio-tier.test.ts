@@ -19,6 +19,9 @@ const makeEqChain = (): object => ({
 })
 
 vi.mock('@monprojetpro/supabase', () => ({
+  // Guard consentement IA (send-to-elio §1bis) — consenti par défaut dans ces tests de tier.
+  // (Fix pré-existant : le mock ne fournissait pas hasIaConsent → 7 tests rouges à HEAD.)
+  hasIaConsent: vi.fn(async () => true),
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({
@@ -59,7 +62,9 @@ describe('sendToElio — Tier check (Story 8.9a — Tasks 2 + 9.1)', () => {
       const result = await sendToElio('one', 'Envoie un rappel de cotisation aux membres en retard', CLIENT_ID)
       expect(result.data).toBeDefined()
       expect(result.error).toBeNull()
-      expect(result.data?.content).toContain('One+')
+      // Fix pré-existant : UPSELL_ONE_PLUS_MESSAGE ne mentionne plus « One+ »
+      // (décision MiKL 2026-06-26 — automatisation = sur-mesure via MiKL).
+      expect(result.data?.content).toContain('sur mesure')
       expect(result.data?.content).toContain('MiKL')
       // Pas d'appel LLM (no token waste)
       expect(mockInvoke).not.toHaveBeenCalled()
@@ -77,7 +82,9 @@ describe('sendToElio — Tier check (Story 8.9a — Tasks 2 + 9.1)', () => {
       })
 
       const result = await sendToElio('one', 'Crée un événement pour samedi prochain', CLIENT_ID)
-      expect(result.data?.content).toContain('One+')
+      // Fix pré-existant : UPSELL_ONE_PLUS_MESSAGE ne mentionne plus « One+ »
+      // (décision MiKL 2026-06-26 — automatisation = sur-mesure via MiKL).
+      expect(result.data?.content).toContain('sur mesure')
       expect(mockInvoke).not.toHaveBeenCalled()
     })
   })
@@ -161,7 +168,9 @@ describe('sendToElio — Tier check (Story 8.9a — Tasks 2 + 9.1)', () => {
       })
 
       const result = await sendToElio('one', 'Envoie un rappel de cotisation aux membres', CLIENT_ID)
-      expect(result.data?.content).toContain('One+')
+      // Fix pré-existant : UPSELL_ONE_PLUS_MESSAGE ne mentionne plus « One+ »
+      // (décision MiKL 2026-06-26 — automatisation = sur-mesure via MiKL).
+      expect(result.data?.content).toContain('sur mesure')
       expect(mockInvoke).not.toHaveBeenCalled()
     })
   })

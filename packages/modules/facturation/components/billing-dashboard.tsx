@@ -11,6 +11,7 @@ import { QuoteForm } from './quote-form'
 import { QuotesList } from './quotes-list'
 import { InvoicesList } from './invoices-list'
 import { SubscriptionsList } from './subscriptions-list'
+import { SubscriptionForm } from './subscription-form'
 import { JustificatifsSection } from './justificatifs-section'
 import { PendingReminders } from './pending-reminders'
 import { AccountantNotifications } from './accountant-notifications'
@@ -89,6 +90,7 @@ function BillingMetricsSection() {
 
 export function BillingDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('devis')
+  const [showSubscriptionForm, setShowSubscriptionForm] = useState(false)
   const [isSyncing, startSync] = useTransition()
   const queryClient = useQueryClient()
 
@@ -175,7 +177,41 @@ export function BillingDashboard() {
 
         {activeTab === 'factures' && <InvoicesList clients={clients} />}
 
-        {activeTab === 'abonnements' && <SubscriptionsList />}
+        {activeTab === 'abonnements' && (
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                data-testid="toggle-subscription-form"
+                onClick={() => setShowSubscriptionForm((v) => !v)}
+                className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                  showSubscriptionForm
+                    ? 'border border-border text-muted-foreground hover:bg-muted/50'
+                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                }`}
+              >
+                {showSubscriptionForm ? 'Annuler' : '+ Nouvel abonnement'}
+              </button>
+            </div>
+
+            {showSubscriptionForm && (
+              <div className="rounded-lg border border-border p-6" data-testid="subscription-form-panel">
+                <h2 className="text-lg font-semibold mb-4">Nouvel abonnement</h2>
+                <SubscriptionForm
+                  clients={clients}
+                  onSuccess={() => {
+                    setShowSubscriptionForm(false)
+                    // createSubscription déclenche déjà triggerBillingSync côté serveur ;
+                    // on invalide le cache pour rafraîchir la liste + les métriques (MRR).
+                    void queryClient.invalidateQueries({ queryKey: ['billing'] })
+                  }}
+                />
+              </div>
+            )}
+
+            <SubscriptionsList />
+          </div>
+        )}
 
         {activeTab === 'justificatifs' && <JustificatifsSection />}
       </div>

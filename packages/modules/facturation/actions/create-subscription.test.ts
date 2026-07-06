@@ -20,13 +20,8 @@ vi.mock('./trigger-billing-sync', () => ({
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
-import {
-  createSubscription,
-  PLAN_MONTHLY_PRICE,
-  PLAN_LABEL,
-  AVAILABLE_EXTRAS,
-  type CreateSubscriptionInput,
-} from './create-subscription'
+import { createSubscription, type CreateSubscriptionInput } from './create-subscription'
+import { PLAN_MONTHLY_PRICE, PLAN_LABEL } from '../config/subscription-plans'
 
 const mockCreateServerSupabaseClient = vi.mocked(createServerSupabaseClient)
 const mockPennylane = vi.mocked(pennylaneClient)
@@ -36,12 +31,6 @@ const mockTriggerBillingSync = vi.mocked(triggerBillingSync)
 
 function makeInsert() {
   return vi.fn().mockResolvedValue({ data: null, error: null })
-}
-
-function makeUpdateChain() {
-  const chain = { eq: vi.fn(() => chain), data: null, error: null }
-  chain.eq = vi.fn().mockResolvedValue({ data: null, error: null })
-  return { eq: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ data: null, error: null }) })) }
 }
 
 function makeSupabaseMock(opts: {
@@ -87,28 +76,75 @@ function makeSupabaseMock(opts: {
   }
 }
 
+// Variante avec update client_configs espionnable
+function makeSupabaseMockWithConfigSpy(updateMock: ReturnType<typeof vi.fn>) {
+  const supabase = makeSupabaseMock()
+  supabase.from = vi.fn((table: string) => {
+    if (table === 'clients') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                id: 'client-1',
+                name: 'ACME',
+                auth_user_id: 'auth-user-1',
+                pennylane_customer_id: '275890907',
+              },
+              error: null,
+            }),
+          }),
+        }),
+      }
+    }
+    if (table === 'client_configs') {
+      return { update: updateMock }
+    }
+    return { insert: makeInsert() }
+  })
+  return supabase
+}
+
 const mockPennylaneSub = {
   id: 'pl-sub-1',
   customer_id: 'pl-cust-1',
   status: 'active',
-  start_date: '2026-03-07',
+  start_date: '2026-07-07',
   recurring_period: 'monthly',
   line_items: [],
-  amount: 49,
-  created_at: '2026-03-07T00:00:00Z',
-  updated_at: '2026-03-07T00:00:00Z',
+  amount: 39,
+  created_at: '2026-07-07T00:00:00Z',
+  updated_at: '2026-07-07T00:00:00Z',
 }
 
 const baseInput: CreateSubscriptionInput = {
   clientId: 'client-1',
   plan: 'essentiel',
   frequency: 'monthly',
-  startDate: '2026-03-07',
-  extras: [],
+  startDate: '2026-07-07',
   paymentMethod: 'cb',
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
+
+describe('grille tarifaire v2 (Contrat 6)', () => {
+  it('One (essentiel) = 39 €/mois', () => {
+    expect(PLAN_MONTHLY_PRICE.essentiel).toBe(39)
+  })
+
+  it('One+ (agentique) = 99 €/mois', () => {
+    expect(PLAN_MONTHLY_PRICE.agentique).toBe(99)
+  })
+
+  it('Ponctuel = pas de prix fixe (devis)', () => {
+    expect(PLAN_MONTHLY_PRICE.ponctuel).toBeNull()
+  })
+
+  it('libellés commerciaux One / One+ dans les line_items', () => {
+    expect(PLAN_LABEL.essentiel).toBe('Abonnement One')
+    expect(PLAN_LABEL.agentique).toBe('Abonnement One+')
+  })
+})
 
 describe('createSubscription', () => {
   beforeEach(() => {
@@ -150,7 +186,6 @@ describe('createSubscription', () => {
   })
 
   it('returns MISSING_EMAIL when client has no pennylane_customer_id and no email (auto-création impossible)', async () => {
-    // Story G : sans pennylane_customer_id, on tente l'auto-création — mais sans email c'est impossible
     const supabase = makeSupabaseMock({
       clientData: {
         id: 'client-1',
@@ -182,7 +217,7 @@ describe('createSubscription', () => {
     expect(result.error?.code).toBe('PENNYLANE_500')
   })
 
-  it('sends correct line_items for essentiel plan (base + no extras)', async () => {
+  it('sends a single line_item "Abonnement One" at 39 € for essentiel plan', async () => {
     const supabase = makeSupabaseMock()
     mockCreateServerSupabaseClient.mockResolvedValue(
       supabase as unknown as ReturnType<typeof createServerSupabaseClient>
@@ -194,25 +229,19 @@ describe('createSubscription', () => {
 
     await createSubscription(baseInput)
 
-    expect(mockPennylane.post).toHaveBeenCalledWith(
-      '/billing_subscriptions',
-      expect.objectContaining({
-        billing_subscription: expect.objectContaining({
-          customer_id: '275890907',
-          recurring_period: 'monthly',
-          line_items: expect.arrayContaining([
-            expect.objectContaining({
-              label: PLAN_LABEL.essentiel,
-              // toPennylaneLineItem produit raw_currency_unit_price (string) en V2
-              raw_currency_unit_price: String(PLAN_MONTHLY_PRICE.essentiel) + '.00',
-            }),
-          ]),
-        }),
-      })
-    )
+    const postCall = mockPennylane.post.mock.calls[0]
+    const lineItems = (postCall[1] as { billing_subscription: { line_items: unknown[] } })
+      .billing_subscription.line_items
+    // Grille v2 : une seule ligne, plus d'extras
+    expect(lineItems).toHaveLength(1)
+    expect(lineItems[0]).toMatchObject({
+      label: 'Abonnement One',
+      // toPennylaneLineItem produit raw_currency_unit_price (string) en V2
+      raw_currency_unit_price: '39.00',
+    })
   })
 
-  it('includes extra module line items when extras are selected', async () => {
+  it('sends a single line_item "Abonnement One+" at 99 € for agentique plan', async () => {
     const supabase = makeSupabaseMock()
     mockCreateServerSupabaseClient.mockResolvedValue(
       supabase as unknown as ReturnType<typeof createServerSupabaseClient>
@@ -222,18 +251,15 @@ describe('createSubscription', () => {
       error: null,
     })
 
-    const visioExtra = AVAILABLE_EXTRAS.find((e) => e.id === 'visio')!
-
-    await createSubscription({ ...baseInput, extras: ['visio'] })
+    await createSubscription({ ...baseInput, plan: 'agentique' })
 
     const postCall = mockPennylane.post.mock.calls[0]
     const lineItems = (postCall[1] as { billing_subscription: { line_items: unknown[] } })
       .billing_subscription.line_items
-    expect(lineItems).toHaveLength(2)
-    expect(lineItems[1]).toMatchObject({
-      label: visioExtra.label,
-      // toPennylaneLineItem produit raw_currency_unit_price (string) en V2
-      raw_currency_unit_price: visioExtra.monthlyPrice.toFixed(2),
+    expect(lineItems).toHaveLength(1)
+    expect(lineItems[0]).toMatchObject({
+      label: 'Abonnement One+',
+      raw_currency_unit_price: '99.00',
     })
   })
 
@@ -241,30 +267,7 @@ describe('createSubscription', () => {
     const updateMock = vi.fn().mockReturnValue({
       eq: vi.fn().mockResolvedValue({ data: null, error: null }),
     })
-    const supabase = makeSupabaseMock()
-    supabase.from = vi.fn((table: string) => {
-      if (table === 'clients') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: {
-                  id: 'client-1',
-                  name: 'ACME',
-                  auth_user_id: 'auth-user-1',
-                  pennylane_customer_id: '275890907',
-                },
-                error: null,
-              }),
-            }),
-          }),
-        }
-      }
-      if (table === 'client_configs') {
-        return { update: updateMock }
-      }
-      return { insert: makeInsert() }
-    })
+    const supabase = makeSupabaseMockWithConfigSpy(updateMock)
     mockCreateServerSupabaseClient.mockResolvedValue(
       supabase as unknown as ReturnType<typeof createServerSupabaseClient>
     )
@@ -367,30 +370,7 @@ describe('createSubscription', () => {
     const updateMock = vi.fn().mockReturnValue({
       eq: vi.fn().mockResolvedValue({ data: null, error: null }),
     })
-    const supabase = makeSupabaseMock()
-    supabase.from = vi.fn((table: string) => {
-      if (table === 'clients') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: {
-                  id: 'client-1',
-                  name: 'ACME',
-                  auth_user_id: 'auth-user-1',
-                  pennylane_customer_id: '275890907',
-                },
-                error: null,
-              }),
-            }),
-          }),
-        }
-      }
-      if (table === 'client_configs') {
-        return { update: updateMock }
-      }
-      return { insert: makeInsert() }
-    })
+    const supabase = makeSupabaseMockWithConfigSpy(updateMock)
     mockCreateServerSupabaseClient.mockResolvedValue(
       supabase as unknown as ReturnType<typeof createServerSupabaseClient>
     )
@@ -410,30 +390,7 @@ describe('createSubscription', () => {
     const updateMock = vi.fn().mockReturnValue({
       eq: vi.fn().mockResolvedValue({ data: null, error: null }),
     })
-    const supabase = makeSupabaseMock()
-    supabase.from = vi.fn((table: string) => {
-      if (table === 'clients') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: {
-                  id: 'client-1',
-                  name: 'ACME',
-                  auth_user_id: 'auth-user-1',
-                  pennylane_customer_id: '275890907',
-                },
-                error: null,
-              }),
-            }),
-          }),
-        }
-      }
-      if (table === 'client_configs') {
-        return { update: updateMock }
-      }
-      return { insert: makeInsert() }
-    })
+    const supabase = makeSupabaseMockWithConfigSpy(updateMock)
     mockCreateServerSupabaseClient.mockResolvedValue(
       supabase as unknown as ReturnType<typeof createServerSupabaseClient>
     )

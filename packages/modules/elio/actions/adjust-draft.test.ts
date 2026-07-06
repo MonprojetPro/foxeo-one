@@ -82,6 +82,30 @@ describe('adjustDraft (Story 8.6 — Task 6)', () => {
     expect(result.data?.version).toBe(2)
   })
 
+  it('Fix systemPrompt vide — envoie un systemPrompt NON vide et le brouillon dans message', async () => {
+    mockInvoke.mockResolvedValueOnce({ data: { content: 'ok' }, error: null })
+
+    const { adjustDraft } = await import('./adjust-draft')
+    await adjustDraft({
+      previousDraft: 'Brouillon original',
+      instruction: 'Plus court',
+      clientName: 'Thomas',
+      draftType: 'email',
+    })
+
+    expect(mockInvoke).toHaveBeenCalledWith(
+      'elio-chat',
+      expect.objectContaining({
+        body: expect.objectContaining({
+          systemPrompt: expect.stringContaining('assistant de rédaction'),
+          message: expect.stringContaining('Brouillon original'),
+        }),
+      }),
+    )
+    const body = mockInvoke.mock.calls[0]![1].body as { systemPrompt: string }
+    expect(body.systemPrompt.length).toBeGreaterThan(0)
+  })
+
   it('Task 6.1 — retourne VALIDATION_ERROR si instruction vide', async () => {
     const { adjustDraft } = await import('./adjust-draft')
     const result = await adjustDraft({

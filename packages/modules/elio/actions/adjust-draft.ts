@@ -9,27 +9,21 @@ import type { AdjustDraftInput, AdjustedDraftResult } from '../types/elio.types'
 
 const ELIO_TIMEOUT_MS = 60_000
 
+/**
+ * Split system/user : l'edge function elio-chat renvoie 400 si systemPrompt est vide,
+ * l'instruction système vit donc dans systemPrompt, le contenu variable dans message.
+ */
 function buildAdjustPrompt(
   previousDraft: string,
   instruction: string,
   profile: CommunicationProfile | null,
   draftType: string,
-): string {
+): { systemPrompt: string; message: string } {
   const { toneLabel } = getProfileLabels(profile)
 
-  return `Tu es un assistant de rédaction professionnelle.
+  const systemPrompt = `Tu es un assistant de rédaction professionnelle.
 
-**Tâche** : Modifie le brouillon suivant selon l'instruction donnée.
-
-**Brouillon précédent** :
----
-${previousDraft}
----
-
-**Instruction de modification** : ${instruction}
-
-**Type de contenu** : ${draftType === 'email' ? 'Email' : draftType === 'validation_hub' ? 'Réponse Validation Hub' : 'Message chat'}
-**Ton du client** : ${toneLabel}
+**Tâche** : Modifie le brouillon fourni selon l'instruction donnée.
 
 **Instructions** :
 1. Applique la modification demandée
@@ -42,6 +36,18 @@ ${previousDraft}
 ---
 
 [Note sur les modifications]`
+
+  const message = `**Brouillon précédent** :
+---
+${previousDraft}
+---
+
+**Instruction de modification** : ${instruction}
+
+**Type de contenu** : ${draftType === 'email' ? 'Email' : draftType === 'validation_hub' ? 'Réponse Validation Hub' : 'Message chat'}
+**Ton du client** : ${toneLabel}`
+
+  return { systemPrompt, message }
 }
 
 /**
@@ -81,7 +87,8 @@ export async function adjustDraft(
     }
   }
 
-  const prompt = buildAdjustPrompt(input.previousDraft, input.instruction, profile, input.draftType)
+  // Prompt system + message — jamais de systemPrompt vide (400 côté edge function)
+  const { systemPrompt, message } = buildAdjustPrompt(input.previousDraft, input.instruction, profile, input.draftType)
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
@@ -89,8 +96,8 @@ export async function adjustDraft(
   try {
     const { data, error: fnError } = await supabase.functions.invoke('elio-chat', {
       body: {
-        systemPrompt: '',
-        message: prompt,
+        systemPrompt,
+        message,
         dashboardType: 'hub',
       },
       signal: controller.signal,

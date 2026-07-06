@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculateCostEur, getModelPricing, formatCostEur } from './token-cost-calculator'
+import { calculateCostEur, calculateTokenCost, getModelPricing, formatCostEur } from './token-cost-calculator'
 
 describe('calculateCostEur', () => {
   it('calcule le coût pour Gemini 2.5 Flash', () => {
@@ -24,12 +24,9 @@ describe('calculateCostEur', () => {
     expect(cost).toBeCloseTo(expectedEur, 6)
   })
 
-  it('utilise le tarif par défaut pour un modèle inconnu', () => {
+  it('retourne 0 pour un modèle inconnu (ne casse pas le tracking, pas de tarif inventé)', () => {
     const cost = calculateCostEur('unknown-model-xyz', 1_000, 500)
-    // Doit utiliser le DEFAULT_PRICING (Gemini 2.5 Flash : $0.15/$0.60)
-    const expectedUsd = (1_000 / 1_000_000) * 0.15 + (500 / 1_000_000) * 0.60
-    const expectedEur = expectedUsd * 0.92
-    expect(cost).toBeCloseTo(expectedEur, 6)
+    expect(cost).toBe(0)
   })
 
   it('retourne 0 pour 0 tokens', () => {
@@ -48,18 +45,44 @@ describe('calculateCostEur', () => {
   })
 })
 
+describe('calculateTokenCost', () => {
+  it('retourne le coût + unknownModel: false pour un modèle connu', () => {
+    const result = calculateTokenCost('claude-sonnet-4-6', 10_000, 2_000)
+    const expectedUsd = (10_000 / 1_000_000) * 3.00 + (2_000 / 1_000_000) * 15.00
+    expect(result.unknownModel).toBe(false)
+    expect(result.costEur).toBeCloseTo(expectedUsd * 0.92, 6)
+  })
+
+  it('retourne { costEur: 0, unknownModel: true } pour un modèle tiers inconnu', () => {
+    const result = calculateTokenCost('mistral-large-latest', 10_000, 2_000)
+    expect(result).toEqual({ costEur: 0, unknownModel: true })
+  })
+
+  it('résout par préfixe (variantes datées)', () => {
+    const result = calculateTokenCost('claude-haiku-4-5-20251001', 1_000, 500)
+    expect(result.unknownModel).toBe(false)
+    expect(result.costEur).toBeGreaterThan(0)
+  })
+})
+
 describe('getModelPricing', () => {
   it('retourne les tarifs USD corrects pour Gemini', () => {
     const pricing = getModelPricing('gemini-2.5-flash')
     expect(pricing.inputPer1M).toBe(0.15)
     expect(pricing.outputPer1M).toBe(0.60)
     expect(pricing.currency).toBe('USD')
+    expect(pricing.unknownModel).toBe(false)
   })
 
   it('retourne les tarifs pour Opus', () => {
     const pricing = getModelPricing('claude-opus-4-6')
     expect(pricing.inputPer1M).toBe(15.00)
     expect(pricing.outputPer1M).toBe(75.00)
+  })
+
+  it('retourne tarifs 0 + unknownModel: true pour un modèle inconnu', () => {
+    const pricing = getModelPricing('grok-42')
+    expect(pricing).toEqual({ inputPer1M: 0, outputPer1M: 0, currency: 'USD', unknownModel: true })
   })
 })
 

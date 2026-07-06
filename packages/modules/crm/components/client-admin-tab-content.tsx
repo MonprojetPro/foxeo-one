@@ -9,6 +9,7 @@ import { HandoffDialog } from './handoff-dialog'
 import { LabExitKitDialog } from './lab-exit-kit-dialog'
 import { ArchiveClientDialog } from './archive-client-dialog'
 import { ChangeTierDialog } from './change-tier-dialog'
+import { CoachingCreditsPanel } from './coaching-credits-panel'
 import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
 import type { SubscriptionTier } from '../types/subscription.types'
 
@@ -64,6 +65,9 @@ export function ClientAdminTabContent({ clientId }: ClientAdminTabContentProps) 
           </CardContent>
         </Card>
       )}
+
+      {/* Coaching One+ — visible seulement si elio_tier='one_plus' (le panneau se masque sinon) */}
+      {isOneClient && <CoachingCreditsPanel clientId={clientId} />}
 
       {/* Export RGPD */}
       <Card>

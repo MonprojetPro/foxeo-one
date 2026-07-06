@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -27,6 +27,10 @@ vi.mock('./invoices-list', () => ({
 
 vi.mock('./subscriptions-list', () => ({
   SubscriptionsList: () => <div data-testid="subscriptions-list" />,
+}))
+
+vi.mock('./subscription-form', () => ({
+  SubscriptionForm: () => <div data-testid="subscription-form" />,
 }))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
@@ -99,5 +103,39 @@ describe('BillingDashboard — métriques Hub (AC #4)', () => {
     render(<BillingDashboard />, { wrapper })
     const loadingTexts = screen.getAllByText('…')
     expect(loadingTexts.length).toBeGreaterThan(0)
+  })
+})
+
+describe('BillingDashboard — onglet Abonnements (grille v2)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockMetrics({ monthlyRevenue: 0, pendingAmount: 0, pendingQuotesCount: 0, mrr: 0 })
+  })
+
+  function openSubscriptionsTab() {
+    render(<BillingDashboard />, { wrapper })
+    fireEvent.click(screen.getByRole('button', { name: 'Abonnements' }))
+  }
+
+  it('affiche le bouton "+ Nouvel abonnement" et la liste', () => {
+    openSubscriptionsTab()
+    expect(screen.getByTestId('toggle-subscription-form')).toHaveTextContent('+ Nouvel abonnement')
+    expect(screen.getByTestId('subscriptions-list')).toBeInTheDocument()
+    // Le form n'est pas monté par défaut
+    expect(screen.queryByTestId('subscription-form')).not.toBeInTheDocument()
+  })
+
+  it('affiche le SubscriptionForm au clic sur "+ Nouvel abonnement"', () => {
+    openSubscriptionsTab()
+    fireEvent.click(screen.getByTestId('toggle-subscription-form'))
+    expect(screen.getByTestId('subscription-form')).toBeInTheDocument()
+    expect(screen.getByTestId('toggle-subscription-form')).toHaveTextContent('Annuler')
+  })
+
+  it('masque le form au second clic (Annuler)', () => {
+    openSubscriptionsTab()
+    fireEvent.click(screen.getByTestId('toggle-subscription-form'))
+    fireEvent.click(screen.getByTestId('toggle-subscription-form'))
+    expect(screen.queryByTestId('subscription-form')).not.toBeInTheDocument()
   })
 })

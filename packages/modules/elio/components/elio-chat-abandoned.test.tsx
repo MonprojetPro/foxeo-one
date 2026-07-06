@@ -54,6 +54,19 @@ vi.mock('../actions/send-to-elio', () => ({
   sendToElio: vi.fn(async () => ({ data: null, error: null })),
 }))
 
+// Agent Élio Hub (chantier 2026-07-06) — coupe la chaîne d'imports serveur
+// (hub-tools → menu-facile admin-client → server-only) comme pour send-to-elio.
+vi.mock('../actions/elio-hub-agent', () => ({
+  sendToElioHubAgent: vi.fn(async () => ({ data: null, error: null })),
+  confirmElioHubAction: vi.fn(async () => ({ data: null, error: null })),
+  rejectElioHubAction: vi.fn(async () => ({ data: null, error: null })),
+  getElioHubActions: vi.fn(async () => ({ data: [], error: null })),
+}))
+
+vi.mock('../hooks/use-elio-hub-actions', () => ({
+  useElioHubActions: () => ({ actions: [], isLoading: false, refetch: vi.fn() }),
+}))
+
 vi.mock('../actions/escalate-to-mikl', () => ({
   escalateToMiKL: vi.fn(async () => ({ data: null, error: null })),
 }))

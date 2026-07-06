@@ -6,6 +6,15 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import {
+  normalizeCustomerId,
+  buildCustomerClientMap,
+  resolveClientId,
+  extractSubscriptionCustomerId,
+  computeSubscriptionAmountCents,
+  type ClientLookupRow,
+  type PennylaneSubscriptionApi,
+} from './sync-logic.ts'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -194,6 +203,55 @@ async function batchFetchCustomers(
   return results
 }
 
+// ── Résolution client_id (chantier 2026-07-06) ────────────────────────────────
+// Toutes les rows billing_sync doivent porter client_id quand le customer
+// Pennylane correspond à un client MonprojetPro — sinon les rows sont invisibles
+// pour le client (RLS billing_sync_select_owner) et pour les hooks filtrés.
+// Cache Map par run pour éviter les requêtes répétées.
+
+class ClientResolver {
+  private cache = new Map<string, string | null>()
+
+  constructor(private supabase: SupabaseClient) {}
+
+  /** Résout un lot de customer ids Pennylane → Map(customerId → clients.id | null). */
+  async resolveMany(
+    customerIds: Array<string | number | null | undefined>
+  ): Promise<Map<string, string | null>> {
+    const wanted = [
+      ...new Set(
+        customerIds
+          .map(normalizeCustomerId)
+          .filter((id): id is string => id !== null)
+      ),
+    ]
+
+    const missing = wanted.filter((id) => !this.cache.has(id))
+    if (missing.length > 0) {
+      const { data, error } = await this.supabase
+        .from('clients')
+        .select('id, pennylane_customer_id')
+        .in('pennylane_customer_id', missing)
+
+      if (error) {
+        console.error('[BILLING:SYNC] ClientResolver query error', error)
+      }
+
+      const found = buildCustomerClientMap((data ?? []) as ClientLookupRow[])
+      // Cache aussi les miss (null) pour ne pas re-requêter dans le même run
+      for (const id of missing) {
+        this.cache.set(id, found.get(id) ?? null)
+      }
+    }
+
+    const result = new Map<string, string | null>()
+    for (const id of wanted) {
+      result.set(id, this.cache.get(id) ?? null)
+    }
+    return result
+  }
+}
+
 // ── Pure helpers Lab invoice (Story 11.6) ────────────────────────────────────
 // Dupliqués ici depuis packages/modules/facturation/utils/billing-sync-logic.ts
 // (Deno ne peut pas importer les packages workspace)
@@ -243,12 +301,16 @@ interface OverdueHandlingResult {
 
 async function upsertInvoices(
   supabase: SupabaseClient,
-  invoices: PennylaneInvoice[]
+  invoices: PennylaneInvoice[],
+  resolver: ClientResolver
 ): Promise<OverdueHandlingResult> {
   if (invoices.length === 0) return { upserted: 0, newlyOverdue: [], paidFromOverdue: [], labInvoicesPaid: [] }
 
   const now = new Date()
   const today = now.toISOString().split('T')[0]
+
+  // Résolution pennylane customer_id → clients.id (chantier 2026-07-06)
+  const clientIdMap = await resolver.resolveMany(invoices.map((i) => i.customer_id))
 
   // 1. Pré-UPSERT: lire l'état actuel de ces factures dans billing_sync
   const { data: existingRows } = await supabase
@@ -304,6 +366,7 @@ async function upsertInvoices(
     return {
       entity_type: 'invoice' as EntityType,
       pennylane_id: inv.id,
+      client_id: resolveClientId(clientIdMap, inv.customer_id),
       status: finalStatus,
       data: mergedData,
       amount: Math.round(inv.amount * 100),
@@ -555,13 +618,18 @@ async function handleLabPaymentActivations(
 
 async function upsertCustomers(
   supabase: SupabaseClient,
-  customers: PennylaneCustomer[]
+  customers: PennylaneCustomer[],
+  resolver: ClientResolver
 ): Promise<number> {
   if (customers.length === 0) return 0
+
+  // Pour un customer, le pennylane_id EST le customer id → résolution directe
+  const clientIdMap = await resolver.resolveMany(customers.map((c) => c.id))
 
   const rows = customers.map((c) => ({
     entity_type: 'customer' as EntityType,
     pennylane_id: c.id,
+    client_id: resolveClientId(clientIdMap, c.id),
     status: 'active',
     data: c as unknown as Record<string, unknown>,
     last_synced_at: new Date().toISOString(),
@@ -573,6 +641,84 @@ async function upsertCustomers(
 
   if (error) {
     console.error('[BILLING:SYNC] upsertCustomers error', error)
+    return 0
+  }
+
+  return rows.length
+}
+
+// ── Subscriptions (chantier 2026-07-06) ───────────────────────────────────────
+// ⚠️ Pennylane n'expose PAS de changelog /changelogs/billing_subscriptions dans
+// l'API externe v2. On fait donc un fetch direct paginé de /billing_subscriptions
+// à chaque sync (volumétrie très faible : quelques abonnements par client).
+// Conséquence : pas de détection de suppression (soft delete) pour cette entité —
+// un abonnement supprimé côté Pennylane doit être stoppé (status stopped/finished),
+// ce qui est bien remonté par le fetch complet.
+
+async function fetchAllSubscriptions(
+  apiToken: string
+): Promise<{ subs: PennylaneSubscriptionApi[]; rateLimited: boolean; error: boolean }> {
+  const subs: PennylaneSubscriptionApi[] = []
+  let cursor: string | undefined = undefined
+  let hasMore = true
+
+  while (hasMore) {
+    const params = new URLSearchParams({ per_page: '100' })
+    if (cursor) params.set('cursor', cursor)
+
+    const result = await pennylaneGet<Record<string, unknown>>(
+      `/billing_subscriptions?${params.toString()}`,
+      apiToken
+    )
+
+    if (result.retryAfter !== undefined) {
+      return { subs, rateLimited: true, error: false }
+    }
+    if (result.error || !result.data) {
+      console.error('[BILLING:SYNC] fetchAllSubscriptions error', result.error)
+      return { subs, rateLimited: false, error: true }
+    }
+
+    // Le payload V2 liste sous `billing_subscriptions` (fallback `items` par prudence)
+    const json = result.data
+    const pageItems = (json.billing_subscriptions ?? json.items ?? []) as PennylaneSubscriptionApi[]
+    subs.push(...pageItems)
+
+    const nextCursor = json.next_cursor as string | undefined
+    hasMore = Boolean(json.has_more) && Boolean(nextCursor)
+    cursor = nextCursor
+  }
+
+  return { subs, rateLimited: false, error: false }
+}
+
+async function upsertSubscriptions(
+  supabase: SupabaseClient,
+  subscriptions: PennylaneSubscriptionApi[],
+  resolver: ClientResolver
+): Promise<number> {
+  if (subscriptions.length === 0) return 0
+
+  const clientIdMap = await resolver.resolveMany(
+    subscriptions.map((s) => extractSubscriptionCustomerId(s))
+  )
+
+  const rows = subscriptions.map((sub) => ({
+    entity_type: 'subscription' as EntityType,
+    pennylane_id: String(sub.id),
+    client_id: resolveClientId(clientIdMap, extractSubscriptionCustomerId(sub)),
+    status: typeof sub.status === 'string' && sub.status.length > 0 ? sub.status : 'active',
+    data: sub as unknown as Record<string, unknown>,
+    amount: computeSubscriptionAmountCents(sub),
+    last_synced_at: new Date().toISOString(),
+  }))
+
+  const { error } = await supabase
+    .from('billing_sync')
+    .upsert(rows, { onConflict: 'entity_type,pennylane_id' })
+
+  if (error) {
+    console.error('[BILLING:SYNC] upsertSubscriptions error', error)
     return 0
   }
 
@@ -654,8 +800,32 @@ async function syncEntityType(
   changelogPath: string,
   state: BillingSyncState,
   apiToken: string,
-  targetClientId: string | null
+  targetClientId: string | null,
+  resolver: ClientResolver
 ): Promise<SyncEntityResult> {
+  // ── Subscriptions : pas de changelog Pennylane → fetch direct paginé complet ──
+  if (entityType === 'subscription') {
+    const { subs, rateLimited, error } = await fetchAllSubscriptions(apiToken)
+    if (rateLimited) return { synced: 0, rateLimited: true, error: false }
+    if (error) return { synced: 0, rateLimited: false, error: true }
+
+    const filtered = targetClientId
+      ? subs.filter((s) => extractSubscriptionCustomerId(s) === normalizeCustomerId(targetClientId))
+      : subs
+    const upsertedSubs = await upsertSubscriptions(supabase, filtered, resolver)
+
+    await supabase
+      .from('billing_sync_state')
+      .update({
+        last_sync_at: new Date().toISOString(),
+        consecutive_errors: 0,
+        last_error: null,
+      })
+      .eq('entity_type', entityType)
+
+    return { synced: upsertedSubs, rateLimited: false, error: false }
+  }
+
   const { ids, deleteIds, rateLimited, error: changelogError } =
     await fetchChangelog(changelogPath, state.last_sync_at, apiToken)
 
@@ -677,7 +847,7 @@ async function syncEntityType(
       ? (entities as PennylaneInvoice[]).filter((inv) => inv.customer_id === targetClientId)
       : entities as PennylaneInvoice[]
     // Story 11.4 — upsertInvoices retourne maintenant les listes overdue/paid
-    const invoiceResult = await upsertInvoices(supabase, filtered)
+    const invoiceResult = await upsertInvoices(supabase, filtered, resolver)
     upserted = invoiceResult.upserted
     // Traiter les notifications overdue et paiements reçus
     await handleOverdueNotifications(supabase, invoiceResult.newlyOverdue)
@@ -690,7 +860,7 @@ async function syncEntityType(
     const filtered = targetClientId
       ? (entities as PennylaneCustomer[]).filter((c) => c.id === targetClientId)
       : entities as PennylaneCustomer[]
-    upserted = await upsertCustomers(supabase, filtered)
+    upserted = await upsertCustomers(supabase, filtered, resolver)
   }
 
   await markDeleted(supabase, entityType, deleteIds)
@@ -759,9 +929,15 @@ serve(async (req: Request) => {
 
     // ── Sync each entity type independently ───────────────────────────────
 
+    // Résolveur pennylane_customer_id → clients.id, partagé (cache) sur tout le run
+    const resolver = new ClientResolver(supabase)
+
     const entityConfigs: { type: EntityType; changelogPath: string }[] = [
       { type: 'invoice', changelogPath: '/changelogs/customer_invoices' },
       { type: 'customer', changelogPath: '/changelogs/customers' },
+      // subscription : pas de changelog Pennylane → fetch direct paginé
+      // dans syncEntityType (changelogPath ignoré pour ce type)
+      { type: 'subscription', changelogPath: '' },
     ]
 
     for (const { type, changelogPath } of entityConfigs) {
@@ -769,7 +945,7 @@ serve(async (req: Request) => {
       if (!state) continue
 
       const result = await syncEntityType(
-        supabase, type, changelogPath, state, apiToken, targetClientId
+        supabase, type, changelogPath, state, apiToken, targetClientId, resolver
       )
 
       if (result.rateLimited || result.error) {

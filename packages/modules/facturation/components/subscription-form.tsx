@@ -5,19 +5,19 @@ import { showSuccess, showError } from '@monprojetpro/ui'
 import { createSubscription } from '../actions/create-subscription'
 import {
   PLAN_MONTHLY_PRICE,
-  AVAILABLE_EXTRAS,
+  PLAN_COMMERCIAL_NAME,
   type SubscriptionPlan,
   type RecurringPeriod,
   type PaymentMethod,
-} from '../actions/create-subscription'
+} from '../config/subscription-plans'
 import type { ClientWithPennylane } from '../types/billing.types'
 
-// ── Labels ────────────────────────────────────────────────────────────────────
+// ── Labels — grille v2 (One 39 € / One+ 99 €) ─────────────────────────────────
 
 const PLAN_DISPLAY: Record<SubscriptionPlan, { label: string; price: string }> = {
-  ponctuel: { label: 'Ponctuel', price: 'Variable' },
-  essentiel: { label: 'Essentiel', price: '49 €/mois' },
-  agentique: { label: 'Agentique', price: '99 €/mois' },
+  ponctuel: { label: PLAN_COMMERCIAL_NAME.ponctuel, price: 'Variable (devis)' },
+  essentiel: { label: PLAN_COMMERCIAL_NAME.essentiel, price: `${PLAN_MONTHLY_PRICE.essentiel} €/mois` },
+  agentique: { label: PLAN_COMMERCIAL_NAME.agentique, price: `${PLAN_MONTHLY_PRICE.agentique} €/mois` },
 }
 
 const FREQUENCY_LABELS: Record<RecurringPeriod, string> = {
@@ -52,31 +52,13 @@ export function SubscriptionForm({ clients, onSuccess }: SubscriptionFormProps) 
   const [plan, setPlan] = useState<SubscriptionPlan>('essentiel')
   const [frequency, setFrequency] = useState<RecurringPeriod>('monthly')
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [selectedExtras, setSelectedExtras] = useState<Set<string>>(new Set())
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cb')
   const [customAmount, setCustomAmount] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Calcul total mensuel en temps réel
-  const baseMonthly = PLAN_MONTHLY_PRICE[plan] ?? Number(customAmount) ?? 0
-  const extrasMonthly = AVAILABLE_EXTRAS.filter((e) => selectedExtras.has(e.id)).reduce(
-    (sum, e) => sum + e.monthlyPrice,
-    0
-  )
-  const totalMonthly = baseMonthly + extrasMonthly
+  // Calcul total en temps réel — grille v2, une seule ligne (plus d'extras)
+  const totalMonthly = PLAN_MONTHLY_PRICE[plan] ?? (Number(customAmount) || 0)
   const totalForPeriod = totalMonthly * FREQUENCY_MULTIPLIER[frequency]
-
-  function toggleExtra(id: string) {
-    setSelectedExtras((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
 
   async function handleSubmit() {
     if (!clientId) {
@@ -99,7 +81,6 @@ export function SubscriptionForm({ clients, onSuccess }: SubscriptionFormProps) 
         plan,
         frequency,
         startDate,
-        extras: Array.from(selectedExtras),
         paymentMethod,
         customAmount: plan === 'ponctuel' ? Number(customAmount) : null,
       })
@@ -110,13 +91,12 @@ export function SubscriptionForm({ clients, onSuccess }: SubscriptionFormProps) 
       }
 
       const clientName = clients.find((c) => c.id === clientId)?.name ?? 'le client'
-      showSuccess(`Abonnement créé pour ${clientName}`)
+      showSuccess(`Abonnement ${PLAN_COMMERCIAL_NAME[plan]} créé pour ${clientName}`)
       // Reset
       setClientId('')
       setPlan('essentiel')
       setFrequency('monthly')
       setStartDate(new Date().toISOString().split('T')[0])
-      setSelectedExtras(new Set())
       setPaymentMethod('cb')
       setCustomAmount('')
       onSuccess?.()
@@ -153,9 +133,9 @@ export function SubscriptionForm({ clients, onSuccess }: SubscriptionFormProps) 
         )}
       </div>
 
-      {/* Plan */}
+      {/* Offre */}
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Type d'abonnement</span>
+        <span className="text-sm font-medium">Offre</span>
         <div className="flex gap-2 flex-wrap">
           {(Object.keys(PLAN_DISPLAY) as SubscriptionPlan[]).map((p) => (
             <button
@@ -233,31 +213,6 @@ export function SubscriptionForm({ clients, onSuccess }: SubscriptionFormProps) 
         />
       </div>
 
-      {/* Modules extras */}
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Modules supplémentaires</span>
-        <div className="flex flex-col gap-2">
-          {AVAILABLE_EXTRAS.map((extra) => (
-            <label
-              key={extra.id}
-              className="flex items-center gap-3 cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={selectedExtras.has(extra.id)}
-                onChange={() => toggleExtra(extra.id)}
-                className="rounded border-border"
-                data-testid={`extra-${extra.id}`}
-              />
-              <span className="text-sm">{extra.label}</span>
-              <span className="text-xs text-muted-foreground ml-auto">
-                +{extra.monthlyPrice} €/mois
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
       {/* Mode de paiement */}
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Mode de paiement</span>
@@ -283,22 +238,12 @@ export function SubscriptionForm({ clients, onSuccess }: SubscriptionFormProps) 
       {/* Total */}
       <div className="rounded-lg border border-border bg-muted/30 p-4 flex flex-col gap-2">
         <div className="flex justify-between text-sm">
-          <span>Base mensuelle</span>
-          <span data-testid="base-monthly">{baseMonthly.toFixed(2)} €/mois</span>
-        </div>
-        {extrasMonthly > 0 && (
-          <div className="flex justify-between text-sm">
-            <span>Modules extras</span>
-            <span data-testid="extras-monthly">+{extrasMonthly.toFixed(2)} €/mois</span>
-          </div>
-        )}
-        <div className="flex justify-between text-sm border-t border-border pt-2">
           <span>Total mensuel</span>
           <span className="font-semibold" data-testid="total-monthly">
             {totalMonthly.toFixed(2)} €/mois
           </span>
         </div>
-        <div className="flex justify-between font-semibold">
+        <div className="flex justify-between font-semibold border-t border-border pt-2">
           <span>
             Total{' '}
             {frequency === 'monthly'

@@ -148,6 +148,29 @@ describe('generateDraft (Story 8.6 — Task 3)', () => {
     expect(result.data?.draftType).toBe('chat')
   })
 
+  it('Fix systemPrompt vide — envoie un systemPrompt NON vide et le contenu dans message', async () => {
+    mockInvoke.mockResolvedValueOnce({ data: { content: 'ok' }, error: null })
+
+    const { generateDraft } = await import('./generate-draft')
+    await generateDraft({
+      clientName: 'Sandrine',
+      draftType: 'email',
+      subject: 'Votre devis est prêt',
+    })
+
+    expect(mockInvoke).toHaveBeenCalledWith(
+      'elio-chat',
+      expect.objectContaining({
+        body: expect.objectContaining({
+          systemPrompt: expect.stringContaining('assistant de rédaction'),
+          message: expect.stringContaining('Votre devis est prêt'),
+        }),
+      }),
+    )
+    const body = mockInvoke.mock.calls[0]![1].body as { systemPrompt: string }
+    expect(body.systemPrompt.length).toBeGreaterThan(0)
+  })
+
   it('Task 3.2 — retourne CLIENT_NOT_FOUND si client introuvable', async () => {
     const { createServerSupabaseClient } = await import('@monprojetpro/supabase')
     vi.mocked(createServerSupabaseClient).mockImplementationOnce(async () => ({

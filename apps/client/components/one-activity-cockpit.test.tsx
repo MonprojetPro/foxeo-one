@@ -18,6 +18,13 @@ const mocks = {
   ticketsPending: false,
   summary: { evolutionPendingCount: 0, elioTier: 'one' as 'one' | 'one_plus', oneStatus: null },
   summaryPending: false,
+  coaching: {
+    elioTier: 'one_plus' as 'one' | 'one_plus' | null,
+    balance: 0,
+    nextSessionAt: null as string | null,
+    nextSessionTitle: null as string | null,
+  },
+  coachingPending: false,
 }
 
 vi.mock('next/link', () => ({
@@ -52,6 +59,8 @@ vi.mock('@monprojetpro/module-visio', () => ({
     data: status === 'scheduled' ? mocks.scheduled : mocks.completed,
     isPending: mocks.meetingsPending,
   }),
+  useCoachingInfo: () => ({ data: mocks.coaching, isPending: mocks.coachingPending }),
+  useCoachingRealtime: () => undefined,
 }))
 
 vi.mock('@monprojetpro/modules-support', () => ({
@@ -80,6 +89,8 @@ function reset() {
   mocks.ticketsPending = false
   mocks.summary = { evolutionPendingCount: 0, elioTier: 'one', oneStatus: null }
   mocks.summaryPending = false
+  mocks.coaching = { elioTier: 'one_plus', balance: 0, nextSessionAt: null, nextSessionTitle: null }
+  mocks.coachingPending = false
 }
 
 describe('OneActivityCockpit — cockpit One (données réelles)', () => {
@@ -148,5 +159,33 @@ describe('OneActivityCockpit — cockpit One (données réelles)', () => {
     render(<OneActivityCockpit clientId="c1" userId="u1" />)
     expect(screen.getByText('Coaching mensuel')).toBeInTheDocument()
     expect(screen.getByText('Prochain rendez-vous')).toBeInTheDocument()
+  })
+
+  it('la carte « Coaching » est absente pour un client One (tier one)', () => {
+    mocks.summary = { evolutionPendingCount: 0, elioTier: 'one', oneStatus: null }
+    render(<OneActivityCockpit clientId="c1" userId="u1" />)
+    expect(screen.queryByText('Coaching')).not.toBeInTheDocument()
+  })
+
+  it('la carte « Coaching » affiche solde + prochaine séance pour un client One+', () => {
+    mocks.summary = { evolutionPendingCount: 0, elioTier: 'one_plus', oneStatus: null }
+    mocks.coaching = {
+      elioTier: 'one_plus',
+      balance: 2,
+      nextSessionAt: '2099-02-01T10:00:00Z',
+      nextSessionTitle: 'Séance stratégie',
+    }
+    render(<OneActivityCockpit clientId="c1" userId="u1" />)
+    expect(screen.getByText('Coaching')).toBeInTheDocument()
+    expect(screen.getByText('Séances incluses restantes')).toBeInTheDocument()
+    expect(screen.getByText('Séance stratégie')).toBeInTheDocument()
+    expect(screen.getByText('Réserver une séance')).toBeInTheDocument()
+  })
+
+  it('la carte « Coaching » signale la séance hors forfait à 45 € quand le crédit est épuisé', () => {
+    mocks.summary = { evolutionPendingCount: 0, elioTier: 'one_plus', oneStatus: null }
+    mocks.coaching = { elioTier: 'one_plus', balance: 0, nextSessionAt: null, nextSessionTitle: null }
+    render(<OneActivityCockpit clientId="c1" userId="u1" />)
+    expect(screen.getByText(/Crédit épuisé — prochaine séance : 45 €/)).toBeInTheDocument()
   })
 })

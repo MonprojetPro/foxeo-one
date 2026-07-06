@@ -13,6 +13,17 @@ export { BillingSummary } from './components/billing-summary'
 // Components (Story 11.6)
 export { LabBillingTab } from './components/lab-billing-tab'
 
+// Components — abonnements grille v2 (chantier 2026-07-06)
+export { SubscriptionForm } from './components/subscription-form'
+export { SubscriptionsList } from './components/subscriptions-list'
+export {
+  PLAN_MONTHLY_PRICE,
+  PLAN_LABEL,
+  PLAN_COMMERCIAL_NAME,
+  PLAN_TIER,
+} from './config/subscription-plans'
+export type { SubscriptionPlan, RecurringPeriod, PaymentMethod } from './config/subscription-plans'
+
 // Components (Story 13.2)
 export { DocumentsList } from './components/documents-list'
 export { SubscriptionCard } from './components/subscription-card'

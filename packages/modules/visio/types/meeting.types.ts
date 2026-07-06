@@ -7,7 +7,7 @@ import { z } from 'zod'
 export const MeetingStatusValues = ['scheduled', 'in_progress', 'completed', 'cancelled'] as const
 export type MeetingStatus = typeof MeetingStatusValues[number]
 
-export const MeetingTypeValues = ['standard', 'prospect', 'onboarding', 'support'] as const
+export const MeetingTypeValues = ['standard', 'prospect', 'onboarding', 'support', 'coaching'] as const
 export type MeetingType = typeof MeetingTypeValues[number]
 
 export interface Meeting {
