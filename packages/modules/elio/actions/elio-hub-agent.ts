@@ -20,6 +20,7 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 import { buildHubAgentPrompt, ELIO_FORMATTING_INSTRUCTION } from '../config/system-prompts'
 import { getLlmConfig } from './llm-config'
+import { getHubDirectives } from './hub-directives'
 import { DEFAULT_LLM_CONFIG } from '../types/llm-config.types'
 import { logTokenUsage } from './log-token-usage'
 import { HUB_AGENT_TOOLS } from './hub-tools/tool-definitions'
@@ -280,7 +281,22 @@ export async function sendToElioHubAgent(params: {
     apiKeyEnv: profile.apiKeyEnv,
   }
 
-  const systemPrompt = buildHubAgentPrompt() + ELIO_FORMATTING_INSTRUCTION
+  // Directives permanentes de MiKL (mode « Màj Élio ») — best-effort, jamais
+  // bloquant : si la lecture échoue, l'agent répond sans les directives.
+  let directivesSection = ''
+  try {
+    const { data: directives } = await getHubDirectives()
+    if (directives && directives.length > 0) {
+      directivesSection =
+        '\n\n## Directives permanentes de MiKL\n' +
+        'MiKL t’a donné ces consignes permanentes (mode « Màj Élio »). Applique-les systématiquement, en plus des règles ci-dessus :\n' +
+        directives.map((d) => `- ${d.text}`).join('\n')
+    }
+  } catch {
+    /* best-effort — jamais bloquant */
+  }
+
+  const systemPrompt = buildHubAgentPrompt() + directivesSection + ELIO_FORMATTING_INSTRUCTION
   const messages = await buildConversationMessages(ctx.supabase, conversationId, message.trim())
 
   const deadline = Date.now() + GLOBAL_TIMEOUT_MS

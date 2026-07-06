@@ -282,6 +282,24 @@ export {
 } from './types/alert-thresholds.types'
 export type { AlertThresholds } from './types/alert-thresholds.types'
 
+// Actions — Directives permanentes Élio Hub (mode « Màj Élio », widget sidebar)
+export { getHubDirectives, addHubDirective, removeHubDirective } from './actions/hub-directives'
+
+// Types — Directives permanentes Élio Hub
+export {
+  HubDirectiveSchema,
+  HubDirectivesSchema,
+  HubDirectiveTextSchema,
+  HUB_DIRECTIVES_KEY,
+  MAX_HUB_DIRECTIVES,
+  HUB_DIRECTIVE_MAX_LENGTH,
+} from './types/hub-directives.types'
+export type { HubDirective } from './types/hub-directives.types'
+
+// Hook — dictée vocale Web Speech API (micro widget + chat plein écran Hub)
+export { useSpeechDictation } from './hooks/use-speech-dictation'
+export type { UseSpeechDictationResult, UseSpeechDictationOptions } from './hooks/use-speech-dictation'
+
 // Actions — Chantier Élio Hub (boucle agent + garde-fou, Contrats 3 & 4)
 export {
   sendToElioHubAgent,

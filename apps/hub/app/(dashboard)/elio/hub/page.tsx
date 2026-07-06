@@ -1,22 +1,26 @@
 import {
   getLlmConfig,
   getAlertThresholds,
+  getHubDirectives,
   listElioHubActions,
   DEFAULT_LLM_CONFIG,
   DEFAULT_ALERT_THRESHOLDS,
 } from '@monprojetpro/module-elio'
 import { LlmConfigSection } from './llm-config-section'
 import { AlertThresholdsSection } from './alert-thresholds-section'
+import { HubDirectivesSection } from './hub-directives-section'
 import { HubActionsHistory } from './hub-actions-history'
 
 /**
  * Onglet Élio Hub — centre de pilotage (T5 Pilotage).
- * 3 sections : config LLM par profils, seuils d'alertes, historique des actions.
+ * 4 sections : config LLM par profils, seuils d'alertes, directives permanentes,
+ * historique des actions.
  */
 export default async function ElioHubTabPage() {
-  const [llmResult, thresholdsResult, actionsResult] = await Promise.all([
+  const [llmResult, thresholdsResult, directivesResult, actionsResult] = await Promise.all([
     getLlmConfig(),
     getAlertThresholds(),
+    getHubDirectives(),
     listElioHubActions(),
   ])
 
@@ -33,6 +37,10 @@ export default async function ElioHubTabPage() {
 
       <div className="border-t border-border/40 pt-8">
         <AlertThresholdsSection initialThresholds={thresholdsResult.data ?? DEFAULT_ALERT_THRESHOLDS} />
+      </div>
+
+      <div className="border-t border-border/40 pt-8">
+        <HubDirectivesSection initialDirectives={directivesResult.data ?? []} />
       </div>
 
       <div className="border-t border-border/40 pt-8">

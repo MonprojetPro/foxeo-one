@@ -1,12 +1,27 @@
 'use client'
 
-import { useState, useRef, type KeyboardEvent } from 'react'
-import { Mic, Paperclip, Send, Loader2, ExternalLink, Bot, Zap, MessageCircle, SlidersHorizontal, PenLine, FileText } from 'lucide-react'
-import { newConversation, sendToElio, saveElioMessage } from '@monprojetpro/module-elio'
+import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
+import { Mic, Paperclip, Send, Loader2, ExternalLink, Bot, Zap, MessageCircle, SlidersHorizontal, PenLine, FileText, Plus, Hourglass } from 'lucide-react'
+import {
+  newConversation,
+  saveElioMessage,
+  sendToElioHubAgent,
+  addHubDirective,
+  useSpeechDictation,
+} from '@monprojetpro/module-elio'
 import { readFileContent } from '@monprojetpro/utils'
 import Link from 'next/link'
 
 type ElioMode = 'ordre' | 'avis' | 'maj-elio' | 'brouillon'
+
+/** Clé sessionStorage — la conversation du widget survit aux navigations. */
+const CONVERSATION_STORAGE_KEY = 'elio-widget-conversation-id'
+
+/** Paliers du message d'attente (l'agent outillé peut prendre 20-50 s). */
+const WAITING_STAGES: Array<{ afterMs: number; label: string }> = [
+  { afterMs: 5_000, label: 'Élio consulte les données…' },
+  { afterMs: 20_000, label: 'Encore un instant — Élio croise les infos…' },
+]
 
 const MODES: {
   id: ElioMode
@@ -81,10 +96,38 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
   const [mode, setMode] = useState<ElioMode>('ordre')
   const [isFocused, setIsFocused] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [waitingLabel, setWaitingLabel] = useState('Élio réfléchit…')
   const [lastReply, setLastReply] = useState<string | null>(null)
+  const [pendingCount, setPendingCount] = useState(0)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [attachedFile, setAttachedFile] = useState<string | null>(null)
+  // Conversation continue : restaurée depuis sessionStorage tant que la sidebar vit.
+  const [conversationId, setConversationId] = useState<string | null>(() =>
+    typeof window === 'undefined' ? null : window.sessionStorage.getItem(CONVERSATION_STORAGE_KEY),
+  )
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const waitingTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  // Dictée vocale (Web Speech API) — le texte dicté s'AJOUTE au champ de saisie.
+  const {
+    isSupported: micSupported,
+    isListening,
+    toggle: toggleMic,
+    error: micError,
+  } = useSpeechDictation({
+    onTranscript: (text) => {
+      setInput((prev) => (prev.trim() ? `${prev.replace(/\s+$/, '')} ${text}` : text))
+      textareaRef.current?.focus()
+    },
+  })
+
+  const clearWaitingTimers = () => {
+    for (const t of waitingTimersRef.current) clearTimeout(t)
+    waitingTimersRef.current = []
+  }
+
+  useEffect(() => clearWaitingTimers, [])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -107,26 +150,88 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
 
   const activeMode = MODES.find((m) => m.id === mode)!
 
+  /** Récupère la conversation continue du widget — créée au premier envoi. */
+  const ensureConversation = async (): Promise<string | null> => {
+    if (conversationId) return conversationId
+    const { data: conv } = await newConversation('hub')
+    if (!conv) return null
+    setConversationId(conv.id)
+    try {
+      window.sessionStorage.setItem(CONVERSATION_STORAGE_KEY, conv.id)
+    } catch {
+      /* sessionStorage indisponible — la conversation vit en state seulement */
+    }
+    return conv.id
+  }
+
+  /** Bouton « + » — repartir sur une conversation vierge au prochain envoi. */
+  const handleNewConversation = () => {
+    if (isLoading) return
+    setConversationId(null)
+    try {
+      window.sessionStorage.removeItem(CONVERSATION_STORAGE_KEY)
+    } catch {
+      /* rien à nettoyer */
+    }
+    setLastReply(null)
+    setPendingCount(0)
+    setSuccessMsg(null)
+    setErrorMsg(null)
+  }
+
   const handleSend = async () => {
     const text = input.trim()
     if (!text || isLoading) return
     setInput('')
     setLastReply(null)
+    setPendingCount(0)
+    setSuccessMsg(null)
     setErrorMsg(null)
-    setIsLoading(true)
+    setAttachedFile(null)
 
-    const { data: conv } = await newConversation('hub')
-    if (!conv) {
+    // ── Mode « Màj Élio » : directive persistée, AUCUN appel LLM ─────────────
+    // Déterministe et instantané : la consigne est stockée dans system_config
+    // et injectée dans le system prompt de l'agent à chaque conversation.
+    if (mode === 'maj-elio') {
+      setIsLoading(true)
+      const { error } = await addHubDirective(text)
+      setIsLoading(false)
+      if (error) {
+        setErrorMsg(error.message)
+        setInput(text) // ne pas perdre la saisie
+        return
+      }
+      setSuccessMsg('✅ Directive enregistrée — Élio l’appliquera désormais')
+      return
+    }
+
+    // ── Modes Ordre / Avis / Brouillon : agent Élio Hub outillé ──────────────
+    setIsLoading(true)
+    setWaitingLabel('Élio réfléchit…')
+    clearWaitingTimers()
+    waitingTimersRef.current = WAITING_STAGES.map(({ afterMs, label: stageLabel }) =>
+      setTimeout(() => setWaitingLabel(stageLabel), afterMs),
+    )
+
+    const convId = await ensureConversation()
+    if (!convId) {
+      clearWaitingTimers()
       setErrorMsg('Impossible de créer la conversation')
       setIsLoading(false)
       return
     }
 
-    setAttachedFile(null)
+    // L'agent ne persiste PAS les messages : le composant appelant persiste le
+    // message user AVANT (l'agent le dédoublonne) et la réponse APRÈS — même
+    // contrat que le chat plein écran (elio-chat.tsx).
     const fullMessage = activeMode.prefix + text
-    await saveElioMessage(conv.id, 'user', fullMessage)
+    await saveElioMessage(convId, 'user', fullMessage)
 
-    const { data: reply, error } = await sendToElio('hub', fullMessage)
+    const { data: reply, error } = await sendToElioHubAgent({
+      conversationId: convId,
+      message: fullMessage,
+    })
+    clearWaitingTimers()
     setIsLoading(false)
 
     if (error) {
@@ -135,8 +240,23 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
     }
 
     if (reply) {
-      await saveElioMessage(conv.id, 'assistant', reply.content)
-      setLastReply(reply.content)
+      const assistantContent =
+        reply.content.trim() ||
+        'Proposition enregistrée — la carte de validation t’attend dans Élio.'
+
+      // Metadata persistée en snake_case (relue camelCase) — les cartes d'action
+      // s'affichent dans le chat plein écran /modules/elio.
+      const persistedMetadata: Record<string, unknown> = {}
+      if (reply.pendingActions.length > 0) {
+        persistedMetadata.hub_action_ids = reply.pendingActions.map((a) => a.id)
+      }
+      if (reply.toolsUsed.length > 0) {
+        persistedMetadata.hub_tools_used = reply.toolsUsed
+      }
+      await saveElioMessage(convId, 'assistant', assistantContent, persistedMetadata)
+
+      setLastReply(assistantContent)
+      setPendingCount(reply.pendingActions.length)
     }
   }
 
@@ -149,8 +269,7 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
 
   return (
     <div className="flex flex-col gap-2 px-2 pb-2">
-      {/* Input fichier caché */}
-      {/* Label Élio + lien vers page complète */}
+      {/* Label Élio + nouvelle conversation + lien vers page complète */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-1.5">
           <Bot className="h-3.5 w-3.5 text-primary" />
@@ -158,14 +277,26 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
             {label}
           </span>
         </div>
-        <Link
-          href="/modules/elio"
-          className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
-          title="Ouvrir la conversation complète"
-        >
-          Ouvrir
-          <ExternalLink className="h-2.5 w-2.5" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleNewConversation}
+            disabled={isLoading}
+            title="Nouvelle conversation"
+            aria-label="Nouvelle conversation"
+            className="flex items-center text-muted-foreground hover:text-primary transition-colors cursor-pointer disabled:opacity-40"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+          <Link
+            href="/modules/elio"
+            className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+            title="Ouvrir la conversation complète"
+          >
+            Ouvrir
+            <ExternalLink className="h-2.5 w-2.5" />
+          </Link>
+        </div>
       </div>
 
       {/* Mode buttons */}
@@ -200,11 +331,11 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
         ))}
       </div>
 
-      {/* Indicateur de chargement */}
+      {/* Indicateur de chargement — message d'attente évolutif (agent 20-50 s) */}
       {isLoading && (
         <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
           <Loader2 className="h-3 w-3 text-primary animate-spin shrink-0" />
-          <span className="text-[11px] text-muted-foreground italic">Élio réfléchit…</span>
+          <span className="text-[11px] text-muted-foreground italic">{waitingLabel}</span>
         </div>
       )}
 
@@ -228,6 +359,13 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
         </div>
       )}
 
+      {/* Confirmation directive (mode Màj Élio) */}
+      {!isLoading && successMsg && (
+        <div className="rounded-lg bg-primary/5 border border-primary/20 px-3 py-2" role="status">
+          <p className="text-[11px] text-foreground/80 leading-relaxed">{successMsg}</p>
+        </div>
+      )}
+
       {/* Dernière réponse d'Élio */}
       {!isLoading && lastReply && (
         <div className="rounded-lg bg-primary/5 border border-primary/20 px-3 py-2 flex flex-col gap-1.5">
@@ -242,6 +380,28 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
             <ExternalLink className="h-2.5 w-2.5" />
           </Link>
         </div>
+      )}
+
+      {/* Actions en attente de validation (garde-fou agent) */}
+      {!isLoading && pendingCount > 0 && (
+        <div className="rounded-lg bg-[oklch(0.7_0.2_50/0.08)] border border-[oklch(0.7_0.2_50/0.3)] px-3 py-2 flex flex-col gap-1" role="status">
+          <p className="text-[11px] text-foreground/80 leading-relaxed flex items-center gap-1.5">
+            <Hourglass className="h-3 w-3 text-[oklch(0.7_0.2_50)] shrink-0" />
+            {pendingCount} action{pendingCount > 1 ? 's' : ''} en attente de ta validation
+          </p>
+          <Link
+            href="/modules/elio"
+            className="self-end text-[10px] text-primary hover:underline flex items-center gap-0.5"
+          >
+            Valider dans Élio
+            <ExternalLink className="h-2.5 w-2.5" />
+          </Link>
+        </div>
+      )}
+
+      {/* Erreur micro (discrète) */}
+      {micError && (
+        <p className="px-1 text-[10px] text-destructive/70 leading-snug">{micError}</p>
       )}
 
       {/* Zone de saisie */}
@@ -285,13 +445,22 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
         {/* Boutons action */}
         <div className="flex items-center justify-between px-2 pb-2">
           <div className="flex items-center gap-0.5">
-            <button
-              type="button"
-              title="Microphone (bientôt disponible)"
-              className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-pointer"
-            >
-              <Mic className="h-3 w-3" />
-            </button>
+            {micSupported && (
+              <button
+                type="button"
+                onClick={toggleMic}
+                title={isListening ? 'Arrêter la dictée' : 'Dicter au micro'}
+                aria-label={isListening ? 'Arrêter la dictée vocale' : 'Démarrer la dictée vocale'}
+                className={[
+                  'h-6 w-6 rounded-full flex items-center justify-center transition-colors cursor-pointer',
+                  isListening
+                    ? 'text-red-500 animate-pulse'
+                    : 'text-muted-foreground/40 hover:text-muted-foreground/70',
+                ].join(' ')}
+              >
+                <Mic className="h-3 w-3" />
+              </button>
+            )}
             <label
               title="Joindre un fichier texte"
               className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-pointer"

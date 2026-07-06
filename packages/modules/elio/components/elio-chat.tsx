@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useElioChat } from '../hooks/use-elio-chat'
 import { useElioConversations } from '../hooks/use-elio-conversations'
 import { useElioMessages } from '../hooks/use-elio-messages'
+import { useSpeechDictation } from '../hooks/use-speech-dictation'
 import { ElioThinking } from './elio-thinking'
 import { ElioErrorMessage } from './elio-error-message'
 import { ElioMessageItem } from './elio-message'
@@ -1026,6 +1027,21 @@ function ChatInput({
   const [attachedFile, setAttachedFile] = useState<string | null>(null)
   const hasMode = mode !== undefined && onModeChange !== undefined
 
+  // Dictée vocale (Web Speech API) — bouton micro du mode Hub uniquement.
+  // Le texte dicté s'AJOUTE au champ de saisie (append, jamais remplacé).
+  const {
+    isSupported: micSupported,
+    isListening,
+    toggle: toggleMic,
+    error: micError,
+  } = useSpeechDictation({
+    onTranscript: (text) => {
+      const current = inputRef.current?.value ?? ''
+      onChange(current.trim() ? `${current.replace(/\s+$/, '')} ${text}` : text)
+      inputRef.current?.focus()
+    },
+  })
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -1126,10 +1142,22 @@ function ChatInput({
           {/* Bottom row */}
           <div className="flex items-center justify-between px-2 pb-2">
             <div className="flex items-center gap-0.5">
-              <button type="button" title="Microphone (bientôt disponible)"
-                className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-pointer">
-                <Mic className="h-3.5 w-3.5" />
-              </button>
+              {micSupported && (
+                <button
+                  type="button"
+                  onClick={toggleMic}
+                  title={isListening ? 'Arrêter la dictée' : 'Dicter au micro'}
+                  aria-label={isListening ? 'Arrêter la dictée vocale' : 'Démarrer la dictée vocale'}
+                  className={[
+                    'h-7 w-7 rounded-full flex items-center justify-center transition-colors cursor-pointer',
+                    isListening
+                      ? 'text-red-500 animate-pulse'
+                      : 'text-muted-foreground/40 hover:text-muted-foreground/70',
+                  ].join(' ')}
+                >
+                  <Mic className="h-3.5 w-3.5" />
+                </button>
+              )}
               <label title="Joindre un fichier texte"
                 className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors cursor-pointer">
                 <Paperclip className="h-3.5 w-3.5" />
@@ -1146,6 +1174,9 @@ function ChatInput({
             </button>
           </div>
         </div>
+        {micError && (
+          <p className="mt-1 text-[10px] text-destructive/70 leading-snug">{micError}</p>
+        )}
         <p className="mt-1.5 text-center text-[10px] text-muted-foreground/50">
           Entrée pour envoyer · Maj+Entrée pour nouvelle ligne
         </p>
