@@ -735,3 +735,14 @@
 - **Solution** : migration complémentaire `REVOKE EXECUTE ... FROM PUBLIC;` (sans risque si `authenticated`/`service_role` ont leurs grants explicites). Vérifier ensuite `proacl` : ni `anon=`, ni entrée commençant par `=X`.
 - **Regle a suivre** : pour verrouiller une RPC : (1) `REVOKE ... FROM PUBLIC` ET `FROM anon`, (2) grants explicites aux rôles voulus, (3) vérif `proacl`. ⚠️ Probable dette générale : la plupart des 32 fonctions SECURITY DEFINER du schéma ont ce grant PUBLIC implicite (cf. docs/audit-2026-07-03-a-etudier.md §⑤.4).
 - **Agents impliques** : CERBÈRE, SPARK, ATLAS
+
+### [DB-006] Notification silencieusement perdue : type hors CHECK — pattern récurrent (3 occurrences)
+- **Date** : 2026-07-06
+- **Projet** : MonprojetPro (Hub + Client)
+- **Phase** : Chantier Élio Hub / Coaching One+
+- **Catégorie** : Base de données (DB)
+- **Symptôme** : une feature « marche » (la row métier est créée) mais le client/opérateur ne reçoit jamais la cloche ni l'email. Aucun crash visible : l'INSERT `notifications` échoue sur la contrainte `notifications_type_check` et l'erreur est avalée par le try/catch best-effort.
+- **Occurrences** : ① `elio_escalation` (perdu par 00056, réintégré par 00109) ; ② `meeting_scheduled` (calcom-webhook + create-meeting — TOUTES les notifs visio perdues depuis l'origine, découvert le 2026-07-06) ; ③ `billing_payment_failed`/`billing_payment_received`/`lab_payment_received`/`billing_sync_alert` (billing-sync — corrigé par 20260706124000).
+- **Cause racine** : la CHECK `notifications_type_check` est recréée intégralement par chaque migration qui ajoute un type (drop + re-add avec liste complète). Tout code qui invente un type sans étendre la CHECK, ou toute migration qui recrée la liste sans un type utilisé ailleurs, casse silencieusement les notifs.
+- **Solution durable** : avant tout INSERT `notifications` avec un type nouveau : vérifier la contrainte réelle en prod (`pg_get_constraintdef`) — pas les fichiers de migration. Préférer un type existant (`system`, `payment`) quand le besoin n'exige pas de filtrage dédié. Si nouveau type : migration qui étend la CHECK dans le MÊME commit.
+- **Détection** : grep périodique des `type:` insérés dans `notifications` vs la liste de la contrainte prod.
