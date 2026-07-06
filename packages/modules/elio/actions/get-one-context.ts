@@ -66,7 +66,30 @@ export async function getOneContext(clientId: string): Promise<string | null> {
         data: Array<{ title: string | null; body: string; created_at: string }> | null
       }
 
-    // 3. Tickets de support encore ouverts (open / in_progress).
+    // 3. Dernières séances de coaching terminées + extrait du transcript.
+    // RLS : le client lit ses propres meetings (meetings_select owner) et les
+    // recordings de ses meetings (meeting_recordings_select owner) — le
+    // transcript_text est alimenté par syncMeetingResults (module visio).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: coachingMeetings } = await (supabase as any)
+      .from('meetings')
+      .select('title, scheduled_at, meeting_recordings(transcript_text)')
+      .eq('client_id', clientId)
+      .eq('type', 'coaching')
+      .eq('status', 'completed')
+      .order('scheduled_at', { ascending: false })
+      .limit(2) as {
+        data: Array<{
+          title: string | null
+          scheduled_at: string
+          meeting_recordings:
+            | Array<{ transcript_text: string | null }>
+            | { transcript_text: string | null }
+            | null
+        }> | null
+      }
+
+    // 4. Tickets de support encore ouverts (open / in_progress).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: tickets } = await (supabase as any)
       .from('support_tickets')
@@ -123,6 +146,28 @@ export async function getOneContext(clientId: string): Promise<string | null> {
         })
         .join(' · ')
       lines.push(`- Dernières actualités du Suivi de l'outil : ${postsList}.`)
+    }
+
+    // --- Dernières séances de coaching (extraits courts des transcripts) ---
+    if (coachingMeetings && coachingMeetings.length > 0) {
+      const COACHING_EXCERPT_MAX = 400
+      const sessions = coachingMeetings.map((m) => {
+        const recs = Array.isArray(m.meeting_recordings)
+          ? m.meeting_recordings
+          : m.meeting_recordings
+            ? [m.meeting_recordings]
+            : []
+        const text = recs
+          .map((r) => r.transcript_text?.trim())
+          .find((t): t is string => Boolean(t)) ?? null
+        const dateLabel = new Date(m.scheduled_at).toLocaleDateString('fr-FR')
+        const label = m.title?.trim() || 'Séance de coaching'
+        const excerpt = text
+          ? ` — extrait : « ${text.length > COACHING_EXCERPT_MAX ? `${text.slice(0, COACHING_EXCERPT_MAX)}…` : text} »`
+          : ''
+        return `« ${label} » (${dateLabel})${excerpt}`
+      })
+      lines.push(`- Dernières séances de coaching avec MiKL : ${sessions.join(' · ')}`)
     }
 
     // --- Support ouvert ---

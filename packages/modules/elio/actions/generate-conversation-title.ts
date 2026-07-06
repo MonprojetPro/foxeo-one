@@ -2,12 +2,15 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
+import { getLlmConfig } from './llm-config'
 
 const ELIO_TIMEOUT_MS = 15_000 // appel léger, 15s suffisent
+const FALLBACK_MICRO_MODEL = 'claude-haiku-4-5-20251001' // si la config LLM est illisible
 
 /**
  * Server Action — Génère automatiquement le titre d'une conversation via LLM.
- * Déclenchée après le 3ème message utilisateur (AC5).
+ * Déclenchée après le 3ème message utilisateur (AC5). Micro-tâche : lit le
+ * profil `micro` de la config LLM (Contrat 2), fallback Haiku.
  * Retourne toujours { data, error } — jamais throw.
  */
 export async function generateConversationTitle(
@@ -20,8 +23,29 @@ export async function generateConversationTitle(
 
   const supabase = await createServerSupabaseClient()
 
-  const question = firstMessages[0] ?? ''
-  const prompt = `Question posée : "${question}"\n\nGénère un titre de 3 à 6 mots en français qui résume le sujet. Réponds UNIQUEMENT avec le titre, sans guillemets, sans ponctuation finale, sans explication.`
+  // Profil micro (model + provider) — fallback comportement historique si erreur.
+  let model = FALLBACK_MICRO_MODEL
+  let provider: { name: string; baseUrl?: string; apiKeyEnv: string } | null = null
+  try {
+    const { data: llmConfig } = await getLlmConfig()
+    const micro = llmConfig?.micro
+    if (micro?.model) {
+      model = micro.model
+      provider = {
+        name: micro.provider,
+        ...(micro.baseUrl ? { baseUrl: micro.baseUrl } : {}),
+        apiKeyEnv: micro.apiKeyEnv,
+      }
+    }
+  } catch {
+    // fallback silencieux : model Haiku, provider Anthropic implicite
+  }
+
+  const excerpt = firstMessages
+    .slice(0, 3)
+    .map((m) => `- ${m}`)
+    .join('\n')
+  const prompt = `Premiers messages de la conversation :\n${excerpt}\n\nGénère un titre de 3 à 6 mots en français qui résume le sujet. Réponds UNIQUEMENT avec le titre, sans guillemets, sans ponctuation finale, sans explication.`
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ELIO_TIMEOUT_MS)
@@ -31,7 +55,9 @@ export async function generateConversationTitle(
       body: {
         systemPrompt: 'Tu génères des titres courts (3 à 6 mots) en français pour des conversations. Réponds uniquement avec le titre demandé, sans guillemets ni ponctuation.',
         message: prompt,
-        maxTokens: 30,
+        model,
+        ...(provider ? { provider } : {}),
+        maxTokens: 20,
         temperature: 0.2,
       },
       signal: controller.signal,

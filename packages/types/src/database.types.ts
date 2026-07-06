@@ -345,6 +345,8 @@ export type Database = {
           recording_duration_seconds: number
           file_size_bytes: number
           transcript_url: string | null
+          transcript_text: string | null
+          transcript_synced_at: string | null
           transcription_status: 'pending' | 'processing' | 'completed' | 'failed'
           transcription_language: string
           created_at: string
@@ -357,6 +359,8 @@ export type Database = {
           recording_duration_seconds: number
           file_size_bytes: number
           transcript_url?: string | null
+          transcript_text?: string | null
+          transcript_synced_at?: string | null
           transcription_status?: 'pending' | 'processing' | 'completed' | 'failed'
           transcription_language?: string
           created_at?: string
@@ -369,6 +373,8 @@ export type Database = {
           recording_duration_seconds?: number
           file_size_bytes?: number
           transcript_url?: string | null
+          transcript_text?: string | null
+          transcript_synced_at?: string | null
           transcription_status?: 'pending' | 'processing' | 'completed' | 'failed'
           transcription_language?: string
           created_at?: string

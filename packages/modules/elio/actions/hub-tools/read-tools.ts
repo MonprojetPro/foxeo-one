@@ -192,6 +192,47 @@ async function getClientActivity(supabase: Supa, clientIdOuNom: string): Promise
     .order('created_at', { ascending: false })
     .limit(3)
 
+  // Dernières séances de coaching terminées + extrait du transcript
+  // (meeting_recordings.transcript_text — alimenté par syncMeetingResults)
+  const { data: coachingRows } = await supabase
+    .from('meetings')
+    .select('title, scheduled_at, meeting_recordings(transcript_text)')
+    .eq('client_id', client.id)
+    .eq('type', 'coaching')
+    .eq('status', 'completed')
+    .order('scheduled_at', { ascending: false })
+    .limit(2)
+
+  type CoachingRow = {
+    title: string | null
+    scheduled_at: string
+    meeting_recordings:
+      | { transcript_text: string | null }[]
+      | { transcript_text: string | null }
+      | null
+  }
+  const TRANSCRIPT_EXCERPT_MAX = 1500
+  const recentCoachingSessions = ((coachingRows ?? []) as unknown as CoachingRow[]).map((m) => {
+    const recs = Array.isArray(m.meeting_recordings)
+      ? m.meeting_recordings
+      : m.meeting_recordings
+        ? [m.meeting_recordings]
+        : []
+    const fullText = recs
+      .map((r) => r.transcript_text?.trim())
+      .find((t): t is string => Boolean(t)) ?? null
+    return {
+      title: m.title ?? 'Séance de coaching',
+      at: m.scheduled_at,
+      daysAgo: daysSince(m.scheduled_at),
+      transcriptExcerpt: fullText
+        ? fullText.length > TRANSCRIPT_EXCERPT_MAX
+          ? `${fullText.slice(0, TRANSCRIPT_EXCERPT_MAX)}…`
+          : fullText
+        : null,
+    }
+  })
+
   // « Dernier contact il y a N jours » = échange le plus récent (chat ou visio)
   const contactDates = [lastSent?.created_at, lastReceived?.created_at, lastMeeting?.scheduled_at]
     .filter((d): d is string => Boolean(d))
@@ -221,6 +262,7 @@ async function getClientActivity(supabase: Supa, clientIdOuNom: string): Promise
         status: v.status,
         createdAt: v.created_at,
       })),
+      recentCoachingSessions,
       lastContactDaysAgo: lastContactDays,
     },
   }

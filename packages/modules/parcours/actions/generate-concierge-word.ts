@@ -4,7 +4,54 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 
 const CONCIERGE_TIMEOUT_MS = 15_000 // appel léger, 15s suffisent
-const HAIKU_MODEL = 'claude-haiku-4-5-20251001' // mot court → modèle éco (cf. routage)
+const HAIKU_MODEL = 'claude-haiku-4-5-20251001' // fallback si la config LLM est illisible
+
+type Supa = Awaited<ReturnType<typeof createServerSupabaseClient>>
+
+/**
+ * Lit le profil `micro` de la config LLM (system_config, clé `llm_config` —
+ * Contrat 2 du chantier Élio Hub). Lecture locale minimale : les modules ne
+ * s'importent pas entre eux (et module-elio importe déjà module-parcours →
+ * un import inverse créerait un cycle). Miroir allégé de getLlmConfig —
+ * garder en phase avec packages/modules/elio/types/llm-config.types.ts.
+ * Retourne null (→ fallback Haiku historique) au moindre doute.
+ */
+async function readMicroLlmProfile(supabase: Supa): Promise<{
+  name: 'anthropic' | 'openai-compatible'
+  model: string
+  baseUrl: string | null
+  apiKeyEnv: string
+} | null> {
+  try {
+    const { data, error } = await supabase
+      .from('system_config')
+      .select('value')
+      .eq('key', 'llm_config')
+      .maybeSingle()
+
+    if (error || !data?.value || typeof data.value !== 'object') return null
+    const micro = (data.value as { micro?: Record<string, unknown> }).micro
+    if (!micro) return null
+
+    const provider = micro.provider
+    if (provider !== 'anthropic' && provider !== 'openai-compatible') return null
+    const model = typeof micro.model === 'string' && micro.model ? micro.model : null
+    const apiKeyEnv =
+      typeof micro.apiKeyEnv === 'string' && /^[A-Z][A-Z0-9_]*_API_KEY$/.test(micro.apiKeyEnv)
+        ? micro.apiKeyEnv
+        : null
+    if (!model || !apiKeyEnv) return null
+
+    return {
+      name: provider,
+      model,
+      baseUrl: typeof micro.baseUrl === 'string' && micro.baseUrl ? micro.baseUrl : null,
+      apiKeyEnv,
+    }
+  } catch {
+    return null
+  }
+}
 
 /**
  * Persona compacte d'Élio le Concierge pour les mots PROACTIFS (≠ chat complet).
@@ -88,6 +135,9 @@ export async function generateConciergeWord(
   let body = ''
   let source: 'ai' | 'template' = 'ai'
 
+  // Profil `micro` de la config LLM — fallback comportement historique (Haiku).
+  const microProfile = await readMicroLlmProfile(supabase)
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), CONCIERGE_TIMEOUT_MS)
   try {
@@ -95,7 +145,16 @@ export async function generateConciergeWord(
       body: {
         systemPrompt: CONCIERGE_SYSTEM_PROMPT,
         message: buildEventPrompt(event),
-        model: HAIKU_MODEL,
+        model: microProfile?.model ?? HAIKU_MODEL,
+        ...(microProfile
+          ? {
+              provider: {
+                name: microProfile.name,
+                ...(microProfile.baseUrl ? { baseUrl: microProfile.baseUrl } : {}),
+                apiKeyEnv: microProfile.apiKeyEnv,
+              },
+            }
+          : {}),
         maxTokens: 160,
         temperature: 0.7,
       },

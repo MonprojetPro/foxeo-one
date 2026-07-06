@@ -3,6 +3,11 @@
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { z } from 'zod'
+import {
+  extractGoogleDocsText,
+  parseGoogleDocumentId,
+  TRANSCRIPT_TEXT_MAX_LENGTH,
+} from '../utils/google-docs-text'
 
 const SyncMeetingResultsInput = z.object({
   meetingId: z.string().uuid('meetingId invalide'),
@@ -24,7 +29,35 @@ function mapTranscriptionStatus(
 
 interface ConferenceRecord { name: string }
 interface GoogleRecording { driveDestination?: { exportUri?: string } }
-interface GoogleTranscript { docsDestination?: { exportUri?: string }; state?: string }
+interface GoogleTranscript { docsDestination?: { document?: string; exportUri?: string }; state?: string }
+
+/**
+ * Récupère le TEXTE du transcript via l'API Google Docs (même token OAuth que
+ * les appels Meet). Best-effort : si le scope `documents.readonly` manque, si
+ * l'API échoue ou si le doc est vide → on log et on retourne null (l'URL du
+ * transcript reste stockée, seul le texte manque).
+ */
+async function fetchTranscriptText(
+  documentId: string,
+  authHeaders: Record<string, string>
+): Promise<string | null> {
+  try {
+    const docRes = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}`, {
+      headers: authHeaders,
+    })
+    if (!docRes.ok) {
+      // 403 typique = scope Google Docs manquant sur le refresh token
+      console.warn(
+        `[VISIO:SYNC_RESULTS] Google Docs API ${docRes.status} — texte du transcript non récupéré (scope documents.readonly manquant ?). transcript_url conservé.`
+      )
+      return null
+    }
+    return extractGoogleDocsText(await docRes.json(), TRANSCRIPT_TEXT_MAX_LENGTH)
+  } catch (err) {
+    console.warn('[VISIO:SYNC_RESULTS] Google Docs fetch error — transcript_url conservé:', err)
+    return null
+  }
+}
 
 export async function syncMeetingResults(
   input: { meetingId: string }
@@ -124,6 +157,22 @@ export async function syncMeetingResults(
       return successResponse({ synced: false })
     }
 
+    // Texte du transcript (Google Docs) — uniquement quand le fichier est généré.
+    // Best-effort : null si scope insuffisant / API KO — on garde juste l'URL.
+    let transcriptText: string | null = null
+    if (transcriptionStatus === 'completed') {
+      const documentId = parseGoogleDocumentId({
+        document: transcript?.docsDestination?.document ?? null,
+        exportUri: transcriptUrl,
+      })
+      if (documentId) {
+        transcriptText = await fetchTranscriptText(documentId, authHeaders)
+      }
+    }
+    const transcriptTextFields = transcriptText
+      ? { transcript_text: transcriptText, transcript_synced_at: new Date().toISOString() }
+      : {}
+
     // Check if a recording row already exists for this meeting
     const { data: existing, error: existingError } = await supabase
       .from('meeting_recordings')
@@ -146,6 +195,7 @@ export async function syncMeetingResults(
           recording_url: recordingUrl ?? existing.recording_url,
           transcript_url: transcriptUrl,
           transcription_status: transcriptionStatus,
+          ...transcriptTextFields,
         })
         .eq('id', existing.id)
 
@@ -162,6 +212,7 @@ export async function syncMeetingResults(
         recording_duration_seconds: 0,
         file_size_bytes: 0,
         transcription_language: 'fr',
+        ...transcriptTextFields,
       })
 
       if (insertError) {

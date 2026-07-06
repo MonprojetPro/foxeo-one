@@ -334,6 +334,74 @@ describe('syncMeetingResults Server Action', () => {
     )
   })
 
+  it('stores transcript_text when Google Docs API returns the document', async () => {
+    mockSelectEq.mockReturnValueOnce({
+      single: vi.fn().mockResolvedValue({ data: mockMeeting, error: null }),
+    })
+    const mockSingleNoRecord = vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
+    mockLimit.mockReturnValueOnce({ single: mockSingleNoRecord })
+    mockInsert.mockResolvedValue({ error: null })
+
+    const mockDocsDocument = {
+      ok: true,
+      json: async () => ({
+        body: {
+          content: [
+            { paragraph: { elements: [{ textRun: { content: 'MiKL : Bonjour, on attaque le pricing.\n' } }] } },
+          ],
+        },
+      }),
+    }
+
+    setupFetchMock([
+      mockFetchToken,
+      mockConferenceList,
+      mockRecordingsList,
+      mockTranscriptsList, // docsDestination.exportUri = .../document/d/trans456/view
+      mockDocsDocument,    // 5e appel = GET docs.googleapis.com/v1/documents/trans456
+    ])
+
+    const { syncMeetingResults } = await import('./sync-meeting-results')
+    const result = await syncMeetingResults({ meetingId: MEETING_ID })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.synced).toBe(true)
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transcript_url: DOCS_URL,
+        transcript_text: 'MiKL : Bonjour, on attaque le pricing.',
+        transcript_synced_at: expect.any(String),
+      })
+    )
+  })
+
+  it('keeps only transcript_url when Google Docs API fails (best-effort, ex: scope manquant)', async () => {
+    mockSelectEq.mockReturnValueOnce({
+      single: vi.fn().mockResolvedValue({ data: mockMeeting, error: null }),
+    })
+    const mockSingleNoRecord = vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
+    mockLimit.mockReturnValueOnce({ single: mockSingleNoRecord })
+    mockInsert.mockResolvedValue({ error: null })
+
+    setupFetchMock([
+      mockFetchToken,
+      mockConferenceList,
+      mockRecordingsList,
+      mockTranscriptsList,
+      { ok: false, status: 403 }, // Docs API refuse (scope documents.readonly absent)
+    ])
+
+    const { syncMeetingResults } = await import('./sync-meeting-results')
+    const result = await syncMeetingResults({ meetingId: MEETING_ID })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.synced).toBe(true)
+    const insertPayload = mockInsert.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(insertPayload.transcript_url).toBe(DOCS_URL)
+    expect(insertPayload.transcript_text).toBeUndefined()
+    expect(insertPayload.transcript_synced_at).toBeUndefined()
+  })
+
   it('maps STARTED transcript state to processing', async () => {
     mockSelectEq.mockReturnValueOnce({
       single: vi.fn().mockResolvedValue({ data: mockMeeting, error: null }),

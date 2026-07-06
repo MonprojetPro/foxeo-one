@@ -44,7 +44,7 @@ export const HUB_AGENT_TOOLS: AnthropicTool[] = [
   {
     name: 'get_client_activity',
     description:
-      "Activité récente d'un client : dernier message envoyé/reçu (chat), dernière visio, dernières validations, et « dernier contact il y a N jours ». À utiliser pour savoir où en est la relation avec un client.",
+      "Activité récente d'un client : dernier message envoyé/reçu (chat), dernière visio, dernières validations, les 2 dernières séances de coaching terminées (avec un extrait du transcript si disponible), et « dernier contact il y a N jours ». À utiliser pour savoir où en est la relation avec un client ou ce qui s'est dit en séance de coaching.",
     input_schema: {
       type: 'object',
       properties: { client: CLIENT_PARAM },

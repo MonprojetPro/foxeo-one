@@ -136,6 +136,55 @@ describe('runHubReadTool — get_client_activity', () => {
     expect(payload.recentValidations).toHaveLength(1)
   })
 
+  it('inclut les 2 dernières séances de coaching avec un extrait de transcript (≤ 1500 caractères)', async () => {
+    const twoDaysAgo = new Date(Date.now() - 2 * 86_400_000).toISOString()
+
+    // resolveClient (UUID direct)
+    queueResult('clients', {
+      id: CLIENT_UUID,
+      name: 'Dupont',
+      company: 'Dupont SARL',
+      email: 'dupont@example.com',
+      auth_user_id: 'auth-1',
+      operator_id: 'op-1',
+    })
+    // messages : aucun
+    queueResult('messages', [])
+    queueResult('messages', [])
+    // 1ère requête meetings = dernière visio ; 2e = séances de coaching
+    queueResult('meetings', [])
+    queueResult('meetings', [
+      {
+        title: 'Coaching pricing',
+        scheduled_at: twoDaysAgo,
+        meeting_recordings: [{ transcript_text: `MiKL : ${'blabla '.repeat(300)}` }], // > 1500 chars
+      },
+      {
+        title: null,
+        scheduled_at: twoDaysAgo,
+        meeting_recordings: [{ transcript_text: null }],
+      },
+    ])
+    // validations
+    queueResult('validation_requests', [])
+
+    const result = await runHubReadTool(makeSupabase(), 'op-1', 'get_client_activity', { client: CLIENT_UUID })
+
+    expect(result.ok).toBe(true)
+    const payload = result.payload as {
+      recentCoachingSessions: Array<{ title: string; transcriptExcerpt: string | null; daysAgo: number }>
+    }
+    expect(payload.recentCoachingSessions).toHaveLength(2)
+    expect(payload.recentCoachingSessions[0].title).toBe('Coaching pricing')
+    expect(payload.recentCoachingSessions[0].transcriptExcerpt).not.toBeNull()
+    // Tronqué à 1500 caractères + ellipse
+    expect(payload.recentCoachingSessions[0].transcriptExcerpt!.length).toBeLessThanOrEqual(1501)
+    expect(payload.recentCoachingSessions[0].transcriptExcerpt!.endsWith('…')).toBe(true)
+    // Séance sans transcript : titre par défaut, extrait null
+    expect(payload.recentCoachingSessions[1].title).toBe('Séance de coaching')
+    expect(payload.recentCoachingSessions[1].transcriptExcerpt).toBeNull()
+  })
+
   it('retourne une erreur claire si le client est introuvable', async () => {
     queueResult('clients', []) // recherche par nom sans résultat
 

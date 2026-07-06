@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
-import { getTokenUsageSummary } from '@monprojetpro/module-elio'
+import { getTokenUsageSummary, getAlertThresholds, DEFAULT_ALERT_THRESHOLDS } from '@monprojetpro/module-elio'
+import { buildElioSuggestions, type SilentClient, type StagnantParcoursClient } from '../../lib/elio-suggestions'
 import { MetricCard } from '../../components/dashboard/metric-card'
 import { InteractiveMetricCard } from '../../components/dashboard/interactive-metric-card'
 import { AgendaItem } from '../../components/dashboard/agenda-item'
@@ -218,6 +219,101 @@ async function getHubStats(operatorId: string) {
   }
 }
 
+// ─── Suggestions Élio (alertes calculées selon elio_alert_thresholds) ────────
+
+async function getElioAlertData(operatorId: string): Promise<{
+  oldValidations: { count: number; oldestDays: number }
+  stagnantParcours: StagnantParcoursClient[]
+  silentClients: SilentClient[]
+}> {
+  const supabase = await createServerSupabaseClient()
+  const { data: thresholdsData } = await getAlertThresholds()
+  const thresholds = thresholdsData ?? DEFAULT_ALERT_THRESHOLDS
+  const daysAgo = (iso: string) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000))
+
+  // Clients actifs (non prospects, non archivés) de l'opérateur
+  const { data: rawActive } = await supabase
+    .from('clients')
+    .select('id, name, company')
+    .eq('operator_id', operatorId)
+    .eq('status', 'active')
+  const activeClients = (rawActive ?? []) as { id: string; name: string; company: string | null }[]
+  const activeIds = activeClients.map((c) => c.id)
+  const nameOf = new Map(activeClients.map((c) => [c.id, c.company || c.name || 'Client']))
+
+  // Validations en attente depuis plus de N jours
+  const validationCutoff = new Date(Date.now() - thresholds.oldValidationDays * 86_400_000).toISOString()
+  const { data: oldVals } = await supabase
+    .from('validation_requests')
+    .select('id, created_at')
+    .eq('operator_id', operatorId)
+    .eq('status', 'pending')
+    .lt('created_at', validationCutoff)
+    .order('created_at', { ascending: true })
+    .limit(100)
+  const oldValidationRows = (oldVals ?? []) as { id: string; created_at: string }[]
+  const oldestDays = oldValidationRows.length > 0 ? daysAgo(oldValidationRows[0].created_at) : 0
+
+  // Parcours stagnants : étapes actives sans progression depuis N jours (agrégées par client)
+  const stagnantByClient = new Map<string, { stepsCount: number; inactiveDays: number }>()
+  if (activeIds.length > 0) {
+    const stagnantCutoff = new Date(Date.now() - thresholds.stagnantParcoursDays * 86_400_000).toISOString()
+    const { data: stagnantRows } = await supabase
+      .from('client_parcours_agents')
+      .select('client_id, updated_at')
+      .eq('status', 'active')
+      .lt('updated_at', stagnantCutoff)
+      .in('client_id', activeIds)
+      .limit(200)
+    for (const row of (stagnantRows ?? []) as { client_id: string; updated_at: string }[]) {
+      const days = daysAgo(row.updated_at)
+      const agg = stagnantByClient.get(row.client_id)
+      if (agg) {
+        agg.stepsCount += 1
+        agg.inactiveDays = Math.max(agg.inactiveDays, days)
+      } else {
+        stagnantByClient.set(row.client_id, { stepsCount: 1, inactiveDays: days })
+      }
+    }
+  }
+
+  // Clients silencieux : dernier message (tous sens confondus) plus vieux que N jours
+  const silentClients: SilentClient[] = []
+  if (activeIds.length > 0) {
+    const { data: lastMsgs } = await supabase
+      .from('messages')
+      .select('client_id, created_at')
+      .in('client_id', activeIds)
+      .order('created_at', { ascending: false })
+      .limit(1000)
+    const lastByClient = new Map<string, string>()
+    for (const m of (lastMsgs ?? []) as { client_id: string; created_at: string }[]) {
+      if (!lastByClient.has(m.client_id)) lastByClient.set(m.client_id, m.created_at)
+    }
+    const cutoffMs = Date.now() - thresholds.silentClientDays * 86_400_000
+    for (const c of activeClients) {
+      const clientName = nameOf.get(c.id) ?? 'Client'
+      const last = lastByClient.get(c.id)
+      if (!last) {
+        silentClients.push({ clientId: c.id, clientName, silentDays: null })
+      } else if (new Date(last).getTime() < cutoffMs) {
+        silentClients.push({ clientId: c.id, clientName, silentDays: daysAgo(last) })
+      }
+    }
+  }
+
+  return {
+    oldValidations: { count: oldValidationRows.length, oldestDays },
+    stagnantParcours: [...stagnantByClient.entries()].map(([clientId, agg]) => ({
+      clientId,
+      clientName: nameOf.get(clientId) ?? 'Client',
+      stepsCount: agg.stepsCount,
+      inactiveDays: agg.inactiveDays,
+    })),
+    silentClients,
+  }
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function HubHomePage() {
@@ -245,13 +341,22 @@ export default async function HubHomePage() {
     newProspects,
     tokenSummaryResult,
     pendingValidations,
+    elioAlertData,
   ] = await Promise.all([
     getHubStats(operatorId),
     getClientsBreakdown(operatorId),
     getNewProspects(operatorId),
     getTokenUsageSummary(),
     getPendingValidations(operatorId),
+    getElioAlertData(operatorId),
   ])
+
+  const elioSuggestions = buildElioSuggestions({
+    unpaid: { count: unpaidCount, amountEur: unpaidAmount },
+    oldValidations: elioAlertData.oldValidations,
+    stagnantParcours: elioAlertData.stagnantParcours,
+    silentClients: elioAlertData.silentClients,
+  })
 
   const tokenSummary = tokenSummaryResult.data
 
@@ -527,29 +632,27 @@ export default async function HubHomePage() {
           )}
         </DashboardCard>
 
-        <DashboardCard title="Alertes & Actions — Suggestions Élio" linkHref="/modules/elio">
-          {unpaidAmount > 0 && (
-            <AlertItem
-              icon="warning"
-              title="Factures impayées"
-              detail={`${Math.round(unpaidAmount).toLocaleString('fr-FR')} € en retard`}
-              iconColor="text-destructive"
-              href="/modules/facturation"
-            />
+        <DashboardCard
+          title="Alertes & Actions — Suggestions Élio"
+          badge={elioSuggestions.length || undefined}
+          linkHref="/elio/hub"
+        >
+          {elioSuggestions.length === 0 ? (
+            <p className="px-3 py-4 text-sm text-muted-foreground italic">
+              Rien à signaler — tout roule 🦊
+            </p>
+          ) : (
+            elioSuggestions.map((s) => (
+              <AlertItem
+                key={s.key}
+                icon={s.icon}
+                title={s.title}
+                detail={s.detail}
+                iconColor={s.iconColor}
+                href={s.href}
+              />
+            ))
           )}
-          <AlertItem
-            icon="graduation"
-            title="Vérifier les progressions Lab"
-            detail="Consulter les étapes en attente de validation"
-            iconColor="text-primary"
-            href="/modules/validation-hub"
-          />
-          <AlertItem
-            icon="bell"
-            title="Élio disponible"
-            detail="Demandez-lui une analyse ou une suggestion"
-            href="/modules/elio"
-          />
         </DashboardCard>
       </div>
     </div>

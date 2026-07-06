@@ -2,9 +2,35 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { getLlmConfig } from './llm-config'
 
 const CONCIERGE_TIMEOUT_MS = 15_000 // appel léger, 15s suffisent
-const HAIKU_MODEL = 'claude-haiku-4-5-20251001' // mot court → modèle éco (cf. routage)
+const HAIKU_MODEL = 'claude-haiku-4-5-20251001' // fallback si la config LLM est illisible
+
+/**
+ * Résout le profil `micro` de la config LLM (Contrat 2) : model + provider.
+ * Fallback comportement historique (Haiku, provider Anthropic implicite) si erreur.
+ */
+async function resolveMicroLlm(): Promise<{
+  model: string
+  provider?: { name: string; baseUrl?: string; apiKeyEnv: string }
+}> {
+  try {
+    const { data } = await getLlmConfig()
+    const micro = data?.micro
+    if (!micro?.model) return { model: HAIKU_MODEL }
+    return {
+      model: micro.model,
+      provider: {
+        name: micro.provider,
+        ...(micro.baseUrl ? { baseUrl: micro.baseUrl } : {}),
+        apiKeyEnv: micro.apiKeyEnv,
+      },
+    }
+  } catch {
+    return { model: HAIKU_MODEL }
+  }
+}
 
 /**
  * Persona compacte d'Élio le Concierge ONE pour les mots PROACTIFS (≠ chat complet).
@@ -156,6 +182,9 @@ export async function generateOneConciergeWord(
     let body = ''
     let source: 'ai' | 'template' = 'ai'
 
+    // Profil `micro` de la config LLM (fallback Haiku si illisible)
+    const microLlm = await resolveMicroLlm()
+
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), CONCIERGE_TIMEOUT_MS)
     try {
@@ -163,7 +192,8 @@ export async function generateOneConciergeWord(
         body: {
           systemPrompt: ONE_CONCIERGE_SYSTEM_PROMPT,
           message: buildEventPrompt(event),
-          model: HAIKU_MODEL,
+          model: microLlm.model,
+          ...(microLlm.provider ? { provider: microLlm.provider } : {}),
           maxTokens: 160,
           temperature: 0.7,
         },

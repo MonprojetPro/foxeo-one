@@ -270,6 +270,18 @@ export type { TokenCostResult } from './utils/token-cost-calculator'
 // Actions — Chantier Élio Hub (config LLM multi-provider, Contrat 2)
 export { getLlmConfig, setLlmConfig } from './actions/llm-config'
 
+// Actions — Chantier Élio Hub T5 (seuils d'alertes + historique des actions)
+export { getAlertThresholds, setAlertThresholds } from './actions/alert-thresholds'
+export { listElioHubActions } from './actions/list-elio-hub-actions'
+
+// Types — Seuils d'alertes Élio (T5 Pilotage)
+export {
+  AlertThresholdsSchema,
+  DEFAULT_ALERT_THRESHOLDS,
+  ALERT_THRESHOLDS_KEY,
+} from './types/alert-thresholds.types'
+export type { AlertThresholds } from './types/alert-thresholds.types'
+
 // Actions — Chantier Élio Hub (boucle agent + garde-fou, Contrats 3 & 4)
 export {
   sendToElioHubAgent,
