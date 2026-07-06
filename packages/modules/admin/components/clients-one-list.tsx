@@ -13,7 +13,10 @@ export function ClientsOneList() {
   const { data: clients, isPending, isError } = useOneClients()
   const setStatusMutation = useSetOneStatus()
   const applySetupMutation = useApplyOneSetup()
-  const [confirmDeliver, setConfirmDeliver] = useState<OneClientEntry | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{
+    client: OneClientEntry
+    target: 'delivered' | 'construction'
+  } | null>(null)
 
   if (isPending) {
     return (
@@ -48,12 +51,11 @@ export function ClientsOneList() {
     ONE_SETUP_MODULES.filter((m) => !client.activeModules.includes(m))
 
   function handleToggleStatus(client: OneClientEntry) {
-    if (client.oneStatus === 'construction') {
-      // Livraison = événement fort côté client → confirmation
-      setConfirmDeliver(client)
-    } else {
-      setStatusMutation.mutate({ clientId: client.clientId, oneStatus: 'construction' })
-    }
+    // Les deux directions sont des événements forts côté client (notif + bandeau) → confirmation
+    setConfirmAction({
+      client,
+      target: client.oneStatus === 'construction' ? 'delivered' : 'construction',
+    })
   }
 
   return (
@@ -134,28 +136,49 @@ export function ClientsOneList() {
         </table>
       </div>
 
-      {/* Confirmation livraison */}
-      {confirmDeliver && (
-        <div className="rounded border border-green-500/20 bg-green-950/30 p-4">
+      {/* Confirmation bascule chantier ↔ livré (les deux directions) */}
+      {confirmAction && (
+        <div
+          className={`rounded border p-4 ${
+            confirmAction.target === 'delivered'
+              ? 'border-green-500/20 bg-green-950/30'
+              : 'border-amber-500/20 bg-amber-950/30'
+          }`}
+        >
           <p className="text-sm text-white">
-            Marquer l&apos;outil de <span className="font-medium">{confirmDeliver.name}</span> comme{' '}
-            <span className="font-medium text-green-400">livré</span> ?
+            {confirmAction.target === 'delivered' ? (
+              <>
+                Marquer l&apos;outil de <span className="font-medium">{confirmAction.client.name}</span> comme{' '}
+                <span className="font-medium text-green-400">livré</span> ?
+              </>
+            ) : (
+              <>
+                Repasser l&apos;outil de <span className="font-medium">{confirmAction.client.name}</span>{' '}
+                <span className="font-medium text-amber-400">en chantier</span> ?
+              </>
+            )}
           </p>
           <p className="mt-1 text-xs text-gray-400">
-            Côté client : le bandeau « en chantier » disparaît et les cockpits s&apos;allument, instantanément.
+            {confirmAction.target === 'delivered'
+              ? 'Côté client : le bandeau « en chantier » disparaît, les cockpits s\'allument, et il reçoit une notification (cloche + mot d\'Élio). Instantané.'
+              : 'Côté client : le bandeau « en chantier » réapparaît immédiatement, et il reçoit une notification (cloche + mot d\'Élio). Son tableau de bord reste entièrement accessible.'}
           </p>
           <div className="mt-3 flex gap-2">
             <Button
               size="sm"
+              variant={confirmAction.target === 'delivered' ? 'default' : 'outline'}
               onClick={() => {
-                setStatusMutation.mutate({ clientId: confirmDeliver.clientId, oneStatus: 'delivered' })
-                setConfirmDeliver(null)
+                setStatusMutation.mutate({
+                  clientId: confirmAction.client.clientId,
+                  oneStatus: confirmAction.target,
+                })
+                setConfirmAction(null)
               }}
               disabled={setStatusMutation.isPending}
             >
-              Confirmer la livraison
+              {confirmAction.target === 'delivered' ? 'Confirmer la livraison' : 'Confirmer le retour en chantier'}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setConfirmDeliver(null)}>
+            <Button variant="outline" size="sm" onClick={() => setConfirmAction(null)}>
               Annuler
             </Button>
           </div>

@@ -7,6 +7,8 @@ import {
   successResponse,
   errorResponse,
 } from '@monprojetpro/types'
+import { createNotification } from '@monprojetpro/modules-notifications'
+import { generateOneConciergeWord } from '@monprojetpro/module-elio'
 
 const SetOneStatusSchema = z.object({
   clientId: z.string().uuid('ID client invalide'),
@@ -44,7 +46,7 @@ export async function setOneStatus(
     // Le client doit appartenir à l'opérateur
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, name')
+      .select('id, name, auth_user_id')
       .eq('id', clientId)
       .eq('operator_id', operator.id)
       .single()
@@ -69,6 +71,34 @@ export async function setOneStatus(
       entity_type: 'client',
       entity_id: clientId,
       metadata: { oneStatus, clientName: client.name },
+    })
+
+    // Notification cloche côté client (best-effort — la bascule ne doit jamais échouer pour ça).
+    // Convention notifications : recipient_id = auth_user_id, type dans la liste CHECK.
+    if (client.auth_user_id) {
+      try {
+        await createNotification({
+          recipientType: 'client',
+          recipientId: client.auth_user_id as string,
+          type: 'tool_update',
+          title:
+            oneStatus === 'delivered'
+              ? '🎉 Votre outil est livré !'
+              : 'Votre outil repasse en chantier',
+          body:
+            oneStatus === 'delivered'
+              ? 'Votre outil sur-mesure est prêt — les cockpits de pilotage sont maintenant actifs sur votre tableau de bord.'
+              : 'MiKL travaille sur votre outil (améliorations en cours). Votre tableau de bord reste entièrement accessible.',
+          link: '/',
+        })
+      } catch (notifError) {
+        console.error('[ADMIN:SET_ONE_STATUS] Notification error (ignored):', notifError)
+      }
+    }
+
+    // Mot d'Élio sur l'accueil One (best-effort, erreurs avalées par l'action elle-même)
+    await generateOneConciergeWord(clientId, {
+      type: oneStatus === 'delivered' ? 'tool_delivered' : 'tool_construction',
     })
 
     return successResponse({ oneStatus })

@@ -26,6 +26,8 @@ export type OneConciergeEvent =
   | { type: 'graduation_welcome'; clientName?: string }
   | { type: 'tool_update'; title?: string }
   | { type: 'tool_comment'; title?: string }
+  | { type: 'tool_delivered' }
+  | { type: 'tool_construction' }
   | { type: 'evolution_approved'; requestLabel?: string }
   | { type: 'evolution_revision'; requestLabel?: string; comment?: string }
   | { type: 'module_enabled'; moduleLabel: string }
@@ -40,6 +42,9 @@ function eventLabel(event: OneConciergeEvent): string | null {
     case 'tool_update':
     case 'tool_comment':
       return event.title ?? null
+    case 'tool_delivered':
+    case 'tool_construction':
+      return null
     case 'evolution_approved':
     case 'evolution_revision':
       return event.requestLabel ?? null
@@ -66,6 +71,10 @@ function buildEventPrompt(event: OneConciergeEvent): string {
       return `Événement : il y a du nouveau dans un échange du Suivi de l'outil${
         event.title ? ` sur « ${event.title} »` : ''
       }. Écris le mot d'Élio qui signale au client cette nouvelle réponse et l'invite à y jeter un œil.`
+    case 'tool_delivered':
+      return `Événement : l'outil sur-mesure du client vient d'être marqué comme LIVRÉ par MiKL — les cockpits de pilotage sont désormais actifs sur son tableau de bord. Écris le mot d'Élio qui félicite le client pour cette étape (son outil est prêt) et l'invite à explorer son tableau de bord.`
+    case 'tool_construction':
+      return `Événement : l'outil du client repasse temporairement en phase « chantier » — MiKL travaille dessus (améliorations ou corrections). Le tableau de bord reste entièrement accessible. Écris le mot d'Élio qui l'informe factuellement et le rassure : rien n'est perdu, il sera prévenu à la re-livraison.`
     case 'evolution_approved':
       return `Événement : une demande d'évolution du client${
         event.requestLabel ? ` (« ${event.requestLabel} »)` : ''
@@ -102,6 +111,10 @@ function buildFallback(event: OneConciergeEvent): string {
       return `Il y a une nouvelle réponse dans le Suivi de l'outil${
         event.title ? ` sur « ${event.title} »` : ''
       }. Jette-y un œil quand tu veux.`
+    case 'tool_delivered':
+      return `Ton outil est livré ! Les cockpits de pilotage sont maintenant actifs sur ton tableau de bord — va les découvrir.`
+    case 'tool_construction':
+      return `Ton outil repasse en chantier : MiKL travaille dessus. Ton tableau de bord reste entièrement accessible, et tu seras prévenu dès que c'est prêt.`
     case 'evolution_approved':
       return `Bonne nouvelle : ta demande d'évolution${
         event.requestLabel ? ` « ${event.requestLabel} »` : ''
