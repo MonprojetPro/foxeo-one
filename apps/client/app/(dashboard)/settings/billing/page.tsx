@@ -17,7 +17,8 @@ export const metadata = { title: 'Mes factures | MonprojetPro' }
 // est rapatrié ici. On RÉUTILISE les composants existants du module facturation
 // (SubscriptionCard / BillingSummary / InvoicesList) — aucune logique réécrite.
 //
-// RLS : billing_sync_select_owner garantit que le client ne voit que ses lignes.
+// RLS : billing_sync_select_merged (is_operator() OR client propriétaire) garantit que
+// le client ne voit que ses lignes.
 // Réservé au mode One (un client en mode Lab n'a pas d'abonnement MPP à afficher ici).
 export default async function SettingsBillingPage() {
   const supabase = await createServerSupabaseClient()
