@@ -341,6 +341,63 @@ async function handleBookingCancelled(
   return jsonResponse({ data: { success: true, meetingId: meeting.id, recredited } })
 }
 
+async function handleBookingRescheduled(
+  supabase: SupabaseClient,
+  payload: Record<string, unknown>
+): Promise<Response> {
+  const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+
+  // Cal.com envoie l'uid de la NOUVELLE réservation + rescheduleUid de l'ancienne
+  const newUid = (payload.uid as string) ?? null
+  const oldUid = (payload.rescheduleUid as string) ?? (payload.uid as string) ?? null
+  const newStart = payload.startTime as string | undefined
+
+  if (!oldUid || !newStart) {
+    return jsonResponse({ message: 'Missing uid or startTime — nothing to reschedule' })
+  }
+
+  const { data: meeting } = await supabase
+    .from('meetings')
+    .select('id, client_id, metadata, scheduled_at')
+    .eq('metadata->>calcomUid', oldUid)
+    .maybeSingle()
+
+  if (!meeting) {
+    return jsonResponse({ message: 'Meeting not found for rescheduled booking' })
+  }
+
+  // Même séance déplacée : on met à jour la date (et l'uid si Cal.com en a émis
+  // un nouveau) — AUCUN mouvement de crédit coaching.
+  const updatedMetadata = {
+    ...((meeting.metadata as Record<string, unknown>) ?? {}),
+    calcomUid: newUid ?? oldUid,
+    rescheduledFrom: meeting.scheduled_at,
+  }
+
+  const { error: updateError } = await supabase
+    .from('meetings')
+    .update({ scheduled_at: newStart, status: 'scheduled', metadata: updatedMetadata })
+    .eq('id', meeting.id)
+
+  if (updateError) {
+    console.error('[VISIO:CALCOM_WEBHOOK] Failed to reschedule meeting:', updateError)
+    return jsonResponse({ error: 'Failed to reschedule meeting' }, 500)
+  }
+
+  if (meeting.client_id) {
+    await notifyClient(
+      supabase,
+      meeting.client_id as string,
+      'RDV déplacé',
+      `Votre rendez-vous avec MiKL a été déplacé au ${formatDateFr(newStart)}.`,
+      '/modules/visio'
+    )
+  }
+
+  return jsonResponse({ data: { success: true, meetingId: meeting.id, rescheduledTo: newStart } })
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204 })
@@ -395,6 +452,9 @@ Deno.serve(async (req) => {
     }
     if (event.triggerEvent === 'BOOKING_CANCELLED') {
       return await handleBookingCancelled(supabase, payload)
+    }
+    if (event.triggerEvent === 'BOOKING_RESCHEDULED') {
+      return await handleBookingRescheduled(supabase, payload)
     }
     return jsonResponse({ message: 'Event ignored' })
   } catch (err) {
