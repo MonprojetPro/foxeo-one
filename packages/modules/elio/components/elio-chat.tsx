@@ -404,6 +404,14 @@ function ElioChatPersisted({
     }
   }, [conversations, activeConversationId])
 
+  // Suivre ?conversation= quand il change SANS remontage (navigation client
+  // depuis le widget sidebar alors qu'on est déjà sur la page Élio)
+  useEffect(() => {
+    if (initialConversationId) {
+      setActiveConversationId(initialConversationId)
+    }
+  }, [initialConversationId])
+
   // Vider messages locaux en transit lors d'un changement de conversation
   useEffect(() => {
     setLocalMessages([])

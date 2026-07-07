@@ -21,6 +21,7 @@ vi.mock('@monprojetpro/module-elio', () => ({
   saveElioMessage: (...args: unknown[]) => mockSaveElioMessage(...args),
   sendToElioHubAgent: (...args: unknown[]) => mockSendToElioHubAgent(...args),
   addHubDirective: (...args: unknown[]) => mockAddHubDirective(...args),
+  generateConversationTitle: vi.fn(async () => ({ data: null, error: null })),
   useSpeechDictation: (...args: unknown[]) =>
     (mockUseSpeechDictation as (...a: unknown[]) => ReturnType<typeof mockUseSpeechDictation>)(...args),
 }))

@@ -7,6 +7,7 @@ import {
   saveElioMessage,
   sendToElioHubAgent,
   addHubDirective,
+  generateConversationTitle,
   useSpeechDictation,
 } from '@monprojetpro/module-elio'
 import { readFileContent } from '@monprojetpro/utils'
@@ -150,6 +151,12 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
 
   const activeMode = MODES.find((m) => m.id === mode)!
 
+  // Lien vers le chat plein écran — ouvre directement LA conversation du widget
+  // (la page /modules/elio lit ?conversation= et la sélectionne).
+  const elioPageHref = conversationId
+    ? `/modules/elio?conversation=${conversationId}`
+    : '/modules/elio'
+
   /** Récupère la conversation continue du widget — créée au premier envoi. */
   const ensureConversation = async (): Promise<string | null> => {
     if (conversationId) return conversationId
@@ -213,6 +220,7 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
       setTimeout(() => setWaitingLabel(stageLabel), afterMs),
     )
 
+    const isNewConversation = !conversationId
     const convId = await ensureConversation()
     if (!convId) {
       clearWaitingTimers()
@@ -255,6 +263,12 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
       }
       await saveElioMessage(convId, 'assistant', assistantContent, persistedMetadata)
 
+      // Titre lisible dans la liste des conversations de /modules/elio
+      // (sinon la conversation du widget reste « Nouvelle conversation »).
+      if (isNewConversation) {
+        void generateConversationTitle(convId, [text]).catch(() => {})
+      }
+
       setLastReply(assistantContent)
       setPendingCount(reply.pendingActions.length)
     }
@@ -289,7 +303,7 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
             <Plus className="h-3 w-3" />
           </button>
           <Link
-            href="/modules/elio"
+            href={elioPageHref}
             className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-primary transition-colors"
             title="Ouvrir la conversation complète"
           >
@@ -373,7 +387,7 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
             {lastReply}
           </p>
           <Link
-            href="/modules/elio"
+            href={elioPageHref}
             className="self-end text-[10px] text-primary hover:underline flex items-center gap-0.5"
           >
             Voir dans Élio
@@ -390,7 +404,7 @@ export function ElioQueryBox({ userId, label = 'Élio Hub' }: ElioQueryBoxProps)
             {pendingCount} action{pendingCount > 1 ? 's' : ''} en attente de ta validation
           </p>
           <Link
-            href="/modules/elio"
+            href={elioPageHref}
             className="self-end text-[10px] text-primary hover:underline flex items-center gap-0.5"
           >
             Valider dans Élio
