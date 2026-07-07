@@ -114,11 +114,21 @@ async function fetchChangelog(
   let error = false
   let errorDetail: string | undefined
 
+  // Les changelogs Pennylane ont une rétention limitée : un start_date trop
+  // ancien renvoie 422 « Start date is too old » (constaté après 5 mois sans
+  // sync, 2026-07-07). On borne à 30 jours — au-delà, l'historique est de
+  // toute façon perdu côté changelog.
+  const OLDEST_START_MS = 30 * 24 * 60 * 60 * 1000
+  const startDate =
+    Date.now() - new Date(lastSyncAt).getTime() > OLDEST_START_MS
+      ? new Date(Date.now() - OLDEST_START_MS).toISOString()
+      : lastSyncAt
+
   while (hasMore) {
     const params = new URLSearchParams()
     if (!cursor) {
       // Première page : filtrer par date
-      params.set('start_date', lastSyncAt)
+      params.set('start_date', startDate)
     } else {
       // Pages suivantes : utiliser cursor (ne pas mixer avec start_date)
       params.set('cursor', cursor)
