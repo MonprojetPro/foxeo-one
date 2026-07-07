@@ -37,8 +37,9 @@ export const THRESHOLDS: Record<string, { warn: number; error: number }> = {
   resend: { warn: 1500, error: 3000 },
 }
 
-// Debounce : 15 minutes entre alertes par service
-export const ALERT_DEBOUNCE_MS = 15 * 60 * 1000
+// Debounce : 60 minutes entre alertes par service (15 min → 60 min le 2026-07-07,
+// la cloche était polluée par des blips de latence transitoires)
+export const ALERT_DEBOUNCE_MS = 60 * 60 * 1000
 
 /** Détermine le statut d'un service en fonction de la latence et des seuils */
 export function evaluateServiceStatus(
@@ -86,11 +87,21 @@ export function buildHealthCheckResult(
   }
 }
 
-/** Retourne les services en erreur/dégradés qui nécessitent une alerte */
+/**
+ * Retourne les services qui nécessitent une alerte cloche.
+ * Règle (2026-07-07 — anti-pollution) : UNIQUEMENT `error`, ET confirmé par le
+ * cycle précédent (2 observations consécutives). Un blip isolé ou un simple
+ * `degraded` reste visible dans l'onglet Maintenance & Système, sans notification.
+ * Une vraie panne alerte donc au plus tard à T+10 min (2 cycles de 5 min).
+ */
 export function getAlertingServices(
-  services: Record<string, ServiceCheck>
+  services: Record<string, ServiceCheck>,
+  previousServices?: Record<string, ServiceCheck>
 ): string[] {
   return Object.entries(services)
-    .filter(([, check]) => check.status === 'error' || check.status === 'degraded')
+    .filter(([name, check]) => {
+      if (check.status !== 'error') return false
+      return previousServices?.[name]?.status === 'error'
+    })
     .map(([name]) => name)
 }

@@ -11,6 +11,7 @@ import {
   shouldSendAlert,
   getAlertingServices,
   type ServiceCheck,
+  type HealthCheckResult,
 } from './health-check-logic.ts'
 
 // ── Types locaux ──────────────────────────────────────────────────────────────
@@ -254,7 +255,14 @@ serve(async (_req: Request) => {
 
   const result = buildHealthCheckResult(services)
 
-  // 2. UPSERT dans system_config.health_checks
+  // 2. Lire le check PRÉCÉDENT (confirmation 2 cycles) puis UPSERT le nouveau
+  const { data: previousRow } = await supabase
+    .from('system_config')
+    .select('value')
+    .eq('key', 'health_checks')
+    .maybeSingle()
+  const previousServices = (previousRow?.value as HealthCheckResult | null)?.services
+
   const { error: upsertError } = await supabase
     .from('system_config')
     .update({ value: result })
@@ -265,8 +273,8 @@ serve(async (_req: Request) => {
     return new Response('Error saving health checks', { status: 500 })
   }
 
-  // 3. Alertes avec debounce
-  const alertingServices = getAlertingServices(services)
+  // 3. Alertes : error confirmé sur 2 cycles + debounce 60 min
+  const alertingServices = getAlertingServices(services, previousServices)
 
   if (alertingServices.length > 0) {
     // Lire les données de debounce depuis system_config

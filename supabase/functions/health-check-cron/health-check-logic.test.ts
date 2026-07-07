@@ -91,8 +91,8 @@ describe('shouldSendAlert', () => {
     expect(shouldSendAlert(past, nowMs)).toBe(true)
   })
 
-  it('retourne false si la dernière alerte est dans le debounce (< 15 min)', () => {
-    const recent = new Date(nowMs - 5 * 60 * 1000).toISOString()
+  it('retourne false si la dernière alerte est dans le debounce (< 60 min)', () => {
+    const recent = new Date(nowMs - 30 * 60 * 1000).toISOString()
     expect(shouldSendAlert(recent, nowMs)).toBe(false)
   })
 
@@ -125,17 +125,38 @@ describe('buildHealthCheckResult', () => {
   })
 })
 
-describe('getAlertingServices', () => {
-  it('retourne les services en erreur ou dégradés', () => {
+describe('getAlertingServices — error confirmé sur 2 cycles (anti-pollution 2026-07-07)', () => {
+  it('n\'alerte que sur error confirmé par le cycle précédent — jamais sur degraded', () => {
     const services: Record<string, ServiceCheck> = {
       db: { status: 'ok', latencyMs: 100 },
       storage: { status: 'degraded', latencyMs: 1500 },
       pennylane: { status: 'error', latencyMs: 3000 },
     }
-    const alerting = getAlertingServices(services)
-    expect(alerting).toContain('storage')
-    expect(alerting).toContain('pennylane')
-    expect(alerting).not.toContain('db')
+    const previous: Record<string, ServiceCheck> = {
+      db: { status: 'ok', latencyMs: 110 },
+      storage: { status: 'degraded', latencyMs: 1400 },
+      pennylane: { status: 'error', latencyMs: 2800 },
+    }
+    const alerting = getAlertingServices(services, previous)
+    expect(alerting).toEqual(['pennylane'])
+  })
+
+  it('un error isolé (cycle précédent ok) n\'alerte pas — blip transitoire', () => {
+    const services: Record<string, ServiceCheck> = {
+      db: { status: 'error', latencyMs: 2000 },
+    }
+    const previous: Record<string, ServiceCheck> = {
+      db: { status: 'ok', latencyMs: 150 },
+    }
+    expect(getAlertingServices(services, previous)).toHaveLength(0)
+  })
+
+  it('sans données du cycle précédent, aucune alerte (confirmation au cycle suivant)', () => {
+    const services: Record<string, ServiceCheck> = {
+      db: { status: 'error', latencyMs: 2000 },
+    }
+    expect(getAlertingServices(services)).toHaveLength(0)
+    expect(getAlertingServices(services, undefined)).toHaveLength(0)
   })
 
   it('retourne un tableau vide si tout est ok', () => {
@@ -143,6 +164,6 @@ describe('getAlertingServices', () => {
       db: { status: 'ok', latencyMs: 100 },
       storage: { status: 'ok', latencyMs: 200 },
     }
-    expect(getAlertingServices(services)).toHaveLength(0)
+    expect(getAlertingServices(services, services)).toHaveLength(0)
   })
 })
