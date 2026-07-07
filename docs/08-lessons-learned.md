@@ -746,3 +746,9 @@
 - **Cause racine** : la CHECK `notifications_type_check` est recréée intégralement par chaque migration qui ajoute un type (drop + re-add avec liste complète). Tout code qui invente un type sans étendre la CHECK, ou toute migration qui recrée la liste sans un type utilisé ailleurs, casse silencieusement les notifs.
 - **Solution durable** : avant tout INSERT `notifications` avec un type nouveau : vérifier la contrainte réelle en prod (`pg_get_constraintdef`) — pas les fichiers de migration. Préférer un type existant (`system`, `payment`) quand le besoin n'exige pas de filtrage dédié. Si nouveau type : migration qui étend la CHECK dans le MÊME commit.
 - **Détection** : grep périodique des `type:` insérés dans `notifications` vs la liste de la contrainte prod.
+
+### [CFG-003] Le déploiement CLI d'une Edge Function réinitialise verify_jwt
+- **Date** : 2026-07-07
+- **Symptôme** : le webhook calcom-webhook (auth HMAC, verify_jwt=false posé via MCP) s'est retrouvé verify_jwt=true après un simple redéploiement CLI → Cal.com bloqué en 401 au gateway, silencieusement.
+- **Cause racine** : `supabase functions deploy` applique verify_jwt=true par défaut si aucun config.toml ne dit le contraire ; le réglage posé au déploiement précédent n'est PAS conservé.
+- **Solution** : chaque fonction appelée sans JWT (webhooks externes, fonctions à auth custom) DOIT avoir son `config.toml` avec `verify_jwt = false` commité à côté de l'index.ts. Vérifier `verify_jwt` dans list_edge_functions après tout déploiement d'un webhook.
