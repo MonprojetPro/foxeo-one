@@ -105,13 +105,14 @@ async function fetchChangelog(
   entityPath: string,
   lastSyncAt: string,
   apiToken: string
-): Promise<{ ids: string[]; deleteIds: string[]; rateLimited: boolean; error: boolean }> {
+): Promise<{ ids: string[]; deleteIds: string[]; rateLimited: boolean; error: boolean; errorDetail?: string }> {
   const ids: string[] = []
   const deleteIds: string[] = []
   let cursor: string | undefined = undefined
   let hasMore = true
   let rateLimited = false
   let error = false
+  let errorDetail: string | undefined
 
   while (hasMore) {
     const params = new URLSearchParams()
@@ -135,6 +136,7 @@ async function fetchChangelog(
     if (result.error || !result.data) {
       console.error('[BILLING:SYNC] fetchChangelog error on', entityPath, result.error)
       error = true
+      errorDetail = result.error?.slice(0, 500)
       break
     }
 
@@ -150,7 +152,7 @@ async function fetchChangelog(
     cursor = result.data.next_cursor
   }
 
-  return { ids, deleteIds, rateLimited, error }
+  return { ids, deleteIds, rateLimited, error, errorDetail }
 }
 
 // ── Batch fetch d'entités par IDs ─────────────────────────────────────────────
@@ -657,7 +659,7 @@ async function upsertCustomers(
 
 async function fetchAllSubscriptions(
   apiToken: string
-): Promise<{ subs: PennylaneSubscriptionApi[]; rateLimited: boolean; error: boolean }> {
+): Promise<{ subs: PennylaneSubscriptionApi[]; rateLimited: boolean; error: boolean; errorDetail?: string }> {
   const subs: PennylaneSubscriptionApi[] = []
   let cursor: string | undefined = undefined
   let hasMore = true
@@ -676,7 +678,7 @@ async function fetchAllSubscriptions(
     }
     if (result.error || !result.data) {
       console.error('[BILLING:SYNC] fetchAllSubscriptions error', result.error)
-      return { subs, rateLimited: false, error: true }
+      return { subs, rateLimited: false, error: true, errorDetail: result.error?.slice(0, 500) }
     }
 
     // Le payload V2 liste sous `billing_subscriptions` (fallback `items` par prudence)
@@ -802,6 +804,7 @@ interface SyncEntityResult {
   synced: number
   rateLimited: boolean
   error: boolean
+  errorDetail?: string
 }
 
 async function syncEntityType(
@@ -815,9 +818,9 @@ async function syncEntityType(
 ): Promise<SyncEntityResult> {
   // ── Subscriptions : pas de changelog Pennylane → fetch direct paginé complet ──
   if (entityType === 'subscription') {
-    const { subs, rateLimited, error } = await fetchAllSubscriptions(apiToken)
+    const { subs, rateLimited, error, errorDetail } = await fetchAllSubscriptions(apiToken)
     if (rateLimited) return { synced: 0, rateLimited: true, error: false }
-    if (error) return { synced: 0, rateLimited: false, error: true }
+    if (error) return { synced: 0, rateLimited: false, error: true, errorDetail }
 
     const filtered = targetClientId
       ? subs.filter((s) => extractSubscriptionCustomerId(s) === normalizeCustomerId(targetClientId))
@@ -836,7 +839,7 @@ async function syncEntityType(
     return { synced: upsertedSubs, rateLimited: false, error: false }
   }
 
-  const { ids, deleteIds, rateLimited, error: changelogError } =
+  const { ids, deleteIds, rateLimited, error: changelogError, errorDetail } =
     await fetchChangelog(changelogPath, state.last_sync_at, apiToken)
 
   if (rateLimited) {
@@ -844,7 +847,7 @@ async function syncEntityType(
   }
 
   if (changelogError) {
-    return { synced: 0, rateLimited: false, error: true }
+    return { synced: 0, rateLimited: false, error: true, errorDetail }
   }
 
   let entities: PennylaneInvoice[] | PennylaneCustomer[] = []
@@ -962,7 +965,7 @@ serve(async (req: Request) => {
         // Incrémenter les erreurs uniquement pour CE type d'entité (H2 fix)
         const errMsg = result.rateLimited
           ? 'Rate limited by Pennylane API (429)'
-          : 'Changelog fetch error'
+          : result.errorDetail ?? 'Changelog fetch error'
         const newErrors = state.consecutive_errors + 1
         await supabase
           .from('billing_sync_state')
