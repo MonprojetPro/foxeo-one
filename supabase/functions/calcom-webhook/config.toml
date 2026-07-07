@@ -1,0 +1,4 @@
+# verify_jwt = false : webhook externe Cal.com (pas de JWT Supabase possible).
+# L'authentification est assurée par la signature HMAC x-cal-signature-256
+# (fail-closed : refuse tout si CALCOM_WEBHOOK_SECRET absent).
+verify_jwt = false
