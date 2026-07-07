@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@monprojetpro/ui'
@@ -8,82 +8,94 @@ import { markGraduationScreenShown } from '../../graduation/actions/mark-graduat
 import { useGraduationTour } from '../../hooks/use-graduation-tour'
 
 interface TourStep {
+  icon: string
   title: string
   description: string
-  targetId?: string
+  /** Étape affichée uniquement si ce module est actif pour le client */
+  requiresModule?: string
+  /** Étape affichée uniquement si le client garde l'accès au mode Lab */
+  requiresLabMode?: boolean
 }
 
 const ONE_TOUR_STEPS: TourStep[] = [
   {
-    title: 'Votre dashboard One',
-    description: 'Bienvenue dans votre espace professionnel MonprojetPro One. Toutes vos ressources business sont ici.',
-    targetId: 'sidebar-navigation',
+    icon: '🏠',
+    title: 'Votre console de pilotage',
+    description:
+      'One est votre espace de pilotage : vos livrables, votre activité et votre lien direct avec MiKL, réunis au même endroit.',
   },
   {
-    title: 'CRM & Contacts',
-    description: 'Gérez vos clients, prospects et partenaires depuis votre espace centralisé.',
-    targetId: 'module-crm',
+    icon: '📄',
+    title: 'Documents & livrables',
+    description:
+      'Tous les documents de votre parcours Lab restent accessibles, et vos nouveaux livrables arrivent ici au fil de l’accompagnement.',
+    requiresModule: 'documents',
   },
   {
-    title: 'Documents & Livrables',
-    description: 'Retrouvez tous vos documents Lab et ajoutez vos nouveaux fichiers business.',
-    targetId: 'module-documents',
+    icon: '💬',
+    title: 'Le lien direct avec MiKL',
+    description:
+      'Une question, un besoin ? La messagerie vous connecte directement à MiKL, votre accompagnateur.',
+    requiresModule: 'chat',
   },
   {
-    title: 'Élio+, votre assistant IA',
-    description: 'Élio+ peut maintenant effectuer des actions avancées et générer des documents métiers pour vous.',
-    targetId: 'elio-chat-button',
+    icon: '🤖',
+    title: 'Élio+, votre copilote',
+    description:
+      'Élio+ connaît votre activité et vous répond à tout moment depuis la bulle en bas de l’écran. Si besoin, il transmet directement à MiKL.',
+    requiresModule: 'elio',
   },
   {
-    title: 'Bienvenue dans MonprojetPro One !',
-    description: 'Vous êtes prêt à démarrer votre aventure entrepreneuriale. Bonne réussite !',
+    icon: '🔄',
+    title: 'Revenir sur votre parcours Lab',
+    description:
+      'Le sélecteur Lab / One dans la barre latérale vous permet de consulter à tout moment l’historique de votre incubation.',
+    requiresLabMode: true,
+  },
+  {
+    icon: '🚀',
+    title: 'C’est parti !',
+    description:
+      'Votre espace est prêt. Bonne route — MiKL et Élio+ restent à vos côtés.',
   },
 ]
 
 interface GraduationTourProps {
   activeModuleIds: string[]
+  labModeAvailable: boolean
 }
 
-export function GraduationTour({ activeModuleIds }: GraduationTourProps) {
+export function GraduationTour({ activeModuleIds, labModeAvailable }: GraduationTourProps) {
   const router = useRouter()
-  const { isActive, currentStep, startTour, stopTour, nextStep, previousStep, markCompleted } =
-    useGraduationTour()
-  const [isPending, startTransition] = useTransition()
-  const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
 
   const steps = useMemo(
     () =>
       ONE_TOUR_STEPS.filter(
-        (s) => !s.targetId?.startsWith('module-') || activeModuleIds.some((id) => s.targetId?.includes(id))
+        (s) =>
+          (!s.requiresModule || activeModuleIds.includes(s.requiresModule)) &&
+          (!s.requiresLabMode || labModeAvailable)
       ),
-    [activeModuleIds]
+    [activeModuleIds, labModeAvailable]
   )
+
+  const { isActive, currentStep, startTour, stopTour, nextStep, previousStep, markCompleted } =
+    useGraduationTour(steps.length)
+  const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
     startTour()
   }, [startTour])
 
-  useEffect(() => {
-    if (!isActive) return
-
-    const step = steps[currentStep]
-    if (!step?.targetId) {
-      setTargetRect(null)
-      return
-    }
-
-    const el = document.getElementById(step.targetId)
-    if (el) {
-      setTargetRect(el.getBoundingClientRect())
-    } else {
-      setTargetRect(null)
-    }
-  }, [isActive, currentStep, steps])
-
   function handleComplete() {
-    markCompleted()
     startTransition(async () => {
-      await markGraduationScreenShown()
+      const { error } = await markGraduationScreenShown()
+      if (error) {
+        // Ne PAS rediriger : tant que le flag n'est pas posé en base, le
+        // middleware renverrait vers /graduation/celebrate en boucle.
+        toast.error('Un problème est survenu, réessaie dans un instant.')
+        return
+      }
+      markCompleted()
       stopTour()
       toast.success('Bienvenue dans MonprojetPro One 🚀')
       router.push('/')
@@ -99,27 +111,13 @@ export function GraduationTour({ activeModuleIds }: GraduationTourProps) {
   const isFirstStep = currentStep === 0
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/60 z-50 transition-opacity" aria-hidden="true" />
-
+    <div className="flex items-center justify-center min-h-screen px-4">
       <div
-        className="fixed z-50 w-80 bg-popover border border-border rounded-xl shadow-xl p-6 text-foreground"
-        style={
-          targetRect
-            ? {
-                top: targetRect.bottom + 12,
-                left: Math.max(16, Math.min(targetRect.left, window.innerWidth - 336)),
-              }
-            : {
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-              }
-        }
+        className="w-full max-w-md bg-popover border border-border rounded-2xl shadow-2xl p-8 text-foreground"
         role="dialog"
         aria-label={`Étape ${currentStep + 1} sur ${steps.length}: ${step.title}`}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <span className="text-xs text-muted-foreground">
             Étape {currentStep + 1} / {steps.length}
           </span>
@@ -134,17 +132,20 @@ export function GraduationTour({ activeModuleIds }: GraduationTourProps) {
           </Button>
         </div>
 
-        <div className="w-full bg-muted rounded-full h-1 mb-4">
+        <div className="w-full bg-muted rounded-full h-1 mb-8">
           <div
             className="bg-primary rounded-full h-1 transition-all duration-300"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>
 
-        <h3 className="font-semibold text-base mb-2">{step.title}</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+        <div className="text-5xl mb-4" aria-hidden="true">
+          {step.icon}
+        </div>
+        <h3 className="font-semibold text-xl mb-3">{step.title}</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed min-h-16">{step.description}</p>
 
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-8">
           <Button
             variant="outline"
             size="sm"
@@ -161,7 +162,7 @@ export function GraduationTour({ activeModuleIds }: GraduationTourProps) {
               disabled={isPending}
               className="bg-primary hover:bg-primary/90"
             >
-              {isPending ? 'Chargement...' : 'Terminer'}
+              {isPending ? 'Chargement...' : 'Accéder à mon dashboard'}
             </Button>
           ) : (
             <Button size="sm" onClick={nextStep} disabled={isPending}>
@@ -170,6 +171,6 @@ export function GraduationTour({ activeModuleIds }: GraduationTourProps) {
           )}
         </div>
       </div>
-    </>
+    </div>
   )
 }

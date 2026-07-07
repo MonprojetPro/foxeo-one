@@ -9,36 +9,44 @@ export const metadata = {
   description: 'Découvrez les modules disponibles dans votre espace professionnel.',
 }
 
+// Catalogue aligné sur ALL_CLIENT_MANIFESTS (modules ciblant client-one).
+// Descriptions orientées client — vision One v2 : console de pilotage + lien MiKL.
 const MODULE_DEFINITIONS: OneModule[] = [
   {
-    id: 'crm',
-    name: 'CRM',
-    description: 'Gérez vos contacts, clients et opportunités commerciales',
-    icon: '👥',
+    id: 'suivi-outil',
+    name: "Suivi de l'outil",
+    description: "Suivez en direct l'avancement du développement de votre outil",
+    icon: '📈',
   },
   {
     id: 'documents',
     name: 'Documents',
-    description: 'Stockez, organisez et partagez vos documents importants',
+    description: 'Vos documents et livrables, organisés et accessibles à tout moment',
     icon: '📄',
   },
   {
     id: 'elio',
     name: 'Élio+',
-    description: 'Assistant IA avancé avec actions automatisées et génération de documents',
+    description: 'Votre copilote IA : il connaît votre activité et fait le lien avec MiKL',
     icon: '🤖',
   },
   {
     id: 'chat',
     name: 'Chat',
-    description: 'Messagerie directe avec votre accompagnateur MiKL',
+    description: 'Messagerie directe avec MiKL, votre accompagnateur',
     icon: '💬',
   },
   {
     id: 'visio',
-    name: 'Visio',
-    description: 'Réunions vidéo HD avec enregistrement et transcription automatique',
+    name: 'Visioconférence',
+    description: 'Vos réunions vidéo avec MiKL, accessibles en un clic',
     icon: '🎥',
+  },
+  {
+    id: 'support',
+    name: 'Support',
+    description: "Un souci, une question ? Ouvrez une demande d'aide",
+    icon: '🛟',
   },
 ]
 
@@ -76,13 +84,13 @@ export default async function DiscoverOnePage() {
   )
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-emerald-950 via-emerald-900 to-orange-900 text-white p-8">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-emerald-950 via-emerald-900 to-green-950 text-white p-8">
       <div className="max-w-5xl w-full space-y-12">
         <div className="text-center space-y-4">
           <div className="text-6xl">🚀</div>
           <h1 className="text-5xl font-bold tracking-tight">Bienvenue dans MonprojetPro One</h1>
           <p className="text-xl text-green-200">
-            Votre espace professionnel tout-en-un pour gérer et développer votre activité
+            Votre console de pilotage : vos livrables, votre activité et votre lien direct avec MiKL
           </p>
         </div>
 

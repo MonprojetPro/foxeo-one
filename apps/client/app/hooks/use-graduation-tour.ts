@@ -22,7 +22,7 @@ export interface UseGraduationTourReturn {
   hasCompletedTour: () => boolean
 }
 
-export function useGraduationTour(): UseGraduationTourReturn {
+export function useGraduationTour(maxSteps: number = TOUR_MAX_STEPS): UseGraduationTourReturn {
   const [state, setState] = useState<GraduationTourState>({
     isActive: false,
     currentStep: 0,
@@ -39,9 +39,9 @@ export function useGraduationTour(): UseGraduationTourReturn {
   const nextStep = useCallback(() => {
     setState((prev) => ({
       ...prev,
-      currentStep: Math.min(TOUR_MAX_STEPS - 1, prev.currentStep + 1),
+      currentStep: Math.min(maxSteps - 1, prev.currentStep + 1),
     }))
-  }, [])
+  }, [maxSteps])
 
   const previousStep = useCallback(() => {
     setState((prev) => ({

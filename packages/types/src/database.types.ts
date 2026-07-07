@@ -397,6 +397,11 @@ export type Database = {
         Args: Record<string, never>
         Returns: string
       }
+      /** Migration 00143 — le client gradué pose lui-même graduation_screen_shown (RLS clients sans UPDATE owner) */
+      fn_mark_graduation_screen_shown: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
       fn_update_updated_at: {
         Args: Record<string, never>
         Returns: unknown

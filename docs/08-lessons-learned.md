@@ -13,7 +13,7 @@
 | DL | Téléchargement / Storage | 5 |
 | API | Intégration API externe | 5 |
 | RSC | Next.js Server/Client | 6 |
-| DB | Base de données / Schéma | 1 |
+| DB | Base de données / Schéma | 2 |
 | DEP | Déploiement | 6 |
 | GIT | Git / Workflow | 1 |
 | SEC | Sécurité / Secrets | 1 |
@@ -23,6 +23,17 @@
 ---
 
 ## Lecons
+
+### [DB-002] UPDATE filtré par la RLS = 0 ligne modifiée SANS erreur → flag jamais posé → boucle middleware
+- **Date** : 2026-07-07
+- **Projet** : MonprojetPro
+- **Phase** : Bug graduation — « Accéder au dashboard » renvoie en boucle sur l'animation Félicitations
+- **Categorie** : Base de données / Schéma (DB)
+- **Symptome** : le client gradué clique « Accéder au dashboard » (depuis celebrate, discover-one ou le tour) → toast de succès → retour immédiat sur `/graduation/celebrate`. Boucle infinie, aucun log d'erreur nulle part.
+- **Cause racine** : `markGraduationScreenShown()` faisait un `UPDATE clients SET graduation_screen_shown = TRUE` avec le client Supabase **du client connecté**. Or la table `clients` n'a **aucune policy UPDATE owner** (seulement `clients_update_operator`, migration 00012). Un UPDATE dont la clause USING de la RLS filtre toutes les lignes modifie **0 ligne et ne retourne AUCUNE erreur** — le code croyait avoir réussi, le flag restait FALSE, et le middleware (qui redirige tout client `graduated_at != null && !graduation_screen_shown` vers celebrate) rebouclait. Jumelle de la leçon mémoire « INSERT RETURNING bloqué par la RLS SELECT » : les policies RLS échouent en silence sur les lignes filtrées.
+- **Solution validee** : RPC `fn_mark_graduation_screen_shown()` SECURITY DEFINER (migration 00143) qui ne pose QUE ce flag, sur la seule row du caller (`auth_user_id = auth.uid() AND graduated_at IS NOT NULL`), et **retourne le row count**. La Server Action vérifie `updated === true`, l'UI vérifie `{ error }` et NE redirige PAS en cas d'échec (rediriger = re-boucler).
+- **Regle a suivre** : (1) toute mutation self-service d'un client sur une table où il n'a pas de policy d'écriture passe par une RPC SECURITY DEFINER dédiée qui retourne une preuve d'effet (row count) ; (2) après un UPDATE/DELETE côté user, ne JAMAIS conclure au succès sur la seule absence d'erreur — vérifier l'effet ; (3) un `await serverAction()` dont on ignore le retour dans l'UI est un bug latent : toujours destructurer `{ error }`. ⚠️ Vérifier `complete-onboarding.ts` : même pattern (UPDATE clients self-service) — même bug latent probable.
+
 
 ### [DRY-001] Une décision dupliquée dans N consumers diverge et casse en cascade → résolveur unique
 - **Date** : 2026-06-16

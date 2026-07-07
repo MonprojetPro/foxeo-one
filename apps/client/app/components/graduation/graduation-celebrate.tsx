@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useTransition } from 'react'
+import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@monprojetpro/ui'
@@ -24,22 +24,7 @@ export function GraduationCelebrate({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  useEffect(() => {
-    // Transition thème Lab → One
-    document.documentElement.classList.add('theme-transition')
-    const themeTimer = setTimeout(() => {
-      document.documentElement.setAttribute('data-theme', 'one')
-    }, 1000)
-    // Remove transition class after animation completes to avoid lingering transitions
-    const cleanupTimer = setTimeout(() => {
-      document.documentElement.classList.remove('theme-transition')
-    }, 2500)
-    return () => {
-      clearTimeout(themeTimer)
-      clearTimeout(cleanupTimer)
-      document.documentElement.classList.remove('theme-transition')
-    }
-  }, [])
+  // Thème One appliqué par ThemeOneSetter dans le layout /graduation
 
   function handleDiscoverOne() {
     router.push('/graduation/discover-one')
@@ -47,7 +32,12 @@ export function GraduationCelebrate({
 
   function handleSkip() {
     startTransition(async () => {
-      await markGraduationScreenShown()
+      const { error } = await markGraduationScreenShown()
+      if (error) {
+        // Ne PAS rediriger : le middleware ramènerait ici en boucle
+        toast.error('Un problème est survenu, réessaie dans un instant.')
+        return
+      }
       toast.success('Bienvenue dans MonprojetPro One 🚀')
       router.push('/')
     })

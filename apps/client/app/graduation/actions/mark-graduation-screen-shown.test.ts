@@ -19,7 +19,7 @@ const mockSupabase = {
   auth: {
     getUser: vi.fn(),
   },
-  from: vi.fn(),
+  rpc: vi.fn(),
 }
 
 describe('markGraduationScreenShown', () => {
@@ -38,6 +38,7 @@ describe('markGraduationScreenShown', () => {
 
     expect(result.data).toBeNull()
     expect(result.error?.code).toBe('UNAUTHORIZED')
+    expect(mockSupabase.rpc).not.toHaveBeenCalled()
   })
 
   it('returns UNAUTHORIZED when auth returns error', async () => {
@@ -52,16 +53,14 @@ describe('markGraduationScreenShown', () => {
     expect(result.error?.code).toBe('UNAUTHORIZED')
   })
 
-  it('returns UPDATE_FAILED when database update fails', async () => {
+  it('returns UPDATE_FAILED when the RPC fails', async () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: 'user-123' } },
       error: null,
     })
-
-    const dbError = { message: 'DB error', code: 'PGRST001' }
-    mockSupabase.from.mockReturnValue({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockResolvedValue({ error: dbError }),
+    mockSupabase.rpc.mockResolvedValue({
+      data: null,
+      error: { message: 'function not found', code: 'PGRST202' },
     })
 
     const result = await markGraduationScreenShown()
@@ -70,16 +69,25 @@ describe('markGraduationScreenShown', () => {
     expect(result.error?.code).toBe('UPDATE_FAILED')
   })
 
-  it('returns success when graduation screen marked shown', async () => {
+  it('returns UPDATE_FAILED when no row was updated (client introuvable ou non gradué)', async () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: 'user-123' } },
       error: null,
     })
+    mockSupabase.rpc.mockResolvedValue({ data: false, error: null })
 
-    mockSupabase.from.mockReturnValue({
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockResolvedValue({ error: null }),
+    const result = await markGraduationScreenShown()
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('UPDATE_FAILED')
+  })
+
+  it('returns success when the RPC confirms the update', async () => {
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'user-123' } },
+      error: null,
     })
+    mockSupabase.rpc.mockResolvedValue({ data: true, error: null })
 
     const result = await markGraduationScreenShown()
 
@@ -87,23 +95,15 @@ describe('markGraduationScreenShown', () => {
     expect(result.data).toEqual({ success: true })
   })
 
-  it('calls update with graduation_screen_shown = true', async () => {
+  it('calls the dedicated SECURITY DEFINER RPC', async () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: 'user-456' } },
       error: null,
     })
-
-    const updateMock = vi.fn().mockReturnThis()
-    const eqMock = vi.fn().mockResolvedValue({ error: null })
-    mockSupabase.from.mockReturnValue({
-      update: updateMock,
-      eq: eqMock,
-    })
+    mockSupabase.rpc.mockResolvedValue({ data: true, error: null })
 
     await markGraduationScreenShown()
 
-    expect(mockSupabase.from).toHaveBeenCalledWith('clients')
-    expect(updateMock).toHaveBeenCalledWith({ graduation_screen_shown: true })
-    expect(eqMock).toHaveBeenCalledWith('auth_user_id', 'user-456')
+    expect(mockSupabase.rpc).toHaveBeenCalledWith('fn_mark_graduation_screen_shown')
   })
 })

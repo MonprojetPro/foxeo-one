@@ -36,7 +36,7 @@ export default async function TourOnePage({ searchParams }: PageProps) {
 
   const { data: config } = await supabase
     .from('client_configs')
-    .select('active_modules')
+    .select('active_modules, lab_mode_available')
     .eq('client_id', client.id)
     .maybeSingle()
 
@@ -49,7 +49,10 @@ export default async function TourOnePage({ searchParams }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-950 to-emerald-900 text-white">
-      <GraduationTour activeModuleIds={activeModuleIds} />
+      <GraduationTour
+        activeModuleIds={activeModuleIds}
+        labModeAvailable={config?.lab_mode_available ?? false}
+      />
     </div>
   )
 }
