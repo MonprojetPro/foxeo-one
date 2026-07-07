@@ -150,7 +150,18 @@ async function fetchChangelog(
       break
     }
 
-    for (const entry of result.data.changelogs) {
+    // L'API 2026 ne garantit pas la clé `changelogs` — formes observées : items/data.
+    // Si la forme est inconnue, on remonte les clés réelles dans last_error (diagnostic).
+    const payload = result.data as unknown as Record<string, unknown>
+    const rawList = payload.changelogs ?? payload.items ?? payload.data
+    if (!Array.isArray(rawList)) {
+      console.error('[BILLING:SYNC] Unexpected changelog payload on', entityPath, Object.keys(payload))
+      error = true
+      errorDetail = `Unexpected changelog payload shape — keys: ${Object.keys(payload).join(', ')}`.slice(0, 500)
+      break
+    }
+
+    for (const entry of rawList as ChangelogEntry[]) {
       if (entry.operation === 'delete') {
         deleteIds.push(entry.id)
       } else {
@@ -158,8 +169,8 @@ async function fetchChangelog(
       }
     }
 
-    hasMore = result.data.has_more
-    cursor = result.data.next_cursor
+    hasMore = Boolean(payload.has_more)
+    cursor = payload.next_cursor as string | undefined
   }
 
   return { ids, deleteIds, rateLimited, error, errorDetail }
@@ -764,10 +775,15 @@ async function logError(
   message: string,
   details: unknown
 ): Promise<void> {
-  await supabase.from('activity_logs').insert({
-    type: 'billing_sync_error',
+  // Shape réelle d'activity_logs : actor_type/action/entity_type/metadata
+  // (l'ancien insert utilisait une colonne `type` inexistante → jamais journalisé)
+  const { error } = await supabase.from('activity_logs').insert({
+    actor_type: 'system',
+    action: 'billing_sync_error',
+    entity_type: 'billing_sync',
     metadata: { message, details },
   })
+  if (error) console.error('[BILLING:SYNC] logError insert failed:', error)
 }
 
 // ── Notification MiKL (3 erreurs consécutives) ────────────────────────────────
@@ -1008,7 +1024,7 @@ serve(async (req: Request) => {
     await logError(supabase, 'Unhandled error in billing-sync', { error: errMsg })
 
     return new Response(
-      JSON.stringify({ error: 'Internal error', synced: 0 }),
+      JSON.stringify({ error: 'Internal error', detail: errMsg.slice(0, 300), synced: 0 }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
