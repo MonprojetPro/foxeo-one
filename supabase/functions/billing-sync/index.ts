@@ -760,11 +760,21 @@ async function logError(
 
 // ── Notification MiKL (3 erreurs consécutives) ────────────────────────────────
 
+// Cadence cron = 5 min → 288 cycles ≈ 24 h. Anti-spam (incident 2026-07-07 :
+// 834 notifications en 24 h) : on notifie UNE fois au franchissement du seuil,
+// puis un rappel quotidien tant que l'erreur persiste. Le compteur repasse à 0
+// au premier succès, donc une rechute re-déclenche bien une alerte.
+const REMINDER_EVERY_CYCLES = 288
+
 async function notifyOperatorIfNeeded(
   supabase: SupabaseClient,
   state: BillingSyncState
 ): Promise<void> {
-  if (state.consecutive_errors < MAX_CONSECUTIVE_ERRORS) return
+  const crossedThreshold = state.consecutive_errors === MAX_CONSECUTIVE_ERRORS
+  const dailyReminder =
+    state.consecutive_errors > MAX_CONSECUTIVE_ERRORS &&
+    state.consecutive_errors % REMINDER_EVERY_CYCLES === 0
+  if (!crossedThreshold && !dailyReminder) return
 
   // Trouver le user opérateur pour la notification
   const { data: operators } = await supabase
@@ -781,8 +791,8 @@ async function notifyOperatorIfNeeded(
     recipient_id: operatorUserId,
     type: 'billing_sync_alert',
     title: 'Alerte — synchronisation facturation en erreur',
-    body: `La synchronisation Pennylane échoue depuis ${MAX_CONSECUTIVE_ERRORS} cycles consécutifs.`,
-    link: '/hub/facturation',
+    body: `La synchronisation Pennylane (${state.entity_type}) échoue depuis ${state.consecutive_errors} cycles. Vérifie PENNYLANE_API_TOKEN dans les secrets Edge Functions Supabase.`,
+    link: '/modules/facturation',
   })
 }
 
