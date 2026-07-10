@@ -104,10 +104,10 @@ export function ActivityLogs() {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
+      {/* Barre de filtres cockpit */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <select
-          className="rounded bg-white/5 border border-white/10 px-3 py-2 text-sm text-gray-200"
+          className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-gray-200 transition-colors focus:border-cyan-500/50 focus:outline-none"
           value={filters.clientId ?? ''}
           onChange={(e) => setFilters((f) => ({ ...f, clientId: e.target.value || undefined, page: 0 }))}
           aria-label="Filtrer par client"
@@ -116,7 +116,7 @@ export function ActivityLogs() {
         </select>
 
         <select
-          className="rounded bg-white/5 border border-white/10 px-3 py-2 text-sm text-gray-200"
+          className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-gray-200 transition-colors focus:border-cyan-500/50 focus:outline-none"
           value={filters.actionType ?? ''}
           onChange={(e) => setFilters((f) => ({ ...f, actionType: e.target.value || undefined, page: 0 }))}
           aria-label="Filtrer par type d'action"
@@ -128,7 +128,7 @@ export function ActivityLogs() {
         </select>
 
         <select
-          className="rounded bg-white/5 border border-white/10 px-3 py-2 text-sm text-gray-200"
+          className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-gray-200 transition-colors focus:border-cyan-500/50 focus:outline-none"
           value={filters.actorType ?? ''}
           onChange={(e) => setFilters((f) => ({ ...f, actorType: e.target.value || undefined, page: 0 }))}
           aria-label="Filtrer par acteur"
@@ -142,14 +142,14 @@ export function ActivityLogs() {
         <div className="flex gap-2">
           <input
             type="date"
-            className="flex-1 rounded bg-white/5 border border-white/10 px-3 py-2 text-sm text-gray-200"
+            className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-gray-200 focus:border-cyan-500/50 focus:outline-none"
             value={filters.startDate ?? ''}
             onChange={(e) => setFilters((f) => ({ ...f, startDate: e.target.value || undefined, page: 0 }))}
             aria-label="Date de début"
           />
           <input
             type="date"
-            className="flex-1 rounded bg-white/5 border border-white/10 px-3 py-2 text-sm text-gray-200"
+            className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-gray-200 focus:border-cyan-500/50 focus:outline-none"
             value={filters.endDate ?? ''}
             onChange={(e) => setFilters((f) => ({ ...f, endDate: e.target.value || undefined, page: 0 }))}
             aria-label="Date de fin"
@@ -157,60 +157,69 @@ export function ActivityLogs() {
         </div>
       </div>
 
-      {/* Search */}
+      {/* Champ de recherche */}
       <input
         type="text"
-        placeholder="Rechercher dans les actions..."
-        className="w-full rounded bg-white/5 border border-white/10 px-3 py-2 text-sm text-gray-200 placeholder-gray-500"
+        placeholder="Rechercher dans les actions…"
+        className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 transition-colors focus:border-cyan-500/50 focus:outline-none"
         value={searchInput}
         onChange={(e) => handleSearchChange(e.target.value)}
         aria-label="Recherche textuelle"
       />
 
-      {/* Logs list */}
+      {/* État de chargement — skeletons cockpit */}
       {isPending && (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-14 rounded bg-white/5 animate-pulse" />
+            <div key={i} className="h-14 animate-pulse rounded-xl bg-white/5" />
           ))}
         </div>
       )}
 
+      {/* Erreur */}
       {isError && (
-        <div className="rounded bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+        <div className="rounded-2xl border border-red-500/20 bg-red-950/20 px-4 py-3 text-sm text-red-400">
           Erreur lors du chargement des logs.
         </div>
       )}
 
+      {/* État vide */}
       {!isPending && !isError && logs.length === 0 && (
-        <div className="rounded bg-white/5 px-4 py-8 text-center text-sm text-gray-500">
-          Aucun log trouvé.
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/10 px-4 py-10 text-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+            <span className="text-lg text-gray-500" aria-hidden="true">—</span>
+          </div>
+          <p className="text-sm text-gray-500">Aucun log trouvé.</p>
         </div>
       )}
 
+      {/* Liste des entrées de log */}
       {!isPending && logs.length > 0 && (
         <div className="space-y-2">
           {logs.map((log) => (
             <div
               key={log.id}
-              className="rounded bg-white/5 border border-white/10 px-4 py-3 space-y-1"
+              className="space-y-1 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 transition-colors hover:bg-white/[0.04]"
             >
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-lg" aria-hidden="true">{getActorIcon(log.actorType)}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${getActionBadgeClass(log.action)}`}>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Icône acteur */}
+                <span className="text-base" aria-hidden="true">{getActorIcon(log.actorType)}</span>
+                {/* Badge action coloré */}
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getActionBadgeClass(log.action)}`}>
                   {log.action}
                 </span>
                 {log.entityType && (
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-500">
                     {log.entityType}: <span className="text-gray-300">{log.entityId}</span>
                   </span>
                 )}
-                <span className="ml-auto text-xs text-gray-500">{formatDate(log.createdAt)}</span>
+                {/* Horodatage tabular-nums */}
+                <span className="ml-auto tabular-nums text-xs text-gray-500">{formatDate(log.createdAt)}</span>
               </div>
-              <div className="text-xs text-gray-400">
-                Acteur: <span className="text-gray-300">{log.actorType}</span>
+              <div className="text-xs text-gray-500">
+                Acteur: <span className="text-gray-400">{log.actorType}</span>
                 {' · '}
-                ID: <span className="font-mono text-gray-300">{log.actorId.slice(0, 8)}…</span>
+                ID: <span className="font-mono text-gray-400">{log.actorId.slice(0, 8)}…</span>
               </div>
               <ExpandableMetadata metadata={log.metadata} />
             </div>
@@ -218,10 +227,10 @@ export function ActivityLogs() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Pagination cockpit */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-400">
+          <span className="tabular-nums text-xs text-gray-500">
             {total} logs · page {currentPage + 1}/{totalPages}
           </span>
           <div className="flex gap-2">
@@ -229,7 +238,7 @@ export function ActivityLogs() {
               type="button"
               disabled={currentPage === 0}
               onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 0) - 1 }))}
-              className="rounded px-3 py-1.5 text-sm bg-white/5 border border-white/10 text-gray-200 disabled:opacity-40 hover:bg-white/10"
+              className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-sm text-gray-200 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Page précédente"
             >
               Précédent
@@ -238,7 +247,7 @@ export function ActivityLogs() {
               type="button"
               disabled={currentPage >= totalPages - 1}
               onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 0) + 1 }))}
-              className="rounded px-3 py-1.5 text-sm bg-white/5 border border-white/10 text-gray-200 disabled:opacity-40 hover:bg-white/10"
+              className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-sm text-gray-200 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Page suivante"
             >
               Suivant

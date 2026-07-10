@@ -10,7 +10,7 @@ interface ReminderDayListProps {
 }
 
 export function ReminderDayList({ reminders, selectedDate, onEdit }: ReminderDayListProps) {
-  // Filter reminders for selected date
+  // Filtrer les rappels pour la date sélectionnée
   const dayReminders = reminders.filter((r) => {
     const reminderDate = new Date(r.dueDate)
     return (
@@ -20,17 +20,19 @@ export function ReminderDayList({ reminders, selectedDate, onEdit }: ReminderDay
     )
   })
 
+  // Empty state cockpit : fond transparent, texte discret
   if (dayReminders.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p>Aucun rappel pour cette date</p>
+      <div className="py-8 text-center">
+        <p className="text-sm text-gray-500">Aucun rappel pour cette date</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium mb-3">
+      {/* Label de la date sélectionnée — ton secondaire discret */}
+      <p className="text-xs font-medium text-gray-400 mb-3">
         {selectedDate.toLocaleDateString('fr-FR', {
           weekday: 'long',
           day: 'numeric',

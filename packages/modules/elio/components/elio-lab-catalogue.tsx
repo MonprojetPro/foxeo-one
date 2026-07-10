@@ -70,40 +70,47 @@ export function ElioLabCatalogue({ initialAgents }: ElioLabCatalogueProps) {
   const inactiveCount = agents.filter((a) => a.archived).length
 
   return (
-    <div className="px-8 py-6 space-y-6">
-      {/* Header */}
+    <div className="space-y-5">
+      {/* En-tête de section style cockpit */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Catalogue d'agents Élio Lab</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-500">
+            Catalogue d&apos;agents Élio Lab
+          </p>
+          <p className="mt-0.5 text-xs text-gray-400">
             {activeCount} agent{activeCount !== 1 ? 's' : ''} actif{activeCount !== 1 ? 's' : ''}
-            {inactiveCount > 0 && ` · ${inactiveCount} inactif${inactiveCount !== 1 ? 's' : ''}`}
+            {inactiveCount > 0 && (
+              <span className="text-gray-600">
+                {' '}· {inactiveCount} inactif{inactiveCount !== 1 ? 's' : ''}
+              </span>
+            )}
           </p>
         </div>
 
+        {/* Bouton sync — style pill cyan cockpit */}
         <button
-          onClick={handleSync}
+          onClick={() => void handleSync()}
           disabled={syncing || isLoading}
-          className="flex items-center gap-2 rounded-lg bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 disabled:opacity-50"
+          className="flex shrink-0 items-center gap-2 rounded-lg border border-cyan-800/50 px-4 py-2 text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-900/20 disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
           {syncing ? 'Synchronisation…' : 'Synchroniser les agents'}
         </button>
       </div>
 
-      {/* Erreur sync */}
+      {/* Erreur sync — callout rouge cockpit */}
       {syncError && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+        <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/[0.06] px-4 py-3 text-sm text-red-400">
+          <AlertCircle className="h-4 w-4 shrink-0" />
           {syncError}
         </div>
       )}
 
-      {/* Grille agents */}
+      {/* Grille agents — skeletons style cockpit (bg-white/5) */}
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 animate-pulse rounded-xl border border-border/40 bg-card/40" />
+            <div key={i} className="h-48 animate-pulse rounded-2xl border border-white/5 bg-white/[0.025]" />
           ))}
         </div>
       ) : agents.length === 0 ? (
@@ -126,16 +133,18 @@ export function ElioLabCatalogue({ initialAgents }: ElioLabCatalogueProps) {
 
 function ElioLabEmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-card/20 px-6 py-16 text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-border/40 bg-muted">
-        <Bot className="h-8 w-8 text-muted-foreground" />
+    /* État vide cockpit — bordure pointillée blanc/10, fond très discret */
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.015] px-6 py-16 text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03]">
+        <Bot className="h-8 w-8 text-gray-500" />
       </div>
-      <p className="text-sm font-medium text-foreground">Aucun agent Élio Lab</p>
-      <p className="mt-2 max-w-sm text-xs leading-relaxed text-muted-foreground">
-        Créez votre premier agent avec le <strong>skill-creator</strong> dans Claude Code, puis
-        cliquez sur <strong>Synchroniser les agents</strong> pour l'importer ici.
+      <p className="text-sm font-medium text-white">Aucun agent Élio Lab</p>
+      <p className="mt-2 max-w-sm text-xs leading-relaxed text-gray-500">
+        Créez votre premier agent avec le <strong className="text-gray-300">skill-creator</strong>{' '}
+        dans Claude Code, puis cliquez sur{' '}
+        <strong className="text-gray-300">Synchroniser les agents</strong> pour l&apos;importer ici.
       </p>
-      <p className="mt-3 font-mono text-xs text-muted-foreground/60">
+      <p className="mt-3 font-mono text-xs text-gray-600">
         packages/modules/elio/agents/lab/mon-agent.md
       </p>
     </div>

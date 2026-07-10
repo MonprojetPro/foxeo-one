@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Button, Skeleton } from '@monprojetpro/ui'
-import { Plus } from 'lucide-react'
+import { Button, CockpitHeader, BlockSkeleton } from '@monprojetpro/ui'
+import { Plus, CalendarDays } from 'lucide-react'
 import {
   RemindersCalendar,
   ReminderDayList,
@@ -37,37 +37,32 @@ export default function RemindersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Rappels & Calendrier</h1>
-          <p className="text-muted-foreground mt-1">
-            Gérez vos rappels et deadlines
-          </p>
-        </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouveau rappel
-        </Button>
-      </div>
+      {/* En-tête cockpit Hub avec accent cyan */}
+      <CockpitHeader
+        icon={CalendarDays}
+        title="Rappels & Calendrier"
+        subtitle="Gérez vos rappels et deadlines"
+        tone="cyan"
+        actions={
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nouveau rappel
+          </Button>
+        }
+      />
 
-      {/* Filter */}
+      {/* Filtre de période */}
       <RemindersFilter value={filter} onChange={setFilter} />
 
-      {/* Calendar + Day List */}
+      {/* Grille calendrier + liste du jour */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar */}
+        {/* Calendrier mensuel */}
         <div className="lg:col-span-2">
           {isLoading ? (
+            /* Skeleton cockpit : animate-pulse sans Skeleton shadcn */
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-7 w-48" />
-                <div className="flex gap-1">
-                  <Skeleton className="h-8 w-8" />
-                  <Skeleton className="h-8 w-8" />
-                </div>
-              </div>
-              <Skeleton className="h-[500px] w-full rounded-lg" />
+              <BlockSkeleton className="h-8 w-48" />
+              <BlockSkeleton className="h-[500px] w-full" />
             </div>
           ) : (
             <RemindersCalendar
@@ -81,15 +76,19 @@ export default function RemindersPage() {
           )}
         </div>
 
-        {/* Day List */}
+        {/* Panneau rappels du jour — style cockpit sombre */}
         <div className="lg:col-span-1">
-          <div className="border rounded-lg p-4">
-            <h3 className="font-semibold mb-4">Rappels du jour</h3>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            {/* Label section en majuscules comme les autres cartes Hub */}
+            <h3 className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-400 mb-4">
+              Rappels du jour
+            </h3>
             {isLoading ? (
+              /* Skeletons cockpit pour les cartes de rappel */
               <div className="space-y-3">
-                <Skeleton className="h-20 w-full rounded-lg" />
-                <Skeleton className="h-20 w-full rounded-lg" />
-                <Skeleton className="h-20 w-full rounded-lg" />
+                <BlockSkeleton className="h-20 w-full" />
+                <BlockSkeleton className="h-20 w-full" />
+                <BlockSkeleton className="h-20 w-full" />
               </div>
             ) : (
               <ReminderDayList
@@ -102,13 +101,13 @@ export default function RemindersPage() {
         </div>
       </div>
 
-      {/* Create Dialog */}
+      {/* Dialog création */}
       <CreateReminderDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
       />
 
-      {/* Edit Dialog */}
+      {/* Dialog édition */}
       <EditReminderDialog
         open={editingReminder !== null}
         onOpenChange={(open) => {

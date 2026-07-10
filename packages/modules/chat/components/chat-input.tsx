@@ -76,29 +76,36 @@ export function ChatInput({
   }
 
   return (
-    <div className="border-t shrink-0" data-testid="chat-input">
+    /* Barre de saisie cockpit — fond verre, bordure haut discrète */
+    <div
+      className="shrink-0 border-t border-white/10 bg-white/[0.02]"
+      data-testid="chat-input"
+    >
       {/* Preview fichier sélectionné */}
       {selectedFile && (
-        <div className="flex items-center gap-2 px-6 pt-3 text-sm">
-          <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span className="truncate text-muted-foreground flex-1 text-xs">
-            {selectedFile.name} <span className="opacity-60">({formatFileSize(selectedFile.size)})</span>
+        <div className="flex items-center gap-2 px-5 pt-3 text-sm">
+          <Paperclip className="h-3.5 w-3.5 text-gray-500 shrink-0" />
+          <span className="truncate text-gray-400 flex-1 text-xs">
+            {selectedFile.name}{' '}
+            <span className="text-gray-600">({formatFileSize(selectedFile.size)})</span>
           </span>
           <button
             type="button"
             onClick={() => { setSelectedFile(null); setFileError(null) }}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-gray-600 hover:text-gray-300 transition-colors"
             aria-label="Retirer le fichier"
           >
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
+      {/* Erreur de validation fichier */}
       {fileError && (
-        <p className="px-6 pt-1 text-xs text-destructive">{fileError}</p>
+        <p className="px-5 pt-1 text-xs text-red-400">{fileError}</p>
       )}
 
-      <div className="flex items-end gap-2 px-6 py-4">
+      <div className="flex items-end gap-2 px-5 py-3">
+        {/* Bouton pièce jointe */}
         {showAttachment && (
           <>
             <input
@@ -118,13 +125,14 @@ export function ChatInput({
               disabled={disabled || isSending}
               aria-label="Joindre un fichier"
               data-testid="attach-button"
-              className="shrink-0 h-9 w-9 text-muted-foreground hover:text-foreground"
+              className="shrink-0 h-9 w-9 text-gray-500 hover:text-gray-200 hover:bg-white/[0.05]"
             >
               <Paperclip className="h-4 w-4" />
             </Button>
           </>
         )}
 
+        {/* Champ de saisie — verre cockpit */}
         <Textarea
           ref={textareaRef}
           value={content}
@@ -133,11 +141,12 @@ export function ChatInput({
           placeholder={placeholder}
           disabled={disabled || isSending}
           rows={1}
-          className="min-h-[40px] max-h-[120px] resize-none"
+          className="min-h-[40px] max-h-[120px] resize-none border-white/10 bg-white/[0.03] text-gray-100 placeholder:text-gray-600 focus-visible:ring-cyan-400/30 focus-visible:border-cyan-400/25"
           aria-label="Message"
           data-testid="message-input"
         />
 
+        {/* Bouton Envoyer — accent cyan */}
         <Button
           type="button"
           size="icon"
@@ -145,7 +154,7 @@ export function ChatInput({
           disabled={!canSend}
           aria-label="Envoyer le message"
           data-testid="send-button"
-          className="shrink-0 h-9 w-9"
+          className="shrink-0 h-9 w-9 bg-cyan-500/80 hover:bg-cyan-500 text-white shadow-[0_0_16px_-4px_theme(colors.cyan.400/40)] transition-colors"
         >
           <Send className="h-4 w-4" />
         </Button>

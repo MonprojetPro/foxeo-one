@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { addWeeks, subWeeks, addDays, subDays, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Plus, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
-import { Button, toast } from "@monprojetpro/ui";
+import { Plus, ChevronLeft, ChevronRight, RefreshCw, CalendarDays } from "lucide-react";
+import { Button, toast, CockpitHeader, PillTabs, type PillTab } from "@monprojetpro/ui";
 import { AgendaSidebarPanel } from "./agenda-sidebar-panel";
 import { WeekView } from "./week-view";
 import { DayView } from "./day-view";
@@ -221,6 +221,13 @@ export function AgendaPage({ userId }: { userId: string }) {
     setFilters(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f));
   };
 
+  /* Onglets de vue — alignés sur le design cockpit */
+  const viewTabs: PillTab<ViewMode>[] = [
+    { key: 'day',   label: 'Jour' },
+    { key: 'week',  label: 'Semaine' },
+    { key: 'month', label: 'Mois' },
+  ]
+
   return (
     <div className="flex overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
       <AgendaSidebarPanel
@@ -235,47 +242,78 @@ export function AgendaPage({ userId }: { userId: string }) {
       />
 
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-          <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:flex items-center gap-3 mr-4">
-              {filters.map(f => (
-                <div key={f.key} className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: f.color }} />
-                  <span className="text-[10px] text-muted-foreground">{f.label}</span>
+        {/* ── En-tête cockpit ── */}
+        <div className="shrink-0 px-6 pt-6 pb-4">
+          <CockpitHeader
+            icon={CalendarDays}
+            title="Agenda"
+            subtitle="Vos rendez-vous et calendriers connectés"
+            tone="cyan"
+            actions={
+              <div className="flex items-center gap-2">
+                {/* Légendes calendriers (desktop uniquement) */}
+                <div className="hidden lg:flex items-center gap-3 mr-2">
+                  {filters.map(f => (
+                    <div key={f.key} className="flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: f.color }} />
+                      <span className="text-[10px] text-gray-400">{f.label}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => void handleManualSync()} title="Synchroniser">
-              <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            </Button>
-            <Button onClick={() => setShowNewRdv(true)} size="sm">
-              <Plus className="h-4 w-4 mr-1" />Nouveau RDV
-            </Button>
-          </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-gray-400 hover:text-white"
+                  onClick={() => void handleManualSync()}
+                  title="Synchroniser"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                </Button>
+                <button
+                  onClick={() => setShowNewRdv(true)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-sm font-medium text-cyan-300 transition-colors hover:bg-cyan-400/20"
+                >
+                  <Plus className="h-4 w-4" />
+                  Nouveau RDV
+                </button>
+              </div>
+            }
+          />
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-between px-6 py-2 border-b border-border shrink-0">
-          <div className="flex items-center gap-1 bg-secondary rounded-md p-0.5">
-            {(["day", "week", "month"] as ViewMode[]).map(v => (
-              <button key={v} onClick={() => setViewMode(v)}
-                className={`px-3 py-1 text-xs rounded transition-colors ${viewMode === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                {v === "day" ? "Jour" : v === "week" ? "Semaine" : "Mois"}
-              </button>
-            ))}
-          </div>
+        {/* ── Barre de navigation temporelle ── */}
+        <div className="flex items-center justify-between px-6 py-2 border-b border-white/10 shrink-0">
+          {/* Sélecteur de vue via PillTabs */}
+          <PillTabs
+            tabs={viewTabs}
+            active={viewMode}
+            onChange={setViewMode}
+            tone="cyan"
+          />
+
+          {/* Navigation date */}
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goPrev}><ChevronLeft className="h-4 w-4" /></Button>
-            <span className="text-sm font-medium text-foreground min-w-[200px] text-center capitalize">{getDateLabel()}</span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goNext}><ChevronRight className="h-4 w-4" /></Button>
-            <Button variant="outline" size="sm" className="text-xs h-7 ml-2" onClick={() => setCurrentDate(new Date())}>Aujourd&apos;hui</Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-white" onClick={goPrev}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="min-w-[200px] text-center text-sm font-medium capitalize text-white">
+              {getDateLabel()}
+            </span>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-white" onClick={goNext}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <button
+              className="ml-2 rounded-xl border border-white/20 bg-white/[0.02] px-3 py-1 text-xs text-gray-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+              onClick={() => setCurrentDate(new Date())}
+            >
+              Aujourd&apos;hui
+            </button>
           </div>
+          {/* Espace d'équilibrage */}
           <div className="w-[120px]" />
         </div>
 
-        {/* Calendar View */}
+        {/* ── Vue calendrier ── */}
         <div className="flex-1 min-h-0 overflow-hidden">
           {viewMode === "week" && <WeekView currentDate={currentDate} events={allEvents} onEventClick={handleEventClick} onSlotClick={(date, hour) => setNewRdvSlot({ date, hour })} />}
           {viewMode === "day" && <DayView currentDate={currentDate} events={allEvents} onEventClick={handleEventClick} onSlotClick={(date, hour) => setNewRdvSlot({ date, hour })} />}
@@ -283,26 +321,39 @@ export function AgendaPage({ userId }: { userId: string }) {
         </div>
       </main>
 
-      {/* Event detail popover */}
+      {/* ── Popover détail événement — style cockpit ── */}
       {selectedEvent && showPopover && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60" onClick={() => setShowPopover(false)}>
-          <div className="bg-card border border-border rounded-lg p-4 w-64 space-y-2" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-medium text-foreground">{selectedEvent.title}</p>
-            {selectedEvent.subtitle && <p className="text-[10px] text-muted-foreground">{selectedEvent.subtitle}</p>}
-            <p className="text-[11px] text-muted-foreground">
-              {`${selectedEvent.startHour.toString().padStart(2, "0")}:${selectedEvent.startMinute.toString().padStart(2, "0")} - ${selectedEvent.endHour.toString().padStart(2, "0")}:${selectedEvent.endMinute.toString().padStart(2, "0")}`}
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setShowPopover(false)}
+        >
+          <div
+            className="w-72 rounded-2xl border border-white/10 bg-[#0a0f0a] p-5 space-y-3 shadow-xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="text-sm font-semibold text-white">{selectedEvent.title}</p>
+            {selectedEvent.subtitle && (
+              <p className="text-xs text-gray-400">{selectedEvent.subtitle}</p>
+            )}
+            <p className="text-xs text-gray-400 tabular-nums">
+              {`${selectedEvent.startHour.toString().padStart(2, "0")}:${selectedEvent.startMinute.toString().padStart(2, "0")} — ${selectedEvent.endHour.toString().padStart(2, "0")}:${selectedEvent.endMinute.toString().padStart(2, "0")}`}
             </p>
             <div className="flex items-center gap-1.5">
               {selectedEvent.customColor && (
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: selectedEvent.customColor }} />
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: selectedEvent.customColor }} />
               )}
-              <p className="text-[10px] text-muted-foreground">{SOURCE_LABELS[selectedEvent.source]}</p>
+              <p className="text-xs text-gray-500">{SOURCE_LABELS[selectedEvent.source]}</p>
             </div>
             {selectedEvent.source === "google" && (
-              <div className="flex gap-1.5 pt-1">
-                <Button variant="outline" size="sm" className="text-[11px] h-7 flex-1"
-                  onClick={() => { setEditEvent(selectedEvent); setShowPopover(false); }}>Modifier</Button>
-                <Button variant="outline" size="sm" className="text-[11px] h-7 flex-1 text-destructive hover:text-destructive"
+              <div className="flex gap-2 pt-1">
+                <button
+                  className="flex-1 rounded-xl border border-white/20 bg-white/[0.02] px-3 py-1.5 text-xs text-gray-300 transition-colors hover:bg-white/[0.08]"
+                  onClick={() => { setEditEvent(selectedEvent); setShowPopover(false); }}
+                >
+                  Modifier
+                </button>
+                <button
+                  className="flex-1 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/10"
                   onClick={async () => {
                     const label = calendarStatus.googleAccounts.find(a => a.color === selectedEvent.customColor)?.label ?? calendarStatus.googleAccounts[0]?.label ?? "";
                     const { error } = await deleteGoogleCalendarEvent(selectedEvent.id, label);
@@ -311,7 +362,10 @@ export function AgendaPage({ userId }: { userId: string }) {
                     setShowPopover(false);
                     setSelectedEvent(null);
                     await loadExternalEvents();
-                  }}>Supprimer</Button>
+                  }}
+                >
+                  Supprimer
+                </button>
               </div>
             )}
           </div>

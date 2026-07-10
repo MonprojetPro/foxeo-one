@@ -71,16 +71,17 @@ function InstanceDetail({
   ]
 
   return (
-    <div className="space-y-4 rounded border border-white/10 bg-white/5 p-4">
+    /* Panneau de détail instance — verre cockpit */
+    <div className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-medium text-white">{instance.slug}</h3>
-          <p className="text-xs text-gray-400">Dernier check : {lastCheck}</p>
+          <h3 className="font-semibold text-white">{instance.slug}</h3>
+          <p className="text-xs text-gray-500">Dernier check : {lastCheck}</p>
         </div>
         <button
           type="button"
           onClick={() => onUpgrade(instance.id)}
-          className="rounded bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-500"
+          className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-1.5 text-xs font-medium text-amber-400 transition-colors hover:border-amber-400/50 hover:bg-amber-500/10"
           aria-label={`Initier un upgrade pour ${instance.slug}`}
         >
           Initier upgrade
@@ -96,7 +97,7 @@ function InstanceDetail({
             <div key={label} className="space-y-1">
               <div className="flex justify-between text-xs">
                 <span className="text-gray-400">{label}</span>
-                <span className="text-gray-300">
+                <span className="tabular-nums text-gray-300">
                   {value.toLocaleString('fr-FR')}{unit} / {max.toLocaleString('fr-FR')}{unit}
                   <span className="ml-1 text-gray-500">({pct}%)</span>
                 </span>
@@ -107,22 +108,24 @@ function InstanceDetail({
         })}
       </div>
 
-      {/* Historique 30 jours — résumé textuel (graphique P2) */}
+      {/* Historique 30 jours — mini spark bars */}
       {history.length > 0 && (
         <div>
-          <p className="mb-2 text-xs text-gray-500">Historique ({history.length} snapshots)</p>
-          <div className="flex gap-1" aria-label="Historique métriques 30 jours">
+          <p className="mb-2 text-[0.7rem] font-medium uppercase tracking-wider text-gray-500">
+            Historique ({history.length} snapshots)
+          </p>
+          <div className="flex gap-0.5" aria-label="Historique métriques 30 jours">
             {history.map((snap, idx) => {
               const level = getMetricLevel(snap.dbRows, 'dbRows')
               const colorClass =
                 level === 'critical' ? 'bg-red-500' :
                 level === 'warning'  ? 'bg-amber-500' :
                 level === 'info'     ? 'bg-blue-500' :
-                'bg-green-500'
+                'bg-emerald-500'
               return (
                 <div
                   key={idx}
-                  className={`h-4 w-2 rounded-sm opacity-70 ${colorClass}`}
+                  className={`h-4 w-2 rounded-sm opacity-60 transition-opacity hover:opacity-100 ${colorClass}`}
                   title={snap.timestamp ? new Date(snap.timestamp).toLocaleDateString('fr-FR') : ''}
                 />
               )
@@ -131,12 +134,17 @@ function InstanceDetail({
         </div>
       )}
 
-      {/* Modules actifs */}
+      {/* Modules actifs — tags cockpit */}
       <div>
-        <p className="mb-1 text-xs text-gray-500">Modules ({instance.activeModules.length})</p>
-        <div className="flex flex-wrap gap-1">
+        <p className="mb-2 text-[0.7rem] font-medium uppercase tracking-wider text-gray-500">
+          Modules ({instance.activeModules.length})
+        </p>
+        <div className="flex flex-wrap gap-1.5">
           {instance.activeModules.map((mod) => (
-            <span key={mod} className="rounded bg-white/10 px-2 py-0.5 text-xs text-gray-300">
+            <span
+              key={mod}
+              className="rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-xs text-gray-300"
+            >
               {mod}
             </span>
           ))}
@@ -156,20 +164,22 @@ export function InstancesDashboard({ upgradeModal: UpgradeModal }: InstancesDash
 
   if (isPending) {
     return (
-      <div className="space-y-3" aria-label="Chargement du tableau de bord instances">
-        <div className="grid grid-cols-3 gap-4">
+      <div className="space-y-4" aria-label="Chargement du tableau de bord instances">
+        {/* Skeletons des cartes KPI */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="h-20 animate-pulse rounded bg-white/5" />
+            <div key={n} className="h-24 animate-pulse rounded-2xl bg-white/5" />
           ))}
         </div>
-        <div className="h-64 animate-pulse rounded bg-white/5" />
+        {/* Skeleton du tableau */}
+        <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
       </div>
     )
   }
 
   if (isError) {
     return (
-      <div className="rounded border border-red-500/20 bg-red-950/30 p-4 text-sm text-red-400">
+      <div className="rounded-2xl border border-red-500/20 bg-red-950/20 p-4 text-sm text-red-400">
         Erreur lors du chargement du tableau de bord instances
       </div>
     )
@@ -187,15 +197,20 @@ export function InstancesDashboard({ upgradeModal: UpgradeModal }: InstancesDash
 
   return (
     <div className="space-y-6">
-      {/* Vue d'ensemble */}
-      <div className="grid grid-cols-3 gap-4" aria-label="Vue d'ensemble instances">
-        <div className="rounded border border-white/10 bg-white/5 p-4">
-          <p className="text-xs text-gray-400">Instances actives</p>
-          <p className="mt-1 text-2xl font-bold text-white">{stats.activeCount}</p>
+      {/* Vue d'ensemble — cartes KPI cockpit */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="Vue d'ensemble instances">
+        {/* Instances actives */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 transition-colors hover:bg-white/[0.04]">
+          <p className="text-[0.7rem] font-medium uppercase tracking-wider text-gray-500">Instances actives</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-white">
+            {stats.activeCount}
+          </p>
         </div>
-        <div className="rounded border border-white/10 bg-white/5 p-4">
-          <p className="text-xs text-gray-400">Alertes en cours</p>
-          <p className={`mt-1 text-2xl font-bold ${stats.alertCount > 0 ? 'text-amber-400' : 'text-white'}`}>
+
+        {/* Alertes en cours */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 transition-colors hover:bg-white/[0.04]">
+          <p className="text-[0.7rem] font-medium uppercase tracking-wider text-gray-500">Alertes en cours</p>
+          <p className={`mt-2 text-3xl font-semibold tabular-nums tracking-tight ${stats.alertCount > 0 ? 'text-amber-400' : 'text-white'}`}>
             {stats.alertCount}
             {stats.criticalCount > 0 && (
               <span className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
@@ -204,29 +219,33 @@ export function InstancesDashboard({ upgradeModal: UpgradeModal }: InstancesDash
             )}
           </p>
         </div>
-        <div className="rounded border border-white/10 bg-white/5 p-4">
-          <p className="text-xs text-gray-400">MRR estimé</p>
-          <p className="mt-1 text-2xl font-bold text-white">{stats.estimatedMrr}€/mois</p>
+
+        {/* MRR estimé */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 transition-colors hover:bg-white/[0.04]">
+          <p className="text-[0.7rem] font-medium uppercase tracking-wider text-gray-500">MRR estimé</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-white">
+            {stats.estimatedMrr}€<span className="text-base font-normal text-gray-500">/mois</span>
+          </p>
         </div>
       </div>
 
-      {/* Filtres */}
-      <div className="flex gap-2" role="group" aria-label="Filtrer par niveau d'alerte">
+      {/* Filtres par niveau d'alerte */}
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer par niveau d'alerte">
         {(['all', 'none', 'info', 'warning', 'critical'] as const).map((level) => (
           <button
             key={level}
             type="button"
             onClick={() => setFilterLevel(level)}
-            className={`rounded border px-3 py-1 text-xs transition-colors ${
+            className={`rounded-xl border px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
               filterLevel === level
-                ? 'border-white/30 bg-white/15 text-white'
-                : 'border-white/10 text-gray-400 hover:text-white'
+                ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-300 shadow-[0_0_20px_-6px_rgb(34_211_238/0.4)]'
+                : 'border-white/10 bg-white/[0.02] text-gray-400 hover:border-white/20 hover:bg-white/5 hover:text-gray-200'
             }`}
             aria-pressed={filterLevel === level}
           >
             {level === 'all' ? 'Tous' : ALERT_BADGE[level].label}
             {level !== 'all' && (
-              <span className="ml-1.5 text-gray-500">
+              <span className="ml-1.5 text-gray-500 tabular-nums">
                 ({allInstances.filter((i) => i.alertLevel === level).length})
               </span>
             )}
@@ -236,14 +255,19 @@ export function InstancesDashboard({ upgradeModal: UpgradeModal }: InstancesDash
 
       {/* Liste des instances */}
       {filtered.length === 0 ? (
-        <div className="rounded border border-white/10 bg-white/5 p-8 text-center text-sm text-gray-500">
-          Aucune instance pour ce filtre
+        /* État vide cockpit */
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-white/10 p-10 text-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+            <span className="text-lg text-gray-500" aria-hidden="true">—</span>
+          </div>
+          <p className="text-sm text-gray-500">Aucune instance pour ce filtre</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded border border-white/10">
+        <div className="overflow-hidden rounded-2xl border border-white/10">
           <table className="w-full text-sm" aria-label="Liste des instances avec monitoring">
+            {/* En-tête de tableau cockpit */}
             <thead>
-              <tr className="border-b border-white/10 bg-white/5 text-left text-xs text-gray-400">
+              <tr className="border-b border-white/10 text-left text-xs text-gray-400">
                 <th className="px-4 py-3 font-medium">Instance</th>
                 <th className="px-4 py-3 font-medium">Alerte</th>
                 <th className="px-4 py-3 font-medium">DB Rows</th>
@@ -252,15 +276,16 @@ export function InstancesDashboard({ upgradeModal: UpgradeModal }: InstancesDash
                 <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
+            {/* Lignes zébrées au survol */}
             <tbody className="divide-y divide-white/5">
               {filtered.map((instance) => {
                 const badge = ALERT_BADGE[instance.alertLevel]
                 const metrics = instance.usageMetrics
                 return (
-                  <tr key={instance.id} className="text-gray-300 hover:bg-white/5">
+                  <tr key={instance.id} className="text-gray-300 transition-colors hover:bg-white/[0.03]">
                     <td className="px-4 py-3">
                       <div className="font-medium text-white">{instance.slug}</div>
-                      <div className="text-xs text-gray-400">{instance.clientName ?? instance.clientId.slice(0, 8)}</div>
+                      <div className="text-xs text-gray-500">{instance.clientName ?? instance.clientId.slice(0, 8)}</div>
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={badge.variant} className={badge.className}>
@@ -269,7 +294,7 @@ export function InstancesDashboard({ upgradeModal: UpgradeModal }: InstancesDash
                     </td>
                     <td className="px-4 py-3 min-w-28">
                       <div className="space-y-1">
-                        <span className="text-xs">{metrics.dbRows.toLocaleString('fr-FR')}</span>
+                        <span className="text-xs tabular-nums">{metrics.dbRows.toLocaleString('fr-FR')}</span>
                         <ProgressBar
                           percent={getUsagePercent(metrics.dbRows, THRESHOLDS.dbRows.max)}
                           level={getMetricLevel(metrics.dbRows, 'dbRows')}
@@ -278,7 +303,7 @@ export function InstancesDashboard({ upgradeModal: UpgradeModal }: InstancesDash
                     </td>
                     <td className="px-4 py-3 min-w-28">
                       <div className="space-y-1">
-                        <span className="text-xs">{metrics.storageUsedMb.toFixed(1)} MB</span>
+                        <span className="text-xs tabular-nums">{metrics.storageUsedMb.toFixed(1)} MB</span>
                         <ProgressBar
                           percent={getUsagePercent(metrics.storageUsedMb, THRESHOLDS.storageUsedMb.max)}
                           level={getMetricLevel(metrics.storageUsedMb, 'storageUsedMb')}
@@ -287,7 +312,7 @@ export function InstancesDashboard({ upgradeModal: UpgradeModal }: InstancesDash
                     </td>
                     <td className="px-4 py-3 min-w-28">
                       <div className="space-y-1">
-                        <span className="text-xs">{metrics.bandwidthUsedGb.toFixed(2)} GB</span>
+                        <span className="text-xs tabular-nums">{metrics.bandwidthUsedGb.toFixed(2)} GB</span>
                         <ProgressBar
                           percent={getUsagePercent(metrics.bandwidthUsedGb, THRESHOLDS.bandwidthUsedGb.max)}
                           level={getMetricLevel(metrics.bandwidthUsedGb, 'bandwidthUsedGb')}
@@ -296,19 +321,21 @@ export function InstancesDashboard({ upgradeModal: UpgradeModal }: InstancesDash
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
+                        {/* Bouton détail */}
                         <button
                           type="button"
                           onClick={() => setSelectedId(selectedId === instance.id ? null : instance.id)}
-                          className="rounded border border-white/10 px-2 py-1 text-xs text-gray-300 hover:text-white"
+                          className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-1.5 text-xs text-gray-300 transition-colors hover:border-white/20 hover:bg-white/5 hover:text-white"
                           aria-label={`Voir le détail de ${instance.slug}`}
                           aria-expanded={selectedId === instance.id}
                         >
                           Détail
                         </button>
+                        {/* Bouton upgrade accent amber */}
                         <button
                           type="button"
                           onClick={() => setUpgradeInstanceId(instance.id)}
-                          className="rounded border border-orange-500/30 px-2 py-1 text-xs text-orange-400 hover:border-orange-400"
+                          className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-2.5 py-1.5 text-xs text-amber-400 transition-colors hover:border-amber-400/50 hover:bg-amber-500/10"
                           aria-label={`Initier un upgrade pour ${instance.slug}`}
                         >
                           Upgrade

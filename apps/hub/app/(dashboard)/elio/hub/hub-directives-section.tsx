@@ -74,18 +74,27 @@ export function HubDirectivesSection({ initialDirectives }: HubDirectivesSection
 
   return (
     <section className="space-y-4" aria-labelledby="hub-directives-title">
+      {/* Titre de section style cockpit */}
       <div>
-        <h3 id="hub-directives-title" className="text-base font-semibold text-foreground">
+        <h3
+          id="hub-directives-title"
+          className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-500"
+        >
           Directives permanentes — Élio Hub
         </h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="mt-0.5 text-xs text-gray-400">
           Consignes durables données à Élio (mode « Màj Élio » du widget, ou ajout manuel ici).
-          Injectées dans son cerveau à chaque conversation. {directives.length}/{MAX_HUB_DIRECTIVES} directives.
+          Injectées dans son cerveau à chaque conversation.{' '}
+          <span className="tabular-nums text-gray-500">
+            {directives.length}/{MAX_HUB_DIRECTIVES}
+          </span>{' '}
+          directives.
         </p>
       </div>
 
+      {/* État vide — style cockpit border-dashed blanc/10 */}
       {directives.length === 0 ? (
-        <p className="text-sm text-muted-foreground rounded-xl border border-dashed border-border px-4 py-6 text-center">
+        <p className="text-sm text-gray-500 italic rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center">
           Aucune directive pour l&apos;instant. Utilise le mode « Màj Élio » du widget sidebar,
           ou ajoute une consigne ci-dessous.
         </p>
@@ -94,11 +103,11 @@ export function HubDirectivesSection({ initialDirectives }: HubDirectivesSection
           {directives.map((directive) => (
             <li
               key={directive.id}
-              className="flex items-start gap-3 rounded-xl border border-border bg-card/50 px-4 py-3"
+              className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3 transition-colors hover:bg-white/[0.035]"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground leading-relaxed break-words">{directive.text}</p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
+                <p className="text-sm text-white leading-relaxed break-words">{directive.text}</p>
+                <p className="text-[11px] text-gray-600 mt-0.5">
                   Ajoutée le {formatDate(directive.createdAt)}
                 </p>
               </div>
@@ -108,7 +117,7 @@ export function HubDirectivesSection({ initialDirectives }: HubDirectivesSection
                 disabled={deletingId !== null}
                 title="Supprimer cette directive"
                 aria-label={`Supprimer la directive : ${directive.text.slice(0, 60)}`}
-                className="shrink-0 rounded-md p-1.5 text-muted-foreground/60 hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-40 cursor-pointer"
+                className="shrink-0 rounded-lg p-1.5 text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40 cursor-pointer"
               >
                 {deletingId === directive.id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -121,7 +130,7 @@ export function HubDirectivesSection({ initialDirectives }: HubDirectivesSection
         </ul>
       )}
 
-      {/* Ajout manuel */}
+      {/* Ajout manuel — textarea + bouton cockpit */}
       <div className="flex items-start gap-2">
         <textarea
           value={newText}
@@ -130,13 +139,13 @@ export function HubDirectivesSection({ initialDirectives }: HubDirectivesSection
           maxLength={HUB_DIRECTIVE_MAX_LENGTH}
           placeholder="Ex: À partir de maintenant, toujours tutoyer les clients…"
           aria-label="Nouvelle directive permanente"
-          className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500"
+          className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-gray-600 resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500/70"
         />
         <button
           type="button"
           onClick={() => void handleAdd()}
           disabled={isAdding || !newText.trim()}
-          className="rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 px-4 py-2 text-sm font-medium text-white transition-colors inline-flex items-center gap-1.5"
+          className="rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 px-4 py-2 text-sm font-medium text-white transition-colors inline-flex items-center gap-1.5"
         >
           {isAdding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           Ajouter

@@ -1,5 +1,6 @@
 'use client'
 
+import { SectionTitle } from '@monprojetpro/ui'
 import { KpiCard } from './kpi-card'
 import { ClientTypeChart } from './client-type-chart'
 import { TimePerClientTable } from './time-per-client-table'
@@ -33,7 +34,10 @@ export function StatsDashboard({
 
   return (
     <div className="space-y-6" data-testid="stats-dashboard">
-      {/* KPI Cards Grid */}
+      {/* Section : indicateurs clés */}
+      <SectionTitle>Indicateurs clés</SectionTitle>
+
+      {/* Grille KPI — 5 cartes sur 4 colonnes max */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <KpiCard
           label="Total clients"
@@ -62,15 +66,19 @@ export function StatsDashboard({
         />
       </div>
 
-      {/* Charts Row */}
+      {/* Section : répartition par type de client */}
       {stats && (
-        <ClientTypeChart
-          data={stats.byType}
-          total={stats.totalClients}
-        />
+        <>
+          <SectionTitle>Répartition</SectionTitle>
+          <ClientTypeChart
+            data={stats.byType}
+            total={stats.totalClients}
+          />
+        </>
       )}
 
-      {/* Time per client table */}
+      {/* Section : temps passé par client */}
+      <SectionTitle>Temps par client</SectionTitle>
       <TimePerClientTable data={timeData} />
     </div>
   )

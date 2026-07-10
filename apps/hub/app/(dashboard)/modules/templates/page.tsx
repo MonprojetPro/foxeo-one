@@ -1,13 +1,20 @@
 'use client'
 
 import { useState } from 'react'
+import { LayoutTemplate, Mail } from 'lucide-react'
+import {
+  CockpitHeader,
+  PillTabs,
+  type PillTab,
+} from '@monprojetpro/ui'
 import { ParcourTemplateEditor, EmailTemplateEditor } from '@monprojetpro/module-templates'
 
+/* Onglets du module templates */
 type TemplatesTab = 'parcours' | 'emails'
 
-const TABS: { id: TemplatesTab; label: string }[] = [
-  { id: 'parcours', label: 'Parcours Lab' },
-  { id: 'emails', label: 'Emails' },
+const TABS: PillTab<TemplatesTab>[] = [
+  { key: 'parcours', label: 'Parcours Lab', icon: LayoutTemplate },
+  { key: 'emails', label: 'Emails', icon: Mail },
 ]
 
 export default function TemplatesPage() {
@@ -15,34 +22,27 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-white">Templates</h1>
-        <p className="text-sm text-gray-400">Templates de parcours Lab réutilisables et emails automatiques</p>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-white/10">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.id
-                ? 'text-white border-b-2 border-cyan-400'
-                : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* En-tête cockpit avec navigation par pills */}
+      <CockpitHeader
+        icon={LayoutTemplate}
+        title="Templates"
+        subtitle="Parcours Lab réutilisables et emails automatiques"
+        tone="cyan"
+        actions={
+          <PillTabs
+            tabs={TABS}
+            active={activeTab}
+            onChange={setActiveTab}
+            tone="cyan"
+          />
+        }
+      />
 
-      {/* Tab content */}
-      <div>
-        {activeTab === 'parcours' && <ParcourTemplateEditor />}
-        {activeTab === 'emails' && <EmailTemplateEditor />}
-      </div>
+      {/* Contenu de l'onglet actif */}
+      {activeTab === 'parcours' && <ParcourTemplateEditor />}
+      {activeTab === 'emails' && <EmailTemplateEditor />}
+
     </div>
   )
 }

@@ -4,7 +4,30 @@ import { useState, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Input, Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@monprojetpro/ui'
 import { showSuccess, showError } from '@monprojetpro/ui'
-import { Search, Eye, EyeOff, Share2, Download, Upload, FileIcon, Folder, ChevronDown } from 'lucide-react'
+import {
+  CockpitHeader,
+  PillTabs,
+  HeroStatGrid,
+  HeroStat,
+  SectionTitle,
+  HeroStatSkeleton,
+  RowSkeleton,
+} from '@monprojetpro/ui'
+import type { PillTab } from '@monprojetpro/ui'
+import {
+  Search,
+  Eye,
+  EyeOff,
+  Share2,
+  Download,
+  Upload,
+  FileIcon,
+  FolderOpen,
+  ChevronDown,
+  Files,
+  Users,
+  Globe,
+} from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import { getAllDocuments } from '../actions/get-all-documents'
 import { getDocumentUrl } from '../actions/get-document-url'
@@ -19,7 +42,7 @@ interface ClientOption {
   name: string
 }
 
-// ---- Download helper ----
+// ── Téléchargement ──────────────────────────────────────────────────────────
 
 function triggerDownload(url: string) {
   const a = document.createElement('a')
@@ -30,67 +53,75 @@ function triggerDownload(url: string) {
   document.body.removeChild(a)
 }
 
-// ---- File type badge ----
+// ── Badge type de fichier ───────────────────────────────────────────────────
 
 const FILE_TYPE_COLORS: Record<string, string> = {
-  pdf:  'bg-red-500/20 text-red-600 dark:text-red-400',
-  docx: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
-  doc:  'bg-blue-500/20 text-blue-600 dark:text-blue-400',
-  xlsx: 'bg-green-500/20 text-green-600 dark:text-green-400',
-  xls:  'bg-green-500/20 text-green-600 dark:text-green-400',
-  csv:  'bg-green-500/20 text-green-600 dark:text-green-400',
-  png:  'bg-purple-500/20 text-purple-600 dark:text-purple-400',
-  jpg:  'bg-purple-500/20 text-purple-600 dark:text-purple-400',
-  jpeg: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
-  svg:  'bg-purple-500/20 text-purple-600 dark:text-purple-400',
-  md:   'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400',
+  pdf:  'bg-red-500/20 text-red-400',
+  docx: 'bg-blue-500/20 text-blue-400',
+  doc:  'bg-blue-500/20 text-blue-400',
+  xlsx: 'bg-emerald-500/20 text-emerald-400',
+  xls:  'bg-emerald-500/20 text-emerald-400',
+  csv:  'bg-emerald-500/20 text-emerald-400',
+  png:  'bg-violet-500/20 text-violet-400',
+  jpg:  'bg-violet-500/20 text-violet-400',
+  jpeg: 'bg-violet-500/20 text-violet-400',
+  svg:  'bg-violet-500/20 text-violet-400',
+  md:   'bg-amber-500/20 text-amber-400',
 }
 
 function FileTypeBadge({ fileType }: { fileType: string }) {
   const ext = fileType.toLowerCase().replace(/^\./, '')
-  const color = FILE_TYPE_COLORS[ext] ?? 'bg-muted text-muted-foreground'
+  const color = FILE_TYPE_COLORS[ext] ?? 'bg-white/10 text-gray-400'
   return (
-    <span className={cn('inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0', color)}>
+    <span className={cn(
+      'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0',
+      color,
+    )}>
       {ext.slice(0, 4)}
     </span>
   )
 }
 
-// ---- Visibility badge ----
+// ── Badge visibilité ────────────────────────────────────────────────────────
 
 function VisibilityBadge({ visibility }: { visibility: string }) {
   const shared = visibility === 'shared'
   return (
     <span className={cn(
-      'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
+      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
       shared
-        ? 'bg-green-500/15 text-green-600 dark:text-green-400'
-        : 'bg-red-500/15 text-red-600 dark:text-red-400'
+        ? 'bg-emerald-400/10 text-emerald-300'
+        : 'bg-white/[0.05] text-gray-500',
     )}>
+      {shared ? <Globe className="h-2.5 w-2.5" /> : null}
       {shared ? 'Partagé' : 'Privé'}
     </span>
   )
 }
 
-// ---- Type badge ----
+// ── Badge type / tag ────────────────────────────────────────────────────────
+
+const TAG_TONE_CYCLE = [
+  'bg-amber-500/15 text-amber-300',
+  'bg-blue-500/15 text-blue-300',
+  'bg-violet-500/15 text-violet-300',
+  'bg-cyan-500/15 text-cyan-300',
+  'bg-emerald-500/15 text-emerald-300',
+]
 
 function TypeBadge({ tag }: { tag: string }) {
-  const colors = [
-    'bg-orange-500/15 text-orange-600 dark:text-orange-400',
-    'bg-blue-500/15 text-blue-600 dark:text-blue-400',
-    'bg-violet-500/15 text-violet-600 dark:text-violet-400',
-    'bg-teal-500/15 text-teal-600 dark:text-teal-400',
-    'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400',
-  ]
-  const idx = tag.charCodeAt(0) % colors.length
+  const idx = tag.charCodeAt(0) % TAG_TONE_CYCLE.length
   return (
-    <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium capitalize', colors[idx])}>
+    <span className={cn(
+      'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium capitalize',
+      TAG_TONE_CYCLE[idx],
+    )}>
       {tag}
     </span>
   )
 }
 
-// ---- Preview modal ----
+// ── Modale de prévisualisation ──────────────────────────────────────────────
 
 const VIEWABLE_IMAGE = ['png', 'jpg', 'jpeg', 'svg', 'gif', 'webp']
 const VIEWABLE_PDF   = ['pdf']
@@ -104,7 +135,6 @@ function PreviewModal({ doc, onClose }: PreviewModalProps) {
   const [url, setUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  // Load URL when doc changes
   useMemo(() => {
     if (!doc) { setUrl(null); return }
     setLoading(true)
@@ -124,37 +154,33 @@ function PreviewModal({ doc, onClose }: PreviewModalProps) {
 
   return (
     <Dialog open={!!doc} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="sm:max-w-[700px] flex flex-col gap-0 p-0 max-h-[85vh]">
-        {/* Header */}
-        <DialogHeader className="flex flex-row items-center justify-between px-5 py-4 border-b shrink-0">
-          <DialogTitle className="text-sm font-medium truncate pr-4">
+      <DialogContent className="sm:max-w-[700px] flex flex-col gap-0 p-0 max-h-[85vh] bg-[#0a0a0a] border border-white/10">
+        {/* En-tête */}
+        <DialogHeader className="flex flex-row items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+          <DialogTitle className="text-sm font-medium text-white truncate pr-4">
             {doc?.name}
           </DialogTitle>
         </DialogHeader>
 
-        {/* Preview area */}
-        <div className="flex-1 overflow-auto min-h-[300px] bg-muted/20">
+        {/* Zone de prévisualisation */}
+        <div className="flex-1 overflow-auto min-h-[300px] bg-white/[0.02]">
           {loading ? (
             <div className="flex h-[300px] items-center justify-center">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              {/* Skeleton animate-pulse au lieu du spinner */}
+              <div className="h-32 w-full max-w-xs animate-pulse rounded-xl bg-white/5" />
             </div>
           ) : !url || !canPreview ? (
-            /* Fallback — pas d'aperçu possible */
-            <div className="flex flex-col items-center justify-center gap-4 h-[300px] text-muted-foreground">
-              <FileIcon className="h-12 w-12 opacity-20" />
-              <div className="text-center">
-                <p className="text-sm font-medium">{doc?.name}</p>
-                <p className="text-xs opacity-60 mt-1">Aperçu non disponible pour ce type de fichier</p>
+            /* Fallback : aperçu non disponible */
+            <div className="flex flex-col items-center justify-center gap-4 h-[300px]">
+              <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 flex flex-col items-center gap-3">
+                <FileIcon className="h-10 w-10 text-gray-600" />
+                <p className="text-sm text-gray-400 font-medium">{doc?.name}</p>
+                <p className="text-xs text-gray-600">Aperçu non disponible pour ce type de fichier</p>
               </div>
             </div>
           ) : VIEWABLE_PDF.includes(ext) ? (
-            <iframe
-              src={url}
-              className="w-full h-[500px]"
-              title={doc?.name}
-            />
+            <iframe src={url} className="w-full h-[500px]" title={doc?.name} />
           ) : (
-            /* Image */
             <div className="flex items-center justify-center p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -166,9 +192,9 @@ function PreviewModal({ doc, onClose }: PreviewModalProps) {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-4 border-t shrink-0 gap-3">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {/* Pied */}
+        <div className="flex items-center justify-between px-5 py-4 border-t border-white/10 shrink-0 gap-3">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
             {doc && <FileTypeBadge fileType={doc.fileType} />}
             <span>{doc?.clientName}</span>
             {doc?.tags[0] && <><span>·</span><TypeBadge tag={doc.tags[0]} /></>}
@@ -188,7 +214,7 @@ function PreviewModal({ doc, onClose }: PreviewModalProps) {
   )
 }
 
-// ---- Import modal ----
+// ── Modale d'import ─────────────────────────────────────────────────────────
 
 interface ImportModalProps {
   open: boolean
@@ -243,21 +269,21 @@ function ImportModal({ open, onClose, clients, operatorId, onUploaded }: ImportM
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose() }}>
-      <DialogContent className="sm:max-w-[520px] flex flex-col gap-0 p-0">
-        <DialogHeader className="px-6 py-4 border-b shrink-0">
-          <DialogTitle className="text-base">Importer un document</DialogTitle>
+      <DialogContent className="sm:max-w-[520px] flex flex-col gap-0 p-0 bg-[#0a0a0a] border border-white/10">
+        <DialogHeader className="px-6 py-4 border-b border-white/10 shrink-0">
+          <DialogTitle className="text-base text-white">Importer un document</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-5 px-6 py-5">
           {/* Client */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-widest">
               Client *
             </label>
             <select
               value={selectedClientId}
               onChange={(e) => setSelectedClientId(e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="w-full h-9 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm text-gray-200 focus:outline-none focus:ring-1 focus:ring-cyan-400/40"
             >
               <option value="">Sélectionner un client...</option>
               {clients.map((c) => (
@@ -268,7 +294,7 @@ function ImportModal({ open, onClose, clients, operatorId, onUploaded }: ImportM
 
           {/* Fichier */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-widest">
               Fichier *
             </label>
             <DocumentUpload
@@ -279,7 +305,7 @@ function ImportModal({ open, onClose, clients, operatorId, onUploaded }: ImportM
 
           {/* Visibilité */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-widest">
               Visibilité
             </label>
             <div className="flex gap-2">
@@ -289,12 +315,12 @@ function ImportModal({ open, onClose, clients, operatorId, onUploaded }: ImportM
                   type="button"
                   onClick={() => setVisibility(v)}
                   className={cn(
-                    'flex-1 rounded-md border px-3 py-2 text-sm transition-colors',
+                    'flex-1 rounded-xl border px-3 py-2 text-sm transition-colors',
                     visibility === v
                       ? v === 'shared'
-                        ? 'border-green-500 bg-green-500/10 text-green-600 dark:text-green-400'
-                        : 'border-primary bg-primary/10 text-primary'
-                      : 'border-input text-muted-foreground hover:border-muted-foreground'
+                        ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+                        : 'border-cyan-400/30 bg-cyan-400/10 text-cyan-300'
+                      : 'border-white/10 bg-white/[0.02] text-gray-500 hover:border-white/20 hover:text-gray-300'
                   )}
                 >
                   {v === 'private' ? '🔒 Privé (MiKL uniquement)' : '👁 Partagé (visible client)'}
@@ -305,19 +331,19 @@ function ImportModal({ open, onClose, clients, operatorId, onUploaded }: ImportM
 
           {/* Tags */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-widest">
               Tags <span className="font-normal normal-case">(optionnel, séparés par virgule)</span>
             </label>
             <Input
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="Business, Branding, Tarifs..."
-              className="h-9 text-sm"
+              className="h-9 text-sm bg-white/[0.03] border-white/10 text-gray-200 placeholder:text-gray-600"
             />
           </div>
         </div>
 
-        <div className="flex gap-2 px-6 py-4 border-t shrink-0">
+        <div className="flex gap-2 px-6 py-4 border-t border-white/10 shrink-0">
           <Button
             onClick={handleSubmit}
             disabled={!canSubmit}
@@ -335,7 +361,7 @@ function ImportModal({ open, onClose, clients, operatorId, onUploaded }: ImportM
   )
 }
 
-// ---- Visibility toggle (hub view) ----
+// ── Bouton toggle partage ────────────────────────────────────────────────────
 
 function VisibilityToggleButton({ doc }: { doc: DocumentWithClient }) {
   const queryClient = useQueryClient()
@@ -358,20 +384,26 @@ function VisibilityToggleButton({ doc }: { doc: DocumentWithClient }) {
   })
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className={cn('h-7 w-7', isShared ? 'text-green-500 hover:text-green-400' : 'text-muted-foreground hover:text-foreground')}
+    <button
+      type="button"
+      className={cn(
+        'h-7 w-7 flex items-center justify-center rounded-lg transition-colors',
+        isShared
+          ? 'text-emerald-400 hover:bg-emerald-400/10'
+          : 'text-gray-600 hover:text-gray-300 hover:bg-white/[0.05]',
+        mutation.isPending && 'opacity-50 pointer-events-none',
+      )}
       title={isShared ? 'Retirer le partage' : 'Partager avec le client'}
       onClick={() => mutation.mutate()}
       disabled={mutation.isPending}
+      aria-label={isShared ? 'Retirer le partage' : 'Partager avec le client'}
     >
       {isShared ? <EyeOff className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
-    </Button>
+    </button>
   )
 }
 
-// ---- Helpers ----
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function getUniqueClients(docs: DocumentWithClient[]) {
   return [...new Set(docs.map((d) => d.clientName))].sort()
@@ -385,7 +417,17 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-// ---- Main component ----
+// ── Pills de filtre visibilité ───────────────────────────────────────────────
+
+type VisibilityFilter = '' | 'shared' | 'private'
+
+const VISIBILITY_PILLS: PillTab<VisibilityFilter>[] = [
+  { key: '', label: 'Tous' },
+  { key: 'shared', label: 'Partagés' },
+  { key: 'private', label: 'Privés' },
+]
+
+// ── Composant principal ──────────────────────────────────────────────────────
 
 interface DocumentsHubPageProps {
   initialDocuments: DocumentWithClient[]
@@ -397,12 +439,12 @@ export function DocumentsHubPage({ initialDocuments, initialClients, operatorId 
   const [search, setSearch] = useState('')
   const [clientFilter, setClientFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
-  const [visibilityFilter, setVisibilityFilter] = useState('')
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>('')
   const [previewDoc, setPreviewDoc] = useState<DocumentWithClient | null>(null)
   const [importOpen, setImportOpen] = useState(false)
   const [collapsedClients, setCollapsedClients] = useState<Set<string>>(new Set())
 
-  const { data: documents = initialDocuments, refetch } = useQuery({
+  const { data: documents = initialDocuments, refetch, isPending } = useQuery({
     queryKey: ['all-documents'],
     queryFn: async () => {
       const r = await getAllDocuments()
@@ -436,6 +478,11 @@ export function DocumentsHubPage({ initialDocuments, initialClients, operatorId 
     return [...map.values()].sort((a, b) => a.clientName.localeCompare(b.clientName))
   }, [filtered])
 
+  // Métriques calculées côté client pour les cartes héros
+  const totalDocs     = documents.length
+  const sharedDocs    = documents.filter((d) => d.visibility === 'shared').length
+  const uniqueClients = new Set(documents.map((d) => d.clientId)).size
+
   const toggleClient = (clientId: string) => {
     setCollapsedClients((prev) => {
       const next = new Set(prev)
@@ -444,179 +491,316 @@ export function DocumentsHubPage({ initialDocuments, initialClients, operatorId 
     })
   }
 
-  function handleDownload(doc: DocumentWithClient) {
-    triggerDownload(`/api/documents/download/${doc.id}`)
-  }
+  const hasActiveFilters = search || clientFilter || typeFilter || visibilityFilter
 
   return (
     <>
       <div className="flex flex-col gap-6 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold">Documents</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {filtered.length} document{filtered.length > 1 ? 's' : ''} · {documents.length} au total
-            </p>
-          </div>
-          <Button size="sm" className="gap-2" onClick={() => setImportOpen(true)}>
-            <Upload className="h-4 w-4" />
-            Importer un document
-          </Button>
-        </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px] max-w-[300px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un document..."
-              className="pl-9 h-9 text-sm"
-            />
-          </div>
-
-          <select
-            value={clientFilter}
-            onChange={(e) => setClientFilter(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="">Tous les clients</option>
-            {clients.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="">Tous types</option>
-            {types.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-
-          <select
-            value={visibilityFilter}
-            onChange={(e) => setVisibilityFilter(e.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-          >
-            <option value="">Toute visibilité</option>
-            <option value="shared">Partagé</option>
-            <option value="private">Privé</option>
-          </select>
-
-          {(search || clientFilter || typeFilter || visibilityFilter) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { setSearch(''); setClientFilter(''); setTypeFilter(''); setVisibilityFilter('') }}
-              className="text-muted-foreground text-xs h-9"
+        {/* ── En-tête cockpit ── */}
+        <CockpitHeader
+          icon={Files}
+          title="Documents"
+          subtitle="Bibliothèque des documents opérateur et clients"
+          tone="cyan"
+          actions={
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-3.5 py-2 text-sm font-medium text-cyan-300 transition-all hover:bg-cyan-400/20"
             >
-              Réinitialiser
-            </Button>
-          )}
-        </div>
+              <Upload className="h-4 w-4" />
+              Importer un document
+            </button>
+          }
+        />
 
-        {/* Vue groupée par client */}
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
-            <p className="text-sm">Aucun document trouvé</p>
-            {(search || clientFilter || typeFilter || visibilityFilter) && (
-              <p className="text-xs opacity-60">Essaie de modifier les filtres</p>
+        {/* ── Cartes KPI ── */}
+        {isPending ? (
+          <HeroStatGrid>
+            <HeroStatSkeleton />
+            <HeroStatSkeleton />
+            <HeroStatSkeleton />
+          </HeroStatGrid>
+        ) : (
+          <HeroStatGrid>
+            <HeroStat
+              icon={Files}
+              label="Documents total"
+              value={totalDocs}
+              tone="cyan"
+            />
+            <HeroStat
+              icon={Globe}
+              label="Partagés clients"
+              value={sharedDocs}
+              tone="emerald"
+            />
+            <HeroStat
+              icon={Users}
+              label="Clients avec docs"
+              value={uniqueClients}
+              tone="blue"
+            />
+          </HeroStatGrid>
+        )}
+
+        {/* ── Filtres ── */}
+        <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+          {/* Ligne 1 : recherche + sélecteurs */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Champ recherche */}
+            <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500 pointer-events-none" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher un document..."
+                className="w-full h-9 rounded-xl border border-white/10 bg-white/[0.03] pl-9 pr-3 text-sm text-gray-200 placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-cyan-400/40"
+              />
+            </div>
+
+            {/* Filtre client */}
+            <select
+              value={clientFilter}
+              onChange={(e) => setClientFilter(e.target.value)}
+              className="h-9 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm text-gray-300 focus:outline-none focus:ring-1 focus:ring-cyan-400/40"
+            >
+              <option value="">Tous les clients</option>
+              {clients.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            {/* Filtre type / tag */}
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="h-9 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm text-gray-300 focus:outline-none focus:ring-1 focus:ring-cyan-400/40"
+            >
+              <option value="">Tous types</option>
+              {types.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('')
+                  setClientFilter('')
+                  setTypeFilter('')
+                  setVisibilityFilter('')
+                }}
+                className="h-9 px-3 rounded-xl border border-white/10 bg-white/[0.02] text-xs text-gray-500 hover:text-gray-300 hover:border-white/20 transition-colors"
+              >
+                Réinitialiser
+              </button>
             )}
           </div>
-        ) : (
+
+          {/* Ligne 2 : pills visibilité */}
+          <PillTabs
+            tabs={VISIBILITY_PILLS}
+            active={visibilityFilter}
+            onChange={setVisibilityFilter}
+            tone="cyan"
+          />
+        </div>
+
+        {/* ── Contenu ── */}
+        {isPending ? (
+          /* Skeleton de chargement */
           <div className="flex flex-col gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
+                  <div className="h-4 w-4 animate-pulse rounded bg-white/10" />
+                  <div className="h-4 w-32 animate-pulse rounded bg-white/10" />
+                </div>
+                <div className="flex flex-col gap-2 p-3">
+                  {Array.from({ length: 2 }).map((_, j) => (
+                    <RowSkeleton key={j} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          /* État vide */
+          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.01] py-20">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
+              <Files className="h-6 w-6 text-gray-600" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-400 font-medium">Aucun document trouvé</p>
+              {hasActiveFilters && (
+                <p className="text-xs text-gray-600 mt-1">Essaie de modifier les filtres</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Liste groupée par client */
+          <div className="flex flex-col gap-3">
+            <SectionTitle action={
+              <span className="text-xs text-gray-500 tabular-nums">
+                {filtered.length} document{filtered.length > 1 ? 's' : ''}
+              </span>
+            }>
+              Par client
+            </SectionTitle>
+
             {groupedByClient.map(({ clientId, clientName, docs }) => {
               const isCollapsed = collapsedClients.has(clientId)
+              const sharedCount = docs.filter((d) => d.visibility === 'shared').length
+
               return (
-                <div key={clientId} className="rounded-lg border overflow-hidden">
+                <div
+                  key={clientId}
+                  className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]"
+                >
                   {/* En-tête dossier client */}
                   <button
                     type="button"
                     onClick={() => toggleClient(clientId)}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 border-b border-white/10 hover:bg-white/[0.03] transition-colors text-left"
                   >
-                    <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform duration-150', isCollapsed && '-rotate-90')} />
-                    <Folder className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-medium">{clientName}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">
-                      {docs.length} document{docs.length > 1 ? 's' : ''}
+                    <ChevronDown className={cn(
+                      'h-4 w-4 text-gray-600 transition-transform duration-150',
+                      isCollapsed && '-rotate-90',
+                    )} />
+                    <FolderOpen className="h-4 w-4 text-cyan-400 shrink-0" />
+                    <span className="font-medium text-sm text-white">{clientName}</span>
+                    {sharedCount > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2 py-0.5 text-[11px] text-emerald-300">
+                        <Globe className="h-2.5 w-2.5" />
+                        {sharedCount} partagé{sharedCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-600 ml-auto tabular-nums">
+                      {docs.length} doc{docs.length > 1 ? 's' : ''}
                     </span>
                   </button>
 
-                  {/* Liste des documents */}
+                  {/* Desktop : table ──────────────────────────────────── */}
                   {!isCollapsed && (
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b bg-muted/20">
-                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nom</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Visibilité</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
+                    <>
+                      <div className="hidden md:block">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-white/10">
+                              <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
+                              <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                              <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visibilité</th>
+                              <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                              <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {docs.map((doc) => (
+                              <tr
+                                key={doc.id}
+                                className="border-b border-white/5 hover:bg-white/[0.03] transition-colors"
+                              >
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <FileTypeBadge fileType={doc.fileType} />
+                                    <span className="font-medium text-gray-200 truncate max-w-[260px]" title={doc.name}>
+                                      {doc.name}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  {doc.tags.length > 0
+                                    ? <TypeBadge tag={doc.tags[0]} />
+                                    : <span className="text-gray-700 text-xs">—</span>
+                                  }
+                                </td>
+                                <td className="px-4 py-3">
+                                  <VisibilityBadge visibility={doc.visibility} />
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className="text-gray-600 text-xs tabular-nums">{formatDate(doc.createdAt)}</span>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <VisibilityToggleButton doc={doc} />
+                                    <button
+                                      type="button"
+                                      className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.05] transition-colors"
+                                      title="Prévisualiser"
+                                      aria-label="Prévisualiser"
+                                      onClick={() => setPreviewDoc(doc)}
+                                    >
+                                      <Eye className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.05] transition-colors"
+                                      title="Télécharger"
+                                      aria-label="Télécharger"
+                                      onClick={() => triggerDownload(`/api/documents/download/${doc.id}`)}
+                                    >
+                                      <Download className="h-3.5 w-3.5" />
+                                    </button>
+                                    <a
+                                      href={`/modules/documents/${doc.clientId}`}
+                                      className="h-7 px-2 inline-flex items-center text-xs text-gray-600 hover:text-cyan-300 hover:bg-white/[0.05] rounded-lg transition-colors"
+                                    >
+                                      Ouvrir
+                                    </a>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile : cards ───────────────────────────────── */}
+                      <div className="flex flex-col gap-2 p-3 md:hidden">
                         {docs.map((doc) => (
-                          <tr key={doc.id} className="hover:bg-muted/20 transition-colors">
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            key={doc.id}
+                            className="rounded-xl border border-white/10 bg-white/[0.02] p-3 flex flex-col gap-2"
+                          >
+                            <div className="flex items-start gap-2 justify-between">
+                              <div className="flex items-center gap-2 min-w-0">
                                 <FileTypeBadge fileType={doc.fileType} />
-                                <span className="font-medium truncate max-w-[260px]" title={doc.name}>
-                                  {doc.name}
-                                </span>
+                                <span className="text-sm font-medium text-gray-200 truncate">{doc.name}</span>
                               </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              {doc.tags.length > 0
-                                ? <TypeBadge tag={doc.tags[0]} />
-                                : <span className="text-muted-foreground/50 text-xs">—</span>
-                              }
-                            </td>
-                            <td className="px-4 py-3">
                               <VisibilityBadge visibility={doc.visibility} />
-                            </td>
-                            <td className="px-4 py-3">
-                              <span className="text-muted-foreground text-xs">{formatDate(doc.createdAt)}</span>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center justify-end gap-1">
-                                <VisibilityToggleButton doc={doc} />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                  title="Prévisualiser"
-                                  onClick={() => setPreviewDoc(doc)}
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                  title="Télécharger"
-                                  onClick={() => handleDownload(doc)}
-                                >
-                                  <Download className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs text-muted-foreground hover:text-foreground px-2"
-                                  asChild
-                                >
-                                  <a href={`/modules/documents/${doc.clientId}`}>
-                                    Ouvrir
-                                  </a>
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {doc.tags[0] && <TypeBadge tag={doc.tags[0]} />}
+                              <span className="text-xs text-gray-600 tabular-nums">{formatDate(doc.createdAt)}</span>
+                            </div>
+                            <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+                              <VisibilityToggleButton doc={doc} />
+                              <button
+                                type="button"
+                                onClick={() => setPreviewDoc(doc)}
+                                className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.05] transition-colors"
+                                aria-label="Prévisualiser"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => triggerDownload(`/api/documents/download/${doc.id}`)}
+                                className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-300 hover:bg-white/[0.05] transition-colors"
+                                aria-label="Télécharger"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                              </button>
+                              <a
+                                href={`/modules/documents/${doc.clientId}`}
+                                className="ml-auto text-xs text-cyan-300/80 hover:text-cyan-200 transition-colors"
+                              >
+                                Ouvrir →
+                              </a>
+                            </div>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
+                      </div>
+                    </>
                   )}
                 </div>
               )
@@ -626,10 +810,7 @@ export function DocumentsHubPage({ initialDocuments, initialClients, operatorId 
       </div>
 
       {/* Modale prévisualisation */}
-      <PreviewModal
-        doc={previewDoc}
-        onClose={() => setPreviewDoc(null)}
-      />
+      <PreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
 
       {/* Modale import */}
       <ImportModal

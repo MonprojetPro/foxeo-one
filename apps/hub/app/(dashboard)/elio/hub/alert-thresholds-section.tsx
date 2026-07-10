@@ -66,19 +66,27 @@ export function AlertThresholdsSection({ initialThresholds }: AlertThresholdsSec
 
   return (
     <section className="space-y-4" aria-labelledby="alert-thresholds-title">
+      {/* Titre de section style cockpit */}
       <div>
-        <h3 id="alert-thresholds-title" className="text-base font-semibold text-foreground">
+        <h3
+          id="alert-thresholds-title"
+          className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-500"
+        >
           Seuils d&apos;alertes — Suggestions Élio
         </h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="mt-0.5 text-xs text-gray-400">
           Ces seuils pilotent les alertes calculées sur l&apos;accueil du Hub (et les défauts des outils de veille d&apos;Élio).
         </p>
       </div>
 
+      {/* Cartes seuils — style cockpit bg-white/[0.02] */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {FIELDS.map(({ key, label, hint }) => (
-          <div key={key} className="rounded-xl border border-border bg-card/50 p-4 space-y-1.5">
-            <label htmlFor={`threshold-${key}`} className="text-sm font-medium text-foreground block">
+          <div
+            key={key}
+            className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-1.5 transition-colors hover:bg-white/[0.04]"
+          >
+            <label htmlFor={`threshold-${key}`} className="text-sm font-medium text-white block">
               {label}
             </label>
             <input
@@ -89,18 +97,19 @@ export function AlertThresholdsSection({ initialThresholds }: AlertThresholdsSec
               step={1}
               value={values[key]}
               onChange={(e) => setValues((prev) => ({ ...prev, [key]: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white tabular-nums focus:outline-none focus:ring-1 focus:ring-cyan-500/70"
             />
-            <p className="text-[11px] text-muted-foreground">{hint}</p>
+            <p className="text-[11px] text-gray-500">{hint}</p>
           </div>
         ))}
       </div>
 
+      {/* Bouton cockpit cyan */}
       <button
         type="button"
-        onClick={handleSave}
+        onClick={() => void handleSave()}
         disabled={isSaving}
-        className="rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 px-4 py-2 text-sm font-medium text-white transition-colors"
+        className="rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 px-4 py-2 text-sm font-medium text-white transition-colors"
       >
         {isSaving ? 'Sauvegarde...' : 'Enregistrer les seuils'}
       </button>

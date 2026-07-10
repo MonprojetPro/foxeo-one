@@ -45,7 +45,8 @@ function BackupCard({
   entry: BackupEntry | null
 }) {
   return (
-    <div className="rounded bg-white/5 border border-white/10 p-4 space-y-2">
+    /* Carte backup cockpit — verre sur fond noir */
+    <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-5 transition-colors hover:bg-white/[0.04]">
       <div>
         <p className="text-sm font-medium text-gray-200">{title}</p>
         <p className="text-xs text-gray-500">{subtitle}</p>
@@ -54,15 +55,15 @@ function BackupCard({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             {statusBadge(entry.status)}
-            <span className="text-xs text-gray-400">{formatDate(entry.date)}</span>
+            <span className="tabular-nums text-xs text-gray-500">{formatDate(entry.date)}</span>
           </div>
-          <p className="text-xs text-gray-500">
-            {entry.clientsCount} client(s) • {formatBytes(entry.sizeBytes)} •{' '}
+          <p className="tabular-nums text-xs text-gray-500">
+            {entry.clientsCount} client(s) · {formatBytes(entry.sizeBytes)} ·{' '}
             {entry.triggeredBy === 'manual' ? 'Manuel' : 'Automatique'}
           </p>
         </div>
       ) : (
-        <p className="text-xs text-gray-500 italic">Aucun backup enregistré</p>
+        <p className="text-xs italic text-gray-600">Aucun backup enregistré</p>
       )}
     </div>
   )
@@ -92,7 +93,7 @@ export function BackupStatus() {
     return (
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-16 rounded bg-white/5 animate-pulse" />
+          <div key={i} className="h-16 animate-pulse rounded-2xl bg-white/5" />
         ))}
       </div>
     )
@@ -101,9 +102,9 @@ export function BackupStatus() {
   const history = data?.backupHistory ?? []
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      {/* Last backups status */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className="max-w-2xl space-y-6">
+      {/* Cartes dernier backup quotidien / hebdomadaire */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <BackupCard
           title="Backup quotidien (natif)"
           subtitle="Géré par Supabase Pro — rétention 30 jours"
@@ -116,60 +117,64 @@ export function BackupStatus() {
         />
       </div>
 
-      {/* Actions */}
+      {/* Boutons d'action */}
       <div className="flex gap-3">
         <button
           type="button"
           onClick={handleManualBackup}
           disabled={triggering}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {triggering ? 'Déclenchement…' : 'Déclencher un backup manuel'}
         </button>
         <button
           type="button"
           onClick={() => setShowRestoreModal(true)}
-          className="px-4 py-2 rounded text-sm font-medium border border-white/20 text-gray-300 hover:bg-white/5 transition-colors"
+          className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:border-white/20 hover:bg-white/5"
         >
           Restaurer
         </button>
       </div>
 
-      {/* Restore modal */}
+      {/* Modale de confirmation restauration */}
       {showRestoreModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
           role="dialog"
           aria-modal="true"
           aria-label="Confirmation de restauration"
           onClick={() => { setShowRestoreModal(false); setRestoreConfirmText('') }}
         >
-          <div className="bg-[#0d0d0d] border border-white/10 rounded-lg p-6 max-w-md w-full space-y-4 mx-4" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="mx-4 w-full max-w-md space-y-4 rounded-2xl border border-white/10 bg-[#0d0d0d] p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 className="text-base font-semibold text-gray-100">Restauration</h2>
             <p className="text-sm text-gray-400">
               La restauration d&apos;un backup est une opération manuelle qui nécessite
               l&apos;intervention du support Supabase. Cette action ne peut pas être annulée.
             </p>
             <p className="text-sm text-gray-300">
-              Tapez <span className="font-mono bg-white/10 px-1 rounded">RESTAURER</span> pour
-              confirmer.
+              Tapez{' '}
+              <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-xs">RESTAURER</span>{' '}
+              pour confirmer.
             </p>
             <input
               type="text"
               value={restoreConfirmText}
               onChange={(e) => setRestoreConfirmText(e.target.value)}
               placeholder="RESTAURER"
-              className="w-full rounded bg-white/5 border border-white/10 px-3 py-2 text-sm text-gray-200 placeholder-gray-500"
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-red-500/50 focus:outline-none"
               aria-label="Confirmation restauration"
             />
-            <div className="flex gap-3 justify-end">
+            <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setShowRestoreModal(false)
                   setRestoreConfirmText('')
                 }}
-                className="px-4 py-2 rounded text-sm border border-white/20 text-gray-300 hover:bg-white/5 transition-colors"
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm text-gray-300 transition-colors hover:bg-white/5"
               >
                 Annuler
               </button>
@@ -183,7 +188,7 @@ export function BackupStatus() {
                     'Demande de restauration enregistrée — contactez le support Supabase pour procéder'
                   )
                 }}
-                className="px-4 py-2 bg-red-600 text-white rounded text-sm font-medium hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Confirmer la restauration
               </button>
@@ -192,26 +197,26 @@ export function BackupStatus() {
         </div>
       )}
 
-      {/* Backup history */}
+      {/* Historique des backups */}
       <div>
-        <h3 className="text-sm font-medium text-gray-300 mb-3">
+        <p className="mb-3 text-[0.7rem] font-medium uppercase tracking-wider text-gray-500">
           Historique des backups ({history.length})
-        </h3>
+        </p>
         {history.length === 0 ? (
-          <p className="text-xs text-gray-500 italic">Aucun backup dans l&apos;historique</p>
+          <p className="text-xs italic text-gray-600">Aucun backup dans l&apos;historique</p>
         ) : (
           <div className="space-y-2">
             {history.map((entry, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between rounded bg-white/5 border border-white/10 px-3 py-2"
+                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2.5 transition-colors hover:bg-white/[0.04]"
               >
                 <div className="flex items-center gap-3">
                   {statusBadge(entry.status)}
-                  <span className="text-xs text-gray-300">{formatDate(entry.date)}</span>
+                  <span className="tabular-nums text-xs text-gray-300">{formatDate(entry.date)}</span>
                 </div>
-                <div className="text-xs text-gray-500">
-                  {entry.clientsCount} client(s) • {formatBytes(entry.sizeBytes)} •{' '}
+                <div className="tabular-nums text-xs text-gray-500">
+                  {entry.clientsCount} client(s) · {formatBytes(entry.sizeBytes)} ·{' '}
                   {entry.triggeredBy === 'manual' ? 'Manuel' : 'Auto'}
                 </div>
               </div>

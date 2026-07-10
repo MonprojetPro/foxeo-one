@@ -94,17 +94,22 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
 
   return (
     <section className="space-y-4" aria-labelledby="llm-config-title">
+      {/* Titre de section style cockpit — label uppercase xs */}
       <div>
-        <h3 id="llm-config-title" className="text-base font-semibold text-foreground">
-          Config LLM — fournisseur & modèle
+        <h3
+          id="llm-config-title"
+          className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-500"
+        >
+          Config LLM — fournisseur &amp; modèle
         </h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="mt-0.5 text-xs text-gray-400">
           Trois profils indépendants. Élio bascule instantanément, sans redéploiement.
         </p>
       </div>
 
-      <div className="rounded-xl border border-cyan-900/40 bg-cyan-950/10 p-3.5 text-xs text-cyan-200/90">
-        💡 <strong>Important :</strong> la clé API n&apos;est jamais stockée ici. Le champ
+      {/* Callout info cockpit — fond cyan très discret */}
+      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.04] p-3.5 text-xs text-cyan-300/90">
+        <strong>Important :</strong> la clé API n&apos;est jamais stockée ici. Le champ
         « Nom du secret » désigne un secret Edge Functions Supabase (Dashboard → Edge
         Functions → Secrets) : la clé doit y exister <em>sous ce nom exact</em> (finissant
         par <code className="text-cyan-300">_API_KEY</code>) pour que le profil fonctionne.
@@ -116,6 +121,7 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
         ))}
       </datalist>
 
+      {/* Grille de profils — cartes cockpit bg-white/[0.02] */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {PROFILES.map(({ key, label, description }) => {
           const profile = config[key]
@@ -127,16 +133,16 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
           return (
             <div
               key={key}
-              className="rounded-xl border border-border bg-card/50 p-4 space-y-3"
+              className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3 transition-colors hover:bg-white/[0.04]"
               data-testid={`llm-profile-${key}`}
             >
               <div>
-                <p className="text-sm font-semibold text-foreground">{label}</p>
-                <p className="text-xs text-muted-foreground">{description}</p>
+                <p className="text-sm font-semibold text-white">{label}</p>
+                <p className="text-xs text-gray-500">{description}</p>
               </div>
 
               <div className="space-y-1">
-                <label htmlFor={`provider-${key}`} className="text-xs text-muted-foreground block">
+                <label htmlFor={`provider-${key}`} className="text-xs text-gray-500 block">
                   Fournisseur
                 </label>
                 <select
@@ -150,7 +156,7 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
                       baseUrl: provider === 'anthropic' ? null : profile.baseUrl,
                     })
                   }}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-cyan-500/70"
                 >
                   <option value="anthropic">Anthropic (natif)</option>
                   <option value="openai-compatible">OpenAI-compatible</option>
@@ -158,7 +164,7 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
               </div>
 
               <div className="space-y-1">
-                <label htmlFor={`model-${key}`} className="text-xs text-muted-foreground block">
+                <label htmlFor={`model-${key}`} className="text-xs text-gray-500 block">
                   Modèle
                 </label>
                 <input
@@ -168,13 +174,13 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
                   value={profile.model}
                   onChange={(e) => updateProfile(key, { model: e.target.value })}
                   placeholder="ex: claude-sonnet-4-6"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/70"
                 />
               </div>
 
               {isOpenAiCompatible && (
                 <div className="space-y-1">
-                  <label htmlFor={`baseurl-${key}`} className="text-xs text-muted-foreground block">
+                  <label htmlFor={`baseurl-${key}`} className="text-xs text-gray-500 block">
                     Base URL
                   </label>
                   <input
@@ -183,8 +189,9 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
                     value={profile.baseUrl ?? ''}
                     onChange={(e) => updateProfile(key, { baseUrl: e.target.value || null })}
                     placeholder="https://api.openai.com/v1"
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-cyan-500/70"
                   />
+                  {/* Pills presets — style cockpit */}
                   <div className="flex flex-wrap gap-1 pt-0.5">
                     {BASE_URL_PRESETS.map((preset) => (
                       <button
@@ -193,8 +200,8 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
                         onClick={() => updateProfile(key, { baseUrl: preset.url })}
                         className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
                           profile.baseUrl === preset.url
-                            ? 'border-cyan-500/60 text-cyan-300 bg-cyan-900/30'
-                            : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                            ? 'border-cyan-500/60 text-cyan-300 bg-cyan-400/10'
+                            : 'border-white/10 text-gray-500 hover:text-gray-300 hover:bg-white/5'
                         }`}
                       >
                         {preset.label}
@@ -205,7 +212,7 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
               )}
 
               <div className="space-y-1">
-                <label htmlFor={`apikeyenv-${key}`} className="text-xs text-muted-foreground block">
+                <label htmlFor={`apikeyenv-${key}`} className="text-xs text-gray-500 block">
                   Nom du secret (Edge Functions Supabase)
                 </label>
                 <input
@@ -215,10 +222,10 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
                   onChange={(e) => updateProfile(key, { apiKeyEnv: e.target.value.toUpperCase() })}
                   placeholder="ex: MISTRAL_API_KEY"
                   aria-invalid={apiKeyEnvInvalid}
-                  className={`w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 ${
+                  className={`w-full rounded-xl border bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 ${
                     apiKeyEnvInvalid
-                      ? 'border-red-500/60 focus:ring-red-500'
-                      : 'border-border focus:ring-cyan-500'
+                      ? 'border-red-500/50 focus:ring-red-500/70'
+                      : 'border-white/10 focus:ring-cyan-500/70'
                   }`}
                 />
                 {apiKeyEnvInvalid && (
@@ -228,11 +235,12 @@ export function LlmConfigSection({ initialConfig }: LlmConfigSectionProps) {
                 )}
               </div>
 
+              {/* Bouton cockpit cyan */}
               <button
                 type="button"
-                onClick={() => handleSave(key)}
+                onClick={() => void handleSave(key)}
                 disabled={isSaving || apiKeyEnvInvalid}
-                className="w-full rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 px-4 py-2 text-sm font-medium text-white transition-colors"
+                className="w-full rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 px-4 py-2 text-sm font-medium text-white transition-colors"
               >
                 {isSaving ? 'Sauvegarde...' : 'Enregistrer'}
               </button>

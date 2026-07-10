@@ -56,14 +56,15 @@ function matchesFilter(status: ElioHubActionStatus, filter: FilterKey): boolean 
   }
 }
 
+/** Badge de statut — style cockpit (teintes cohérentes avec le reste du Hub). */
 function StatusBadge({ status }: { status: ElioHubActionStatus }) {
   const config: Record<ElioHubActionStatus, { label: string; className: string; Icon: typeof Check }> = {
-    pending: { label: 'En attente', className: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/40', Icon: Clock },
-    confirmed: { label: 'Validée…', className: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/40', Icon: Clock },
-    executed: { label: 'Exécutée', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40', Icon: Check },
-    auto_executed: { label: 'Exécutée (sans vérif)', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40', Icon: Zap },
-    rejected: { label: 'Refusée', className: 'bg-muted text-muted-foreground border-border', Icon: X },
-    failed: { label: 'Échec', className: 'bg-red-500/10 text-red-400 border-red-500/40', Icon: AlertTriangle },
+    pending: { label: 'En attente', className: 'bg-amber-400/10 text-amber-300 border-amber-400/30', Icon: Clock },
+    confirmed: { label: 'Validée…', className: 'bg-amber-400/10 text-amber-300 border-amber-400/30', Icon: Clock },
+    executed: { label: 'Exécutée', className: 'bg-emerald-400/10 text-emerald-300 border-emerald-400/30', Icon: Check },
+    auto_executed: { label: 'Exécutée (sans vérif)', className: 'bg-emerald-400/10 text-emerald-300 border-emerald-400/30', Icon: Zap },
+    rejected: { label: 'Refusée', className: 'bg-white/[0.04] text-gray-500 border-white/10', Icon: X },
+    failed: { label: 'Échec', className: 'bg-red-500/10 text-red-400 border-red-500/30', Icon: AlertTriangle },
   }
   const { label, className, Icon } = config[status]
   return (
@@ -133,25 +134,31 @@ export function HubActionsHistory({ initialActions }: HubActionsHistoryProps) {
   return (
     <section className="space-y-4" aria-labelledby="hub-actions-history-title">
       <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* Titre style cockpit */}
         <div>
-          <h3 id="hub-actions-history-title" className="text-base font-semibold text-foreground">
+          <h3
+            id="hub-actions-history-title"
+            className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-500"
+          >
             Historique des actions Élio
           </h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="mt-0.5 text-xs text-gray-400">
             Tout ce qu&apos;Élio a proposé ou exécuté (100 dernières). Les propositions en attente se valident aussi ici.
           </p>
         </div>
-        <div className="flex gap-1" role="group" aria-label="Filtrer par statut">
+
+        {/* Pills de filtre — style cockpit */}
+        <div className="flex flex-wrap gap-1" role="group" aria-label="Filtrer par statut">
           {FILTERS.map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setFilter(key)}
               aria-pressed={filter === key}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+              className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                 filter === key
-                  ? 'border-cyan-500/60 text-cyan-300 bg-cyan-900/30'
-                  : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
+                  ? 'border-cyan-500/60 text-cyan-300 bg-cyan-400/10'
+                  : 'border-white/10 text-gray-500 hover:text-gray-200 hover:bg-white/5'
               }`}
             >
               {label}
@@ -160,29 +167,59 @@ export function HubActionsHistory({ initialActions }: HubActionsHistoryProps) {
         </div>
       </div>
 
+      {/* État vide cockpit */}
       {filtered.length === 0 ? (
-        <p className="rounded-xl border border-border bg-card/50 px-4 py-6 text-sm text-muted-foreground italic text-center">
+        <p className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-sm text-gray-500 italic text-center">
           {filter === 'all'
-            ? 'Aucune action Élio pour l’instant — demande-lui quelque chose dans le chat.'
+            ? "Aucune action Élio pour l'instant — demande-lui quelque chose dans le chat."
             : 'Aucune action avec ce statut.'}
         </p>
       ) : (
-        <ul className="space-y-2">
-          {filtered.map((action) => {
-            const isBusy = busyId === action.id
-            return (
-              <li
-                key={action.id}
-                className="rounded-xl border border-border bg-card/50 p-3.5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
-                data-testid={`hub-history-${action.status}`}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      {TOOL_LABELS[action.toolName] ?? action.toolName}
-                    </span>
-                    <StatusBadge status={action.status} />
-                    <span className="text-[11px] text-muted-foreground">
+        /* Table d’historique — lignes cockpit */
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+          <table className="w-full text-sm" role="list">
+            <thead>
+              <tr className="border-b border-white/10 text-left text-xs text-gray-400">
+                <th className="px-4 py-2.5 font-medium">Action</th>
+                <th className="px-4 py-2.5 font-medium">Résumé</th>
+                <th className="px-4 py-2.5 font-medium text-right">Date</th>
+                <th className="px-4 py-2.5 font-medium text-right">Décision</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((action) => {
+                const isBusy = busyId === action.id
+                return (
+                  <tr
+                    key={action.id}
+                    className="border-b border-white/5 last:border-0 transition-colors hover:bg-white/[0.03]"
+                    data-testid={`hub-history-${action.status}`}
+                  >
+                    {/* Outil + badge statut */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                          {TOOL_LABELS[action.toolName] ?? action.toolName}
+                        </span>
+                        <StatusBadge status={action.status} />
+                      </div>
+                    </td>
+
+                    {/* Résumé */}
+                    <td className="px-4 py-3 max-w-xs">
+                      <p className="text-sm text-white truncate" title={action.summary}>
+                        {action.summary}
+                      </p>
+                      {action.status === 'failed' && action.error && (
+                        <p className="mt-0.5 text-xs text-red-400 flex items-center gap-1.5">
+                          <AlertTriangle className="h-3 w-3 shrink-0" />
+                          {action.error}
+                        </p>
+                      )}
+                    </td>
+
+                    {/* Date */}
+                    <td className="px-4 py-3 text-right text-xs text-gray-500 tabular-nums whitespace-nowrap">
                       {new Date(action.createdAt).toLocaleString('fr-FR', {
                         day: '2-digit',
                         month: '2-digit',
@@ -190,47 +227,41 @@ export function HubActionsHistory({ initialActions }: HubActionsHistoryProps) {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
-                    </span>
-                  </div>
-                  <p className="text-sm text-foreground truncate" title={action.summary}>
-                    {action.summary}
-                  </p>
-                  {action.status === 'failed' && action.error && (
-                    <p className="mt-1 text-xs text-red-400 flex items-center gap-1.5">
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                      {action.error}
-                    </p>
-                  )}
-                </div>
+                    </td>
 
-                {action.status === 'pending' && (
-                  <div className="flex gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleDecision(action.id, 'confirm')}
-                      disabled={isBusy}
-                      className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-                      aria-label={`Valider : ${action.summary}`}
-                    >
-                      {isBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                      Valider
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDecision(action.id, 'reject')}
-                      disabled={isBusy}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50 transition-colors"
-                      aria-label={`Refuser : ${action.summary}`}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      Refuser
-                    </button>
-                  </div>
-                )}
-              </li>
-            )
-          })}
-        </ul>
+                    {/* Boutons décision (pending seulement) */}
+                    <td className="px-4 py-3 text-right">
+                      {action.status === 'pending' && (
+                        <div className="flex justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => void handleDecision(action.id, 'confirm')}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50 transition-colors"
+                            aria-label={`Valider : ${action.summary}`}
+                          >
+                            {isBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                            Valider
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDecision(action.id, 'reject')}
+                            disabled={isBusy}
+                            className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white hover:bg-white/5 disabled:opacity-50 transition-colors"
+                            aria-label={`Refuser : ${action.summary}`}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                            Refuser
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   )

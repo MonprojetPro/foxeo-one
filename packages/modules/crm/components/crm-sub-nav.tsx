@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { cn } from '@monprojetpro/utils'
+import { pillClasses } from '@monprojetpro/ui'
 
 const NAV_ITEMS = [
   { href: '/modules/crm', label: 'Clients' },
@@ -14,7 +14,8 @@ export function CrmSubNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex gap-1 border-b pb-2 mb-6" data-testid="crm-sub-nav">
+    // Navigation sous-menu CRM — pills cockpit accent cyan
+    <nav className="flex flex-wrap gap-2 mb-6" data-testid="crm-sub-nav">
       {NAV_ITEMS.map((item) => {
         const isActive = item.href === '/modules/crm'
           ? pathname === item.href
@@ -24,12 +25,7 @@ export function CrmSubNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={cn(
-              'px-3 py-1.5 text-sm rounded-md transition-colors',
-              isActive
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            )}
+            className={pillClasses(isActive, 'cyan')}
           >
             {item.label}
           </Link>

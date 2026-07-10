@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, MessageSquare } from 'lucide-react'
-import { Skeleton } from '@monprojetpro/ui'
+import { CockpitCallout, BlockSkeleton } from '@monprojetpro/ui'
 import { useValidationRequest } from '../hooks/use-validation-request'
 import { RequestHeader } from './request-header'
 import { ClientInfoCard } from './client-info-card'
@@ -36,29 +36,20 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-        <div className="p-4 rounded-full bg-red-500/10">
-          <AlertCircle className="h-8 w-8 text-red-400" />
-        </div>
-        <div>
-          <p className="text-lg font-medium text-foreground">
-            Impossible de charger la demande
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">{error.message}</p>
-        </div>
+      <div className="p-6">
+        <CockpitCallout tone="red" icon={AlertCircle} title="Impossible de charger la demande">
+          {error.message}
+        </CockpitCallout>
       </div>
     )
   }
 
   if (!request) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
-        <p className="text-lg font-medium text-foreground">
-          Demande introuvable
-        </p>
-        <p className="text-sm text-muted-foreground">
+      <div className="p-6">
+        <CockpitCallout tone="gray" icon={AlertCircle} title="Demande introuvable">
           Cette demande n&apos;existe pas ou vous n&apos;y avez pas accès.
-        </p>
+        </CockpitCallout>
       </div>
     )
   }
@@ -99,7 +90,7 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
             (la question MiKL est envoyée dans le chat, la réponse client arrive aussi là). */}
         <Link
           href={`/modules/chat/${request.clientId}`}
-          className="inline-flex items-center gap-2 rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-300 hover:bg-blue-500/15 transition-colors w-fit"
+          className="inline-flex w-fit items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-300 transition-colors hover:border-blue-500/50 hover:bg-blue-500/20"
           aria-label={`Ouvrir le chat avec ${request.client.name}`}
         >
           <MessageSquare className="h-4 w-4" />
@@ -129,11 +120,11 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
 
             {/* Section Injection MiKL — disponible si step_id présent et demande non approuvée */}
             {request.stepId && request.status !== 'approved' && (
-              <div className="rounded-xl border border-[#2d2d2d] bg-[#0f0f0f] p-5">
-                <h3 className="text-sm font-semibold text-[#f9fafb] mb-1">
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+                <h3 className="mb-1 text-sm font-semibold text-white">
                   Envoyer un message à Élio
                 </h3>
-                <p className="text-xs text-[#9ca3af] mb-4">
+                <p className="mb-4 text-xs text-gray-400">
                   Feedback texte visible dans l&apos;historique, ou feuille de route cachée qui oriente Élio et renvoie l&apos;étape au client.
                 </p>
                 <FeedbackInjectionForm
@@ -214,17 +205,20 @@ export function RequestDetail({ requestId }: RequestDetailProps) {
   )
 }
 
+// Squelette de chargement cockpit pour la page de détail
 function RequestDetailSkeleton() {
   return (
-    <div className="p-6 space-y-6">
-      <Skeleton className="h-24 w-full" />
-      <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-6">
+    <div className="space-y-6 p-6">
+      {/* En-tête */}
+      <BlockSkeleton className="h-24 w-full" />
+      {/* Layout 2 colonnes */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[70%_30%]">
         <div className="space-y-6">
-          <Skeleton className="h-36 w-full" />
-          <Skeleton className="h-72 w-full" />
+          <BlockSkeleton className="h-36 w-full" />
+          <BlockSkeleton className="h-72 w-full" />
         </div>
         <div className="space-y-6">
-          <Skeleton className="h-64 w-full" />
+          <BlockSkeleton className="h-64 w-full" />
         </div>
       </div>
     </div>

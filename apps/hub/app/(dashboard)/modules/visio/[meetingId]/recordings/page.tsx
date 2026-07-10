@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getMeetingRecordings } from '@monprojetpro/module-visio'
 import { RecordingListPage } from '@monprojetpro/module-visio'
+import { FileVideo } from 'lucide-react'
+import { CockpitHeader } from '@monprojetpro/ui'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -21,13 +23,21 @@ export default async function HubRecordingsPage({ params }: Props) {
   const { data: recordings } = await getMeetingRecordings({ meetingId })
 
   return (
-    <div className="flex flex-col gap-4 p-6">
-      <div className="flex items-center gap-2">
-        <a href={`/modules/visio/${meetingId}`} className="text-sm text-muted-foreground hover:text-foreground">
-          ← Retour au meeting
-        </a>
-      </div>
-      <h1 className="text-xl font-semibold">Enregistrements</h1>
+    <div className="flex flex-col gap-6 p-6">
+      {/* Fil d'Ariane */}
+      <a href={`/modules/visio/${meetingId}`} className="w-fit text-sm text-gray-400 transition-colors hover:text-gray-200">
+        ← Retour au meeting
+      </a>
+
+      {/* ── En-tête cockpit ── */}
+      <CockpitHeader
+        icon={FileVideo}
+        title="Enregistrements"
+        subtitle="Replay et ressources de la session"
+        tone="cyan"
+      />
+
+      {/* Composant de liste fourni par le module visio — non modifié */}
       <RecordingListPage recordings={recordings ?? []} />
     </div>
   )

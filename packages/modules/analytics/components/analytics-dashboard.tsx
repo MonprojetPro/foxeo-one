@@ -1,208 +1,307 @@
 'use client'
 
 import { useState } from 'react'
+import {
+  BarChart2,
+  Users,
+  GraduationCap,
+  MessageSquare,
+  Activity,
+  TrendingUp,
+  Banknote,
+  Bot,
+  AlertCircle,
+} from 'lucide-react'
+import {
+  CockpitHeader,
+  CockpitPanel,
+  CockpitCallout,
+  HeroStat,
+  HeroStatGrid,
+  HeroStatSkeleton,
+  SectionTitle,
+  RowSkeleton,
+  PillTabs,
+  type PillTab,
+} from '@monprojetpro/ui'
 import { useAnalytics } from '../hooks/use-analytics'
 import type { AnalyticsPeriod } from '../actions/get-analytics'
 import { MetricCard } from './metric-card'
 import { BarChart } from './bar-chart'
 
-const PERIODS: { key: AnalyticsPeriod; label: string }[] = [
-  { key: '7d', label: '7j' },
-  { key: '30d', label: '30j' },
-  { key: '90d', label: '90j' },
-  { key: '1y', label: '1an' },
+/* ─────────────────────────────────────────────────────────────
+   Onglets de période — format PillTabs
+───────────────────────────────────────────────────────────── */
+
+type Period = { key: AnalyticsPeriod; label: string }
+
+const PERIODS: Period[] = [
+  { key: '7d', label: '7 jours' },
+  { key: '30d', label: '30 jours' },
+  { key: '90d', label: '90 jours' },
+  { key: '1y', label: '1 an' },
 ]
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-sm font-medium text-gray-300 mb-3">{children}</h2>
+const PERIOD_TABS: PillTab<AnalyticsPeriod>[] = PERIODS.map((p) => ({
+  key: p.key,
+  label: p.label,
+}))
+
+/* ─────────────────────────────────────────────────────────────
+   Squelettes de chargement
+───────────────────────────────────────────────────────────── */
+
+function HeroSkeletonGrid() {
+  return (
+    <HeroStatGrid>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <HeroStatSkeleton key={i} />
+      ))}
+    </HeroStatGrid>
+  )
 }
 
-function SkeletonCard() {
-  return <div className="h-20 rounded-lg bg-white/5 animate-pulse" />
+function PanelRowSkeletons({ count }: { count: number }) {
+  return (
+    <div className="space-y-2 p-3">
+      {Array.from({ length: count }).map((_, i) => (
+        <RowSkeleton key={i} />
+      ))}
+    </div>
+  )
 }
 
-function SkeletonBar() {
-  return <div className="h-5 rounded bg-white/5 animate-pulse" />
+/* ─────────────────────────────────────────────────────────────
+   Ligne de données Élio (stat en ligne)
+───────────────────────────────────────────────────────────── */
+
+function ElioRow({
+  label,
+  value,
+  accent,
+}: {
+  label: string
+  value: React.ReactNode
+  accent?: 'emerald' | 'red'
+}) {
+  const valueClass =
+    accent === 'emerald'
+      ? 'text-emerald-400'
+      : accent === 'red'
+        ? 'text-red-400'
+        : 'text-white'
+  return (
+    <div className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-white/[0.03] transition-colors">
+      <span className="text-sm text-gray-400">{label}</span>
+      <span className={`text-sm font-semibold tabular-nums ${valueClass}`}>{value}</span>
+    </div>
+  )
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Composant principal
+───────────────────────────────────────────────────────────── */
 
 export function AnalyticsDashboard() {
   const [period, setPeriod] = useState<AnalyticsPeriod>('30d')
   const { data, isLoading, error } = useAnalytics(period)
 
+  /* ── État d'erreur ── */
   if (error) {
     return (
-      <div className="rounded-lg border border-red-400/30 bg-red-400/5 p-6 text-center">
-        <p className="text-sm text-red-400">Erreur lors du chargement des analytics</p>
-        <p className="text-xs text-gray-500 mt-1">{(error as Error).message ?? 'Erreur inconnue'}</p>
+      <div className="space-y-6">
+        <CockpitHeader
+          icon={BarChart2}
+          title="Analytics"
+          subtitle="Métriques d'usage de la plateforme"
+          tone="cyan"
+        />
+        <CockpitCallout tone="red" icon={AlertCircle} title="Erreur de chargement">
+          <span>{(error as Error).message ?? 'Erreur inconnue'}</span>
+        </CockpitCallout>
       </div>
     )
   }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-white">Analytics</h1>
-          <p className="text-sm text-gray-400">Métriques d&apos;usage de la plateforme</p>
-        </div>
 
-        {/* Period filter */}
-        <div className="flex gap-1 rounded-lg border border-white/10 p-1">
-          {PERIODS.map((p) => (
-            <button
-              key={p.key}
-              type="button"
-              onClick={() => setPeriod(p.key)}
-              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                period === p.key
-                  ? 'bg-cyan-400/20 text-cyan-400'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* ── En-tête cockpit + filtre période ── */}
+      <CockpitHeader
+        icon={BarChart2}
+        title="Analytics"
+        subtitle="Métriques d'usage de la plateforme"
+        tone="cyan"
+        actions={
+          <PillTabs
+            tabs={PERIOD_TABS}
+            active={period}
+            onChange={setPeriod}
+            tone="cyan"
+          />
+        }
+      />
 
-      {/* Vue d'ensemble */}
-      <div>
+      {/* ── KPI héros ── */}
+      <section aria-label="Vue d'ensemble">
         <SectionTitle>Vue d&apos;ensemble</SectionTitle>
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
-          </div>
+          <HeroSkeletonGrid />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <MetricCard
+          <HeroStatGrid>
+            <HeroStat
+              icon={Users}
               label="Clients actifs"
               value={data?.overview?.totalClients ?? 0}
-              sub={`Lab: ${data?.overview?.labClients ?? 0} · One: ${data?.overview?.oneClients ?? 0}`}
-              accent
+              tone="cyan"
+              sub={`Lab : ${data?.overview?.labClients ?? 0} · One : ${data?.overview?.oneClients ?? 0}`}
             />
-            <MetricCard
+            <HeroStat
+              icon={GraduationCap}
               label="Taux graduation"
-              value={`${data?.overview?.graduationRate ?? 0}%`}
+              value={`${data?.overview?.graduationRate ?? 0} %`}
+              tone="emerald"
               sub="Lab → One"
             />
-            <MetricCard
+            <HeroStat
+              icon={MessageSquare}
               label="Conversations Élio"
               value={data?.elio?.totalConversations ?? 0}
-              sub={`${data?.elio?.conversationsPerDay ?? 0}/jour`}
+              tone="violet"
+              sub={`${data?.elio?.conversationsPerDay ?? 0} / jour`}
             />
-            <MetricCard
+            <HeroStat
+              icon={Activity}
               label="Activités tracées"
               value={data?.overview?.handledRequests ?? 0}
+              tone="cyan"
               sub={`Sur ${period}`}
             />
-          </div>
+          </HeroStatGrid>
         )}
-      </div>
+      </section>
 
-      {/* Modules & Élio */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Modules par usage */}
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-          <SectionTitle>Modules — classement usage</SectionTitle>
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => <SkeletonBar key={i} />)}
-            </div>
-          ) : (
-            <BarChart
-              data={(data?.modules ?? []).map((m) => ({
-                label: m.entityType,
-                value: m.count,
-              }))}
-            />
-          )}
-        </div>
+      {/* ── Modules & Élio ── */}
+      <section aria-label="Modules et agent Élio">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
-        {/* Élio stats */}
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-          <SectionTitle>Agent Élio</SectionTitle>
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => <SkeletonBar key={i} />)}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Conversations totales</span>
-                <span className="text-white font-medium">{data?.elio?.totalConversations ?? 0}</span>
+          {/* Classement modules */}
+          <CockpitPanel title="Modules — classement usage">
+            {isLoading ? (
+              <PanelRowSkeletons count={5} />
+            ) : (
+              <div className="p-3">
+                <BarChart
+                  data={(data?.modules ?? []).map((m) => ({
+                    label: m.entityType,
+                    value: m.count,
+                  }))}
+                />
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Feedbacks positifs</span>
-                <span className="text-green-400 font-medium">{data?.elio?.positiveFeedback ?? 0}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Feedbacks négatifs</span>
-                <span className="text-red-400 font-medium">{data?.elio?.negativeFeedback ?? 0}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Moyenne/jour</span>
-                <span className="text-white font-medium">{data?.elio?.conversationsPerDay ?? 0}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+            )}
+          </CockpitPanel>
 
-      {/* Engagement & MRR */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Clients les plus actifs */}
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-          <SectionTitle>Engagement clients</SectionTitle>
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 5 }).map((_, i) => <SkeletonBar key={i} />)}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {(data?.engagement?.mostActiveClients ?? []).slice(0, 5).map((c, i) => (
-                <div key={c.actorId} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">
-                    <span className="text-gray-500 mr-2">#{i + 1}</span>
-                    {c.actorId.slice(0, 8)}…
-                  </span>
-                  <span className="text-white font-medium">{c.count} actions</span>
-                </div>
-              ))}
-              {data?.engagement?.inactiveClientIds && data.engagement.inactiveClientIds.length > 0 && (
-                <p className="text-xs text-amber-400 mt-2">
-                  {data.engagement.inactiveClientIds.length} client(s) inactif(s) &gt;7j
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+          {/* Stats Élio */}
+          <CockpitPanel title="Agent Élio" badge={data?.elio?.totalConversations} badgeTone="violet">
+            {isLoading ? (
+              <PanelRowSkeletons count={4} />
+            ) : (
+              <div className="py-1">
+                <ElioRow
+                  label="Conversations totales"
+                  value={data?.elio?.totalConversations ?? 0}
+                />
+                <ElioRow
+                  label="Feedbacks positifs"
+                  value={data?.elio?.positiveFeedback ?? 0}
+                  accent="emerald"
+                />
+                <ElioRow
+                  label="Feedbacks négatifs"
+                  value={data?.elio?.negativeFeedback ?? 0}
+                  accent="red"
+                />
+                <ElioRow
+                  label="Moyenne / jour"
+                  value={data?.elio?.conversationsPerDay ?? 0}
+                />
+              </div>
+            )}
+          </CockpitPanel>
 
-        {/* MRR */}
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-          <SectionTitle>Revenus (MRR)</SectionTitle>
-          {isLoading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 2 }).map((_, i) => <SkeletonBar key={i} />)}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">MRR estimé</span>
-                <span className="text-white font-medium">
-                  {data?.mrr?.mrr != null
-                    ? `${data.mrr.mrr.toFixed(2)} €`
-                    : '—'}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Abonnements actifs</span>
-                <span className="text-white font-medium">{data?.mrr?.activeSubscriptions ?? 0}</span>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+      </section>
+
+      {/* ── Engagement & MRR ── */}
+      <section aria-label="Engagement clients et revenus">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+          {/* Clients les plus actifs */}
+          <CockpitPanel title="Engagement clients">
+            {isLoading ? (
+              <PanelRowSkeletons count={5} />
+            ) : (
+              <div className="py-1">
+                {(data?.engagement?.mostActiveClients ?? []).length === 0 ? (
+                  /* État vide */
+                  <div className="flex items-center justify-center rounded-xl border border-dashed border-white/10 py-6 mx-3 my-2">
+                    <p className="text-xs text-gray-500">Aucune activité sur la période</p>
+                  </div>
+                ) : (
+                  <>
+                    {(data?.engagement?.mostActiveClients ?? []).slice(0, 5).map((c, i) => (
+                      <div
+                        key={c.actorId}
+                        className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-white/[0.03] transition-colors"
+                      >
+                        <span className="text-sm text-gray-400">
+                          <span className="text-gray-600 mr-2 tabular-nums">#{i + 1}</span>
+                          {c.actorId.slice(0, 8)}…
+                        </span>
+                        <span className="text-sm font-semibold tabular-nums text-white">
+                          {c.count} actions
+                        </span>
+                      </div>
+                    ))}
+                    {(data?.engagement?.inactiveClientIds?.length ?? 0) > 0 && (
+                      <div className="mx-3 mt-2">
+                        <CockpitCallout tone="amber">
+                          {data!.engagement!.inactiveClientIds!.length} client(s) inactif(s) depuis plus de 7 jours
+                        </CockpitCallout>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </CockpitPanel>
+
+          {/* MRR */}
+          <CockpitPanel title="Revenus (MRR)">
+            {isLoading ? (
+              <PanelRowSkeletons count={2} />
+            ) : (
+              <div className="grid grid-cols-2 gap-3 p-3">
+                <MetricCard
+                  label="MRR estimé"
+                  value={
+                    data?.mrr?.mrr != null
+                      ? `${data.mrr.mrr.toFixed(2)} €`
+                      : '—'
+                  }
+                  accent
+                />
+                <MetricCard
+                  label="Abonnements actifs"
+                  value={data?.mrr?.activeSubscriptions ?? 0}
+                />
+              </div>
+            )}
+          </CockpitPanel>
+
+        </div>
+      </section>
+
     </div>
   )
 }

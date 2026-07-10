@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@monprojetpro/ui'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@monprojetpro/ui'
 import { Info } from 'lucide-react'
 
 interface KpiCardProps {
@@ -12,16 +12,18 @@ interface KpiCardProps {
 
 export function KpiCard({ label, value, tooltip, icon }: KpiCardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+    // Carte KPI cockpit — fond sombre, accent Hub au survol
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 transition-colors hover:bg-white/[0.04]">
+      {/* En-tête : libellé + icône info optionnelle */}
+      <div className="flex items-center justify-between">
+        <span className="text-[0.7rem] font-medium uppercase tracking-wider text-gray-500">
           {label}
-        </CardTitle>
+        </span>
         {tooltip && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                <Info className="h-4 w-4 text-gray-500 cursor-help" />
               </TooltipTrigger>
               <TooltipContent>
                 <p className="max-w-xs text-sm">{tooltip}</p>
@@ -29,13 +31,15 @@ export function KpiCard({ label, value, tooltip, icon }: KpiCardProps) {
             </Tooltip>
           </TooltipProvider>
         )}
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2">
-          {icon}
-          <span className="text-2xl font-bold">{value}</span>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Valeur principale + icône métier */}
+      <div className="flex items-center gap-2 mt-1">
+        {icon}
+        <span className="text-2xl font-semibold tabular-nums tracking-tight text-white">
+          {value}
+        </span>
+      </div>
+    </div>
   )
 }

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ScrollArea, Avatar, AvatarFallback, Button } from '@monprojetpro/ui'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
-import { ExternalLink, Settings2 } from 'lucide-react'
+import { ExternalLink, MessageSquare, Settings2 } from 'lucide-react'
 import { ChatMessage } from './chat-message'
 import { ChatInput, type ChatSendPayload, type TransformMode } from './chat-input'
 import { ChatSkeleton } from './chat-skeleton'
@@ -144,30 +144,32 @@ export function ChatWindow({
   return (
     <div className="flex h-full flex-col" data-testid="chat-window">
 
-      {/* ── Header de conversation ── */}
+      {/* ── Header de conversation — cockpit ── */}
       {currentUserType === 'operator' && clientName ? (
-        <div className="flex items-center gap-3 border-b px-4 py-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 border-b border-white/10 bg-white/[0.02] px-4 py-3">
+          {/* Avatar + présence */}
           <div className="relative">
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="text-sm font-semibold">
+            <Avatar className="h-9 w-9 border border-white/10 bg-white/[0.04]">
+              <AvatarFallback className="text-sm font-semibold text-gray-200 bg-transparent">
                 {getInitials(clientName)}
               </AvatarFallback>
             </Avatar>
             <PresenceIndicator
               status="offline"
-              className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
+              className="absolute -bottom-0.5 -right-0.5 ring-2 ring-black/60"
             />
           </div>
 
+          {/* Nom + badge dashboard */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm truncate">{clientName}</span>
+              <span className="font-semibold text-sm text-white/90 truncate">{clientName}</span>
               {dashboardType && (
                 <span className={cn(
                   'rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
                   dashboardType === 'lab'
-                    ? 'bg-violet-500/20 text-violet-400'
-                    : 'bg-emerald-500/20 text-emerald-400'
+                    ? 'bg-violet-500/20 text-violet-300'
+                    : 'bg-emerald-500/20 text-emerald-300'
                 )}>
                   {dashboardType === 'lab' ? 'Lab' : 'One'}
                 </span>
@@ -175,31 +177,40 @@ export function ChatWindow({
             </div>
           </div>
 
-          {/* Mode Élio toggle */}
+          {/* Toggle mode Élio — cockpit style */}
           <button
             type="button"
             onClick={toggleMode}
             title={`Mode Élio : ${transformMode === 'verify' ? 'Vérification (cliquer pour passer en Confiance)' : 'Confiance (cliquer pour revenir en Vérification)'}`}
             className={cn(
-              'flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors border',
+              'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
               transformMode === 'trust'
-                ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                : 'border-primary/30 bg-primary/10 text-primary'
+                ? 'border-amber-400/30 bg-amber-400/10 text-amber-300'
+                : 'border-cyan-400/25 bg-cyan-400/10 text-cyan-300'
             )}
           >
             <Settings2 className="h-3 w-3" />
             <span>{transformMode === 'verify' ? 'Vérification' : 'Confiance'}</span>
           </button>
 
-          {/* Voir fiche */}
-          <Button variant="ghost" size="sm" asChild className="shrink-0 gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+          {/* Voir la fiche client */}
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="shrink-0 gap-1.5 text-xs text-gray-500 hover:text-gray-200 hover:bg-white/[0.05]"
+          >
             <Link href={`/modules/crm/clients/${clientId}`}>
               Voir fiche <ExternalLink className="h-3 w-3" />
             </Link>
           </Button>
         </div>
       ) : currentUserType === 'client' ? (
-        <div className="flex items-center gap-2 border-b px-4 py-2 text-sm text-muted-foreground shrink-0" data-testid="operator-presence-header">
+        /* Présence opérateur (vue client) */
+        <div
+          className="flex items-center gap-2 shrink-0 border-b border-white/10 bg-white/[0.02] px-4 py-2.5 text-sm text-gray-400"
+          data-testid="operator-presence-header"
+        >
           <PresenceIndicator status={operatorStatus} />
           {operatorStatus === 'online'
             ? <span>Votre conseiller est en ligne</span>
@@ -207,14 +218,17 @@ export function ChatWindow({
         </div>
       ) : null}
 
-      {/* ── Messages ── */}
-      <ScrollArea className="flex-1 p-6">
+      {/* ── Zone de messages ── */}
+      <ScrollArea className="flex-1 p-4">
         <div className="flex flex-col gap-3">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 gap-3 text-muted-foreground">
-              <div className="text-4xl opacity-30">💬</div>
-              <p className="text-sm">Aucun message pour le moment.</p>
-              <p className="text-xs opacity-70">Démarrez la conversation !</p>
+            /* État vide — cockpit (centré, bord pointillé) */
+            <div className="flex flex-col items-center justify-center h-52 gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] mx-4 my-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
+                <MessageSquare className="h-5 w-5 opacity-70" />
+              </div>
+              <p className="text-sm text-gray-400">Aucun message pour le moment.</p>
+              <p className="text-xs text-gray-600">Démarrez la conversation !</p>
             </div>
           ) : (
             messages.map((message) => (

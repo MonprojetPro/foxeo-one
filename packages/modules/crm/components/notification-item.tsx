@@ -47,27 +47,31 @@ export function NotificationItem({
   }
 
   return (
+    /* Notification cockpit — lue = atténuée, non lue = bordure cyan */
     <div
-      className={`rounded-lg border p-3 space-y-2 ${
-        !isUnread ? 'opacity-60' : 'border-primary/30'
+      className={`rounded-xl border p-3 space-y-2 transition-colors ${
+        !isUnread
+          ? 'border-white/5 bg-white/[0.01] opacity-60'
+          : 'border-cyan-400/20 bg-white/[0.02] hover:bg-white/[0.04]'
       }`}
       data-testid={`notification-item-${notification.id}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
+            {/* Point cyan pour les notifications non lues */}
             {isUnread && (
-              <span className="h-2 w-2 rounded-full bg-primary" />
+              <span className="h-2 w-2 rounded-full bg-cyan-400 shrink-0" />
             )}
-            <p className="text-sm font-medium">{notification.title}</p>
+            <p className="text-sm font-medium text-white">{notification.title}</p>
           </div>
           {notification.body && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-400">
               {notification.body}
             </p>
           )}
         </div>
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
+        <span className="text-xs text-gray-500 whitespace-nowrap">
           {formatRelativeDate(notification.createdAt)}
         </span>
       </div>

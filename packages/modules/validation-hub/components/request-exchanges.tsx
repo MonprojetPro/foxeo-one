@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader } from '@monprojetpro/ui'
+import { CockpitPanel } from '@monprojetpro/ui'
 import { formatFullDate } from '@monprojetpro/utils'
 
 export type ExchangeEntry = {
@@ -19,19 +19,14 @@ export function RequestExchanges({ exchanges }: RequestExchangesProps) {
     return null
   }
 
-  // Sort chronologically (oldest first)
+  // Tri chronologique (plus ancien en premier)
   const sorted = [...exchanges].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   )
 
   return (
-    <Card className="bg-card/50 border-border/50">
-      <CardHeader className="pb-3">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          Échanges
-        </h2>
-      </CardHeader>
-      <CardContent className="pt-0">
+    <CockpitPanel title="Échanges" tone="blue">
+      <div className="p-3">
         <div className="relative space-y-0">
           {sorted.map((entry, index) => (
             <ExchangeItem
@@ -41,10 +36,12 @@ export function RequestExchanges({ exchanges }: RequestExchangesProps) {
             />
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CockpitPanel>
   )
 }
+
+// ── Item — entrée de la timeline d'échanges ───────────────────────────────
 
 function ExchangeItem({
   entry,
@@ -57,31 +54,31 @@ function ExchangeItem({
 
   return (
     <div className="flex gap-3">
-      {/* Timeline line */}
+      {/* Ligne de timeline */}
       <div className="flex flex-col items-center">
         <div
-          className={`h-2.5 w-2.5 rounded-full mt-1 shrink-0 ${
-            isMiKL ? 'bg-primary' : 'bg-muted-foreground'
+          className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+            isMiKL ? 'bg-cyan-400' : 'bg-gray-500'
           }`}
         />
-        {!isLast && <div className="w-px flex-1 bg-border/50 mt-1" />}
+        {!isLast && <div className="mt-1 w-px flex-1 bg-white/10" />}
       </div>
 
-      {/* Content */}
-      <div className={`pb-4 flex-1 ${isLast ? 'pb-0' : ''}`}>
+      {/* Contenu */}
+      <div className={`flex-1 ${isLast ? 'pb-0' : 'pb-4'}`}>
         <div className="flex flex-wrap items-baseline gap-1.5 text-xs">
-          <span className="text-muted-foreground">
+          <span className="text-gray-500 tabular-nums">
             {formatFullDate(entry.date)}
           </span>
           <span
-            className={`font-medium ${isMiKL ? 'text-primary' : 'text-foreground'}`}
+            className={`font-medium ${isMiKL ? 'text-cyan-300' : 'text-gray-200'}`}
           >
             {entry.actor}
           </span>
-          <span className="text-muted-foreground">{entry.action}</span>
+          <span className="text-gray-400">{entry.action}</span>
         </div>
         {entry.comment && (
-          <p className="mt-1 text-sm text-foreground/80 bg-muted/20 rounded p-2">
+          <p className="mt-1 rounded-xl bg-white/[0.03] p-2 text-sm text-gray-300">
             {entry.comment}
           </p>
         )}

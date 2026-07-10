@@ -14,6 +14,8 @@ import {
   type ClientListItem,
 } from '@monprojetpro/modules-crm'
 import { useOnlineUsers } from '@monprojetpro/modules-chat'
+import { CockpitHeader, CockpitCallout } from '@monprojetpro/ui'
+import { Users, AlertCircle } from 'lucide-react'
 
 interface CRMPageClientProps {
   initialClients: ClientListItem[]
@@ -28,7 +30,7 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
 
   const { data: clients = [], isLoading, error } = useClients(filters, initialClients)
 
-  // Client-side filtering (< 500 clients)
+  // Filtrage côté client (< 500 clients)
   const filteredClients = clients.filter((client) => {
     if (search) {
       const searchLower = search.toLowerCase()
@@ -56,24 +58,31 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
     router.push(`/modules/crm/clients/${client.id}`)
   }
 
+  // --- État de chargement (skeleton cockpit) ---
   if (isLoading && initialClients.length === 0) {
     return (
-      <div className="p-6 space-y-6">
-        <div className="h-8 w-48 bg-muted rounded animate-pulse" />
-        <div className="h-10 w-full max-w-md bg-muted rounded animate-pulse" />
+      <div className="space-y-6 p-6 md:p-8">
+        {/* Skeleton titre */}
+        <div className="h-8 w-48 bg-white/5 animate-pulse rounded-xl" />
+        {/* Skeleton barre de recherche */}
+        <div className="h-10 w-full max-w-md bg-white/5 animate-pulse rounded-xl" />
+        {/* Skeleton lignes tableau */}
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 bg-card border border-border rounded-lg animate-pulse" />
+            <div key={i} className="h-16 bg-white/5 animate-pulse rounded-xl" />
           ))}
         </div>
       </div>
     )
   }
 
+  // --- État d'erreur (callout cockpit rouge) ---
   if (error) {
     return (
-      <div className="p-6 text-destructive">
-        Erreur: {error.message}
+      <div className="p-6 md:p-8">
+        <CockpitCallout tone="red" icon={AlertCircle}>
+          {error.message}
+        </CockpitCallout>
       </div>
     )
   }
@@ -87,32 +96,36 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
   const showEmptyState = filteredClients.length === 0
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Clients</h1>
-          <p className="text-sm text-muted-foreground">
-            Gérez vos clients et suivez vos relations
-          </p>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <ImportCsvDialog />
-          <CreateClientDialog />
-        </div>
-      </div>
+    <div className="space-y-6 p-6 md:p-8">
+      {/* En-tête cockpit Hub */}
+      <CockpitHeader
+        icon={Users}
+        title="Clients"
+        subtitle="Gérez vos clients et suivez vos relations"
+        actions={
+          <div className="flex gap-2 shrink-0">
+            <ImportCsvDialog />
+            <CreateClientDialog />
+          </div>
+        }
+      />
 
-      {/* Search + Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Barre recherche + filtres — conteneur cockpit */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex flex-col sm:flex-row gap-3">
         <ClientSearch onSearchChange={setSearch} />
         <ClientFiltersPanel filters={filters} onFiltersChange={setFilters} />
       </div>
 
-      {/* Table / Empty states */}
+      {/* Tableau / états vides — inchangés */}
       {showEmptyState ? (
         <EmptyClientList hasFilters={hasFilters} />
       ) : (
-        <ClientList clients={filteredClients} onRowClick={handleRowClick} onlineUserIds={onlineUserIds} showCreateButton={false} />
+        <ClientList
+          clients={filteredClients}
+          onRowClick={handleRowClick}
+          onlineUserIds={onlineUserIds}
+          showCreateButton={false}
+        />
       )}
     </div>
   )

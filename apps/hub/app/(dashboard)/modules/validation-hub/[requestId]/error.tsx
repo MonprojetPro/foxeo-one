@@ -2,6 +2,7 @@
 
 import { AlertCircle } from 'lucide-react'
 import { Button } from '@monprojetpro/ui'
+import { CockpitCallout } from '@monprojetpro/ui'
 
 export default function RequestDetailError({
   error,
@@ -11,19 +12,20 @@ export default function RequestDetailError({
   reset: () => void
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 gap-4 text-center p-6">
-      <div className="p-4 rounded-full bg-red-500/10">
-        <AlertCircle className="h-8 w-8 text-red-400" />
-      </div>
+    <div className="flex flex-col gap-4 p-6">
+      {/* Bandeau d'erreur cockpit */}
+      <CockpitCallout tone="red" icon={AlertCircle} title="Une erreur est survenue">
+        {error.message}
+      </CockpitCallout>
       <div>
-        <p className="text-lg font-medium text-foreground">
-          Une erreur est survenue
-        </p>
-        <p className="text-sm text-muted-foreground mt-1">{error.message}</p>
+        <Button
+          variant="outline"
+          onClick={reset}
+          className="border-white/10 bg-white/[0.02] text-gray-400 hover:border-white/20 hover:text-gray-200"
+        >
+          Réessayer
+        </Button>
       </div>
-      <Button variant="outline" onClick={reset}>
-        Réessayer
-      </Button>
     </div>
   )
 }

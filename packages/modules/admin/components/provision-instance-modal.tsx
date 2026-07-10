@@ -142,48 +142,50 @@ export function ProvisionInstanceModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="provision-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
     >
-      <div className="w-full max-w-lg rounded-lg border border-white/10 bg-gray-900 p-6 shadow-2xl">
+      {/* Carte modale cockpit */}
+      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d0d0d] p-6 shadow-2xl">
+        {/* En-tête */}
         <div className="mb-5 flex items-start justify-between">
           <div>
             <h2 id="provision-modal-title" className="text-base font-semibold text-white">
               Provisionner une instance One
             </h2>
-            <p className="text-sm text-gray-400">{companyName}</p>
+            <p className="text-sm text-gray-500">{companyName}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={isRunning}
             aria-label="Fermer"
-            className="rounded p-1 text-gray-400 hover:text-white disabled:opacity-40"
+            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-40"
           >
             ✕
           </button>
         </div>
 
-        {/* Progress indicator */}
+        {/* Indicateur de progression */}
         {(status === 'running' || status === 'success') && currentStep && (
           <div
             aria-live="polite"
             aria-label="Progression du provisioning"
-            className="mb-4 rounded border border-white/10 bg-white/5 p-4"
+            className="mb-4 rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4"
           >
             <p className="text-sm font-medium text-cyan-400">
               {status === 'success' ? '✅ Prêt !' : `⏳ ${STEP_LABELS[currentStep]}`}
             </p>
             {currentStep && (
-              <p className="mt-1 text-xs text-gray-400">{STEP_LABELS[currentStep]}</p>
+              <p className="mt-1 text-xs text-gray-500">{STEP_LABELS[currentStep]}</p>
             )}
           </div>
         )}
 
-        {/* Error display */}
+        {/* Erreur */}
         {status === 'error' && errorMessage && (
           <div
             role="alert"
-            className="mb-4 rounded border border-red-500/30 bg-red-950/50 p-3 text-sm text-red-400"
+            className="mb-4 rounded-xl border border-red-500/20 bg-red-950/30 p-3 text-sm text-red-400"
           >
             <p className="font-medium">Échec du provisioning</p>
             <p className="mt-1">{errorMessage}</p>
@@ -192,9 +194,9 @@ export function ProvisionInstanceModal({
 
         {status !== 'running' && status !== 'success' && (
           <>
-            {/* Slug */}
+            {/* Champ slug */}
             <div className="mb-4">
-              <label htmlFor="provision-slug" className="mb-1 block text-sm text-gray-300">
+              <label htmlFor="provision-slug" className="mb-1.5 block text-sm text-gray-300">
                 Sous-domaine (slug)
               </label>
               <input
@@ -202,7 +204,7 @@ export function ProvisionInstanceModal({
                 type="text"
                 value={slug}
                 onChange={(e) => handleSlugChange(e.target.value)}
-                className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-600 transition-colors focus:border-cyan-500/50 focus:outline-none"
                 placeholder="mon-entreprise"
                 aria-describedby={slugError ? 'slug-error' : 'slug-hint'}
               />
@@ -220,12 +222,12 @@ export function ProvisionInstanceModal({
 
             {/* Modules */}
             <fieldset className="mb-4">
-              <legend className="mb-2 text-sm text-gray-300">Modules à activer</legend>
+              <legend className="mb-2.5 text-sm text-gray-300">Modules à activer</legend>
               <div className="grid grid-cols-2 gap-2">
                 {ALL_MODULES.map((mod) => (
                   <label
                     key={mod.id}
-                    className="flex cursor-pointer items-center gap-2 text-sm text-gray-300"
+                    className="flex cursor-pointer items-center gap-2 text-sm text-gray-300 transition-colors hover:text-white"
                   >
                     <input
                       type="checkbox"
@@ -241,14 +243,14 @@ export function ProvisionInstanceModal({
 
             {/* Tier */}
             <div className="mb-4">
-              <label htmlFor="provision-tier" className="mb-1 block text-sm text-gray-300">
+              <label htmlFor="provision-tier" className="mb-1.5 block text-sm text-gray-300">
                 Tier Élio initial
               </label>
               <select
                 id="provision-tier"
                 value={tier}
                 onChange={(e) => setTier(e.target.value as typeof tier)}
-                className="w-full rounded border border-white/10 bg-gray-800 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white transition-colors focus:border-cyan-500/50 focus:outline-none"
               >
                 {TIER_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -258,20 +260,21 @@ export function ProvisionInstanceModal({
               </select>
             </div>
 
-            {/* Cost estimate */}
-            <p className="mb-5 text-xs text-gray-500">
-              Estimation coût mensuel Vercel + Supabase Free : <span className="text-gray-300">~5–7€</span>
+            {/* Estimation coût */}
+            <p className="mb-5 text-xs text-gray-600">
+              Estimation coût mensuel Vercel + Supabase Free :{' '}
+              <span className="text-gray-400">~5–7€</span>
             </p>
           </>
         )}
 
-        {/* Actions */}
+        {/* Boutons d'action */}
         <div className="flex justify-end gap-3">
           {status === 'error' && (
             <button
               type="button"
               onClick={handleRetry}
-              className="rounded border border-white/10 px-4 py-2 text-sm text-gray-300 hover:text-white"
+              className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 text-sm text-gray-300 transition-colors hover:border-white/20 hover:text-white"
             >
               Réessayer
             </button>
@@ -281,15 +284,16 @@ export function ProvisionInstanceModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded border border-white/10 px-4 py-2 text-sm text-gray-300 hover:text-white"
+                className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 text-sm text-gray-300 transition-colors hover:border-white/20 hover:text-white"
               >
                 Annuler
               </button>
+              {/* Bouton principal cyan */}
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={!!slugError || selectedModules.length === 0}
-                className="rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-500 disabled:opacity-40"
+                className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Lancer le provisioning
               </button>
@@ -299,7 +303,7 @@ export function ProvisionInstanceModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-500"
+              className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 transition-colors hover:border-cyan-400/50 hover:bg-cyan-500/20"
             >
               Fermer
             </button>

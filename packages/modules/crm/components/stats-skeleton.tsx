@@ -1,46 +1,26 @@
 'use client'
 
-import { Card, CardContent, CardHeader, Skeleton } from '@monprojetpro/ui'
+import { StatCardSkeleton, BlockSkeleton, RowSkeleton } from '@monprojetpro/ui'
 
 export function StatsSkeleton() {
   return (
     <div className="space-y-6">
-      {/* KPI Cards skeleton */}
+      {/* Grille KPI skeleton — 5 cartes cockpit */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-3 w-32" />
-            </CardContent>
-          </Card>
+          <StatCardSkeleton key={i} />
         ))}
       </div>
 
-      {/* Chart skeleton */}
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-48 w-full" />
-        </CardContent>
-      </Card>
+      {/* Graphique skeleton — bloc pleine largeur */}
+      <BlockSkeleton className="h-48 w-full" />
 
-      {/* Table skeleton */}
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-40" />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
-        </CardContent>
-      </Card>
+      {/* Table skeleton — wrapper cockpit + lignes */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <RowSkeleton key={i} className="h-12" />
+        ))}
+      </div>
     </div>
   )
 }

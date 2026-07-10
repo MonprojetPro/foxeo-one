@@ -5,13 +5,7 @@ import Link from 'next/link'
 import { FileText, Download, Copy, Check } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Separator,
-} from '@monprojetpro/ui'
+import { Button } from '@monprojetpro/ui'
 import { formatFileSize } from '@monprojetpro/utils'
 import type { DocumentSummary } from '../types/validation.types'
 
@@ -22,16 +16,16 @@ type RequestContentProps = {
 
 export function RequestContent({ content, documents }: RequestContentProps) {
   return (
-    <Card className="bg-card/50 border-border/50">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-            Besoin exprimé
-          </h2>
-          <CopyContentButton content={content} />
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0 space-y-4">
+    /* CockpitPanel apporte l'en-tête titré cockpit ; l'action CopyContent va dans le slot linkText */
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+      {/* En-tête cockpit homogène */}
+      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
+        <h2 className="text-[0.8rem] font-semibold uppercase tracking-wider text-gray-300">
+          Besoin exprimé
+        </h2>
+        <CopyContentButton content={content} />
+      </div>
+      <div className="space-y-4 p-4">
         {/* Contenu markdown */}
         <div className="prose prose-invert max-w-none text-sm text-foreground/90">
           <ReactMarkdown
@@ -95,11 +89,11 @@ export function RequestContent({ content, documents }: RequestContentProps) {
         {/* Documents joints */}
         {documents.length > 0 && (
           <>
-            <Separator className="bg-border/50" />
+            <div className="border-t border-white/10" />
             <div className="space-y-2">
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-wider text-gray-500">
                 Documents joints ({documents.length})
-              </h3>
+              </p>
               <div className="space-y-2">
                 {documents.map((doc) => (
                   <DocumentItem key={doc.id} document={doc} />
@@ -108,8 +102,8 @@ export function RequestContent({ content, documents }: RequestContentProps) {
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -141,10 +135,10 @@ function CopyContentButton({ content }: { content: string }) {
       variant="outline"
       size="sm"
       onClick={handleCopy}
-      className="h-7 shrink-0 gap-1.5 text-xs"
+      className="h-7 shrink-0 gap-1.5 border-white/10 bg-white/[0.02] text-xs text-gray-400 hover:border-white/20 hover:text-gray-200"
       aria-label="Copier le contenu du document"
     >
-      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
       {copied ? 'Copié' : 'Copier'}
     </Button>
   )
@@ -154,21 +148,22 @@ function DocumentItem({ document: doc }: { document: DocumentSummary }) {
   const ext = doc.fileType.split('/').pop()?.toUpperCase() ?? doc.fileType
 
   return (
-    <div className="flex items-center gap-3 p-2.5 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors">
-      <div className="p-1.5 rounded bg-primary/10 shrink-0">
-        <FileText className="h-4 w-4 text-primary" />
+    /* Ligne document : style cockpit — fond verre, hover discret */
+    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-2.5 transition-colors hover:bg-white/[0.04]">
+      <div className="shrink-0 rounded-lg border border-cyan-400/20 bg-cyan-400/10 p-1.5">
+        <FileText className="h-4 w-4 text-cyan-300" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">
+        <p className="truncate text-sm font-medium text-white">
           {doc.name}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-500 tabular-nums">
           {ext} · {formatFileSize(doc.fileSize)}
         </p>
       </div>
       <Link
         href={`/modules/documents?path=${encodeURIComponent(doc.filePath)}`}
-        className="shrink-0 p-1.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+        className="shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-cyan-400/10 hover:text-cyan-300"
         aria-label={`Télécharger ${doc.name}`}
       >
         <Download className="h-4 w-4" />

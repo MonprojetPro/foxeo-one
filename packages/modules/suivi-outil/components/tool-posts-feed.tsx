@@ -34,12 +34,13 @@ function FeedSkeleton() {
 
 function EmptyState({ isOperator }: { isOperator: boolean }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="rounded-full bg-white/5 p-4 mb-4">
+    /* État vide — style cockpit : bordure pointillée, centré */
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 py-16 text-center">
+      <div className="mb-4 rounded-full bg-white/5 p-4">
         <Hammer size={28} className="text-white/30" />
       </div>
-      <h3 className="text-sm font-medium text-white/60 mb-1">Pas encore de mise à jour</h3>
-      <p className="text-xs text-white/40 max-w-xs">
+      <h3 className="mb-1 text-sm font-medium text-white/60">Pas encore de mise à jour</h3>
+      <p className="max-w-xs text-xs text-white/40">
         {isOperator
           ? "Publiez la première mise à jour ci-dessus : avancement, captures d'écran, prochaines étapes. Le client la verra en temps réel."
           : "Votre opérateur publiera ici l'avancement du développement de votre outil."}
@@ -58,7 +59,8 @@ export function ToolPostsFeed({ clientId, isOperator = false }: ToolPostsFeedPro
 
   if (isError) {
     return (
-      <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5 text-center">
+      /* Callout d'erreur — style cockpit cohérent */
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-5 text-center">
         <p className="text-sm text-red-400">
           Impossible de charger les mises à jour. Rechargez la page.
         </p>

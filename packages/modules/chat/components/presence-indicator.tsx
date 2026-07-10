@@ -6,8 +6,8 @@ interface PresenceIndicatorProps extends Omit<HTMLAttributes<HTMLSpanElement>, '
 }
 
 /**
- * Visual presence dot — green when online, gray when offline.
- * AC3, AC4: Used in ChatWindow header and ChatList items.
+ * Indicateur de présence cockpit — point coloré avec halo pulsant quand en ligne.
+ * AC3, AC4 : utilisé dans le header ChatWindow et les items ChatList.
  */
 export function PresenceIndicator({ status, className, ...rest }: PresenceIndicatorProps) {
   const label = status === 'online' ? 'En ligne' : 'Hors ligne'
@@ -18,12 +18,20 @@ export function PresenceIndicator({ status, className, ...rest }: PresenceIndica
       aria-label={label}
       title={label}
       data-testid="presence-dot"
-      className={cn(
-        'inline-block h-2.5 w-2.5 rounded-full shrink-0',
-        status === 'online' ? 'bg-green-500' : 'bg-gray-400',
-        className
-      )}
+      className={cn('relative inline-flex h-2.5 w-2.5 shrink-0', className)}
       {...rest}
-    />
+    >
+      {/* Halo pulsant — uniquement quand en ligne */}
+      {status === 'online' && (
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/40" />
+      )}
+      {/* Point central */}
+      <span
+        className={cn(
+          'relative inline-flex h-2.5 w-2.5 rounded-full',
+          status === 'online' ? 'bg-emerald-400' : 'bg-white/20'
+        )}
+      />
+    </span>
   )
 }

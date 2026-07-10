@@ -20,16 +20,25 @@ export function Sparkline({ values, width = 100, height = 32 }: SparklineProps) 
   })
 
   return (
+    /* Sparkline cockpit : ligne cyan avec zone de remplissage discrète */
     <svg
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
       className="overflow-visible"
+      aria-hidden
     >
+      {/* Zone de remplissage très discrète sous la courbe */}
+      <polyline
+        points={[`0,${height}`, ...points, `${width},${height}`].join(' ')}
+        fill="rgb(34 211 238 / 0.06)"
+        stroke="none"
+      />
+      {/* Ligne principale cyan */}
       <polyline
         points={points.join(' ')}
         fill="none"
-        stroke="rgb(34 211 238 / 0.6)"
+        stroke="rgb(34 211 238 / 0.7)"
         strokeWidth="1.5"
         strokeLinejoin="round"
         strokeLinecap="round"

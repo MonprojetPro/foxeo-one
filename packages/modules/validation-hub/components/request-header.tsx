@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Calendar } from 'lucide-react'
-import { Badge, Button, Card, CardContent } from '@monprojetpro/ui'
+import { Badge, Button } from '@monprojetpro/ui'
 import { cn, formatFullDate } from '@monprojetpro/utils'
 import type {
   ValidationRequestType,
@@ -28,46 +28,48 @@ export function RequestHeader({
   const typeConfig = TYPE_CONFIG[type]
 
   return (
-    <Card className="bg-card/50 border-border/50">
-      <CardContent className="p-6">
-        <div className="flex items-start gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push('/modules/validation-hub')}
-            className="shrink-0 text-muted-foreground hover:text-foreground"
-            aria-label="Retour à la file d'attente"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            File d&apos;attente
-          </Button>
+    /* Bandeau cockpit : fond verre sur noir, bordure fine, arrondi 2xl */
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-4">
+      <div className="flex items-start gap-4">
+        {/* Retour vers la file d'attente */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/modules/validation-hub')}
+          className="shrink-0 text-gray-400 hover:bg-white/[0.04] hover:text-white"
+          aria-label="Retour à la file d'attente"
+        >
+          <ArrowLeft className="mr-1 h-4 w-4" />
+          File d&apos;attente
+        </Button>
 
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-semibold text-foreground truncate">
-              {title}
-            </h1>
+        <div className="flex-1 min-w-0">
+          {/* Titre de la demande */}
+          <h1 className="truncate text-xl font-semibold text-white">
+            {title}
+          </h1>
 
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              <Badge
-                variant="outline"
-                className={cn('text-xs border', typeConfig.className)}
-              >
-                {typeConfig.label}
-              </Badge>
-              <Badge
-                variant="outline"
-                className={cn('text-xs border', statusConfig.className)}
-              >
-                {statusConfig.label}
-              </Badge>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                {formatFullDate(submittedAt)}
-              </span>
-            </div>
+          {/* Badges type + statut + date */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className={cn('border text-xs', typeConfig.className)}
+            >
+              {typeConfig.label}
+            </Badge>
+            <Badge
+              variant="outline"
+              className={cn('border text-xs', statusConfig.className)}
+            >
+              {statusConfig.label}
+            </Badge>
+            <span className="flex items-center gap-1 text-xs text-gray-500 tabular-nums">
+              <Calendar className="h-3 w-3" />
+              {formatFullDate(submittedAt)}
+            </span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

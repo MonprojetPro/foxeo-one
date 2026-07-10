@@ -26,13 +26,14 @@ export function ClientSearch({
   }, [searchTerm])
 
   return (
+    /* Champ de recherche cockpit — pleine largeur dans son conteneur */
     <div className="w-full max-w-md">
       <Input
         type="search"
         placeholder={placeholder}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full"
+        className="w-full bg-white/[0.03] border-white/10 text-white placeholder:text-gray-500 focus:border-cyan-400/40 focus:ring-cyan-400/10"
       />
     </div>
   )

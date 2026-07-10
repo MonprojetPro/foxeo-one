@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Avatar, AvatarFallback, Badge, Skeleton, Input } from '@monprojetpro/ui'
+import { Avatar, AvatarFallback, Input } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
 import { Search } from 'lucide-react'
 import { useConversations } from '../hooks/use-conversations'
@@ -71,52 +71,61 @@ function ConversationItem({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors',
+        /* Base — carte verre cockpit */
+        'flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors',
         isSelected
-          ? 'bg-primary/10 border border-primary/20'
-          : 'hover:bg-muted/40 border border-transparent'
+          ? /* Sélectionné — accent cyan discret */
+            'border border-cyan-400/25 bg-cyan-400/[0.07]'
+          : /* Repos + survol */
+            'border border-transparent hover:border-white/10 hover:bg-white/[0.04]'
       )}
       data-testid="conversation-item"
       aria-selected={isSelected}
     >
       <div className="relative mt-0.5 shrink-0">
-        <Avatar className="h-10 w-10">
-          <AvatarFallback className="text-sm font-medium">
+        <Avatar className="h-10 w-10 border border-white/10 bg-white/[0.04]">
+          <AvatarFallback className="text-sm font-medium text-gray-200 bg-transparent">
             {getInitials(conversation.clientName)}
           </AvatarFallback>
         </Avatar>
         <PresenceIndicator
           status={isOnline ? 'online' : 'offline'}
-          className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
+          className="absolute -bottom-0.5 -right-0.5 ring-2 ring-black/60"
         />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-1">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className={cn('truncate text-sm font-medium', isSelected && 'text-primary')}>
+            <span
+              className={cn(
+                'truncate text-sm font-medium',
+                isSelected ? 'text-cyan-300' : 'text-white/90'
+              )}
+            >
               {conversation.clientName}
             </span>
             {conversation.dashboardType && (
               <DashboardBadge type={conversation.dashboardType} />
             )}
           </div>
-          <span className="shrink-0 text-xs text-muted-foreground">
+          {/* Horodatage tabular */}
+          <span className="shrink-0 text-[11px] tabular-nums text-gray-500">
             {formatLastMessageTime(conversation.lastMessageAt)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <span className="truncate text-xs text-muted-foreground">
+          <span className="truncate text-xs text-gray-500">
             {conversation.lastMessage ?? 'Aucun message'}
           </span>
+          {/* Badge non-lus — accent rouge cockpit */}
           {conversation.unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="h-4 min-w-4 shrink-0 px-1 text-[10px] rounded-full"
+            <span
+              className="inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-red-400/20 px-1 text-[10px] font-semibold tabular-nums text-red-300 ring-1 ring-red-400/30"
               aria-label={`${conversation.unreadCount} non lus`}
             >
-              {conversation.unreadCount}
-            </Badge>
+              {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+            </span>
           )}
         </div>
       </div>
@@ -132,13 +141,14 @@ export function ChatList({ selectedClientId, onSelectClient }: ChatListProps) {
 
   if (isPending) {
     return (
-      <div className="flex flex-col gap-1 p-2" data-testid="chat-list-skeleton">
+      <div className="flex flex-col gap-1 px-2 pt-3" data-testid="chat-list-skeleton">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-start gap-3 p-3">
-            <Skeleton className="h-10 w-10 rounded-full" />
+          <div key={i} className="flex items-center gap-3 rounded-xl px-3 py-3">
+            {/* Avatar skeleton */}
+            <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-white/5" />
             <div className="flex-1 space-y-1.5">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-48" />
+              <div className="h-3.5 w-28 animate-pulse rounded bg-white/5" />
+              <div className="h-2.5 w-44 animate-pulse rounded bg-white/5" />
             </div>
           </div>
         ))}
@@ -148,8 +158,9 @@ export function ChatList({ selectedClientId, onSelectClient }: ChatListProps) {
 
   if (!conversations || conversations.length === 0) {
     return (
-      <div className="flex h-32 items-center justify-center text-muted-foreground text-sm p-4 text-center">
-        Aucun client trouvé.
+      /* État vide cockpit — bord pointillé centré */
+      <div className="mx-2 mt-4 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-4 py-10 text-center">
+        <p className="text-xs text-gray-400">Aucun client trouvé.</p>
       </div>
     )
   }
@@ -173,30 +184,30 @@ export function ChatList({ selectedClientId, onSelectClient }: ChatListProps) {
 
   return (
     <div className="flex flex-col h-full" data-testid="chat-list">
-      {/* Search */}
-      <div className="px-3 pt-2 pb-1">
+      {/* Barre de recherche cockpit */}
+      <div className="px-3 pt-3 pb-1">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher une conversation..."
-            className="pl-8 h-8 text-xs"
+            className="pl-8 h-8 text-xs border-white/10 bg-white/[0.03] text-gray-200 placeholder:text-gray-600 focus-visible:ring-cyan-400/30 focus-visible:border-cyan-400/25"
             aria-label="Rechercher une conversation"
           />
         </div>
       </div>
 
-      {/* Sort toggle */}
+      {/* Toggle « En ligne d'abord » */}
       <div className="flex items-center justify-end px-3 py-1">
         <button
           type="button"
           onClick={() => setSortOnlineFirst((prev) => !prev)}
           className={cn(
-            'text-[11px] px-2 py-0.5 rounded transition-colors',
+            'rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors',
             sortOnlineFirst
-              ? 'bg-green-500/15 text-green-500 font-medium'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+              : 'border-white/10 text-gray-500 hover:border-white/15 hover:text-gray-300'
           )}
           data-testid="sort-online-first-toggle"
           aria-pressed={sortOnlineFirst}
@@ -205,10 +216,11 @@ export function ChatList({ selectedClientId, onSelectClient }: ChatListProps) {
         </button>
       </div>
 
-      {/* List */}
+      {/* Liste des conversations */}
       <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
         {filtered.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">Aucun résultat</p>
+          /* Aucun résultat de recherche */
+          <p className="py-6 text-center text-xs text-gray-600">Aucun résultat</p>
         ) : (
           filtered.map((conversation) => (
             <ConversationItem

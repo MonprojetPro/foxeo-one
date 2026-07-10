@@ -1,31 +1,38 @@
 'use client'
 
-import { Skeleton } from '@monprojetpro/ui'
+import { HeroStatSkeleton, RowSkeleton } from '@monprojetpro/ui'
 
+/**
+ * Skeleton cockpit pour la vue hub Documents.
+ * Remplace les blocs génériques par des skeletons cohérents avec le design system.
+ */
 export function DocumentSkeleton() {
   return (
-    <div className="flex flex-col gap-2 p-4" data-testid="document-skeleton">
-      {/* Header row */}
-      <div className="flex items-center justify-between pb-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-10 w-36 rounded-lg" />
+    <div className="flex flex-col gap-6 p-6" data-testid="document-skeleton">
+      {/* En-tête cockpit */}
+      <div className="h-20 animate-pulse rounded-2xl bg-white/5" />
+
+      {/* Cartes KPI */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <HeroStatSkeleton />
+        <HeroStatSkeleton />
+        <HeroStatSkeleton />
       </div>
-      {/* Table header */}
-      <div className="flex gap-4 border-b border-border/50 pb-2">
-        <Skeleton className="h-4 w-8" />
-        <Skeleton className="h-4 w-48" />
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-20" />
-      </div>
-      {/* Table rows */}
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 py-3">
-          <Skeleton className="h-5 w-5 rounded" />
-          <Skeleton className="h-4 w-56" />
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-6 w-16 rounded-full" />
+
+      {/* Barre de filtres */}
+      <div className="h-24 animate-pulse rounded-2xl bg-white/5" />
+
+      {/* Groupes documents */}
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
+            <div className="h-4 w-4 animate-pulse rounded bg-white/10" />
+            <div className="h-4 w-36 animate-pulse rounded bg-white/10" />
+          </div>
+          <div className="flex flex-col gap-2 p-3">
+            <RowSkeleton />
+            <RowSkeleton />
+          </div>
         </div>
       ))}
     </div>

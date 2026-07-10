@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { MeetingStatusBadge } from '@monprojetpro/module-visio'
 import type { MeetingStatus } from '@monprojetpro/module-visio'
-import { ExternalLink, FileVideo, VideoOff } from 'lucide-react'
+import { ExternalLink, FileVideo, Video, VideoOff } from 'lucide-react'
+import { CockpitHeader, SectionTitle } from '@monprojetpro/ui'
 import { MeetingDetailActions } from './meeting-detail-actions'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -68,79 +69,78 @@ export default async function HubMeetingDetailPage({ params }: Props) {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex items-center gap-2">
-        <a href="/modules/visio" className="text-sm text-muted-foreground hover:text-foreground">
-          ← Retour aux meetings
-        </a>
-      </div>
+      {/* Fil d'Ariane */}
+      <a href="/modules/visio" className="w-fit text-sm text-gray-400 transition-colors hover:text-gray-200">
+        ← Retour aux meetings
+      </a>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">{meeting.title}</h1>
-          {clientName && <p className="text-sm text-muted-foreground">Client : {clientName}</p>}
-        </div>
-        <div className="flex items-center gap-3">
-          <MeetingStatusBadge status={meeting.status} />
-          <MeetingDetailActions meetingId={meeting.id} status={meeting.status} />
-        </div>
-      </div>
+      {/* ── En-tête cockpit ── */}
+      <CockpitHeader
+        icon={Video}
+        title={meeting.title}
+        subtitle={clientName ? `Client : ${clientName}` : undefined}
+        tone="cyan"
+        status={<MeetingStatusBadge status={meeting.status} />}
+        actions={<MeetingDetailActions meetingId={meeting.id} status={meeting.status} />}
+      />
 
-      {/* Détails */}
-      <div className="rounded-xl border border-white/10 bg-white/5 p-5 flex flex-col gap-4">
+      {/* ── Fiche détails ── */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 flex flex-col gap-4">
+        <SectionTitle>Informations</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-0.5">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Date prévue</p>
-            <p className="text-sm">{formatDate(meeting.scheduled_at)}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Date prévue</p>
+            <p className="text-sm text-white tabular-nums">{formatDate(meeting.scheduled_at)}</p>
           </div>
           <div className="flex flex-col gap-0.5">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Durée</p>
-            <p className="text-sm">{formatDuration(meeting.duration_seconds)}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Durée</p>
+            <p className="text-sm text-white tabular-nums">{formatDuration(meeting.duration_seconds)}</p>
           </div>
           {meeting.started_at && (
             <div className="flex flex-col gap-0.5">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Démarré le</p>
-              <p className="text-sm">{formatDate(meeting.started_at)}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Démarré le</p>
+              <p className="text-sm text-white tabular-nums">{formatDate(meeting.started_at)}</p>
             </div>
           )}
           {meeting.ended_at && (
             <div className="flex flex-col gap-0.5">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Terminé le</p>
-              <p className="text-sm">{formatDate(meeting.ended_at)}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Terminé le</p>
+              <p className="text-sm text-white tabular-nums">{formatDate(meeting.ended_at)}</p>
             </div>
           )}
         </div>
         {meeting.description && (
           <div className="flex flex-col gap-0.5 border-t border-white/10 pt-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Description</p>
-            <p className="text-sm whitespace-pre-wrap">{meeting.description}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Description</p>
+            <p className="text-sm text-white/80 whitespace-pre-wrap">{meeting.description}</p>
           </div>
         )}
       </div>
 
-      {/* Lien Google Meet */}
+      {/* ── Lien Google Meet (si meeting actif) ── */}
       {meeting.meet_uri && isActive ? (
         <a
           href={meeting.meet_uri}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-fit items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+          className="inline-flex w-fit items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-green-700"
         >
           <ExternalLink className="h-4 w-4" />
           Rejoindre sur Google Meet
         </a>
       ) : isActive ? (
-        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-          <VideoOff className="h-4 w-4 shrink-0" />
+        /* Callout informatif quand aucun lien visio n'est disponible */
+        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm text-gray-400">
+          <VideoOff className="h-4 w-4 shrink-0 text-gray-500" />
           Pas de lien visio pour ce meeting.
         </div>
       ) : null}
 
-      {/* Liens post-meeting */}
-      <div className="flex flex-wrap items-center gap-4">
+      {/* ── Actions post-meeting (enregistrements, transcription) ── */}
+      <div className="flex flex-wrap items-center gap-3">
         <a
           href={`/modules/visio/${meeting.id}/recordings`}
-          className="inline-flex items-center gap-2 rounded-md border border-white/20 px-4 py-2 text-sm font-medium hover:bg-white/10"
+          className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/[0.02] px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-white/[0.06] hover:text-white"
         >
           <FileVideo className="h-4 w-4" />
           Voir les enregistrements
@@ -150,7 +150,7 @@ export default async function HubMeetingDetailPage({ params }: Props) {
             href={meeting.recording_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-200"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             Enregistrement
@@ -161,7 +161,7 @@ export default async function HubMeetingDetailPage({ params }: Props) {
             href={meeting.transcript_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-gray-200"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             Transcription

@@ -11,6 +11,7 @@ export default async function HubVisioPage() {
   const { data: meetings } = await getMeetings({})
 
   return (
+    /* Conteneur cockpit — gap homogène avec les autres modules Hub */
     <div className="flex flex-col gap-6 p-6">
       <HubVisioClient meetings={meetings ?? []} operatorId={user.id} />
     </div>

@@ -98,27 +98,30 @@ export function UpgradeInstanceModal({ instance, onClose, onContactClient }: Upg
       role="dialog"
       aria-modal="true"
       aria-label={`Initier un upgrade pour ${instance.slug}`}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="w-full max-w-lg rounded border border-white/10 bg-gray-900 p-6 shadow-2xl">
-        {/* Header */}
+      {/* Carte modale cockpit */}
+      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0d0d0d] p-6 shadow-2xl">
+        {/* En-tête */}
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white">Initier un upgrade</h2>
-            <p className="mt-0.5 text-sm text-gray-400">Instance : <span className="text-orange-400">{instance.slug}</span></p>
+            <p className="mt-0.5 text-sm text-gray-500">
+              Instance : <span className="text-amber-400">{instance.slug}</span>
+            </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white"
+            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-white/5 hover:text-white"
             aria-label="Fermer"
           >
             ✕
           </button>
         </div>
 
-        {/* Options de plan */}
+        {/* Sélection du plan — radio cockpit */}
         <div className="space-y-3" role="radiogroup" aria-label="Choisir un plan d'upgrade">
           {PLANS.map((plan) => {
             const isSelected = selectedPlan === plan.id
@@ -130,62 +133,67 @@ export function UpgradeInstanceModal({ instance, onClose, onContactClient }: Upg
                 role="radio"
                 aria-checked={isSelected}
                 onClick={() => setSelectedPlan(plan.id)}
-                className={`w-full rounded border p-4 text-left transition-colors ${
+                className={`w-full rounded-xl border p-4 text-left transition-all duration-200 ${
                   isSelected
-                    ? 'border-orange-500/50 bg-orange-950/30'
-                    : 'border-white/10 bg-white/5 hover:border-white/20'
+                    ? 'border-amber-500/40 bg-amber-500/5 shadow-[0_0_20px_-8px_rgb(245_158_11/0.3)]'
+                    : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className={`font-medium ${isSelected ? 'text-orange-400' : 'text-white'}`}>
+                    <span className={`font-medium ${isSelected ? 'text-amber-300' : 'text-white'}`}>
                       {plan.label}
                     </span>
                     {isRecommended && (
-                      <span className="rounded bg-orange-800/50 px-1.5 py-0.5 text-xs text-orange-300">
+                      <span className="rounded-lg bg-amber-500/10 px-2 py-0.5 text-xs text-amber-300 ring-1 ring-amber-500/20">
                         Recommandé
                       </span>
                     )}
                   </div>
-                  <span className="text-sm font-semibold text-white">+{plan.monthlyCost}$/mois</span>
+                  <span className="tabular-nums text-sm font-semibold text-white">
+                    +{plan.monthlyCost}$/mois
+                  </span>
                 </div>
-                <p className="mt-1 text-xs text-gray-400">{plan.description}</p>
+                <p className="mt-1.5 text-xs text-gray-500">{plan.description}</p>
               </button>
             )
           })}
         </div>
 
-        {/* Coût estimé */}
-        <div className="mt-4 rounded border border-white/10 bg-white/5 p-3">
-          <p className="text-xs text-gray-400">
+        {/* Récap coût cockpit */}
+        <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-3.5">
+          <p className="text-xs text-gray-500">
             Coût additionnel estimé :{' '}
-            <span className="font-semibold text-white">
+            <span className="tabular-nums font-semibold text-white">
               +{PLANS.find((p) => p.id === selectedPlan)?.monthlyCost ?? 0}$/mois
             </span>
           </p>
         </div>
 
-        {/* Actions */}
+        {/* Boutons d'action */}
         <div className="mt-6 flex gap-3">
+          {/* Confirmer — accent amber */}
           <button
             type="button"
             onClick={handleConfirm}
             disabled={isPending}
-            className="flex-1 rounded bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-500 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-300 transition-colors hover:border-amber-400/50 hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isPending ? 'Enregistrement...' : 'Confirmer upgrade'}
+            {isPending ? 'Enregistrement…' : 'Confirmer upgrade'}
           </button>
+          {/* Contacter le client */}
           <button
             type="button"
             onClick={handleContactClient}
-            className="flex-1 rounded border border-white/10 px-4 py-2 text-sm text-gray-300 hover:text-white"
+            className="flex-1 rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 text-sm text-gray-300 transition-colors hover:border-white/20 hover:text-white"
           >
             Contacter le client
           </button>
+          {/* Annuler */}
           <button
             type="button"
             onClick={onClose}
-            className="rounded border border-white/10 px-4 py-2 text-sm text-gray-400 hover:text-white"
+            className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-2 text-sm text-gray-500 transition-colors hover:border-white/20 hover:text-gray-300"
           >
             Annuler
           </button>

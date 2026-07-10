@@ -1,6 +1,8 @@
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { notFound } from 'next/navigation'
 import { ToolPostComposer, ToolPostsFeed } from '@monprojetpro/module-suivi-outil'
+import { Hammer } from 'lucide-react'
+import { CockpitHeader } from '@monprojetpro/ui'
 
 interface PageProps {
   params: Promise<{ clientId: string }>
@@ -13,7 +15,7 @@ export default async function HubSuiviOutilPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()
 
-  // Vérifie que l'opérateur a accès à ce client
+  /* Vérifie que l'opérateur a accès à ce client */
   const { data: operator } = await supabase
     .from('operators')
     .select('id')
@@ -33,13 +35,18 @@ export default async function HubSuiviOutilPage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col gap-6 p-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold">Suivi de l'outil — {clientName}</h1>
-        <p className="text-sm text-muted-foreground">
-          Publiez des mises à jour sur l'avancement du développement.
-        </p>
-      </div>
+      {/* ── En-tête cockpit avec nom du client ── */}
+      <CockpitHeader
+        icon={Hammer}
+        title={`Suivi de l'outil — ${clientName}`}
+        subtitle="Publiez des mises à jour sur l'avancement du développement."
+        tone="cyan"
+      />
+
+      {/* Compositeur de mise à jour (inchangé — logique formulaire) */}
       <ToolPostComposer clientId={clientId} operatorId={operator.id} />
+
+      {/* Fil des publications (inchangé — logique Realtime) */}
       <ToolPostsFeed clientId={clientId} isOperator={true} operatorId={operator.id} />
     </div>
   )

@@ -58,9 +58,12 @@ export function ReminderCard({ reminder, onEdit }: ReminderCardProps) {
 
   return (
     <>
+      {/* Carte rappel — style cockpit sombre, opacité réduite si terminé */}
       <div
-        className={`flex items-start gap-3 rounded-lg border p-3 ${
-          isCompleted ? 'bg-muted/30' : 'bg-background'
+        className={`flex items-start gap-3 rounded-xl border p-3 ${
+          isCompleted
+            ? 'bg-white/[0.01] border-white/5 opacity-60'
+            : 'bg-white/[0.02] border-white/10'
         }`}
       >
         <Checkbox
@@ -72,24 +75,33 @@ export function ReminderCard({ reminder, onEdit }: ReminderCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
+              {/* Titre barré si complété */}
               <p
-                className={`font-medium ${
-                  isCompleted ? 'line-through text-muted-foreground' : ''
+                className={`font-medium text-white ${
+                  isCompleted ? 'line-through text-gray-500' : ''
                 }`}
               >
                 {reminder.title}
               </p>
 
+              {/* Description secondaire */}
               {reminder.description && (
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-gray-400 mt-1">
                   {reminder.description}
                 </p>
               )}
 
               <div className="flex items-center gap-2 mt-2">
+                {/* Badge date — couleur selon état */}
                 <Badge
-                  variant={isOverdue ? 'destructive' : isCompleted ? 'secondary' : 'default'}
-                  className="text-xs"
+                  variant="outline"
+                  className={`text-xs ${
+                    isOverdue && !isCompleted
+                      ? 'border-red-400/30 bg-red-400/15 text-red-300'
+                      : isCompleted
+                        ? 'border-white/10 bg-white/5 text-gray-500'
+                        : 'border-cyan-400/25 bg-cyan-400/10 text-cyan-200'
+                  }`}
                 >
                   {new Date(reminder.dueDate).toLocaleDateString('fr-FR', {
                     day: 'numeric',
@@ -99,12 +111,14 @@ export function ReminderCard({ reminder, onEdit }: ReminderCardProps) {
                   })}
                 </Badge>
 
+                {/* Indicateur de retard */}
                 {isOverdue && !isCompleted && (
-                  <span className="text-xs text-destructive font-medium">En retard</span>
+                  <span className="text-xs text-red-400 font-medium">En retard</span>
                 )}
               </div>
             </div>
 
+            {/* Menu actions */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -129,6 +143,7 @@ export function ReminderCard({ reminder, onEdit }: ReminderCardProps) {
         </div>
       </div>
 
+      {/* Dialog de confirmation de suppression — primitives shadcn conservées telles quelles */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
