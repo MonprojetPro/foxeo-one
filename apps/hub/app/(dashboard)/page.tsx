@@ -1,3 +1,5 @@
+import { LayoutDashboard } from 'lucide-react'
+import { CockpitHeader, StatusPill } from '@monprojetpro/ui'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getTokenUsageSummary, getAlertThresholds, DEFAULT_ALERT_THRESHOLDS } from '@monprojetpro/module-elio'
 import { buildElioSuggestions, type SilentClient, type StagnantParcoursClient } from '../../lib/elio-suggestions'
@@ -369,20 +371,14 @@ export default async function HubHomePage() {
   const unpaidDisplay = unpaidAmount > 0 ? `${Math.round(unpaidAmount).toLocaleString('fr-FR')} €` : '—'
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Greeting */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Bonjour MiKL 👋</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Voici votre tableau de bord pour aujourd'hui — {todayCap}
-          </p>
-        </div>
-        <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-          En ligne
-        </span>
-      </div>
+    <div className="space-y-6 p-6 md:p-8">
+      {/* En-tête cockpit */}
+      <CockpitHeader
+        icon={LayoutDashboard}
+        title="Bonjour MiKL 👋"
+        subtitle={`Voici votre tableau de bord pour aujourd'hui — ${todayCap}`}
+        status={<StatusPill state="live" label="En ligne" />}
+      />
 
       {/* Alerte système — s'affiche uniquement si un voyant du monitoring est orange/rouge (Realtime) */}
       <SystemHealthAlert />
@@ -391,30 +387,34 @@ export default async function HubHomePage() {
       {tokenSummary && (
         <a
           href="/elio/lab"
-          className="flex items-center justify-between rounded-xl border border-cyan-900/30 bg-cyan-950/10 px-5 py-3.5 hover:bg-cyan-950/20 transition-colors group"
+          className="group relative flex items-center justify-between overflow-hidden rounded-2xl border border-white/10 bg-cyan-400/[0.05] px-5 py-3.5 transition-colors hover:bg-cyan-400/[0.08]"
         >
-          <div className="flex items-center gap-4">
-            <span className="text-cyan-400 text-lg">🤖</span>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-10 -top-16 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl"
+          />
+          <div className="relative flex items-center gap-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-400/25 bg-cyan-400/10 text-lg">🤖</span>
             <div>
-              <p className="text-xs text-muted-foreground">Coût IA ce mois</p>
-              <p className="text-lg font-bold text-cyan-400 leading-tight">
+              <p className="text-xs text-gray-500">Coût IA ce mois</p>
+              <p className="text-lg font-semibold leading-tight text-cyan-300">
                 {tokenSummary.totalCostEur.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
               </p>
             </div>
-            <div className="hidden sm:block border-l border-cyan-900/40 pl-4">
-              <p className="text-xs text-muted-foreground">Tokens</p>
-              <p className="text-sm font-medium text-foreground">
+            <div className="hidden border-l border-white/10 pl-4 sm:block">
+              <p className="text-xs text-gray-500">Tokens</p>
+              <p className="text-sm font-medium tabular-nums text-gray-200">
                 {tokenSummary.totalTokens.toLocaleString('fr-FR')}
               </p>
             </div>
-            <div className="hidden md:block border-l border-cyan-900/40 pl-4">
-              <p className="text-xs text-muted-foreground">Agents actifs</p>
-              <p className="text-sm font-medium text-foreground">
+            <div className="hidden border-l border-white/10 pl-4 md:block">
+              <p className="text-xs text-gray-500">Agents actifs</p>
+              <p className="text-sm font-medium tabular-nums text-gray-200">
                 {tokenSummary.byAgent.length}
               </p>
             </div>
           </div>
-          <span className="text-xs text-cyan-400/60 group-hover:text-cyan-400 transition-colors">
+          <span className="relative text-xs text-cyan-300/60 transition-colors group-hover:text-cyan-300">
             Voir le détail →
           </span>
         </a>
@@ -570,14 +570,14 @@ export default async function HubHomePage() {
             return (
               <div
                 key={p.id}
-                className="flex items-start gap-3 px-3 py-2.5 hover:bg-muted/40 transition-colors"
+                className="flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.03]"
               >
                 <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-400 animate-pulse" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{displayName}</p>
-                  <p className="text-xs text-muted-foreground truncate">{p.company} · {p.email}</p>
+                  <p className="truncate text-sm font-medium text-gray-100">{displayName}</p>
+                  <p className="truncate text-xs text-gray-500">{p.company} · {p.email}</p>
                   {p.lead_message && (
-                    <p className="text-xs text-muted-foreground/70 line-clamp-1 mt-0.5 italic">
+                    <p className="mt-0.5 line-clamp-1 text-xs italic text-gray-600">
                       {p.lead_message}
                     </p>
                   )}

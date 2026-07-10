@@ -82,3 +82,6 @@ export { ConflictDialog, type ConflictDialogProps } from './components/conflict-
 
 // Impersonation
 export { ImpersonationBanner } from './components/impersonation-banner'
+
+// Cockpit — signature visuelle « Minimal Futuriste » du Hub (issue de MenuFacile)
+export * from './components/cockpit'

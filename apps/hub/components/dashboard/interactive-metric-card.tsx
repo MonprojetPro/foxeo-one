@@ -27,10 +27,10 @@ interface InteractiveMetricCardProps {
 }
 
 const sectionAccents: Record<string, string> = {
-  green: 'text-green-400',
-  yellow: 'text-yellow-400',
-  red: 'text-red-400',
-  default: 'text-muted-foreground',
+  green: 'text-emerald-300',
+  yellow: 'text-amber-300',
+  red: 'text-red-300',
+  default: 'text-gray-500',
 }
 
 export function InteractiveMetricCard({
@@ -42,11 +42,11 @@ export function InteractiveMetricCard({
 }: InteractiveMetricCardProps) {
   const [open, setOpen] = useState(false)
 
-  const borderColors = {
-    primary: 'border-t-primary',
-    destructive: 'border-t-destructive',
-    muted: 'border-t-border',
-  }
+  const accent = {
+    primary: { top: 'border-t-cyan-400/50', value: 'text-white', glow: 'bg-cyan-400/10' },
+    destructive: { top: 'border-t-red-400/50', value: 'text-red-200', glow: 'bg-red-400/10' },
+    muted: { top: 'border-t-white/15', value: 'text-white', glow: 'bg-white/5' },
+  }[accentColor]
 
   return (
     <>
@@ -54,15 +54,22 @@ export function InteractiveMetricCard({
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          'bg-card rounded-lg border border-border p-4 border-t-2 text-left w-full',
-          'hover:bg-card/80 hover:border-primary/30 transition-colors cursor-pointer',
-          borderColors[accentColor]
+          'group relative w-full overflow-hidden rounded-2xl border border-white/10 border-t-2 bg-white/[0.025] p-4 text-left transition-all duration-200',
+          'cursor-pointer hover:border-cyan-400/30 hover:bg-white/[0.04]',
+          accent.top,
         )}
       >
-        <p className="text-[0.75rem] font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
-        <p className="mt-1 text-2xl font-bold text-foreground">{value}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p>
-        <p className="mt-2 text-[0.65rem] text-primary/60">Cliquer pour le détail →</p>
+        <div
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full opacity-50 blur-2xl transition-opacity duration-300 group-hover:opacity-90',
+            accent.glow,
+          )}
+        />
+        <p className="relative text-[0.7rem] font-semibold uppercase tracking-wider text-gray-500">{title}</p>
+        <p className={cn('relative mt-1 text-2xl font-semibold tabular-nums tracking-tight', accent.value)}>{value}</p>
+        <p className="relative mt-0.5 text-xs text-gray-500">{subtitle}</p>
+        <p className="relative mt-2 text-[0.65rem] text-cyan-300/60">Cliquer pour le détail →</p>
       </button>
 
       {/* Popup overlay */}
@@ -71,18 +78,18 @@ export function InteractiveMetricCard({
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setOpen(false)}
         >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
           <div
-            className="relative z-10 w-full max-w-md rounded-xl border border-border bg-card shadow-2xl"
+            className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#0a0f0e] shadow-2xl shadow-black/60"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header popup */}
-            <div className="flex items-center justify-between border-b border-border px-5 py-4">
-              <h2 className="text-sm font-semibold uppercase tracking-wider">{title}</h2>
+            <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.02] px-5 py-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-200">{title}</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-gray-500 transition-colors hover:text-gray-200"
                 aria-label="Fermer"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -99,12 +106,12 @@ export function InteractiveMetricCard({
                     <span className={cn('text-xs font-semibold uppercase tracking-wide', sectionAccents[section.accentColor ?? 'default'])}>
                       {section.label}
                     </span>
-                    <span className="text-xs font-bold text-foreground bg-muted px-2 py-0.5 rounded-full">
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-bold tabular-nums text-gray-200">
                       {section.count}
                     </span>
                   </div>
                   {section.items.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic">{section.emptyText ?? 'Aucun'}</p>
+                    <p className="text-xs italic text-gray-500">{section.emptyText ?? 'Aucun'}</p>
                   ) : (
                     <ul className="flex flex-col gap-1">
                       {section.items.map((item) => (
@@ -112,13 +119,13 @@ export function InteractiveMetricCard({
                           <Link
                             href={`/modules/crm/clients/${item.id}`}
                             onClick={() => setOpen(false)}
-                            className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted/50 transition-colors group"
+                            className="group flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/[0.04]"
                           >
                             <div>
-                              <span className="font-medium group-hover:text-primary transition-colors">{item.name}</span>
-                              <span className="ml-2 text-xs text-muted-foreground">{item.company}</span>
+                              <span className="font-medium text-gray-100 transition-colors group-hover:text-cyan-200">{item.name}</span>
+                              <span className="ml-2 text-xs text-gray-500">{item.company}</span>
                             </div>
-                            <svg className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <svg className="h-3.5 w-3.5 shrink-0 text-gray-500 transition-colors group-hover:text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                             </svg>
                           </Link>
