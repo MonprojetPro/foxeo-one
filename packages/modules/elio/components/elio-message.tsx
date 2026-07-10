@@ -43,7 +43,7 @@ export function ElioMessageItem({ message, dashboardType, feedbackSlot, document
           paletteClass,
           isUser
             ? 'bg-primary text-primary-foreground rounded-br-sm'
-            : 'bg-muted text-foreground rounded-bl-sm',
+            : 'border border-white/10 bg-white/[0.05] text-gray-100 rounded-bl-sm',
           message.isError ? 'border border-destructive/30 bg-destructive/10 text-destructive' : '',
         ]
           .filter(Boolean)

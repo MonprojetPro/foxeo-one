@@ -76,7 +76,7 @@ export function ConversationItem({
       onClick={!isEditing ? onSelect : undefined}
       className={[
         'group flex flex-col gap-0.5 px-3 py-2 cursor-pointer',
-        'hover:bg-muted/50 transition-colors duration-150',
+        'hover:bg-white/[0.04] transition-colors duration-150',
         isActive ? activeClass : 'border-l-2 border-transparent',
       ].join(' ')}
       aria-current={isActive ? 'true' : undefined}

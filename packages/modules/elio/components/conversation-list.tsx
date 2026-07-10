@@ -58,14 +58,14 @@ export function ConversationList({
 
   const listContent = (
     <div className="flex flex-col h-full">
-      <div className="p-3 border-b border-border">
+      <div className="p-3 border-b border-white/10">
         <button
           onClick={onNewConversation}
           disabled={isCreating}
           className={[
-            'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium',
-            'border border-border',
-            'hover:bg-muted transition-colors duration-150',
+            'w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium',
+            'border border-white/10 bg-white/[0.03]',
+            'hover:bg-white/[0.06] transition-colors duration-150',
             'disabled:cursor-not-allowed disabled:opacity-50',
             accentClass,
           ].join(' ')}
@@ -78,7 +78,7 @@ export function ConversationList({
 
       <div className="flex-1 overflow-y-auto py-2" role="list" aria-label="Liste des conversations">
         {conversations.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-muted-foreground text-center">
+          <p className="px-4 py-6 text-sm text-gray-500 text-center">
             Aucune conversation pour l'instant
           </p>
         ) : (
@@ -164,11 +164,11 @@ export function ConversationList({
 
       {/* Sidebar desktop collapsible (>= 768px) */}
       <aside
-        className="hidden md:flex flex-col w-64 border-r border-border bg-background shrink-0"
+        className="hidden md:flex flex-col w-64 border-r border-white/10 bg-white/[0.01] shrink-0"
         aria-label="Conversations Élio"
       >
-        <div className="p-3 border-b border-border">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        <div className="p-3 border-b border-white/10">
+          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
             Conversations
           </h2>
         </div>

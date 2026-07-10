@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback, type CSSProperties } from 'react'
 import Link from 'next/link'
-import { Zap, MessageCircle, SlidersHorizontal, PenLine, Mic, Paperclip, Send, Loader2, FileText } from 'lucide-react'
+import { Zap, MessageCircle, SlidersHorizontal, PenLine, Mic, Paperclip, Send, Loader2, FileText, Sparkles } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useElioChat } from '../hooks/use-elio-chat'
 import { useElioConversations } from '../hooks/use-elio-conversations'
@@ -240,7 +240,10 @@ function ElioChatSimple({
       data-dashboard-type={dashboardType}
       style={oneAccentStyle}
     >
-      <header className="border-b border-border px-4 py-3 shrink-0">
+      <header className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-4 py-3 shrink-0">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
+          <Sparkles className="h-4 w-4" />
+        </div>
         <h2 className="text-sm font-semibold text-foreground">{headerLabel}</h2>
       </header>
       <div
@@ -816,7 +819,10 @@ function ElioChatPersisted({
       className={`flex flex-col h-full bg-background text-foreground ${paletteClass}`}
       data-dashboard-type={dashboardType}
     >
-      <header className="border-b border-border px-4 py-3 shrink-0">
+      <header className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-4 py-3 shrink-0">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
+          <Sparkles className="h-4 w-4" />
+        </div>
         <h2 className="text-sm font-semibold text-foreground">{headerLabel}</h2>
       </header>
       <div className="flex flex-1 min-h-0">
@@ -1074,7 +1080,7 @@ function ChatInput({
     const glowLine = MODE_GLOW_LINE_HUB[mode]
 
     return (
-      <form onSubmit={(e) => { setAttachedFile(null); onSubmit(e) }} className="border-t border-border px-4 py-4">
+      <form onSubmit={(e) => { setAttachedFile(null); onSubmit(e) }} className="border-t border-white/10 px-4 py-4">
         {/* Input fichier caché */}
 
         {/* Indicateur fichier attaché */}
@@ -1194,7 +1200,7 @@ function ChatInput({
 
   // Mode standard (Lab / One)
   return (
-    <form onSubmit={onSubmit} className="border-t border-border px-4 py-3">
+    <form onSubmit={onSubmit} className="border-t border-white/10 px-4 py-3">
       <div className="flex items-end gap-2">
         <textarea
           ref={inputRef}
@@ -1206,8 +1212,8 @@ function ChatInput({
           rows={1}
           aria-label="Message à envoyer à Élio"
           className={[
-            'flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm',
-            'placeholder:text-muted-foreground',
+            'flex-1 resize-none rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-foreground',
+            'placeholder:text-muted-foreground/60',
             'disabled:cursor-not-allowed disabled:opacity-50',
             'focus-visible:outline-none focus-visible:ring-2',
             focusRing,
@@ -1257,7 +1263,10 @@ export function ElioChat({
         className={`flex flex-col h-full bg-background text-foreground ${PALETTE_CLASSES[dashboardType]}`}
         data-dashboard-type={dashboardType}
       >
-        <header className="border-b border-border px-4 py-3 shrink-0">
+        <header className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-4 py-3 shrink-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
+            <Sparkles className="h-4 w-4" />
+          </div>
           <h2 className="text-sm font-semibold text-foreground">{HEADER_LABELS[dashboardType]}</h2>
         </header>
         <div className="flex-1 flex items-center justify-center px-6">
