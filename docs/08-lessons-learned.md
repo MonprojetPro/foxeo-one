@@ -763,3 +763,16 @@
 - **Symptôme** : le webhook calcom-webhook (auth HMAC, verify_jwt=false posé via MCP) s'est retrouvé verify_jwt=true après un simple redéploiement CLI → Cal.com bloqué en 401 au gateway, silencieusement.
 - **Cause racine** : `supabase functions deploy` applique verify_jwt=true par défaut si aucun config.toml ne dit le contraire ; le réglage posé au déploiement précédent n'est PAS conservé.
 - **Solution** : chaque fonction appelée sans JWT (webhooks externes, fonctions à auth custom) DOIT avoir son `config.toml` avec `verify_jwt = false` commité à côté de l'index.ts. Vérifier `verify_jwt` dans list_edge_functions après tout déploiement d'un webhook.
+
+---
+
+### [UI-005] Un raccourci de rendu « lecture seule » court-circuite en silence un état riche déjà construit
+- **Date** : 2026-07-10
+- **Projet** : MonprojetPro — App client (page Mon Parcours, mode Lab, client gradué)
+- **Categorie** : Architecture UI / Régression
+- **Symptome** : Un client gradué en MODE LAB voyait un résumé condensé en lecture seule (`LabHistoryView` : liste d'étapes cochées, sans conversations, docs réduits à un lien) au lieu du parcours entier grisé attendu (visuel conservé, étapes cliquables, Élio « en pause », réouverture par MiKL). MiKL : « on avait déjà réglé cette partie… pourquoi ce retour en arrière ? ».
+- **Cause racine** : un « Lot » ultérieur (commit `c96fe4a`, « Lot 3 : consultation historique vs Lab entier ») a ajouté une branche `labReadOnly = graduated && !elio_lab_enabled → return <LabHistoryView>` **avant** le rendu normal. Or l'état « pause/grisé » riche existait déjà dans `ParcoursOverview` via `agentsPaused` (bouton Générer masqué, cartes cliquables, conversations + docs consultables). Le raccourci interceptait donc les gradués et les privait de l'état déjà construit. Régression **invisible en tests** (les tests couvraient chaque composant isolément, pas la bascule de la page).
+- **Solution validee** : retrait de la branche `labReadOnly → LabHistoryView`. Les gradués passent par le même `ParcoursPageClient` que les Lab natifs, avec `agentsPaused = !elio_lab_enabled`. Composant `LabHistoryView` conservé mais dé-référencé.
+- **Prevention** : avant d'ajouter une vue « simplifiée » parallèle pour un sous-cas, vérifier si l'état visuel voulu existe déjà (grep de l'état/prop concerné, ex. `agentsPaused`) et le **réutiliser** plutôt que de le court-circuiter. Une branche `if (sousCas) return <VueDépouillée>` en tête de composant est un drapeau rouge de régression : elle masque tout le rendu riche en aval.
+- **Agents impliques** : SPARK (dev), ATLAS
+
