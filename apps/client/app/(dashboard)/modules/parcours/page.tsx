@@ -4,8 +4,6 @@ import { cookies } from 'next/headers'
 import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
 import { resolveClientMode } from '@monprojetpro/utils'
-import { getParcours } from '@monprojetpro/module-parcours'
-import { LabHistoryView } from '@monprojetpro/module-core-dashboard'
 import { ParcoursPageClient } from './parcours-page-client'
 // rebuild
 
@@ -41,38 +39,13 @@ export default async function ClientParcoursPage() {
     redirect('/')
   }
 
-  // Niveau d'accès Lab (ADR-01) : un client gradué (dashboard_type='one') qui n'a PAS
-  // Élio Lab réactivé ne voit son Lab qu'en CONSULTATION (historique lecture seule).
-  // Élio Lab réactivé OU client Lab natif → parcours entier interactif.
-  const isGraduated = cfg?.dashboard_type === 'one'
-  const labReadOnly = isGraduated && !(cfg?.elio_lab_enabled ?? false)
+  // Accès Lab du client gradué (ADR-01) : on affiche TOUJOURS le parcours entier.
+  // Quand Élio Lab n'est pas réactivé, il est simplement grisé / en pause
+  // (agentsPaused ci-dessous) — étapes cliquables (conversations + docs consultables),
+  // bouton « Générer » masqué, réouverture d'une étape réservée à MiKL depuis le Hub.
+  // (Retrait du raccourci LabHistoryView "consultation" du Lot 3 — régression signalée.)
 
-  if (labReadOnly) {
-    const parcoursRes = await getParcours({ clientId: client.id })
-    const p = parcoursRes.data
-    const historyParcours = p
-      ? {
-          id: p.id,
-          status: p.status,
-          startedAt: p.createdAt,
-          completedAt: p.completedAt,
-          steps: p.steps.map((s) => ({
-            id: s.id,
-            name: s.title,
-            completedAt: s.completedAt,
-            documentId: null,
-          })),
-        }
-      : null
-
-    return (
-      <div className="flex flex-col gap-6 p-6">
-        <LabHistoryView parcours={historyParcours} />
-      </div>
-    )
-  }
-
-  // Agents du parcours coupés par l'opérateur (client Lab natif). L'état « en pause » n'est
+  // Agents du parcours coupés par l'opérateur (client Lab natif ou gradué). L'état « en pause » n'est
   // plus une bannière séparée : il est porté par le bandeau UNIQUE d'Élio le Concierge,
   // seule voix qui s'adresse au client sur cette page.
   const labAgentsOff = !(cfg?.elio_lab_enabled ?? false)
