@@ -776,3 +776,14 @@
 - **Prevention** : avant d'ajouter une vue « simplifiée » parallèle pour un sous-cas, vérifier si l'état visuel voulu existe déjà (grep de l'état/prop concerné, ex. `agentsPaused`) et le **réutiliser** plutôt que de le court-circuiter. Une branche `if (sousCas) return <VueDépouillée>` en tête de composant est un drapeau rouge de régression : elle masque tout le rendu riche en aval.
 - **Agents impliques** : SPARK (dev), ATLAS
 
+
+## UI-006 — Vague d'agents parallèles : guillemets courbes + fausse alerte git (chantier design cockpit)
+
+**Contexte** : refonte design du Hub (style MenuFacile généralisé) via 8 agents Sonnet en parallèle sur le même working tree.
+
+- **Piège 1 — guillemets courbes comme délimiteurs** : un agent a émis des `‘…’` (U+2018/U+2019) à la place de `'…'` comme **délimiteurs de chaînes JS** (`className={… ? ‘border-cyan-500/60’ : …}`), cassant `next build` (« Expected '</', got 'border' »). Invisible pour tsc/vitest tant que le fichier n'est pas parsé par SWC/Next.
+  - **Détection** : `grep -nP "[\x{2018}\x{2019}\x{201C}\x{201D}]"` sur les fichiers de `git diff --name-only`.
+  - **Ne PAS remplacer aveuglément** : une apostrophe courbe *dans* une chaîne à guillemets droits (`'…n’a pas…'`) est **valide** — n'y toucher que quand le courbe est un **délimiteur**. Cas mixte (`‘…l’instant…’`) → repasser la chaîne en guillemets droits doubles.
+- **Piège 2 — fausse alerte « débordement » git** : un agent a lancé `git status`, vu les 65 fichiers modifiés par ses **collègues parallèles**, et conclu à tort qu'il avait débordé — proposant un `git checkout HEAD -- packages/modules/chat crm …` qui aurait **détruit le travail des 7 autres agents**. STOP : sur un tree partagé, un sous-agent ne doit jamais raisonner sur `git status` global ni reverter des fichiers hors de son périmètre. Seul l'orchestrateur a la vue d'ensemble.
+- **Prévention vague parallèle** : (1) toujours 1 `turbo build` global APRÈS la vague, en capturant le vrai code retour (`… > log 2>&1; echo $?` — un `| tail` masque l'exit de turbo) ; (2) scanner les guillemets courbes avant commit ; (3) briefer les agents : « ne lance pas de build, ne commite pas, ne reverte rien, ignore le git status global ».
+- **Agents impliqués** : MAX (orchestration), PIXEL ×8 (vague), ATLAS
