@@ -62,43 +62,51 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
-        aria-label={`Étape ${step.stepNumber}: ${step.title} — parcours en pause, consultation uniquement`}
+        aria-label={`Étape ${step.stepNumber}: ${step.title} — non finalisée, parcours en pause, consultation uniquement`}
       >
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1 bg-[rgba(251,146,60,0.15)] text-orange-400 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+          <span className="inline-flex items-center gap-1 bg-[rgba(251,146,60,0.12)] text-orange-400/90 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
             <svg width="8" height="8" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <rect x="2" y="5" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M4 5V4a2 2 0 014 0v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
-            En pause
+            Non finalisée
           </span>
           <span className="text-[11px] text-[#6b7280]">Étape {step.stepNumber}</span>
         </div>
         <div className="mt-3.5 text-[16px] font-medium text-[#9ca3af] leading-snug">{step.title}</div>
         <div className="text-[12px] text-[#6b7280] mt-1 line-clamp-2">{step.description}</div>
         <div className="flex-1" />
-        <div className="text-[11px] text-orange-400/60 italic">Consultation uniquement →</div>
+        <div className="text-[11px] text-[#6b7280] italic">En pause · consultation uniquement →</div>
       </div>
     )
   }
 
-  // ÉTAT COMPLÉTÉ — fond vert discret, badge "Complétée"
+  // ÉTAT COMPLÉTÉ — fond vert discret, badge "Complétée". En pause : version ATTÉNUÉE
+  // (grisée, opacity-70) pour rester cohérente avec les cartes gelées et ne plus paraître
+  // active — mais garde le badge « Complétée » (une réussite reste visible).
   if (step.status === 'completed') {
+    const paused = isAbandoned || isPaused
     return (
       <div
         className={cn(
-          'h-[158px] flex flex-col rounded-[14px] p-[18px] cursor-pointer transition-all hover:brightness-105',
-          'bg-[rgba(22,163,74,0.1)] border border-[rgba(34,197,94,0.45)]',
+          'h-[158px] flex flex-col rounded-[14px] p-[18px] cursor-pointer transition-all',
+          paused
+            ? 'bg-[rgba(22,163,74,0.05)] border border-[rgba(34,197,94,0.22)] opacity-70 hover:opacity-90'
+            : 'bg-[rgba(22,163,74,0.1)] border border-[rgba(34,197,94,0.45)] hover:brightness-105',
           className
         )}
         onClick={handleClick}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
-        aria-label={`Étape ${step.stepNumber}: ${step.title} — complétée`}
+        aria-label={`Étape ${step.stepNumber}: ${step.title} — complétée${paused ? ', parcours en pause' : ''}`}
       >
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 bg-[rgba(34,197,94,0.15)] text-[#4ade80] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+          <span className={cn(
+            'inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase',
+            paused ? 'bg-[rgba(34,197,94,0.1)] text-[#4ade80]/75' : 'bg-[rgba(34,197,94,0.15)] text-[#4ade80]'
+          )}>
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M2 6l3 3 5-5" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -116,11 +124,11 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
             <span className="text-[11px] text-[#6b7280]">Étape {step.stepNumber}</span>
           </div>
         </div>
-        <div className="mt-3.5 text-[16px] font-semibold text-[#f9fafb] leading-snug">{step.title}</div>
-        <div className="text-[12px] text-[#9ca3af] mt-1 line-clamp-2">{step.description}</div>
+        <div className={cn('mt-3.5 text-[16px] font-semibold leading-snug', paused ? 'text-[#9ca3af]' : 'text-[#f9fafb]')}>{step.title}</div>
+        <div className="text-[12px] text-[#6b7280] mt-1 line-clamp-2">{step.description}</div>
         <div className="flex-1" />
         {step.completedAt && (
-          <div className="text-[11px] text-[#4ade80] font-medium">
+          <div className={cn('text-[11px] font-medium', paused ? 'text-[#4ade80]/60' : 'text-[#4ade80]')}>
             Complétée le {new Date(step.completedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
           </div>
         )}

@@ -92,16 +92,20 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
         onAskConcierge={onAskConcierge}
       />
 
-      {/* Progress bar — Claude Design */}
-      <ParcoursProgressBar
-        completedSteps={parcours.completedSteps}
-        totalSteps={parcours.totalSteps}
-        progressPercent={parcours.progressPercent}
-      />
+      {/* Progress bar — Claude Design. Atténuée quand le Lab est en pause (le parcours
+          est gelé : on ne pousse plus le client à avancer). */}
+      <div className={cn('transition-opacity', agentsPaused && 'opacity-50')}>
+        <ParcoursProgressBar
+          completedSteps={parcours.completedSteps}
+          totalSteps={parcours.totalSteps}
+          progressPercent={parcours.progressPercent}
+        />
+      </div>
 
       {/* LOT E — Mode libre : bandeau explicatif. Le client peut traiter les étapes
-          dans l'ordre qu'il veut (pas de verrou séquentiel). Masqué si parcours en pause. */}
-      {parcours.parcoursMode === 'libre' && !isAbandoned && (
+          dans l'ordre qu'il veut (pas de verrou séquentiel). Masqué si parcours en pause
+          (abandonné OU Lab suspendu) — il inciterait à avancer alors que tout est gelé. */}
+      {parcours.parcoursMode === 'libre' && !isAbandoned && !agentsPaused && (
         <div className="flex items-start gap-2.5 rounded-lg border border-[rgba(124,58,237,0.35)] bg-[rgba(124,58,237,0.08)] px-4 py-3">
           <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#a78bfa]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4" />
