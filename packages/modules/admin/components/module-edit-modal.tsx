@@ -29,12 +29,19 @@ export function ModuleEditModal({ module, onClose }: ModuleEditModalProps) {
 
   const upsertMutation = useUpsertModuleCatalog()
 
+  // Un module « One de base » (Relation + inclus) est fourni d'office dans
+  // l'abonnement One/One+ : le tableau l'affiche « Inclus » et masque le prix.
+  // Par cohérence, on interdit alors la saisie d'un prix setup (sinon on stocke
+  // un montant fantôme jamais affiché) et on force 0 à l'enregistrement.
+  const isIncluded = formData.family === 'relation' && formData.is_default
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     upsertMutation.mutate(
       {
         ...(module?.id ? { id: module.id } : {}),
         ...formData,
+        setup_price_ht: isIncluded ? 0 : formData.setup_price_ht,
         // Vision v2 : plus d'abonnement à la carte par module — offres One/One+ fixes
         monthly_price_ht: null,
         manifest_path: module?.manifest_path ?? null,
@@ -143,10 +150,17 @@ export function ModuleEditModal({ module, onClose }: ModuleEditModalProps) {
                 type="number"
                 min={0}
                 step={0.01}
-                value={formData.setup_price_ht}
+                value={isIncluded ? '' : formData.setup_price_ht}
                 onChange={(e) => updateField('setup_price_ht', parseFloat(e.target.value) || 0)}
-                className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                disabled={isIncluded}
+                placeholder={isIncluded ? 'Inclus — non applicable' : undefined}
+                className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
               />
+              {isIncluded && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Module « One de base » → inclus dans l'abonnement, pas de prix setup.
+                </p>
+              )}
             </div>
           </div>
 
