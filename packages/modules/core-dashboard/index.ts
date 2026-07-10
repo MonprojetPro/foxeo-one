@@ -1,8 +1,6 @@
 export { coreDashboardManifest } from './manifest'
 export { CoreDashboard } from './components/core-dashboard'
 export { LabTeasingCard } from './components/lab-teasing-card'
-export { LabHistoryView } from './components/lab-history-view'
-export type { ParcoursData, ParcoursStep } from './components/lab-history-view'
 export { useClientConfig } from './hooks/use-client-config'
 export { getClientConfig } from './actions/get-client-config'
 export { getTeasingEligibility } from './actions/get-teasing-eligibility'

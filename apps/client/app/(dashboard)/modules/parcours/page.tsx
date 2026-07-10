@@ -43,7 +43,7 @@ export default async function ClientParcoursPage() {
   // Quand Élio Lab n'est pas réactivé, il est simplement grisé / en pause
   // (agentsPaused ci-dessous) — étapes cliquables (conversations + docs consultables),
   // bouton « Générer » masqué, réouverture d'une étape réservée à MiKL depuis le Hub.
-  // (Retrait du raccourci LabHistoryView "consultation" du Lot 3 — régression signalée.)
+  // (L'ancien raccourci « consultation historique » du Lot 3 a été retiré — régression signalée.)
 
   // Agents du parcours coupés par l'opérateur (client Lab natif ou gradué). L'état « en pause » n'est
   // plus une bannière séparée : il est porté par le bandeau UNIQUE d'Élio le Concierge,
