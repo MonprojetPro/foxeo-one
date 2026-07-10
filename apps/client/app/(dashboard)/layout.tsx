@@ -448,7 +448,11 @@ export default async function DashboardLayout({
     '--brand-accent-fg': accentFg,
     '--brand-accent-muted': `color-mix(in srgb, ${effectiveAccent} 12%, transparent)`,
     '--brand-accent-border': `color-mix(in srgb, ${effectiveAccent} 30%, transparent)`,
-    ...(accentColor ? { '--accent': accentColor } : {}),
+    // Le token shadcn --accent n'est surchargé par la couleur de branding qu'en mode One.
+    // En mode Lab, on laisse l'accent violet du thème : sinon le vert One bave sur les
+    // composants génériques shadcn (ex. le chip dossier « Tous les documents »). Les tokens
+    // --brand-accent* ci-dessus ne sont consommés que par des composants One (mode One only).
+    ...(accentColor && activeMode === 'one' ? { '--accent': accentColor } : {}),
   } as React.CSSProperties
 
   // Élio One actif → widget sidebar + pop-up partagent UNE session éphémère (continuité).

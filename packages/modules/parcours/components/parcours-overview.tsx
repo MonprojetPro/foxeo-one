@@ -121,7 +121,7 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
         agentsPaused && 'opacity-70'
       )}>
         {parcours.steps.map((step) => (
-          <ParcoursStepCard key={step.id} step={step} unreadCount={unreadByStep[step.id] ?? 0} isAbandoned={isAbandoned} />
+          <ParcoursStepCard key={step.id} step={step} unreadCount={unreadByStep[step.id] ?? 0} isAbandoned={isAbandoned} isPaused={agentsPaused} />
         ))}
       </div>
 

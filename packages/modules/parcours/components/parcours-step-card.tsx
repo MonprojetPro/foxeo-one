@@ -9,9 +9,13 @@ interface ParcoursStepCardProps {
   className?: string
   unreadCount?: number
   isAbandoned?: boolean
+  /** Lab en pause (agents coupés / client gradué non réactivé) → même rendu que
+   *  « parcours abandonné » : carte grisée « En pause », consultation uniquement.
+   *  Les étapes déjà complétées gardent leur badge vert (voir garde `!== 'completed'`). */
+  isPaused?: boolean
 }
 
-export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned = false }: ParcoursStepCardProps) {
+export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned = false, isPaused = false }: ParcoursStepCardProps) {
   const router = useRouter()
 
   function handleClick() {
@@ -43,8 +47,10 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
     )
   }
 
-  // ÉTAT EN PAUSE — parcours abandonné : cartes cliquables (consultation) mais badge orange visible
-  if (isAbandoned) {
+  // ÉTAT EN PAUSE — parcours abandonné OU Lab en pause : cartes cliquables (consultation)
+  // mais badge « En pause » visible. Les étapes complétées sont exclues ici : elles gardent
+  // leur badge vert « Complétée » (rendu plus bas), une réussite reste une réussite en pause.
+  if ((isAbandoned || isPaused) && step.status !== 'completed') {
     return (
       <div
         className={cn(
