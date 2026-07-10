@@ -89,6 +89,8 @@ interface ElioChatProps {
   // Session éphémère PARTAGÉE (One) : quand fournie, le chat n'utilise pas son propre état
   // interne mais celui-ci. Permet au widget sidebar et à la pop-up de partager UNE conversation.
   externalSession?: ElioChatSession
+  // Masque l'en-tête interne du chat quand la page fournit déjà une bannière (CockpitHeader).
+  hideHeader?: boolean
 }
 
 /** Forme d'une session de chat éphémère (= valeur de retour de `useElioChat`). */
@@ -135,7 +137,8 @@ function ElioChatSimple({
   placeholder,
   model,
   externalSession,
-}: Pick<ElioChatProps, 'dashboardType' | 'clientId' | 'placeholder' | 'model' | 'externalSession'>) {
+  hideHeader = false,
+}: Pick<ElioChatProps, 'dashboardType' | 'clientId' | 'placeholder' | 'model' | 'externalSession' | 'hideHeader'>) {
   const queryClient = useQueryClient()
   // Le hook interne est toujours appelé (règle des hooks) mais ignoré si une session externe
   // partagée est fournie (widget ↔ pop-up = une seule conversation).
@@ -240,12 +243,14 @@ function ElioChatSimple({
       data-dashboard-type={dashboardType}
       style={oneAccentStyle}
     >
-      <header className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-4 py-3 shrink-0">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
-          <Sparkles className="h-4 w-4" />
-        </div>
-        <h2 className="text-sm font-semibold text-foreground">{headerLabel}</h2>
-      </header>
+      {!hideHeader && (
+        <header className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-4 py-3 shrink-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <h2 className="text-sm font-semibold text-foreground">{headerLabel}</h2>
+        </header>
+      )}
       <div
         className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
         role="log"
@@ -352,8 +357,9 @@ function ElioChatPersisted({
   placeholder,
   customGreeting,
   initialConversationId,
+  hideHeader = false,
 }: Required<Pick<ElioChatProps, 'dashboardType' | 'userId'>> &
-  Pick<ElioChatProps, 'clientId' | 'tutoiement' | 'placeholder' | 'customGreeting' | 'initialConversationId'>) {
+  Pick<ElioChatProps, 'clientId' | 'tutoiement' | 'placeholder' | 'customGreeting' | 'initialConversationId' | 'hideHeader'>) {
   const queryClient = useQueryClient()
 
   const [inputValue, setInputValue] = useState('')
@@ -819,12 +825,14 @@ function ElioChatPersisted({
       className={`flex flex-col h-full bg-background text-foreground ${paletteClass}`}
       data-dashboard-type={dashboardType}
     >
-      <header className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-4 py-3 shrink-0">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
-          <Sparkles className="h-4 w-4" />
-        </div>
-        <h2 className="text-sm font-semibold text-foreground">{headerLabel}</h2>
-      </header>
+      {!hideHeader && (
+        <header className="flex items-center gap-3 border-b border-white/10 bg-white/[0.02] px-4 py-3 shrink-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <h2 className="text-sm font-semibold text-foreground">{headerLabel}</h2>
+        </header>
+      )}
       <div className="flex flex-1 min-h-0">
         {/* Panneau conversations (AC2) */}
         {!conversationsLoading && (
@@ -1255,6 +1263,7 @@ export function ElioChat({
   initialConversationId,
   model,
   externalSession,
+  hideHeader = false,
 }: ElioChatProps) {
   // Story 9.3 — Désactiver Élio Lab si parcours abandonné
   if (parcoursAbandoned && dashboardType === 'lab') {
@@ -1302,6 +1311,7 @@ export function ElioChat({
         placeholder={resolvedPlaceholder}
         customGreeting={customGreeting}
         initialConversationId={initialConversationId}
+        hideHeader={hideHeader}
       />
     )
   }
@@ -1313,6 +1323,7 @@ export function ElioChat({
       placeholder={resolvedPlaceholder}
       model={model}
       externalSession={externalSession}
+      hideHeader={hideHeader}
     />
   )
 }
