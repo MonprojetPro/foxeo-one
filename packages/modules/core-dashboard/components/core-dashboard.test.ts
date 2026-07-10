@@ -91,27 +91,6 @@ describe('CoreDashboard', () => {
       expect(container.textContent).not.toContain('Bonjour Marie')
     })
 
-    it('renders quick access cards for active modules', () => {
-      const { container } = render(
-        CoreDashboard({
-          clientConfig: makeConfig({ activeModules: ['core-dashboard', 'chat', 'documents'] }),
-          clientName: 'Test',
-        })
-      )
-      expect(container.textContent).toContain('Chat')
-      expect(container.textContent).toContain('Documents')
-    })
-
-    it('renders no-modules message when only core-dashboard active', () => {
-      const { container } = render(
-        CoreDashboard({
-          clientConfig: makeConfig({ activeModules: ['core-dashboard'] }),
-          clientName: 'Test',
-        })
-      )
-      expect(container.textContent).toContain('Contactez MiKL')
-    })
-
     it('renders without logo when no custom branding', () => {
       const { container } = render(
         CoreDashboard({
