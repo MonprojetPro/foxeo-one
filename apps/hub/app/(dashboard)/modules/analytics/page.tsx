@@ -5,5 +5,10 @@ export const metadata = {
 }
 
 export default function AnalyticsPage() {
-  return <AnalyticsDashboard />
+  return (
+    /* Padding homogène avec les autres modules Hub */
+    <div className="p-6 md:p-8">
+      <AnalyticsDashboard />
+    </div>
+  )
 }
