@@ -1,27 +1,33 @@
 import { Sparkles } from 'lucide-react'
-import { CockpitHeader, CockpitCallout } from '@monprojetpro/ui'
+import { getOnePopupConfig, getGraduatedOneClients, DEFAULT_ONE_POPUP_CONFIG } from '@monprojetpro/module-elio'
+import { CockpitHeader } from '@monprojetpro/ui'
+import { OnePopupSection } from './one-popup-section'
 
 /**
- * Onglet Élio One — placeholder.
- * Restyling cockpit v2 — CockpitHeader ton emerald (thème One), état vide cockpit.
+ * Onglet Élio One — personnalisation de la pop-up (lot 1).
+ * Réglage global (tous les clients gradués) + surcharge par client.
+ * Restyling cockpit v2 — CockpitHeader ton emerald (thème One).
  */
-export default function ElioOnePage() {
+export default async function ElioOnePage() {
+  const [configResult, clientsResult] = await Promise.all([
+    getOnePopupConfig(),
+    getGraduatedOneClients(),
+  ])
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-8">
       {/* En-tête cockpit — ton emerald pour refléter le thème One */}
       <CockpitHeader
         icon={Sparkles}
         title="Élio One"
-        subtitle="L'agent Élio intégré dans le dashboard One de tes clients gradués."
+        subtitle="Personnalise la pop-up Élio du dashboard One de tes clients gradués."
         tone="emerald"
       />
 
-      {/* État vide — roadmap à venir */}
-      <CockpitCallout tone="gray" title="En cours de développement">
-        La configuration Élio One (personnalisation du pop-up, deep-links, historique) sera
-        disponible dans une prochaine version. Les réglages Élio Hub s&apos;appliquent en
-        attendant.
-      </CockpitCallout>
+      <OnePopupSection
+        initialConfig={configResult.data ?? DEFAULT_ONE_POPUP_CONFIG}
+        clients={clientsResult.data ?? []}
+      />
     </div>
   )
 }

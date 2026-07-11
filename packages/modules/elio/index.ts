@@ -285,6 +285,28 @@ export type { AlertThresholds } from './types/alert-thresholds.types'
 // Actions — Directives permanentes Élio Hub (mode « Màj Élio », widget sidebar)
 export { getHubDirectives, addHubDirective, removeHubDirective } from './actions/hub-directives'
 
+// Actions — Personnalisation pop-up Élio One (lot 1 — pilotage Hub)
+export {
+  getOnePopupConfig,
+  setOnePopupConfig,
+  getOnePopupClientOverride,
+  setOnePopupClientOverride,
+} from './actions/one-popup-config'
+export { resolveOnePopupConfig } from './actions/resolve-one-popup-config'
+export { getGraduatedOneClients } from './actions/get-graduated-one-clients'
+export type { GraduatedOneClient } from './actions/get-graduated-one-clients'
+
+// Types — Personnalisation pop-up Élio One
+export {
+  ElioOnePopupConfigSchema,
+  ElioOnePopupOverrideSchema,
+  DEFAULT_ONE_POPUP_CONFIG,
+  ELIO_ONE_POPUP_KEY,
+  MAX_ONE_POPUP_SUGGESTIONS,
+  mergeOnePopupConfig,
+} from './types/one-popup.types'
+export type { ElioOnePopupConfig, ElioOnePopupOverride } from './types/one-popup.types'
+
 // Types — Directives permanentes Élio Hub
 export {
   HubDirectiveSchema,

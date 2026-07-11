@@ -91,6 +91,10 @@ interface ElioChatProps {
   externalSession?: ElioChatSession
   // Masque l'en-tête interne du chat quand la page fournit déjà une bannière (CockpitHeader).
   hideHeader?: boolean
+  // Personnalisation pop-up One (résolue global + surcharge client) : message d'accueil et
+  // suggestions de démarrage affichés en état vide (chat éphémère uniquement).
+  greeting?: string
+  suggestions?: string[]
 }
 
 /** Forme d'une session de chat éphémère (= valeur de retour de `useElioChat`). */
@@ -138,7 +142,9 @@ function ElioChatSimple({
   model,
   externalSession,
   hideHeader = false,
-}: Pick<ElioChatProps, 'dashboardType' | 'clientId' | 'placeholder' | 'model' | 'externalSession' | 'hideHeader'>) {
+  greeting,
+  suggestions,
+}: Pick<ElioChatProps, 'dashboardType' | 'clientId' | 'placeholder' | 'model' | 'externalSession' | 'hideHeader' | 'greeting' | 'suggestions'>) {
   const queryClient = useQueryClient()
   // Le hook interne est toujours appelé (règle des hooks) mais ignoré si une session externe
   // partagée est fournie (widget ↔ pop-up = une seule conversation).
@@ -257,6 +263,39 @@ function ElioChatSimple({
         aria-live="polite"
         aria-label="Conversation avec Élio"
       >
+        {/* État vide — accueil + suggestions de démarrage (pop-up One personnalisable) */}
+        {messages.length === 0 && !isLoading && !error && (greeting || (suggestions && suggestions.length > 0)) && (
+          <div className="flex flex-col items-center justify-center h-full gap-4 px-2 text-center">
+            {greeting && (
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <p className="max-w-md text-sm text-foreground leading-relaxed">{greeting}</p>
+              </div>
+            )}
+            {suggestions && suggestions.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {suggestions.map((sugg, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => void sendMessage(sugg)}
+                    disabled={isLoading}
+                    className={[
+                      'rounded-full border border-primary/25 bg-primary/[0.06] px-3 py-1.5 text-xs text-foreground',
+                      'hover:bg-primary/12 hover:border-primary/40 transition-colors cursor-pointer',
+                      'focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50',
+                      focusRing,
+                    ].join(' ')}
+                  >
+                    {sugg}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         {messages.map((msg) => (
           <ElioMessageItem key={msg.id} message={msg} dashboardType={dashboardType} />
         ))}
@@ -1264,6 +1303,8 @@ export function ElioChat({
   model,
   externalSession,
   hideHeader = false,
+  greeting,
+  suggestions,
 }: ElioChatProps) {
   // Story 9.3 — Désactiver Élio Lab si parcours abandonné
   if (parcoursAbandoned && dashboardType === 'lab') {
@@ -1324,6 +1365,8 @@ export function ElioChat({
       model={model}
       externalSession={externalSession}
       hideHeader={hideHeader}
+      greeting={greeting}
+      suggestions={suggestions}
     />
   )
 }

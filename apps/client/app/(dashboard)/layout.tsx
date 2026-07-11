@@ -47,6 +47,7 @@ import { ImpersonationWrapper } from './impersonation-wrapper'
 import { OneElioBox } from '../../components/one-elio-box'
 import { ElioOnePopup } from '../../components/elio-one-popup'
 import { ElioOneSessionProvider } from '../../components/elio-one-session'
+import { resolveOnePopupConfig, DEFAULT_ONE_POPUP_CONFIG } from '@monprojetpro/module-elio'
 import { SessionKeepAlive } from './session-keep-alive'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
 
@@ -458,6 +459,12 @@ export default async function DashboardLayout({
   // Élio One actif → widget sidebar + pop-up partagent UNE session éphémère (continuité).
   const oneElioActive = activeMode === 'one' && activeModules.includes('elio')
 
+  // Config pop-up Élio One résolue (global + surcharge client) — pilotée depuis le Hub.
+  // Résolue côté serveur ici pour éviter tout flash de coquille vide côté client.
+  const onePopupConfig = oneElioActive
+    ? (await resolveOnePopupConfig(clientId)).data ?? DEFAULT_ONE_POPUP_CONFIG
+    : DEFAULT_ONE_POPUP_CONFIG
+
   const shell = (
     <DashboardShell
       density={density}
@@ -497,7 +504,7 @@ export default async function DashboardLayout({
           pop-up consomment la même conversation → « Voir dans Élio » montre l'échange en cours. */}
       {oneElioActive ? (
         <ElioOneSessionProvider clientId={clientId}>
-          <ElioOnePopup clientId={clientId} iaConsentGranted={iaConsentGranted} />
+          <ElioOnePopup clientId={clientId} iaConsentGranted={iaConsentGranted} popupConfig={onePopupConfig} />
           {shell}
         </ElioOneSessionProvider>
       ) : (

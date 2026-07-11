@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ElioChat } from '@monprojetpro/module-elio'
+import { ElioChat, type ElioOnePopupConfig } from '@monprojetpro/module-elio'
 import { Dialog, DialogContent, DialogTitle } from '@monprojetpro/ui'
 import { subscribeElioOnePopup } from './use-elio-one-popup'
 import { useElioOneSession } from './elio-one-session'
@@ -11,6 +11,8 @@ interface ElioOnePopupProps {
   clientId: string
   /** Consentement IA (RGPD) — sinon Élio reste en veille dans la pop-up. */
   iaConsentGranted: boolean
+  /** Personnalisation pop-up résolue (global + surcharge client) — accueil, suggestions, invite. */
+  popupConfig: ElioOnePopupConfig
 }
 
 /**
@@ -19,7 +21,7 @@ interface ElioOnePopupProps {
  * vert branché sur la SESSION PARTAGÉE (`useElioOneSession`) : elle affiche donc exactement la
  * même conversation que le widget sidebar — « Voir dans Élio » montre ce qui a déjà été échangé.
  */
-export function ElioOnePopup({ clientId, iaConsentGranted }: ElioOnePopupProps) {
+export function ElioOnePopup({ clientId, iaConsentGranted, popupConfig }: ElioOnePopupProps) {
   const [open, setOpen] = useState(false)
   const session = useElioOneSession()
 
@@ -35,6 +37,9 @@ export function ElioOnePopup({ clientId, iaConsentGranted }: ElioOnePopupProps) 
               dashboardType="one"
               clientId={clientId}
               externalSession={session ?? undefined}
+              greeting={popupConfig.greeting}
+              suggestions={popupConfig.suggestions}
+              placeholder={popupConfig.placeholder}
             />
           ) : (
             <ElioVeille />
