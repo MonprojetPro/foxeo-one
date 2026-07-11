@@ -37,9 +37,12 @@ export const THRESHOLDS: Record<string, { warn: number; error: number }> = {
   resend: { warn: 1500, error: 3000 },
 }
 
-// Debounce : 60 minutes entre alertes par service (15 min → 60 min le 2026-07-07,
-// la cloche était polluée par des blips de latence transitoires)
-export const ALERT_DEBOUNCE_MS = 60 * 60 * 1000
+// Durée minimale d'erreur CONTINUE avant d'alerter (2026-07-11 — anti-fantôme).
+// Un service doit être en `error` depuis au moins 15 min (≈ 3 cycles de 5 min)
+// pour déclencher une alerte cloche. Filtre les blips transitoires qui se
+// soignent seuls. La surveillance externe (Better Stack) prend le relais pour
+// l'urgence temps réel.
+export const SUSTAINED_ERROR_MS = 15 * 60 * 1000
 
 /** Détermine le statut d'un service en fonction de la latence et des seuils */
 export function evaluateServiceStatus(
@@ -65,16 +68,6 @@ export function determineGlobalStatus(
   return 'ok'
 }
 
-/** Vérifie si une alerte peut être envoyée (debounce 15 min) */
-export function shouldSendAlert(
-  lastAlertAt: string | null,
-  nowMs: number = Date.now()
-): boolean {
-  if (!lastAlertAt) return true
-  const lastMs = new Date(lastAlertAt).getTime()
-  return nowMs - lastMs >= ALERT_DEBOUNCE_MS
-}
-
 /** Construit le résultat complet health check */
 export function buildHealthCheckResult(
   services: Record<string, ServiceCheck>,
@@ -87,21 +80,76 @@ export function buildHealthCheckResult(
   }
 }
 
+// ── Suivi d'incidents (auto-résolution — 2026-07-11) ──────────────────────────
+//
+// Le problème résolu : avant, une alerte partait dès qu'un service était `error`
+// 2 cycles de suite, MAIS elle restait affichée dans la cloche même après le
+// retour à la normale (« le monitoring est vert mais j'ai une alerte fantôme »).
+//
+// Nouveau modèle : on garde un état d'incident par service.
+//  • `errorSince`      = début de la série d'erreurs en cours.
+//  • `notificationId`  = id de l'alerte cloche ouverte (null tant que pas alerté).
+// Règles :
+//  1. On alerte UNE fois quand l'erreur dure ≥ SUSTAINED_ERROR_MS (panne durable).
+//  2. Dès que le service repasse ok/degraded, l'alerte ouverte est SUPPRIMÉE
+//     (auto-résolution) → la cloche ne montre que des pannes réellement en cours.
+
+export interface Incident {
+  /** ISO — début de la série d'erreurs continue en cours */
+  errorSince: string
+  /** id de la notification cloche ouverte, ou null si pas encore alerté */
+  notificationId: string | null
+}
+
+export type IncidentMap = Record<string, Incident>
+
+export interface IncidentReconciliation {
+  /** Services à alerter maintenant (panne durable, pas encore notifiée) */
+  toAlert: string[]
+  /** Alertes ouvertes à supprimer (service revenu à la normale) */
+  toResolve: { service: string; notificationId: string }[]
+  /** État d'incidents à persister pour le prochain cycle */
+  nextIncidents: IncidentMap
+}
+
 /**
- * Retourne les services qui nécessitent une alerte cloche.
- * Règle (2026-07-07 — anti-pollution) : UNIQUEMENT `error`, ET confirmé par le
- * cycle précédent (2 observations consécutives). Un blip isolé ou un simple
- * `degraded` reste visible dans l'onglet Maintenance & Système, sans notification.
- * Une vraie panne alerte donc au plus tard à T+10 min (2 cycles de 5 min).
+ * Compare l'état courant des services aux incidents connus et décide :
+ * qui alerter (panne durable), quelles alertes fermer (service rétabli),
+ * et l'état d'incidents à sauvegarder.
+ *
+ * Note : pour les services `toAlert`, le `notificationId` reste `null` dans
+ * `nextIncidents` — l'appelant le renseigne après l'insertion réelle de la notif.
  */
-export function getAlertingServices(
+export function reconcileIncidents(
   services: Record<string, ServiceCheck>,
-  previousServices?: Record<string, ServiceCheck>
-): string[] {
-  return Object.entries(services)
-    .filter(([name, check]) => {
-      if (check.status !== 'error') return false
-      return previousServices?.[name]?.status === 'error'
-    })
-    .map(([name]) => name)
+  prevIncidents: IncidentMap = {},
+  nowMs: number = Date.now()
+): IncidentReconciliation {
+  const toAlert: string[] = []
+  const toResolve: { service: string; notificationId: string }[] = []
+  const nextIncidents: IncidentMap = {}
+
+  for (const [service, check] of Object.entries(services)) {
+    const prev = prevIncidents[service]
+
+    if (check.status === 'error') {
+      const errorSince = prev?.errorSince ?? new Date(nowMs).toISOString()
+      const notificationId = prev?.notificationId ?? null
+      const sustainedMs = nowMs - new Date(errorSince).getTime()
+
+      // Alerte seulement si l'erreur dure ET qu'aucune alerte n'est déjà ouverte
+      if (!notificationId && sustainedMs >= SUSTAINED_ERROR_MS) {
+        toAlert.push(service)
+      }
+      nextIncidents[service] = { errorSince, notificationId }
+    } else {
+      // Service revenu ok/degraded : auto-résolution si une alerte était ouverte
+      if (prev?.notificationId) {
+        toResolve.push({ service, notificationId: prev.notificationId })
+      }
+      // Incident clos → on ne le persiste pas (absent de nextIncidents)
+    }
+  }
+
+  return { toAlert, toResolve, nextIncidents }
 }

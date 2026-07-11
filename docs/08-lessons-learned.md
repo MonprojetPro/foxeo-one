@@ -787,3 +787,15 @@
 - **Piège 2 — fausse alerte « débordement » git** : un agent a lancé `git status`, vu les 65 fichiers modifiés par ses **collègues parallèles**, et conclu à tort qu'il avait débordé — proposant un `git checkout HEAD -- packages/modules/chat crm …` qui aurait **détruit le travail des 7 autres agents**. STOP : sur un tree partagé, un sous-agent ne doit jamais raisonner sur `git status` global ni reverter des fichiers hors de son périmètre. Seul l'orchestrateur a la vue d'ensemble.
 - **Prévention vague parallèle** : (1) toujours 1 `turbo build` global APRÈS la vague, en capturant le vrai code retour (`… > log 2>&1; echo $?` — un `| tail` masque l'exit de turbo) ; (2) scanner les guillemets courbes avant commit ; (3) briefer les agents : « ne lance pas de build, ne commite pas, ne reverte rien, ignore le git status global ».
 - **Agents impliqués** : MAX (orchestration), PIXEL ×8 (vague), ATLAS
+
+---
+
+### [RT-001] Event Realtime DELETE (et UPDATE filtré) non délivré sans REPLICA IDENTITY FULL — alerte fantôme dans la cloche
+- **Date** : 2026-07-11
+- **Projet** : MonprojetPro
+- **Categorie** : Supabase Realtime
+- **Symptome** : MiKL — « j'ai des alertes système dans ma cloche alors que le monitoring est tout vert ». Les alertes du health-check-cron restaient affichées après le rétablissement du service (fantômes non-actionnables).
+- **Cause (2 volets)** : (1) **Conception** — l'ancien code envoyait une notif dès qu'un service était `error` 2 cycles, mais ne la refermait JAMAIS ; une notif est permanente jusqu'à lecture → un blip transitoire de 10 min laissait un fantôme éternel. (2) **Réalisation Realtime** — pour auto-résoudre, on supprime la notif côté serveur ; MAIS le hook cloche n'écoutait que `INSERT`, et surtout la table `notifications` était en `REPLICA IDENTITY default` (PK seule) → sur un `DELETE`, le `old` record ne contient que `id`, donc le filtre `recipient_id=eq.<id>` ne matche jamais et l'event est **silencieusement jeté** (le navigateur ne voit pas la suppression).
+- **Solution** : suivi d'incidents par service (`system_config.health_incidents` = `errorSince` + `notificationId`) → alerte seulement si l'erreur DURE ≥ 15 min, puis **auto-résolution** (DELETE de la notif) au retour à la normale. Côté client : hook Realtime étendu à `UPDATE` + `DELETE`, et migration `ALTER TABLE notifications REPLICA IDENTITY FULL`. L'historique reste tracé dans `activity_logs` (`system_alert` / `system_alert_resolved`).
+- **Regle a suivre** : (1) Pour qu'un event Realtime `DELETE` (ou `UPDATE` filtré sur une colonne **hors PK**) soit délivré, la table doit être en `REPLICA IDENTITY FULL` — sinon le `old` record n'a que la PK et le filtre ne matche pas. (cf. [RSC-009], même prérequis). (2) Toute notification/alerte a un **cycle de vie complet** : elle doit pouvoir se FERMER (auto-résolution), pas seulement s'ouvrir — sinon la cloche accumule des fantômes. (3) Une alerte non-actionnable (blip qui se soigne seul) ne devrait jamais notifier : exiger une **panne durable** avant d'alerter.
+- **Agents impliques** : SCOUT (reco surveillance externe Better Stack), SPARK, ATLAS

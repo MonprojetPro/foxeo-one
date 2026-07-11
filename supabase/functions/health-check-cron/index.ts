@@ -8,25 +8,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import {
   evaluateServiceStatus,
   buildHealthCheckResult,
-  shouldSendAlert,
-  getAlertingServices,
+  reconcileIncidents,
   type ServiceCheck,
-  type HealthCheckResult,
+  type IncidentMap,
 } from './health-check-logic.ts'
-
-// ── Types locaux ──────────────────────────────────────────────────────────────
-
-interface SystemAlertData {
-  last_alert_pennylane_at?: string | null
-  last_alert_cal_com_at?: string | null
-  last_alert_supabase_db_at?: string | null
-  last_alert_supabase_storage_at?: string | null
-  last_alert_supabase_auth_at?: string | null
-  last_alert_supabase_realtime_at?: string | null
-  last_alert_vercel_hub_at?: string | null
-  last_alert_vercel_client_at?: string | null
-  last_alert_resend_at?: string | null
-}
 
 // ── Helpers de timing ─────────────────────────────────────────────────────────
 
@@ -169,41 +154,39 @@ async function checkResend(apiKey: string | undefined): Promise<ServiceCheck> {
 
 // ── Notification MiKL ─────────────────────────────────────────────────────────
 
+// Crée l'alerte cloche pour un service en panne durable.
+// Retourne l'id de la notification créée (pour pouvoir la refermer ensuite), ou
+// null en cas d'échec.
 async function sendAlertNotification(
   supabase: ReturnType<typeof createClient>,
+  operatorAuthId: string,
   serviceName: string,
   serviceStatus: string
-): Promise<void> {
-  // Récupérer l'auth_user_id du premier opérateur
-  const { data: operator } = await supabase
-    .from('operators')
-    .select('auth_user_id')
-    .limit(1)
-    .maybeSingle()
-
-  if (!operator?.auth_user_id) {
-    console.error('[HEALTH:CRON] No operator found for alert notification')
-    return
-  }
-
+): Promise<string | null> {
   const displayName = serviceName.replace(/_/g, ' ')
 
-  const { error: notifError } = await supabase.from('notifications').insert({
-    recipient_type: 'operator',
-    recipient_id: operator.auth_user_id,
-    type: 'system',
-    title: `Alerte système — ${displayName}`,
-    body: `Le service ${displayName} ne répond pas correctement (statut: ${serviceStatus}). Vérifiez le tableau de monitoring.`,
-    link: '/modules/admin/system',
-  })
+  // service_role → RLS bypass, .select() après insert est sûr ici
+  const { data: notif, error: notifError } = await supabase
+    .from('notifications')
+    .insert({
+      recipient_type: 'operator',
+      recipient_id: operatorAuthId,
+      type: 'system',
+      title: `Alerte système — ${displayName}`,
+      body: `Le service ${displayName} est en panne depuis plus de 15 min (statut: ${serviceStatus}). Cette alerte disparaîtra automatiquement au rétablissement du service.`,
+      link: '/modules/admin/system',
+    })
+    .select('id')
+    .single()
 
   if (notifError) {
     console.error('[HEALTH:CRON] Failed to insert notification:', notifError)
+    return null
   }
 
   const { error: logError } = await supabase.from('activity_logs').insert({
     actor_type: 'system',
-    actor_id: operator.auth_user_id,
+    actor_id: operatorAuthId,
     action: 'system_alert',
     entity_type: 'system',
     entity_id: null,
@@ -212,6 +195,40 @@ async function sendAlertNotification(
 
   if (logError) {
     console.error('[HEALTH:CRON] Failed to insert activity log:', logError)
+  }
+
+  return (notif as { id: string } | null)?.id ?? null
+}
+
+// Auto-résolution : supprime l'alerte cloche d'un service revenu à la normale.
+// L'historique reste tracé dans activity_logs (action `system_alert_resolved`).
+async function resolveAlertNotification(
+  supabase: ReturnType<typeof createClient>,
+  operatorAuthId: string,
+  serviceName: string,
+  notificationId: string
+): Promise<void> {
+  const { error: delError } = await supabase
+    .from('notifications')
+    .delete()
+    .eq('id', notificationId)
+
+  if (delError) {
+    console.error('[HEALTH:CRON] Failed to delete resolved notification:', delError)
+    return
+  }
+
+  const { error: logError } = await supabase.from('activity_logs').insert({
+    actor_type: 'system',
+    actor_id: operatorAuthId,
+    action: 'system_alert_resolved',
+    entity_type: 'system',
+    entity_id: null,
+    metadata: { service: serviceName },
+  })
+
+  if (logError) {
+    console.error('[HEALTH:CRON] Failed to insert resolution log:', logError)
   }
 }
 
@@ -255,14 +272,7 @@ serve(async (_req: Request) => {
 
   const result = buildHealthCheckResult(services)
 
-  // 2. Lire le check PRÉCÉDENT (confirmation 2 cycles) puis UPSERT le nouveau
-  const { data: previousRow } = await supabase
-    .from('system_config')
-    .select('value')
-    .eq('key', 'health_checks')
-    .maybeSingle()
-  const previousServices = (previousRow?.value as HealthCheckResult | null)?.services
-
+  // 2. UPSERT le snapshot courant (lu par l'onglet Maintenance & Système)
   const { error: upsertError } = await supabase
     .from('system_config')
     .update({ value: result })
@@ -273,43 +283,66 @@ serve(async (_req: Request) => {
     return new Response('Error saving health checks', { status: 500 })
   }
 
-  // 3. Alertes : error confirmé sur 2 cycles + debounce 60 min
-  const alertingServices = getAlertingServices(services, previousServices)
+  // 3. Réconciliation d'incidents : alerter les pannes durables (≥15 min),
+  //    refermer les alertes des services rétablis (auto-résolution).
+  const { data: incidentRow } = await supabase
+    .from('system_config')
+    .select('value')
+    .eq('key', 'health_incidents')
+    .maybeSingle()
 
-  if (alertingServices.length > 0) {
-    // Lire les données de debounce depuis system_config
-    const { data: alertData } = await supabase
-      .from('system_config')
-      .select('value')
-      .eq('key', 'health_alert_debounce')
+  const prevIncidents = (incidentRow?.value ?? {}) as IncidentMap
+  const nowMs = Date.now()
+  const { toAlert, toResolve, nextIncidents } = reconcileIncidents(
+    services,
+    prevIncidents,
+    nowMs
+  )
+
+  if (toAlert.length > 0 || toResolve.length > 0) {
+    // Un seul lookup opérateur pour alertes + résolutions
+    const { data: operator } = await supabase
+      .from('operators')
+      .select('auth_user_id')
+      .limit(1)
       .maybeSingle()
 
-    const debounceData: SystemAlertData = (alertData?.value ?? {}) as SystemAlertData
-    const nowMs = Date.now()
-    const updatedDebounce: SystemAlertData = { ...debounceData }
-    let alertsSent = 0
+    const operatorAuthId = (operator as { auth_user_id: string } | null)?.auth_user_id
 
-    for (const serviceName of alertingServices) {
-      const debounceKey = `last_alert_${serviceName}_at` as keyof SystemAlertData
-      const lastAlertAt = debounceData[debounceKey] ?? null
-
-      if (shouldSendAlert(lastAlertAt, nowMs)) {
-        await sendAlertNotification(supabase, serviceName, services[serviceName].status)
-        updatedDebounce[debounceKey] = new Date(nowMs).toISOString()
-        alertsSent++
+    if (!operatorAuthId) {
+      console.error('[HEALTH:CRON] No operator found — skipping notifications')
+    } else {
+      // Nouvelles alertes : on renseigne le notificationId dans l'état persisté
+      for (const service of toAlert) {
+        const notifId = await sendAlertNotification(
+          supabase,
+          operatorAuthId,
+          service,
+          services[service].status
+        )
+        if (notifId && nextIncidents[service]) {
+          nextIncidents[service].notificationId = notifId
+        }
       }
-    }
 
-    if (alertsSent > 0) {
-      // UPSERT debounce data
-      await supabase
-        .from('system_config')
-        .upsert({ key: 'health_alert_debounce', value: updatedDebounce })
+      // Auto-résolution des services rétablis
+      for (const { service, notificationId } of toResolve) {
+        await resolveAlertNotification(supabase, operatorAuthId, service, notificationId)
+      }
     }
   }
 
+  // Persister l'état d'incidents pour le prochain cycle
+  const { error: incidentUpsertError } = await supabase
+    .from('system_config')
+    .upsert({ key: 'health_incidents', value: nextIncidents })
+
+  if (incidentUpsertError) {
+    console.error('[HEALTH:CRON] Failed to upsert health_incidents', incidentUpsertError)
+  }
+
   console.info(
-    `[HEALTH:CRON] Global: ${result.globalStatus}, Alerting services: ${alertingServices.join(', ') || 'none'}`
+    `[HEALTH:CRON] Global: ${result.globalStatus}, Alerting: ${toAlert.join(', ') || 'none'}, Resolved: ${toResolve.map((r) => r.service).join(', ') || 'none'}`
   )
 
   return new Response(

@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest'
 import {
   evaluateServiceStatus,
   determineGlobalStatus,
-  shouldSendAlert,
   buildHealthCheckResult,
-  getAlertingServices,
-  ALERT_DEBOUNCE_MS,
+  reconcileIncidents,
+  SUSTAINED_ERROR_MS,
   type ServiceCheck,
+  type IncidentMap,
 } from './health-check-logic'
 
 describe('evaluateServiceStatus', () => {
@@ -79,29 +79,6 @@ describe('determineGlobalStatus', () => {
   })
 })
 
-describe('shouldSendAlert', () => {
-  const nowMs = Date.now()
-
-  it('retourne true si lastAlertAt est null', () => {
-    expect(shouldSendAlert(null, nowMs)).toBe(true)
-  })
-
-  it('retourne true si la dernière alerte dépasse le debounce', () => {
-    const past = new Date(nowMs - ALERT_DEBOUNCE_MS - 1000).toISOString()
-    expect(shouldSendAlert(past, nowMs)).toBe(true)
-  })
-
-  it('retourne false si la dernière alerte est dans le debounce (< 60 min)', () => {
-    const recent = new Date(nowMs - 30 * 60 * 1000).toISOString()
-    expect(shouldSendAlert(recent, nowMs)).toBe(false)
-  })
-
-  it('retourne false exactement à la limite du debounce', () => {
-    const atLimit = new Date(nowMs - ALERT_DEBOUNCE_MS + 1000).toISOString()
-    expect(shouldSendAlert(atLimit, nowMs)).toBe(false)
-  })
-})
-
 describe('buildHealthCheckResult', () => {
   it('construit un résultat complet avec globalStatus', () => {
     const services: Record<string, ServiceCheck> = {
@@ -125,45 +102,115 @@ describe('buildHealthCheckResult', () => {
   })
 })
 
-describe('getAlertingServices — error confirmé sur 2 cycles (anti-pollution 2026-07-07)', () => {
-  it('n\'alerte que sur error confirmé par le cycle précédent — jamais sur degraded', () => {
-    const services: Record<string, ServiceCheck> = {
-      db: { status: 'ok', latencyMs: 100 },
-      storage: { status: 'degraded', latencyMs: 1500 },
-      pennylane: { status: 'error', latencyMs: 3000 },
-    }
-    const previous: Record<string, ServiceCheck> = {
-      db: { status: 'ok', latencyMs: 110 },
-      storage: { status: 'degraded', latencyMs: 1400 },
-      pennylane: { status: 'error', latencyMs: 2800 },
-    }
-    const alerting = getAlertingServices(services, previous)
-    expect(alerting).toEqual(['pennylane'])
+describe('reconcileIncidents — panne durable + auto-résolution (2026-07-11)', () => {
+  const nowMs = Date.parse('2026-07-11T12:00:00Z')
+  const err = (latencyMs = 3000): ServiceCheck => ({ status: 'error', latencyMs })
+  const ok = (latencyMs = 100): ServiceCheck => ({ status: 'ok', latencyMs })
+
+  it('n\'alerte PAS au premier cycle d\'erreur (blip) — juste ouvre l\'incident', () => {
+    const { toAlert, toResolve, nextIncidents } = reconcileIncidents(
+      { resend: err() },
+      {},
+      nowMs
+    )
+    expect(toAlert).toHaveLength(0)
+    expect(toResolve).toHaveLength(0)
+    // incident ouvert, errorSince = maintenant, pas encore notifié
+    expect(nextIncidents.resend).toEqual({
+      errorSince: new Date(nowMs).toISOString(),
+      notificationId: null,
+    })
   })
 
-  it('un error isolé (cycle précédent ok) n\'alerte pas — blip transitoire', () => {
-    const services: Record<string, ServiceCheck> = {
-      db: { status: 'error', latencyMs: 2000 },
-    }
-    const previous: Record<string, ServiceCheck> = {
-      db: { status: 'ok', latencyMs: 150 },
-    }
-    expect(getAlertingServices(services, previous)).toHaveLength(0)
+  it('alerte quand l\'erreur dure >= 15 min et n\'est pas déjà notifiée', () => {
+    const errorSince = new Date(nowMs - SUSTAINED_ERROR_MS).toISOString()
+    const prev: IncidentMap = { resend: { errorSince, notificationId: null } }
+    const { toAlert, nextIncidents } = reconcileIncidents({ resend: err() }, prev, nowMs)
+    expect(toAlert).toEqual(['resend'])
+    // errorSince préservé ; notificationId reste null (renseigné par l'appelant après insert)
+    expect(nextIncidents.resend.errorSince).toBe(errorSince)
+    expect(nextIncidents.resend.notificationId).toBeNull()
   })
 
-  it('sans données du cycle précédent, aucune alerte (confirmation au cycle suivant)', () => {
-    const services: Record<string, ServiceCheck> = {
-      db: { status: 'error', latencyMs: 2000 },
+  it('n\'alerte pas si l\'erreur dure mais est déjà notifiée (pas de spam)', () => {
+    const errorSince = new Date(nowMs - 2 * SUSTAINED_ERROR_MS).toISOString()
+    const prev: IncidentMap = {
+      resend: { errorSince, notificationId: 'notif-123' },
     }
-    expect(getAlertingServices(services)).toHaveLength(0)
-    expect(getAlertingServices(services, undefined)).toHaveLength(0)
+    const { toAlert, toResolve, nextIncidents } = reconcileIncidents(
+      { resend: err() },
+      prev,
+      nowMs
+    )
+    expect(toAlert).toHaveLength(0)
+    expect(toResolve).toHaveLength(0)
+    // l'incident reste ouvert avec sa notif
+    expect(nextIncidents.resend.notificationId).toBe('notif-123')
   })
 
-  it('retourne un tableau vide si tout est ok', () => {
-    const services: Record<string, ServiceCheck> = {
-      db: { status: 'ok', latencyMs: 100 },
-      storage: { status: 'ok', latencyMs: 200 },
+  it('auto-résout : service rétabli avec une alerte ouverte → à supprimer', () => {
+    const prev: IncidentMap = {
+      resend: { errorSince: '2026-07-11T11:00:00Z', notificationId: 'notif-123' },
     }
-    expect(getAlertingServices(services, services)).toHaveLength(0)
+    const { toAlert, toResolve, nextIncidents } = reconcileIncidents(
+      { resend: ok() },
+      prev,
+      nowMs
+    )
+    expect(toAlert).toHaveLength(0)
+    expect(toResolve).toEqual([{ service: 'resend', notificationId: 'notif-123' }])
+    // incident clos → absent de l'état persisté
+    expect(nextIncidents.resend).toBeUndefined()
+  })
+
+  it('service rétabli SANS alerte ouverte (blip jamais notifié) → rien à faire', () => {
+    const prev: IncidentMap = {
+      resend: { errorSince: '2026-07-11T11:58:00Z', notificationId: null },
+    }
+    const { toAlert, toResolve, nextIncidents } = reconcileIncidents(
+      { resend: ok() },
+      prev,
+      nowMs
+    )
+    expect(toAlert).toHaveLength(0)
+    expect(toResolve).toHaveLength(0)
+    expect(nextIncidents.resend).toBeUndefined()
+  })
+
+  it('degraded compte comme rétabli (pas une panne) → auto-résout l\'alerte', () => {
+    const prev: IncidentMap = {
+      resend: { errorSince: '2026-07-11T11:00:00Z', notificationId: 'notif-123' },
+    }
+    const { toResolve } = reconcileIncidents(
+      { resend: { status: 'degraded', latencyMs: 1800 } },
+      prev,
+      nowMs
+    )
+    expect(toResolve).toEqual([{ service: 'resend', notificationId: 'notif-123' }])
+  })
+
+  it('gère alerte + résolution simultanées sur des services différents', () => {
+    const prev: IncidentMap = {
+      db: { errorSince: new Date(nowMs - SUSTAINED_ERROR_MS).toISOString(), notificationId: null },
+      resend: { errorSince: '2026-07-11T11:00:00Z', notificationId: 'notif-999' },
+    }
+    const { toAlert, toResolve } = reconcileIncidents(
+      { db: err(2000), resend: ok() },
+      prev,
+      nowMs
+    )
+    expect(toAlert).toEqual(['db'])
+    expect(toResolve).toEqual([{ service: 'resend', notificationId: 'notif-999' }])
+  })
+
+  it('tout ok sans incident préalable → aucune action', () => {
+    const { toAlert, toResolve, nextIncidents } = reconcileIncidents(
+      { db: ok(), storage: ok() },
+      {},
+      nowMs
+    )
+    expect(toAlert).toHaveLength(0)
+    expect(toResolve).toHaveLength(0)
+    expect(nextIncidents).toEqual({})
   })
 })

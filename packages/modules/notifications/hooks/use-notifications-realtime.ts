@@ -13,6 +13,14 @@ export function useNotificationsRealtime(recipientId: string) {
 
     // createBrowserSupabaseClient is a singleton — safe to call in useEffect
     const supabase = createBrowserSupabaseClient()
+
+    const invalidate = () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', recipientId] })
+      queryClient.invalidateQueries({
+        queryKey: ['notifications', recipientId, 'unread-count'],
+      })
+    }
+
     const channel = supabase
       .channel(`notifications:${recipientId}`)
       .on(
@@ -24,15 +32,35 @@ export function useNotificationsRealtime(recipientId: string) {
           filter: `recipient_id=eq.${recipientId}`,
         },
         (payload) => {
-          queryClient.invalidateQueries({ queryKey: ['notifications', recipientId] })
-          queryClient.invalidateQueries({
-            queryKey: ['notifications', recipientId, 'unread-count'],
-          })
+          invalidate()
           const newNotif = payload.new as { title?: string; body?: string }
           if (newNotif.title) {
             showInfo(newNotif.title)
           }
         }
+      )
+      // UPDATE (ex: marquage lu) et DELETE (ex: auto-résolution d'une alerte
+      // système rétablie par le cron) — la cloche se met à jour sans refresh.
+      // DELETE nécessite REPLICA IDENTITY FULL sur la table (cf. migration).
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `recipient_id=eq.${recipientId}`,
+        },
+        invalidate
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `recipient_id=eq.${recipientId}`,
+        },
+        invalidate
       )
       .subscribe()
 
