@@ -24,6 +24,10 @@ import { getLabParcoursContext } from './get-lab-parcours-context'
 import { getOneContext } from './get-one-context'
 import { getLlmConfig } from './llm-config'
 import { DEFAULT_LLM_CONFIG } from '../types/llm-config.types'
+import { getEscalationConfig } from './escalation-config'
+import { getOneNavigationConfig } from './one-navigation-config'
+import { DEFAULT_ONE_NAVIGATION_CONFIG } from '../types/one-navigation-config.types'
+import { GOTO_ROUTES } from '../utils/parse-goto-links'
 
 const ELIO_TIMEOUT_MS = 60_000 // NFR-I2 : 60 secondes max
 
@@ -323,6 +327,19 @@ export async function sendToElio(
     // support ouvert) — volet réactif : Élio One « au courant » de l'état réel sans halluciner.
     const oneContextState = await getOneContext(clientId)
 
+    // Navigation deep-links pilotée depuis le Hub (lot 3) : destinations coupées par MiKL +
+    // consigne de navigation additionnelle, injectées à la suite de la carte ONE_NAVIGATION_MAP.
+    const { data: navCfgData } = await getOneNavigationConfig()
+    const navCfg = navCfgData ?? DEFAULT_ONE_NAVIGATION_CONFIG
+    const disabledRoutes = navCfg.disabledRoutes.filter((k) => k in GOTO_ROUTES)
+    let navExtra = ''
+    if (disabledRoutes.length > 0) {
+      navExtra += `\n\n## Destinations deep-link DÉSACTIVÉES (ne pas proposer)\nCes destinations sont temporairement coupées par MiKL : n'émets JAMAIS de jeton [[goto:CLE|…]] pour ces CLE et n'oriente pas le client vers l'onglet correspondant : ${disabledRoutes.join(', ')}.`
+    }
+    if (navCfg.extraNavigationNote.trim()) {
+      navExtra += `\n\n## Consigne de navigation additionnelle (MiKL)\n${navCfg.extraNavigationNote.trim()}`
+    }
+
     // Détecter l'intention avant l'appel LLM (Tasks 2, 3, 7, 8)
     const oneIntent = detectIntent(message)
 
@@ -430,7 +447,7 @@ export async function sendToElio(
         labBriefs: labBriefsText,
         parcoursContext,
         oneContextState,
-      }) + (actionMarkdownDocs ? `\n\n${actionMarkdownDocs}` : '')
+      }) + (actionMarkdownDocs ? `\n\n${actionMarkdownDocs}` : '') + navExtra
 
       const actionResponse = await callLLM(supabase, actionSystemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
 
@@ -492,13 +509,22 @@ export async function sendToElio(
       labBriefs: labBriefsText,
       parcoursContext,
       oneContextState,
-    }) + (markdownDocs ? `\n\n${markdownDocs}` : '')
+    }) + (markdownDocs ? `\n\n${markdownDocs}` : '') + navExtra
 
     const response = await callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
 
-    // Task 10 — Détecter la faible confiance et signaler pour escalade MiKL
+    // Task 10 — Détecter la faible confiance et signaler pour escalade MiKL.
+    // Escalade pilotée depuis le Hub (lot 2) : si l'interrupteur global est OFF, Élio One ne
+    // propose jamais l'escalade. Sinon on marque needsEscalation + le message perso du bandeau.
     if (response.data && detectLowConfidence(response.data.content)) {
-      response.data.metadata = { ...response.data.metadata, needsEscalation: true }
+      const { data: escalationConfig } = await getEscalationConfig()
+      if (escalationConfig?.enabled !== false) {
+        response.data.metadata = {
+          ...response.data.metadata,
+          needsEscalation: true,
+          ...(escalationConfig?.escalationHint ? { escalationHint: escalationConfig.escalationHint } : {}),
+        }
+      }
     }
 
     return response

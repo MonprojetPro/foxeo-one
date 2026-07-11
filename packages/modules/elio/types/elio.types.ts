@@ -115,6 +115,8 @@ export interface ElioMessageMetadata {
   evolutionBrief?: boolean
   // Story 8.7: escalade MiKL quand confiance basse
   needsEscalation?: boolean
+  // Lot 2: message personnalisé du bandeau d'escalade (config Hub elio_one_escalation)
+  escalationHint?: string
   // Story 8.8: évolution détectée — lancer la collecte côté client
   evolutionDetected?: boolean
   evolutionInitialRequest?: string

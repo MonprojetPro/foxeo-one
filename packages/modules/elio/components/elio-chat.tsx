@@ -210,6 +210,8 @@ function ElioChatSimple({
   // Le Concierge ne sait pas / renvoie vers MiKL → bouton d'action directe vers le chat MiKL.
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
   const showMiklButton = dashboardType !== 'hub' && Boolean(lastAssistant?.metadata?.needsEscalation)
+  // Lot 2 : message d'escalade personnalisable depuis le Hub (config elio_one_escalation).
+  const escalationHint = lastAssistant?.metadata?.escalationHint
 
   // Demande d'évolution One : Élio a flairé une demande d'amélioration → on propose de la
   // transmettre à MiKL. La requête de référence = celle détectée par Élio, sinon le dernier
@@ -353,7 +355,12 @@ function ElioChatSimple({
         </p>
       )}
       {showMiklButton && (
-        <div className="px-4 pb-2 shrink-0">
+        <div className="px-4 pb-2 shrink-0 space-y-2">
+          {escalationHint && (
+            <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+              {escalationHint}
+            </p>
+          )}
           <Link
             href="/modules/chat"
             className={[

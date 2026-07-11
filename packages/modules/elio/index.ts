@@ -296,6 +296,37 @@ export { resolveOnePopupConfig } from './actions/resolve-one-popup-config'
 export { getGraduatedOneClients } from './actions/get-graduated-one-clients'
 export type { GraduatedOneClient } from './actions/get-graduated-one-clients'
 
+// Actions + types — Vue Hub « Activité Élio One » (lot 4)
+export { getOneActivity } from './actions/get-one-activity'
+export {
+  aggregateOneActivity,
+  extractClientIdFromEscalationLink,
+} from './types/one-activity.types'
+export type { OneActivityRow } from './types/one-activity.types'
+
+// Actions — Escalade Élio One → MiKL (lot 2 — pilotage Hub)
+export { getEscalationConfig, setEscalationConfig } from './actions/escalation-config'
+export { listRecentEscalations } from './actions/list-recent-escalations'
+export type { RecentEscalation } from './actions/list-recent-escalations'
+export {
+  EscalationConfigSchema,
+  DEFAULT_ESCALATION_CONFIG,
+  ELIO_ESCALATION_KEY,
+  ESCALATION_HINT_MAX,
+  ESCALATION_SENSITIVITIES,
+} from './types/escalation-config.types'
+export type { EscalationConfig } from './types/escalation-config.types'
+
+// Actions — Navigation deep-links Élio One (lot 3 — pilotage Hub)
+export { getOneNavigationConfig, setOneNavigationConfig } from './actions/one-navigation-config'
+export {
+  OneNavigationConfigSchema,
+  DEFAULT_ONE_NAVIGATION_CONFIG,
+  ELIO_ONE_NAVIGATION_KEY,
+  EXTRA_NAVIGATION_NOTE_MAX,
+} from './types/one-navigation-config.types'
+export type { OneNavigationConfig } from './types/one-navigation-config.types'
+
 // Types — Personnalisation pop-up Élio One
 export {
   ElioOnePopupConfigSchema,
