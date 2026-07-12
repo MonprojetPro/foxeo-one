@@ -77,4 +77,32 @@ export function useApplyOneSetup() {
   })
 }
 
+/**
+ * Applique un jeu de modules ARBITRAIRE à un client (activer/désactiver à la carte).
+ * `applyClientModuleConfig` réinjecte automatiquement les modules `is_default` + dépendances :
+ * certains modules ne peuvent donc pas être désactivés (ils reviennent en cascade). Le résultat
+ * renvoyé (`applied`) reflète l'état RÉEL appliqué — c'est lui qui fait foi.
+ */
+export function useApplyClientModules() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ clientId, moduleKeys }: { clientId: string; moduleKeys: string[] }) => {
+      const result = await applyClientModuleConfig(clientId, moduleKeys)
+      if (result.error) throw new Error(result.error.message)
+      return result.data!
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['one-clients'] })
+      queryClient.invalidateQueries({ queryKey: ['client-modules'] })
+      const cascadedNote =
+        data.cascaded.length > 0 ? ` (${data.cascaded.length} réactivé(s) en cascade)` : ''
+      showSuccess(`Modules mis à jour — ${data.applied.length} actif(s)${cascadedNote}`)
+    },
+    onError: (error: Error) => {
+      showError(error.message)
+    },
+  })
+}
+
 export type { OneClientEntry }

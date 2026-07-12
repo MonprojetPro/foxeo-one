@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
 import { Badge, Button } from '@monprojetpro/ui'
 import { useOneClients, useSetOneStatus, useApplyOneSetup, ONE_SETUP_MODULES, type OneClientEntry } from '../hooks/use-one-clients'
+import { ClientModulesModal } from './client-modules-modal'
 
 /**
  * Vue « Clients One » — vision v2 (2026-06-24).
@@ -17,6 +19,7 @@ export function ClientsOneList() {
     client: OneClientEntry
     target: 'delivered' | 'construction'
   } | null>(null)
+  const [modulesClient, setModulesClient] = useState<OneClientEntry | null>(null)
 
   if (isPending) {
     return (
@@ -115,19 +118,30 @@ export function ClientsOneList() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {missing.length > 0 ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {missing.length > 0 ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => applySetupMutation.mutate(client.clientId)}
+                          disabled={applySetupMutation.isPending}
+                          title={`Modules manquants : ${missing.join(', ')}`}
+                        >
+                          {applySetupMutation.isPending ? 'Application...' : `Setup One complet (+${missing.length})`}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-green-400">✓ Setup One complet</span>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => applySetupMutation.mutate(client.clientId)}
-                        disabled={applySetupMutation.isPending}
-                        title={`Modules manquants : ${missing.join(', ')}`}
+                        onClick={() => setModulesClient(client)}
+                        title="Activer / désactiver les modules de ce client"
                       >
-                        {applySetupMutation.isPending ? 'Application...' : `Setup One complet (+${missing.length})`}
+                        <SlidersHorizontal className="mr-1.5 h-3.5 w-3.5" />
+                        Modules
                       </Button>
-                    ) : (
-                      <span className="text-xs text-green-400">✓ Setup One complet</span>
-                    )}
+                    </div>
                   </td>
                 </tr>
               )
@@ -183,6 +197,11 @@ export function ClientsOneList() {
             </Button>
           </div>
         </div>
+      )}
+
+      {/* Modale d'activation/désactivation des modules du client */}
+      {modulesClient && (
+        <ClientModulesModal client={modulesClient} onClose={() => setModulesClient(null)} />
       )}
     </div>
   )

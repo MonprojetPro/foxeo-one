@@ -136,9 +136,9 @@ export function EscaladeSection({ initialConfig, recentEscalations }: EscaladeSe
               className={`${INPUT_CLASS} disabled:opacity-40`}
               aria-label="Sensibilité d’escalade"
             >
-              <option value="low">Basse</option>
-              <option value="normal">Normale</option>
-              <option value="high">Haute</option>
+              <option value="low" className="bg-neutral-900 text-white">Basse</option>
+              <option value="normal" className="bg-neutral-900 text-white">Normale</option>
+              <option value="high" className="bg-neutral-900 text-white">Haute</option>
             </select>
             <span className="block text-[11px] text-gray-600">{SENSITIVITY_LABELS[sensitivity]}</span>
           </label>

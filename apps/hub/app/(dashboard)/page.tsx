@@ -1,7 +1,7 @@
 import { LayoutDashboard } from 'lucide-react'
 import { CockpitHeader, StatusPill } from '@monprojetpro/ui'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
-import { getTokenUsageSummary, getAlertThresholds, DEFAULT_ALERT_THRESHOLDS } from '@monprojetpro/module-elio'
+import { getTokenUsageSummary, getAlertThresholds, DEFAULT_ALERT_THRESHOLDS, listRecentEscalations } from '@monprojetpro/module-elio'
 import { buildElioSuggestions, type SilentClient, type StagnantParcoursClient } from '../../lib/elio-suggestions'
 import { MetricCard } from '../../components/dashboard/metric-card'
 import { InteractiveMetricCard } from '../../components/dashboard/interactive-metric-card'
@@ -344,6 +344,7 @@ export default async function HubHomePage() {
     tokenSummaryResult,
     pendingValidations,
     elioAlertData,
+    escalationsResult,
   ] = await Promise.all([
     getHubStats(operatorId),
     getClientsBreakdown(operatorId),
@@ -351,7 +352,10 @@ export default async function HubHomePage() {
     getTokenUsageSummary(),
     getPendingValidations(operatorId),
     getElioAlertData(operatorId),
+    listRecentEscalations(5),
   ])
+
+  const recentEscalations = escalationsResult.data ?? []
 
   const elioSuggestions = buildElioSuggestions({
     unpaid: { count: unpaidCount, amountEur: unpaidAmount },
@@ -557,6 +561,31 @@ export default async function HubHomePage() {
           )}
         </DashboardCard>
       </div>
+
+      {/* Escalades Élio One — questions transmises par l'agent des clients gradués.
+          Réactif : RealtimeDashboardRefresh écoute déjà les INSERT notifications du user. */}
+      <DashboardCard
+        title="Escalades Élio One"
+        badge={recentEscalations.length || undefined}
+        linkHref="/elio/one"
+      >
+        {recentEscalations.length === 0 ? (
+          <p className="px-3 py-4 text-sm text-muted-foreground italic">
+            Aucune escalade — Élio répond seul aux clients gradués
+          </p>
+        ) : (
+          recentEscalations.map((esc) => (
+            <AlertItem
+              key={esc.id}
+              icon="warning"
+              title={esc.title}
+              detail={formatRelativeTime(esc.createdAt)}
+              iconColor="text-amber-400"
+              href="/elio/one"
+            />
+          ))
+        )}
+      </DashboardCard>
 
       {/* Nouveaux prospects non vus */}
       {newProspects.length > 0 && (
