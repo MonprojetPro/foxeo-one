@@ -12,14 +12,27 @@ export interface ApplyConfigResult {
   cascaded: string[]
 }
 
+export interface ApplyConfigOptions {
+  /**
+   * Réinjecter automatiquement les modules `is_default` du catalogue.
+   * - `true` (défaut) : flux « Setup One complet » — on garantit le socle standard.
+   * - `false` : gestion À LA CARTE — on respecte EXACTEMENT le choix de l'opérateur
+   *   (sinon un module `is_default` décoché reviendrait aussitôt, rendant la désactivation
+   *   impossible). Les dépendances (`requires_modules`) restent toujours résolues.
+   */
+  injectDefaults?: boolean
+}
+
 /**
  * Remplace atomiquement la liste des modules actifs d'un client.
- * Injecte automatiquement les dependances et les modules par defaut.
+ * Résout toujours les dependances ; réinjecte les modules par defaut selon `options.injectDefaults`.
  */
 export async function applyClientModuleConfig(
   clientId: string,
-  moduleKeys: string[]
+  moduleKeys: string[],
+  options: ApplyConfigOptions = {}
 ): Promise<ActionResponse<ApplyConfigResult>> {
+  const { injectDefaults = true } = options
   try {
     const supabase = await createServerSupabaseClient()
 
@@ -59,11 +72,14 @@ export async function applyClientModuleConfig(
     const finalSet = new Set(moduleKeys)
     const cascaded: string[] = []
 
-    // Add defaults
-    for (const entry of catalog) {
-      if (entry.is_default && !finalSet.has(entry.module_key)) {
-        finalSet.add(entry.module_key)
-        cascaded.push(entry.module_key)
+    // Add defaults — UNIQUEMENT en mode « Setup » (injectDefaults). En mode à la carte,
+    // on ne force rien : le choix de l'opérateur fait foi.
+    if (injectDefaults) {
+      for (const entry of catalog) {
+        if (entry.is_default && !finalSet.has(entry.module_key)) {
+          finalSet.add(entry.module_key)
+          cascaded.push(entry.module_key)
+        }
       }
     }
 

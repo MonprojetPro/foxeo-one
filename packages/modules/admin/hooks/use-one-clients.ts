@@ -88,7 +88,9 @@ export function useApplyClientModules() {
 
   return useMutation({
     mutationFn: async ({ clientId, moduleKeys }: { clientId: string; moduleKeys: string[] }) => {
-      const result = await applyClientModuleConfig(clientId, moduleKeys)
+      // injectDefaults:false → gestion à la carte : le choix de l'opérateur est respecté à la lettre
+      // (sinon les modules is_default décochés reviendraient aussitôt).
+      const result = await applyClientModuleConfig(clientId, moduleKeys, { injectDefaults: false })
       if (result.error) throw new Error(result.error.message)
       return result.data!
     },

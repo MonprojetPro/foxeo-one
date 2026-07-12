@@ -16,10 +16,11 @@ const MODULE_LABELS: Record<string, string> = {
   elio: 'Élio (assistant)',
   'suivi-outil': "Suivi de l'outil",
   parcours: 'Parcours (Lab)',
+  notifications: 'Notifications',
 }
 
-/** Modules qu'on ne peut jamais désactiver (socle du dashboard). */
-const LOCKED_MODULES = new Set(['core-dashboard'])
+/** Modules qu'on ne peut jamais désactiver (infrastructure du dashboard). */
+const LOCKED_MODULES = new Set(['core-dashboard', 'notifications'])
 
 interface ClientModulesModalProps {
   client: OneClientEntry
