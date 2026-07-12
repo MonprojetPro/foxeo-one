@@ -5,9 +5,11 @@ import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase
 import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
 import { resolveClientMode } from '@monprojetpro/utils'
 import { ParcoursPageClient } from './parcours-page-client'
+import { requireActiveModule } from '../require-active-module'
 // rebuild
 
 export default async function ClientParcoursPage() {
+  await requireActiveModule('parcours')
   const supabase = await createServerSupabaseClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) notFound()

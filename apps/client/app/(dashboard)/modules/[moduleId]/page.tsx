@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { EmptyState } from '@monprojetpro/ui'
 import { discoverModules, getModule } from '@monprojetpro/utils'
 import dynamic from 'next/dynamic'
+import { requireActiveModule } from '../require-active-module'
 
 type ModulePageProps = {
   params: Promise<{ moduleId: string }>
@@ -14,6 +15,9 @@ export default async function ModulePage({ params }: ModulePageProps) {
   if (moduleId === 'core-dashboard') {
     redirect('/')
   }
+
+  // Verrou d'accès : un module désactivé pour ce client n'est pas atteignable par URL directe.
+  await requireActiveModule(moduleId)
 
   // Auto-discover modules
   await discoverModules()

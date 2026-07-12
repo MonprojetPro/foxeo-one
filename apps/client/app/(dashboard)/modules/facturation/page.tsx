@@ -1,11 +1,13 @@
 import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { InvoicesList, BillingSummary, SubscriptionCard } from '@monprojetpro/modules-facturation'
+import { requireActiveModule } from '../require-active-module'
 
 // ── Page "Comptabilité" — Vue client One (lecture seule via RLS)
 // RLS policy billing_sync_select_owner garantit que le client ne voit que ses données
 
 export default async function ClientFacturationPage() {
+  await requireActiveModule('facturation')
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()

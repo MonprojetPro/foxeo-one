@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getDocuments, DocumentsPageClient } from '@monprojetpro/module-documents'
+import { requireActiveModule } from '../require-active-module'
 
 export default async function ClientDocumentsPage() {
+  await requireActiveModule('documents')
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()

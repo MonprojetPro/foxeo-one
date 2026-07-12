@@ -66,14 +66,14 @@ export function ClientModulesModal({ client, onClose }: ClientModulesModalProps)
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md flex max-h-[85vh] flex-col">
         <DialogTitle>Modules — {client.name}</DialogTitle>
         <p className="text-xs text-gray-400">
           Coche les modules accessibles à ce client. Décocher un module le fait disparaître de sa
           sidebar (instantané côté client).
         </p>
 
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
           {allKeys.map((key) => {
             const isLocked = LOCKED_MODULES.has(key)
             const isOn = checked.has(key)
@@ -112,7 +112,7 @@ export function ClientModulesModal({ client, onClose }: ClientModulesModalProps)
           })}
         </ul>
 
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="mt-4 flex shrink-0 justify-end gap-2 border-t border-white/10 pt-4">
           <Button variant="outline" size="sm" onClick={onClose} disabled={applyMutation.isPending}>
             Annuler
           </Button>

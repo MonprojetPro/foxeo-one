@@ -1,8 +1,10 @@
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { notFound } from 'next/navigation'
 import { EmailToggle, ToolPostsFeed } from '@monprojetpro/module-suivi-outil'
+import { requireActiveModule } from '../require-active-module'
 
 export default async function SuiviOutilPage() {
+  await requireActiveModule('suivi-outil')
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()

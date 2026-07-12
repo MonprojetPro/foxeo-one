@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getMeetings, MeetingStatusBadge, CalcomBookingWidget } from '@monprojetpro/module-visio'
 import { ExternalLink, MessageSquare } from 'lucide-react'
+import { requireActiveModule } from '../require-active-module'
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
@@ -14,6 +15,7 @@ function normalizeCalcomUrl(raw: string): string {
 }
 
 export default async function ClientVisioPage() {
+  await requireActiveModule('visio')
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()

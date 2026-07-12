@@ -2,8 +2,10 @@ import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { getMessages, markMessagesRead } from '@monprojetpro/modules-chat'
 import { ChatClientPageClient } from './chat-client-page-client'
+import { requireActiveModule } from '../require-active-module'
 
 export default async function ClientChatPage() {
+  await requireActiveModule('chat')
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()
