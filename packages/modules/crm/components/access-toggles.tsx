@@ -95,7 +95,7 @@ export function AccessToggles({
     <>
       <Card data-testid="access-toggles">
         <CardHeader>
-          <CardTitle>{showOnlyAgents ? 'Agents du parcours' : 'Accès dashboards'}</CardTitle>
+          <CardTitle>{showOnlyAgents ? 'Lab — agents du parcours' : 'Accès dashboards'}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -130,8 +130,22 @@ export function AccessToggles({
                 NB : distinct d'Élio Lab, l'assistant du dashboard, qui reste toujours dispo. */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Agents du parcours</p>
-                <p className="text-xs text-muted-foreground">Communication avec les agents Élio des étapes (Élio Lab l&apos;assistant reste dispo)</p>
+                <p className="flex items-center gap-2 text-sm font-medium">
+                  Agents du parcours
+                  {labModeAvailable && (
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
+                        agentsEnabled
+                          ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
+                          : 'border-amber-500/30 bg-amber-500/15 text-amber-400'
+                      }`}
+                      data-testid="lab-agents-state"
+                    >
+                      {agentsEnabled ? 'Actifs' : 'En pause'}
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">C&apos;est LE levier on/off du Lab : communication avec les agents Élio des étapes (Élio Lab l&apos;assistant reste dispo)</p>
               </div>
               <Switch
                 checked={agentsEnabled}

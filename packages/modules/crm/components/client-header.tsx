@@ -9,6 +9,7 @@ import { fr } from 'date-fns/locale'
 import { ClientStatusBadge } from './client-status-badge'
 import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
 import type { SubscriptionTier } from '../types/subscription.types'
+import { useClientTabNav } from '../hooks/use-client-tab-nav'
 
 interface ClientHeaderProps {
   client: Client
@@ -36,6 +37,7 @@ function getInitials(name: string): string {
 }
 
 export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot }: ClientHeaderProps) {
+  const { navigateToTab } = useClientTabNav()
   const fullName = client.firstName ? `${client.firstName} ${client.name}` : client.name
   const creationDate = format(new Date(client.createdAt), 'd MMMM yyyy', { locale: fr })
   const initials = getInitials(fullName)
@@ -113,17 +115,20 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
           {hasAnyAccess && (
             <div className="flex items-center gap-2 border border-white/10 rounded-xl px-3 py-2">
               {hasLab && (
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                /* Cliquable : ouvre l'onglet Lab, là où vit le levier « Agents du parcours ». */
+                <button
+                  type="button"
+                  onClick={() => navigateToTab('lab-billing')}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors cursor-pointer ${
                     labAgentsOn
-                      ? 'bg-violet-500/15 text-violet-300 border-violet-500/30'
-                      : 'bg-white/[0.03] text-gray-500 border-white/10'
+                      ? 'bg-violet-500/15 text-violet-300 border-violet-500/30 hover:bg-violet-500/25'
+                      : 'bg-white/[0.03] text-gray-500 border-white/10 hover:bg-white/[0.08] hover:text-gray-300'
                   }`}
-                  title={labAgentsOn ? 'Lab — agents actifs' : 'Lab — historique (agents coupés)'}
+                  title={`${labAgentsOn ? 'Lab — agents actifs' : 'Lab — agents en pause (historique consultable)'} · cliquer pour gérer`}
                 >
                   <span className={`h-1.5 w-1.5 rounded-full ${labAgentsOn ? 'bg-violet-400' : 'bg-gray-600'}`} />
-                  {labAgentsOn ? 'Lab' : 'Lab · historique'}
-                </span>
+                  {labAgentsOn ? 'Lab · agents actifs' : 'Lab · en pause'}
+                </button>
               )}
               {oneEnabled && (
                 <span

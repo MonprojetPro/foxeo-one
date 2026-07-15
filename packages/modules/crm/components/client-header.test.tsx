@@ -6,6 +6,8 @@ import type { Client } from '../types/crm.types'
 // Mock dependencies
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/modules/crm/clients/client-1',
+  useSearchParams: () => new URLSearchParams(),
 }))
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
