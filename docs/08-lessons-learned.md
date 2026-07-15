@@ -799,3 +799,25 @@
 - **Solution** : suivi d'incidents par service (`system_config.health_incidents` = `errorSince` + `notificationId`) → alerte seulement si l'erreur DURE ≥ 15 min, puis **auto-résolution** (DELETE de la notif) au retour à la normale. Côté client : hook Realtime étendu à `UPDATE` + `DELETE`, et migration `ALTER TABLE notifications REPLICA IDENTITY FULL`. L'historique reste tracé dans `activity_logs` (`system_alert` / `system_alert_resolved`).
 - **Regle a suivre** : (1) Pour qu'un event Realtime `DELETE` (ou `UPDATE` filtré sur une colonne **hors PK**) soit délivré, la table doit être en `REPLICA IDENTITY FULL` — sinon le `old` record n'a que la PK et le filtre ne matche pas. (cf. [RSC-009], même prérequis). (2) Toute notification/alerte a un **cycle de vie complet** : elle doit pouvoir se FERMER (auto-résolution), pas seulement s'ouvrir — sinon la cloche accumule des fantômes. (3) Une alerte non-actionnable (blip qui se soigne seul) ne devrait jamais notifier : exiger une **panne durable** avant d'alerter.
 - **Agents impliques** : SCOUT (reco surveillance externe Better Stack), SPARK, ATLAS
+
+---
+
+### [NAV-001] Boucle de redirection infinie entre deux gardes qui vérifient des conditions différentes
+- **Date** : 2026-07-15
+- **Projet** : MonprojetPro
+- **Categorie** : Next.js / Navigation / Cohérence des gardes
+- **Symptome** : MiKL — « quand je vais sur Lab ça alterne la page d'accueil avec la page d'erreur toutes les 3 secondes » (client Dev Test). Page blanche « Application error: a client-side exception has occurred » en alternance avec la home.
+- **Cause racine** : deux gardes de redirection aux conditions disjointes se renvoyaient la balle. La home `/` redirigeait vers `/modules/parcours` si le **mode** résolu était `lab` (resolveClientMode), sans vérifier les modules actifs. La page parcours (`requireActiveModule('parcours')`) redirigeait vers `/` si le **module** n'était pas dans `active_modules`. Le client Dev Test avait `lab_mode_available=true` + cookie `mpp_active_view=lab` MAIS `parcours` absent d'`active_modules` → ping-pong infini de redirects RSC → crash navigateur.
+- **Solution validee** : (1) donnée : `parcours` ajouté aux `active_modules` de Dev Test ; (2) code : la home ne redirige vers `/modules/parcours` que si `activeModules.includes('parcours')` — sinon elle affiche la home One (état dégradé sans boucle).
+- **Regle a suivre** : toute redirection serveur doit vérifier que sa **cible est atteignable** (mêmes conditions que les gardes de la cible). Quand deux pages se redirigent mutuellement sous conditions, les conditions doivent être **mutuellement exclusives** — sinon il existe un état de données qui boucle. Symptôme signature : alternance page/erreur en continu = chercher un ping-pong de `redirect()`.
+- **Agents impliques** : SPARK (fix), ATLAS
+
+### [ASSET-001] Les dossiers `public/` ne sont pas partagés entre apps du monorepo
+- **Date** : 2026-07-15
+- **Projet** : MonprojetPro
+- **Categorie** : Monorepo / Assets statiques
+- **Symptome** : dans le catalogue Élio Lab du Hub, seul Élio Dev affichait son avatar — les 11 autres cartes montraient l'icône robot de secours, alors que tous les `image_path` étaient corrects en base.
+- **Cause racine** : les PNG d'agents n'existaient que dans `apps/client/public/elio/agents/`. Chaque app Next.js sert **son propre** dossier `public/` : le Hub renvoyait 404 sur `/elio/agents/*.png` (sauf `elio-dev.png`, seul copié) → `onError` → fallback icône.
+- **Solution validee** : copie des 14 PNG dans `apps/hub/public/elio/agents/`.
+- **Regle a suivre** : un asset référencé par un chemin absolu (`/elio/...`) affiché par PLUSIEURS apps du monorepo doit exister dans le `public/` de CHAQUE app (ou être déplacé vers un stockage partagé type Supabase Storage). Un fallback `onError` silencieux masque le 404 — vérifier l'onglet Réseau au moindre avatar manquant.
+- **Agents impliques** : SPARK (fix), ATLAS
