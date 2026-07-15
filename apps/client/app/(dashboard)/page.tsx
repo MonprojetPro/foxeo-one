@@ -69,7 +69,11 @@ export default async function ClientHomePage() {
     cookieMode: cookieStore.get(MODE_TOGGLE_COOKIE)?.value,
   })
 
-  if (effectiveMode === 'lab') {
+  // Garde anti-boucle : /modules/parcours renvoie vers '/' quand le module n'est pas
+  // dans active_modules (requireActiveModule). Si on redirigeait sans cette vérification,
+  // un client "mode Lab actif mais module parcours désactivé" rebondirait indéfiniment
+  // entre '/' et '/modules/parcours' (crash "Application error" côté navigateur).
+  if (effectiveMode === 'lab' && clientConfig.activeModules.includes('parcours')) {
     redirect('/modules/parcours')
   }
 
