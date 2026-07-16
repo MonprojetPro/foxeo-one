@@ -3,7 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Card, CardContent, CardHeader, CardTitle, Badge, Button,
+  Button,
+  Badge,
+  CockpitPanel,
+  CockpitCallout,
+  StatCard,
+  SectionTitle,
+  BlockSkeleton,
+  RowSkeleton,
 } from '@monprojetpro/ui'
 import {
   AlertCircle, CheckCircle2, TrendingUp, Activity, Zap, GraduationCap,
@@ -38,7 +45,7 @@ function fmtDate(value: string | null | undefined): string {
   return format(new Date(value), 'd MMM yyyy', { locale: fr })
 }
 
-/** Petit bouton-icône de raccourci vers un autre onglet, posé dans l'en-tête d'une carte. */
+/** Petit bouton-icône de raccourci vers un autre onglet, posé dans l'en-tête d'un panneau. */
 function TabShortcut({ onClick, title }: { onClick: () => void; title: string }) {
   return (
     <button
@@ -46,7 +53,7 @@ function TabShortcut({ onClick, title }: { onClick: () => void; title: string })
       onClick={onClick}
       title={title}
       aria-label={title}
-      className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      className="rounded-md p-1 text-gray-500 transition-colors hover:bg-white/5 hover:text-gray-300"
     >
       <ExternalLink className="h-4 w-4" />
     </button>
@@ -62,15 +69,15 @@ function TodoRow({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-left transition-colors hover:bg-amber-500/20"
+      className="flex w-full items-center justify-between rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2.5 text-left transition-colors hover:bg-amber-400/10"
     >
       <span className="flex items-center gap-2 text-sm font-medium text-amber-200">
-        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/30 px-1.5 text-xs font-bold">
+        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400/20 px-1.5 text-xs font-bold ring-1 ring-amber-400/30">
           {count}
         </span>
         {label}
       </span>
-      <ArrowRight className="h-4 w-4 text-amber-300/70" />
+      <ArrowRight className="h-4 w-4 text-amber-300/60" />
     </button>
   )
 }
@@ -85,13 +92,13 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
   const { data: toolSummary, isLoading: toolSummaryLoading } = useClientToolTrackingSummary(clientId)
   const { navigateToTab } = useClientTabNav('pilote')
 
-  // Rafraîchissement live (soumission / validation / progression) via broadcast DB.
+  // Rafraichissement live (soumission / validation / progression) via broadcast DB.
   useClientCockpitRealtime(clientId)
 
   const [graduationOpen, setGraduationOpen] = useState(false)
 
   if (!client) {
-    return <div className="h-64 rounded-xl bg-muted animate-pulse" />
+    return <BlockSkeleton className="h-64" />
   }
 
   const dashboardType = client.config?.dashboardType ?? 'lab'
@@ -101,27 +108,27 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
   const hasActiveParcours = parcours?.status === 'en_cours'
   const parcoursAbandoned = parcours?.status === 'abandoned'
 
-  // ── Progression (B) ──
+  // Progression (B)
   const activeStages = parcours?.activeStages.filter((s) => s.active) ?? []
   const completedStages = activeStages.filter((s) => s.status === 'completed')
   const progressPct = activeStages.length > 0
     ? Math.round((completedStages.length / activeStages.length) * 100)
     : 0
-  // « Étape en cours » = l'étape en cours, sinon la prochaine en attente (jamais une skipped/terminée).
+  // Etape en cours = l'etape en cours, sinon la prochaine en attente (jamais une skipped/terminee).
   const currentStage =
     activeStages.find((s) => s.status === 'in_progress') ??
     activeStages.find((s) => s.status === 'pending')
   const currentStageLabel = currentStage
-    ? (currentStage.label ?? `Étape ${activeStages.indexOf(currentStage) + 1} sur ${activeStages.length}`)
+    ? (currentStage.label ?? `Etape ${activeStages.indexOf(currentStage) + 1} sur ${activeStages.length}`)
     : null
 
-  // ── À traiter (C) ──
+  // A traiter (C)
   const pendingCount = pendingValidations?.count ?? 0
   const abandonCount = parcoursAbandoned ? 1 : 0
   const supportCount = supportOpenCount ?? 0
   const totalTodo = pendingCount + abandonCount + supportCount
 
-  // ── Abonnement (clients One gradués / direct_one) ──
+  // Abonnement (clients One gradues / direct_one)
   const currentTier: SubscriptionTier = (client.config?.subscriptionTier as SubscriptionTier) ?? 'base'
   const tierInfo = TIER_INFO[currentTier]
   const tierBadgeClass = TIER_BADGE_CLASSES[currentTier]
@@ -131,20 +138,17 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      {/* ──────────── C — À traiter maintenant ──────────── */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <AlertCircle className="h-4 w-4 text-amber-400" />
-            À traiter
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      {/* C — A traiter maintenant */}
+      <CockpitPanel
+        title="A traiter"
+        badge={totalTodo > 0 ? totalTodo : undefined}
+        badgeTone="amber"
+      >
+        <div className="space-y-1.5 p-2">
           {totalTodo === 0 ? (
-            <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
-              <CheckCircle2 className="h-4 w-4" />
+            <CockpitCallout tone="emerald" icon={CheckCircle2}>
               Rien à traiter pour ce client.
-            </div>
+            </CockpitCallout>
           ) : (
             <>
               <TodoRow count={pendingCount} label="Validation(s) en attente" onClick={() => navigateToTab('submissions')} />
@@ -152,200 +156,200 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
               <TodoRow count={supportCount} label="Ticket(s) support ouvert(s)" onClick={() => navigateToTab('support')} />
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </CockpitPanel>
 
-      {/* ──────────── B — Progression parcours ──────────── */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between gap-2 text-base">
-            <span className="flex items-center gap-2">
+      {/* B — Progression parcours */}
+      <CockpitPanel
+        title="Progression"
+        linkHref={undefined}
+        linkText={undefined}
+      >
+        <div className="p-2">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-cyan-400" />
-              Progression
-            </span>
-            <span className="flex items-center gap-2">
               {parcours && <ParcoursStatusBadge status={parcours.status} />}
-              <TabShortcut onClick={() => navigateToTab('lab-billing')} title="Ouvrir l'onglet Lab" />
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+            </div>
+            <TabShortcut onClick={() => navigateToTab('lab-billing')} title="Ouvrir l'onglet Lab" />
+          </div>
           {parcours ? (
-            <>
+            <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Étapes terminées</span>
-                <span className="font-medium">{completedStages.length} / {activeStages.length} ({progressPct}%)</span>
+                <span className="text-gray-500">Etapes terminees</span>
+                <span className="font-medium text-white tabular-nums">
+                  {completedStages.length} / {activeStages.length} ({progressPct}%)
+                </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-cyan-500 transition-all" style={{ width: `${progressPct}%` }} />
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-cyan-500 transition-all"
+                  style={{ width: `${progressPct}%` }}
+                />
               </div>
               {currentStageLabel && (
-                <p className="text-xs text-muted-foreground">
-                  Étape en cours : <span className="font-medium text-foreground">{currentStageLabel}</span>
+                <p className="text-xs text-gray-500">
+                  Etape en cours :{' '}
+                  <span className="font-medium text-gray-300">{currentStageLabel}</span>
                 </p>
               )}
-            </>
+            </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Aucun parcours assigné.</p>
+            <p className="text-sm text-gray-500">Aucun parcours assigné.</p>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </CockpitPanel>
 
-      {/* ──────────── D — Activité & alertes ──────────── */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
+      {/* D — Activite & alertes */}
+      <CockpitPanel title="Activite">
+        <div className="space-y-1.5 p-2">
+          <div className="flex items-center gap-2 px-1 pb-1">
             <Activity className="h-4 w-4 text-violet-400" />
-            Activité
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Première connexion</span>
-            <span className="font-medium">
-              {activity?.firstLoginAt ? fmtDate(activity.firstLoginAt) : 'Jamais connecté'}
-            </span>
+            <span className="text-xs font-medium uppercase tracking-wider text-gray-500">Connexions</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Dernière activité</span>
-            <span className="font-medium">{fmtDate(activity?.lastActivityAt)}</span>
+          <div className="grid grid-cols-2 gap-2">
+            <StatCard
+              label="Premiere connexion"
+              value={activity?.firstLoginAt ? fmtDate(activity.firstLoginAt) : 'Jamais'}
+            />
+            <StatCard
+              label="Derniere activite"
+              value={fmtDate(activity?.lastActivityAt)}
+            />
           </div>
           {activity?.isInactive && (
-            <div className="flex items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-xs text-orange-300">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+            <CockpitCallout tone="amber" icon={AlertCircle} className="mt-2">
               Inactif depuis {activity.daysSinceActivity} jours — relance Concierge automatique active.
-            </div>
+            </CockpitCallout>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </CockpitPanel>
 
-      {/* ──────────── G — Suivi de l'outil ──────────── */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between gap-2 text-base">
-            <span className="flex items-center gap-2">
-              <Rss className="h-4 w-4 text-emerald-400" />
-              Suivi de l'outil
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
+      {/* G — Suivi de l'outil */}
+      <CockpitPanel title="Suivi de l'outil">
+        <div className="space-y-2 p-2">
+          <div className="flex items-center gap-2 px-1 pb-1">
+            <Rss className="h-4 w-4 text-emerald-400" />
+            <span className="text-xs font-medium uppercase tracking-wider text-gray-500">Publications</span>
+          </div>
           {toolSummaryLoading ? (
             <div className="space-y-2">
-              <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-              <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+              <RowSkeleton />
+              <RowSkeleton className="w-2/3" />
             </div>
           ) : toolSummary && toolSummary.postCount > 0 ? (
-            <>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Publications</span>
-                <span className="font-medium">{toolSummary.postCount}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Réactions du client</span>
-                <span className="font-medium">{toolSummary.clientCommentCount}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Dernière activité</span>
-                <span className="font-medium">
+            <div className="grid grid-cols-2 gap-2">
+              <StatCard
+                label="Publications"
+                value={toolSummary.postCount}
+                accent
+                tone="emerald"
+              />
+              <StatCard
+                label="Reactions client"
+                value={toolSummary.clientCommentCount}
+              />
+              <div className="col-span-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2">
+                <span className="text-[0.7rem] font-medium uppercase tracking-wider text-gray-500">Derniere activite</span>
+                <span className="text-sm font-medium text-white">
                   {toolSummary.lastActivityAt
                     ? formatDistanceToNow(new Date(toolSummary.lastActivityAt), { addSuffix: true, locale: fr })
                     : '—'}
                 </span>
               </div>
-            </>
+            </div>
           ) : (
-            <p className="flex items-center gap-2 text-muted-foreground">
-              <CircleSlash className="h-4 w-4" />
+            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-sm text-gray-500">
+              <CircleSlash className="h-4 w-4 shrink-0" />
               Aucune publication pour l'instant.
-            </p>
+            </div>
           )}
           <Button
             size="sm"
             variant="outline"
-            className="w-full mt-1"
+            className="mt-1 w-full border-white/10 text-gray-300 hover:bg-white/5"
             onClick={() => router.push(`/modules/suivi-outil/${clientId}`)}
             data-testid="cockpit-open-suivi-outil"
           >
             Ouvrir le suivi
             <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </CockpitPanel>
 
-      {/* ──────────── F — Instance One (+ graduation) ──────────── */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center justify-between gap-2 text-base">
-            <span className="flex items-center gap-2">
+      {/* F — Instance One (+ graduation) */}
+      <CockpitPanel title="Instance One">
+        <div className="space-y-2 p-2">
+          <div className="mb-1 flex items-center justify-between">
+            <div className="flex items-center gap-2 px-1">
               <Zap className="h-4 w-4 text-blue-400" />
-              Instance One
-            </span>
-            {instance && <TabShortcut onClick={() => navigateToTab('modules')} title="Ouvrir l'onglet One" />}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
+              <span className="text-xs font-medium uppercase tracking-wider text-gray-500">Statut</span>
+            </div>
+            {instance && (
+              <TabShortcut onClick={() => navigateToTab('modules')} title="Ouvrir l'onglet One" />
+            )}
+          </div>
           {instance ? (
-            <>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Statut</span>
-                <Badge variant={instance.status === 'active' ? 'default' : 'outline'} className="capitalize">
-                  {instance.status}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Modules actifs</span>
-                <span className="font-medium">{instance.activeModules.length}</span>
-              </div>
-            </>
+            <div className="grid grid-cols-2 gap-2">
+              <StatCard
+                label="Statut"
+                value={instance.status === 'active' ? 'Actif' : instance.status}
+                accent={instance.status === 'active'}
+                tone="cyan"
+              />
+              <StatCard
+                label="Modules actifs"
+                value={instance.activeModules.length}
+                accent
+                tone="blue"
+              />
+            </div>
           ) : (
-            <p className="flex items-center gap-2 text-muted-foreground">
-              <CircleSlash className="h-4 w-4" />
+            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-sm text-gray-500">
+              <CircleSlash className="h-4 w-4 shrink-0" />
               Pas encore d'instance One.
-            </p>
+            </div>
           )}
 
-          {/* Graduation Lab → One (l'action qui crée le One) */}
+          {/* Graduation Lab → One */}
           {canGraduate && (
             <Button
               size="sm"
-              className="w-full"
+              className="mt-1 w-full"
               onClick={() => setGraduationOpen(true)}
               data-testid="cockpit-graduate-button"
             >
               <GraduationCap className="mr-1.5 h-4 w-4" /> Graduer vers One
             </Button>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </CockpitPanel>
 
-      {/* ──────────── Abonnement (clients One gradués / direct_one) ──────────── */}
+      {/* Abonnement (clients One gradues / direct_one) */}
       {showAbonnement && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+        <CockpitPanel title="Abonnement">
+          <div className="space-y-2 p-2">
+            <div className="flex items-center gap-2 px-1 pb-1">
               <CreditCard className="h-4 w-4 text-blue-400" />
-              Abonnement
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Tier</span>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tierBadgeClass}`}>{tierInfo.name}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Mensuel</span>
-              <span className="font-medium">{tierInfo.price}</span>
+            <div className="grid grid-cols-2 gap-2">
+              <StatCard label="Tier" value={tierInfo.name} />
+              <StatCard label="Mensuel" value={tierInfo.price} accent tone="blue" />
             </div>
-            <Button variant="ghost" size="sm" className="px-0 text-blue-300" onClick={() => navigateToTab('administration')}>
-              Gérer l'abonnement <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="px-0 text-blue-300 hover:text-blue-200"
+              onClick={() => navigateToTab('administration')}
+            >
+              Gerer l'abonnement <ArrowRight className="ml-1 h-3.5 w-3.5" />
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </CockpitPanel>
       )}
 
-      {/* ──────────── Mode du parcours (tracé / libre) — pour tout client ayant un espace Lab.
-           Visible même avant le lancement, pour que MiKL puisse pré-régler le mode. ──────────── */}
+      {/* Mode du parcours (trace / libre) — pour tout client ayant un espace Lab.
+          Visible meme avant le lancement, pour que MiKL puisse pre-regler le mode. */}
       {client.config?.labModeAvailable && (
         <div className="lg:col-span-2">
           <ParcoursModeSelector
@@ -355,7 +359,7 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
         </div>
       )}
 
-      {/* ──────────── E — Accès (toggles inline, pleine largeur) ──────────── */}
+      {/* E — Acces (toggles inline, pleine largeur) */}
       <div className="lg:col-span-2">
         <AccessToggles
           clientId={clientId}
@@ -366,7 +370,7 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
         />
       </div>
 
-      {/* ──────────── Notes privées (pleine largeur) ──────────── */}
+      {/* Notes privees (pleine largeur) */}
       <div className="lg:col-span-2">
         <ClientNotesSection clientId={clientId} />
       </div>

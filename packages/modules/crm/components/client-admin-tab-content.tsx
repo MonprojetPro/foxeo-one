@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Card, CardContent, CardHeader, CardTitle, Badge, Separator, Button, showSuccess, showError } from '@monprojetpro/ui'
+import { Badge, Button, showSuccess, showError, CockpitPanel, CockpitCallout } from '@monprojetpro/ui'
 import { exportClientData } from '@monprojetpro/module-admin'
 import { useClient } from '../hooks/use-client'
 import { HandoffDialog } from './handoff-dialog'
@@ -38,123 +38,104 @@ export function ClientAdminTabContent({ clientId }: ClientAdminTabContentProps) 
     <div className="space-y-6">
       {/* Abonnement — pour clients One */}
       {isOneClient && client.config && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Abonnement</CardTitle>
-            <Button variant="outline" size="sm" onClick={() => setChangeTierDialogOpen(true)} data-testid="change-tier-button">
-              Modifier le tier
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Tier actuel</span>
-                <span className={`text-xs px-2 py-1 rounded-full font-medium ${tierBadgeClass}`}>{tierInfo.name}</span>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Coût mensuel</span>
-                <span className="text-sm">{tierInfo.price}</span>
-              </div>
-              <Separator />
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">Élio</span>
-                <span className="text-sm">{tierInfo.elio}</span>
+        <CockpitPanel
+          title="Abonnement"
+          linkHref={undefined}
+        >
+          <div className="space-y-0 divide-y divide-white/[0.05]">
+            <div className="flex items-center justify-between px-3 py-2.5">
+              <span className="text-xs text-gray-400">Tier actuel</span>
+              <div className="flex items-center gap-2">
+                <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${tierBadgeClass}`}>{tierInfo.name}</span>
+                <Button variant="outline" size="sm" onClick={() => setChangeTierDialogOpen(true)} data-testid="change-tier-button">
+                  Modifier
+                </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="flex items-center justify-between px-3 py-2.5">
+              <span className="text-xs text-gray-400">Cout mensuel</span>
+              <span className="text-sm font-medium text-white">{tierInfo.price}</span>
+            </div>
+            <div className="flex items-center justify-between px-3 py-2.5">
+              <span className="text-xs text-gray-400">Elio</span>
+              <span className="text-sm font-medium text-white">{tierInfo.elio}</span>
+            </div>
+          </div>
+        </CockpitPanel>
       )}
 
       {/* Coaching One+ — visible seulement si elio_tier='one_plus' (le panneau se masque sinon) */}
       {isOneClient && <CoachingCreditsPanel clientId={clientId} />}
 
       {/* Export RGPD */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Export RGPD</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Exportez les données personnelles du client (droit d&apos;accès RGPD).
-            </p>
-            {exportConfirmOpen ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Confirmer ?</span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  disabled={isExporting}
-                  data-testid="confirm-export-button"
-                  onClick={() => {
-                    setExportConfirmOpen(false)
-                    startExportTransition(async () => {
-                      const result = await exportClientData({ clientId, requestedBy: 'operator' })
-                      if (result.error) showError(result.error.message)
-                      else showSuccess('Export en cours')
-                    })
-                  }}
-                >
-                  {isExporting ? 'Export en cours…' : 'Confirmer'}
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setExportConfirmOpen(false)}>Annuler</Button>
-              </div>
-            ) : (
-              <Button variant="outline" size="sm" disabled={isExporting} data-testid="export-client-data-button" onClick={() => setExportConfirmOpen(true)}>
-                Exporter les données client
+      <CockpitPanel title="Export RGPD">
+        <div className="space-y-3 px-3 py-3">
+          <p className="text-sm text-gray-400">
+            Exportez les donnees personnelles du client (droit d&apos;acces RGPD).
+          </p>
+          {exportConfirmOpen ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400">Confirmer ?</span>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={isExporting}
+                data-testid="confirm-export-button"
+                onClick={() => {
+                  setExportConfirmOpen(false)
+                  startExportTransition(async () => {
+                    const result = await exportClientData({ clientId, requestedBy: 'operator' })
+                    if (result.error) showError(result.error.message)
+                    else showSuccess('Export en cours')
+                  })
+                }}
+              >
+                {isExporting ? 'Export en cours...' : 'Confirmer'}
               </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              <Button variant="outline" size="sm" onClick={() => setExportConfirmOpen(false)}>Annuler</Button>
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" disabled={isExporting} data-testid="export-client-data-button" onClick={() => setExportConfirmOpen(true)}>
+              Exporter les donnees client
+            </Button>
+          )}
+        </div>
+      </CockpitPanel>
 
       {/* Kit de sortie One */}
       {client.status !== 'archived' && client.status !== 'deleted' && client.status !== 'handed_off' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Kit de sortie — Déploiement standalone</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Livrez au client un déploiement standalone (Vercel + GitHub + Supabase).
-              </p>
-              <Button variant="destructive" size="sm" onClick={() => setHandoffDialogOpen(true)} data-testid="start-handoff-button">
-                Lancer le kit de sortie
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <CockpitPanel title="Kit de sortie — Deploiement standalone">
+          <div className="space-y-3 px-3 py-3">
+            <p className="text-sm text-gray-400">
+              Livrez au client un deploiement standalone (Vercel + GitHub + Supabase).
+            </p>
+            <Button variant="destructive" size="sm" onClick={() => setHandoffDialogOpen(true)} data-testid="start-handoff-button">
+              Lancer le kit de sortie
+            </Button>
+          </div>
+        </CockpitPanel>
       )}
       {client.status === 'handed_off' && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">Transféré</Badge>
-              <span className="text-xs text-muted-foreground">Le client a reçu son déploiement standalone.</span>
-            </div>
-          </CardContent>
-        </Card>
+        <CockpitCallout tone="cyan" title="Deploiement transfere">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">Transfere</Badge>
+            <span className="text-xs">Le client a recu son deploiement standalone.</span>
+          </div>
+        </CockpitCallout>
       )}
 
       {/* Archivage */}
       {client.status !== 'archived' && client.status !== 'deleted' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Archivage</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Archivez le client pour bloquer son accès. Les données seront anonymisées après la période de rétention (RGPD).
-              </p>
-              <Button variant="outline" size="sm" onClick={() => setArchiveDialogOpen(true)} data-testid="archive-client-button">
-                Archiver le client
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <CockpitPanel title="Archivage">
+          <div className="space-y-3 px-3 py-3">
+            <p className="text-sm text-gray-400">
+              Archivez le client pour bloquer son acces. Les donnees seront anonymisees apres la periode de retention (RGPD).
+            </p>
+            <Button variant="outline" size="sm" onClick={() => setArchiveDialogOpen(true)} data-testid="archive-client-button">
+              Archiver le client
+            </Button>
+          </div>
+        </CockpitPanel>
       )}
 
       {/* Dialogs */}

@@ -1,7 +1,8 @@
 'use client'
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@monprojetpro/ui'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { PillTabs, BlockSkeleton, type PillTab } from '@monprojetpro/ui'
 import { OrpheusConfigForm } from './orpheus-config-form'
 import { ElioConfigHistory } from './elio-config-history'
 import { getElioConfig } from '../actions/get-elio-config'
@@ -11,6 +12,8 @@ interface ElioConfigSectionProps {
   /** Slot pour le formulaire de profil de communication (injecté depuis le Hub) */
   communicationProfileSlot?: React.ReactNode
 }
+
+type TabKey = 'profil' | 'configuration' | 'historique'
 
 /**
  * Section Configuration Élio pour la fiche client Hub (AC3 Story 8.3).
@@ -26,37 +29,43 @@ export function ElioConfigSection({ clientId, communicationProfileSlot }: ElioCo
     },
   })
 
-  const defaultTab = communicationProfileSlot ? 'profil' : 'configuration'
+  const defaultTab: TabKey = communicationProfileSlot ? 'profil' : 'configuration'
+  const [activeTab, setActiveTab] = useState<TabKey>(defaultTab)
+
+  const tabs: PillTab<TabKey>[] = [
+    ...(communicationProfileSlot ? [{ key: 'profil' as TabKey, label: 'Profil de communication' }] : []),
+    { key: 'configuration', label: 'Configuration Orpheus' },
+    { key: 'historique', label: 'Historique' },
+  ]
 
   return (
-    <Tabs defaultValue={defaultTab}>
-      <TabsList>
-        {communicationProfileSlot && (
-          <TabsTrigger value="profil">Profil de communication</TabsTrigger>
-        )}
-        <TabsTrigger value="configuration">Configuration Orpheus</TabsTrigger>
-        <TabsTrigger value="historique" data-testid="tab-historique">
-          Historique
-        </TabsTrigger>
-      </TabsList>
+    <div className="space-y-4">
+      <PillTabs<TabKey>
+        tabs={tabs}
+        active={activeTab}
+        onChange={setActiveTab}
+        tone="cyan"
+      />
 
-      {communicationProfileSlot && (
-        <TabsContent value="profil" className="mt-4">
-          {communicationProfileSlot}
-        </TabsContent>
+      {activeTab === 'profil' && communicationProfileSlot && (
+        <div>{communicationProfileSlot}</div>
       )}
 
-      <TabsContent value="configuration" className="mt-4">
-        {isLoading ? (
-          <div className="h-40 rounded-xl bg-muted animate-pulse" />
-        ) : (
-          <OrpheusConfigForm initialConfig={config ?? null} />
-        )}
-      </TabsContent>
+      {activeTab === 'configuration' && (
+        <div>
+          {isLoading ? (
+            <BlockSkeleton className="h-40" />
+          ) : (
+            <OrpheusConfigForm initialConfig={config ?? null} />
+          )}
+        </div>
+      )}
 
-      <TabsContent value="historique" className="mt-4">
-        <ElioConfigHistory clientId={clientId} />
-      </TabsContent>
-    </Tabs>
+      {activeTab === 'historique' && (
+        <div data-testid="tab-historique">
+          <ElioConfigHistory clientId={clientId} />
+        </div>
+      )}
+    </div>
   )
 }

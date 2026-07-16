@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { createBrowserSupabaseClient } from '@monprojetpro/supabase'
-import { Button } from '@monprojetpro/ui'
+import { Button, SectionTitle, CockpitPanel, CockpitCallout, RowSkeleton } from '@monprojetpro/ui'
 import { useModuleCatalog } from '@monprojetpro/module-admin'
 import { useClientModules, useApplyClientModuleConfig } from '@monprojetpro/module-admin'
 import { type ModuleCatalogEntry } from '@monprojetpro/module-admin'
@@ -163,7 +163,7 @@ export function ClientModulesTab({ clientId, clientName, dashboardType, labPaid 
     return (
       <div className="space-y-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-14 animate-pulse rounded bg-white/5" />
+          <RowSkeleton key={i} className="h-14" />
         ))}
       </div>
     )
@@ -173,50 +173,52 @@ export function ClientModulesTab({ clientId, clientName, dashboardType, labPaid 
     <div className="space-y-6">
       {/* AC10 — Warning cohérence devis vs modules actifs */}
       {quoteModuleDiff && (
-        <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
-          <p className="text-sm font-medium text-yellow-300">
-            Les modules actifs diffèrent du dernier devis payé. Génère un avenant ou un nouveau devis pour régulariser.
-          </p>
-          <div className="mt-2 flex gap-4 text-xs">
-            {quoteModuleDiff.added.length > 0 && (
-              <span className="text-green-400">
-                + Ajoutés : {quoteModuleDiff.added.join(', ')}
-              </span>
-            )}
-            {quoteModuleDiff.removed.length > 0 && (
-              <span className="text-red-400">
-                - Retirés : {quoteModuleDiff.removed.join(', ')}
-              </span>
-            )}
+        <CockpitCallout tone="amber" title="Modules en ecart avec le dernier devis paye">
+          <div className="space-y-2">
+            <p>
+              Les modules actifs different du dernier devis paye. Genere un avenant ou un nouveau devis pour regulariser.
+            </p>
+            <div className="flex gap-4 text-xs">
+              {quoteModuleDiff.added.length > 0 && (
+                <span className="text-emerald-400">
+                  + Ajoutes : {quoteModuleDiff.added.join(', ')}
+                </span>
+              )}
+              {quoteModuleDiff.removed.length > 0 && (
+                <span className="text-red-400">
+                  - Retires : {quoteModuleDiff.removed.join(', ')}
+                </span>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+              onClick={() => setShowQuoteModal(true)}
+            >
+              Generer avenant
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-2 border-yellow-500/30 text-yellow-300 hover:bg-yellow-500/10"
-            onClick={() => setShowQuoteModal(true)}
-          >
-            Générer avenant
-          </Button>
-        </div>
+        </CockpitCallout>
       )}
 
-      {/* Summary bar */}
-      <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4">
+      {/* Barre recapitulative */}
+      <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
         <div className="flex gap-6 text-sm">
           <div>
-            <span className="text-gray-400">Modules actifs : </span>
-            <span className="font-medium text-white">{effectiveModules.size}</span>
+            <span className="text-[0.7rem] uppercase tracking-wider text-gray-500">Modules actifs</span>
+            <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">{effectiveModules.size}</p>
           </div>
           <div>
-            <span className="text-gray-400">Setup total : </span>
-            <span className="font-medium text-white">{formatPrice(pricingSummary.setupTotal)}</span>
+            <span className="text-[0.7rem] uppercase tracking-wider text-gray-500">Setup total</span>
+            <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">{formatPrice(pricingSummary.setupTotal)}</p>
           </div>
           <div>
-            <span className="text-gray-400">Mensuel : </span>
-            <span className="font-medium text-white">
+            <span className="text-[0.7rem] uppercase tracking-wider text-gray-500">Mensuel</span>
+            <p className="mt-0.5 text-lg font-semibold tabular-nums text-white">
               {formatPrice(pricingSummary.monthlyTotal)}
-              {pricingSummary.monthlyTotal > 0 && <span className="text-gray-500">/mois</span>}
-            </span>
+              {pricingSummary.monthlyTotal > 0 && <span className="ml-0.5 text-xs font-normal text-gray-500">/mois</span>}
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -235,77 +237,75 @@ export function ClientModulesTab({ clientId, clientName, dashboardType, labPaid 
             size="sm"
             onClick={() => setShowQuoteModal(true)}
           >
-            Générer devis
+            Generer devis
           </Button>
         </div>
       </div>
 
-      {/* Modules by category */}
+      {/* Modules par categorie */}
       {Array.from(grouped.entries()).map(([category, modules]) => (
         <section key={category}>
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-400">
-            {categoryLabels[category] ?? category}
-          </h3>
-          <div className="space-y-2">
-            {modules.map((mod) => {
-              const isActive = effectiveModules.has(mod.module_key)
-              const isPending = pendingChanges.has(mod.module_key)
-              const isDefault = mod.is_default
+          <SectionTitle>{categoryLabels[category] ?? category}</SectionTitle>
+          <CockpitPanel title={categoryLabels[category] ?? category}>
+            <div className="divide-y divide-white/[0.05]">
+              {modules.map((mod) => {
+                const isActive = effectiveModules.has(mod.module_key)
+                const isPending = pendingChanges.has(mod.module_key)
+                const isDefault = mod.is_default
 
-              return (
-                <div
-                  key={mod.id}
-                  className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
-                    isPending
-                      ? 'border-cyan-500/30 bg-cyan-500/5'
-                      : 'border-white/10 bg-white/5'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={isActive}
-                      disabled={isDefault}
-                      onChange={() => handleToggle(mod.module_key, isDefault)}
-                      className="h-4 w-4 rounded border-white/20"
-                      aria-label={`${isActive ? 'Désactiver' : 'Activer'} ${mod.name}`}
-                    />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-white">{mod.name}</span>
-                        {isDefault && (
-                          <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs text-cyan-300">
-                            One de base
-                          </span>
-                        )}
-                        {mod.kind === 'custom' && (
-                          <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-xs text-purple-300">
-                            Sur-mesure
-                          </span>
-                        )}
-                        {isPending && (
-                          <span className="rounded-full bg-yellow-500/20 px-2 py-0.5 text-xs text-yellow-300">
-                            Modifié
-                          </span>
+                return (
+                  <div
+                    key={mod.id}
+                    className={`flex items-center justify-between px-3 py-2.5 transition-colors ${
+                      isPending ? 'bg-cyan-500/[0.04]' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isActive}
+                        disabled={isDefault}
+                        onChange={() => handleToggle(mod.module_key, isDefault)}
+                        className="h-4 w-4 rounded border-white/20 accent-cyan-400"
+                        aria-label={`${isActive ? 'Desactiver' : 'Activer'} ${mod.name}`}
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-white">{mod.name}</span>
+                          {isDefault && (
+                            <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-[0.65rem] font-medium text-cyan-300">
+                              One de base
+                            </span>
+                          )}
+                          {mod.kind === 'custom' && (
+                            <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[0.65rem] font-medium text-violet-300">
+                              Sur-mesure
+                            </span>
+                          )}
+                          {isPending && (
+                            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[0.65rem] font-medium text-amber-300">
+                              Modifie
+                            </span>
+                          )}
+                        </div>
+                        {mod.description && (
+                          <p className="mt-0.5 text-xs text-gray-500">{mod.description}</p>
                         )}
                       </div>
-                      {mod.description && (
-                        <p className="mt-0.5 text-xs text-gray-500">{mod.description}</p>
-                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-[0.7rem] tabular-nums text-gray-400">
+                      <span>{formatPrice(mod.setup_price_ht)} setup</span>
+                      <span>
+                        {mod.monthly_price_ht !== null && mod.monthly_price_ht > 0
+                          ? `${formatPrice(mod.monthly_price_ht)}/mois`
+                          : '—'}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
-                    <span>{formatPrice(mod.setup_price_ht)} setup</span>
-                    <span>
-                      {mod.monthly_price_ht !== null && mod.monthly_price_ht > 0
-                        ? `${formatPrice(mod.monthly_price_ht)}/mois`
-                        : '—'}
-                    </span>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          </CockpitPanel>
         </section>
       ))}
 

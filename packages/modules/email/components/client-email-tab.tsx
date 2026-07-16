@@ -67,7 +67,7 @@ export function ClientEmailTab({ clientId, clientEmail, returnTo }: ClientEmailT
 
   if (!gmailStatus.connected) {
     return (
-      <div className="p-4">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-4">
         <GmailConnectBanner
           returnTo={returnTo}
           connected={false}
@@ -79,9 +79,9 @@ export function ClientEmailTab({ clientId, clientEmail, returnTo }: ClientEmailT
   }
 
   return (
-    <div className="flex flex-col h-full min-h-[500px]">
+    <div className="flex h-full min-h-[500px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
       {/* Barre de contrôle */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+      <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-2.5">
         <GmailConnectBanner
           returnTo={returnTo}
           connected={gmailStatus.connected}
@@ -91,17 +91,21 @@ export function ClientEmailTab({ clientId, clientEmail, returnTo }: ClientEmailT
             queryClient.removeQueries({ queryKey: ['email-threads', clientId] })
           }}
         />
-        <div className="flex items-center gap-2 ml-4">
+        <div className="ml-4 flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => refetchThreads()}
-            className="h-8 w-8 text-muted-foreground"
-            title="Rafraîchir"
+            className="h-7 w-7 text-gray-500 hover:bg-white/5 hover:text-gray-300"
+            title="Rafraichir"
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
-          <Button size="sm" onClick={() => setComposeOpen(true)} className="gap-1.5">
+          <Button
+            size="sm"
+            onClick={() => setComposeOpen(true)}
+            className="h-7 gap-1.5 border border-cyan-400/25 bg-cyan-400/10 px-3 text-xs font-medium text-cyan-200 hover:bg-cyan-400/20"
+          >
             <PenSquare className="h-3.5 w-3.5" />
             Nouveau mail
           </Button>
@@ -111,13 +115,13 @@ export function ClientEmailTab({ clientId, clientEmail, returnTo }: ClientEmailT
       {/* Contenu */}
       <div className="flex flex-1 overflow-hidden">
         {/* Liste des threads */}
-        <aside className="w-80 shrink-0 border-r overflow-y-auto">
+        <aside className="w-72 shrink-0 overflow-y-auto border-r border-white/10">
           {threadsLoading ? (
             <div className="space-y-px p-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="rounded-md p-3 space-y-1.5">
-                  <div className="h-3 bg-muted animate-pulse rounded w-3/4" />
-                  <div className="h-2.5 bg-muted animate-pulse rounded w-1/2" />
+                <div key={i} className="space-y-1.5 rounded-lg p-3">
+                  <div className="h-3 w-3/4 animate-pulse rounded bg-white/5" />
+                  <div className="h-2.5 w-1/2 animate-pulse rounded bg-white/5" />
                 </div>
               ))}
             </div>
@@ -130,7 +134,7 @@ export function ClientEmailTab({ clientId, clientEmail, returnTo }: ClientEmailT
           )}
         </aside>
 
-        {/* Vue thread ou état vide */}
+        {/* Vue thread ou etat vide */}
         <main className="flex-1 overflow-hidden">
           {selectedThread ? (
             <EmailThreadView
@@ -141,10 +145,10 @@ export function ClientEmailTab({ clientId, clientEmail, returnTo }: ClientEmailT
             />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                <div className="text-4xl opacity-20">📧</div>
-                <p className="text-sm font-medium">Sélectionne un échange</p>
-                <p className="text-xs opacity-60">ou crée un nouveau mail</p>
+              <div className="flex flex-col items-center gap-3">
+                <div className="text-4xl opacity-10">📧</div>
+                <p className="text-sm font-medium text-gray-400">Selectionne un echange</p>
+                <p className="text-xs text-gray-600">ou cree un nouveau mail</p>
               </div>
             </div>
           )}

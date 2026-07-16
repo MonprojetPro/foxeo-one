@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import { getDocuments, useShareDocument, DocumentsPageClient, getOperatorId } from '@monprojetpro/module-documents'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from '@monprojetpro/ui'
-import { FileText, Lock, Eye, FolderOpen } from 'lucide-react'
+import { CockpitPanel, CockpitCallout, RowSkeleton, SectionTitle } from '@monprojetpro/ui'
+import { FileText, Lock, Eye, FolderOpen, AlertCircle, FolderPlus } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 
 interface ClientDocumentsTabProps {
@@ -38,7 +39,7 @@ function DocumentsManagementDialog({ clientId }: { clientId: string }) {
       <Button
         size="sm"
         variant="outline"
-        className="gap-1.5"
+        className="gap-1.5 border-white/10 bg-white/[0.03] text-gray-300 hover:border-cyan-400/30 hover:bg-cyan-400/5 hover:text-cyan-300 transition-colors"
         onClick={handleOpen}
         data-testid="open-documents-management"
       >
@@ -56,8 +57,10 @@ function DocumentsManagementDialog({ clientId }: { clientId: string }) {
           </DialogHeader>
           <div className="flex-1 overflow-auto min-h-0">
             {isLoading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <div className="p-6 space-y-2">
+                <RowSkeleton className="h-9" />
+                <RowSkeleton className="h-9" />
+                <RowSkeleton className="h-9" />
               </div>
             ) : operatorId ? (
               <DocumentsPageClient
@@ -93,77 +96,83 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
   })
 
   return (
-    <div className="mt-4 space-y-3">
-      {/* Bouton Gestion des documents */}
-      <div className="flex justify-end">
-        <DocumentsManagementDialog clientId={clientId} />
-      </div>
+    <div className="mt-4 space-y-4">
+      {/* En-tête avec action */}
+      <SectionTitle action={<DocumentsManagementDialog clientId={clientId} />}>
+        Documents client
+      </SectionTitle>
 
       {isPending ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-lg border p-3 space-y-1.5">
-              <div className="h-3 bg-muted animate-pulse rounded w-1/2" />
-              <div className="h-2.5 bg-muted animate-pulse rounded w-1/4" />
-            </div>
-          ))}
-        </div>
+        <CockpitPanel title="Documents">
+          <div className="space-y-1.5 p-1">
+            <RowSkeleton className="h-10" />
+            <RowSkeleton className="h-10" />
+            <RowSkeleton className="h-10" />
+          </div>
+        </CockpitPanel>
       ) : error ? (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+        <CockpitCallout tone="red" icon={AlertCircle} title="Erreur de chargement">
           Impossible de charger les documents.
-        </div>
+        </CockpitCallout>
       ) : !documents || documents.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground text-sm">
-          Aucun document pour ce client.{' '}
-          <button
-            type="button"
-            className="text-primary hover:underline"
-            onClick={() => document.querySelector<HTMLButtonElement>('[data-testid="open-documents-management"]')?.click()}
-          >
-            Importer un document →
-          </button>
-        </div>
+        <CockpitCallout tone="gray" icon={FolderPlus}>
+          <span>
+            Aucun document pour ce client.{' '}
+            <button
+              type="button"
+              className="text-cyan-300 hover:underline"
+              onClick={() => document.querySelector<HTMLButtonElement>('[data-testid="open-documents-management"]')?.click()}
+            >
+              Importer un document &rarr;
+            </button>
+          </span>
+        </CockpitCallout>
       ) : (
-        <div className="divide-y rounded-lg border overflow-hidden">
-          {documents.map((doc) => (
-            <div key={doc.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
-              <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{doc.name}</p>
-                <p className="text-xs text-muted-foreground">{formatDate(doc.createdAt)}</p>
-              </div>
-              <button
-                type="button"
-                title={doc.visibility === 'shared' ? 'Retirer le partage' : 'Partager avec le client'}
-                disabled={isSharing || isUnsharing}
-                onClick={() => {
-                  if (doc.visibility === 'shared') {
-                    unshare(doc.id, {
-                      onSuccess: () => showSuccess('Partage retiré'),
-                      onError: () => showError('Erreur lors de la modification'),
-                    })
-                  } else {
-                    share(doc.id, {
-                      onSuccess: () => showSuccess('Document partagé'),
-                      onError: () => showError('Erreur lors de la modification'),
-                    })
-                  }
-                }}
-                className={cn(
-                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0 transition-opacity hover:opacity-70 disabled:opacity-50',
-                  doc.visibility === 'shared'
-                    ? 'bg-green-500/15 text-green-600 dark:text-green-400'
-                    : 'bg-muted text-muted-foreground'
-                )}
+        <CockpitPanel title="Documents" badge={documents.length} badgeTone="cyan">
+          <div className="divide-y divide-white/5">
+            {documents.map((doc) => (
+              <div
+                key={doc.id}
+                className="flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
               >
-                {doc.visibility === 'shared'
-                  ? <><Eye className="h-2.5 w-2.5" /> Partagé</>
-                  : <><Lock className="h-2.5 w-2.5" /> Privé</>
-                }
-              </button>
-            </div>
-          ))}
-        </div>
+                <FileText className="h-4 w-4 shrink-0 text-gray-500" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-200 truncate">{doc.name}</p>
+                  <p className="text-xs text-gray-500">{formatDate(doc.createdAt)}</p>
+                </div>
+                <button
+                  type="button"
+                  title={doc.visibility === 'shared' ? 'Retirer le partage' : 'Partager avec le client'}
+                  disabled={isSharing || isUnsharing}
+                  onClick={() => {
+                    if (doc.visibility === 'shared') {
+                      unshare(doc.id, {
+                        onSuccess: () => showSuccess('Partage retiré'),
+                        onError: () => showError('Erreur lors de la modification'),
+                      })
+                    } else {
+                      share(doc.id, {
+                        onSuccess: () => showSuccess('Document partagé'),
+                        onError: () => showError('Erreur lors de la modification'),
+                      })
+                    }
+                  }}
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0 transition-opacity hover:opacity-70 disabled:opacity-50 border',
+                    doc.visibility === 'shared'
+                      ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300'
+                      : 'border-white/10 bg-white/[0.04] text-gray-400'
+                  )}
+                >
+                  {doc.visibility === 'shared'
+                    ? <><Eye className="h-2.5 w-2.5" /> Partagé</>
+                    : <><Lock className="h-2.5 w-2.5" /> Privé</>
+                  }
+                </button>
+              </div>
+            ))}
+          </div>
+        </CockpitPanel>
       )}
     </div>
   )
