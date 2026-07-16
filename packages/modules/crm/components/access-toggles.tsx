@@ -74,6 +74,10 @@ export function AccessToggles({
       const action = enabled ? 'activé' : 'désactivé'
       showSuccess(`${label} ${action}`)
 
+      if (result.data?.labAutoPaused) {
+        showSuccess('Le Lab a été mis en pause automatiquement (One déclenché) — réactive les agents si besoin')
+      }
+
       if (result.data?.parcoursSuspended) {
         showSuccess('Le parcours Lab a été suspendu')
       }

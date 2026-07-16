@@ -30,10 +30,13 @@ vi.mock('../hooks/use-client', () => ({ useClient: () => mockUseClient() }))
 vi.mock('../hooks/use-client-parcours', () => ({ useClientParcours: () => mockUseParcours() }))
 vi.mock('../hooks/use-client-pending-validations', () => ({ useClientPendingValidations: () => mockUsePending() }))
 
-const baseClient = (dashboardType: string) => ({
+const baseClient = (
+  dashboardType: string,
+  flags: { labModeAvailable?: boolean; elioLabEnabled?: boolean } = {},
+) => ({
   data: {
     id: 'c-1', name: 'Dev Test', company: 'ACME', status: 'active',
-    config: { dashboardType },
+    config: { dashboardType, ...flags },
   },
 })
 
@@ -62,19 +65,28 @@ describe('ClientLabTabContent', () => {
     expect(screen.getByTestId('access-toggles-mock')).toBeDefined()
   })
 
-  it('en-tête : « Lab activé » + « activé manuellement » quand lab sans facture', () => {
-    mockUseClient.mockReturnValue(baseClient('lab'))
+  it('en-tête : « Lab actif » + « activé manuellement » quand espace Lab + agents actifs', () => {
+    mockUseClient.mockReturnValue(baseClient('lab', { labModeAvailable: true, elioLabEnabled: true }))
     mockUseParcours.mockReturnValue(parcoursEnCours)
     mockUsePending.mockReturnValue({ data: { count: 0 } })
 
     render(
       <ClientLabTabContent clientId="c-1" billingStatus={{ invoiceSent: false, labPaid: false }} />
     )
-    expect(screen.getByTestId('lab-activation-badge').textContent).toBe('Lab activé')
+    expect(screen.getByTestId('lab-activation-badge').textContent).toBe('Lab actif')
     expect(screen.getByText('Activé manuellement (sans facturation).')).toBeDefined()
   })
 
-  it('en-tête : « Lab non activé » quand dashboardType ≠ lab', () => {
+  it('en-tête : « Lab en pause » quand espace Lab acquis mais agents coupés (ex. One déclenché)', () => {
+    mockUseClient.mockReturnValue(baseClient('one', { labModeAvailable: true, elioLabEnabled: false }))
+    mockUseParcours.mockReturnValue(parcoursEnCours)
+    mockUsePending.mockReturnValue({ data: { count: 0 } })
+
+    render(<ClientLabTabContent clientId="c-1" />)
+    expect(screen.getByTestId('lab-activation-badge').textContent).toBe('Lab en pause')
+  })
+
+  it('en-tête : « Lab non activé » quand aucun espace Lab (flags absents)', () => {
     mockUseClient.mockReturnValue(baseClient('hub'))
     mockUseParcours.mockReturnValue({ data: null })
     mockUsePending.mockReturnValue({ data: { count: 0 } })

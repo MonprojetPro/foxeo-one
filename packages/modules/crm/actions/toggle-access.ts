@@ -16,6 +16,8 @@ type ToggleAccessResult = {
   dashboardType: string
   parcoursSuspended?: boolean
   clientSuspended?: boolean
+  /** Règle « One déclenché ⇒ Lab en pause » appliquée automatiquement lors de cet appel. */
+  labAutoPaused?: boolean
 }
 
 export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResponse<ToggleAccessResult>> {
@@ -80,9 +82,18 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
       elio_lab_enabled?: boolean
     } = { dashboard_type: newDashboardType }
 
+    // Règle métier (décision MiKL 2026-07-16) : quand le One est déclenché, le Lab se met
+    // en pause (agents du parcours coupés) — « sauf si j'en décide autrement » : le switch
+    // « Agents du parcours » reste disponible pour les rallumer au cas par cas ensuite.
+    const labAutoPaused =
+      accessType === 'one' && enabled && config.lab_mode_available === true && config.elio_lab_enabled === true
+
     if (accessType === 'one') {
       // Ouvrir / fermer le One.
       configUpdate.one_mode_available = enabled
+      if (labAutoPaused) {
+        configUpdate.elio_lab_enabled = false
+      }
     } else {
       // Agents Lab : couper (off) ou réactiver (on) la communication.
       configUpdate.elio_lab_enabled = enabled
@@ -113,32 +124,31 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
     const clientSuspended = false
 
     // Handle parcours suspension/reactivation when Lab agents are toggled
+    // (manuellement via le switch, OU automatiquement quand le One est déclenché).
     let parcoursSuspended = false
-    if (accessType === 'lab') {
-      if (!enabled) {
-        // Suspend active parcours
-        const { data: updated } = await supabase
-          .from('parcours')
-          .update({
-            status: 'suspendu',
-            suspended_at: new Date().toISOString(),
-          })
-          .eq('client_id', clientId)
-          .eq('status', 'en_cours')
-          .select('id')
+    if ((accessType === 'lab' && !enabled) || labAutoPaused) {
+      // Suspend active parcours
+      const { data: updated } = await supabase
+        .from('parcours')
+        .update({
+          status: 'suspendu',
+          suspended_at: new Date().toISOString(),
+        })
+        .eq('client_id', clientId)
+        .eq('status', 'en_cours')
+        .select('id')
 
-        parcoursSuspended = (updated?.length ?? 0) > 0
-      } else {
-        // Reactivate suspended parcours
-        await supabase
-          .from('parcours')
-          .update({
-            status: 'en_cours',
-            suspended_at: null,
-          })
-          .eq('client_id', clientId)
-          .eq('status', 'suspendu')
-      }
+      parcoursSuspended = (updated?.length ?? 0) > 0
+    } else if (accessType === 'lab' && enabled) {
+      // Reactivate suspended parcours
+      await supabase
+        .from('parcours')
+        .update({
+          status: 'en_cours',
+          suspended_at: null,
+        })
+        .eq('client_id', clientId)
+        .eq('status', 'suspendu')
     }
 
     // Log activity
@@ -148,7 +158,7 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
       action: `access_${accessType}_${enabled ? 'enabled' : 'disabled'}`,
       entity_type: 'client',
       entity_id: clientId,
-      metadata: { accessType, enabled, newDashboardType, clientSuspended },
+      metadata: { accessType, enabled, newDashboardType, clientSuspended, labAutoPaused },
     })
 
     return successResponse({
@@ -158,6 +168,7 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
       dashboardType: newDashboardType,
       parcoursSuspended,
       clientSuspended,
+      labAutoPaused,
     })
   } catch (error) {
     console.error('[CRM:TOGGLE_ACCESS] Unexpected error:', error)

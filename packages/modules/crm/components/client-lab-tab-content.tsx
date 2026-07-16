@@ -58,20 +58,33 @@ export function ClientLabTabContent({
 
   const dashboardType = client.config?.dashboardType ?? 'hub'
   const isLabClient = dashboardType === 'lab'
-  const labActivated = dashboardType === 'lab'
   const hasActiveParcours = parcours?.status === 'en_cours'
   const parcoursAbandoned = parcours?.status === 'abandoned'
   const parcoursCompleted = parcours?.status === 'termine'
   const noPendingValidations = (pendingValidations?.count ?? 0) === 0
 
-  // En-tête d'état unique : clarifie « Lab activé » vs « processus de facturation ».
-  const activationNote = !labActivated
-    ? "Le client n'a pas encore accès à son dashboard Lab."
-    : billingStatus?.labPaid
-      ? 'Forfait Lab payé — accès actif.'
-      : billingStatus?.invoiceSent
-        ? 'Activé — facture envoyée, paiement en attente.'
-        : 'Activé manuellement (sans facturation).'
+  // État du Lab — SOURCE UNIQUE : les vrais flags (plus jamais dashboard_type, qui ne dit
+  // que le mode par défaut au login et rendait cet en-tête incohérent avec le switch agents).
+  //  - lab_mode_available = l'espace Lab existe (permanent une fois accordé)
+  //  - elio_lab_enabled   = agents du parcours actifs ou en pause
+  // Règle métier : One déclenché ⇒ Lab en pause automatiquement (sauf réactivation manuelle).
+  const hasLab = client.config?.labModeAvailable ?? false
+  const agentsOn = client.config?.elioLabEnabled ?? false
+  const labState: 'none' | 'active' | 'paused' = !hasLab ? 'none' : agentsOn ? 'active' : 'paused'
+
+  const activationNote =
+    labState === 'none'
+      ? "Le client n'a pas encore accès à son espace Lab."
+      : labState === 'paused'
+        ? 'Espace Lab acquis (historique consultable) — agents du parcours en pause. Le One actif met le Lab en pause ; réactive les agents ci-dessous si besoin.'
+        : billingStatus?.labPaid
+          ? 'Forfait Lab payé — accès actif.'
+          : billingStatus?.invoiceSent
+            ? 'Activé — facture envoyée, paiement en attente.'
+            : 'Activé manuellement (sans facturation).'
+
+  const labStateBadge =
+    labState === 'none' ? 'Lab non activé' : labState === 'paused' ? 'Lab en pause' : 'Lab actif'
 
   const graduationTooltip = !isLabClient
     ? null
@@ -96,8 +109,8 @@ export function ClientLabTabContent({
               <p className="text-sm font-medium">État du Lab</p>
               <p className="text-xs text-muted-foreground">{activationNote}</p>
             </div>
-            <Badge variant={labActivated ? 'default' : 'outline'} data-testid="lab-activation-badge">
-              {labActivated ? 'Lab activé' : 'Lab non activé'}
+            <Badge variant={labState === 'active' ? 'default' : 'outline'} data-testid="lab-activation-badge">
+              {labStateBadge}
             </Badge>
           </CardContent>
         </Card>

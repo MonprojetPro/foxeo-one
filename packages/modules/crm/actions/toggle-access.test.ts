@@ -205,6 +205,101 @@ describe('toggleAccess Server Action', () => {
     expect((capturedUpdate as Record<string, unknown>)?.lab_mode_available).toBeUndefined()
   })
 
+  it('déclencher le One met les agents Lab en pause automatiquement (règle 2026-07-16)', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: testOperatorId } },
+      error: null,
+    })
+
+    mockOperatorSingle.mockResolvedValue({
+      data: { id: testOperatorDbId },
+      error: null,
+    })
+
+    // Client Lab : espace présent, agents ACTIFS, One fermé → on ouvre le One.
+    mockConfigSingle.mockResolvedValue({
+      data: { dashboard_type: 'lab', lab_mode_available: true, one_mode_available: false, elio_lab_enabled: true },
+      error: null,
+    })
+
+    mockUpdateEq.mockResolvedValue({ error: null })
+    mockParcoursUpdateSelect.mockResolvedValue({ data: [{ id: 'p-1' }], error: null })
+
+    let capturedUpdate: Record<string, unknown> | null = null
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'operators') {
+        return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockOperatorSingle })) })) }
+      }
+      if (table === 'client_configs') {
+        return {
+          select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockConfigSingle })) })),
+          update: vi.fn((payload: Record<string, unknown>) => {
+            capturedUpdate = payload
+            return { eq: mockUpdateEq }
+          }),
+        }
+      }
+      if (table === 'parcours') return { update: mockParcoursUpdate }
+      if (table === 'activity_logs') return { insert: mockActivityInsert }
+      return {}
+    })
+
+    const { toggleAccess } = await import('./toggle-access')
+    const result = await toggleAccess({
+      clientId: testClientId,
+      accessType: 'one',
+      enabled: true,
+    })
+
+    expect(result.error).toBeNull()
+    // One ouvert ⇒ agents Lab coupés dans le MÊME update (« sauf si j'en décide autrement »
+    // = le switch reste dispo pour les rallumer ensuite).
+    expect(capturedUpdate).toMatchObject({
+      dashboard_type: 'one',
+      one_mode_available: true,
+      elio_lab_enabled: false,
+    })
+    expect(result.data?.labAutoPaused).toBe(true)
+    // Le parcours en cours est suspendu, comme pour une coupure manuelle des agents.
+    expect(result.data?.parcoursSuspended).toBe(true)
+    expect(mockParcoursUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'suspendu' })
+    )
+  })
+
+  it('déclencher le One ne touche pas aux agents déjà coupés (pas de faux labAutoPaused)', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: testOperatorId } },
+      error: null,
+    })
+
+    mockOperatorSingle.mockResolvedValue({
+      data: { id: testOperatorDbId },
+      error: null,
+    })
+
+    // Agents déjà en pause → ouvrir le One ne doit rien « re-pauser ».
+    mockConfigSingle.mockResolvedValue({
+      data: { dashboard_type: 'lab', lab_mode_available: true, one_mode_available: false, elio_lab_enabled: false },
+      error: null,
+    })
+
+    mockUpdateEq.mockResolvedValue({ error: null })
+    mockParcoursUpdateSelect.mockResolvedValue({ data: [], error: null })
+
+    const { toggleAccess } = await import('./toggle-access')
+    const result = await toggleAccess({
+      clientId: testClientId,
+      accessType: 'one',
+      enabled: true,
+    })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.labAutoPaused).toBe(false)
+    // Pas de suspension de parcours déclenchée par cette ouverture.
+    expect(mockParcoursUpdate).not.toHaveBeenCalled()
+  })
+
   it('should always return { data, error } format', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: null },
