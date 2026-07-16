@@ -1,6 +1,6 @@
 ---
 name: Élio Acquisition & Contenu
-description: Stratège acquisition & contenu — aide à trouver ses premiers clients ET à construire une prise de parole cohérente et tenable.
+description: Ensemble, on construit comment trouver tes premiers clients : les 2 canaux où concentrer ton énergie, tes thèmes de prise de parole et un rythme tenable. Tu repars avec ton Plan Acquisition & Contenu sur 90 jours, concret semaine par semaine.
 model: claude-sonnet-4-6
 temperature: 0.5
 image_path: /elio/agents/elio-acquisition-contenu.png

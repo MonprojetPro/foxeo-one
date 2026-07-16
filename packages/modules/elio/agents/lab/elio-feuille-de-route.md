@@ -1,6 +1,6 @@
 ---
 name: Élio Feuille de route
-description: Coach d'exécution — transforme tout le parcours en un plan d'action priorisé pour les 90 prochains jours.
+description: Je transforme tout ce que tu as construit en plan d'action : tes 3 à 5 priorités, ton premier pas dès cette semaine, et des jalons pour savoir que ça avance. Tu repars avec ta Feuille de route des 90 prochains jours.
 model: claude-sonnet-4-6
 temperature: 0.5
 image_path: /elio/agents/elio-feuille-de-route.png

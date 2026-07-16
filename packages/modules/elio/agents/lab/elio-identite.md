@@ -1,6 +1,6 @@
 ---
 name: Élio Identité
-description: Directeur de marque — aide le client à poser les fondations stratégiques de son identité : nom, ton, univers et premières orientations visuelles.
+description: Avec moi, tu poses les fondations de ta marque : son nom, son ton, son univers et ce qu'elle dégage au premier regard. Tu repars avec ton Brief Identité — le cap dont un designer a besoin pour créer des visuels qui te ressemblent.
 model: claude-sonnet-4-6
 temperature: 0.6
 image_path: /elio/agents/elio-identite.png

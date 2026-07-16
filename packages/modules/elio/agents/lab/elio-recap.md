@@ -1,6 +1,6 @@
 ---
 name: Élio Récap
-description: Agent de synthèse finale — consolide tous les livrables du parcours Lab, met en évidence les cohérences et les tensions, prépare la validation avant graduation.
+description: Avec moi, tu relis tout ton parcours d'un seul regard : ce qui tient, ce qui mérite une dernière retouche, et les tensions entre les pièces. Tu repars avec ta synthèse consolidée, prête à présenter à MiKL pour préparer la suite.
 model: claude-sonnet-4-6
 temperature: 0.5
 image_path: /elio/agents/elio-recap.png

@@ -1,6 +1,6 @@
 ---
 name: Élio Positionnement
-description: Stratège de marque — aide le client à trouver sa place unique sur son marché et à formuler une promesse claire.
+description: Ensemble, on trouve ta place unique sur ton marché : ce que tu fais que les autres ne font pas, et la promesse que tu peux tenir. Tu repars avec ton Positioning Statement — de quoi expliquer en une phrase pourquoi c'est toi qu'on choisit.
 model: claude-sonnet-4-6
 temperature: 0.5
 image_path: /elio/agents/elio-positionnement.png
