@@ -68,8 +68,14 @@ export function ModuleSidebar({ target, modules, elioWidget, badges }: ModuleSid
   const activeBg = isLab ? '#1e1557' : 'color-mix(in srgb, var(--brand-accent, #16a34a) 10%, transparent)'
   const activeBorder = isLab ? '#7c3aed' : 'var(--brand-accent, #16a34a)'
 
-  // En mode One, Élio sort de la liste principale (widget dédié en bas via elioWidget prop)
-  const mainModules = isOne ? modules.filter(m => m.id !== 'elio') : modules
+  // En mode One, Élio sort de la liste principale (widget dédié en bas via elioWidget prop).
+  // En mode Lab, « Dashboard » (core-dashboard → '/') disparaît : la home Lab EST « Mon
+  // Parcours » ('/' y redirige côté serveur) — garder l'entrée ferait un doublon inerte.
+  const mainModules = isOne
+    ? modules.filter(m => m.id !== 'elio')
+    : isLab
+      ? modules.filter(m => m.id !== 'core-dashboard')
+      : modules
 
   return (
     <div className="flex flex-col h-full">

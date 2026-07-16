@@ -41,6 +41,16 @@ export async function addParcoursStep(
     const maxOrder = (existing?.[0] as { step_order: number } | undefined)?.step_order ?? 0
     const newOrder = maxOrder + 1
 
+    // Même règle de statut initial que launch-client-parcours (LOT E) : en mode 'libre',
+    // toutes les étapes sont navigables d'emblée → une étape ajoutée après coup doit être
+    // 'active', sinon elle reste « En attente » alors que le reste du parcours est ouvert.
+    const { data: cfgRow } = await supabase
+      .from('client_configs')
+      .select('parcours_mode')
+      .eq('client_id', clientId)
+      .maybeSingle()
+    const isLibre = (cfgRow as { parcours_mode?: string } | null)?.parcours_mode === 'libre'
+
     const { data: inserted, error: insertError } = await supabase
       .from('client_parcours_agents')
       .insert({
@@ -48,7 +58,7 @@ export async function addParcoursStep(
         elio_lab_agent_id: agentId,
         step_order: newOrder,
         step_label: stepLabel,
-        status: 'pending',
+        status: isLibre ? 'active' : 'pending',
       })
       .select('id, step_order')
       .single()

@@ -15,16 +15,24 @@ const mockFetchOrderFn = vi.fn(() => ({ limit: mockFetchLimitFn }))
 const mockFetchEqFn = vi.fn(() => ({ order: mockFetchOrderFn }))
 const mockFetchSelectFn = vi.fn(() => ({ eq: mockFetchEqFn }))
 
+// Chaîne config (SELECT parcours_mode) :
+// .from('client_configs').select().eq().maybeSingle()
+const mockConfigMaybeSingle = vi.fn()
+const mockConfigEqFn = vi.fn(() => ({ maybeSingle: mockConfigMaybeSingle }))
+const mockConfigSelectFn = vi.fn(() => ({ eq: mockConfigEqFn }))
+
 // Chaîne insert (INSERT + select single) :
 // .from().insert().select().single()
 const mockInsertSingle = vi.fn()
 const mockInsertSelect = vi.fn(() => ({ single: mockInsertSingle }))
 const mockInsertFn = vi.fn(() => ({ select: mockInsertSelect }))
 
-let callCount = 0
-const mockFrom = vi.fn(() => {
-  callCount++
-  if (callCount === 1) return { select: mockFetchSelectFn }
+let parcoursCallCount = 0
+const mockFrom = vi.fn((table: string) => {
+  if (table === 'client_configs') return { select: mockConfigSelectFn }
+  // client_parcours_agents : 1er appel = SELECT max order, 2e = INSERT
+  parcoursCallCount++
+  if (parcoursCallCount === 1) return { select: mockFetchSelectFn }
   return { insert: mockInsertFn }
 })
 
@@ -41,9 +49,10 @@ const AGENT_ID = '00000000-0000-0000-0000-000000000010'
 describe('addParcoursStep Server Action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    callCount = 0
+    parcoursCallCount = 0
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-id' } }, error: null })
     mockFetchLimitFn.mockResolvedValue({ data: [{ step_order: 3 }], error: null })
+    mockConfigMaybeSingle.mockResolvedValue({ data: { parcours_mode: 'tracee' }, error: null })
     mockInsertSingle.mockResolvedValue({
       data: { id: '00000000-0000-0000-0000-000000000099', step_order: 4 },
       error: null,
@@ -82,6 +91,23 @@ describe('addParcoursStep Server Action', () => {
     const { addParcoursStep } = await import('./add-parcours-step')
     const result = await addParcoursStep({ clientId: CLIENT_ID, agentId: AGENT_ID, stepLabel: 'Première étape' })
     expect(result.data?.stepOrder).toBe(1)
+  })
+
+  it("insère en 'active' quand le parcours est en mode libre (règle LOT E)", async () => {
+    mockConfigMaybeSingle.mockResolvedValue({ data: { parcours_mode: 'libre' }, error: null })
+    const { addParcoursStep } = await import('./add-parcours-step')
+    const result = await addParcoursStep({ clientId: CLIENT_ID, agentId: AGENT_ID, stepLabel: 'Étape ajoutée' })
+
+    expect(result.error).toBeNull()
+    expect(mockInsertFn).toHaveBeenCalledWith(expect.objectContaining({ status: 'active' }))
+  })
+
+  it("insère en 'pending' quand le parcours est en mode tracé", async () => {
+    const { addParcoursStep } = await import('./add-parcours-step')
+    const result = await addParcoursStep({ clientId: CLIENT_ID, agentId: AGENT_ID, stepLabel: 'Étape ajoutée' })
+
+    expect(result.error).toBeNull()
+    expect(mockInsertFn).toHaveBeenCalledWith(expect.objectContaining({ status: 'pending' }))
   })
 
   it('returns DB_ERROR when insert fails', async () => {
