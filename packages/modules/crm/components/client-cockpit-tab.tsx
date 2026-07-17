@@ -27,6 +27,7 @@ import { useClientTabNav } from '../hooks/use-client-tab-nav'
 import { useClientCockpitRealtime } from '../hooks/use-client-cockpit-realtime'
 import { useClientToolTrackingSummary } from '../hooks/use-client-tool-tracking-summary'
 import { AccessToggles } from './access-toggles'
+import { OneAccessToggle } from './one-access-toggle'
 import { ParcoursModeSelector } from './parcours-mode-selector'
 import { ParcoursStatusBadge } from './parcours-status-badge'
 import { GraduationDialog } from './graduation-dialog'
@@ -135,6 +136,11 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
   const showAbonnement = isOneClient && (hasGraduated || client.clientType === 'direct_one')
 
   const canGraduate = isLabClient && !!parcours
+
+  // Dashboard One (F) — statut basé sur le vrai levier one_mode_available (multi-tenant),
+  // pas sur la table client_instances (réservée au kit de sortie).
+  const oneOpen = client.config?.oneModeAvailable ?? false
+  const activeModuleCount = client.config?.activeModules?.length ?? 0
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -277,29 +283,36 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
         </div>
       </CockpitPanel>
 
-      {/* F — Instance One (+ graduation) */}
-      <CockpitPanel title="Instance One">
+      {/* F — Dashboard One : levier d'accès (one_mode_available) + statut + graduation.
+          Le One est servi par l'app multi-tenant — pas de déploiement dédié en fonctionnement
+          normal. Une « instance dédiée » n'existe que via le kit de sortie (client sortant). */}
+      <CockpitPanel title="Dashboard One">
         <div className="space-y-2 p-2">
           <div className="mb-1 flex items-center justify-between">
             <div className="flex items-center gap-2 px-1">
               <Zap className="h-4 w-4 text-blue-400" />
               <span className="text-xs font-medium uppercase tracking-wider text-gray-500">Statut</span>
             </div>
-            {instance && (
-              <TabShortcut onClick={() => navigateToTab('modules')} title="Ouvrir l'onglet One" />
+            {oneOpen && (
+              <TabShortcut onClick={() => navigateToTab('modules')} title="Ouvrir l'onglet Modules" />
             )}
           </div>
-          {instance ? (
+
+          {/* Levier unique : Accès One */}
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5">
+            <div>
+              <p className="text-sm font-medium text-white">Accès One</p>
+              <p className="text-xs text-gray-500">Dashboard business du client</p>
+            </div>
+            <OneAccessToggle clientId={clientId} oneModeAvailable={oneOpen} />
+          </div>
+
+          {oneOpen ? (
             <div className="grid grid-cols-2 gap-2">
-              <StatCard
-                label="Statut"
-                value={instance.status === 'active' ? 'Actif' : instance.status}
-                accent={instance.status === 'active'}
-                tone="cyan"
-              />
+              <StatCard label="Statut" value="Ouvert" accent tone="emerald" />
               <StatCard
                 label="Modules actifs"
-                value={instance.activeModules.length}
+                value={activeModuleCount}
                 accent
                 tone="blue"
               />
@@ -307,8 +320,16 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
           ) : (
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-sm text-gray-500">
               <CircleSlash className="h-4 w-4 shrink-0" />
-              Pas encore d'instance One.
+              Accès One fermé — le client ne voit pas le dashboard One.
             </div>
+          )}
+
+          {/* Instance dédiée = uniquement un client sorti via le kit de sortie */}
+          {instance && (
+            <p className="px-1 text-xs text-gray-500">
+              Instance dédiée (kit de sortie) : {instance.status === 'active' ? 'active' : instance.status}
+              {instance.instanceUrl ? ` — ${instance.instanceUrl}` : ''}
+            </p>
           )}
 
           {/* Graduation Lab → One */}
@@ -359,13 +380,12 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
         </div>
       )}
 
-      {/* E — Acces (toggles inline, pleine largeur) */}
+      {/* E — Accès Lab (espace + agents du parcours — le levier One vit dans le panneau Dashboard One) */}
       <div className="lg:col-span-2">
         <AccessToggles
           clientId={clientId}
           labModeAvailable={client.config?.labModeAvailable ?? false}
           elioLabEnabled={client.config?.elioLabEnabled ?? false}
-          oneModeAvailable={client.config?.oneModeAvailable ?? false}
           hasActiveParcours={hasActiveParcours}
         />
       </div>

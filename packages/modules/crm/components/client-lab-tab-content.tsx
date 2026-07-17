@@ -121,7 +121,6 @@ export function ClientLabTabContent({
           clientId={clientId}
           labModeAvailable={client.config?.labModeAvailable ?? false}
           elioLabEnabled={client.config?.elioLabEnabled ?? false}
-          oneModeAvailable={client.config?.oneModeAvailable ?? false}
           hasActiveParcours={hasActiveParcours}
           showOnlyAgents
         />

@@ -27,56 +27,49 @@ interface AccessTogglesProps {
   labModeAvailable: boolean
   /** Agents Élio Lab actifs (communication). C'est CE levier que la switch « Agents Lab » pilote. */
   elioLabEnabled: boolean
-  /** Accès One ouvert. */
-  oneModeAvailable: boolean
   hasActiveParcours: boolean
   /** Onglet Lab : n'affiche que le toggle « Agents du parcours » (l'accès global vit dans le Pilote). */
   showOnlyAgents?: boolean
 }
 
+/**
+ * Leviers Lab : statut « Espace Lab » (permanent, lecture seule) + switch « Agents du parcours ».
+ * Le levier « Accès One » vit dans le panneau « Dashboard One » du cockpit (OneAccessToggle).
+ */
 export function AccessToggles({
   clientId,
   labModeAvailable,
   elioLabEnabled,
-  oneModeAvailable,
   hasActiveParcours,
   showOnlyAgents = false,
 }: AccessTogglesProps) {
-  const [confirmDialog, setConfirmDialog] = useState<{ type: 'lab' | 'one'; show: boolean }>({ type: 'lab', show: false })
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const queryClient = useQueryClient()
 
-  // Les switches lisent les VRAIS flags (plus de dérivation depuis dashboard_type) :
-  //  - « Agents Lab » = elio_lab_enabled (couper/réactiver la communication ; l'espace Lab reste).
-  //  - « Accès One »  = one_mode_available (ouvrir/fermer).
+  // La switch lit le VRAI flag (plus de dérivation depuis dashboard_type) :
+  //  « Agents Lab » = elio_lab_enabled (couper/réactiver la communication ; l'espace Lab reste).
   const agentsEnabled = elioLabEnabled
-  const oneEnabled = oneModeAvailable
 
-  const handleToggle = (accessType: 'lab' | 'one', enabled: boolean) => {
+  const handleToggle = (enabled: boolean) => {
     // À la désactivation, on confirme (couper les agents suspend le parcours en cours).
     if (!enabled) {
-      setConfirmDialog({ type: accessType, show: true })
+      setConfirmOpen(true)
       return
     }
-    executeToggle(accessType, enabled)
+    executeToggle(enabled)
   }
 
-  const executeToggle = (accessType: 'lab' | 'one', enabled: boolean) => {
+  const executeToggle = (enabled: boolean) => {
     startTransition(async () => {
-      const result = await toggleAccess({ clientId, accessType, enabled })
+      const result = await toggleAccess({ clientId, accessType: 'lab', enabled })
 
       if (result.error) {
         showError(result.error.message)
         return
       }
 
-      const label = accessType === 'lab' ? 'Agents du parcours' : 'Accès One'
-      const action = enabled ? 'activé' : 'désactivé'
-      showSuccess(`${label} ${action}`)
-
-      if (result.data?.labAutoPaused) {
-        showSuccess('Le Lab a été mis en pause automatiquement (One déclenché) — réactive les agents si besoin')
-      }
+      showSuccess(`Agents du parcours ${enabled ? 'activés' : 'désactivés'}`)
 
       if (result.data?.parcoursSuspended) {
         showSuccess('Le parcours Lab a été suspendu')
@@ -89,17 +82,15 @@ export function AccessToggles({
   }
 
   const confirmDisable = () => {
-    executeToggle(confirmDialog.type, false)
-    setConfirmDialog({ type: 'lab', show: false })
+    executeToggle(false)
+    setConfirmOpen(false)
   }
-
-  const dialogLabel = confirmDialog.type === 'lab' ? 'les agents du parcours' : 'l’accès One'
 
   return (
     <>
       <Card data-testid="access-toggles">
         <CardHeader>
-          <CardTitle>{showOnlyAgents ? 'Lab — agents du parcours' : 'Accès dashboards'}</CardTitle>
+          <CardTitle>{showOnlyAgents ? 'Lab — agents du parcours' : 'Accès Lab'}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -153,52 +144,29 @@ export function AccessToggles({
               </div>
               <Switch
                 checked={agentsEnabled}
-                onCheckedChange={(checked: boolean) => handleToggle('lab', checked)}
+                onCheckedChange={(checked: boolean) => handleToggle(checked)}
                 disabled={isPending || !labModeAvailable}
                 aria-label="Activer les agents Lab"
                 data-testid="toggle-lab"
               />
             </div>
-
-            {/* Accès One — masqué en mode agents-only (piloté depuis le Pilote) */}
-            {!showOnlyAgents && (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Accès One</p>
-                  <p className="text-xs text-muted-foreground">Dashboard business client</p>
-                </div>
-                <Switch
-                  checked={oneEnabled}
-                  onCheckedChange={(checked: boolean) => handleToggle('one', checked)}
-                  disabled={isPending}
-                  aria-label="Activer l'accès One"
-                  data-testid="toggle-one"
-                />
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Confirmation dialog for disabling access */}
-      <Dialog open={confirmDialog.show} onOpenChange={(open) => setConfirmDialog((prev) => ({ ...prev, show: open }))}>
+      {/* Confirmation dialog for disabling agents */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Désactiver {dialogLabel}</DialogTitle>
+            <DialogTitle>Désactiver les agents du parcours</DialogTitle>
             <DialogDescription>
-              {confirmDialog.type === 'lab' ? (
-                <>
-                  Le client ne pourra plus échanger avec les agents de son parcours. Son espace Lab,
-                  son historique et l&apos;assistant Élio Lab restent accessibles.
-                  {hasActiveParcours && <> Le parcours en cours sera suspendu (pas supprimé).</>}
-                </>
-              ) : (
-                <>Le client perdra l&apos;accès à son dashboard One.</>
-              )}
+              Le client ne pourra plus échanger avec les agents de son parcours. Son espace Lab,
+              son historique et l&apos;assistant Élio Lab restent accessibles.
+              {hasActiveParcours && <> Le parcours en cours sera suspendu (pas supprimé).</>}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDialog({ type: 'lab', show: false })}>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
               Annuler
             </Button>
             <Button variant="destructive" onClick={confirmDisable} disabled={isPending}>

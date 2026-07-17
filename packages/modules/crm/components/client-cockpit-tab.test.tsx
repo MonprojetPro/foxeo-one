@@ -9,6 +9,15 @@ const mockRouterPush = vi.fn()
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mockRouterPush }) }))
 
+const defaultConfig = () => ({
+  dashboardType: 'lab',
+  labModeAvailable: true,
+  elioLabEnabled: true,
+  oneModeAvailable: false,
+  activeModules: [] as string[],
+  subscriptionTier: 'base',
+})
+
 const clientData = {
   id: CLIENT_ID,
   name: 'Jean Test',
@@ -19,7 +28,7 @@ const clientData = {
   status: 'active',
   clientType: 'lab',
   createdAt: '2026-01-01T00:00:00.000Z',
-  config: { dashboardType: 'lab', labModeAvailable: true, elioLabEnabled: true, oneModeAvailable: false, subscriptionTier: 'base' },
+  config: defaultConfig(),
 }
 
 // État configurable par test
@@ -48,6 +57,7 @@ vi.mock('../hooks/use-client-tool-tracking-summary', () => ({ useClientToolTrack
 
 // Enfants avec hooks propres → stubs
 vi.mock('./access-toggles', () => ({ AccessToggles: () => <div data-testid="access-toggles-stub" /> }))
+vi.mock('./one-access-toggle', () => ({ OneAccessToggle: () => <div data-testid="one-access-toggle-stub" /> }))
 vi.mock('./parcours-mode-selector', () => ({ ParcoursModeSelector: () => <div data-testid="parcours-mode-selector-stub" /> }))
 vi.mock('./graduation-dialog', () => ({ GraduationDialog: () => <div data-testid="graduation-dialog-stub" /> }))
 vi.mock('./client-notes-section', () => ({ ClientNotesSection: () => <div data-testid="notes-stub" /> }))
@@ -63,6 +73,7 @@ const parcoursEnCours = {
 describe('ClientCockpitTab', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    clientData.config = defaultConfig()
     state.parcours = null
     state.pending = { count: 0 }
     state.activity = { firstLoginAt: '2026-01-02T00:00:00Z', lastActivityAt: '2026-06-19T00:00:00Z', daysSinceActivity: 1, isInactive: false }
@@ -110,9 +121,28 @@ describe('ClientCockpitTab', () => {
     expect(screen.getByTestId('cockpit-graduate-button')).toBeInTheDocument()
   })
 
-  it('affiche « pas encore d\'instance One » sans instance', () => {
+  it('affiche « Accès One fermé » quand le One n\'est pas ouvert (avec le toggle)', () => {
     render(<ClientCockpitTab clientId={CLIENT_ID} />)
-    expect(screen.getByText(/Pas encore d'instance One/i)).toBeInTheDocument()
+    expect(screen.getByText(/Accès One fermé/i)).toBeInTheDocument()
+    expect(screen.getByTestId('one-access-toggle-stub')).toBeInTheDocument()
+  })
+
+  it('affiche le statut Ouvert + modules actifs quand le One est ouvert', () => {
+    clientData.config = { ...defaultConfig(), oneModeAvailable: true, activeModules: ['core-dashboard', 'documents'] }
+    render(<ClientCockpitTab clientId={CLIENT_ID} />)
+    expect(screen.getByText('Ouvert')).toBeInTheDocument()
+    expect(screen.getByText('Modules actifs')).toBeInTheDocument()
+    expect(screen.getByText('2')).toBeInTheDocument()
+  })
+
+  it('ne mentionne l\'instance dédiée que si elle existe (kit de sortie)', () => {
+    const { unmount } = render(<ClientCockpitTab clientId={CLIENT_ID} />)
+    expect(screen.queryByText(/Instance dédiée/i)).not.toBeInTheDocument()
+    unmount()
+
+    state.instance = { status: 'transferred', instanceUrl: 'https://client-sorti.example.com', activeModules: [] }
+    render(<ClientCockpitTab clientId={CLIENT_ID} />)
+    expect(screen.getByText(/Instance dédiée/i)).toBeInTheDocument()
   })
 
   it('affiche les notes privées (rapatriées dans le cockpit)', () => {

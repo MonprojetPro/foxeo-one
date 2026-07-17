@@ -20,14 +20,13 @@ const createWrapper = () => {
 
 const CLIENT_ID = '550e8400-e29b-41d4-a716-446655440001'
 
-// Profil Lab actif : espace Lab présent, agents actifs, One fermé
+// Profil Lab actif : espace Lab présent, agents actifs
 function renderLab(hasActiveParcours = false) {
   return render(
     <AccessToggles
       clientId={CLIENT_ID}
       labModeAvailable
       elioLabEnabled
-      oneModeAvailable={false}
       hasActiveParcours={hasActiveParcours}
     />,
     { wrapper: createWrapper() }
@@ -35,29 +34,27 @@ function renderLab(hasActiveParcours = false) {
 }
 
 describe('AccessToggles', () => {
-  it('rend les leviers Agents du parcours et Accès One', () => {
+  it('rend le levier Agents du parcours (le levier One vit dans le panneau Dashboard One)', () => {
     renderLab()
     expect(screen.getByText('Agents du parcours')).toBeInTheDocument()
-    expect(screen.getByText('Accès One')).toBeInTheDocument()
+    expect(screen.queryByText('Accès One')).not.toBeInTheDocument()
   })
 
-  it('rend 2 switches', () => {
+  it('rend 1 seule switch', () => {
     renderLab()
-    expect(screen.getAllByRole('switch')).toHaveLength(2)
+    expect(screen.getAllByRole('switch')).toHaveLength(1)
   })
 
-  it('reflète les vrais flags : agents ON (elioLabEnabled), One OFF (oneModeAvailable)', () => {
+  it('reflète le vrai flag : agents ON (elioLabEnabled)', () => {
     renderLab()
     expect(screen.getByTestId('toggle-lab')).toHaveAttribute('aria-checked', 'true')
-    expect(screen.getByTestId('toggle-one')).toHaveAttribute('aria-checked', 'false')
   })
 
-  it('One ON quand oneModeAvailable=true', () => {
+  it('agents OFF quand elioLabEnabled=false', () => {
     render(
-      <AccessToggles clientId={CLIENT_ID} labModeAvailable elioLabEnabled={false} oneModeAvailable hasActiveParcours={false} />,
+      <AccessToggles clientId={CLIENT_ID} labModeAvailable elioLabEnabled={false} hasActiveParcours={false} />,
       { wrapper: createWrapper() }
     )
-    expect(screen.getByTestId('toggle-one')).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByTestId('toggle-lab')).toHaveAttribute('aria-checked', 'false')
   })
 
@@ -83,6 +80,6 @@ describe('AccessToggles', () => {
   it('a le data-testid access-toggles + titre', () => {
     renderLab()
     expect(screen.getByTestId('access-toggles')).toBeInTheDocument()
-    expect(screen.getByText('Accès dashboards')).toBeInTheDocument()
+    expect(screen.getByText('Accès Lab')).toBeInTheDocument()
   })
 })

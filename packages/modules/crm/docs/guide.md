@@ -99,10 +99,10 @@ L'onglet actif est synchronisé avec l'URL (`?tab=historique`). Vous pouvez part
 
 ### Gérer les accès Lab/One
 
-Dans la section **"Accès dashboards"** de la fiche client :
-- **Accès Lab** : Active/désactive le dashboard d'incubation. Si désactivé avec un parcours en cours, celui-ci est suspendu (pas supprimé). À la réactivation, le parcours reprend.
-- **Accès One** : Active/désactive le dashboard business.
-- La désactivation déclenche un dialog de confirmation.
+Dans le cockpit Pilote de la fiche client :
+- **Accès Lab** (section dédiée) : l'espace Lab est **permanent** une fois accordé (statut en lecture seule). Le levier réel est **"Agents du parcours"** : couper/réactiver la communication avec les agents Élio des étapes. Si coupé avec un parcours en cours, celui-ci est suspendu (pas supprimé) ; à la réactivation, le parcours reprend.
+- **Accès One** (panneau **"Dashboard One"**) : le toggle ouvre/ferme le dashboard business du client (flag `one_mode_available`, servi par l'app multi-tenant — aucun déploiement dédié). Le panneau affiche aussi le statut et le nombre de modules actifs. Une "instance dédiée" n'apparaît que pour un client sorti via le kit de sortie.
+- Toute désactivation déclenche un dialog de confirmation.
 
 ### Notes privées sur un client
 
