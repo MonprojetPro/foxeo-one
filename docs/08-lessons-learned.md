@@ -17,7 +17,7 @@
 | DEP | Déploiement | 6 |
 | GIT | Git / Workflow | 1 |
 | SEC | Sécurité / Secrets | 2 |
-| UI | Interface / CSS | 1 |
+| UI | Interface / CSS | 2 |
 | DRY | Logique dupliquée / Architecture | 1 |
 
 ---
@@ -831,3 +831,13 @@
 - **Solution validee** : jeton de connexion à usage unique du compte client via l'API admin (`generateLink` type `magiclink`, service role) + route publique `/auth/impersonation` qui le consomme avec `verifyOtp()` **côté serveur** (pas de dépendance au flow PKCE/implicite : aucun token dans le fragment d'URL) → vraie session client. Cookie d'impersonation en **httpOnly**, bannière alimentée par le layout serveur. Policy RLS UPDATE client ajoutée (restreinte à sa propre session et aux statuts `ended`/`expired`) + `signOut` réel. Cookie porté à 2 h alors que la session logique expire à 1 h : c'est ce décalage qui permet au middleware de **détecter** la fenêtre écoulée et de déconnecter.
 - **Regle a suivre** : (a) « se connecter comme X » n'est fait que si une **session d'authentification de X** est créée — une bannière qui dit « tu es en impersonation » n'est pas une impersonation ; vérifier `auth.getUser()` dans le contexte cible, pas la présence d'un cookie. (b) Une session d'emprunt doit avoir ses **quatre** maillons : ouverture, marqueur visible, fermeture qui ferme vraiment (row + signOut), expiration qui expire vraiment. Un marqueur qui disparaît sans déconnecter est un trou de sécurité. (c) **Toute étape « une seule fois » du parcours client doit être neutralisée en impersonation** — sans quoi l'opérateur consomme les données du client : `first_login_at` écrit par MiKL, écran de graduation grillé, CGU acceptées à sa place. Recenser ces one-shots (middleware compris) fait partie de l'inspection des consumers. (d) Un fallback `localhost` dans du code qui tourne en prod est un bug en attente : viser la prod par défaut, comme le reste du repo.
 - **Agents impliques** : SPARK (fix), CERBÈRE (revue impersonation), ATLAS
+
+### [UI-007] Ordre des effets React : un provider racine écrase toujours un correctif de sous-arbre
+- **Date** : 2026-07-25
+- **Projet** : MonprojetPro
+- **Categorie** : React / Thème / Ordre d'exécution
+- **Symptome** : MiKL — « l'onglet paramètres Lab et One était le même, et du coup le code couleur est celui du Lab ». Le bouton « Exporter mes données » s'affichait en violet alors que le toggle indiquait MODE ONE, tandis que d'autres éléments (widget Élio) étaient bien verts.
+- **Cause racine** : deux composants écrivaient la classe de thème sur `<html>`. `ThemeClassSetter` (sous-arbre `(dashboard)`) posait `theme-one` d'après le mode résolu ; le `ThemeProvider` du layout RACINE, appelé avec `dashboardTheme="lab"` en dur, faisait `classList.remove('theme-hub','theme-lab','theme-one')` puis ajoutait `theme-lab`. **Les effets des composants enfants s'exécutent AVANT ceux de leurs parents** : le provider racine gagnait donc systématiquement, et tout le mode One tournait avec les tokens violets du Lab (`--primary` en hue 290) après chaque chargement de page. Pire, son premier effet (`setThemeState(getStoredTheme(...))`) pouvait relancer l'écrasement une seconde fois. Le commentaire de `ThemeClassSetter` affirmait l'inverse (« s'exécute APRÈS lui dans le sous-arbre ») — une supposition jamais vérifiée. Les composants One avaient contourné le symptôme en forçant leurs couleurs en littéral, ce qui masquait la cause et donnait un vert présent à certains endroits seulement.
+- **Solution validee** : une seule autorité par responsabilité. Le `ThemeProvider` ne gère plus que `light`/`dark` ; la classe de dashboard est posée **côté serveur** dans le `className` de `<html>` (déduite du cookie du toggle Lab/One, donc sans flash), puis ajustée par `ThemeClassSetter` pour le clamp aux modes réellement autorisés.
+- **Regle a suivre** : (a) une propriété globale du DOM (`documentElement.classList`, `dataset`, `<title>`) ne doit avoir **qu'un seul écrivain**. Deux composants qui la modifient = le plus proche de la racine gagne, quelle que soit l'intention. (b) Se rappeler que les effets remontent des **enfants vers les parents** : un correctif appliqué « plus bas » ne corrige rien si un parent réécrit la même chose. (c) **Symptôme signature** : des couleurs forcées en littéral dispersées dans le code = quelqu'un contourne un thème qui ne s'applique pas. Chercher l'écrivain concurrent avant d'ajouter un nouveau `!important` ou une valeur en dur.
+- **Agents impliques** : SPARK (fix), PIXEL (thème), ATLAS
