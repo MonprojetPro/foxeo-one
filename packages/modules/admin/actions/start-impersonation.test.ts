@@ -34,6 +34,23 @@ vi.mock('../utils/build-impersonation-link', () => ({
   buildImpersonationLink: (...args: unknown[]) => mockBuildLink(...args),
 }))
 
+/**
+ * Chaîne de requête Supabase tolérante : chaque filtre (.eq/.gt/.lte/…) renvoie le même
+ * nœud, qui est à la fois awaitable et terminal (.single/.maybeSingle). Évite de réécrire
+ * les mocks à chaque filtre ajouté dans l'action — c'est ce qui les rendait fragiles.
+ */
+function queryChain(result: unknown = { data: null, error: null }) {
+  const node: Record<string, unknown> = {}
+  const passthrough = () => node
+  for (const method of ['eq', 'gt', 'gte', 'lte', 'lt', 'neq', 'select', 'order', 'limit']) {
+    node[method] = vi.fn(passthrough)
+  }
+  node.maybeSingle = vi.fn().mockResolvedValue(result)
+  node.single = vi.fn().mockResolvedValue(result)
+  node.then = (resolve: (value: unknown) => unknown) => Promise.resolve(result).then(resolve)
+  return node
+}
+
 describe('startImpersonation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -141,15 +158,10 @@ describe('startImpersonation', () => {
         }
       }
       if (table === 'impersonation_sessions') {
-        // Check existing → none, then insert
+        // Aucune session en cours → insert
         return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-              })),
-            })),
-          })),
+          select: vi.fn(() => queryChain({ data: null, error: null })),
+          update: vi.fn(() => queryChain({ error: null })),
           insert: vi.fn(() => ({
             select: vi.fn(() => ({
               single: vi.fn().mockResolvedValue({
@@ -198,8 +210,8 @@ describe('startImpersonation', () => {
 
     mockBuildLink.mockResolvedValue({ error: 'SUPABASE_SERVICE_ROLE_KEY manquant' })
 
-    const sessionUpdateEq = vi.fn().mockResolvedValue({ error: null })
-    const sessionUpdate = vi.fn(() => ({ eq: sessionUpdateEq }))
+    const sessionUpdateChain = queryChain({ error: null })
+    const sessionUpdate = vi.fn(() => sessionUpdateChain)
     const emailInvoke = vi.fn().mockResolvedValue({ data: null, error: null })
     mockSupabase.functions.invoke = emailInvoke
 
@@ -234,13 +246,7 @@ describe('startImpersonation', () => {
       }
       if (table === 'impersonation_sessions') {
         return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-              })),
-            })),
-          })),
+          select: vi.fn(() => queryChain({ data: null, error: null })),
           insert: vi.fn(() => ({
             select: vi.fn(() => ({
               single: vi.fn().mockResolvedValue({ data: { id: sessionId }, error: null }),
@@ -262,7 +268,7 @@ describe('startImpersonation', () => {
     expect(sessionUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ status: 'ended' })
     )
-    expect(sessionUpdateEq).toHaveBeenCalledWith('id', sessionId)
+    expect(sessionUpdateChain.eq).toHaveBeenCalledWith('id', sessionId)
     // Et le client n'est pas notifié d'une session qui n'a jamais eu lieu.
     expect(emailInvoke).not.toHaveBeenCalled()
   })
@@ -310,16 +316,8 @@ describe('startImpersonation', () => {
       }
       if (table === 'impersonation_sessions') {
         return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                maybeSingle: vi.fn().mockResolvedValue({
-                  data: { id: 'existing-session' },
-                  error: null,
-                }),
-              })),
-            })),
-          })),
+          select: vi.fn(() => queryChain({ data: { id: 'existing-session' }, error: null })),
+          update: vi.fn(() => queryChain({ error: null })),
         }
       }
       return { select: mockSelect, insert: mockInsert }
@@ -329,6 +327,74 @@ describe('startImpersonation', () => {
 
     expect(result.error).toBeTruthy()
     expect(result.error?.code).toBe('CONFLICT')
+  })
+
+  it('expires a stale active session instead of blocking on CONFLICT', async () => {
+    const operatorId = '00000000-0000-0000-0000-000000000010'
+    const clientId = '00000000-0000-0000-0000-000000000001'
+    const sessionId = '00000000-0000-0000-0000-000000000099'
+
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'op-auth-id' } },
+      error: null,
+    })
+
+    // La péremption se fait par filtres (.eq status active + .lte expires_at now) :
+    // le select qui suit ne voit donc plus de session en cours.
+    const staleUpdate = vi.fn(() => queryChain({ error: null }))
+
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'operators') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: { id: operatorId }, error: null }),
+            })),
+          })),
+        }
+      }
+      if (table === 'clients') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  id: clientId,
+                  auth_user_id: 'auth-id',
+                  name: 'Test',
+                  first_name: null,
+                  email: 'test@test.com',
+                  status: 'active',
+                },
+                error: null,
+              }),
+            })),
+          })),
+        }
+      }
+      if (table === 'impersonation_sessions') {
+        return {
+          select: vi.fn(() => queryChain({ data: null, error: null })),
+          update: staleUpdate,
+          insert: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: { id: sessionId }, error: null }),
+            })),
+          })),
+        }
+      }
+      if (table === 'activity_logs') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) }
+      }
+      return { select: mockSelect, insert: mockInsert }
+    })
+
+    const result = await startImpersonation({ clientId })
+
+    expect(result.error).toBeNull()
+    expect(staleUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'expired' })
+    )
   })
 
   it('should reject client without auth user', async () => {

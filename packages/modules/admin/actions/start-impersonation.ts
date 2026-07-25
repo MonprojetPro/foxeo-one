@@ -73,17 +73,35 @@ export async function startImpersonation(
       return errorResponse('Ce client n\'a pas de compte utilisateur', 'VALIDATION_ERROR')
     }
 
-    // 4. Check no active session for this client already
+    // 4. Check no active session for this client already.
+    //
+    // Correctif 2026-07-25 — Une session « active » dont la fenêtre d'1 h est écoulée
+    // n'est PAS un conflit : rien dans le système ne repassait jamais une session à
+    // 'expired' (ni cron, ni trigger). Résultat observé : un onglet fermé sans cliquer
+    // « Fermer la session » bloquait toute nouvelle impersonation du client pour
+    // toujours (« Une session impersonation est déjà active pour ce client »).
+    // On périme donc les sessions dépassées à la volée, puis on ne refuse que sur une
+    // session RÉELLEMENT en cours.
+    const nowIso = new Date().toISOString()
+
+    await supabase
+      .from('impersonation_sessions')
+      .update({ status: 'expired', ended_at: nowIso })
+      .eq('client_id', client.id)
+      .eq('status', 'active')
+      .lte('expires_at', nowIso)
+
     const { data: existingSession } = await supabase
       .from('impersonation_sessions')
       .select('id')
       .eq('client_id', client.id)
       .eq('status', 'active')
+      .gt('expires_at', nowIso)
       .maybeSingle()
 
     if (existingSession) {
       return errorResponse(
-        'Une session impersonation est déjà active pour ce client',
+        'Une session impersonation est déjà en cours pour ce client — ferme-la depuis la bannière (ou attends son expiration).',
         'CONFLICT'
       )
     }

@@ -86,6 +86,14 @@ export async function middleware(request: NextRequest) {
     request.cookies.get(IMPERSONATION_COOKIE)?.value
   )
   if (rawImpersonationCookie && isImpersonationExpired(rawImpersonationCookie)) {
+    // On clôt aussi la row : sans ça la session reste « active » en base pour toujours
+    // (aucun cron ne les périme) et bloque toute nouvelle impersonation du client.
+    await supabase
+      .from('impersonation_sessions')
+      .update({ status: 'expired', ended_at: new Date().toISOString() })
+      .eq('id', rawImpersonationCookie.sessionId)
+      .eq('status', 'active')
+
     await supabase.auth.signOut()
     const hubUrl = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://hub.monprojet-pro.com'
     const expiredResponse = NextResponse.redirect(hubUrl)
