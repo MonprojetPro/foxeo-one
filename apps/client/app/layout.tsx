@@ -2,7 +2,14 @@
 import type { Metadata } from 'next'
 import { Poppins, Inter } from 'next/font/google'
 import { QueryProvider, ThemeProvider, RealtimeProvider } from '@monprojetpro/supabase'
-import { Toaster, OfflineBanner, BrowserWarning, LocaleProvider } from '@monprojetpro/ui'
+import { cookies } from 'next/headers'
+import {
+  Toaster,
+  OfflineBanner,
+  BrowserWarning,
+  LocaleProvider,
+  MODE_TOGGLE_COOKIE,
+} from '@monprojetpro/ui'
 import './globals.css'
 
 const poppins = Poppins({
@@ -24,17 +31,26 @@ export const metadata: Metadata = {
   description: 'Votre espace MonprojetPro',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Default to Lab theme — dynamic switch to One via ThemeProvider
-  // Client config will determine actual theme (Story 1.5+)
+  // Classe de thème posée dès le SERVEUR, d'après l'intention de mode stockée dans le
+  // cookie du toggle Lab/One. Sans ça, la page s'affichait d'abord en violet (Lab) puis
+  // ThemeClassSetter corrigeait après hydratation — flash visible à chaque navigation.
+  //
+  // Le cookie n'exprime qu'une intention : le clamp aux modes réellement autorisés est
+  // fait par le layout (dashboard), qui rectifie la classe si besoin (cas rare d'un
+  // cookie 'one' resté chez un client redevenu Lab uniquement).
+  const cookieStore = await cookies()
+  const dashboardTheme =
+    cookieStore.get(MODE_TOGGLE_COOKIE)?.value === 'one' ? 'theme-one' : 'theme-lab'
+
   return (
     <html
       lang="fr"
-      className={`dark theme-lab ${poppins.variable} ${inter.variable}`}
+      className={`dark ${dashboardTheme} ${poppins.variable} ${inter.variable}`}
       suppressHydrationWarning
     >
       <head>

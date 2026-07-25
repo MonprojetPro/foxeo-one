@@ -127,8 +127,13 @@ export const ActivityLog = z.object({
   eventData: z.record(z.unknown()).optional(),
   description: z.string(),
   createdAt: z.string().datetime({ offset: true }),
-  // Acteur de l'événement (actor_type en DB)
-  actorType: z.enum(['client', 'operator', 'system', 'elio']).optional(),
+  // Acteur de l'événement (actor_type en DB).
+  // ⚠️ Doit rester aligné sur le CHECK de activity_logs.actor_type (migration 00087) :
+  // une valeur absente de cet enum faisait échouer le parse et écroulait TOUT
+  // l'historique du client (régression 2026-07-25 avec 'operator_impersonation').
+  actorType: z
+    .enum(['client', 'operator', 'system', 'elio', 'elio_one_plus', 'operator_impersonation'])
+    .optional(),
   // Libellé FR de l'acteur, calculé côté serveur
   actorLabel: z.string().optional(),
 })

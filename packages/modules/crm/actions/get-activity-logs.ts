@@ -70,9 +70,17 @@ export async function getActivityLogs(
       return successResponse([])
     }
 
-    // Transform DB columns to ActivityLog shape
-    const logs: ActivityLog[] = data.map((log) =>
-      ActivityLogSchema.parse({
+    // Transform DB columns to ActivityLog shape.
+    //
+    // safeParse ligne à ligne — et non parse() : le 2026-07-25, l'ajout de
+    // 'operator_impersonation' (pourtant valide en DB depuis la migration 00087) faisait
+    // lever le parse du PREMIER log rencontré et l'historique ENTIER du client devenait
+    // « Impossible de charger l'historique ». Une ligne inattendue doit être ignorée,
+    // jamais faire tomber la page.
+    const logs: ActivityLog[] = []
+
+    for (const log of data) {
+      const parsed = ActivityLogSchema.safeParse({
         id: log.id,
         clientId: clientId,
         eventType: log.action,
@@ -85,7 +93,18 @@ export async function getActivityLogs(
         actorType: log.actor_type,
         actorLabel: resolveActorLabel(log.actor_type),
       })
-    )
+
+      if (parsed.success) {
+        logs.push(parsed.data)
+      } else {
+        console.warn(
+          '[CRM:GET_ACTIVITY_LOGS] Log ignoré (forme inattendue):',
+          log.id,
+          log.action,
+          parsed.error.issues
+        )
+      }
+    }
 
     return successResponse(logs)
   } catch (error) {

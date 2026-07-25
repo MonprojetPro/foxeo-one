@@ -100,16 +100,21 @@ export default async function SettingsPage() {
         <span className="text-muted-foreground">&rarr;</span>
       </Link>
 
-      {/* AC6 — Revoir le tutoriel */}
-      <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
-        <div>
-          <h2 className="text-base font-medium text-foreground">Tutoriel interactif</h2>
-          <p className="text-sm text-muted-foreground">
-            Relancez le tutoriel de découverte de votre espace Lab
-          </p>
+      {/* AC6 — Revoir le tutoriel.
+          Masqué en mode One : ce bouton relance le tutoriel du LAB. En mode One il
+          annonçait « découverte de votre espace Lab » et aurait rejoué un tour hors
+          contexte (retour MiKL 2026-07-25 : les Paramètres Lab et One étaient identiques). */}
+      {!isOneMode && (
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
+          <div>
+            <h2 className="text-base font-medium text-foreground">Tutoriel interactif</h2>
+            <p className="text-sm text-muted-foreground">
+              Relancez le tutoriel de découverte de votre espace Lab
+            </p>
+          </div>
+          <RestartTourButton />
         </div>
-        <RestartTourButton />
-      </div>
+      )}
 
       {/* Story 13.3 — Historique support */}
       <Link
@@ -125,8 +130,11 @@ export default async function SettingsPage() {
         <span className="text-muted-foreground">&rarr;</span>
       </Link>
 
-      {/* Story 9.3 — Section Mon parcours Lab */}
-      <ParcoursSettingsSection clientId={clientId ?? undefined} />
+      {/* Story 9.3 — Section Mon parcours Lab.
+          Masquée en mode One : « Mon parcours Lab » et son « Quitter le parcours » n'ont
+          aucun sens dans l'outil quotidien. Le client gradué y accède en repassant en
+          mode Lab. */}
+      {!isOneMode && <ParcoursSettingsSection clientId={clientId ?? undefined} />}
 
       {/* Story 9.5a — Section Mes données RGPD */}
       {clientId && <DataExportSection clientId={clientId} />}

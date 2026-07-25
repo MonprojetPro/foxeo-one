@@ -402,6 +402,17 @@ export type Database = {
         Args: Record<string, never>
         Returns: boolean
       }
+      /** Story 13.3 — détail lisible des actions métier d'une session d'impersonation. */
+      fn_get_impersonation_session_actions: {
+        Args: {
+          p_session_id: string
+        }
+        Returns: {
+          action: string
+          occurred_at: string
+          zone: string | null
+        }[]
+      }
       /** Story 13.3 — clôt une session d'impersonation et recalcule actions_count. */
       fn_close_impersonation_session: {
         Args: {

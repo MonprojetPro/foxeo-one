@@ -48,6 +48,7 @@ import {
   FileSpreadsheet,
   Mail,
   AlertCircle,
+  Shield,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -194,6 +195,41 @@ export const ACTIVITY_EVENT_CONFIG: Record<string, EventConfig> = {
     iconClass: 'text-yellow-500 bg-yellow-500/10',
     tab: 'submissions',
     actionLabel: 'Voir les soumissions',
+  },
+  // ── Impersonation (Story 13.3) ──────────────────────────────────────────────
+  // Absentes de ce registre, ces actions s'affichaient sans libellé utile — et leur
+  // actor_type inconnu écroulait l'historique entier (régression 2026-07-25).
+  impersonation_started: {
+    label: 'Session support ouverte sur le compte client',
+    Icon: Shield,
+    iconClass: 'text-orange-400 bg-orange-400/10',
+    tab: null,
+    actionLabel: null,
+  },
+  impersonation_ended: {
+    label: 'Session support fermée',
+    Icon: Shield,
+    iconClass: 'text-muted-foreground bg-muted',
+    tab: null,
+    actionLabel: null,
+    describe: (meta) => {
+      const count = typeof meta.actions_count === 'number' ? meta.actions_count : null
+      if (count === null) return ''
+      return count === 0
+        ? 'Session fermée — aucune modification effectuée'
+        : `Session fermée — ${count} modification${count > 1 ? 's' : ''}`
+    },
+  },
+  impersonation_action: {
+    label: 'Action en session support',
+    Icon: Shield,
+    iconClass: 'text-orange-400/70 bg-orange-400/5',
+    tab: null,
+    actionLabel: null,
+    describe: (meta) => {
+      const path = typeof meta.path === 'string' ? meta.path : null
+      return `Session support — ${resolveImpersonationZone(path)}`
+    },
   },
   parcours_reactivated: {
     label: 'Parcours réactivé',
@@ -518,13 +554,37 @@ export function resolveActorLabel(actorType: string): string {
   switch (actorType) {
     case 'operator':
       return 'par toi'
+    case 'operator_impersonation':
+      return 'par toi (session support)'
     case 'client':
       return 'par le client'
     case 'elio':
       return 'par Élio'
+    case 'elio_one_plus':
+      return 'par Élio One+'
     case 'system':
       return 'automatique'
     default:
       return ''
   }
+}
+
+/**
+ * Zone de l'app en français, dérivée du chemin d'une action journalisée en
+ * impersonation. Le middleware ne connaît que l'URL : sans cette traduction, la trace
+ * afficherait « /modules/suivi-outil », illisible dans un historique.
+ */
+export function resolveImpersonationZone(path: string | null): string {
+  if (!path || path === '/') return 'Accueil'
+  if (path.startsWith('/modules/parcours')) return 'Parcours'
+  if (path.startsWith('/modules/documents')) return 'Documents'
+  if (path.startsWith('/modules/chat')) return 'Chat'
+  if (path.startsWith('/modules/visio')) return 'Visio'
+  if (path.startsWith('/modules/facturation')) return 'Facturation'
+  if (path.startsWith('/modules/suivi-outil')) return "Suivi de l'outil"
+  if (path.startsWith('/modules/support')) return 'Support'
+  if (path.startsWith('/modules/elio')) return 'Élio'
+  if (path.startsWith('/settings')) return 'Paramètres'
+  if (path.startsWith('/onboarding')) return 'Onboarding'
+  return path
 }

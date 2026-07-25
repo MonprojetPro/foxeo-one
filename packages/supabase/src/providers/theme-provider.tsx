@@ -54,15 +54,19 @@ export function ThemeProvider({
   useEffect(() => {
     const root = document.documentElement
 
-    root.classList.remove(
-      'light',
-      'dark',
-      'theme-hub',
-      'theme-lab',
-      'theme-one'
-    )
-
-    root.classList.add(`theme-${dashboardTheme}`)
+    // ⚠️ Correctif 2026-07-25 — Ne JAMAIS toucher aux classes `theme-hub/lab/one` ici.
+    //
+    // Les effets des composants ENFANTS s'exécutent AVANT ceux de leurs parents. Ce
+    // provider étant monté à la racine, il écrasait systématiquement la classe posée
+    // par `ThemeClassSetter` (sous-arbre dashboard) : le mode One s'affichait donc avec
+    // les tokens VIOLETS du Lab après chaque chargement de page (`--primary` en hue 290).
+    // Les composants One avaient contourné le symptôme en forçant leurs couleurs en
+    // littéral — d'où un vert qui « bavait » à certains endroits et pas à d'autres.
+    //
+    // La classe de dashboard est désormais posée UNE SEULE FOIS côté serveur (className
+    // de <html> dans chaque layout racine) puis ajustée par ThemeClassSetter selon le
+    // mode réel du client. Ce provider ne gère plus que light/dark.
+    root.classList.remove('light', 'dark')
 
     const effectiveTheme =
       theme === 'system'
@@ -72,6 +76,8 @@ export function ThemeProvider({
         : theme
 
     root.classList.add(effectiveTheme)
+    // dashboardTheme reste dans les deps : il est encore exposé via le contexte
+    // (consommé par useTheme) même s'il ne pilote plus la classe CSS.
   }, [theme, dashboardTheme])
 
   // Listen for system preference changes when theme is 'system'
