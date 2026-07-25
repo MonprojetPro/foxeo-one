@@ -316,7 +316,13 @@ describe('startImpersonation', () => {
       }
       if (table === 'impersonation_sessions') {
         return {
-          select: vi.fn(() => queryChain({ data: { id: 'existing-session' }, error: null })),
+          // Session en cours appartenant à un AUTRE opérateur.
+          select: vi.fn(() =>
+            queryChain({
+              data: { id: 'existing-session', operator_id: 'un-autre-operateur' },
+              error: null,
+            })
+          ),
           update: vi.fn(() => queryChain({ error: null })),
         }
       }
@@ -327,6 +333,80 @@ describe('startImpersonation', () => {
 
     expect(result.error).toBeTruthy()
     expect(result.error?.code).toBe('CONFLICT')
+    expect(result.error?.message).toContain('autre opérateur')
+  })
+
+  it('replaces its own in-progress session instead of blocking', async () => {
+    const operatorId = '00000000-0000-0000-0000-000000000010'
+    const clientId = '00000000-0000-0000-0000-000000000001'
+    const sessionId = '00000000-0000-0000-0000-000000000099'
+
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'op-auth-id' } },
+      error: null,
+    })
+
+    const sessionUpdate = vi.fn(() => queryChain({ error: null }))
+
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'operators') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: { id: operatorId }, error: null }),
+            })),
+          })),
+        }
+      }
+      if (table === 'clients') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  id: clientId,
+                  auth_user_id: 'auth-id',
+                  name: 'Test',
+                  first_name: null,
+                  email: 'test@test.com',
+                  status: 'active',
+                },
+                error: null,
+              }),
+            })),
+          })),
+        }
+      }
+      if (table === 'impersonation_sessions') {
+        return {
+          // Session en cours du MÊME opérateur → doit être remplacée, pas refusée.
+          select: vi.fn(() =>
+            queryChain({
+              data: { id: 'ma-session-en-cours', operator_id: operatorId },
+              error: null,
+            })
+          ),
+          update: sessionUpdate,
+          insert: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: { id: sessionId }, error: null }),
+            })),
+          })),
+        }
+      }
+      if (table === 'activity_logs') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) }
+      }
+      return { select: mockSelect, insert: mockInsert }
+    })
+
+    const result = await startImpersonation({ clientId })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.sessionId).toBe(sessionId)
+    expect(sessionUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'ended' })
+    )
   })
 
   it('expires a stale active session instead of blocking on CONFLICT', async () => {

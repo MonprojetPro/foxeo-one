@@ -93,17 +93,29 @@ export async function startImpersonation(
 
     const { data: existingSession } = await supabase
       .from('impersonation_sessions')
-      .select('id')
+      .select('id, operator_id')
       .eq('client_id', client.id)
       .eq('status', 'active')
       .gt('expires_at', nowIso)
       .maybeSingle()
 
     if (existingSession) {
-      return errorResponse(
-        'Une session impersonation est déjà en cours pour ce client — ferme-la depuis la bannière (ou attends son expiration).',
-        'CONFLICT'
-      )
+      // Correctif 2026-07-25 (2) — Sa PROPRE session ne bloque pas : relancer la
+      // remplace. Un onglet fermé, un lien perdu ou un essai raté immobilisait sinon
+      // le client pendant 1 h, alors que rien ne l'impose techniquement.
+      if (existingSession.operator_id === operator.id) {
+        await supabase
+          .from('impersonation_sessions')
+          .update({ status: 'ended', ended_at: nowIso })
+          .eq('id', existingSession.id)
+      } else {
+        // Session d'un AUTRE opérateur : là, on refuse — on ne coupe pas le support
+        // de quelqu'un d'autre en cours de route.
+        return errorResponse(
+          'Un autre opérateur a une session support en cours sur ce client.',
+          'CONFLICT'
+        )
+      }
     }
 
     // 5. Create impersonation session
