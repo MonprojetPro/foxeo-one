@@ -16,7 +16,7 @@
 | DB | Base de données / Schéma | 2 |
 | DEP | Déploiement | 6 |
 | GIT | Git / Workflow | 1 |
-| SEC | Sécurité / Secrets | 1 |
+| SEC | Sécurité / Secrets | 2 |
 | UI | Interface / CSS | 1 |
 | DRY | Logique dupliquée / Architecture | 1 |
 
