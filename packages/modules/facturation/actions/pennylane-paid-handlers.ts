@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getClientAppUrl } from '@monprojetpro/utils'
 import type { QuoteMetadataRow, QuoteType } from '../types/billing.types'
 import { createClientAuthUser } from '../utils/create-client-auth-user'
 import { generateSecureTemporaryPassword } from '../utils/generate-temp-password'
@@ -366,7 +367,8 @@ export async function handleOneDepositPaid(
 
   const emailResult = await deps.sendDirectEmail('welcome-one', client.email as string, {
     clientName: (client.name as string) ?? 'Cher(e) client(e)',
-    activationLink: `${process.env.NEXT_PUBLIC_CLIENT_URL ?? 'https://app.monprojet-pro.com'}/login`,
+    // Correctif 2026-07-25 — le fallback `app.monprojet-pro.com` n'existe pas en DNS.
+    activationLink: `${getClientAppUrl()}/login`,
     temporaryPassword: tempPassword ?? null,
   })
 

@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { getClientAppUrl } from '@monprojetpro/utils'
 
 // Story 13.3 (correctif 2026-07-25) — Impersonation RÉELLE.
 //
@@ -18,15 +19,6 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 // À n'appeler que côté serveur — nécessite SUPABASE_SERVICE_ROLE_KEY.
 
 export const IMPERSONATION_CALLBACK_PATH = '/auth/impersonation'
-
-/**
- * URL de l'app client multi-tenant. Le fallback vise la PROD (et non localhost) :
- * c'est le même choix que sendWelcomeLabInvite / pennylane-paid-handlers, pour qu'une
- * variable d'env absente sur Vercel ne casse pas la redirection.
- */
-export function getClientAppUrl(): string {
-  return process.env.NEXT_PUBLIC_CLIENT_URL ?? 'https://app.monprojet-pro.com'
-}
 
 export interface BuildImpersonationLinkParams {
   /** Email du compte client à impersonner. */

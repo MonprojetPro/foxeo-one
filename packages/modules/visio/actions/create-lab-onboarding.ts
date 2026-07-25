@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { getClientAppUrl } from '@monprojetpro/utils'
 import { CreateLabOnboardingInput } from './post-meeting-schemas'
 export type { CreateLabOnboardingInput } from './post-meeting-schemas'
 
@@ -122,7 +123,9 @@ export async function createLabOnboarding(
             // À réconcilier avec le pattern d'invitation generateLink ultérieurement.
             clientName,
             firstStepLabel: template.name,
-            activationLink: `${process.env.NEXT_PUBLIC_CLIENT_URL ?? ''}/activate?client_id=${client.id}`,
+            // Correctif 2026-07-25 — le fallback vide produisait un lien relatif
+            // inutilisable dans un email. Base centralisée.
+            activationLink: `${getClientAppUrl()}/activate?client_id=${client.id}`,
           },
         }),
       })

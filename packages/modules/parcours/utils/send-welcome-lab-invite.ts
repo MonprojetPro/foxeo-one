@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { getClientAppUrl } from '@monprojetpro/utils'
 
 // LOT C — Invitation Lab envoyée au LANCEMENT du parcours.
 //
@@ -46,7 +47,9 @@ export async function sendWelcomeLabInvite(
     }
   }
 
-  const clientBase = process.env.NEXT_PUBLIC_CLIENT_URL ?? 'https://app.monprojet-pro.com'
+  // Correctif 2026-07-25 — passait par un fallback `app.monprojet-pro.com` qui n'existe
+  // pas en DNS : les invitations partaient avec un lien mort. Base centralisée.
+  const clientBase = getClientAppUrl()
   // /auth/callback = chemin PUBLIC (middleware) qui échange le code PKCE puis redirige
   // vers /reset-password où le client choisit son mot de passe. Même chemin que le
   // flux « mot de passe oublié » → mêmes URLs autorisées côté Supabase.

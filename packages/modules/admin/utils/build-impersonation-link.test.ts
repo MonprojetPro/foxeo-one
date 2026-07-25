@@ -1,9 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import {
-  buildImpersonationLink,
-  getClientAppUrl,
-  IMPERSONATION_CALLBACK_PATH,
-} from './build-impersonation-link'
+import { buildImpersonationLink, IMPERSONATION_CALLBACK_PATH } from './build-impersonation-link'
 
 function adminMock(result: unknown) {
   const generateLink = vi.fn().mockResolvedValue(result)
@@ -13,28 +9,16 @@ function adminMock(result: unknown) {
   }
 }
 
-describe('getClientAppUrl', () => {
+describe('buildImpersonationLink', () => {
   const original = process.env.NEXT_PUBLIC_CLIENT_URL
+
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_CLIENT_URL = 'https://app.monprojet-pro.com'
+  })
 
   afterEach(() => {
     if (original === undefined) delete process.env.NEXT_PUBLIC_CLIENT_URL
     else process.env.NEXT_PUBLIC_CLIENT_URL = original
-  })
-
-  it('uses NEXT_PUBLIC_CLIENT_URL when defined', () => {
-    process.env.NEXT_PUBLIC_CLIENT_URL = 'https://staging.example.com'
-    expect(getClientAppUrl()).toBe('https://staging.example.com')
-  })
-
-  it('falls back to production, never localhost', () => {
-    delete process.env.NEXT_PUBLIC_CLIENT_URL
-    expect(getClientAppUrl()).toBe('https://app.monprojet-pro.com')
-  })
-})
-
-describe('buildImpersonationLink', () => {
-  beforeEach(() => {
-    process.env.NEXT_PUBLIC_CLIENT_URL = 'https://app.monprojet-pro.com'
   })
 
   it('builds a callback URL carrying the hashed token and session id', async () => {

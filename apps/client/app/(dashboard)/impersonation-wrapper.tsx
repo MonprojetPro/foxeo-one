@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ImpersonationBanner } from '@monprojetpro/ui'
+import { getHubUrl } from '@monprojetpro/utils'
 import { endImpersonationClient } from './actions/end-impersonation-client'
 
 // Story 13.3 (correctif 2026-07-25).
@@ -36,8 +37,7 @@ export function ImpersonationWrapper({ children, session }: ImpersonationWrapper
 
     setEnded(true)
 
-    const hubUrl = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://hub.monprojet-pro.com'
-    window.location.href = hubUrl
+    window.location.href = getHubUrl()
   }
 
   return (

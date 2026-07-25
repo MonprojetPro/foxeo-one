@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
+import { getHubUrl } from '@monprojetpro/utils'
 import { checkConsentVersion } from './middleware-consent'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
 import {
@@ -95,8 +96,7 @@ export async function middleware(request: NextRequest) {
       .eq('status', 'active')
 
     await supabase.auth.signOut()
-    const hubUrl = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://hub.monprojet-pro.com'
-    const expiredResponse = NextResponse.redirect(hubUrl)
+    const expiredResponse = NextResponse.redirect(getHubUrl())
     // signOut() a écrit les cookies auth vidés sur `response` : sans ce report, la
     // déconnexion serait perdue et l'opérateur resterait connecté au compte client.
     response.cookies.getAll().forEach((cookie) => expiredResponse.cookies.set(cookie))
