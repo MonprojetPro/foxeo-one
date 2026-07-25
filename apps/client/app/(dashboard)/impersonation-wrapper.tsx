@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { ImpersonationBanner } from '@monprojetpro/ui'
-import { getHubUrl } from '@monprojetpro/utils'
 import { endImpersonationClient } from './actions/end-impersonation-client'
 
 // Story 13.3 (correctif 2026-07-25).
@@ -37,12 +36,28 @@ export function ImpersonationWrapper({ children, session }: ImpersonationWrapper
 
     setEnded(true)
 
-    window.location.href = getHubUrl()
+    // L'onglet a été ouvert par le Hub via window.open() : on le referme au lieu de
+    // rediriger vers le Hub, qui laissait deux onglets Hub ouverts (retour MiKL).
+    // Si le navigateur refuse la fermeture programmatique, l'écran de confirmation
+    // ci-dessous prend le relais — on ne redirige pas, pour ne pas recréer le doublon.
+    window.close()
+  }
+
+  if (ended) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 p-8 text-center">
+        <p className="text-lg font-medium text-foreground">Session support fermée</p>
+        <p className="text-sm text-muted-foreground">
+          Tu n&apos;es plus connecté au compte de ce client. Tu peux fermer cet onglet et
+          revenir sur le Hub.
+        </p>
+      </div>
+    )
   }
 
   return (
     <>
-      {session && !ended && (
+      {session && (
         <ImpersonationBanner
           sessionId={session.sessionId}
           onEndSession={handleEndSession}

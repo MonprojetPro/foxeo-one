@@ -43,7 +43,10 @@ export function ImpersonationButton({ clientId, clientName }: ImpersonationButto
       // par la route /auth/impersonation de l'app client, en httpOnly.
       //
       // redirectUrl = lien de connexion à usage unique au compte client.
-      window.open(result.data.redirectUrl, '_blank', 'noopener,noreferrer')
+      // Pas de `noopener` : l'onglet doit rester fermable programmatiquement pour que
+      // « Fermer la session » le referme (sinon deux onglets Hub restent ouverts).
+      // La cible est notre propre app client, sur un domaine que l'on contrôle.
+      window.open(result.data.redirectUrl, '_blank')
       setOpen(false)
     }
 
