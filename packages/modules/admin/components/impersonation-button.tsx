@@ -13,7 +13,6 @@ import {
 } from '@monprojetpro/ui'
 import { Shield } from 'lucide-react'
 import { startImpersonation } from '../actions/start-impersonation'
-import { IMPERSONATION_COOKIE_NAME } from '../utils/impersonation-guards'
 
 interface ImpersonationButtonProps {
   clientId: string
@@ -38,17 +37,13 @@ export function ImpersonationButton({ clientId, clientName }: ImpersonationButto
     }
 
     if (result.data) {
-      // Set impersonation cookie with session data
-      const sessionData = JSON.stringify({
-        sessionId: result.data.sessionId,
-        clientId,
-        expiresAt: result.data.expiresAt,
-      })
-
-      document.cookie = `${IMPERSONATION_COOKIE_NAME}=${encodeURIComponent(sessionData)}; path=/; max-age=3600; SameSite=Lax`
-
-      // Redirect to client app
-      window.open(result.data.redirectUrl, '_blank')
+      // Correctif 2026-07-25 — On ne pose plus de cookie ici : il était écrit sur le
+      // domaine du Hub, où rien ne le lit (la bannière et les garde-fous vivent sur
+      // l'app client, autre sous-domaine → cookies séparés). Le cookie utile est posé
+      // par la route /auth/impersonation de l'app client, en httpOnly.
+      //
+      // redirectUrl = lien de connexion à usage unique au compte client.
+      window.open(result.data.redirectUrl, '_blank', 'noopener,noreferrer')
       setOpen(false)
     }
 
@@ -75,7 +70,10 @@ export function ImpersonationButton({ clientId, clientName }: ImpersonationButto
               <li>Le client sera <strong>notifié par email</strong></li>
               <li>Toutes tes actions seront <strong>enregistrées</strong></li>
               <li>La session expire automatiquement après <strong>1 heure</strong></li>
-              <li>Les actions destructives sont <strong>bloquées</strong></li>
+              <li>
+                Tu seras <strong>réellement connecté</strong> sous son compte, dans un
+                nouvel onglet — ta session Hub reste ouverte
+              </li>
             </ul>
           </DialogDescription>
         </DialogHeader>

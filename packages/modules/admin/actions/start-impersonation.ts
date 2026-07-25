@@ -8,6 +8,7 @@ import {
 } from '@monprojetpro/types'
 import { z } from 'zod'
 import { IMPERSONATION_MAX_DURATION_MS } from '../utils/impersonation-guards'
+import { buildImpersonationLink } from '../utils/build-impersonation-link'
 
 const StartImpersonationInput = z.object({
   clientId: z.string().uuid(),
@@ -17,6 +18,11 @@ export interface ImpersonationResult {
   sessionId: string
   clientName: string
   expiresAt: string
+  /**
+   * Lien de connexion à USAGE UNIQUE au compte client (route /auth/impersonation de
+   * l'app client). À ouvrir dans un nouvel onglet — c'est lui qui crée réellement la
+   * session du client.
+   */
   redirectUrl: string
 }
 
@@ -102,7 +108,32 @@ export async function startImpersonation(
       return errorResponse('Erreur lors de la création de la session', 'DATABASE_ERROR')
     }
 
-    // 6. Activity log
+    // 6. Générer le lien de connexion RÉELLE au compte client (service role).
+    // Fait AVANT le log et l'email : si la génération échoue, on annule la session
+    // plutôt que de laisser une session « active » fantôme (qui bloquerait tout
+    // nouvel essai via le check CONFLICT de l'étape 4) et de notifier le client
+    // pour rien.
+    const link = await buildImpersonationLink({
+      email: client.email,
+      sessionId: session.id,
+    })
+
+    if (link.error || !link.url) {
+      console.error('[IMPERSONATION:START] Link generation error:', link.error)
+
+      await supabase
+        .from('impersonation_sessions')
+        .update({ status: 'ended', ended_at: new Date().toISOString() })
+        .eq('id', session.id)
+
+      return errorResponse(
+        'Impossible de générer la session de connexion client',
+        'INTERNAL_ERROR',
+        { message: link.error }
+      )
+    }
+
+    // 7. Activity log
     const { error: logError } = await supabase.from('activity_logs').insert({
       actor_type: 'operator_impersonation',
       actor_id: operator.id,
@@ -121,7 +152,7 @@ export async function startImpersonation(
       console.error('[IMPERSONATION:START] Activity log error:', logError)
     }
 
-    // 7. Send notification email to client via Edge Function
+    // 8. Send notification email to client via Edge Function
     try {
       await supabase.functions.invoke('send-email', {
         body: {
@@ -138,17 +169,13 @@ export async function startImpersonation(
       console.error('[IMPERSONATION:START] Email notification error:', emailError)
     }
 
-    // 8. Build redirect URL
-    const clientAppUrl = process.env.NEXT_PUBLIC_CLIENT_URL ?? 'http://localhost:3000'
-    const redirectUrl = `${clientAppUrl}?impersonation_session=${session.id}`
-
     const clientName = `${client.first_name ?? ''} ${client.name ?? ''}`.trim() || 'Client'
 
     return successResponse({
       sessionId: session.id,
       clientName,
       expiresAt,
-      redirectUrl,
+      redirectUrl: link.url,
     })
   } catch (error) {
     console.error('[IMPERSONATION:START] Unexpected error:', error)

@@ -44,6 +44,11 @@ import { ThemeClassSetter } from './theme-class-setter'
 import { RealtimeDashboardRefresh } from '../../components/realtime-dashboard-refresh'
 import { MaintenanceRealtimeGuard } from '../../components/maintenance-realtime-guard'
 import { ImpersonationWrapper } from './impersonation-wrapper'
+import {
+  IMPERSONATION_COOKIE,
+  isImpersonationExpired,
+  parseImpersonationCookie,
+} from '../../impersonation-session'
 import { OneElioBox } from '../../components/one-elio-box'
 import { ElioOnePopup } from '../../components/elio-one-popup'
 import { ElioOneSessionProvider } from '../../components/elio-one-session'
@@ -386,6 +391,17 @@ export default async function DashboardLayout({
   // ADR-01 Révision 2 — Le mode actif est piloté par cookie navigateur, clampé aux
   // modes réellement disponibles (résolveur centralisé, source unique de vérité).
   const cookieStore = await cookies()
+
+  // Story 13.3 — Bannière d'impersonation : lue côté SERVEUR depuis le cookie httpOnly
+  // posé par /auth/impersonation. Le composant client ne peut plus la fabriquer seul.
+  const impersonationCookie = parseImpersonationCookie(
+    cookieStore.get(IMPERSONATION_COOKIE)?.value
+  )
+  const impersonationSession =
+    impersonationCookie && !isImpersonationExpired(impersonationCookie)
+      ? impersonationCookie
+      : null
+
   const { activeMode, oneLocked, labLocked } = resolveClientMode({
     dashboardType: clientConfig?.dashboard_type,
     labModeAvailable,
@@ -484,7 +500,7 @@ export default async function DashboardLayout({
         />
       }
     >
-      <ImpersonationWrapper>
+      <ImpersonationWrapper session={impersonationSession}>
         <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
           {children}
         </PresenceProvider>

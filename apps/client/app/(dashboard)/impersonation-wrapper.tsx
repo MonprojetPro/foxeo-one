@@ -1,84 +1,48 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
 import { ImpersonationBanner } from '@monprojetpro/ui'
 import { endImpersonationClient } from './actions/end-impersonation-client'
 
-const COOKIE_NAME = 'mpro-impersonation-session'
+// Story 13.3 (correctif 2026-07-25).
+//
+// Avant : ce composant lisait `?impersonation_session=<id>` dans l'URL et posait
+// lui-même le cookie — n'importe qui pouvait donc afficher la bannière (ou l'effacer)
+// sans la moindre session d'impersonation réelle. Désormais la session vient du layout
+// serveur, qui lit le cookie httpOnly posé par /auth/impersonation.
 
-function getCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`))
-  return match ? decodeURIComponent(match[1]) : null
-}
-
-function deleteCookie(name: string) {
-  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`
-}
-
-interface SessionData {
+export interface ImpersonationSessionInfo {
   sessionId: string
   expiresAt: string
 }
 
-export function ImpersonationWrapper({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<SessionData | null>(null)
-  const searchParams = useSearchParams()
+interface ImpersonationWrapperProps {
+  children: React.ReactNode
+  session: ImpersonationSessionInfo | null
+}
 
-  useEffect(() => {
-    // Check for session from URL param (initial redirect from Hub)
-    const urlSessionId = searchParams.get('impersonation_session')
-    if (urlSessionId) {
-      const sessionData: SessionData = {
-        sessionId: urlSessionId,
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      }
-      document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=3600; SameSite=Lax`
-      setSession(sessionData)
-
-      // Clean URL params
-      const url = new URL(window.location.href)
-      url.searchParams.delete('impersonation_session')
-      window.history.replaceState({}, '', url.toString())
-      return
-    }
-
-    // Check for existing cookie
-    const cookieValue = getCookie(COOKIE_NAME)
-    if (cookieValue) {
-      try {
-        const data = JSON.parse(cookieValue) as SessionData
-        if (new Date(data.expiresAt) > new Date()) {
-          setSession(data)
-        } else {
-          deleteCookie(COOKIE_NAME)
-        }
-      } catch {
-        deleteCookie(COOKIE_NAME)
-      }
-    }
-  }, [searchParams])
+export function ImpersonationWrapper({ children, session }: ImpersonationWrapperProps) {
+  const [ended, setEnded] = useState(false)
 
   const handleEndSession = async () => {
     if (!session) return
 
-    try {
-      await endImpersonationClient(session.sessionId)
-    } catch (error) {
-      console.error('[IMPERSONATION:END] Error:', error)
+    // La Server Action clôt la session en base, déconnecte le compte client et
+    // supprime le cookie httpOnly. On ne peut plus faire ça côté navigateur.
+    const result = await endImpersonationClient(session.sessionId)
+    if (result.error) {
+      console.error('[IMPERSONATION:END] Error:', result.error.message)
     }
 
-    deleteCookie(COOKIE_NAME)
-    setSession(null)
+    setEnded(true)
 
-    // Redirect to Hub
-    const hubUrl = process.env.NEXT_PUBLIC_HUB_URL ?? 'http://localhost:3002'
+    const hubUrl = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://hub.monprojet-pro.com'
     window.location.href = hubUrl
   }
 
   return (
     <>
-      {session && (
+      {session && !ended && (
         <ImpersonationBanner
           sessionId={session.sessionId}
           onEndSession={handleEndSession}

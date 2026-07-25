@@ -75,3 +75,8 @@ export {
   type BlockedAction,
   type ImpersonationSessionData,
 } from './utils/impersonation-guards'
+export {
+  buildImpersonationLink,
+  getClientAppUrl,
+  IMPERSONATION_CALLBACK_PATH,
+} from './utils/build-impersonation-link'

@@ -27,6 +27,13 @@ vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => mockSupabase),
 }))
 
+// Correctif 2026-07-25 — la Server Action génère désormais un vrai lien de connexion
+// au compte client (service role). Mocké ici : pas de réseau en test unitaire.
+const mockBuildLink = vi.fn()
+vi.mock('../utils/build-impersonation-link', () => ({
+  buildImpersonationLink: (...args: unknown[]) => mockBuildLink(...args),
+}))
+
 describe('startImpersonation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -36,6 +43,9 @@ describe('startImpersonation', () => {
     mockEq.mockReturnValue({ single: mockSingle, maybeSingle: mockMaybeSingle, eq: mockEq })
     mockInsert.mockReturnValue({ select: mockSelect })
     mockInvoke.mockResolvedValue({ data: null, error: null })
+    mockBuildLink.mockResolvedValue({
+      url: 'https://app.monprojet-pro.com/auth/impersonation?token_hash=hash-abc&session=00000000-0000-0000-0000-000000000099',
+    })
   })
 
   it('should reject unauthenticated requests', async () => {
@@ -165,6 +175,96 @@ describe('startImpersonation', () => {
     expect(result.data?.sessionId).toBe(sessionId)
     expect(result.data?.clientName).toBe('Jean Dupont')
     expect(result.data?.redirectUrl).toContain(sessionId)
+    // Le lien doit être un vrai lien de connexion au compte client, jamais localhost
+    // (régression 2026-07-25 : NEXT_PUBLIC_CLIENT_URL absente → fallback localhost:3000).
+    expect(result.data?.redirectUrl).toContain('/auth/impersonation')
+    expect(result.data?.redirectUrl).toContain('token_hash=')
+    expect(result.data?.redirectUrl).not.toContain('localhost')
+    expect(mockBuildLink).toHaveBeenCalledWith({
+      email: 'jean@test.com',
+      sessionId,
+    })
+  })
+
+  it('should roll back the session when the login link cannot be generated', async () => {
+    const operatorId = '00000000-0000-0000-0000-000000000010'
+    const clientId = '00000000-0000-0000-0000-000000000001'
+    const sessionId = '00000000-0000-0000-0000-000000000099'
+
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'op-auth-id' } },
+      error: null,
+    })
+
+    mockBuildLink.mockResolvedValue({ error: 'SUPABASE_SERVICE_ROLE_KEY manquant' })
+
+    const sessionUpdateEq = vi.fn().mockResolvedValue({ error: null })
+    const sessionUpdate = vi.fn(() => ({ eq: sessionUpdateEq }))
+    const emailInvoke = vi.fn().mockResolvedValue({ data: null, error: null })
+    mockSupabase.functions.invoke = emailInvoke
+
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'operators') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: { id: operatorId }, error: null }),
+            })),
+          })),
+        }
+      }
+      if (table === 'clients') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  id: clientId,
+                  auth_user_id: 'auth-id',
+                  name: 'Test',
+                  first_name: null,
+                  email: 'test@test.com',
+                  status: 'active',
+                },
+                error: null,
+              }),
+            })),
+          })),
+        }
+      }
+      if (table === 'impersonation_sessions') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+              })),
+            })),
+          })),
+          insert: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: { id: sessionId }, error: null }),
+            })),
+          })),
+          update: sessionUpdate,
+        }
+      }
+      if (table === 'activity_logs') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) }
+      }
+      return { select: mockSelect, insert: mockInsert }
+    })
+
+    const result = await startImpersonation({ clientId })
+
+    expect(result.error?.code).toBe('INTERNAL_ERROR')
+    // Session clôturée : sinon elle resterait « active » et bloquerait tout nouvel essai.
+    expect(sessionUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: 'ended' })
+    )
+    expect(sessionUpdateEq).toHaveBeenCalledWith('id', sessionId)
+    // Et le client n'est pas notifié d'une session qui n'a jamais eu lieu.
+    expect(emailInvoke).not.toHaveBeenCalled()
   })
 
   it('should reject if active session exists', async () => {

@@ -2,8 +2,14 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
 import { checkConsentVersion } from './middleware-consent'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
+import {
+  IMPERSONATION_COOKIE,
+  isImpersonationExpired,
+  parseImpersonationCookie,
+  type ImpersonationCookieData,
+} from './impersonation-session'
 
-export const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback', '/forgot-password', '/reset-password', '/maintenance']
+export const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback', '/auth/impersonation', '/forgot-password', '/reset-password', '/maintenance']
 export const CONSENT_EXCLUDED_PATHS = ['/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
 export const ONBOARDING_EXCLUDED_PATHS = ['/onboarding', '/login', '/signup', '/auth/callback', '/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
 export const GRADUATION_EXCLUDED_PATHS = ['/graduation', '/login', '/signup', '/auth/callback', '/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/onboarding', '/archived', '/maintenance']
@@ -48,22 +54,10 @@ export function isMaintenanceExcluded(pathname: string): boolean {
 }
 
 // Story 13.3 — Impersonation detection
-const IMPERSONATION_COOKIE = 'mpro-impersonation-session'
-
-function getImpersonationSession(request: NextRequest): { sessionId: string; expiresAt: string } | null {
-  const cookie = request.cookies.get(IMPERSONATION_COOKIE)?.value
-  if (!cookie) return null
-  try {
-    const data = JSON.parse(decodeURIComponent(cookie))
-    if (data.sessionId && data.expiresAt) {
-      // Check expiration
-      if (new Date(data.expiresAt) <= new Date()) return null
-      return data
-    }
-    return null
-  } catch {
-    return null
-  }
+function getImpersonationSession(request: NextRequest): ImpersonationCookieData | null {
+  const data = parseImpersonationCookie(request.cookies.get(IMPERSONATION_COOKIE)?.value)
+  if (!data || isImpersonationExpired(data)) return null
+  return data
 }
 
 export async function middleware(request: NextRequest) {
@@ -81,6 +75,25 @@ export async function middleware(request: NextRequest) {
   const impersonationSession = getImpersonationSession(request)
   if (impersonationSession) {
     response.headers.set('x-impersonation-session', impersonationSession.sessionId)
+  }
+
+  // Correctif 2026-07-25 — Expiration RÉELLE de l'impersonation.
+  // Le cookie vit 2 h alors que la session logique expire à 1 h : un cookie présent
+  // mais périmé signifie « l'opérateur est encore connecté sur le compte client alors
+  // que sa fenêtre d'1 h est écoulée ». On le déconnecte pour de bon et on le renvoie
+  // au Hub — sans ça, il restait connecté indéfiniment, bannière disparue.
+  const rawImpersonationCookie = parseImpersonationCookie(
+    request.cookies.get(IMPERSONATION_COOKIE)?.value
+  )
+  if (rawImpersonationCookie && isImpersonationExpired(rawImpersonationCookie)) {
+    await supabase.auth.signOut()
+    const hubUrl = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://hub.monprojet-pro.com'
+    const expiredResponse = NextResponse.redirect(hubUrl)
+    // signOut() a écrit les cookies auth vidés sur `response` : sans ce report, la
+    // déconnexion serait perdue et l'opérateur resterait connecté au compte client.
+    response.cookies.getAll().forEach((cookie) => expiredResponse.cookies.set(cookie))
+    expiredResponse.cookies.delete(IMPERSONATION_COOKIE)
+    return expiredResponse
   }
 
   // Set locale cookie on response
@@ -189,7 +202,10 @@ export async function middleware(request: NextRequest) {
       }
 
       // Story 13.4 — Premier login avec mot de passe temporaire : forcer le changement
+      // ⚠️ Jamais en impersonation : changer le mot de passe est une action interdite
+      // (IMPERSONATION_BLOCKED_ACTIONS) et MiKL resterait bloqué sur cet écran.
       if (
+        !impersonationSession &&
         client.password_change_required &&
         request.nextUrl.pathname !== '/onboarding/password-change'
       ) {
@@ -201,16 +217,23 @@ export async function middleware(request: NextRequest) {
       }
 
       // Check CGU consent version
-      const consentRedirect = await checkConsentVersion(request, client.id)
-      if (consentRedirect) {
-        return consentRedirect
+      // ⚠️ Jamais en impersonation : sinon MiKL se retrouve sur l'écran de
+      // ré-acceptation des CGU et pourrait consentir à la place du client.
+      if (!impersonationSession) {
+        const consentRedirect = await checkConsentVersion(request, client.id)
+        if (consentRedirect) {
+          return consentRedirect
+        }
       }
       // Note : le re-consentement IA n'est PAS géré ici. Les redirections middleware
       // échouent en navigation interne (soft-nav RSC) → géré dans le layout (dashboard)
       // via redirect() côté serveur, robuste en nav interne ET au login.
 
       // Onboarding detection — only for non-onboarding paths
-      if (!isOnboardingExcluded(request.nextUrl.pathname)) {
+      // ⚠️ Jamais en impersonation : sinon la visite de MiKL écrit `first_login_at`
+      // à la place du client (donnée métier faussée définitivement) et l'enferme dans
+      // le tunnel d'onboarding du client.
+      if (!impersonationSession && !isOnboardingExcluded(request.nextUrl.pathname)) {
         // First login detection: first_login_at IS NULL
         if (!client.first_login_at) {
           // Record first login timestamp
@@ -243,7 +266,10 @@ export async function middleware(request: NextRequest) {
       // ADR-01 Révision 2 — Le client gradué reste sur le même déploiement multi-tenant.
       // On affiche juste l'écran de bienvenue post-graduation une fois, puis le toggle
       // Mode Lab/One dans le shell prend le relais. Pas de redirect cross-subdomain.
-      if (!isGraduationExcluded(request.nextUrl.pathname)) {
+      // ⚠️ Jamais en impersonation : l'écran de graduation ne se montre qu'une fois
+      // (`graduation_screen_shown`). Si MiKL le consommait, le client ne le verrait
+      // jamais.
+      if (!impersonationSession && !isGraduationExcluded(request.nextUrl.pathname)) {
         if (client.graduated_at && !client.graduation_screen_shown) {
           console.log('[GRADUATION:CELEBRATE] Client graduated:', user.id)
 
