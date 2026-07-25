@@ -1,14 +1,17 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getHubUrl } from '@monprojetpro/utils'
 import { checkConsentVersion } from './middleware-consent'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
 import {
+  IMPERSONATION_ACTION,
   IMPERSONATION_COOKIE,
   isImpersonationExpired,
   parseImpersonationCookie,
+  resolveImpersonation,
   type ImpersonationCookieData,
-} from './impersonation-session'
+} from '@monprojetpro/utils'
 
 export const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback', '/auth/impersonation', '/forgot-password', '/reset-password', '/maintenance']
 export const CONSENT_EXCLUDED_PATHS = ['/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
@@ -56,9 +59,55 @@ export function isMaintenanceExcluded(pathname: string): boolean {
 
 // Story 13.3 — Impersonation detection
 function getImpersonationSession(request: NextRequest): ImpersonationCookieData | null {
-  const data = parseImpersonationCookie(request.cookies.get(IMPERSONATION_COOKIE)?.value)
-  if (!data || isImpersonationExpired(data)) return null
-  return data
+  return resolveImpersonation(request.cookies.get(IMPERSONATION_COOKIE)?.value)
+}
+
+/** Méthodes qui modifient l'état — les Server Actions de Next passent par POST. */
+const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+
+export function isMutatingRequest(method: string): boolean {
+  return MUTATING_METHODS.has(method.toUpperCase())
+}
+
+/**
+ * Journalise CHAQUE mutation faite pendant une session d'impersonation.
+ *
+ * Correctif 2026-07-25 — La promesse faite au client (« toutes tes actions sont
+ * enregistrées ») n'était pas tenue : seuls les événements « session démarrée / terminée »
+ * étaient écrits, et tout ce que faisait l'opérateur était journalisé comme si le CLIENT
+ * l'avait fait. Le décompte affiché dans son historique support valait donc toujours 1.
+ *
+ * Le contrôle est fait ici plutôt que dans chaque Server Action : c'est le seul endroit
+ * que TOUTE mutation traverse, donc le seul où l'on ne peut pas oublier d'instrumenter
+ * un futur module. On enregistre la cible (chemin) et l'identifiant d'action Next, pas
+ * le contenu — aucune donnée métier du client ne transite dans le journal.
+ *
+ * Best-effort : un échec d'écriture ne doit jamais bloquer l'action de l'opérateur.
+ */
+async function logImpersonatedAction(
+  supabase: SupabaseClient,
+  request: NextRequest,
+  session: ImpersonationCookieData
+): Promise<void> {
+  try {
+    await supabase.from('activity_logs').insert({
+      actor_type: 'operator_impersonation',
+      actor_id: session.operatorId,
+      action: IMPERSONATION_ACTION,
+      entity_type: 'client',
+      entity_id: session.clientId,
+      metadata: {
+        session_id: session.sessionId,
+        method: request.method,
+        path: request.nextUrl.pathname,
+        // En-tête posé par Next sur les appels de Server Action : permet de distinguer
+        // deux actions différentes déclenchées depuis la même page.
+        next_action: request.headers.get('next-action'),
+      },
+    })
+  } catch (error) {
+    console.error('[IMPERSONATION:LOG] Écriture du journal échouée:', error)
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -76,6 +125,12 @@ export async function middleware(request: NextRequest) {
   const impersonationSession = getImpersonationSession(request)
   if (impersonationSession) {
     response.headers.set('x-impersonation-session', impersonationSession.sessionId)
+
+    // Journal des actions — avant de servir la requête, pour ne rien perdre si la
+    // mutation échoue en aval (une tentative reste une action de l'opérateur).
+    if (isMutatingRequest(request.method)) {
+      await logImpersonatedAction(supabase, request, impersonationSession)
+    }
   }
 
   // Correctif 2026-07-25 — Expiration RÉELLE de l'impersonation.
@@ -89,11 +144,11 @@ export async function middleware(request: NextRequest) {
   if (rawImpersonationCookie && isImpersonationExpired(rawImpersonationCookie)) {
     // On clôt aussi la row : sans ça la session reste « active » en base pour toujours
     // (aucun cron ne les périme) et bloque toute nouvelle impersonation du client.
-    await supabase
-      .from('impersonation_sessions')
-      .update({ status: 'expired', ended_at: new Date().toISOString() })
-      .eq('id', rawImpersonationCookie.sessionId)
-      .eq('status', 'active')
+    // Via la RPC pour que `actions_count` soit calculé comme sur les autres chemins.
+    await supabase.rpc('fn_close_impersonation_session', {
+      p_session_id: rawImpersonationCookie.sessionId,
+      p_status: 'expired',
+    })
 
     await supabase.auth.signOut()
     const expiredResponse = NextResponse.redirect(getHubUrl())

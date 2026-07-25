@@ -1,11 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { endImpersonation } from './end-impersonation'
 
+const mockRpc = vi.fn()
+
 const mockSupabase = {
   auth: {
     getUser: vi.fn(),
   },
   from: vi.fn(),
+  // La clôture passe par fn_close_impersonation_session (décompte réel des actions).
+  rpc: mockRpc,
 }
 
 vi.mock('@monprojetpro/supabase', () => ({
@@ -155,7 +159,12 @@ describe('endImpersonation', () => {
       error: null,
     })
 
-    let impersonationCallCount = 0
+    // La clôture et le décompte sont faits par la RPC (hors RLS).
+    mockRpc.mockResolvedValue({
+      data: [{ session_id: sessionId, actions_count: 5, closed: true }],
+      error: null,
+    })
+
     mockSupabase.from.mockImplementation((table: string) => {
       if (table === 'operators') {
         return {
@@ -167,44 +176,25 @@ describe('endImpersonation', () => {
         }
       }
       if (table === 'impersonation_sessions') {
-        impersonationCallCount++
-        if (impersonationCallCount === 1) {
-          // First call: fetch session
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                single: vi.fn().mockResolvedValue({
-                  data: {
-                    id: sessionId,
-                    operator_id: 'op-1',
-                    client_id: 'cl-1',
-                    status: 'active',
-                    started_at: new Date().toISOString(),
-                  },
-                  error: null,
-                }),
-              })),
-            })),
-          }
-        }
-        // Second call: update
         return {
-          update: vi.fn(() => ({
-            eq: vi.fn().mockResolvedValue({ error: null }),
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  id: sessionId,
+                  operator_id: 'op-1',
+                  client_id: 'cl-1',
+                  status: 'active',
+                  started_at: new Date().toISOString(),
+                },
+                error: null,
+              }),
+            })),
           })),
         }
       }
       if (table === 'activity_logs') {
-        return {
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                gte: vi.fn().mockResolvedValue({ count: 5, error: null }),
-              })),
-            })),
-          })),
-          insert: mockInsert,
-        }
+        return { insert: mockInsert }
       }
       return {}
     })
@@ -213,6 +203,17 @@ describe('endImpersonation', () => {
 
     expect(result.error).toBeNull()
     expect(result.data?.ended).toBe(true)
-    expect(mockInsert).toHaveBeenCalled()
+    expect(mockRpc).toHaveBeenCalledWith('fn_close_impersonation_session', {
+      p_session_id: sessionId,
+      p_status: 'ended',
+    })
+    // Le décompte réel doit être repris dans le log de fin — l'ancien comptage
+    // (activity_logs filtré sur l'opérateur) renvoyait toujours 1.
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'impersonation_ended',
+        metadata: expect.objectContaining({ actions_count: 5 }),
+      })
+    )
   })
 })

@@ -9,6 +9,9 @@ export { createServerSupabaseClient } from './server'
 export { createServiceRoleSupabaseClient } from './service-role'
 export { createMiddlewareSupabaseClient } from './middleware'
 
+// Journal d'activité — attribution de l'acteur (impersonation incluse)
+export { resolveLogActor } from './impersonation-actor'
+
 // Realtime
 export {
   CHANNEL_PATTERNS,

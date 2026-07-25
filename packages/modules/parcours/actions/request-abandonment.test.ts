@@ -44,6 +44,11 @@ vi.mock('@monprojetpro/supabase', () => ({
       return makeChain()
     },
   })),
+  // Hors session d'impersonation, l'acteur journalisé reste le client.
+  resolveLogActor: vi.fn(async (fallback: unknown) => ({
+    ...(fallback as Record<string, unknown>),
+    metadata: {},
+  })),
 }))
 
 vi.mock('../../notifications/actions/create-notification', () => ({

@@ -281,7 +281,7 @@ export type Database = {
       activity_logs: {
         Row: {
           id: string
-          actor_type: 'client' | 'operator' | 'system' | 'elio'
+          actor_type: 'client' | 'operator' | 'system' | 'elio' | 'elio_one_plus' | 'operator_impersonation'
           actor_id: string
           action: string
           entity_type: string
@@ -291,7 +291,7 @@ export type Database = {
         }
         Insert: {
           id?: string
-          actor_type: 'client' | 'operator' | 'system' | 'elio'
+          actor_type: 'client' | 'operator' | 'system' | 'elio' | 'elio_one_plus' | 'operator_impersonation'
           actor_id: string
           action: string
           entity_type: string
@@ -401,6 +401,18 @@ export type Database = {
       fn_mark_graduation_screen_shown: {
         Args: Record<string, never>
         Returns: boolean
+      }
+      /** Story 13.3 — clôt une session d'impersonation et recalcule actions_count. */
+      fn_close_impersonation_session: {
+        Args: {
+          p_session_id: string
+          p_status?: string
+        }
+        Returns: {
+          session_id: string
+          actions_count: number
+          closed: boolean
+        }[]
       }
       fn_update_updated_at: {
         Args: Record<string, never>

@@ -63,6 +63,11 @@ vi.mock('@monprojetpro/supabase', () => ({
     from: mockFrom,
     storage: { from: mockStorageFrom },
   })),
+  // Hors session d'impersonation, l'acteur journalisé reste le client.
+  resolveLogActor: vi.fn(async (fallback: unknown) => ({
+    ...(fallback as Record<string, unknown>),
+    metadata: {},
+  })),
 }))
 
 // ─── Constants ────────────────────────────────────────────────────────────────

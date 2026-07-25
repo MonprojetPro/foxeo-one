@@ -58,8 +58,9 @@ export default async function SupportHistoryPage() {
         <div>
           <h2 className="text-lg font-semibold text-foreground">Historique support</h2>
           <p className="text-sm text-muted-foreground">
-            Sessions de support technique effectuées par MiKL sur votre compte.
-            Toutes les actions sont enregistrées pour votre transparence.
+            Sessions de support technique effectuées par MiKL sur votre compte. Chaque
+            session est enregistrée avec sa date, sa durée et le nombre d&apos;actions
+            effectuées.
           </p>
         </div>
       </div>
@@ -115,10 +116,13 @@ export default async function SupportHistoryPage() {
                     </div>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>Durée : {duration}</span>
-                      <span className="flex items-center gap-1">
-                        <Activity className="h-3 w-3" />
-                        {session.actions_count} action{session.actions_count !== 1 ? 's' : ''}
-                      </span>
+                      {session.status !== 'active' && (
+                        <span className="flex items-center gap-1">
+                          <Activity className="h-3 w-3" />
+                          {session.actions_count} action
+                          {session.actions_count !== 1 ? 's' : ''}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <span className={`text-xs font-medium ${statusColor}`}>

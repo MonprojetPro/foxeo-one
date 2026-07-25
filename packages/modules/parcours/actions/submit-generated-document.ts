@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, resolveLogActor } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { generateConciergeWord } from './generate-concierge-word'
 import type { SubmitStepResult } from '../types/parcours.types'
@@ -134,14 +134,17 @@ export async function submitGeneratedDocument(
       console.error('[PARCOURS:SUBMIT_GENERATED_DOC] Mot d\'Élio non généré (ignoré):', e)
     }
 
-    // Journal d'activité — best-effort, ne bloque jamais la soumission
+    // Journal d'activité — best-effort, ne bloque jamais la soumission.
+    // L'acteur est l'opérateur si l'action est faite pendant une session support.
+    const actor = await resolveLogActor({ actor_type: 'client', actor_id: client.id })
     await supabase.from('activity_logs').insert({
-      actor_type: 'client',
-      actor_id: client.id,
+      actor_type: actor.actor_type,
+      actor_id: actor.actor_id,
       action: 'submission_sent',
       entity_type: 'client',
       entity_id: client.id,
       metadata: {
+        ...actor.metadata,
         submissionId: submission.id,
         stepId: input.stepId,
         stepName: stepTitle,

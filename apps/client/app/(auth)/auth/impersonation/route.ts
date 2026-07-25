@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   IMPERSONATION_COOKIE,
   IMPERSONATION_COOKIE_MAX_AGE_S,
-} from '../../../../impersonation-session'
+} from '@monprojetpro/utils'
 
 // Story 13.3 (correctif 2026-07-25) — Callback d'impersonation.
 //
@@ -14,12 +14,12 @@ import {
 //
 // Consomme le `token_hash` généré côté Hub (buildImpersonationLink → generateLink admin)
 // avec verifyOtp() : la session du COMPTE CLIENT est posée en cookies côté serveur.
-// Puis on pose le cookie d'impersonation (httpOnly) qui déclenche la bannière rouge et
-// les garde-fous du middleware.
+// Puis on pose le cookie d'impersonation (httpOnly) qui déclenche la bannière rouge,
+// les garde-fous du middleware et la journalisation des actions.
 //
 // ⚠️ Next n'autorise dans un route.ts que les handlers (GET/POST/…) et quelques options
-// réservées : les constantes partagées vivent dans apps/client/impersonation-session.ts,
-// sinon `next build` échoue sur un export invalide.
+// réservées : les constantes partagées vivent dans @monprojetpro/utils, sinon
+// `next build` échoue sur un export invalide.
 
 function fail(request: NextRequest, reason: string) {
   const url = new URL('/login', request.url)
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
   // (client_auth_user_id = auth.uid()) garantit qu'on ne lit que la sienne.
   const { data: session } = await supabase
     .from('impersonation_sessions')
-    .select('id, status, expires_at, client_auth_user_id')
+    .select('id, status, expires_at, client_auth_user_id, operator_id, client_id')
     .eq('id', sessionId)
     .maybeSingle()
 
@@ -72,12 +72,20 @@ export async function GET(request: NextRequest) {
 
   // 3. Cookie d'impersonation — httpOnly : la bannière est alimentée par le layout
   // serveur, aucun besoin d'y accéder en JS, et l'opérateur ne peut pas le retirer
-  // depuis la console pour masquer la bannière.
+  // depuis la console pour masquer la bannière ou échapper à la journalisation.
+  //
+  // On y embarque operator_id et client_id : le middleware journalise chaque mutation
+  // sans avoir à relire la session en base à chaque requête.
   const cookieStore = await cookies()
   cookieStore.set(
     IMPERSONATION_COOKIE,
     encodeURIComponent(
-      JSON.stringify({ sessionId: session.id, expiresAt: session.expires_at })
+      JSON.stringify({
+        sessionId: session.id,
+        expiresAt: session.expires_at,
+        operatorId: session.operator_id,
+        clientId: session.client_id,
+      })
     ),
     {
       path: '/',

@@ -44,11 +44,7 @@ import { ThemeClassSetter } from './theme-class-setter'
 import { RealtimeDashboardRefresh } from '../../components/realtime-dashboard-refresh'
 import { MaintenanceRealtimeGuard } from '../../components/maintenance-realtime-guard'
 import { ImpersonationWrapper } from './impersonation-wrapper'
-import {
-  IMPERSONATION_COOKIE,
-  isImpersonationExpired,
-  parseImpersonationCookie,
-} from '../../impersonation-session'
+import { IMPERSONATION_COOKIE, resolveImpersonation } from '@monprojetpro/utils'
 import { OneElioBox } from '../../components/one-elio-box'
 import { ElioOnePopup } from '../../components/elio-one-popup'
 import { ElioOneSessionProvider } from '../../components/elio-one-session'
@@ -394,13 +390,9 @@ export default async function DashboardLayout({
 
   // Story 13.3 — Bannière d'impersonation : lue côté SERVEUR depuis le cookie httpOnly
   // posé par /auth/impersonation. Le composant client ne peut plus la fabriquer seul.
-  const impersonationCookie = parseImpersonationCookie(
+  const impersonationSession = resolveImpersonation(
     cookieStore.get(IMPERSONATION_COOKIE)?.value
   )
-  const impersonationSession =
-    impersonationCookie && !isImpersonationExpired(impersonationCookie)
-      ? impersonationCookie
-      : null
 
   const { activeMode, oneLocked, labLocked } = resolveClientMode({
     dashboardType: clientConfig?.dashboard_type,

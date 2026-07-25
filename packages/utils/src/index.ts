@@ -9,6 +9,18 @@ export {
   DEFAULT_CLIENT_APP_URL,
   DEFAULT_HUB_URL,
 } from './app-urls'
+export {
+  IMPERSONATION_COOKIE,
+  IMPERSONATION_COOKIE_MAX_AGE_S,
+  IMPERSONATION_ACTION,
+  IMPERSONATION_LIFECYCLE_ACTIONS,
+  parseImpersonationCookie,
+  isImpersonationExpired,
+  resolveImpersonation,
+  resolveActivityActor,
+  type ImpersonationCookieData,
+  type ActivityActor,
+} from './impersonation'
 export { getRequiredEnv } from './env'
 export { formatRelativeDate, formatShortDate, formatDate, formatFullDate } from './date'
 export { toCamelCase, toSnakeCase } from './case-transform'

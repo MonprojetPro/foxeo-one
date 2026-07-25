@@ -62,30 +62,26 @@ export async function endImpersonation(
       return successResponse({ ended: true }) // Already ended
     }
 
-    // 3. Count actions during session
-    const { count: actionsCount } = await supabase
-      .from('activity_logs')
-      .select('id', { count: 'exact', head: true })
-      .eq('actor_type', 'operator_impersonation')
-      .eq('actor_id', session.operator_id)
-      .gte('created_at', session.started_at)
+    // 3. Clôture + décompte des actions.
+    // Correctif 2026-07-25 — l'ancien comptage filtrait sur l'opérateur et la date de
+    // début, donc n'attrapait que les événements de cycle de vie (« session démarrée »)
+    // → actions_count valait toujours 1. Le décompte réel est fait par
+    // fn_close_impersonation_session, partagée avec la fermeture depuis la bannière,
+    // pour que les deux chemins produisent exactement le même résultat.
+    const { data: closed, error: closeError } = await supabase.rpc(
+      'fn_close_impersonation_session',
+      { p_session_id: session.id, p_status: 'ended' }
+    )
 
-    // 4. End the session
-    const { error: updateError } = await supabase
-      .from('impersonation_sessions')
-      .update({
-        status: 'ended',
-        ended_at: new Date().toISOString(),
-        actions_count: actionsCount ?? 0,
-      })
-      .eq('id', session.id)
-
-    if (updateError) {
-      console.error('[IMPERSONATION:END] Update error:', updateError)
+    if (closeError) {
+      console.error('[IMPERSONATION:END] RPC error:', closeError)
       return errorResponse('Erreur lors de la fermeture de la session', 'DATABASE_ERROR')
     }
 
-    // 5. Activity log
+    const closedRow = Array.isArray(closed) ? closed[0] : closed
+    const actionsCount = (closedRow as { actions_count?: number } | null)?.actions_count ?? 0
+
+    // 4. Activity log
     await supabase.from('activity_logs').insert({
       actor_type: 'operator_impersonation',
       actor_id: session.operator_id,
@@ -94,7 +90,7 @@ export async function endImpersonation(
       entity_id: session.client_id,
       metadata: {
         session_id: session.id,
-        actions_count: actionsCount ?? 0,
+        actions_count: actionsCount,
       },
     })
 

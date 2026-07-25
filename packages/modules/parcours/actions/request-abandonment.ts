@@ -1,6 +1,10 @@
 'use server'
 
-import { createServerSupabaseClient, createServiceRoleSupabaseClient } from '@monprojetpro/supabase'
+import {
+  createServerSupabaseClient,
+  createServiceRoleSupabaseClient,
+  resolveLogActor,
+} from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { RequestAbandonmentInput } from '../types/parcours.types'
 
@@ -119,14 +123,16 @@ export async function requestParcoursAbandonment(
       }
     }
 
-    // Log activity
+    // Log activity — attribué à l'opérateur si fait pendant une session support.
+    const actor = await resolveLogActor({ actor_type: 'client', actor_id: clientId })
     await supabase.from('activity_logs').insert({
-      actor_type: 'client',
-      actor_id: clientId,
+      actor_type: actor.actor_type,
+      actor_id: actor.actor_id,
       action: 'parcours_abandoned',
       entity_type: 'client',
       entity_id: clientId,
       metadata: {
+        ...actor.metadata,
         reason: reason ?? null,
         progression: `${completedSteps}/${totalSteps}`,
       },
