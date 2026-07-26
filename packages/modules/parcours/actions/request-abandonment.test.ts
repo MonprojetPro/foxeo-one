@@ -16,6 +16,10 @@ function makeChain() {
   chain.select = vi.fn(() => chain)
   chain.eq = vi.fn(() => chain)
   chain.single = vi.fn(() => ({ data: null, error: null }))
+  // La source lit le parcours via .order().limit().maybeSingle(). Ce maillon manquait au
+  // mock : la chaîne cassait sur un TypeError avalé en INTERNAL_ERROR. On route maybeSingle
+  // vers single pour que les mocks déjà écrits (parcoursChain.single) pilotent les deux.
+  chain.maybeSingle = vi.fn(() => chain.single())
   chain.in = vi.fn(() => chain)
   chain.update = vi.fn(() => chain)
   chain.insert = vi.fn(() => ({ data: null, error: null }))
@@ -43,6 +47,15 @@ vi.mock('@monprojetpro/supabase', () => ({
       if (table === 'operators') return operatorsChain
       if (table === 'notifications') return notificationsChain
       if (table === 'parcours_steps') return parcoursStepsChain
+      return makeChain()
+    },
+  })),
+  // La notification à MiKL passe par le client service-role (bypass RLS) — il manquait
+  // au mock, ce qui rendait l'appel `createServiceRoleSupabaseClient()` indéfini.
+  createServiceRoleSupabaseClient: vi.fn(() => ({
+    from: (table: string) => {
+      if (table === 'operators') return operatorsChain
+      if (table === 'notifications') return notificationsChain
       return makeChain()
     },
   })),
@@ -206,14 +219,18 @@ describe('requestParcoursAbandonment', () => {
     expect(result.error?.code).toBe('VALIDATION_ERROR')
   })
 
+  // L'action n'utilise plus le helper `createNotification` : elle insère directement via
+  // le client service-role pour contourner la RLS (un INSERT ... RETURNING cross-user est
+  // refusé en 42501). L'assertion porte donc sur l'insert réel, à intention inchangée :
+  // MiKL est prévenu, en type 'alert', avec la progression dans le corps.
   it('sends notification with progression in body', async () => {
-    const { createNotification } = await import('../../notifications/actions/create-notification')
-
     await requestParcoursAbandonment({ clientId: CLIENT_ID, reason: 'Plus le temps' })
 
-    expect(createNotification).toHaveBeenCalledWith(
+    expect(notificationsChain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
-        recipientType: 'operator',
+        recipient_type: 'operator',
+        // Convention : recipient_id = auth_user_id, jamais clients.id.
+        recipient_id: 'op-auth-id',
         type: 'alert',
         body: expect.stringContaining('1/2 étapes'),
       })

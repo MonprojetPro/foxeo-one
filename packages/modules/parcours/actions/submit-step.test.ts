@@ -35,6 +35,14 @@ const mockStepUpdate = vi.fn(() => ({ eq: mockStepUpdateEq }))
 // notifications insert
 const mockNotifInsert = vi.fn(() => ({}))
 
+// operators lookup (auth_user_id du destinataire de la notification opérateur)
+const mockOperatorSingle = vi.fn()
+const mockOperatorEq = vi.fn(() => ({ single: mockOperatorSingle }))
+const mockOperatorSelect = vi.fn(() => ({ eq: mockOperatorEq }))
+
+// activity_logs insert (journal best-effort)
+const mockActivityInsert = vi.fn(() => ({}))
+
 // Storage upload
 const mockStorageUpload = vi.fn()
 const mockStorageFrom = vi.fn(() => ({ upload: mockStorageUpload }))
@@ -54,6 +62,10 @@ const mockFrom = vi.fn((table: string) => {
     }
   }
   if (table === 'notifications') return { insert: mockNotifInsert }
+  // La soumission notifie l'opérateur puis journalise l'action : ces deux tables
+  // manquaient au mock, ce qui faisait échouer le chemin nominal sur un TypeError.
+  if (table === 'operators') return { select: mockOperatorSelect }
+  if (table === 'activity_logs') return { insert: mockActivityInsert }
   return {}
 })
 
@@ -100,6 +112,7 @@ describe('submitStep Server Action — auth & validation', () => {
     mockStepSingle.mockResolvedValue({ data: mockStep, error: null })
     mockExistingMaybeSingle.mockResolvedValue({ data: null, error: null })
     mockInsertSingle.mockResolvedValue({ data: { id: SUBMISSION_ID }, error: null })
+    mockOperatorSingle.mockResolvedValue({ data: { auth_user_id: 'op-auth-id' }, error: null })
   })
 
   it('returns UNAUTHORIZED when user is not authenticated', async () => {

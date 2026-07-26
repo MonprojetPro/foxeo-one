@@ -47,6 +47,9 @@ const mockFrom = vi.fn((table: string) => {
   if (table === 'validation_requests') return { insert: mockSimpleInsert }
   if (table === 'notifications') return { insert: mockSimpleInsert }
   if (table === 'operators') return { select: mockOperatorSelect }
+  // Journal d'activité en fin de soumission : absent du mock, il faisait échouer
+  // le chemin nominal sur un TypeError avalé en INTERNAL_ERROR.
+  if (table === 'activity_logs') return { insert: mockSimpleInsert }
   return {}
 })
 

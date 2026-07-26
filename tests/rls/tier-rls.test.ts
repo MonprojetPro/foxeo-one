@@ -46,7 +46,7 @@ describe.skipIf(!isSupabaseAvailable)('RLS: Tier Abonnement Isolation (Story 9.4
       // Un client authentifié tente de modifier son propre tier (Hub only)
       const { error } = await clientASupabase
         .from('client_configs')
-        .update({ subscription_tier: 'agentique' })
+        .update({ subscription_tier: 'one_plus' })
         .eq('client_id', TEST_IDS.clientA)
 
       // RLS doit bloquer la modification (aucune ligne affectée ou erreur)
@@ -58,7 +58,7 @@ describe.skipIf(!isSupabaseAvailable)('RLS: Tier Abonnement Isolation (Story 9.4
       // Opérateur B essaie de modifier le tier d'un client qui appartient à opérateur A
       const { data: updatedRows, error } = await operatorBSupabase
         .from('client_configs')
-        .update({ subscription_tier: 'agentique' })
+        .update({ subscription_tier: 'one_plus' })
         .eq('client_id', TEST_IDS.clientA)
         .select()
 
