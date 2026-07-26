@@ -53,29 +53,7 @@ import { ElioOneSessionProvider } from '../../components/elio-one-session'
 import { resolveOnePopupConfig, DEFAULT_ONE_POPUP_CONFIG } from '@monprojetpro/module-elio'
 import { SessionKeepAlive } from './session-keep-alive'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
-import { selectVisibleModules } from './module-visibility'
-
-/**
- * Modules de famille « cockpit » à masquer pour un client dont l'abonnement est terminé.
- *
- * La distinction relation / cockpit vit dans `module_catalog.family` (vision v2) :
- * « relation » = le socle du lien avec MiKL (chat, documents, support, notifications…),
- * « cockpit » = les briques qui pilotent un outil que le client ne paie plus.
- *
- * ⚠️ Le filtrage se fait ICI, au RENDU. On ne retire surtout PAS ces modules de
- * `client_configs.active_modules` : on perdrait la trace de ce que le client avait, et
- * sa réactivation deviendrait destructive.
- */
-async function getCockpitModuleIds(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-): Promise<string[]> {
-  const { data } = await supabase
-    .from('module_catalog')
-    .select('module_key')
-    .eq('family', 'cockpit')
-
-  return ((data as { module_key: string }[] | null) ?? []).map((m) => m.module_key)
-}
+import { selectVisibleModules, getCockpitModuleIds } from './module-visibility'
 
 function ClientSidebar({
   dashboardType,

@@ -7,6 +7,7 @@ import { MODE_TOGGLE_COOKIE } from '@monprojetpro/ui'
 import { resolveClientMode } from '@monprojetpro/utils'
 import type { ClientConfig } from '@monprojetpro/types'
 import { OneHome } from '../../components/one-home'
+import { getCockpitModuleIds } from './module-visibility'
 
 export default async function ClientHomePage() {
   const supabase = await createServerSupabaseClient()
@@ -83,9 +84,23 @@ export default async function ClientHomePage() {
   //    base le contient encore pour d'anciens clients, on ne l'affiche plus en carte d'accueil
   //    ni en raccourci : l'abonnement MPP vit désormais dans Paramètres → Mes factures.
   const HOME_HIDDEN_ONE_IDS = new Set(['parcours', 'facturation'])
+
+  // Tant que l'outil n'est pas livré (one_status = 'construction'), les cockpits sur-mesure
+  // ne sont pas encore allumés : ils doivent disparaître de l'accueil COMME du menu.
+  // On lit la même source que la sidebar (module_catalog.family) au lieu de maintenir une
+  // seconde liste ici : deux filtrages concurrents finiraient par diverger, et une carte
+  // resterait affichée sur l'accueil alors que le menu l'a masquée.
+  // Aujourd'hui `facturation` est le seul module cockpit et il est déjà masqué en dur
+  // ci-dessus — ce filtre existe pour les cockpits à venir (Cockpit Site, Cockpit App…).
+  const oneStatus = configData?.one_status ?? 'construction'
+  const cockpitIds =
+    oneStatus === 'construction' ? await getCockpitModuleIds(supabase) : []
+
   const clientConfigOne = {
     ...clientConfig,
-    activeModules: clientConfig.activeModules.filter(id => !HOME_HIDDEN_ONE_IDS.has(id)),
+    activeModules: clientConfig.activeModules.filter(
+      id => !HOME_HIDDEN_ONE_IDS.has(id) && !cockpitIds.includes(id)
+    ),
   }
 
   // Données SSR de l'accueil, en parallèle (évite les flashs UI côté client) :
