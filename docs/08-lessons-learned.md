@@ -13,8 +13,8 @@
 | DL | Téléchargement / Storage | 5 |
 | API | Intégration API externe | 5 |
 | RSC | Next.js Server/Client | 6 |
-| DB | Base de données / Schéma | 2 |
-| DEP | Déploiement | 6 |
+| DB | Base de données / Schéma | 3 |
+| DEP | Déploiement | 7 |
 | GIT | Git / Workflow | 1 |
 | SEC | Sécurité / Secrets | 2 |
 | UI | Interface / CSS | 2 |
@@ -841,3 +841,27 @@
 - **Solution validee** : une seule autorité par responsabilité. Le `ThemeProvider` ne gère plus que `light`/`dark` ; la classe de dashboard est posée **côté serveur** dans le `className` de `<html>` (déduite du cookie du toggle Lab/One, donc sans flash), puis ajustée par `ThemeClassSetter` pour le clamp aux modes réellement autorisés.
 - **Regle a suivre** : (a) une propriété globale du DOM (`documentElement.classList`, `dataset`, `<title>`) ne doit avoir **qu'un seul écrivain**. Deux composants qui la modifient = le plus proche de la racine gagne, quelle que soit l'intention. (b) Se rappeler que les effets remontent des **enfants vers les parents** : un correctif appliqué « plus bas » ne corrige rien si un parent réécrit la même chose. (c) **Symptôme signature** : des couleurs forcées en littéral dispersées dans le code = quelqu'un contourne un thème qui ne s'applique pas. Chercher l'écrivain concurrent avant d'ajouter un nouveau `!important` ou une valeur en dur.
 - **Agents impliques** : SPARK (fix), PIXEL (thème), ATLAS
+
+---
+
+## DB-003 — Un `select()` Postgrest est atomique : une colonne inconnue = panne 100 % silencieuse
+
+- **Date** : 2026-07-26
+- **Categorie** : Base de données / Schéma
+- **Symptome** : MiKL ne recevait **aucun** email d'alerte opérateur (client inactif, échec de sync facturation, nouveau message client, webhook Pennylane en échec) — et ce depuis la mise en service de la chaîne email. Aucune erreur visible : ni email reçu, ni `email_failed` loggé. Preuve terrain : 9 notifications `recipient_type = 'operator'` en base, dont le `recipient_id` correspondait bien à un `operators.auth_user_id` → **0 email envoyé, 0 échec enregistré**.
+- **Cause racine** : `send-email` résolvait le destinataire avec un seul jeu de colonnes pour les deux tables : `select('email, name, company, email_notifications_enabled')`. La colonne `company` n'existe **que** sur `clients` — sur `operators` elle n'existe pas. Postgrest ne renvoie pas une ligne partielle : il fait échouer **toute** la requête (colonne inconnue). Le code interprétait cette erreur comme « Recipient not found » et sortait en `return` silencieux, sans log d'échec ni notification. Le chemin client fonctionnait parfaitement, ce qui donnait l'illusion que la chaîne email marchait — elle ne marchait qu'à moitié.
+- **Solution validee** : choisir les colonnes selon la table (`company` uniquement pour `clients`). Corrigé dans `supabase/functions/send-email/index.ts` (déployé v13) **et** `handler.ts` (version testée). Vérifié par envoi réel : notification opérateur → `email_sent` vers `contact@monprojet-pro.com`.
+- **Regle a suivre** : (a) quand un même code sert **deux tables au schéma différent**, ne jamais partager une liste de colonnes en dur — la dériver du type de destinataire. (b) Un `return` silencieux sur « entité introuvable » dans un chemin d'envoi **doit** logger un échec : ici, un `email_failed` en base aurait rendu la panne visible en 5 minutes au lieu de plusieurs mois. (c) **Symptôme signature** : « ça marche pour les clients mais jamais pour moi » sur un code partagé → comparer les schémas des deux tables **avant** de chercher ailleurs. (d) Ne jamais conclure « la chaîne fonctionne » depuis un seul chemin testé.
+- **Agents impliques** : MAX (audit), CERBÈRE (transparence RGPD impersonation), ATLAS
+
+---
+
+## DEP-007 — Un fichier source peut diverger silencieusement de la fonction déployée
+
+- **Date** : 2026-07-26
+- **Categorie** : Déploiement
+- **Symptome** : `supabase/functions/send-email/index.ts` contenait des **guillemets typographiques** (`’` `‘` au lieu de `'`) sur ~25 lignes (bloc `handleDirectEmail`) : le fichier ne compile pas en Deno. Pourtant la fonction tournait parfaitement en production (envois réussis le jour même).
+- **Cause racine** : la fonction est déployée **via le MCP** (le CLI n'a pas les privilèges), donc le contenu envoyé à Supabase et le contenu du repo sont deux artefacts distincts. Une édition ultérieure du fichier local (copier-coller depuis un éditeur qui « embellit » les apostrophes — même famille que la leçon UI-006) l'a corrompu sans que rien ne le signale : ni CI, ni build Next (les Edge Functions sont hors du build Turbo), ni test Vitest (qui teste `handler.ts`, pas `index.ts`). Bombe à retardement : le prochain redéploiement depuis le disque aurait cassé **toute** la chaîne email.
+- **Solution validee** : réparation du fichier + redéploiement (v13), avec vérification préalable `grep "‘\|’"` sur les fichiers Edge concernés avant tout déploiement.
+- **Regle a suivre** : (a) avant de redéployer une Edge Function, **comparer le disque au déployé** (`get_edge_function`) — ne jamais présumer qu'ils sont identiques. (b) Passer le `grep` guillemets courbes sur `supabase/functions/**` au même titre que sur le code applicatif. (c) Une Edge Function modifiée dans le repo **n'est pas déployée** tant qu'on ne l'a pas explicitement redéployée : un commit vert ≠ un fix actif en production.
+- **Agents impliques** : MAX, ATLAS

@@ -430,7 +430,7 @@ async function handleOverdueNotifications(
   const customerIds = [...new Set(newlyOverdue.map((o) => o.inv.customer_id))]
   const { data: clients } = await supabase
     .from('clients')
-    .select('auth_user_id, name, pennylane_customer_id')
+    .select('auth_user_id, name, email, pennylane_customer_id')
     .in('pennylane_customer_id', customerIds)
 
   const clientMap = new Map(
@@ -471,8 +471,11 @@ async function handleOverdueNotifications(
 
       // Email via send-email Edge Function (si disponible)
       try {
+        // `to` est OBLIGATOIRE : sans lui, send-email tombe sur la route
+        // notification et rejette l'appel (400) -> aucun email n'etait envoye.
         await supabase.functions.invoke('send-email', {
           body: {
+            to: client.email,
             template: 'payment-failed',
             data: {
               recipientName: client.name ?? 'Client',

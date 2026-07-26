@@ -356,9 +356,15 @@ export async function handleSendEmail(
   // 2. Fetch recipient and check email preferences
   // recipient_id = auth.uid() (via RLS), donc on cherche par auth_user_id
   const recipientTable = notif.recipient_type === 'client' ? 'clients' : 'operators'
+  // `company` n'existe QUE sur clients : le demander sur operators fait echouer tout
+  // le select (colonne inconnue) -> "Recipient not found" -> aucun email operateur.
+  const recipientColumns =
+    notif.recipient_type === 'client'
+      ? 'email, name, company, email_notifications_enabled'
+      : 'email, name, email_notifications_enabled'
   const { data: recipient, error: recipientError } = await supabase
     .from(recipientTable)
-    .select('email, name, company, email_notifications_enabled')
+    .select(recipientColumns)
     .eq('auth_user_id', notif.recipient_id)
     .single()
 

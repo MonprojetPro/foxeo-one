@@ -234,7 +234,12 @@ async function handleSendEmail(notificationId: string, config: SendEmailConfig):
   if (notifError || !notification) { console.error('[EMAIL:SEND] Notification not found:', notificationId, notifError); return { success: false, error: `Notification not found: ${notifError?.message}` } }
   const notif = notification as NotificationRow
   const recipientTable = notif.recipient_type === 'client' ? 'clients' : 'operators'
-  const { data: recipient, error: recipientError } = await supabase.from(recipientTable).select('email, name, company, email_notifications_enabled').eq('auth_user_id', notif.recipient_id).single()
+  // `company` n'existe QUE sur clients : le demander sur operators fait echouer tout
+  // le select (colonne inconnue) -> "Recipient not found" -> aucun email operateur.
+  const recipientColumns = notif.recipient_type === 'client'
+    ? 'email, name, company, email_notifications_enabled'
+    : 'email, name, email_notifications_enabled'
+  const { data: recipient, error: recipientError } = await supabase.from(recipientTable).select(recipientColumns).eq('auth_user_id', notif.recipient_id).single()
   if (recipientError || !recipient) { console.error('[EMAIL:SEND] Recipient not found:', notif.recipient_id, recipientError); return { success: false, error: `Recipient not found: ${recipientError?.message}` } }
   const recip = recipient as RecipientRow
   if (recip.email_notifications_enabled === false) { console.log(`[EMAIL:SEND] Skipped — disabled for ${notif.recipient_id}`); return { success: true, skipped: true } }
@@ -267,23 +272,76 @@ async function handleSendEmail(notificationId: string, config: SendEmailConfig):
   }
 }
 
-type DirectEmailTemplate = ‘welcome-lab’ | ‘welcome-one’ | ‘welcome-venture’ | ‘final-payment-confirmation’ | ‘prospect-resources’ | ‘tool-update’
+type DirectEmailTemplate =
+  | 'welcome-lab'
+  | 'welcome-one'
+  | 'welcome-venture'
+  | 'final-payment-confirmation'
+  | 'prospect-resources'
+  | 'tool-update'
+  | 'operator-impersonation-started'
+  | 'payment-failed'
+  | 'instance-transferred'
 
 function toolUpdateEmailTemplate(d: { clientName: string; body: string; link: string }): string {
-  const bodyHtml = `<p>Bonjour${d.clientName ? ` <strong>${escapeHtml(d.clientName)}</strong>` : ‘’},</p><p>${escapeHtml(d.body)}</p>`
-  return baseTemplate({ title: ‘Nouvelle mise à jour de votre outil’, body: bodyHtml, ctaUrl: d.link, ctaText: ‘Voir la mise à jour’ })
+  const bodyHtml = `<p>Bonjour${d.clientName ? ` <strong>${escapeHtml(d.clientName)}</strong>` : ''},</p><p>${escapeHtml(d.body)}</p>`
+  return baseTemplate({ title: 'Nouvelle mise à jour de votre outil', body: bodyHtml, ctaUrl: d.link, ctaText: 'Voir la mise à jour' })
+}
+
+// Transparence RGPD : le client est prevenu quand l'operateur ouvre une session
+// de support sur son compte (start-impersonation). Le texte peut etre personnalise
+// en base (email_templates.operator-impersonation-started, variable {prenom}).
+function impersonationStartedEmailTemplate(d: { clientName: string }): string {
+  const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>Un membre de l'equipe MonprojetPro vient d'ouvrir une <strong>session de support</strong> sur votre compte pour vous aider.</p><p>Toutes les actions realisees pendant cette session sont enregistrees et consultables. La session se ferme automatiquement au bout de 2 heures.</p><p style="color:#6b7280;font-size:14px;">Si vous n'avez sollicite aucun support, repondez a cet email.</p>`
+  return baseTemplate({ title: 'Session de support sur votre compte', body })
+}
+
+function instanceTransferredEmailTemplate(d: { clientName: string }): string {
+  const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>Votre instance <strong>MonprojetPro One</strong> vous a ete transferee avec succes.</p><p>Vous trouverez votre guide d'autonomie dans votre espace.</p><p>Pour toute question : <a href="mailto:contact@monprojet-pro.com" style="color:#059669;">contact@monprojet-pro.com</a></p>`
+  return baseTemplate({ title: 'Votre instance One vous est transferee', body })
 }
 
 async function handleDirectEmail(input: { to: string; template: DirectEmailTemplate; data: Record<string, unknown> }, config: SendEmailConfig): Promise<{ success: boolean; error?: string }> {
   let subject: string
   let html: string
   switch (input.template) {
-    case ‘welcome-lab’: { const d = input.data as { clientName: string; firstStepLabel: string; activationLink: string }; subject = ‘Bienvenue dans MonprojetPro Lab !’; html = welcomeLabEmailTemplate(d); break }
-    case ‘welcome-one’: { const d = input.data as { clientName: string; activationLink: string; temporaryPassword: string | null }; subject = ‘Votre espace MonprojetPro One est prêt’; html = welcomeOneEmailTemplate(d); break }
-    case ‘welcome-venture’: { const d = input.data as { clientName: string }; subject = ‘Bienvenue dans l’aventure MonprojetPro !’; html = welcomeVentureEmailTemplate(d); break }
-    case ‘final-payment-confirmation’: { const d = input.data as { clientName: string }; subject = ‘Projet livré — MonprojetPro’; html = finalPaymentConfirmationEmailTemplate(d); break }
-    case ‘prospect-resources’: { const d = input.data as { links: Array<{ name: string; url: string }> }; subject = ‘Vos ressources MonprojetPro’; html = prospectResourcesEmailTemplate(d); break }
-    case ‘tool-update’: { const d = input.data as { clientName: string; body: string; link: string }; subject = ‘Nouvelle mise à jour de votre outil — MonprojetPro’; html = toolUpdateEmailTemplate(d); break }
+    case 'welcome-lab': { const d = input.data as { clientName: string; firstStepLabel: string; activationLink: string }; subject = 'Bienvenue dans MonprojetPro Lab !'; html = welcomeLabEmailTemplate(d); break }
+    case 'welcome-one': { const d = input.data as { clientName: string; activationLink: string; temporaryPassword: string | null }; subject = 'Votre espace MonprojetPro One est prêt'; html = welcomeOneEmailTemplate(d); break }
+    case 'welcome-venture': { const d = input.data as { clientName: string }; subject = 'Bienvenue dans l’aventure MonprojetPro !'; html = welcomeVentureEmailTemplate(d); break }
+    case 'final-payment-confirmation': { const d = input.data as { clientName: string }; subject = 'Projet livré — MonprojetPro'; html = finalPaymentConfirmationEmailTemplate(d); break }
+    case 'prospect-resources': { const d = input.data as { links: Array<{ name: string; url: string }> }; subject = 'Vos ressources MonprojetPro'; html = prospectResourcesEmailTemplate(d); break }
+    case 'tool-update': { const d = input.data as { clientName: string; body: string; link: string }; subject = 'Nouvelle mise à jour de votre outil — MonprojetPro'; html = toolUpdateEmailTemplate(d); break }
+    case 'operator-impersonation-started': {
+      const d = input.data as { clientName?: string }
+      const clientName = d.clientName ?? 'Client'
+      subject = 'Session de support sur votre compte — MonprojetPro'
+      html = impersonationStartedEmailTemplate({ clientName })
+      // Texte personnalise en base s'il existe (meme convention que la route notification)
+      try {
+        const supabase = createClient(config.supabaseUrl, config.serviceRoleKey)
+        const dbTemplate = await fetchDbEmailTemplate(supabase, 'operator-impersonation-started')
+        if (dbTemplate) {
+          const vars: Record<string, string> = { prenom: clientName }
+          subject = substituteTemplateVars(dbTemplate.subject, vars)
+          html = plainTextToHtml(substituteTemplateVars(dbTemplate.body, vars), subject)
+        }
+      } catch { /* fallback template integre */ }
+      break
+    }
+    case 'payment-failed': {
+      const d = input.data as { recipientName: string; clientName?: string; amount: string; currency?: string; platformUrl: string; recipientType?: 'client' | 'operator' }
+      subject = 'Échec de paiement — MonprojetPro'
+      html = paymentFailedEmailTemplate({
+        recipientName: d.recipientName,
+        clientName: d.clientName,
+        amount: d.amount,
+        currency: d.currency ?? 'EUR',
+        platformUrl: d.platformUrl,
+        recipientType: d.recipientType ?? 'client',
+      })
+      break
+    }
+    case 'instance-transferred': { const d = input.data as { clientName: string }; subject = 'Votre instance MonprojetPro One vous est transférée'; html = instanceTransferredEmailTemplate(d); break }
     default: return { success: false, error: `Unknown direct template: ${input.template}` }
   }
   try {

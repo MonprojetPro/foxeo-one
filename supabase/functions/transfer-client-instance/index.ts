@@ -31,15 +31,6 @@ interface TransferInput {
   recipientEmail: string
 }
 
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
 Deno.serve(async (req: Request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -156,7 +147,7 @@ ${instance.supabase_project_id
 ## 5. Support Technique
 
 MonprojetPro propose un support technique optionnel (payant) :
-- **Email** : support@monprojet-pro.com
+- **Email** : contact@monprojet-pro.com
 - **Tarif** : 150€/h (interventions ponctuelles)
 - **Abonnement** : 300€/mois (support continu)
 
@@ -222,19 +213,13 @@ MonprojetPro propose un support technique optionnel (payant) :
     })
 
     // Step 9: Send email to client
-    const safeClientName = escapeHtml(client.name)
-    const safeRecipientEmail = escapeHtml(recipientEmail)
-
+    // send-email n'accepte que { notificationId } ou { to, template, data } :
+    // l'ancien payload { to, subject, html } etait rejete (400) -> email jamais parti.
     await supabase.functions.invoke('send-email', {
       body: {
         to: recipientEmail,
-        subject: 'Votre instance MonprojetPro One vous est transférée',
-        html: `<h2>Bonjour ${safeClientName},</h2>
-<p>Votre instance MonprojetPro One a été transférée avec succès.</p>
-<p>Vous trouverez en pièce jointe votre guide d'autonomie.</p>
-<p>Pour toute question, contactez notre support : <a href="mailto:support@monprojet-pro.com">support@monprojet-pro.com</a></p>
-<p><em>L'équipe MonprojetPro</em></p>`,
-        text: `Bonjour ${safeClientName},\n\nVotre instance MonprojetPro One a été transférée avec succès.\n\nPour toute question : support@monprojet-pro.com\n\nL'équipe MonprojetPro`,
+        template: 'instance-transferred',
+        data: { clientName: client.name },
       },
     })
 
