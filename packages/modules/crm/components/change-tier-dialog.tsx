@@ -41,7 +41,7 @@ export function ChangeTierDialog({
   }, [open, currentTier])
 
   const showDowngradeWarning = isDowngradeFromOnePlus(currentTier, selectedTier)
-  const tiers: SubscriptionTier[] = ['base', 'essentiel', 'agentique']
+  const tiers: SubscriptionTier[] = ['ponctuel', 'one', 'one_plus']
 
   const handleConfirm = () => {
     startTransition(async () => {

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
-import { Button, Textarea, showSuccess, showError } from '@monprojetpro/ui'
+import { Button, Textarea, showSuccess, showError, useClientReadOnly } from '@monprojetpro/ui'
 import { SubmissionFileUpload } from './submission-file-upload'
 import { submitStep } from '../actions/submit-step'
 
@@ -20,6 +20,9 @@ interface SubmitStepFormProps {
 
 export function SubmitStepForm({ stepId }: SubmitStepFormProps) {
   const router = useRouter()
+  // Espace figé — abonnement terminé : on masque le formulaire plutôt que d'exposer un
+  // bouton qui échouerait au clic (le refus réel vient de la RLS).
+  const readOnly = useClientReadOnly()
   const {
     register,
     handleSubmit,
@@ -45,6 +48,15 @@ export function SubmitStepForm({ stepId }: SubmitStepFormProps) {
 
     showSuccess('Soumission envoyée — MiKL va valider votre travail.')
     router.push('/modules/parcours')
+  }
+
+  if (readOnly) {
+    return (
+      <p className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+        Votre abonnement est terminé : cette étape reste consultable, mais vous ne pouvez
+        plus soumettre de travail. Écrivez à MiKL si vous souhaitez reprendre.
+      </p>
+    )
   }
 
   return (

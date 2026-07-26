@@ -244,13 +244,28 @@ describe('handleOneDepositPaid', () => {
     expect(mockSupabase.mocks.configUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         dashboard_type: 'one',
-        lab_mode_available: false,
         elio_lab_enabled: false,
         deposit_paid_at: expect.any(String),
       })
     )
     // clients.update pour password_change_required + project_status
     expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledTimes(2)
+  })
+
+  it('ne touche jamais lab_mode_available — permanence de l\'accès Lab (même sur un client qui l\'avait déjà à true)', async () => {
+    // Un client "direct One" n'a normalement jamais eu de Lab, mais si ce flux était un
+    // jour déclenché sur un client qui a déjà lab_mode_available=true, le handler ne doit
+    // JAMAIS l'écraser à false : il ne doit pas du tout écrire cette colonne.
+    const mockSupabase = makeMockSupabase()
+    const deps = makeDeps(mockSupabase.supabase)
+    const quote = makeQuote({
+      quote_type: 'one_direct_deposit',
+      pennylane_quote_id: 'PL-Q-201',
+    })
+    await handleOneDepositPaid(deps, quote)
+
+    const configUpdateCall = mockSupabase.mocks.configUpdate.mock.calls[0][0]
+    expect(configUpdateCall).not.toHaveProperty('lab_mode_available')
   })
 
   it('skips account creation if auth_user_id already exists', async () => {

@@ -3,7 +3,24 @@ import { createClientSchema, updateClientSchema } from '@monprojetpro/utils'
 
 // Client type enums
 export const ClientTypeEnum = z.enum(['complet', 'direct_one', 'ponctuel'])
-export const ClientStatusEnum = z.enum(['active', 'suspended', 'archived', 'deleted', 'prospect'])
+// Miroir du CHECK `clients_status_check` en base. Les 3 derniers y existaient déjà sans
+// être listés ici : `ClientSchema.parse()` (get-client) LEVAIT sur un client résilié,
+// transféré ou archivé Lab — la fiche Hub devenait inaccessible.
+export const ClientStatusEnum = z.enum([
+  'active',
+  'suspended',
+  'archived',
+  'deleted',
+  'prospect',
+  'subscription_cancelled',
+  'handed_off',
+  'archived_lab',
+])
+
+/** Fin d'abonnement : accès dégradé (espace consultable, chat et support actifs). */
+export function isCancelledSubscription(status: string): boolean {
+  return status === 'subscription_cancelled' || status === 'handed_off'
+}
 export const ProspectStageEnum = z.enum(['nouveau', 'qualifié', 'sans_suite'])
 
 // Client Config types (from client_configs table)
@@ -19,7 +36,7 @@ export const ClientConfig = z.object({
   // LOT E — mode de séquençage du parcours
   parcoursMode: z.enum(['tracee', 'libre']).optional(),
   // Story 9.4 — Subscription tier
-  subscriptionTier: z.enum(['base', 'essentiel', 'agentique']).nullable().optional(),
+  subscriptionTier: z.enum(['ponctuel', 'one', 'one_plus']).nullable().optional(),
   tierChangedAt: z.string().datetime({ offset: true }).nullable().optional(),
 })
 

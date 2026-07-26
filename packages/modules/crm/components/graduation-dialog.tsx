@@ -35,28 +35,28 @@ const AVAILABLE_MODULES = [
   { id: 'elio', label: 'Élio' },
 ]
 
-// Socle relation par défaut. `elio` est inclus car le tier par défaut (Essentiel) comprend
+// Socle relation par défaut. `elio` est inclus car le tier par défaut (One) comprend
 // Élio ; il est retiré automatiquement si MiKL choisit « Ponctuel » (cf. handleSelectTier).
 const DEFAULT_MODULES = ['core-dashboard', 'chat', 'documents', 'suivi-outil', 'support', 'elio']
 
 // Les 3 offres — alignées sur docs/one-vision-v2-2026-06-24.md (actées 2026-06-24).
-// ⚠️ Les `value` ('base'/'essentiel'/'agentique') restent les identifiants techniques
-// historiques (mapping elio_tier dans graduateClient) — seuls les libellés affichés changent.
+// Recyclage subscription_tier (2026-07-26) : les `value` SONT désormais les identifiants
+// commerciaux directs ('ponctuel'/'one'/'one_plus') — plus de mapping technique caché.
 // La 3ᵉ offre n'est PLUS « Agentique IA » (devenue option au devis) : c'est « One+ » dont le
 // SEUL différenciateur est le COACHING HUMAIN (1 visio/mois).
 const TIERS: Array<{ value: GraduationTier; label: string; description: string }> = [
   {
-    value: 'base',
+    value: 'ponctuel',
     label: 'Ponctuel — devis projet',
     description: 'Outil livré en one-shot, sans abonnement One ni Élio',
   },
   {
-    value: 'essentiel',
+    value: 'one',
     label: 'One — 39 €/mois',
     description: 'Élio (assistant), chat & demandes d\'évolution, hébergement + maintenance',
   },
   {
-    value: 'agentique',
+    value: 'one_plus',
     label: 'One+ — 99 €/mois',
     description: 'Tout One + 1 visio de coaching humain / mois (accompagnement de l\'entrepreneur)',
   },
@@ -81,7 +81,7 @@ export function GraduationDialog({
   onOpenChange,
   onSuccess,
 }: GraduationDialogProps) {
-  const [selectedTier, setSelectedTier] = useState<GraduationTier>('essentiel')
+  const [selectedTier, setSelectedTier] = useState<GraduationTier>('one')
   const [selectedModules, setSelectedModules] = useState<string[]>(DEFAULT_MODULES)
   const [notes, setNotes] = useState('')
   // Forçage opérateur : graduer même si le parcours n'est pas terminé (cf. graduateClient).
@@ -99,7 +99,7 @@ export function GraduationDialog({
     setSelectedTier(tier)
     setSelectedModules((prev) => {
       const withoutElio = prev.filter((m) => m !== 'elio')
-      return tier === 'base' ? withoutElio : [...withoutElio, 'elio']
+      return tier === 'ponctuel' ? withoutElio : [...withoutElio, 'elio']
     })
   }
 

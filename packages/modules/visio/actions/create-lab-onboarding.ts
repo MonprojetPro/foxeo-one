@@ -2,7 +2,10 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
-import { getClientAppUrl } from '@monprojetpro/utils'
+import {
+  createClientAuthUser,
+  generateSecureTemporaryPassword,
+} from '@monprojetpro/supabase/admin'
 import { CreateLabOnboardingInput } from './post-meeting-schemas'
 export type { CreateLabOnboardingInput } from './post-meeting-schemas'
 
@@ -49,6 +52,23 @@ export async function createLabOnboarding(
     return errorResponse('Un client avec cet email existe déjà', 'CONFLICT')
   }
 
+  // Créer le compte Auth du client MAINTENANT — pas au paiement, pas plus tard.
+  // Pourquoi ici : l'email d'accès part au LANCEMENT du parcours (launchClientParcours →
+  // sendWelcomeLabInvite), qui génère un lien via generateLink({ type: 'recovery' }).
+  // Ce type EXIGE que l'email corresponde déjà à un compte Supabase Auth existant — sans
+  // ce compte créé ici, l'invitation échouerait au lancement (best-effort → juste loguée,
+  // jamais vue). Mot de passe temporaire jetable : le client ne le reçoit jamais, il
+  // définit le sien via le lien de récupération envoyé au lancement du parcours (LOT C).
+  const authResult = await createClientAuthUser({
+    email: clientEmail,
+    password: generateSecureTemporaryPassword(),
+  })
+
+  if (authResult.error || !authResult.userId) {
+    console.error('[VISIO:ONBOARD_PROSPECT] Auth user creation failed:', authResult.error)
+    return errorResponse('Échec création du compte client', 'AUTH_ERROR', authResult.error)
+  }
+
   // Créer client (prospect)
   const { data: client, error: clientError } = await supabase
     .from('clients')
@@ -58,7 +78,7 @@ export async function createLabOnboarding(
       email: clientEmail,
       status: 'prospect',
       client_type: 'complet',
-      auth_user_id: null,
+      auth_user_id: authResult.userId,
     })
     .select()
     .single()
@@ -103,39 +123,30 @@ export async function createLabOnboarding(
     .update({ metadata: { prospect_converted: true, client_id: client.id } })
     .eq('id', meetingId)
 
-  // Envoyer email de bienvenue (non-bloquant)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (supabaseUrl && serviceRoleKey) {
-    try {
-      await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${serviceRoleKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: clientEmail,
-          template: 'welcome-lab',
-          data: {
-            // NB: flow legacy (Story 5.4, ancienne table `parcours`, prospect sans compte
-            // auth). On aligne juste la clé sur le nouveau template welcome-lab (LOT C).
-            // À réconcilier avec le pattern d'invitation generateLink ultérieurement.
-            clientName,
-            firstStepLabel: template.name,
-            // Correctif 2026-07-25 — le fallback vide produisait un lien relatif
-            // inutilisable dans un email. Base centralisée.
-            activationLink: `${getClientAppUrl()}/activate?client_id=${client.id}`,
-          },
-        }),
-      })
-    } catch (emailErr) {
-      // Email non-bloquant : loguer mais ne pas échouer l'action
-      console.error('[VISIO:ONBOARD_PROSPECT] Email failed (non-blocking):', emailErr)
-    }
+  // PLUS d'email envoyé ici (bug corrigé — cf. docs/lab-one-lifecycle.md §8.1) : ce flow
+  // insère encore dans l'ancienne table `parcours`, jamais dans `client_parcours_agents`
+  // (le système réellement lu par le client). Tant qu'aucun parcours d'agents Élio n'est
+  // composé, envoyer l'email d'accès livre un client sur un espace vide. L'email part
+  // désormais au LANCEMENT du parcours (launchClientParcours → sendWelcomeLabInvite),
+  // comme pour tous les autres clients — jamais dupliqué ici.
+  //
+  // Notifier MiKL explicitement (convention stricte : recipient_id = auth_user_id de
+  // l'opérateur, type dans la liste autorisée par notifications_type_check, title
+  // NOT NULL, pas de colonne `read`) qu'il lui reste à composer le parcours pour que
+  // l'accès parte au client. Best-effort : ne doit jamais faire échouer la création.
+  const { error: notifError } = await supabase.from('notifications').insert({
+    recipient_type: 'operator',
+    recipient_id: user.id,
+    type: 'alert',
+    title: 'Parcours Lab à composer',
+    body: `${clientName} a été créé depuis la visio. Compose son parcours pour envoyer l'accès à son espace Lab.`,
+    link: `/modules/crm/clients/${client.id}`,
+  })
+  if (notifError) {
+    console.error('[VISIO:ONBOARD_PROSPECT] Notification opérateur non envoyée:', notifError)
   }
 
-  console.log('[VISIO:ONBOARD_PROSPECT] Client créé:', client.id)
+  console.log('[VISIO:ONBOARD_PROSPECT] Client créé (parcours à composer):', client.id)
 
   return successResponse({ clientId: client.id, parcoursId: parcours.id })
 }

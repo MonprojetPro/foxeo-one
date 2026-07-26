@@ -15,7 +15,7 @@ const defaultConfig = () => ({
   elioLabEnabled: true,
   oneModeAvailable: false,
   activeModules: [] as string[],
-  subscriptionTier: 'base',
+  subscriptionTier: 'ponctuel',
 })
 
 const clientData = {

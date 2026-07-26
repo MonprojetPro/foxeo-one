@@ -7,15 +7,11 @@
 // Usage : `import { verifyPennylaneHmac, dispatchPaidQuote } from '@monprojetpro/modules-facturation/server'`
 
 export { verifyPennylaneHmac } from './utils/verify-pennylane-hmac'
-export {
-  generateSecureTemporaryPassword,
-  TEMP_PASSWORD_LENGTH,
-} from './utils/generate-temp-password'
-export { createClientAuthUser } from './utils/create-client-auth-user'
-export type {
-  CreateClientAuthUserResult,
-  CreateClientAuthUserOptions,
-} from './utils/create-client-auth-user'
+
+// Note : createClientAuthUser / generateSecureTemporaryPassword ne vivent plus ici.
+// Ce n'est pas de la facturation mais de l'authentification Supabase — et les garder ici
+// obligeait les autres modules à importer le module facturation, ce que l'architecture
+// interdit. Ils sont désormais dans `@monprojetpro/supabase/admin`.
 export { matchQuoteFromInvoice } from './actions/match-quote-from-invoice'
 export type { MatchQuoteInput } from './actions/match-quote-from-invoice'
 export {

@@ -37,11 +37,15 @@ export const PLAN_COMMERCIAL_NAME: Record<SubscriptionPlan, string> = {
   agentique: 'One+',
 }
 
-// Mapping plan → client_configs.subscription_tier
-export const PLAN_TIER: Record<SubscriptionPlan, string> = {
-  ponctuel: 'base',
-  essentiel: 'essentiel',
-  agentique: 'agentique',
+// Mapping plan Pennylane → client_configs.subscription_tier.
+// Recyclage subscription_tier (2026-07-26) : la colonne porte désormais directement
+// l'identifiant de l'offre commerciale ('ponctuel'/'one'/'one_plus') — ce mapping ne fait
+// plus que renommer 'essentiel' → 'one' et 'agentique' → 'one_plus' (le plan Pennylane
+// garde son nom historique, distinct du tier de facturation One).
+export const PLAN_TIER: Record<SubscriptionPlan, 'ponctuel' | 'one' | 'one_plus'> = {
+  ponctuel: 'ponctuel',
+  essentiel: 'one',
+  agentique: 'one_plus',
 }
 
 // NOTE : les anciens AVAILABLE_EXTRAS (Visio/CRM/Documents/Analytics)

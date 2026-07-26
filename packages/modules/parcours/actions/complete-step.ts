@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, checkClientWriteAllowed } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import type { CompleteStepResult, ParcoursStepDB } from '../types/parcours.types'
 import { CompleteStepInput } from '../types/parcours.types'
@@ -15,6 +15,10 @@ export async function completeStep(
     if (userError || !user) {
       return errorResponse('Non authentifié', 'UNAUTHORIZED')
     }
+
+    // Espace figé — plus aucun avancement d'étape après résiliation.
+    const readOnly = await checkClientWriteAllowed()
+    if (readOnly) return { data: null, error: readOnly }
 
     const parsed = CompleteStepInput.safeParse(input)
     if (!parsed.success) {

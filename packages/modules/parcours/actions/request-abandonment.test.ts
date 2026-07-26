@@ -32,6 +32,8 @@ let notificationsChain: ReturnType<typeof makeChain>
 let parcoursStepsChain: ReturnType<typeof makeChain>
 
 vi.mock('@monprojetpro/supabase', () => ({
+  // Espace figé : par défaut le client est autorisé à écrire (client actif).
+  checkClientWriteAllowed: vi.fn(async () => null),
   createServerSupabaseClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
     from: (table: string) => {

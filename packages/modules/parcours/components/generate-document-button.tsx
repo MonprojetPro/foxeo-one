@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { showSuccess, showError } from '@monprojetpro/ui'
+import { showSuccess, showError, useClientReadOnly } from '@monprojetpro/ui'
 import { generateDocumentFromConversation } from '../actions/generate-and-submit-step'
 import { submitGeneratedDocument } from '../actions/submit-generated-document'
 import { useStepSubmissionStatus } from '../hooks/use-step-submission-status'
@@ -62,11 +62,15 @@ export function GenerateDocumentButton({
   // Conditions pour activer le bouton
   // Étapes éligibles pour générer/regénérer : current (1ère soumission) + rejected (correction
   // après refus).
+  // Espace figé — abonnement terminé : le parcours reste consultable mais ne bouge plus.
+  const readOnly = useClientReadOnly()
+
   const hasEnoughMessages = messageCount >= MIN_MESSAGES
   const isStepActionable = stepStatus === 'current' || stepStatus === 'rejected'
-  const isEnabled = isStepActionable && hasEnoughMessages && !hasPending && !pendingLoading
+  const isEnabled = !readOnly && isStepActionable && hasEnoughMessages && !hasPending && !pendingLoading
 
   function getDisabledTooltip(): string {
+    if (readOnly) return 'Abonnement terminé — parcours consultable uniquement'
     if (!isStepActionable) return 'Étape non accessible'
     if (hasPending) return 'Soumission en attente de validation'
     if (!hasEnoughMessages) return `Minimum ${MIN_MESSAGES} échanges avec Élio`

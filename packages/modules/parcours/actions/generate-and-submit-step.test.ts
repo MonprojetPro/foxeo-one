@@ -53,6 +53,8 @@ const mockFrom = vi.fn((table: string) => {
 })
 
 vi.mock('@monprojetpro/supabase', () => ({
+  // Espace figé : par défaut le client est autorisé à écrire (client actif).
+  checkClientWriteAllowed: vi.fn(async () => null),
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     from: mockFrom,

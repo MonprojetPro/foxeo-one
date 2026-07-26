@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient, resolveLogActor } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, resolveLogActor, checkClientWriteAllowed } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import type { SubmitStepResult } from '../types/parcours.types'
 import { SubmitStepInput } from '../types/parcours.types'
@@ -15,6 +15,11 @@ export async function submitStep(
     if (userError || !user) {
       return errorResponse('Non authentifié', 'UNAUTHORIZED')
     }
+
+    // Espace figé — un client qui a résilié consulte son parcours mais ne le fait plus
+    // avancer. Doublon volontaire de la RLS, pour une erreur lisible côté interface.
+    const readOnly = await checkClientWriteAllowed()
+    if (readOnly) return { data: null, error: readOnly }
 
     // Validate input (content + stepId)
     const parsed = SubmitStepInput.safeParse({

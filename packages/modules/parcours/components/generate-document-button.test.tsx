@@ -8,6 +8,7 @@ import { GenerateDocumentButton } from './generate-document-button'
 
 const mockGenerateDocument = vi.fn()
 const mockSubmitDocument = vi.fn()
+const mockUseClientReadOnly = vi.fn(() => false)
 const mockShowSuccess = vi.fn()
 const mockShowError = vi.fn()
 const mockUseStepSubmissionStatus = vi.fn()
@@ -21,6 +22,8 @@ vi.mock('../actions/submit-generated-document', () => ({
 vi.mock('@monprojetpro/ui', () => ({
   showSuccess: (...args: unknown[]) => mockShowSuccess(...args),
   showError: (...args: unknown[]) => mockShowError(...args),
+  // Espace figé : par défaut le client est actif, le bouton reste disponible.
+  useClientReadOnly: () => mockUseClientReadOnly(),
 }))
 vi.mock('../hooks/use-step-submission-status', () => ({
   useStepSubmissionStatus: (...args: unknown[]) => mockUseStepSubmissionStatus(...args),

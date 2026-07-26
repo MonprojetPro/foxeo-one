@@ -9,8 +9,8 @@ import type { SubscriptionTier } from '../types/subscription.types'
 
 const ChangeTierInputSchema = z.object({
   clientId: z.string().uuid('ID client invalide'),
-  newTier: z.enum(['base', 'essentiel', 'agentique'], {
-    message: 'Tier invalide — valeurs acceptées : base, essentiel, agentique',
+  newTier: z.enum(['ponctuel', 'one', 'one_plus'], {
+    message: 'Tier invalide — valeurs acceptées : ponctuel, one, one_plus',
   }),
 })
 
@@ -78,7 +78,7 @@ export async function changeClientTier(input: {
     }
 
     // 6. Check same tier
-    const oldTier = (config.subscription_tier as SubscriptionTier | null) ?? 'base'
+    const oldTier = (config.subscription_tier as SubscriptionTier | null) ?? 'ponctuel'
     if (oldTier === newTier) {
       return errorResponse(
         `Le client est déjà en tier ${newTier}`,

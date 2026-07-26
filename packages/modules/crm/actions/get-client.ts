@@ -133,7 +133,7 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
             oneModeAvailable: (configRaw.one_mode_available as boolean | null) ?? false,
             elioLabEnabled: (configRaw.elio_lab_enabled as boolean | null) ?? false,
             parcoursMode: (configRaw.parcours_mode as 'tracee' | 'libre' | null) ?? 'tracee',
-            subscriptionTier: (configRaw.subscription_tier as 'base' | 'essentiel' | 'agentique' | null) ?? null,
+            subscriptionTier: (configRaw.subscription_tier as 'ponctuel' | 'one' | 'one_plus' | null) ?? null,
             tierChangedAt: (configRaw.tier_changed_at as string | null) ?? null,
           }
         : undefined,

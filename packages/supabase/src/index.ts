@@ -12,6 +12,17 @@ export { createMiddlewareSupabaseClient } from './middleware'
 // Journal d'activité — attribution de l'acteur (impersonation incluse)
 export { resolveLogActor } from './impersonation-actor'
 
+// Espace figé — client qui a résilié (lecture seule sur le parcours)
+export {
+  READ_ONLY_CLIENT_STATUSES,
+  READ_ONLY_ERROR_CODE,
+  READ_ONLY_ERROR_MESSAGE,
+  isReadOnlyClientStatus,
+  readOnlyError,
+  checkClientWriteAllowed,
+  type ReadOnlyClientStatus,
+} from './read-only-guard'
+
 // Realtime
 export {
   CHANNEL_PATTERNS,

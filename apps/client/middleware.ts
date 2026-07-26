@@ -249,6 +249,15 @@ export async function middleware(request: NextRequest) {
         return archivedResponse
       }
 
+      // ⚠️ `subscription_cancelled` et `handed_off` ne sont VOLONTAIREMENT pas listés
+      // ci-dessus. Un client qui a résilié n'est pas expulsé : il entre dans le dashboard
+      // et garde un accès dégradé (Lab figé en lecture, modules de famille « relation »,
+      // chat et support pleinement actifs) — c'est une porte laissée ouverte pour qu'il
+      // revienne. Le filtrage des modules et le bandeau sont faits dans
+      // app/(dashboard)/layout.tsx à partir de `clients.status`, et le verrou d'écriture
+      // réel vit dans la RLS (migration 20260726170000).
+      // Ne PAS les ajouter à la redirection /archived.
+
       // Story 9.5b — Check if instance has been transferred
       if (request.nextUrl.pathname !== '/transferred') {
         const instance = Array.isArray(client.client_instances)

@@ -76,7 +76,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
 const validInput = {
   clientId: CLIENT_UUID,
-  tier: 'essentiel' as const,
+  tier: 'one' as const,
   activeModules: ['core-dashboard', 'chat'],
   notes: 'Graduation réussie',
 }
@@ -122,7 +122,7 @@ describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', (
     const { graduateClient } = await import('./graduate-client')
     const result = await graduateClient({
       clientId: 'not-a-uuid',
-      tier: 'essentiel',
+      tier: 'one',
       activeModules: ['core-dashboard'],
     })
 
@@ -134,7 +134,7 @@ describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', (
     const { graduateClient } = await import('./graduate-client')
     const result = await graduateClient({
       clientId: CLIENT_UUID,
-      tier: 'essentiel',
+      tier: 'one',
       activeModules: [],
     })
 
@@ -267,7 +267,7 @@ describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', (
     })
   })
 
-  it('écrit elio_tier=one_plus + subscription_tier=agentique pour une graduation One+ (grille v2, Contrat 6)', async () => {
+  it('écrit elio_tier=one_plus + subscription_tier=one_plus pour une graduation One+ (grille v2, Contrat 6)', async () => {
     let capturedConfigUpdate: Record<string, unknown> | null = null
     mockConfigUpdate.mockImplementation((payload: Record<string, unknown>) => {
       capturedConfigUpdate = payload
@@ -275,15 +275,15 @@ describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', (
     })
 
     const { graduateClient } = await import('./graduate-client')
-    await graduateClient({ ...validInput, tier: 'agentique' })
+    await graduateClient({ ...validInput, tier: 'one_plus' })
 
     expect(capturedConfigUpdate).toMatchObject({
       elio_tier: 'one_plus',
-      subscription_tier: 'agentique',
+      subscription_tier: 'one_plus',
     })
   })
 
-  it('écrit elio_tier=one + subscription_tier=essentiel pour une graduation One', async () => {
+  it('écrit elio_tier=one + subscription_tier=one pour une graduation One', async () => {
     let capturedConfigUpdate: Record<string, unknown> | null = null
     mockConfigUpdate.mockImplementation((payload: Record<string, unknown>) => {
       capturedConfigUpdate = payload
@@ -295,7 +295,7 @@ describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', (
 
     expect(capturedConfigUpdate).toMatchObject({
       elio_tier: 'one',
-      subscription_tier: 'essentiel',
+      subscription_tier: 'one',
     })
   })
 
@@ -333,7 +333,7 @@ describe('graduateClient Server Action — ADR-01 Révision 2 (multi-tenant)', (
         clientId: CLIENT_UUID,
         operatorId: OPERATOR_UUID,
         modulesCount: 2,
-        tier: 'essentiel',
+        tier: 'one',
       })
     )
     // La notification client type 'graduation' déclenche déjà l'email via le

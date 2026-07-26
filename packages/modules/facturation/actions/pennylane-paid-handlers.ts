@@ -1,8 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getClientAppUrl } from '@monprojetpro/utils'
 import type { QuoteMetadataRow, QuoteType } from '../types/billing.types'
-import { createClientAuthUser } from '../utils/create-client-auth-user'
-import { generateSecureTemporaryPassword } from '../utils/generate-temp-password'
+import { createClientAuthUser, generateSecureTemporaryPassword } from '@monprojetpro/supabase/admin'
 
 // Story 13.4 — Handlers Pennylane webhook "facture payee"
 //
@@ -338,11 +337,18 @@ export async function handleOneDepositPaid(
   }
 
   const nowIso = new Date().toISOString()
+  // Ce handler traite les devis "one_direct_deposit" / "ponctuel_deposit" : un client qui
+  // arrive directement sur le One, sans être passé par le Lab. L'intention d'origine était
+  // de fermer le Lab pour ce client — mais lab_mode_available obéit à une règle de
+  // permanence absolue (cf. toggle-access.ts) : une fois accordé, l'accès Lab ne doit
+  // JAMAIS être retiré. Pour un client qui n'a jamais eu de Lab, la valeur est déjà `false`
+  // par défaut : ne pas écrire la colonne préserve l'intention (« pas de Lab ici ») sans
+  // jamais risquer d'écraser un Lab déjà accordé si ce flux est un jour déclenché sur un
+  // client existant. La base (trigger BEFORE UPDATE) fait aussi office de filet de sécurité.
   const { error: configError } = await deps.supabase
     .from('client_configs')
     .update({
       dashboard_type: 'one',
-      lab_mode_available: false,
       elio_lab_enabled: false,
       active_modules: ONE_DEFAULT_MODULES,
       deposit_paid_at: nowIso,

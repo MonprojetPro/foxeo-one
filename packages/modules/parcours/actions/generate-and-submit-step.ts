@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, checkClientWriteAllowed } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { getEffectiveElioConfig } from './get-effective-elio-config'
 
@@ -21,6 +21,11 @@ export async function generateDocumentFromConversation(
     if (userError || !user) {
       return errorResponse('Non authentifié', 'UNAUTHORIZED')
     }
+
+    // Espace figé — générer un livrable produit du nouveau contenu de parcours :
+    // interdit à un client qui a résilié (son espace est consultable, pas modifiable).
+    const readOnly = await checkClientWriteAllowed()
+    if (readOnly) return { data: null, error: readOnly }
 
     // Récupérer l'étape et le nom du client en parallèle
     const [{ data: step, error: stepError }, { data: clientRow }] = await Promise.all([

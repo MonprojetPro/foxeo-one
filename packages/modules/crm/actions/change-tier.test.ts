@@ -11,7 +11,7 @@ const CONFIG_ID = '323e4567-e89b-12d3-a456-426614174002'
 let operatorResponse: { data: unknown; error: unknown } = { data: { id: OPERATOR_ID }, error: null }
 let clientResponse: { data: unknown; error: unknown } = { data: { id: CLIENT_ID, operator_id: OPERATOR_ID, name: 'Alice Dupont' }, error: null }
 let configResponse: { data: unknown; error: unknown } = {
-  data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'essentiel', elio_tier: 'one', elio_proactive_alerts: false },
+  data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'one', elio_tier: 'one', elio_proactive_alerts: false },
   error: null,
 }
 let updateResult: { error: unknown } = { error: null }
@@ -74,7 +74,7 @@ describe('changeClientTier', () => {
     operatorResponse = { data: { id: OPERATOR_ID }, error: null }
     clientResponse = { data: { id: CLIENT_ID, operator_id: OPERATOR_ID, name: 'Alice Dupont' }, error: null }
     configResponse = {
-      data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'essentiel', elio_tier: 'one', elio_proactive_alerts: false },
+      data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'one', elio_tier: 'one', elio_proactive_alerts: false },
       error: null,
     }
     updateResult = { error: null }
@@ -90,13 +90,13 @@ describe('changeClientTier', () => {
 
   describe('Validation', () => {
     it('retourne INVALID_INPUT si clientId invalide', async () => {
-      const result = await changeClientTier({ clientId: 'not-a-uuid', newTier: 'essentiel' })
+      const result = await changeClientTier({ clientId: 'not-a-uuid', newTier: 'one' })
       expect(result.error?.code).toBe('INVALID_INPUT')
       expect(result.data).toBeNull()
     })
 
     it('retourne INVALID_INPUT si newTier invalide', async () => {
-      const result = await changeClientTier({ clientId: CLIENT_ID, newTier: 'invalid' as 'base' })
+      const result = await changeClientTier({ clientId: CLIENT_ID, newTier: 'invalid' as 'ponctuel' })
       expect(result.error?.code).toBe('INVALID_INPUT')
     })
   })
@@ -104,11 +104,11 @@ describe('changeClientTier', () => {
   describe('TIER_UNCHANGED', () => {
     it('retourne TIER_UNCHANGED si même tier', async () => {
       configResponse = {
-        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'essentiel', elio_tier: 'one', elio_proactive_alerts: false },
+        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'one', elio_tier: 'one', elio_proactive_alerts: false },
         error: null,
       }
 
-      const result = await changeClientTier({ clientId: CLIENT_ID, newTier: 'essentiel' })
+      const result = await changeClientTier({ clientId: CLIENT_ID, newTier: 'one' })
       expect(result.error?.code).toBe('TIER_UNCHANGED')
       expect(result.data).toBeNull()
     })
@@ -117,17 +117,17 @@ describe('changeClientTier', () => {
   describe('Changement standard', () => {
     it('met à jour subscription_tier + elio_tier + tier_changed_at dans client_configs', async () => {
       configResponse = {
-        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'essentiel', elio_tier: 'one', elio_proactive_alerts: false },
+        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'one', elio_tier: 'one', elio_proactive_alerts: false },
         error: null,
       }
 
-      const result = await changeClientTier({ clientId: CLIENT_ID, newTier: 'agentique' })
+      const result = await changeClientTier({ clientId: CLIENT_ID, newTier: 'one_plus' })
 
       expect(result.error).toBeNull()
       expect(mockUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          subscription_tier: 'agentique',
-          // Grille v2 (Contrat 6, 2026-07-06) : agentique = offre One+ → elio_tier 'one_plus'
+          subscription_tier: 'one_plus',
+          // Grille v2 (Contrat 6, 2026-07-06) : one_plus → elio_tier 'one_plus'
           // (coaching humain — l'agentique IA reste au devis, MiKL 2026-06-26).
           elio_tier: 'one_plus',
           pending_billing_update: true,
@@ -137,19 +137,19 @@ describe('changeClientTier', () => {
 
     it('crée un activity_log avec oldTier et newTier', async () => {
       configResponse = {
-        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'base', elio_tier: null, elio_proactive_alerts: false },
+        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'ponctuel', elio_tier: null, elio_proactive_alerts: false },
         error: null,
       }
 
-      await changeClientTier({ clientId: CLIENT_ID, newTier: 'essentiel' })
+      await changeClientTier({ clientId: CLIENT_ID, newTier: 'one' })
 
       expect(mockInsert).toHaveBeenCalledWith(
         expect.objectContaining({
           action: 'tier_changed',
           entity_id: CLIENT_ID,
           metadata: expect.objectContaining({
-            oldTier: 'base',
-            newTier: 'essentiel',
+            oldTier: 'ponctuel',
+            newTier: 'one',
           }),
         })
       )
@@ -157,13 +157,13 @@ describe('changeClientTier', () => {
   })
 
   describe('Upgrade vers One+', () => {
-    it('active elio_proactive_alerts lors d\'un upgrade vers agentique', async () => {
+    it('active elio_proactive_alerts lors d\'un upgrade vers one_plus', async () => {
       configResponse = {
-        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'essentiel', elio_tier: 'one', elio_proactive_alerts: false },
+        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'one', elio_tier: 'one', elio_proactive_alerts: false },
         error: null,
       }
 
-      await changeClientTier({ clientId: CLIENT_ID, newTier: 'agentique' })
+      await changeClientTier({ clientId: CLIENT_ID, newTier: 'one_plus' })
 
       expect(mockUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -175,13 +175,13 @@ describe('changeClientTier', () => {
   })
 
   describe('Downgrade depuis One+', () => {
-    it('désactive elio_proactive_alerts lors d\'un downgrade depuis agentique', async () => {
+    it('désactive elio_proactive_alerts lors d\'un downgrade depuis one_plus', async () => {
       configResponse = {
-        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'agentique', elio_tier: 'one_plus', elio_proactive_alerts: true },
+        data: { id: CONFIG_ID, client_id: CLIENT_ID, subscription_tier: 'one_plus', elio_tier: 'one_plus', elio_proactive_alerts: true },
         error: null,
       }
 
-      await changeClientTier({ clientId: CLIENT_ID, newTier: 'essentiel' })
+      await changeClientTier({ clientId: CLIENT_ID, newTier: 'one' })
 
       expect(mockUpdate).toHaveBeenCalledWith(
         expect.objectContaining({

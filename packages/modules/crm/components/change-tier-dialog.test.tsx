@@ -36,7 +36,7 @@ describe('ChangeTierDialog', () => {
   const defaultProps = {
     clientId: 'client-1',
     clientName: 'Alice Dupont',
-    currentTier: 'essentiel' as const,
+    currentTier: 'one' as const,
     open: true,
     onOpenChange: vi.fn(),
   }
@@ -47,9 +47,9 @@ describe('ChangeTierDialog', () => {
 
   it('affiche les 3 options de tier', () => {
     render(<ChangeTierDialog {...defaultProps} />)
-    expect(screen.getByText('Base')).toBeDefined()
-    expect(screen.getByText('Essentiel')).toBeDefined()
-    expect(screen.getByText('Agentique')).toBeDefined()
+    expect(screen.getByText('Ponctuel')).toBeDefined()
+    expect(screen.getByText('One')).toBeDefined()
+    expect(screen.getByText('One+')).toBeDefined()
   })
 
   it('marque le tier actuel avec "(actuel)"', () => {
@@ -57,30 +57,30 @@ describe('ChangeTierDialog', () => {
     expect(screen.getByText('(actuel)')).toBeDefined()
   })
 
-  it('affiche le warning de downgrade si passage de agentique vers essentiel', () => {
-    render(<ChangeTierDialog {...defaultProps} currentTier="agentique" />)
-    // Sélectionner essentiel
-    const essentielButton = screen.getAllByRole('button').find((b) =>
-      b.textContent?.includes('Essentiel')
+  it('affiche le warning de downgrade si passage de one_plus vers one', () => {
+    render(<ChangeTierDialog {...defaultProps} currentTier="one_plus" />)
+    // Sélectionner one
+    const oneButton = screen.getAllByRole('button').find((b) =>
+      b.textContent?.includes('One') && !b.textContent?.includes('One+')
     )
-    expect(essentielButton).toBeDefined()
-    fireEvent.click(essentielButton!)
+    expect(oneButton).toBeDefined()
+    fireEvent.click(oneButton!)
     expect(screen.getByText(/désactivera les fonctionnalités Elio One\+/i)).toBeDefined()
   })
 
-  it('n\'affiche pas le warning si tier actuel n\'est pas agentique', () => {
-    render(<ChangeTierDialog {...defaultProps} currentTier="essentiel" />)
+  it('n\'affiche pas le warning si tier actuel n\'est pas one_plus', () => {
+    render(<ChangeTierDialog {...defaultProps} currentTier="one" />)
     expect(screen.queryByText(/désactivera/i)).toBeNull()
   })
 
   it('appelle changeClientTier au clic sur Confirmer', async () => {
-    render(<ChangeTierDialog {...defaultProps} currentTier="base" />)
+    render(<ChangeTierDialog {...defaultProps} currentTier="ponctuel" />)
 
-    // Sélectionner agentique
-    const agentiqueButton = screen.getAllByRole('button').find((b) =>
-      b.textContent?.includes('Agentique')
+    // Sélectionner one_plus
+    const onePlusButton = screen.getAllByRole('button').find((b) =>
+      b.textContent?.includes('One+')
     )
-    fireEvent.click(agentiqueButton!)
+    fireEvent.click(onePlusButton!)
 
     const confirmButton = screen.getByRole('button', { name: /confirmer/i })
     fireEvent.click(confirmButton)
@@ -88,19 +88,19 @@ describe('ChangeTierDialog', () => {
     await waitFor(() => {
       expect(changeClientTier).toHaveBeenCalledWith({
         clientId: 'client-1',
-        newTier: 'agentique',
+        newTier: 'one_plus',
       })
     })
   })
 
   it('ferme la modale et affiche un toast success après succès', async () => {
     const { showSuccess } = await import('@monprojetpro/ui')
-    render(<ChangeTierDialog {...defaultProps} currentTier="base" />)
+    render(<ChangeTierDialog {...defaultProps} currentTier="ponctuel" />)
 
-    const agentiqueButton = screen.getAllByRole('button').find((b) =>
-      b.textContent?.includes('Agentique')
+    const onePlusButton = screen.getAllByRole('button').find((b) =>
+      b.textContent?.includes('One+')
     )
-    fireEvent.click(agentiqueButton!)
+    fireEvent.click(onePlusButton!)
 
     const confirmButton = screen.getByRole('button', { name: /confirmer/i })
     fireEvent.click(confirmButton)
@@ -118,12 +118,12 @@ describe('ChangeTierDialog', () => {
     })
 
     const { showError } = await import('@monprojetpro/ui')
-    render(<ChangeTierDialog {...defaultProps} currentTier="base" />)
+    render(<ChangeTierDialog {...defaultProps} currentTier="ponctuel" />)
 
-    const agentiqueButton = screen.getAllByRole('button').find((b) =>
-      b.textContent?.includes('Agentique')
+    const onePlusButton = screen.getAllByRole('button').find((b) =>
+      b.textContent?.includes('One+')
     )
-    fireEvent.click(agentiqueButton!)
+    fireEvent.click(onePlusButton!)
 
     const confirmButton = screen.getByRole('button', { name: /confirmer/i })
     fireEvent.click(confirmButton)

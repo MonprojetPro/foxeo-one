@@ -95,12 +95,13 @@ export async function graduateClient(
     }
 
     // 6. Update client_configs — flip dashboard_type + activate toggle + disable Élio Lab
-    // Grille v2 (Contrat 6, chantier 2026-07-06) : l'offre choisie à la graduation écrit
-    // le VRAI elio_tier — One (essentiel) → 'one', One+ (agentique) → 'one_plus' (coaching
-    // humain 1 visio/mois + crédits), Ponctuel (base) → null (pas d'Élio ni d'abonnement).
+    // Grille v2 (Contrat 6, chantier 2026-07-06 ; recyclage subscription_tier 2026-07-26) :
+    // l'offre choisie à la graduation écrit le VRAI elio_tier — One → 'one', One+ → 'one_plus'
+    // (coaching humain 1 visio/mois + crédits), Ponctuel → null (pas d'Élio ni d'abonnement).
     // L'agentique IA reste du cas par cas au devis (décision MiKL 2026-06-26) — 'one_plus'
     // n'active AUCUNE capacité agentique, uniquement le volet coaching.
-    // subscription_tier est écrit aussi (source de la facturation One — grille v2).
+    // subscription_tier est écrit aussi (source de la facturation One — grille v2), avec
+    // désormais le MÊME identifiant que l'offre commerciale (plus de mapping caché).
     const elioTier = mapTierToElio(tier)
 
     const { error: configUpdateError } = await supabase

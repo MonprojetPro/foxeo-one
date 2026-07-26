@@ -4,7 +4,7 @@ import { z } from 'zod'
 // Graduation types (Story 9.1)
 // ============================================================
 
-export const GraduationTierEnum = z.enum(['base', 'essentiel', 'agentique'])
+export const GraduationTierEnum = z.enum(['ponctuel', 'one', 'one_plus'])
 export type GraduationTier = z.infer<typeof GraduationTierEnum>
 
 export const GraduateClientSchema = z.object({

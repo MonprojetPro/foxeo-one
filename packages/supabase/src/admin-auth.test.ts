@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createClientAuthUser } from './create-client-auth-user'
+import { createClientAuthUser } from './admin-auth'
 
 function makeAdmin(
   result: { data: { user: { id: string } | null } | null; error: { message: string } | null }

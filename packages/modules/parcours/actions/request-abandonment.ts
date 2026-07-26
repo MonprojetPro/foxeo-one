@@ -4,6 +4,7 @@ import {
   createServerSupabaseClient,
   createServiceRoleSupabaseClient,
   resolveLogActor,
+  checkClientWriteAllowed,
 } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { RequestAbandonmentInput } from '../types/parcours.types'
@@ -18,6 +19,11 @@ export async function requestParcoursAbandonment(
     if (userError || !user) {
       return errorResponse('Non authentifié', 'UNAUTHORIZED')
     }
+
+    // Espace figé — un parcours déjà figé par la fin d'abonnement n'a plus à être
+    // abandonné. Le client qui veut discuter de la suite passe par le chat MiKL.
+    const readOnly = await checkClientWriteAllowed()
+    if (readOnly) return { data: null, error: readOnly }
 
     const parsed = RequestAbandonmentInput.safeParse(input)
     if (!parsed.success) {

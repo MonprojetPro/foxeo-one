@@ -64,7 +64,7 @@ describe('GraduationDialog', () => {
   it('should pre-select the "One" tier by default', () => {
     render(<GraduationDialog {...defaultProps} />)
 
-    // The default tier (value 'essentiel' → libellé « One — 39 €/mois ») doit être sélectionné
+    // The default tier (value 'one' → libellé « One — 39 €/mois ») doit être sélectionné
     const defaultTierButton = screen.getByText('One — 39 €/mois').closest('button')
     expect(defaultTierButton?.className).toContain('border-primary')
   })

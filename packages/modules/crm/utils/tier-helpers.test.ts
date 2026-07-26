@@ -9,61 +9,61 @@ import {
 import type { SubscriptionTier } from '../types/subscription.types'
 
 describe('mapTierToElio', () => {
-  it('mappe base vers null', () => {
-    expect(mapTierToElio('base')).toBeNull()
+  it('mappe ponctuel vers null', () => {
+    expect(mapTierToElio('ponctuel')).toBeNull()
   })
 
-  it('mappe essentiel vers one', () => {
-    expect(mapTierToElio('essentiel')).toBe('one')
+  it('mappe one vers one', () => {
+    expect(mapTierToElio('one')).toBe('one')
   })
 
-  it('mappe agentique vers one_plus (grille v2 Contrat 6 — One+ = coaching humain, 2026-07-06)', () => {
-    expect(mapTierToElio('agentique')).toBe('one_plus')
+  it('mappe one_plus vers one_plus (grille v2 Contrat 6 — One+ = coaching humain, 2026-07-06)', () => {
+    expect(mapTierToElio('one_plus')).toBe('one_plus')
   })
 })
 
 describe('TIER_INFO', () => {
-  it('contient les 3 tiers', () => {
-    expect(Object.keys(TIER_INFO)).toEqual(['base', 'essentiel', 'agentique'])
+  it('contient les 3 offres', () => {
+    expect(Object.keys(TIER_INFO)).toEqual(['ponctuel', 'one', 'one_plus'])
   })
 
-  it('base a le bon prix Ponctuel', () => {
-    expect(TIER_INFO.base.price).toBe('Ponctuel')
-    expect(TIER_INFO.base.elio).toBe('Aucun')
+  it('ponctuel a le bon prix', () => {
+    expect(TIER_INFO.ponctuel.price).toBe('Devis')
+    expect(TIER_INFO.ponctuel.elio).toBe('Aucun')
   })
 
-  it('essentiel a le bon prix (grille v2 — One 39 €/mois)', () => {
-    expect(TIER_INFO.essentiel.price).toBe('39€/mois')
-    expect(TIER_INFO.essentiel.elio).toBe('Elio One')
+  it('one a le bon prix (grille v2 — One 39 €/mois)', () => {
+    expect(TIER_INFO.one.price).toBe('39€/mois')
+    expect(TIER_INFO.one.elio).toBe('Elio One')
   })
 
-  it('agentique a le bon prix', () => {
-    expect(TIER_INFO.agentique.price).toBe('99€/mois')
-    expect(TIER_INFO.agentique.elio).toBe('Elio One+')
+  it('one_plus a le bon prix', () => {
+    expect(TIER_INFO.one_plus.price).toBe('99€/mois')
+    expect(TIER_INFO.one_plus.elio).toBe('Elio One+')
   })
 })
 
 describe('TIER_BADGE_CLASSES', () => {
-  it('contient les 3 tiers', () => {
-    expect(Object.keys(TIER_BADGE_CLASSES)).toEqual(['base', 'essentiel', 'agentique'])
+  it('contient les 3 offres', () => {
+    expect(Object.keys(TIER_BADGE_CLASSES)).toEqual(['ponctuel', 'one', 'one_plus'])
   })
 
-  it('agentique contient violet', () => {
-    expect(TIER_BADGE_CLASSES.agentique).toContain('violet')
+  it('one_plus contient violet', () => {
+    expect(TIER_BADGE_CLASSES.one_plus).toContain('violet')
   })
 
-  it('essentiel contient green', () => {
-    expect(TIER_BADGE_CLASSES.essentiel).toContain('green')
+  it('one contient green', () => {
+    expect(TIER_BADGE_CLASSES.one).toContain('green')
   })
 })
 
 describe('isDowngradeFromOnePlus', () => {
   const downgradesCases: Array<[SubscriptionTier, SubscriptionTier, boolean]> = [
-    ['agentique', 'essentiel', true],
-    ['agentique', 'base', true],
-    ['agentique', 'agentique', false],
-    ['essentiel', 'base', false],
-    ['base', 'essentiel', false],
+    ['one_plus', 'one', true],
+    ['one_plus', 'ponctuel', true],
+    ['one_plus', 'one_plus', false],
+    ['one', 'ponctuel', false],
+    ['ponctuel', 'one', false],
   ]
 
   it.each(downgradesCases)(
@@ -76,11 +76,11 @@ describe('isDowngradeFromOnePlus', () => {
 
 describe('isUpgradeToOnePlus', () => {
   const upgradesCases: Array<[SubscriptionTier, SubscriptionTier, boolean]> = [
-    ['base', 'agentique', true],
-    ['essentiel', 'agentique', true],
-    ['agentique', 'agentique', false],
-    ['agentique', 'essentiel', false],
-    ['base', 'essentiel', false],
+    ['ponctuel', 'one_plus', true],
+    ['one', 'one_plus', true],
+    ['one_plus', 'one_plus', false],
+    ['one_plus', 'one', false],
+    ['ponctuel', 'one', false],
   ]
 
   it.each(upgradesCases)(

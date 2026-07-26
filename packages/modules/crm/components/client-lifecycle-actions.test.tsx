@@ -16,6 +16,14 @@ vi.mock('./upgrade-client-dialog', () => ({
   UpgradeClientDialog: () => null,
 }))
 
+vi.mock('./cancel-subscription-dialog', () => ({
+  CancelSubscriptionDialog: () => null,
+}))
+
+vi.mock('../actions/cancel-subscription', () => ({
+  reactivateSubscription: vi.fn().mockResolvedValue({ data: { success: true }, error: null }),
+}))
+
 const baseClient: Client = {
   id: '550e8400-e29b-41d4-a716-446655440001',
   operatorId: '550e8400-e29b-41d4-a716-446655440000',

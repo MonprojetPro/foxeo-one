@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { cn } from '@monprojetpro/utils'
+import { useClientReadOnly } from '@monprojetpro/ui'
 import { useParcours } from '../hooks/use-parcours'
 import { useUnreadInjections } from '../hooks/use-unread-injections'
 import { useParcoursRealtimeRefresh } from '../hooks/use-parcours-realtime-refresh'
@@ -27,6 +28,7 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
   const { data: parcours, isPending, error } = useParcours(clientId)
   const { unreadByStep } = useUnreadInjections(clientId)
   const [abandonDialogOpen, setAbandonDialogOpen] = useState(false)
+  const readOnly = useClientReadOnly()
 
   // Mise à jour instantanée quand MiKL coupe/réactive un agent depuis le Hub
   // (invalide la query ['parcours', clientId] — le router.refresh() SSR ne suffit pas).
@@ -47,7 +49,8 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
   }
 
   const isAbandoned = parcours.status === 'abandoned'
-  const canAbandon = ABANDONABLE_STATUSES.includes(parcours.status)
+  // Espace figé — un parcours déjà arrêté par la fin d'abonnement n'a plus à être quitté.
+  const canAbandon = !readOnly && ABANDONABLE_STATUSES.includes(parcours.status)
   // L'étape "active visuellement" : current, en cours de review, ou refusée
   const currentStep = parcours.steps.find(
     (s) =>

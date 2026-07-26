@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient, resolveLogActor } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, resolveLogActor, checkClientWriteAllowed } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { generateConciergeWord } from './generate-concierge-word'
 import type { SubmitStepResult } from '../types/parcours.types'
@@ -24,6 +24,10 @@ export async function submitGeneratedDocument(
     if (userError || !user) {
       return errorResponse('Non authentifié', 'UNAUTHORIZED')
     }
+
+    // Espace figé — plus aucune soumission possible après résiliation.
+    const readOnly = await checkClientWriteAllowed()
+    if (readOnly) return { data: null, error: readOnly }
 
     // Récupérer le client
     const { data: client, error: clientError } = await supabase

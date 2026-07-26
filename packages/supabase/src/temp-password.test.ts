@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   generateSecureTemporaryPassword,
   TEMP_PASSWORD_LENGTH,
-} from './generate-temp-password'
+} from './admin-auth'
 
 describe('generateSecureTemporaryPassword', () => {
   it('returns a string of the default length', () => {

@@ -43,6 +43,23 @@ const statusConfig: Record<
     variant: 'outline',
     className: 'bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/40 font-medium',
   },
+  // Fin d'abonnement — le client n'est pas parti : il garde un accès en consultation et
+  // peut toujours écrire à MiKL. Ambre (information) plutôt que rouge (sanction).
+  subscription_cancelled: {
+    label: 'Résilié',
+    variant: 'outline',
+    className: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40 font-medium',
+  },
+  handed_off: {
+    label: 'Transféré',
+    variant: 'outline',
+    className: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40 font-medium',
+  },
+  archived_lab: {
+    label: 'Lab archivé',
+    variant: 'outline',
+    className: 'bg-slate-500/20 text-slate-500 dark:text-slate-400 border-slate-500/40',
+  },
 }
 
 const formatDate = (isoDate: string): string => {

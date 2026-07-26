@@ -3,12 +3,15 @@
 import { useState, useTransition } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button, showSuccess, showError } from '@monprojetpro/ui'
-import { Pause, Play, Lock, ArrowUpCircle } from 'lucide-react'
+import { Pause, Play, Lock, ArrowUpCircle, CircleSlash, RotateCcw } from 'lucide-react'
 import type { Client } from '../types/crm.types'
+import { isCancelledSubscription } from '../types/crm.types'
 import { SuspendClientDialog } from './suspend-client-dialog'
 import { CloseClientDialog } from './close-client-dialog'
 import { UpgradeClientDialog } from './upgrade-client-dialog'
+import { CancelSubscriptionDialog } from './cancel-subscription-dialog'
 import { reactivateClient } from '../actions/reactivate-client'
+import { reactivateSubscription } from '../actions/cancel-subscription'
 
 interface ClientLifecycleActionsProps {
   client: Client
@@ -24,6 +27,7 @@ export function ClientLifecycleActions({
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false)
+  const [cancelSubDialogOpen, setCancelSubDialogOpen] = useState(false)
   const [upgradeMode, setUpgradeMode] = useState<'lab' | 'one'>('lab')
   const [isPending, startTransition] = useTransition()
   const queryClient = useQueryClient()
@@ -48,6 +52,38 @@ export function ClientLifecycleActions({
       await queryClient.invalidateQueries({ queryKey: ['clients'] })
       await queryClient.invalidateQueries({ queryKey: ['client', client.id] })
     })
+  }
+
+  const handleReactivateSubscription = () => {
+    startTransition(async () => {
+      const result = await reactivateSubscription({ clientId: client.id })
+
+      if (result.error) {
+        showError(result.error.message)
+        return
+      }
+
+      showSuccess('Abonnement réactivé — le client retrouve son accès complet')
+      await queryClient.invalidateQueries({ queryKey: ['clients'] })
+      await queryClient.invalidateQueries({ queryKey: ['client', client.id] })
+    })
+  }
+
+  // Fin d'abonnement — le client garde un accès dégradé, la seule action utile est de
+  // lui rendre son accès complet. Placé AVANT les autres branches : ces statuts ne sont
+  // ni 'active' ni 'suspended'.
+  if (isCancelledSubscription(client.status)) {
+    return (
+      <Button
+        variant={variant}
+        size={size}
+        onClick={handleReactivateSubscription}
+        disabled={isPending}
+      >
+        <RotateCcw className="h-4 w-4 mr-2" />
+        {isPending ? 'Réactivation...' : 'Réactiver l’abonnement'}
+      </Button>
+    )
   }
 
   if (client.status === 'active') {
@@ -85,6 +121,15 @@ export function ClientLifecycleActions({
           Suspendre
         </Button>
         <Button
+          variant={variant}
+          size={size}
+          onClick={() => setCancelSubDialogOpen(true)}
+          disabled={isPending}
+        >
+          <CircleSlash className="h-4 w-4 mr-2" />
+          Résilier l’abonnement
+        </Button>
+        <Button
           variant="destructive"
           size={size}
           onClick={() => setCloseDialogOpen(true)}
@@ -93,6 +138,12 @@ export function ClientLifecycleActions({
           <Lock className="h-4 w-4 mr-2" />
           Clôturer
         </Button>
+        <CancelSubscriptionDialog
+          clientId={client.id}
+          clientName={client.name}
+          open={cancelSubDialogOpen}
+          onOpenChange={setCancelSubDialogOpen}
+        />
         {isPonctuel && (
           <UpgradeClientDialog
             clientId={client.id}

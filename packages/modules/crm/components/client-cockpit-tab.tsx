@@ -130,7 +130,7 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
   const totalTodo = pendingCount + abandonCount + supportCount
 
   // Abonnement (clients One gradues / direct_one)
-  const currentTier: SubscriptionTier = (client.config?.subscriptionTier as SubscriptionTier) ?? 'base'
+  const currentTier: SubscriptionTier = (client.config?.subscriptionTier as SubscriptionTier) ?? 'ponctuel'
   const tierInfo = TIER_INFO[currentTier]
   const tierBadgeClass = TIER_BADGE_CLASSES[currentTier]
   const showAbonnement = isOneClient && (hasGraduated || client.clientType === 'direct_one')

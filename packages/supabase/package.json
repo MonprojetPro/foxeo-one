@@ -21,6 +21,10 @@
       "types": "./src/middleware.ts",
       "default": "./src/middleware.ts"
     },
+    "./admin": {
+      "types": "./src/admin-auth.ts",
+      "default": "./src/admin-auth.ts"
+    },
     "./theme": {
       "types": "./src/providers/theme-provider.tsx",
       "default": "./src/providers/theme-provider.tsx"

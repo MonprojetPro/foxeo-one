@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useParcours, AbandonParcoursDialog } from '@monprojetpro/module-parcours'
+import { useClientReadOnly } from '@monprojetpro/ui'
 
 interface ParcoursSettingsSectionProps {
   clientId?: string
@@ -18,10 +19,12 @@ export function ParcoursSettingsSection({ clientId }: ParcoursSettingsSectionPro
 function ParcoursSettingsContent({ clientId }: { clientId: string }) {
   const { data: parcours } = useParcours(clientId)
   const [abandonDialogOpen, setAbandonDialogOpen] = useState(false)
+  // Espace figé — un parcours déjà arrêté par la fin d'abonnement n'a plus à être quitté.
+  const readOnly = useClientReadOnly()
 
   if (!parcours) return null
 
-  const canAbandon = ABANDONABLE_STATUSES.includes(parcours.status)
+  const canAbandon = !readOnly && ABANDONABLE_STATUSES.includes(parcours.status)
   const isAbandoned = parcours.status === 'abandoned'
 
   const statusLabels: Record<string, string> = {

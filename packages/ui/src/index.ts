@@ -83,5 +83,9 @@ export { ConflictDialog, type ConflictDialogProps } from './components/conflict-
 // Impersonation
 export { ImpersonationBanner } from './components/impersonation-banner'
 
+// Espace figé — client dont l'abonnement est terminé (accès dégradé, pas bloqué)
+export { ReadOnlyBanner, type ReadOnlyBannerProps } from './components/read-only-banner'
+export { ClientAccessProvider, useClientReadOnly } from './components/client-access-context'
+
 // Cockpit — signature visuelle « Minimal Futuriste » du Hub (issue de MenuFacile)
 export * from './components/cockpit'

@@ -280,7 +280,7 @@ describe('createSubscription', () => {
 
     expect(updateMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        subscription_tier: 'essentiel',
+        subscription_tier: 'one',
         pending_billing_update: false,
       })
     )
@@ -366,7 +366,7 @@ describe('createSubscription', () => {
     expect(result.data).toBe('pl-sub-1')
   })
 
-  it('maps ponctuel plan tier to "base" in client_configs', async () => {
+  it('maps ponctuel plan tier to "ponctuel" in client_configs', async () => {
     const updateMock = vi.fn().mockReturnValue({
       eq: vi.fn().mockResolvedValue({ data: null, error: null }),
     })
@@ -382,11 +382,11 @@ describe('createSubscription', () => {
     await createSubscription({ ...baseInput, plan: 'ponctuel', customAmount: 200 })
 
     expect(updateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ subscription_tier: 'base' })
+      expect.objectContaining({ subscription_tier: 'ponctuel' })
     )
   })
 
-  it('maps agentique plan tier to "agentique" in client_configs', async () => {
+  it('maps agentique plan tier to "one_plus" in client_configs', async () => {
     const updateMock = vi.fn().mockReturnValue({
       eq: vi.fn().mockResolvedValue({ data: null, error: null }),
     })
@@ -402,7 +402,7 @@ describe('createSubscription', () => {
     await createSubscription({ ...baseInput, plan: 'agentique' })
 
     expect(updateMock).toHaveBeenCalledWith(
-      expect.objectContaining({ subscription_tier: 'agentique' })
+      expect.objectContaining({ subscription_tier: 'one_plus' })
     )
   })
 })

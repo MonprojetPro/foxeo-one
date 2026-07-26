@@ -30,7 +30,7 @@ export function ClientAdminTabContent({ clientId }: ClientAdminTabContentProps) 
 
   const isLabClient = client.config?.dashboardType === 'lab'
   const isOneClient = client.config?.dashboardType === 'one'
-  const currentTier: SubscriptionTier = (client.config?.subscriptionTier as SubscriptionTier) ?? 'base'
+  const currentTier: SubscriptionTier = (client.config?.subscriptionTier as SubscriptionTier) ?? 'ponctuel'
   const tierInfo = TIER_INFO[currentTier]
   const tierBadgeClass = TIER_BADGE_CLASSES[currentTier]
 

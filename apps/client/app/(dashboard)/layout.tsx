@@ -8,6 +8,8 @@ import {
   MODE_TOGGLE_COOKIE,
   ModuleSidebar,
   Button,
+  ReadOnlyBanner,
+  ClientAccessProvider,
 } from '@monprojetpro/ui'
 import type { ModuleSidebarBadge } from '@monprojetpro/ui'
 import { manifest as parcoursMani } from '@monprojetpro/module-parcours/manifest'
@@ -35,7 +37,7 @@ const ALL_CLIENT_MANIFESTS: ModuleManifest[] = [
   supportMani,   // Lab + One → /modules/support
   suiviOutilMani, // Lab + One → /modules/suivi-outil
 ]
-import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, hasIaConsent, isReadOnlyClientStatus } from '@monprojetpro/supabase'
 import { CURRENT_IA_POLICY_VERSION, resolveClientMode } from '@monprojetpro/utils'
 import { NotificationBadge } from '@monprojetpro/modules-notifications'
 import { PresenceProvider } from '@monprojetpro/modules-chat'
@@ -51,24 +53,53 @@ import { ElioOneSessionProvider } from '../../components/elio-one-session'
 import { resolveOnePopupConfig, DEFAULT_ONE_POPUP_CONFIG } from '@monprojetpro/module-elio'
 import { SessionKeepAlive } from './session-keep-alive'
 import type { ModuleTarget, CustomBranding } from '@monprojetpro/types'
+import { selectVisibleModules } from './module-visibility'
+
+/**
+ * Modules de famille « cockpit » à masquer pour un client dont l'abonnement est terminé.
+ *
+ * La distinction relation / cockpit vit dans `module_catalog.family` (vision v2) :
+ * « relation » = le socle du lien avec MiKL (chat, documents, support, notifications…),
+ * « cockpit » = les briques qui pilotent un outil que le client ne paie plus.
+ *
+ * ⚠️ Le filtrage se fait ICI, au RENDU. On ne retire surtout PAS ces modules de
+ * `client_configs.active_modules` : on perdrait la trace de ce que le client avait, et
+ * sa réactivation deviendrait destructive.
+ */
+async function getCockpitModuleIds(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+): Promise<string[]> {
+  const { data } = await supabase
+    .from('module_catalog')
+    .select('module_key')
+    .eq('family', 'cockpit')
+
+  return ((data as { module_key: string }[] | null) ?? []).map((m) => m.module_key)
+}
 
 function ClientSidebar({
   dashboardType,
   activeModules,
   badges,
   iaConsentGranted,
+  hiddenModuleIds = [],
 }: {
   dashboardType: string
   activeModules: string[]
   badges?: Record<string, ModuleSidebarBadge>
   iaConsentGranted: boolean
+  /** Modules masqués au rendu (cockpit d'un client résilié) — jamais retirés de la config. */
+  hiddenModuleIds?: string[]
 }) {
   const target: ModuleTarget =
     dashboardType === 'one' ? 'client-one' : 'client-lab'
 
-  const modules = ALL_CLIENT_MANIFESTS
-    .filter((m) => m.targets.includes(target) && activeModules.includes(m.id))
-    .sort((a, b) => a.navigation.position - b.navigation.position)
+  const modules = selectVisibleModules(
+    ALL_CLIENT_MANIFESTS,
+    target,
+    activeModules,
+    hiddenModuleIds,
+  )
 
   if (modules.length === 0) {
     return (
@@ -310,6 +341,8 @@ export default async function DashboardLayout({
     first_name: string | null
     name: string | null
     operator_id: string | null
+    /** Sert l'accès dégradé « abonnement terminé » — lu dans la requête existante, pas en plus. */
+    status: string | null
     client_configs:
       | {
           dashboard_type: string
@@ -338,7 +371,7 @@ export default async function DashboardLayout({
   {
     const { data } = await supabase
       .from('clients')
-      .select('id, first_name, name, operator_id, client_configs(dashboard_type, active_modules, custom_branding, lab_mode_available, one_mode_available, one_status)')
+      .select('id, first_name, name, operator_id, status, client_configs(dashboard_type, active_modules, custom_branding, lab_mode_available, one_mode_available, one_status)')
       .eq('auth_user_id', user.id)
       .maybeSingle()
     clientRecord = (data as ClientRecord | null) ?? null
@@ -383,6 +416,12 @@ export default async function DashboardLayout({
 
   const labModeAvailable = clientConfig?.lab_mode_available ?? false
   const activeModules: string[] = clientConfig?.active_modules ?? ['core-dashboard']
+
+  // Abonnement terminé → accès dégradé, pas mur : le client consulte son espace, garde
+  // les modules de famille « relation » et peut toujours écrire à MiKL. Seuls les
+  // modules « cockpit » (l'outil qu'il ne paie plus) disparaissent du menu.
+  const isReadOnlyAccess = isReadOnlyClientStatus(clientRecord?.status)
+  const hiddenModuleIds = isReadOnlyAccess ? await getCockpitModuleIds(supabase) : []
 
   // ADR-01 Révision 2 — Le mode actif est piloté par cookie navigateur, clampé aux
   // modes réellement disponibles (résolveur centralisé, source unique de vérité).
@@ -477,7 +516,7 @@ export default async function DashboardLayout({
     <DashboardShell
       density={density}
       sidebar={
-        <ClientSidebar dashboardType={activeMode} activeModules={activeModules} badges={sidebarBadges} iaConsentGranted={iaConsentGranted} />
+        <ClientSidebar dashboardType={activeMode} activeModules={activeModules} badges={sidebarBadges} iaConsentGranted={iaConsentGranted} hiddenModuleIds={hiddenModuleIds} />
       }
       header={
         <ClientHeader
@@ -494,6 +533,11 @@ export default async function DashboardLayout({
     >
       <ImpersonationWrapper session={impersonationSession}>
         <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
+          {isReadOnlyAccess && (
+            <div className="mb-6">
+              <ReadOnlyBanner />
+            </div>
+          )}
           {children}
         </PresenceProvider>
       </ImpersonationWrapper>
@@ -501,6 +545,9 @@ export default async function DashboardLayout({
   )
 
   return (
+    // Le contexte porte l'état « espace figé » jusqu'aux boutons d'action du parcours,
+    // enfouis trop profond pour être atteints par des props sans en oublier un.
+    <ClientAccessProvider readOnly={isReadOnlyAccess}>
     <div style={accentStyle}>
       <SessionKeepAlive />
       <RealtimeDashboardRefresh clientId={clientId} />
@@ -519,5 +566,6 @@ export default async function DashboardLayout({
         shell
       )}
     </div>
+    </ClientAccessProvider>
   )
 }
