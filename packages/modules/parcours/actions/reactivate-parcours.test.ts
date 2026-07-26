@@ -10,6 +10,10 @@ function makeChain() {
   chain.select = vi.fn(() => chain)
   chain.eq = vi.fn(() => chain)
   chain.single = vi.fn(() => ({ data: null, error: null }))
+  // La source lit le parcours via .order().limit().maybeSingle(). Ce maillon manquait au
+  // mock : la chaîne cassait sur un TypeError avalé en INTERNAL_ERROR. On route maybeSingle
+  // vers single pour que les mocks déjà écrits (parcoursChain.single) pilotent les deux.
+  chain.maybeSingle = vi.fn(() => chain.single())
   chain.in = vi.fn(() => chain)
   chain.update = vi.fn(() => chain)
   chain.insert = vi.fn(() => ({ data: null, error: null }))
@@ -22,8 +26,17 @@ let parcoursChain: ReturnType<typeof makeChain>
 let activityChain: ReturnType<typeof makeChain>
 let clientsChain: ReturnType<typeof makeChain>
 let operatorsChain: ReturnType<typeof makeChain>
+let notificationsChain: ReturnType<typeof makeChain>
 
 vi.mock('@monprojetpro/supabase', () => ({
+  // La notification au client passe par le client service-role (bypass RLS) — il manquait
+  // au mock, ce qui rendait l'appel `createServiceRoleSupabaseClient()` indéfini.
+  createServiceRoleSupabaseClient: vi.fn(() => ({
+    from: (table: string) => {
+      if (table === 'notifications') return notificationsChain
+      return makeChain()
+    },
+  })),
   createServerSupabaseClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
     from: (table: string) => {
@@ -52,6 +65,7 @@ function setupDefaultMocks() {
   activityChain = makeChain()
   clientsChain = makeChain()
   operatorsChain = makeChain()
+  notificationsChain = makeChain()
 
   // parcours select — returns abandoned parcours
   parcoursChain.single.mockResolvedValue({
@@ -130,14 +144,17 @@ describe('reactivateParcours', () => {
     expect(result.error).toBeNull()
   })
 
+  // L'action n'utilise plus le helper `createNotification` : elle insère directement via
+  // le client service-role pour contourner la RLS (un INSERT ... RETURNING cross-user est
+  // refusé en 42501). L'assertion porte donc sur l'insert réel, à intention inchangée.
   it('sends notification to client on reactivation', async () => {
-    const { createNotification } = await import('../../notifications/actions/create-notification')
-
     await reactivateParcours({ clientId: CLIENT_ID })
 
-    expect(createNotification).toHaveBeenCalledWith(
+    expect(notificationsChain.insert).toHaveBeenCalledWith(
       expect.objectContaining({
-        recipientType: 'client',
+        recipient_type: 'client',
+        // Convention : recipient_id = auth_user_id, jamais clients.id.
+        recipient_id: 'client-auth-id',
         type: 'system',
       })
     )

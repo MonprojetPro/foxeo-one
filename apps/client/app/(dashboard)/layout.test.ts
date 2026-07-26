@@ -172,4 +172,30 @@ describe('Dashboard layout branding logic', () => {
       expect(oneDensity).toBe('comfortable')
     })
   })
+
+  // Bascule chantier → livré (vision v2 §6) : les cockpits ne s'allument réellement
+  // qu'à la livraison. Reflet de la condition posée dans DashboardLayout juste avant
+  // le calcul de hiddenModuleIds (isOneCockpitLocked).
+  describe('verrouillage des modules cockpit selon one_status', () => {
+    function isOneCockpitLocked(activeMode: 'lab' | 'one', oneStatus: string | null): boolean {
+      return activeMode === 'one' && (oneStatus ?? 'construction') === 'construction'
+    }
+
+    it('mode One en chantier → cockpits verrouillés', () => {
+      expect(isOneCockpitLocked('one', 'construction')).toBe(true)
+    })
+
+    it('mode One livré → cockpits déverrouillés', () => {
+      expect(isOneCockpitLocked('one', 'delivered')).toBe(false)
+    })
+
+    it('one_status absent (null) → traité comme chantier par défaut, verrouillé', () => {
+      expect(isOneCockpitLocked('one', null)).toBe(true)
+    })
+
+    it('mode Lab → jamais verrouillé, quel que soit one_status (les cockpits ne concernent que One)', () => {
+      expect(isOneCockpitLocked('lab', 'construction')).toBe(false)
+      expect(isOneCockpitLocked('lab', 'delivered')).toBe(false)
+    })
+  })
 })

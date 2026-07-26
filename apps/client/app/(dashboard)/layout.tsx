@@ -421,7 +421,6 @@ export default async function DashboardLayout({
   // les modules de famille « relation » et peut toujours écrire à MiKL. Seuls les
   // modules « cockpit » (l'outil qu'il ne paie plus) disparaissent du menu.
   const isReadOnlyAccess = isReadOnlyClientStatus(clientRecord?.status)
-  const hiddenModuleIds = isReadOnlyAccess ? await getCockpitModuleIds(supabase) : []
 
   // ADR-01 Révision 2 — Le mode actif est piloté par cookie navigateur, clampé aux
   // modes réellement disponibles (résolveur centralisé, source unique de vérité).
@@ -447,6 +446,15 @@ export default async function DashboardLayout({
   // Purement visuel : le socle reste entièrement accessible. Concerne uniquement le mode One.
   const oneStatus = clientConfig?.one_status ?? 'construction'
   const showConstructionBanner = activeMode === 'one' && oneStatus === 'construction'
+
+  // Les cockpits (facturation, etc. — module_catalog.family='cockpit') ne s'ALLUMENT
+  // réellement qu'à la livraison : tant que one_status='construction' en mode One, on
+  // les masque du menu — même mécanisme que l'abonnement terminé (jamais retirés de
+  // active_modules, juste masqués au rendu). Sans ce filtre, le bandeau "en chantier"
+  // et la bascule Hub étaient purement décoratifs : les cockpits restaient visibles.
+  const isOneCockpitLocked = activeMode === 'one' && oneStatus === 'construction'
+  const hiddenModuleIds =
+    isReadOnlyAccess || isOneCockpitLocked ? await getCockpitModuleIds(supabase) : []
 
   // Custom branding (from Hub operator configuration)
   // Note : logoUrl est conservé dans le type CustomBranding pour rétro-compat DB mais

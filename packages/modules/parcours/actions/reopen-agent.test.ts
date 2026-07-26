@@ -175,11 +175,21 @@ describe('reopenAgent — success workflow', () => {
     )
   })
 
+  // Convention activity_logs du projet : l'entité journalisée est TOUJOURS le client
+  // (entity_type 'client' + entity_id = clientId), l'objet précis de l'action vivant dans
+  // metadata. L'assertion attendait `entity_id: AGENT_ID` — elle datait d'avant cet
+  // alignement. La production est correcte, c'est le test qu'on remet à niveau.
   it('logs the reopen in activity_logs', async () => {
     const { reopenAgent } = await import('./reopen-agent')
     await reopenAgent({ agentId: AGENT_ID, clientId: CLIENT_ID })
     expect(mockLogInsert).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'parcours_agent_reopened', entity_id: AGENT_ID })
+      expect.objectContaining({
+        action: 'parcours_agent_reopened',
+        actor_type: 'operator',
+        entity_type: 'client',
+        entity_id: CLIENT_ID,
+        metadata: expect.objectContaining({ agentId: AGENT_ID }),
+      })
     )
   })
 
