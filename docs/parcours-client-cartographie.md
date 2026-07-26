@@ -317,12 +317,28 @@ flowchart TD
 | 3 | **Séquencement de l'email** | Le chemin nominal (paiement → composition → email) est **correct**. Le vrai coupable était un second chemin : « créer un Lab après une visio », qui envoyait l'accès sans parcours composé **et sans jamais créer le compte d'authentification** — l'invitation n'aurait de toute façon jamais pu partir, l'échec étant avalé en silence. | ✅ Corrigé |
 | 4 | **Statuts non branchés** | Confirmé, et pire que prévu : **aucune policy RLS ne regarde le statut du client**, donc un blocage d'interface aurait été contournable. Traité avec un verrou en base. | ✅ Corrigé |
 | 5 | **Offre non modélisée** | Il n'y avait pas zéro modélisation mais **trois colonnes concurrentes** (`subscription_tier`, `elio_tier`, `clients.client_type`). Unifié sur `subscription_tier` = `ponctuel` / `one` / `one_plus` ; `client_type` garde son rôle distinct (**comment** le client est arrivé). | ✅ Corrigé |
-| 6 | **Bascule chantier → livré** | La colonne `one_status` (`construction` / `delivered`) existait déjà et était lue par l'interface — mais **aucun bouton ne permettait de la basculer**. | 🟡 Reste à faire |
+| 6 | **Bascule chantier → livré** | L'action ET l'écran de pilotage existaient déjà — **dans le module `admin`**, pas `crm` (d'où le fait qu'une première recherche ne les ait pas trouvés). Le vrai manque était ailleurs : la bascule n'allumait **pas** les cockpits, alors que la notification envoyée au client affirmait le contraire. Le lien est branché. | ✅ Corrigé |
 | 7 | **Sources de métriques cockpits** | Décidées projet par projet — décision produit, pas un bug. | 🟡 Ouvert (volontaire) |
 
-**La leçon de cette vérification** : ne jamais cartographier un système depuis sa documentation seule.
-Ici la doc était **pessimiste** (elle listait comme dette des choses déjà construites) et **mal
-localisée** (elle désignait le mauvais fichier pour le bug de l'email).
+### Reste ouvert (hors périmètre du lot du 2026-07-26)
+
+- **5 tests d'interface en échec** : `server-only` est tiré dans des Client Components
+  (`client-tabs`, `client-detail-content`, `crm-sub-nav`, `stats-skeleton`, `billing-dashboard`,
+  `parcours-timeline`). Cause unique, sujet de **configuration vitest partagée** → à traiter
+  d'un bloc, pas test par test.
+- **Code mort** : `admin/provision-instance` (provisioning d'instances dédiées). 0 ligne en base,
+  mécanisme abandonné par la vision v2.
+- **Dette de tests** : plusieurs tests simulent encore le helper `createNotification` alors que la
+  production insère directement via le client service-role (pour éviter le `42501` sur un
+  `INSERT ... RETURNING` cross-user). `grep -rl "createNotification" --include="*.test.ts*"` les liste.
+
+**Les deux leçons de cette vérification** :
+1. Ne jamais cartographier un système depuis sa documentation seule. Ici la doc était **pessimiste**
+   (elle listait comme dette des choses déjà construites) et **mal localisée** (mauvais fichier pour
+   le bug de l'email).
+2. Ne jamais conclure « ça n'existe pas » depuis une recherche limitée à un seul module. Le pilotage
+   du `one_status` vivait dans `admin` ; une recherche cantonnée à `crm` a failli faire créer un
+   doublon concurrent.
 
 ---
 
