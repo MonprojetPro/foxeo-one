@@ -208,6 +208,33 @@ serve(async (_req) => {
     }
   }
 
+  // 8. Prévenir l'opérateur qu'il a des brouillons à valider.
+  // Sans ça, les relances s'accumulent en 'pending' sans que personne le sache :
+  // Élio prépare, mais c'est MiKL qui décide d'envoyer (design story 13.8).
+  if (processedCount > 0) {
+    const { data: operators } = await supabase
+      .from('operators')
+      .select('auth_user_id')
+
+    const rows = ((operators ?? []) as Array<{ auth_user_id: string | null }>)
+      .filter((op) => op.auth_user_id)
+      .map((op) => ({
+        recipient_type: 'operator',
+        recipient_id: op.auth_user_id,
+        type: 'alert',
+        title: `${processedCount} relance${processedCount > 1 ? 's' : ''} de facture à valider`,
+        body: `Élio a préparé ${processedCount} brouillon${processedCount > 1 ? 's' : ''} de relance pour des factures impayées. À relire et envoyer depuis le module Facturation.`,
+        link: '/modules/facturation',
+      }))
+
+    if (rows.length > 0) {
+      const { error: notifError } = await supabase.from('notifications').insert(rows)
+      if (notifError) {
+        console.error('[DETECT-OVERDUE] Notification opérateur échouée:', notifError.message)
+      }
+    }
+  }
+
   console.log(`[DETECT-OVERDUE] Terminé — ${processedCount} relances créées`)
   return new Response(JSON.stringify({ processed: processedCount }), { status: 200 })
 })

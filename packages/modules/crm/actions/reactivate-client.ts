@@ -52,7 +52,7 @@ export async function reactivateClient(
     // Fetch retention_until and previous_status for archived-specific logic (Story 9.5c)
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, status, operator_id, retention_until, previous_status')
+      .select('id, status, operator_id, retention_until, previous_status, auth_user_id')
       .eq('id', clientId)
       .eq('operator_id', operatorId)
       .single()
@@ -136,19 +136,26 @@ export async function reactivateClient(
       // Don't fail the operation if logging fails
     }
 
-    // Story 9.5c: Send notification to client on reactivation
-    const { error: notifError } = await supabase.from('notifications').insert({
-      recipient_type: 'client',
-      recipient_id: clientId,
-      type: 'system',
-      title: 'Votre compte MonprojetPro a été réactivé',
-      body: 'Votre accès à votre espace MonprojetPro a été rétabli. Bienvenue de retour !',
-      link: null,
-    })
+    // Story 9.5c: Send notification to client on reactivation.
+    // Convention notifications : recipient_id = auth_user_id (JAMAIS clients.id) —
+    // avec clients.id, la notification et l'email de réactivation étaient perdus
+    // (cf. les 2 notifications « compte réactivé » de mars/avril 2026, sans email).
+    if (client.auth_user_id) {
+      const { error: notifError } = await supabase.from('notifications').insert({
+        recipient_type: 'client',
+        recipient_id: client.auth_user_id,
+        type: 'system',
+        title: 'Votre compte MonprojetPro a été réactivé',
+        body: 'Votre accès à votre espace MonprojetPro a été rétabli. Bienvenue de retour !',
+        link: null,
+      })
 
-    if (notifError) {
-      console.error('[CRM:REACTIVATE_CLIENT] Notification error:', notifError)
-      // Don't fail the operation if notification fails
+      if (notifError) {
+        console.error('[CRM:REACTIVATE_CLIENT] Notification error:', notifError)
+        // Don't fail the operation if notification fails
+      }
+    } else {
+      console.warn('[CRM:REACTIVATE_CLIENT] Client sans auth_user_id — notification ignorée:', clientId)
     }
 
     // Revalidate paths

@@ -469,26 +469,10 @@ async function handleOverdueNotifications(
         link: '/modules/facturation',
       })
 
-      // Email via send-email Edge Function (si disponible)
-      try {
-        // `to` est OBLIGATOIRE : sans lui, send-email tombe sur la route
-        // notification et rejette l'appel (400) -> aucun email n'etait envoye.
-        await supabase.functions.invoke('send-email', {
-          body: {
-            to: client.email,
-            template: 'payment-failed',
-            data: {
-              recipientName: client.name ?? 'Client',
-              amount: amountFormatted,
-              currency: inv.currency ?? 'EUR',
-              platformUrl: Deno.env.get('APP_URL') ?? 'https://monprojet-pro.com',
-              recipientType: 'client',
-            },
-          },
-        })
-      } catch {
-        console.warn('[BILLING:SYNC] send-email Edge Function not available')
-      }
+      // Pas d'appel direct a send-email ici : l'INSERT ci-dessus declenche deja
+      // trg_send_email_on_notification -> send-email, qui rend le template
+      // 'billing_payment_failed'. L'ancien appel direct passait un template
+      // inexistant ET sans `to` (rejete en 400) : le reparer creerait un doublon.
     }
 
     // Activity log

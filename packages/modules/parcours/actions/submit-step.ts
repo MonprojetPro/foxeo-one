@@ -125,7 +125,11 @@ export async function submitStep(
     }
     notifs.push({
       recipient_type: 'client',
-      recipient_id: client.id,
+      // Convention notifications : recipient_id = auth_user_id (JAMAIS clients.id).
+      // `user.id` EST l'auth_user_id : le client a été chargé via .eq('auth_user_id', user.id).
+      // Avec clients.id, la notification était invisible pour le client ET l'email
+      // ne partait pas (destinataire introuvable côté send-email).
+      recipient_id: user.id,
       type: 'info',
       title: 'Soumission envoyée',
       body: 'MiKL va valider votre travail sous peu.',

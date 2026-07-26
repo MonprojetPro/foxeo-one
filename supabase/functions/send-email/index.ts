@@ -146,6 +146,10 @@ function buildPlatformUrl(notification: NotificationRow): string {
 }
 
 function resolveTemplateKey(notification: NotificationRow): string | null {
+  // Les templates personnalisables en base sont TOUS rédigés pour le client.
+  // Les appliquer à une notification opérateur envoyait à MiKL des textes du
+  // genre « Votre parcours Lab vous attend » pour une simple alerte interne.
+  if (notification.recipient_type !== 'client') return null
   switch (notification.type) {
     case 'validation': return notification.body?.includes('refusé') ? 'brief_refuse' : 'brief_valide'
     case 'graduation': return 'graduation'
@@ -191,21 +195,59 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
     case 'inactivity_alert':
     case 'alert': {
       const clientNameMatch = notification.title.match(/Client inactif\s*:\s*(.+)/)
+      // Le type 'alert' sert AUSSI aux alertes internes (« N relances à valider »,
+      // « Nouvelle soumission »…). Sans ce garde, elles partaient avec le texte
+      // « Votre client X est inactif depuis 0 jours » — faux et déroutant.
+      if (!clientNameMatch) break
       const daysMatch = notification.body?.match(/inactif depuis (\d+) jours/)
       const dateMatch = notification.body?.match(/Derni[eè]re activit[eé]\s*:\s*(\S+)/)
-      return { subject: notification.title, html: alertInactivityEmailTemplate({ clientName: clientNameMatch?.[1] ?? 'Votre client', daysSinceActivity: daysMatch ? parseInt(daysMatch[1], 10) : 0, lastActivityDate: dateMatch?.[1] ?? '', platformUrl }) }
+      return { subject: notification.title, html: alertInactivityEmailTemplate({ clientName: clientNameMatch[1], daysSinceActivity: daysMatch ? parseInt(daysMatch[1], 10) : 0, lastActivityDate: dateMatch?.[1] ?? '', platformUrl }) }
     }
     case 'graduation':
       return { subject: 'Félicitations ! Votre espace One est prêt — MonprojetPro', html: graduationEmailTemplate({ clientName: recipient.name, oneUrl: platformUrl }) }
     case 'export_ready':
       return { subject: 'Votre export de données est prêt — MonprojetPro', html: exportReadyEmailTemplate({ clientName: recipient.name, downloadUrl: platformUrl }) }
-    case 'payment': {
+    case 'payment':
+    case 'billing_payment_failed': {
       const amountMatch = notification.body?.match(/([\d.,]+)\s*(EUR|€)/)
       return { subject: 'Échec de paiement — MonprojetPro', html: paymentFailedEmailTemplate({ recipientName: recipient.name, amount: amountMatch?.[1] ?? '—', currency: amountMatch?.[2] ?? 'EUR', platformUrl, recipientType: notification.recipient_type }) }
     }
-    default:
-      return { subject: notification.title, html: baseTemplate({ title: notification.title, body: `<p>${escapeHtml(notification.body ?? notification.title)}</p>`, ctaUrl: platformUrl }) }
+
+    // Accusé de réception de paiement : Pennylane envoie la facture, mais rien
+    // à l'encaissement — c'est ce mail qui ferme la boucle côté client.
+    case 'billing_payment_received':
+    case 'lab_payment_received': {
+      const amountMatch = notification.body?.match(/([\d.,\s]+(?:EUR|€))/)
+      const clientNameMatch = notification.title.match(/(?:de|—)\s*(.+)$/)
+      return {
+        subject: notification.recipient_type === 'operator'
+          ? notification.title
+          : 'Paiement bien reçu — MonprojetPro',
+        html: paymentReceivedEmailTemplate({
+          recipientName: recipient.name,
+          amount: amountMatch?.[1]?.trim() ?? '—',
+          platformUrl,
+          recipientType: notification.recipient_type,
+          clientName: clientNameMatch?.[1],
+        }),
+      }
+    }
+
+    case 'elio_escalation':
+      return {
+        subject: notification.title,
+        html: elioEscalationEmailTemplate({
+          recipientName: recipient.name,
+          subject: notification.title,
+          details: notification.body ?? 'Aucun détail fourni.',
+          platformUrl,
+        }),
+      }
+
   }
+
+  // Fallback commun (types sans template dédié + `break` des cas ci-dessus)
+  return { subject: notification.title, html: baseTemplate({ title: notification.title, body: `<p>${escapeHtml(notification.body ?? notification.title)}</p>`, ctaUrl: platformUrl }) }
 }
 
 const EMAIL_FAILURE_THRESHOLD = 5
@@ -294,6 +336,24 @@ function toolUpdateEmailTemplate(d: { clientName: string; body: string; link: st
 function impersonationStartedEmailTemplate(d: { clientName: string }): string {
   const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>Un membre de l'equipe MonprojetPro vient d'ouvrir une <strong>session de support</strong> sur votre compte pour vous aider.</p><p>Toutes les actions realisees pendant cette session sont enregistrees et consultables. La session se ferme automatiquement au bout de 2 heures.</p><p style="color:#6b7280;font-size:14px;">Si vous n'avez sollicite aucun support, repondez a cet email.</p>`
   return baseTemplate({ title: 'Session de support sur votre compte', body })
+}
+
+function paymentReceivedEmailTemplate(d: { recipientName: string; amount: string; platformUrl: string; recipientType: 'client' | 'operator'; clientName?: string }): string {
+  const isOperator = d.recipientType === 'operator'
+  const body = isOperator
+    ? `<p>Bonjour <strong>${escapeHtml(d.recipientName)}</strong>,</p><p>Le paiement de <strong>${escapeHtml(d.clientName ?? 'un client')}</strong> a bien été encaissé.</p><p>Montant : <strong>${escapeHtml(d.amount)}</strong></p>`
+    : `<p>Bonjour <strong>${escapeHtml(d.recipientName)}</strong>,</p><p>✅ Nous avons bien reçu votre paiement de <strong>${escapeHtml(d.amount)}</strong>. Merci !</p><p>Votre facture acquittée est disponible dans votre espace.</p>`
+  return baseTemplate({
+    title: isOperator ? 'Paiement encaissé' : 'Paiement bien reçu — merci !',
+    body,
+    ctaUrl: d.platformUrl,
+    ctaText: isOperator ? 'Voir la facture' : 'Voir ma facture',
+  })
+}
+
+function elioEscalationEmailTemplate(d: { recipientName: string; subject: string; details: string; platformUrl: string }): string {
+  const body = `<p>Bonjour <strong>${escapeHtml(d.recipientName)}</strong>,</p><p>Élio a transmis une demande qu'il ne pouvait pas traiter seul :</p><blockquote style="margin:16px 0;padding:12px 16px;border-left:4px solid #059669;color:#3f3f46;">${escapeHtml(d.details)}</blockquote><p>Un retour rapide de votre part débloquera le client.</p>`
+  return baseTemplate({ title: d.subject, body, ctaUrl: d.platformUrl, ctaText: 'Traiter la demande' })
 }
 
 function instanceTransferredEmailTemplate(d: { clientName: string }): string {

@@ -253,10 +253,28 @@ export async function resetPasswordAction(
   }
 
   const supabase = await createServerSupabaseClient()
-  const { error } = await supabase.auth.updateUser({ password })
+  const { data: updated, error } = await supabase.auth.updateUser({ password })
 
   if (error) {
     return errorResponse('Erreur lors de la mise a jour du mot de passe', 'AUTH_ERROR')
+  }
+
+  // Alerte de securite : le titulaire du compte doit etre prevenu qu'on vient de
+  // changer son mot de passe — c'est le seul signal s'il n'est pas a l'origine
+  // de l'operation. L'INSERT declenche trg_send_email_on_notification -> email.
+  // Best-effort : un echec ici ne doit jamais empecher la reinitialisation.
+  if (updated?.user?.id) {
+    const { error: notifError } = await supabase.from('notifications').insert({
+      recipient_type: 'client',
+      recipient_id: updated.user.id, // auth_user_id (convention notifications)
+      type: 'system',
+      title: 'Votre mot de passe a ete modifie',
+      body: "Le mot de passe de votre espace MonprojetPro vient d'etre changé. Si vous n'êtes pas à l'origine de cette modification, contactez-nous immédiatement à contact@monprojet-pro.com.",
+      link: null,
+    })
+    if (notifError) {
+      console.error('[AUTH:RESET_PASSWORD] Notification securite non creee:', notifError.message)
+    }
   }
 
   return successResponse(null)

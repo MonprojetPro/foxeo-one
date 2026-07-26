@@ -13,8 +13,8 @@
 | DL | Téléchargement / Storage | 5 |
 | API | Intégration API externe | 5 |
 | RSC | Next.js Server/Client | 6 |
-| DB | Base de données / Schéma | 3 |
-| DEP | Déploiement | 7 |
+| DB | Base de données / Schéma | 4 |
+| DEP | Déploiement | 8 |
 | GIT | Git / Workflow | 1 |
 | SEC | Sécurité / Secrets | 2 |
 | UI | Interface / CSS | 2 |
@@ -864,4 +864,28 @@
 - **Cause racine** : la fonction est déployée **via le MCP** (le CLI n'a pas les privilèges), donc le contenu envoyé à Supabase et le contenu du repo sont deux artefacts distincts. Une édition ultérieure du fichier local (copier-coller depuis un éditeur qui « embellit » les apostrophes — même famille que la leçon UI-006) l'a corrompu sans que rien ne le signale : ni CI, ni build Next (les Edge Functions sont hors du build Turbo), ni test Vitest (qui teste `handler.ts`, pas `index.ts`). Bombe à retardement : le prochain redéploiement depuis le disque aurait cassé **toute** la chaîne email.
 - **Solution validee** : réparation du fichier + redéploiement (v13), avec vérification préalable `grep "‘\|’"` sur les fichiers Edge concernés avant tout déploiement.
 - **Regle a suivre** : (a) avant de redéployer une Edge Function, **comparer le disque au déployé** (`get_edge_function`) — ne jamais présumer qu'ils sont identiques. (b) Passer le `grep` guillemets courbes sur `supabase/functions/**` au même titre que sur le code applicatif. (c) Une Edge Function modifiée dans le repo **n'est pas déployée** tant qu'on ne l'a pas explicitement redéployée : un commit vert ≠ un fix actif en production.
+- **Agents impliques** : MAX, ATLAS
+
+---
+
+## DB-004 — « Marqué fait » avant l'effet de bord : l'UI ment et la tâche disparaît
+
+- **Date** : 2026-07-26
+- **Categorie** : Base de données / Logique métier
+- **Symptome** : le module Facturation affichait une relance « envoyée » alors que le client n'avait jamais reçu l'email. Aucune erreur visible, et la relance devenait **inactionnable** (elle n'était plus `pending`, donc plus proposée).
+- **Cause racine** : `sendReminder` passait `collection_reminders.status` à `'sent'` **avant** l'appel à Resend, avec ce commentaire : « idempotence : évite les doublons si send échoue puis retry ». L'intention était bonne (empêcher un double envoi), mais le compromis était inversé : il protégeait contre un doublon rare au prix d'une **perte silencieuse garantie** dès que l'envoi échouait. Or l'envoi échouait *systématiquement* : `RESEND_API_KEY` n'existait pas côté Vercel. Deux bugs se masquaient l'un l'autre — la clé manquante ne se voyait pas parce que le statut disait « envoyée ».
+- **Solution validee** : réservation optimiste + rollback. L'UPDATE est conditionné à `.eq('status','pending')` (le double-clic est donc bien bloqué), et la relance **repasse en `pending`** si l'envoi échoue. Le meilleur des deux : pas de doublon, pas de perte. Tests ajoutés sur les deux chemins.
+- **Regle a suivre** : (a) un statut métier (`sent`, `processed`, `notified`) ne passe à « fait » qu'**après** l'effet de bord réussi — sinon, prévoir un rollback explicite, jamais un simple « on verra ». (b) Se méfier des commentaires qui justifient un ordre contre-intuitif : ils décrivent l'intention, pas ce qui arrive quand ça rate. (c) **Symptôme signature** : « l'app dit que c'est parti mais le destinataire n'a rien » → chercher un statut écrit avant l'action, pas un problème d'envoi.
+- **Agents impliques** : MAX, ATLAS
+
+---
+
+## DEP-008 — Sur disque ≠ déployée ≠ planifiée ≠ à jour : quatre vérifications distinctes
+
+- **Date** : 2026-07-26
+- **Categorie** : Déploiement
+- **Symptome** : deux automatismes réputés « en place » n'avaient **jamais tourné une seule fois**. Aucune alerte « client inactif » depuis la création de la fonctionnalité ; aucune détection de facture en retard.
+- **Cause racine** : chaque fonction échouait à une étape *différente* de la chaîne, ce qui rendait l'inventaire trompeur — `check-inactivity` existait sur disque mais **n'avait jamais été déployée**, et son code écrivait sur un schéma `notifications` obsolète (`operator_id`, `message`, `entity_type` — colonnes disparues depuis) : même déployée, chaque insertion aurait échoué. `detect-overdue-invoices`, elle, était bien déployée et à jour… mais **sans job pg_cron**, donc jamais appelée. Regarder « est-ce que le code existe ? » ou même « est-ce que la fonction est ACTIVE ? » ne répond à aucune des deux questions.
+- **Solution validee** : les quatre plans vérifiés un par un — (1) fichier présent, (2) `list_edge_functions` → déployée, (3) `cron.job` → planifiée, (4) code aligné sur le schéma réel (`information_schema.columns`). Puis exécution manuelle immédiate pour preuve : 2 alertes créées, 2 emails réellement partis.
+- **Regle a suivre** : (a) pour toute automatisation, vérifier **les quatre plans séparément** — la présence d'un fichier ne prouve rien, et « ACTIVE » ne veut pas dire « appelée ». (b) Après avoir branché un cron, le **déclencher à la main tout de suite** : attendre le lendemain 8h, c'est repousser la découverte d'un bug d'un jour. (c) Le code d'une fonction jamais exécutée vieillit **sans jamais protester** : quand le schéma DB évolue, elle n'est ni testée ni exécutée, donc rien ne signale la dérive. Toute fonction dormante doit être relue contre le schéma courant avant remise en service.
 - **Agents impliques** : MAX, ATLAS

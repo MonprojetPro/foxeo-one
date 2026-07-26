@@ -113,7 +113,9 @@ export async function submitElioBrief(
     }
     notifs.push({
       recipient_type: 'client',
-      recipient_id: client.id,
+      // Convention notifications : recipient_id = auth_user_id (JAMAIS clients.id).
+      // `user.id` EST l'auth_user_id (client chargé via .eq('auth_user_id', user.id)).
+      recipient_id: user.id,
       type: 'info',
       title: 'Brief soumis',
       body: 'MiKL va valider votre brief sous peu.',

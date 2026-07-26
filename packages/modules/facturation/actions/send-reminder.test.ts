@@ -11,7 +11,7 @@ const mockIn = vi.fn()
 const mockFrom = vi.fn((table: string) => {
   return {
     select: vi.fn().mockReturnThis(),
-    update: vi.fn(() => ({ eq: mockEq })),
+    update: makeUpdateChain(),
     insert: vi.fn(() => ({ select: vi.fn().mockReturnThis(), single: mockSingle, eq: mockEq })),
     eq: mockEq,
     in: mockIn,
@@ -30,6 +30,19 @@ const mockSupabase = {
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => mockSupabase),
 }))
+
+// Chaîne `update()` compatible avec les deux usages de send-reminder :
+//  - réservation : .update().eq('id').eq('status','pending').select('id')
+//  - rollback    : await .update().eq('id')
+// `reserved` = lignes renvoyées par la réservation ([] simule « déjà prise »).
+function makeUpdateChain(reserved: Array<{ id: string }> = [{ id: 'rem-1' }]) {
+  const chain: Record<string, unknown> = {}
+  chain.eq = vi.fn(() => chain)
+  chain.select = vi.fn(async () => ({ data: reserved, error: null }))
+  chain.then = (res: (v: { error: null }) => unknown, rej?: (e: unknown) => unknown) =>
+    Promise.resolve({ error: null }).then(res, rej)
+  return vi.fn(() => chain)
+}
 
 global.fetch = vi.fn()
 
@@ -77,9 +90,7 @@ describe('sendReminder — canal email', () => {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
           single: vi.fn(async () => ({ data: reminder, error: null })),
-          update: vi.fn(() => ({
-            eq: vi.fn(async () => ({ error: null })),
-          })),
+          update: makeUpdateChain([{ id: 'rem-1' }]),
         }
       }
       if (table === 'clients') {
@@ -171,7 +182,7 @@ describe('sendReminder — canal chat', () => {
             callCount++
             return callCount === 1 ? { data: reminder, error: null } : { data: null, error: null }
           }),
-          update: vi.fn(() => ({ eq: updateEqMock })),
+          update: makeUpdateChain([{ id: 'rem-2' }]),
         }
       }
       if (table === 'clients') {
@@ -228,7 +239,7 @@ describe('sendReminder — canal both', () => {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
           single: vi.fn(async () => ({ data: reminder, error: null })),
-          update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+          update: makeUpdateChain([{ id: 'rem-3' }]),
         }
       }
       if (table === 'clients') {
@@ -299,7 +310,7 @@ describe('sendReminder — mise à jour DB', () => {
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
           single: vi.fn(async () => ({ data: reminder, error: null })),
-          update: vi.fn(() => ({ eq: updateEqMock })),
+          update: makeUpdateChain([{ id: 'rem-4' }]),
         }
       }
       if (table === 'clients') {
@@ -330,5 +341,127 @@ describe('sendReminder — mise à jour DB', () => {
     })
 
     expect(result.data?.sent).toBe(true)
+  })
+})
+
+describe('sendReminder — anti « envoyée à tort »', () => {
+  it('remet la relance en pending quand Resend échoue', async () => {
+    vi.resetAllMocks()
+
+    const reminder = {
+      id: 'rem-5',
+      client_id: 'client-5',
+      invoice_number: 'F-2026-005',
+      invoice_amount: 900,
+      status: 'pending',
+      reminder_level: 1,
+    }
+    const updateSpy = makeUpdateChain([{ id: 'rem-5' }])
+
+    mockSupabase.auth.getUser = vi.fn(async () => ({ data: { user: { id: 'op-auth-id' } }, error: null }))
+    mockSupabase.from = vi.fn((table: string) => {
+      if (table === 'collection_reminders') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn(async () => ({ data: reminder, error: null })),
+          update: updateSpy,
+        }
+      }
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn(async () => ({ data: { email: 'a@b.fr', name: 'Test', auth_user_id: null }, error: null })),
+        insert: vi.fn(async () => ({ error: null })),
+      }
+    }) as typeof mockSupabase.from
+    mockSupabase.rpc = vi.fn(async () => ({ data: true, error: null }))
+
+    process.env.RESEND_API_KEY = 'resend-key'
+    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: false,
+      json: async () => ({ message: 'Domain not verified' }),
+    })
+
+    const { sendReminder } = await import('./send-reminder')
+    const result = await sendReminder({ reminderId: 'rem-5', channel: 'email', body: 'Relance.' })
+
+    expect(result.error?.code).toBe('EMAIL_ERROR')
+    // 2 update : la réservation ('sent') puis le rollback ('pending')
+    expect(updateSpy).toHaveBeenCalledTimes(2)
+    expect(updateSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: 'pending', sent_at: null })
+    )
+  })
+
+  it('refuse une relance déjà prise par un autre appel (double clic)', async () => {
+    vi.resetAllMocks()
+
+    mockSupabase.auth.getUser = vi.fn(async () => ({ data: { user: { id: 'op-auth-id' } }, error: null }))
+    mockSupabase.from = vi.fn((table: string) => {
+      if (table === 'collection_reminders') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn(async () => ({
+            data: { id: 'rem-6', client_id: 'c-6', invoice_number: 'F-6', status: 'pending' },
+            error: null,
+          })),
+          update: makeUpdateChain([]), // aucune ligne réservée
+        }
+      }
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn(async () => ({ data: { email: 'a@b.fr', name: 'T', auth_user_id: null }, error: null })),
+      }
+    }) as typeof mockSupabase.from
+    mockSupabase.rpc = vi.fn(async () => ({ data: true, error: null }))
+
+    const { sendReminder } = await import('./send-reminder')
+    const result = await sendReminder({ reminderId: 'rem-6', channel: 'email', body: 'Relance.' })
+
+    expect(result.error?.code).toBe('ALREADY_SENT')
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  it('insère la notification sur auth_user_id et sans colonne is_read', async () => {
+    vi.resetAllMocks()
+
+    const notifInsert = vi.fn(async () => ({ error: null }))
+    mockSupabase.auth.getUser = vi.fn(async () => ({ data: { user: { id: 'op-auth-id' } }, error: null }))
+    mockSupabase.from = vi.fn((table: string) => {
+      if (table === 'collection_reminders') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn(async () => ({
+            data: { id: 'rem-7', client_id: 'client-7', invoice_number: 'F-7', status: 'pending' },
+            error: null,
+          })),
+          update: makeUpdateChain([{ id: 'rem-7' }]),
+        }
+      }
+      if (table === 'clients') {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn(async () => ({
+            data: { email: 'jean@example.com', name: 'Jean', auth_user_id: 'auth-client-7' },
+            error: null,
+          })),
+        }
+      }
+      if (table === 'notifications') return { insert: notifInsert }
+      return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), single: vi.fn(async () => ({ data: null, error: null })) }
+    }) as typeof mockSupabase.from
+    mockSupabase.rpc = vi.fn(async () => ({ data: true, error: null }))
+
+    const { sendReminder } = await import('./send-reminder')
+    await sendReminder({ reminderId: 'rem-7', channel: 'chat', body: 'Relance chat.' })
+
+    const payload = notifInsert.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(payload.recipient_id).toBe('auth-client-7') // JAMAIS clients.id
+    expect(payload).not.toHaveProperty('is_read')      // colonne inexistante
   })
 })

@@ -83,9 +83,12 @@ export async function sendReminder(
     return errorResponse('Client introuvable', 'NOT_FOUND')
   }
 
-  // Mise à jour DB en premier (idempotence : évite les doublons si send échoue puis retry)
-  // La relance passe à 'sent' avant l'envoi — un retry ne renvoie pas deux fois.
-  const { error: updateError } = await supabase
+  // Réservation optimiste : on passe la relance à 'sent' AVANT l'envoi, mais
+  // uniquement si elle est encore 'pending' (garde anti-doublon si double clic
+  // ou retry concurrent). Si l'envoi échoue ensuite, on la REMET en 'pending'
+  // (rollback ci-dessous) — sinon le Hub afficherait « envoyée » alors que le
+  // client n'a jamais rien reçu, et la relance serait perdue sans recours.
+  const { data: reserved, error: updateError } = await supabase
     .from('collection_reminders')
     .update({
       status: 'sent',
@@ -94,15 +97,35 @@ export async function sendReminder(
       generated_body: body,
     })
     .eq('id', reminderId)
+    .eq('status', 'pending')
+    .select('id')
 
   if (updateError) {
     return errorResponse('Erreur mise à jour relance', 'DB_ERROR', updateError)
+  }
+
+  if (!reserved || reserved.length === 0) {
+    // Quelqu'un d'autre (ou un double clic) a déjà pris la relance entre-temps
+    return errorResponse('Relance déjà traitée', 'ALREADY_SENT')
+  }
+
+  // Remet la relance en 'pending' quand l'envoi échoue : elle reste actionnable
+  // dans le Hub au lieu d'être marquée « envoyée » à tort.
+  const rollbackReminder = async () => {
+    const { error } = await supabase
+      .from('collection_reminders')
+      .update({ status: 'pending', sent_at: null })
+      .eq('id', reminderId)
+    if (error) {
+      console.error('[SEND-REMINDER] Rollback status failed:', error.message)
+    }
   }
 
   // Envoi email si canal email ou both
   if (channel === 'email' || channel === 'both') {
     const resendApiKey = process.env.RESEND_API_KEY
     if (!resendApiKey) {
+      await rollbackReminder()
       return errorResponse('Configuration email manquante (RESEND_API_KEY)', 'CONFIG_ERROR')
     }
 
@@ -130,10 +153,12 @@ export async function sendReminder(
       if (!emailRes.ok) {
         const resendErr = await emailRes.json() as { message?: string }
         console.error('[SEND-REMINDER] Resend error:', resendErr.message)
+        await rollbackReminder()
         return errorResponse(`Erreur envoi email: ${resendErr.message ?? 'Erreur Resend'}`, 'EMAIL_ERROR')
       }
     } catch (emailErr) {
       console.error('[SEND-REMINDER] Fetch Resend failed:', emailErr)
+      await rollbackReminder()
       return errorResponse('Erreur envoi email', 'EMAIL_ERROR')
     }
   }
@@ -141,13 +166,16 @@ export async function sendReminder(
   // Envoi notification chat si canal chat ou both
   if (channel === 'chat' || channel === 'both') {
     if (client.auth_user_id) {
+      // Convention notifications : recipient_id = auth_user_id (JAMAIS clients.id),
+      // sinon le destinataire est introuvable côté lecture ET côté envoi email.
+      // Pas de colonne `is_read` sur cette table (c'est `read_at`) : la passer
+      // faisait échouer l'INSERT en silence -> aucune notification de relance.
       const { error: notifError } = await supabase.from('notifications').insert({
         recipient_type: 'client',
-        recipient_id: reminder.client_id,
+        recipient_id: client.auth_user_id,
         type: 'message',
         title: `Rappel facture ${reminder.invoice_number}`,
         body,
-        is_read: false,
       })
 
       if (notifError) {
