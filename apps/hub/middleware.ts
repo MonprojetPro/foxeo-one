@@ -99,11 +99,15 @@ export async function middleware(request: NextRequest) {
           (f: { status: string }) => f.status === 'verified'
         )
         if (!hasVerifiedFactor) {
-          // Re-enrollment required — reset DB flag so setup flow is clean
+          // Re-enrollment required — reset DB flag so setup flow is clean.
+          // Ciblage par auth_user_id, pas par email : une divergence entre
+          // auth.users.email et operators.email ferait échouer cet UPDATE en silence,
+          // et l'opérateur tournerait en boucle sur l'écran de configuration 2FA
+          // (le drapeau resterait à true alors qu'aucun facteur vérifié n'existe).
           await supabase
             .from('operators')
             .update({ two_factor_enabled: false } as never)
-            .eq('email', user.email ?? '')
+            .eq('auth_user_id', user.id)
           const redirectResponse = NextResponse.redirect(new URL('/setup-mfa', request.url))
           setLocaleCookie(redirectResponse, locale)
           return redirectResponse

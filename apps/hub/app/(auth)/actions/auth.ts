@@ -296,12 +296,16 @@ export async function hubVerifyMfaSetupAction(
   }
 
   // Mark operator as 2FA enabled
+  // Ciblage par auth_user_id et NON par email : l'email vit à deux endroits
+  // (auth.users.email et operators.email) que rien n'oblige à rester synchronisés.
+  // Le 2026-07-27, une divergence entre les deux a fait échouer cet UPDATE en silence
+  // (0 ligne touchée, aucune erreur) — le drapeau 2FA n'était jamais posé.
   const { data: { user } } = await supabase.auth.getUser()
-  if (user?.email) {
+  if (user?.id) {
     await supabase
       .from('operators')
       .update({ two_factor_enabled: true } as never)
-      .eq('email', user.email ?? '')
+      .eq('auth_user_id', user.id)
   }
 
   // Generate 10 recovery codes and store SHA-256 hashes
@@ -315,7 +319,9 @@ export async function hubVerifyMfaSetupAction(
     createHash('sha256').update(code).digest('hex')
   )
 
-  if (user?.email) {
+  // Même raison qu'au-dessus : ciblage par auth_user_id. Un échec silencieux ici serait
+  // pire encore — les codes de secours seraient affichés à MiKL sans jamais être stockés.
+  if (user?.id) {
     await supabase
       .from('operators')
       .update({
@@ -325,7 +331,7 @@ export async function hubVerifyMfaSetupAction(
           recovery_codes_used: 0,
         },
       } as never)
-      .eq('email', user.email ?? '')
+      .eq('auth_user_id', user.id)
   }
 
   return successResponse({ recoveryCodes })
