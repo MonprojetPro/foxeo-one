@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video, ChefHat, Wrench } from 'lucide-react'
+import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video, ChefHat, Wrench, UserCog } from 'lucide-react'
 import { Badge } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
 import { useValidationBadge, useValidationRealtime } from '@monprojetpro/modules-validation-hub'
@@ -22,6 +22,7 @@ const navItems = [
   { icon: Bot,           label: 'Élio',            href: '/elio' },
   { icon: Settings,      label: 'One',              href: '/modules/admin' },
   { icon: Wrench,        label: 'Maintenance & Système', href: '/modules/admin/system' },
+  { icon: UserCog,       label: 'Mon profil',            href: '/settings' },
 ]
 
 // Section « Produits » — produits externes pilotés depuis le Hub (cockpits).

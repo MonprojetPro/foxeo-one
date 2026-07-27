@@ -70,6 +70,7 @@ vi.mock('lucide-react', async (importOriginal) => {
     Receipt: MockIcon,
     Bot: MockIcon,
     Settings: MockIcon,
+    UserCog: MockIcon,
   }
 })
 
@@ -168,5 +169,24 @@ describe('HubSidebarClient', () => {
     render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
     const link = screen.getByRole('link', { name: /Maintenance & Système/i })
     expect(link).toHaveAttribute('href', '/modules/admin/system')
+  })
+
+  // Page « Mon profil » — settings opérateur (nom, email, mot de passe, 2FA)
+  it('renders "Mon profil" nav item linking to /settings', () => {
+    render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
+    const link = screen.getByRole('link', { name: /Mon profil/i })
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute('href', '/settings')
+  })
+
+  it('places "Mon profil" en dernière position de la nav', () => {
+    render(<HubSidebarClient operatorId="op-1" userId="u-1" />)
+    const links = screen.getAllByRole('link')
+    // Le dernier lien du nav est "Mon profil" (avant la section Produits, hors du <nav> principal
+    // mais toujours dans le DOM rendu ici) — on vérifie sa position parmi les nav items connus.
+    const navHrefs = links.map((l) => l.getAttribute('href'))
+    const profileIndex = navHrefs.indexOf('/settings')
+    const maintenanceIndex = navHrefs.indexOf('/modules/admin/system')
+    expect(profileIndex).toBeGreaterThan(maintenanceIndex)
   })
 })
