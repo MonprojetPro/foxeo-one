@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { StepElioChat } from './step-elio-chat'
 
@@ -49,6 +49,13 @@ vi.mock('@monprojetpro/module-elio', () => ({
     error: null,
   }),
   consumeStepContext: vi.fn().mockResolvedValue({ data: { consumed: true }, error: null }),
+}))
+
+// Espace figé (abonnement terminé) — piloté par test, false par défaut (client actif).
+const mockUseClientReadOnly = vi.hoisted(() => vi.fn(() => false))
+vi.mock('@monprojetpro/ui', async (importOriginal) => ({
+  ...(await importOriginal() as Record<string, unknown>),
+  useClientReadOnly: () => mockUseClientReadOnly(),
 }))
 
 const STEP_ID = '00000000-0000-0000-0000-000000000001'
@@ -399,6 +406,48 @@ describe('StepElioChat', () => {
       expect(onAgentConfigLoaded).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'Élio' })
       )
+    })
+  })
+
+  // ── Espace figé — abonnement terminé ────────────────────────────────────────
+
+  describe('parcours arrêté (abonnement terminé)', () => {
+    afterEach(() => mockUseClientReadOnly.mockReturnValue(false))
+
+    it('remplace la saisie par un encart de consultation', async () => {
+      mockUseClientReadOnly.mockReturnValue(true)
+
+      const { container } = render(
+        <StepElioChat
+          stepId={STEP_ID}
+          stepStatus="current"
+          stepNumber={3}
+          clientId={CLIENT_ID}
+        />
+      )
+
+      await waitFor(() => {
+        expect(container.textContent).toContain('Conversation clôturée')
+      })
+      // Plus aucun champ de saisie : le message ne pourrait pas partir.
+      expect(container.querySelector('textarea')).toBeNull()
+    })
+
+    it('laisse la saisie ouverte pour un client actif', async () => {
+      mockUseClientReadOnly.mockReturnValue(false)
+
+      const { container } = render(
+        <StepElioChat
+          stepId={STEP_ID}
+          stepStatus="current"
+          stepNumber={3}
+          clientId={CLIENT_ID}
+        />
+      )
+
+      await waitFor(() => {
+        expect(container.querySelector('textarea')).not.toBeNull()
+      })
     })
   })
 })

@@ -3,10 +3,22 @@ import { getLabParcoursContext } from './get-lab-parcours-context'
 
 const agentsData = vi.hoisted(() => ({ value: [] as Array<Record<string, unknown>> }))
 const cfgData = vi.hoisted(() => ({ value: null as Record<string, unknown> | null }))
+const clientData = vi.hoisted(() => ({ value: null as Record<string, unknown> | null }))
 
 vi.mock('@monprojetpro/supabase', () => ({
+  isReadOnlyClientStatus: (status: string | null | undefined) =>
+    status === 'subscription_cancelled' || status === 'handed_off',
   createServerSupabaseClient: vi.fn(async () => ({
     from: (table: string) => {
+      if (table === 'clients') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({ data: clientData.value, error: null }),
+            }),
+          }),
+        }
+      }
       if (table === 'client_parcours_agents') {
         return {
           select: () => ({
@@ -32,6 +44,7 @@ describe('getLabParcoursContext', () => {
   beforeEach(() => {
     agentsData.value = []
     cfgData.value = null
+    clientData.value = { status: 'active' }
   })
 
   it('retourne null sans clientId', async () => {
@@ -74,6 +87,33 @@ describe('getLabParcoursContext', () => {
     cfgData.value = { elio_lab_enabled: false }
     const ctx = await getLabParcoursContext('client-1')
     expect(ctx).toContain('EN PAUSE')
+  })
+
+  it('signale au Concierge que l\'abonnement est terminé et interdit d\'inviter à reprendre', async () => {
+    agentsData.value = [
+      { step_order: 1, step_label: 'Élio Cible', status: 'active', is_enabled: true },
+    ]
+    cfgData.value = { elio_lab_enabled: true }
+    clientData.value = { status: 'subscription_cancelled' }
+
+    const ctx = await getLabParcoursContext('client-1')
+    expect(ctx).toContain("L'ABONNEMENT DU CLIENT EST TERMINÉ")
+    expect(ctx).toContain('ARRÊTÉ DÉFINITIVEMENT')
+    // L'étape n'est plus « en cours » : le parcours s'est arrêté là.
+    expect(ctx).toContain("Étape où le parcours s'est arrêté")
+    expect(ctx).not.toContain('Étape en cours')
+  })
+
+  it('ne signale rien de particulier pour un client actif', async () => {
+    agentsData.value = [
+      { step_order: 1, step_label: 'Élio Cible', status: 'active', is_enabled: true },
+    ]
+    cfgData.value = { elio_lab_enabled: true }
+    clientData.value = { status: 'active' }
+
+    const ctx = await getLabParcoursContext('client-1')
+    expect(ctx).not.toContain('ABONNEMENT')
+    expect(ctx).toContain('Étape en cours')
   })
 
   it('exclut les agents désactivés (is_enabled=false) de la progression', async () => {

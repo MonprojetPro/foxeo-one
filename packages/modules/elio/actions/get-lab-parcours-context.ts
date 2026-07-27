@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, isReadOnlyClientStatus } from '@monprojetpro/supabase'
 
 /**
  * Construit un résumé textuel léger de l'état du parcours Lab d'un client, destiné
@@ -42,6 +42,18 @@ export async function getLabParcoursContext(clientId: string): Promise<string | 
     const agentsPaused = cfg?.elio_lab_enabled === false
     const isLibre = cfg?.parcours_mode === 'libre'
 
+    // Fin d'abonnement — sans cette information, le Concierge continuait à écrire
+    // « quand tu seras prêt à reprendre » à un client dont le parcours est définitivement
+    // figé : une promesse que l'interface ne peut plus tenir.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: clientRow } = await (supabase as any)
+      .from('clients')
+      .select('status')
+      .eq('id', clientId)
+      .maybeSingle() as { data: { status: string | null } | null }
+
+    const subscriptionEnded = isReadOnlyClientStatus(clientRow?.status)
+
     // Les agents désactivés (is_enabled=false) ne comptent pas dans la progression.
     const enabled = agents.filter((a) => a.is_enabled !== false)
     const total = enabled.length
@@ -57,7 +69,11 @@ export async function getLabParcoursContext(clientId: string): Promise<string | 
     )
     lines.push(`- Progression : ${completed}/${total} étape(s) terminée(s).`)
 
-    if (current) {
+    if (current && subscriptionEnded) {
+      // Plus « en cours » : le parcours s'est arrêté là. Le mot compte — c'est lui qui
+      // décide si le Concierge parle au présent ou au passé.
+      lines.push(`- Étape où le parcours s'est arrêté : « ${current.step_label} ».`)
+    } else if (current) {
       lines.push(`- Étape en cours : « ${current.step_label} ».`)
     } else if (allCompleted) {
       lines.push('- Toutes les étapes sont terminées — la graduation vers le mode One est proche.')
@@ -78,6 +94,12 @@ export async function getLabParcoursContext(clientId: string): Promise<string | 
       .join(' · ')
     if (stepsList) {
       lines.push(`- Étapes : ${stepsList}.`)
+    }
+
+    if (subscriptionEnded) {
+      lines.push(
+        "- ⛔ L'ABONNEMENT DU CLIENT EST TERMINÉ : son parcours Lab est ARRÊTÉ DÉFINITIVEMENT en l'état. Il garde l'accès complet en consultation (étapes, échanges, documents à télécharger) et peut toujours écrire à MiKL, mais il ne peut plus faire avancer son parcours : ni discuter avec les agents d'étape, ni générer, ni soumettre un document. RÈGLES DE DISCOURS ABSOLUES : ne lui dis JAMAIS « quand tu seras prêt à reprendre », ne l'invite JAMAIS à continuer, à avancer, à finaliser ou à soumettre, et ne lui promets aucune reprise. Parle de son parcours au PASSÉ. S'il veut reprendre, la seule bonne réponse est de l'inviter chaleureusement à en parler à MiKL, qui décide. Reste chaleureux : ce n'est pas une sanction, la porte reste ouverte."
+      )
     }
 
     if (agentsPaused) {

@@ -36,13 +36,29 @@ const statusConfig: Record<ParcoursStepStatus, { label: string; dot: string; cla
   },
 }
 
+/**
+ * Parcours arrêté (abonnement terminé) : les statuts « vivants » (en cours, à corriger,
+ * en attente) deviennent faux et invitent à agir. On les remplace par un état neutre,
+ * sans pastille clignotante. « Validée » et « Passée » sont conservés : ce sont des faits
+ * acquis, pas des invitations.
+ */
+const FROZEN_CONFIG = {
+  label: 'Parcours arrêté',
+  dot: 'bg-[#6b7280]',
+  className: 'bg-[#1f2937] text-[#9ca3af] border border-[#374151]',
+}
+
+const FROZEN_KEPT_STATUSES: ParcoursStepStatus[] = ['completed', 'skipped']
+
 interface ParcoursStepStatusBadgeProps {
   status: ParcoursStepStatus
   className?: string
+  /** Abonnement terminé → badge neutre au lieu d'un statut qui suggère une action. */
+  frozen?: boolean
 }
 
-export function ParcoursStepStatusBadge({ status, className }: ParcoursStepStatusBadgeProps) {
-  const config = statusConfig[status]
+export function ParcoursStepStatusBadge({ status, className, frozen = false }: ParcoursStepStatusBadgeProps) {
+  const config = frozen && !FROZEN_KEPT_STATUSES.includes(status) ? FROZEN_CONFIG : statusConfig[status]
   return (
     <span
       className={cn(

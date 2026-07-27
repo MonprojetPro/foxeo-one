@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ParcoursOverview } from './parcours-overview'
 import type { ParcoursWithSteps } from '../types/parcours.types'
@@ -40,10 +40,14 @@ vi.mock('@monprojetpro/supabase', () => {
   }
 })
 
+// Espace figé (abonnement terminé) — piloté par test, false par défaut (client actif).
+const mockUseClientReadOnly = vi.hoisted(() => vi.fn(() => false))
+
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal() as Record<string, unknown>
   return {
     ...actual,
+    useClientReadOnly: () => mockUseClientReadOnly(),
     showSuccess: vi.fn(),
     showError: vi.fn(),
     Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
@@ -250,5 +254,67 @@ describe('ParcoursOverview', () => {
     render(<ParcoursOverview clientId={CLIENT_ID} />)
     expect(screen.getByText(/Votre parcours est en pause/)).toBeDefined()
     expect(screen.getByText(/MiKL va vous contacter/)).toBeDefined()
+  })
+
+  // Espace figé — abonnement terminé. L'écran ne doit plus rien promettre :
+  // ni « EN COURS », ni « Parcours libre », ni « Continuer → », ni progression vivante.
+  describe('parcours arrêté (abonnement terminé)', () => {
+    afterEach(() => mockUseClientReadOnly.mockReturnValue(false))
+
+    function renderFrozen(parcours: Partial<ParcoursWithSteps> = {}) {
+      mockUseClientReadOnly.mockReturnValue(true)
+      mockUseParcours.mockReturnValue({
+        data: { ...mockParcours, ...parcours },
+        isPending: false,
+        error: null,
+      })
+      return render(<ParcoursOverview clientId={CLIENT_ID} />)
+    }
+
+    it('affiche le message de consultation à la place du bandeau « Parcours libre »', () => {
+      const { container } = renderFrozen({ parcoursMode: 'libre' })
+
+      expect(container.textContent).toContain('Ton parcours est arrêté.')
+      expect(container.textContent).not.toContain('Toutes les étapes sont ouvertes')
+    })
+
+    it('n\'affiche plus le badge « En cours » sur les cartes d\'étape', () => {
+      const { container } = renderFrozen()
+
+      expect(container.textContent).not.toContain('En cours')
+      // L'étape non finalisée reste consultable.
+      expect(container.textContent).toContain('consultation uniquement')
+    })
+
+    it('recadre la progression sans supprimer le chiffre', () => {
+      const { container } = renderFrozen()
+
+      expect(container.textContent).toContain('Parcours arrêté')
+      expect(container.textContent).not.toContain('Progression globale')
+      expect(container.textContent).toContain('1/2 étapes réalisées')
+      expect(container.textContent).toContain('50%')
+    })
+
+    it('le Concierge ne promet plus de reprise et ne propose plus « Continuer »', () => {
+      const { container } = renderFrozen()
+
+      expect(container.textContent).toContain('ton parcours s\'arrête ici')
+      expect(container.textContent).not.toContain('Continuer →')
+      // Le Concierge reste joignable — c'est le canal de lien avec MiKL.
+      expect(screen.getByText(/Pose-moi une question/i)).toBeDefined()
+    })
+
+    it('n\'affiche plus un mot d\'Élio antérieur à la résiliation', () => {
+      const { container } = renderFrozen({
+        conciergeWord: {
+          body: 'Quand tu seras prêt à reprendre, je suis là !',
+          eventType: 'submission_approved',
+          agentLabel: 'Élio Cible',
+          createdAt: '2026-07-01T00:00:00.000Z',
+        },
+      })
+
+      expect(container.textContent).not.toContain('prêt à reprendre')
+    })
   })
 })

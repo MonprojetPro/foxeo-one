@@ -13,9 +13,13 @@ interface ParcoursStepCardProps {
    *  « parcours abandonné » : carte grisée « En pause », consultation uniquement.
    *  Les étapes déjà complétées gardent leur badge vert (voir garde `!== 'completed'`). */
   isPaused?: boolean
+  /** Abonnement terminé → parcours arrêté définitivement. Même rendu de consultation que
+   *  « en pause » (on n'invente pas un 8e style), seul le libellé change : une pause peut
+   *  reprendre, un parcours arrêté non — la carte ne doit rien promettre. */
+  isFrozen?: boolean
 }
 
-export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned = false, isPaused = false }: ParcoursStepCardProps) {
+export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned = false, isPaused = false, isFrozen = false }: ParcoursStepCardProps) {
   const router = useRouter()
 
   function handleClick() {
@@ -47,10 +51,13 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
     )
   }
 
-  // ÉTAT EN PAUSE — parcours abandonné OU Lab en pause : cartes cliquables (consultation)
-  // mais badge « En pause » visible. Les étapes complétées sont exclues ici : elles gardent
-  // leur badge vert « Complétée » (rendu plus bas), une réussite reste une réussite en pause.
-  if ((isAbandoned || isPaused) && step.status !== 'completed') {
+  // ÉTAT EN PAUSE / ARRÊTÉ — parcours abandonné, Lab en pause OU abonnement terminé :
+  // cartes cliquables (consultation) mais sans badge « En cours » ni invitation à agir.
+  // Les étapes complétées sont exclues ici : elles gardent leur badge vert « Complétée »
+  // (rendu plus bas), une réussite reste une réussite même parcours arrêté.
+  if ((isAbandoned || isPaused || isFrozen) && step.status !== 'completed') {
+    const frozenLabel = isFrozen ? 'Parcours arrêté · consultation uniquement →' : 'En pause · consultation uniquement →'
+    const frozenAria = isFrozen ? 'parcours arrêté, consultation uniquement' : 'parcours en pause, consultation uniquement'
     return (
       <div
         className={cn(
@@ -62,7 +69,7 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
-        aria-label={`Étape ${step.stepNumber}: ${step.title} — non finalisée, parcours en pause, consultation uniquement`}
+        aria-label={`Étape ${step.stepNumber}: ${step.title} — non finalisée, ${frozenAria}`}
       >
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-1 bg-[rgba(251,146,60,0.12)] text-orange-400/90 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
@@ -77,7 +84,7 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
         <div className="mt-3.5 text-[16px] font-medium text-[#9ca3af] leading-snug">{step.title}</div>
         <div className="text-[12px] text-[#6b7280] mt-1 line-clamp-2">{step.description}</div>
         <div className="flex-1" />
-        <div className="text-[11px] text-[#6b7280] italic">En pause · consultation uniquement →</div>
+        <div className="text-[11px] text-[#6b7280] italic">{frozenLabel}</div>
       </div>
     )
   }
@@ -86,7 +93,7 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
   // (grisée, opacity-70) pour rester cohérente avec les cartes gelées et ne plus paraître
   // active — mais garde le badge « Complétée » (une réussite reste visible).
   if (step.status === 'completed') {
-    const paused = isAbandoned || isPaused
+    const paused = isAbandoned || isPaused || isFrozen
     return (
       <div
         className={cn(
@@ -100,7 +107,7 @@ export function ParcoursStepCard({ step, className, unreadCount = 0, isAbandoned
         role="button"
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick() }}
-        aria-label={`Étape ${step.stepNumber}: ${step.title} — complétée${paused ? ', parcours en pause' : ''}`}
+        aria-label={`Étape ${step.stepNumber}: ${step.title} — complétée${isFrozen ? ', parcours arrêté' : paused ? ', parcours en pause' : ''}`}
       >
         <div className="flex items-center justify-between">
           <span className={cn(

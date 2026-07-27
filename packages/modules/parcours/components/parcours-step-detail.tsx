@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Button } from '@monprojetpro/ui'
+import { Button, useClientReadOnly } from '@monprojetpro/ui'
 import type { ParcoursStep, ParcoursStepStatus } from '../types/parcours.types'
 import { ParcoursStepStatusBadge } from './parcours-step-status-badge'
 import { BriefMarkdownRenderer } from './brief-markdown-renderer'
@@ -71,6 +71,10 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
   const [messageCount, setMessageCount] = useState(0)
   const [mobileTab, setMobileTab] = useState<MobileTab>('step')
 
+  // Espace figé — abonnement terminé. Lu depuis le contexte plutôt que passé en prop :
+  // ce composant est aussi monté côté Hub, où il n'y a pas de provider (donc jamais figé).
+  const readOnly = useClientReadOnly()
+
   // Statut de l'étape (SSR) rafraîchi en direct quand le Hub valide / refuse / renvoie l'étape.
   useStepRealtimeRefresh(step.id)
 
@@ -106,8 +110,10 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             </div>
           )}
 
-          {/* Banner refus — orange : MiKL a refusé, le client doit corriger et resoumettre */}
-          {step.status === 'rejected' && (
+          {/* Banner refus — orange : MiKL a refusé, le client doit corriger et resoumettre.
+              Masqué si l'abonnement est terminé : il demanderait une correction devenue
+              impossible (le bandeau « parcours arrêté » ci-dessous prend le relais). */}
+          {step.status === 'rejected' && !readOnly && (
             <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-orange-500/40 bg-orange-500/10 px-4 py-3 text-sm text-orange-300">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0 mt-0.5">
                 <path d="M12 3l10 18H2L12 3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -127,12 +133,32 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
                 <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M8 12l3 3 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Cette étape a été validée par MiKL. {totalSteps > step.stepNumber ? `Passez à l'étape ${step.stepNumber + 1}.` : 'Toutes vos étapes sont terminées — graduation proche !'}
+              Cette étape a été validée par MiKL.{' '}
+              {readOnly
+                ? ''
+                : totalSteps > step.stepNumber
+                  ? `Passez à l'étape ${step.stepNumber + 1}.`
+                  : 'Toutes vos étapes sont terminées — graduation proche !'}
+            </div>
+          )}
+
+          {/* Banner abonnement terminé — l'étape reste ouverte en lecture, rien d'autre.
+              Prioritaire sur le bandeau « en pause » : une pause peut reprendre, pas ça. */}
+          {readOnly && (
+            <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="mt-0.5 shrink-0">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="leading-relaxed">
+                Ton abonnement est terminé, ton parcours s&apos;est arrêté ici. Cette étape
+                reste consultable : relis les échanges et récupère tes documents quand tu veux.
+                Envie de reprendre ? Écris à MiKL.
+              </p>
             </div>
           )}
 
           {/* Banner parcours en pause — consultation uniquement */}
-          {isPaused && (
+          {isPaused && !readOnly && (
             <div className="mb-4 flex items-center gap-2.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-sm text-orange-300">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="shrink-0">
                 <rect x="2" y="9" width="12" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -156,7 +182,7 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
                     {String(step.stepNumber).padStart(2, '0')}
                   </span>
                   <h1 className="text-2xl font-bold leading-snug text-white">{step.title}</h1>
-                  <ParcoursStepStatusBadge status={step.status} />
+                  <ParcoursStepStatusBadge status={step.status} frozen={readOnly} />
                 </div>
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-[#a78bfa]/60 mb-1">
                   Pourquoi cette étape ?
@@ -225,8 +251,10 @@ export function ParcoursStepDetail({ step, totalSteps, prevStep, nextStep, clien
             />
           )}
 
-          {/* Bouton Générer mon document — masqué si parcours en pause ou agents coupés */}
-          {clientId && config.showGenerateButton && !isPaused && !agentsPaused && (
+          {/* Bouton Générer mon document — masqué si parcours en pause, agents coupés, ou
+              abonnement terminé (le bouton est déjà neutralisé à l'intérieur, mais l'afficher
+              grisé reviendrait à montrer une action qui n'existe plus). */}
+          {clientId && config.showGenerateButton && !isPaused && !agentsPaused && !readOnly && (
             <GenerateDocumentButton
               stepId={step.id}
               stepStatus={step.status}

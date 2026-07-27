@@ -10,6 +10,12 @@ interface ElioParcoursPanelProps {
   /** Agents du parcours coupés par MiKL → le Concierge reste dispo, message adapté. */
   agentsPaused?: boolean
   /**
+   * Abonnement terminé → parcours arrêté. Le Concierge reste joignable (c'est un canal de
+   * lien, comme le chat MiKL) mais son mot ne promet plus de reprise et le CTA d'action
+   * disparaît : plus aucune invitation à faire quelque chose qui échouerait.
+   */
+  frozen?: boolean
+  /**
    * Dernier « mot d'Élio » vivant (LOT F) — message proactif sur-mesure lié au dernier
    * événement. Prioritaire sur les phrases d'état (sauf pause). null = on retombe sur l'état.
    */
@@ -36,6 +42,7 @@ export function ElioParcoursPanel({
   currentStep,
   allCompleted,
   agentsPaused = false,
+  frozen = false,
   conciergeWord,
   onAskConcierge,
 }: ElioParcoursPanelProps) {
@@ -44,9 +51,16 @@ export function ElioParcoursPanel({
   const isPendingReview = currentStep?.status === 'pending_review'
   const isRejected = currentStep?.status === 'rejected'
 
-  // Message de CONTEXTE actuel. Priorité : pause (état système important) > mot d'Élio vivant
-  // (dernier événement, LOT F) > phrases d'état (fallback).
-  const message = agentsPaused
+  // Message de CONTEXTE actuel. Priorité : abonnement terminé (état définitif) > pause
+  // (état système important) > mot d'Élio vivant (dernier événement, LOT F) > phrases d'état.
+  //
+  // ⚠️ `frozen` passe AVANT `conciergeWord` volontairement : un mot d'Élio généré avant la
+  // résiliation est stocké en base et serait ré-affiché tel quel (« quand tu seras prêt à
+  // reprendre… ») alors qu'aucune reprise n'est possible. On ne le supprime pas — il
+  // redeviendrait juste si MiKL réactive le client — on cesse simplement de l'afficher.
+  const message = frozen
+    ? "Ton abonnement est terminé, alors ton parcours s'arrête ici. Tout ce que tu as construit reste à toi : tes étapes, nos échanges et tes documents restent consultables et téléchargeables autant que tu veux. Si un jour tu souhaites reprendre, parles-en à MiKL — et en attendant, je reste là pour tes questions."
+    : agentsPaused
     ? `Les agents de ton parcours sont en pause — MiKL les a suspendus pour le moment. Tu gardes l'accès à tout ton parcours et à ton historique. Moi, le Concierge, je reste là pour répondre à tes questions.`
     : conciergeWord?.body
       ? conciergeWord.body
@@ -61,8 +75,9 @@ export function ElioParcoursPanel({
             : 'Bienvenue dans votre parcours. Commencez par l\'étape 1 pour démarrer !'
 
   // CTA secondaire (action parcours) — distinct du bouton « Pose-moi une question » (Concierge).
-  // Masqué quand les agents sont en pause (pas d'invitation à avancer).
-  const parcoursCta = agentsPaused
+  // Masqué quand les agents sont en pause ou l'abonnement terminé (pas d'invitation à avancer :
+  // un « Continuer → » mènerait à une étape où plus rien n'est possible).
+  const parcoursCta = frozen || agentsPaused
     ? null
     : allCompleted
       ? null // Parcours terminé : le parcours complet est déjà affiché juste en dessous → CTA redondant.
@@ -74,15 +89,17 @@ export function ElioParcoursPanel({
             ? { href: `/modules/parcours/steps/${currentStep.stepNumber}`, label: 'Continuer →' }
             : { href: '/modules/parcours/steps/1', label: 'Démarrer →' }
 
-  const accentBorder = agentsPaused ? 'border-amber-500/30' : 'border-[#2d2d2d]'
-  const roleColor = agentsPaused ? 'text-amber-400' : 'text-[#a78bfa]'
-  const messageBox = agentsPaused
+  // Même palette ambre que la pause : information, pas erreur (cf. ReadOnlyBanner).
+  const muted = frozen || agentsPaused
+  const accentBorder = muted ? 'border-amber-500/30' : 'border-[#2d2d2d]'
+  const roleColor = muted ? 'text-amber-400' : 'text-[#a78bfa]'
+  const messageBox = muted
     ? 'bg-amber-500/5 border-amber-500/20'
     : 'bg-[#1e1557] border-[#3d2d6d]'
-  const ctaClass = agentsPaused
+  const ctaClass = muted
     ? 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'
     : 'border-[#a78bfa] text-[#a78bfa] hover:bg-[#1e1557]'
-  const askBtnClass = agentsPaused
+  const askBtnClass = muted
     ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25'
     : 'bg-[#1e1557] border-[#a78bfa]/60 text-[#a78bfa] hover:bg-[#2a1f6b]'
 

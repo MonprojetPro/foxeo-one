@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, isReadOnlyClientStatus } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 
 export interface TeasingEligibility {
@@ -24,6 +24,20 @@ export async function getTeasingEligibility(
   }
 
   const supabase = await createServerSupabaseClient()
+
+  // 0. Abonnement terminé → jamais de teasing.
+  // Le teasing invite le client à découvrir le Lab et à s'y lancer. Le proposer à
+  // quelqu'un dont l'abonnement est résilié — donc dont le parcours est justement figé —
+  // c'est promettre une action impossible. On l'écarte avant tout autre critère.
+  const { data: clientRow } = await supabase
+    .from('clients')
+    .select('status')
+    .eq('id', clientId)
+    .maybeSingle()
+
+  if (isReadOnlyClientStatus((clientRow as { status: string } | null)?.status)) {
+    return successResponse({ showTeasing: false })
+  }
 
   // 1. Check show_lab_teasing config
   const { data: configData, error: configError } = await supabase

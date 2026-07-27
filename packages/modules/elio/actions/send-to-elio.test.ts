@@ -5,6 +5,8 @@ import { DEFAULT_ELIO_CONFIG } from '../types/elio-config.types'
 const mockInvoke = vi.fn()
 // vi.hoisted : la variable est utilisée dans la factory vi.mock (hoistée en haut du fichier)
 const mockHasIaConsent = vi.hoisted(() => vi.fn())
+// Garde « espace figé » (abonnement terminé) — null = écriture autorisée par défaut.
+const mockCheckClientWriteAllowed = vi.hoisted(() => vi.fn())
 
 // Chaîne eq récursive pour supporter .eq().eq().eq() (validation_requests, etc.)
 function makeEqChain(): {
@@ -24,6 +26,7 @@ function makeEqChain(): {
 
 vi.mock('@monprojetpro/supabase', () => ({
   hasIaConsent: mockHasIaConsent,
+  checkClientWriteAllowed: mockCheckClientWriteAllowed,
   createServerSupabaseClient: vi.fn(async () => ({
     auth: {
       getUser: vi.fn(async () => ({ data: { user: { id: 'user-1' } }, error: null })),
@@ -112,6 +115,58 @@ describe('sendToElio', () => {
     vi.clearAllMocks()
     // Par défaut : consentement IA accordé (cas nominal)
     mockHasIaConsent.mockResolvedValue(true)
+    // Par défaut : client actif → écriture autorisée
+    mockCheckClientWriteAllowed.mockResolvedValue(null)
+  })
+
+  describe('espace figé — abonnement terminé', () => {
+    const READ_ONLY = {
+      message: 'Votre abonnement est terminé — votre espace est consultable mais non modifiable.',
+      code: 'READ_ONLY',
+    }
+
+    it('bloque un AGENT DE PARCOURS (appel avec systemPromptOverride)', async () => {
+      mockCheckClientWriteAllowed.mockResolvedValue(READ_ONLY)
+
+      const result = await sendToElio(
+        'lab',
+        'Salut',
+        'client-1',
+        undefined,
+        'Tu es Élio Cible, agent de l\'étape 2.',
+      )
+
+      expect(result.data).toBeNull()
+      expect(result.error?.code).toBe('READ_ONLY')
+      // L'appel LLM ne doit même pas partir.
+      expect(mockInvoke).not.toHaveBeenCalled()
+    })
+
+    it('laisse passer le CONCIERGE (chat libre Lab, sans systemPromptOverride)', async () => {
+      mockCheckClientWriteAllowed.mockResolvedValue(READ_ONLY)
+      mockInvoke.mockResolvedValueOnce({ data: { content: 'Je reste là pour toi.' }, error: null })
+
+      const result = await sendToElio('lab', 'Où en est mon dossier ?', 'client-1')
+
+      expect(result.error).toBeNull()
+      expect(result.data?.content).toBe('Je reste là pour toi.')
+    })
+
+    it('laisse passer un agent de parcours pour un client actif', async () => {
+      mockCheckClientWriteAllowed.mockResolvedValue(null)
+      mockInvoke.mockResolvedValueOnce({ data: { content: 'On continue !' }, error: null })
+
+      const result = await sendToElio(
+        'lab',
+        'Salut',
+        'client-1',
+        undefined,
+        'Tu es Élio Cible.',
+      )
+
+      expect(result.error).toBeNull()
+      expect(result.data?.content).toBe('On continue !')
+    })
   })
 
   it('retourne { data, error: null } en cas de succès', async () => {

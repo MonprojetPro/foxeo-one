@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerSupabaseClient, hasIaConsent } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, hasIaConsent, checkClientWriteAllowed } from '@monprojetpro/supabase'
 import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
 import { buildSystemPrompt, UPSELL_ONE_PLUS_MESSAGE, ELIO_FORMATTING_INSTRUCTION } from '../config/system-prompts'
 import { getElioConfig } from './get-elio-config'
@@ -535,6 +535,21 @@ export async function sendToElio(
   // reste disponible). On distingue par `systemPromptOverride` : seul le chat d'étape en
   // passe un (agent de parcours). cf. docs/lab-one-lifecycle.md.
   if (dashboardType === 'lab' && clientId && systemPromptOverride) {
+    // Espace figé — abonnement terminé : le parcours ne bouge plus, donc les agents d'étape
+    // ne dialoguent plus non plus. Sans cette garde, le client résilié continuait à faire
+    // avancer son travail avec l'agent alors que la soumission, elle, est verrouillée en
+    // base : on l'aurait laissé travailler pour rien. Le Concierge (chemin 3ter, sans
+    // systemPromptOverride) reste lui pleinement accessible — c'est un canal de lien avec
+    // MiKL, au même titre que le chat, et la RLS laisse volontairement ces tables ouvertes
+    // (cf. migration 20260726170000, §③ « tables volontairement laissées ouvertes »).
+    const readOnly = await checkClientWriteAllowed()
+    if (readOnly) {
+      return errorResponse(
+        "Ton abonnement est terminé : ton parcours est à l'arrêt, les agents d'étape ne répondent plus. Tu gardes l'accès à tous tes échanges et à tes documents — et si tu veux reprendre, écris à MiKL, il te répond.",
+        readOnly.code
+      )
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: labConfig } = await (supabase as any)
       .from('client_configs')

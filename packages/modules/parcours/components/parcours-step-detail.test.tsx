@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ParcoursStepDetail } from './parcours-step-detail'
 import type { ParcoursStep } from '../types/parcours.types'
@@ -34,10 +34,13 @@ vi.mock('next/link', () => ({
     <a href={href} {...props}>{children}</a>
   ),
 }))
+const mockUseClientReadOnly = vi.hoisted(() => vi.fn(() => false))
+
 vi.mock('@monprojetpro/ui', () => ({
   Button: ({ children, disabled, variant, size, ...props }: { children: React.ReactNode; disabled?: boolean; variant?: string; size?: string; [key: string]: unknown }) => (
     <button disabled={disabled} data-variant={variant} data-size={size} {...props}>{children}</button>
   ),
+  useClientReadOnly: () => mockUseClientReadOnly(),
 }))
 
 const baseStep: ParcoursStep = {
@@ -170,5 +173,49 @@ describe('ParcoursStepDetail', () => {
     fireEvent.click(screen.getByText('Historique'))
     fireEvent.click(screen.getByText('Étape'))
     expect(screen.getByText('Pourquoi cette étape ?')).toBeDefined()
+  })
+
+  // Espace figé — abonnement terminé : l'étape reste consultable, sans aucune invitation à agir.
+  describe('parcours arrêté (abonnement terminé)', () => {
+    afterEach(() => mockUseClientReadOnly.mockReturnValue(false))
+
+    it('affiche le bandeau « parcours arrêté » et masque le bouton Générer', () => {
+      mockUseClientReadOnly.mockReturnValue(true)
+      const { container } = render(<ParcoursStepDetail step={baseStep} totalSteps={5} clientId="client-1" />)
+
+      expect(container.textContent).toContain("ton parcours s'est arrêté ici")
+      expect(screen.queryByTestId('generate-document-button')).toBeNull()
+    })
+
+    it('ne demande plus de corriger une étape refusée', () => {
+      mockUseClientReadOnly.mockReturnValue(true)
+      const rejected = { ...baseStep, status: 'rejected' as const }
+      const { container } = render(<ParcoursStepDetail step={rejected} totalSteps={5} clientId="client-1" />)
+
+      expect(container.textContent).not.toContain('régénère ton document')
+    })
+
+    it('ne renvoie plus vers l\'étape suivante sur une étape validée', () => {
+      mockUseClientReadOnly.mockReturnValue(true)
+      const completed = { ...baseStep, status: 'completed' as const }
+      const { container } = render(<ParcoursStepDetail step={completed} totalSteps={5} clientId="client-1" />)
+
+      expect(container.textContent).toContain('Cette étape a été validée par MiKL')
+      expect(container.textContent).not.toContain("Passez à l'étape")
+    })
+
+    it('neutralise le badge de statut « En cours »', () => {
+      mockUseClientReadOnly.mockReturnValue(true)
+      const { container } = render(<ParcoursStepDetail step={baseStep} totalSteps={5} clientId="client-1" />)
+
+      expect(container.textContent).toContain('Parcours arrêté')
+      expect(container.textContent).not.toContain('En cours')
+    })
+
+    it('laisse le bouton Générer pour un client actif', () => {
+      mockUseClientReadOnly.mockReturnValue(false)
+      render(<ParcoursStepDetail step={baseStep} totalSteps={5} clientId="client-1" />)
+      expect(screen.getByTestId('generate-document-button')).toBeDefined()
+    })
   })
 })

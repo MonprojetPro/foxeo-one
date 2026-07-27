@@ -41,11 +41,20 @@ function ParcoursSettingsContent({ clientId }: { clientId: string }) {
       <div>
         <h2 className="text-base font-medium text-foreground">Mon parcours Lab</h2>
         <p className="text-sm text-muted-foreground">
-          Statut : {statusLabels[parcours.status] ?? parcours.status}
+          {/* Abonnement terminé : afficher « En cours » serait faux — le parcours est arrêté,
+              quel que soit le statut resté en base. */}
+          Statut : {readOnly ? 'Arrêté — abonnement terminé' : statusLabels[parcours.status] ?? parcours.status}
         </p>
       </div>
 
-      {isAbandoned && (
+      {readOnly && (
+        <p className="text-sm text-muted-foreground">
+          Votre parcours reste consultable : vous pouvez relire vos étapes et télécharger vos
+          documents. Pour reprendre, écrivez à MiKL.
+        </p>
+      )}
+
+      {isAbandoned && !readOnly && (
         <p className="text-sm text-muted-foreground">
           Votre parcours est en pause. MiKL va vous contacter pour en discuter.
         </p>

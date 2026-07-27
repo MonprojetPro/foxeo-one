@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@monprojetpro/ui'
+import { Button, useClientReadOnly } from '@monprojetpro/ui'
 import { GeneratedBriefDialog } from './generated-brief-dialog'
 
 interface ElioGenerateBriefSectionProps {
@@ -10,6 +10,12 @@ interface ElioGenerateBriefSectionProps {
 
 export function ElioGenerateBriefSection({ stepId }: ElioGenerateBriefSectionProps) {
   const [showDialog, setShowDialog] = useState(false)
+  // Espace figé — abonnement terminé : générer un brief n'a plus de destination, la
+  // soumission est verrouillée en base. On retire l'encart plutôt que d'exposer un
+  // parcours qui s'arrête sur un mur (le formulaire en dessous explique déjà la situation).
+  const readOnly = useClientReadOnly()
+
+  if (readOnly) return null
 
   return (
     <>

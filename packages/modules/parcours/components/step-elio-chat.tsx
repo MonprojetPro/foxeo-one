@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { Bot } from 'lucide-react'
+import { useClientReadOnly } from '@monprojetpro/ui'
 import { ChatMarkdownRenderer } from './chat-markdown-renderer'
 import { getOrCreateStepConversation } from '../actions/get-or-create-step-conversation'
 import { getParcoursMemory } from '../actions/get-parcours-memory'
@@ -148,8 +149,12 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  // Espace figé — abonnement terminé : l'agent d'étape ne dialogue plus (garde miroir de
+  // celle posée dans sendToElio). L'historique, lui, reste intégralement affiché au-dessus.
+  const readOnly = useClientReadOnly()
+
   const isDisabled = stepStatus === 'locked'
-  const isInputDisabled = isReadonly(stepStatus) || stepStatus === 'locked' || isSending
+  const isInputDisabled = readOnly || isReadonly(stepStatus) || stepStatus === 'locked' || isSending
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -233,6 +238,9 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
         cfg.steeringContextId &&
         cfg.steeringPendingKickoff &&
         !isReadonly(stepStatus) &&
+        // Parcours arrêté : aucune relance proactive. L'appel serait refusé côté serveur,
+        // mais surtout on ne relance pas un client dont l'abonnement est terminé.
+        !readOnly &&
         !kickoffStartedRef.current
       ) {
         kickoffStartedRef.current = true
@@ -275,7 +283,7 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
 
     init()
     return () => { cancelled = true }
-  }, [stepId, stepNumber, clientId, iaConsentGranted])
+  }, [stepId, stepNumber, clientId, iaConsentGranted, readOnly])
 
   const handleSend = useCallback(async () => {
     if (!input.trim() || !conversationId || isSending) return
@@ -410,7 +418,16 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
           </div>
         )}
 
-        {chatStatus === 'ready' && messages.length === 0 && !disabledMessage && (
+        {/* Étape jamais entamée + parcours arrêté : on ne dit pas « posez-moi vos questions »,
+            il n'y a plus personne au bout du fil pour cette étape. */}
+        {chatStatus === 'ready' && messages.length === 0 && readOnly && (
+          <div className="flex-1 flex items-center justify-center px-4 text-center text-sm text-[#6b7280]">
+            Cette étape n&apos;a pas été entamée avant l&apos;arrêt de ton parcours — il n&apos;y a
+            donc aucun échange à consulter ici.
+          </div>
+        )}
+
+        {chatStatus === 'ready' && messages.length === 0 && !readOnly && !disabledMessage && (
           <div className="flex gap-2.5 items-start">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#7c3aed] to-[#a78bfa] flex items-center justify-center text-white font-bold text-[10px] shrink-0">
               E
@@ -492,8 +509,18 @@ export function StepElioChat({ stepId, stepStatus, stepNumber, clientId, iaConse
         </div>
       )}
 
-      {/* Saisie — ou encart « en pause » si les agents sont coupés (historique conservé ci-dessus) */}
-      {agentsPaused ? (
+      {/* Saisie — ou encart de consultation si le parcours est arrêté (abonnement terminé)
+          ou les agents coupés. Dans les deux cas l'historique reste affiché ci-dessus. */}
+      {readOnly ? (
+        <div className="border-t border-amber-500/30 bg-amber-500/5 p-3 flex items-center gap-2.5">
+          <Bot className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+          <p className="text-xs leading-relaxed text-[#9ca3af]">
+            <span className="font-medium text-[#e5e7eb]">Conversation clôturée.</span>{' '}
+            Ton abonnement est terminé : l&apos;agent de cette étape ne répond plus. Tu gardes
+            tout l&apos;historique ci-dessus. Pour reprendre, écris à MiKL — il te répond.
+          </p>
+        </div>
+      ) : agentsPaused ? (
         <div className="border-t border-amber-500/30 bg-amber-500/5 p-3 flex items-center gap-2.5">
           <Bot className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
           <p className="text-xs leading-relaxed text-[#9ca3af]">

@@ -22,6 +22,8 @@ vi.mock('@monprojetpro/supabase', () => ({
   // Guard consentement IA (send-to-elio §1bis) — consenti par défaut dans ces tests de tier.
   // (Fix pré-existant : le mock ne fournissait pas hasIaConsent → 7 tests rouges à HEAD.)
   hasIaConsent: vi.fn(async () => true),
+  // Garde « espace figé » (send-to-elio §3bis) — client actif dans ces tests de tier.
+  checkClientWriteAllowed: vi.fn(async () => null),
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({
