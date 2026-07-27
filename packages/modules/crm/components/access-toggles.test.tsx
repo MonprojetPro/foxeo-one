@@ -82,4 +82,19 @@ describe('AccessToggles', () => {
     expect(screen.getByTestId('access-toggles')).toBeInTheDocument()
     expect(screen.getByText('Accès Lab')).toBeInTheDocument()
   })
+
+  it('client résilié (isFrozen) : « Figé » remplace « Actifs » même si elio_lab_enabled=true', () => {
+    render(
+      <AccessToggles
+        clientId={CLIENT_ID}
+        labModeAvailable
+        elioLabEnabled
+        hasActiveParcours={false}
+        isFrozen
+      />,
+      { wrapper: createWrapper() }
+    )
+    expect(screen.getByTestId('lab-agents-state').textContent).toBe('Figé')
+    expect(screen.queryByText('Actifs')).not.toBeInTheDocument()
+  })
 })

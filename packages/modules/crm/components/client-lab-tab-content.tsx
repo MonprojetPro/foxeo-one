@@ -11,6 +11,7 @@ import { AssignParcoursDialog } from './assign-parcours-dialog'
 import { GraduationDialog } from './graduation-dialog'
 import { ReactivateParcoursDialog } from './reactivate-parcours-dialog'
 import { LabExitKitDialog } from './lab-exit-kit-dialog'
+import { isCancelledSubscription } from '../types/crm.types'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -58,7 +59,10 @@ export function ClientLabTabContent({
 
   const dashboardType = client.config?.dashboardType ?? 'hub'
   const isLabClient = dashboardType === 'lab'
-  const hasActiveParcours = parcours?.status === 'en_cours'
+  // Client résilié/transféré : parcours arrêté quel que soit son statut brut en base
+  // (la résiliation ne réécrit pas parcours.status).
+  const isFrozen = isCancelledSubscription(client.status)
+  const hasActiveParcours = parcours?.status === 'en_cours' && !isFrozen
   const parcoursAbandoned = parcours?.status === 'abandoned'
   const parcoursCompleted = parcours?.status === 'termine'
   const noPendingValidations = (pendingValidations?.count ?? 0) === 0
@@ -70,31 +74,42 @@ export function ClientLabTabContent({
   // Règle métier : One déclenché ⇒ Lab en pause automatiquement (sauf réactivation manuelle).
   const hasLab = client.config?.labModeAvailable ?? false
   const agentsOn = client.config?.elioLabEnabled ?? false
-  const labState: 'none' | 'active' | 'paused' = !hasLab ? 'none' : agentsOn ? 'active' : 'paused'
+  // 'frozen' prime sur tout le reste : un client résilié n'est jamais « actif », même si
+  // elio_lab_enabled est resté vrai en base — la résiliation arrête le parcours, pas ce flag.
+  const labState: 'none' | 'active' | 'paused' | 'frozen' =
+    !hasLab ? 'none' : isFrozen ? 'frozen' : agentsOn ? 'active' : 'paused'
 
   const activationNote =
     labState === 'none'
       ? "Le client n'a pas encore accès à son espace Lab."
-      : labState === 'paused'
-        ? 'Espace Lab acquis (historique consultable) — agents du parcours en pause. Le One actif met le Lab en pause ; réactive les agents ci-dessous si besoin.'
-        : billingStatus?.labPaid
-          ? 'Forfait Lab payé — accès actif.'
-          : billingStatus?.invoiceSent
-            ? 'Activé — facture envoyée, paiement en attente.'
-            : 'Activé manuellement (sans facturation).'
+      : labState === 'frozen'
+        ? 'Abonnement résilié — espace Lab et historique consultables, parcours arrêté (non modifiable).'
+        : labState === 'paused'
+          ? 'Espace Lab acquis (historique consultable) — agents du parcours en pause. Le One actif met le Lab en pause ; réactive les agents ci-dessous si besoin.'
+          : billingStatus?.labPaid
+            ? 'Forfait Lab payé — accès actif.'
+            : billingStatus?.invoiceSent
+              ? 'Activé — facture envoyée, paiement en attente.'
+              : 'Activé manuellement (sans facturation).'
 
   const labStateBadge =
-    labState === 'none' ? 'Lab non activé' : labState === 'paused' ? 'Lab en pause' : 'Lab actif'
+    labState === 'none' ? 'Lab non activé'
+      : labState === 'frozen' ? 'Lab figé'
+        : labState === 'paused' ? 'Lab en pause'
+          : 'Lab actif'
 
   const graduationTooltip = !isLabClient
     ? null
-    : !parcoursCompleted
-      ? `Parcours non terminé — ${
-          parcours?.activeStages.filter((s) => s.active && s.status !== 'completed').length ?? '?'
-        } étape(s) restante(s)`
-      : !noPendingValidations
-        ? `Demandes de validation en attente — traitez-les d'abord`
-        : null
+    : isFrozen
+      // Priorité sur les autres motifs : réactiver l'abonnement est le vrai préalable.
+      ? 'Abonnement résilié — réactivez-le (barre d\'actions) avant de graduer'
+      : !parcoursCompleted
+        ? `Parcours non terminé — ${
+            parcours?.activeStages.filter((s) => s.active && s.status !== 'completed').length ?? '?'
+          } étape(s) restante(s)`
+        : !noPendingValidations
+          ? `Demandes de validation en attente — traitez-les d'abord`
+          : null
 
   return (
     <div className="space-y-8">
@@ -109,7 +124,11 @@ export function ClientLabTabContent({
               <p className="text-sm font-medium">État du Lab</p>
               <p className="text-xs text-muted-foreground">{activationNote}</p>
             </div>
-            <Badge variant={labState === 'active' ? 'default' : 'outline'} data-testid="lab-activation-badge">
+            <Badge
+              variant={labState === 'active' ? 'default' : 'outline'}
+              className={labState === 'frozen' ? 'border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400' : undefined}
+              data-testid="lab-activation-badge"
+            >
               {labStateBadge}
             </Badge>
           </CardContent>
@@ -122,6 +141,7 @@ export function ClientLabTabContent({
           labModeAvailable={client.config?.labModeAvailable ?? false}
           elioLabEnabled={client.config?.elioLabEnabled ?? false}
           hasActiveParcours={hasActiveParcours}
+          isFrozen={isFrozen}
           showOnlyAgents
         />
 
@@ -148,7 +168,19 @@ export function ClientLabTabContent({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">Statut</span>
-                  <ParcoursStatusBadge status={parcours.status} />
+                  {isFrozen ? (
+                    // Statut brut du parcours (souvent encore 'en_cours') ignoré volontairement :
+                    // un client résilié ne « progresse » plus, quoi qu'en dise parcours.status.
+                    <Badge
+                      variant="outline"
+                      className="border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      data-testid="parcours-frozen-badge"
+                    >
+                      Arrêté
+                    </Badge>
+                  ) : (
+                    <ParcoursStatusBadge status={parcours.status} />
+                  )}
                 </div>
                 <Separator />
                 {/* Barre de progression */}
@@ -168,10 +200,15 @@ export function ClientLabTabContent({
                       </div>
                       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full rounded-full bg-primary transition-all"
+                          className={`h-full rounded-full transition-all ${isFrozen ? 'bg-muted-foreground/40' : 'bg-primary'}`}
                           style={{ width: `${progressPct}%` }}
                         />
                       </div>
+                      {isFrozen && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                          Parcours arrêté — abonnement résilié. Historique conservé, non modifiable.
+                        </p>
+                      )}
                     </div>
                   )
                 })()}

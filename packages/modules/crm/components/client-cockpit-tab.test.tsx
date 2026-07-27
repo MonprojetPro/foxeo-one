@@ -74,6 +74,7 @@ describe('ClientCockpitTab', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     clientData.config = defaultConfig()
+    clientData.status = 'active'
     state.parcours = null
     state.pending = { count: 0 }
     state.activity = { firstLoginAt: '2026-01-02T00:00:00Z', lastActivityAt: '2026-06-19T00:00:00Z', daysSinceActivity: 1, isInactive: false }
@@ -148,5 +149,39 @@ describe('ClientCockpitTab', () => {
   it('affiche les notes privées (rapatriées dans le cockpit)', () => {
     render(<ClientCockpitTab clientId={CLIENT_ID} />)
     expect(screen.getByTestId('notes-stub')).toBeInTheDocument()
+  })
+
+  describe('client résilié (subscription_cancelled) — non-régression indicateurs figés', () => {
+    beforeEach(() => {
+      clientData.status = 'subscription_cancelled'
+    })
+
+    it('badge Progression = « Arrêté », jamais le statut brut du parcours (en_cours)', () => {
+      state.parcours = parcoursEnCours
+      render(<ClientCockpitTab clientId={CLIENT_ID} />)
+      expect(screen.getByTestId('parcours-frozen-badge').textContent).toBe('Arrêté')
+      expect(screen.queryByText('En cours')).not.toBeInTheDocument()
+    })
+
+    it('masque « Étape en cours » et garde le chiffre de progression', () => {
+      state.parcours = parcoursEnCours
+      render(<ClientCockpitTab clientId={CLIENT_ID} />)
+      expect(screen.getByText(/1 \/ 2 \(50%\)/)).toBeInTheDocument()
+      expect(screen.queryByText(/Etape en cours/i)).not.toBeInTheDocument()
+      expect(screen.getByText(/Parcours arrêté — abonnement résilié/)).toBeInTheDocument()
+    })
+
+    it('ne propose plus la graduation vers One', () => {
+      state.parcours = parcoursEnCours
+      render(<ClientCockpitTab clientId={CLIENT_ID} />)
+      expect(screen.queryByTestId('cockpit-graduate-button')).not.toBeInTheDocument()
+    })
+
+    it('statut Dashboard One = « Figé » (ambre) au lieu de « Ouvert » (vert)', () => {
+      clientData.config = { ...defaultConfig(), oneModeAvailable: true, activeModules: ['core-dashboard'] }
+      render(<ClientCockpitTab clientId={CLIENT_ID} />)
+      expect(screen.getByText('Figé')).toBeInTheDocument()
+      expect(screen.queryByText('Ouvert')).not.toBeInTheDocument()
+    })
   })
 })

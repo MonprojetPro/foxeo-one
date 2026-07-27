@@ -34,6 +34,7 @@ import { GraduationDialog } from './graduation-dialog'
 import { ClientNotesSection } from './client-notes-section'
 import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
 import type { SubscriptionTier } from '../types/subscription.types'
+import { isCancelledSubscription } from '../types/crm.types'
 
 interface ClientCockpitTabProps {
   clientId: string
@@ -106,7 +107,10 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
   const isLabClient = dashboardType === 'lab'
   const isOneClient = dashboardType === 'one'
   const hasGraduated = !!client.config?.graduationSource
-  const hasActiveParcours = parcours?.status === 'en_cours'
+  // Client résilié/transféré : son parcours est arrêté quel que soit le statut brut en base
+  // (parcours.status peut encore valoir 'en_cours' — la résiliation ne le réécrit pas).
+  const isFrozen = isCancelledSubscription(client.status)
+  const hasActiveParcours = parcours?.status === 'en_cours' && !isFrozen
   const parcoursAbandoned = parcours?.status === 'abandoned'
 
   // Progression (B)
@@ -135,7 +139,9 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
   const tierBadgeClass = TIER_BADGE_CLASSES[currentTier]
   const showAbonnement = isOneClient && (hasGraduated || client.clientType === 'direct_one')
 
-  const canGraduate = isLabClient && !!parcours
+  // Pas de graduation pour un client figé : réactiver l'abonnement (barre d'actions) est le
+  // préalable, sinon on graduerait un parcours à l'arrêt.
+  const canGraduate = isLabClient && !!parcours && !isFrozen
 
   // Dashboard One (F) — statut basé sur le vrai levier one_mode_available (multi-tenant),
   // pas sur la table client_instances (réservée au kit de sortie).
@@ -175,7 +181,21 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
           <div className="mb-3 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-cyan-400" />
-              {parcours && <ParcoursStatusBadge status={parcours.status} />}
+              {parcours && (
+                isFrozen ? (
+                  /* Client résilié : le statut brut du parcours (souvent encore 'en_cours')
+                     ne doit jamais s'afficher tel quel — il donnerait l'illusion que ça avance. */
+                  <Badge
+                    variant="outline"
+                    className="border-amber-400/25 bg-amber-400/10 text-amber-300"
+                    data-testid="parcours-frozen-badge"
+                  >
+                    Arrêté
+                  </Badge>
+                ) : (
+                  <ParcoursStatusBadge status={parcours.status} />
+                )
+              )}
             </div>
             <TabShortcut onClick={() => navigateToTab('lab-billing')} title="Ouvrir l'onglet Lab" />
           </div>
@@ -189,11 +209,15 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                 <div
-                  className="h-full rounded-full bg-cyan-500 transition-all"
+                  className={`h-full rounded-full transition-all ${isFrozen ? 'bg-gray-500' : 'bg-cyan-500'}`}
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
-              {currentStageLabel && (
+              {isFrozen ? (
+                <p className="text-xs text-amber-300/80">
+                  Parcours arrêté — abonnement résilié. Historique conservé, non modifiable.
+                </p>
+              ) : currentStageLabel && (
                 <p className="text-xs text-gray-500">
                   Etape en cours :{' '}
                   <span className="font-medium text-gray-300">{currentStageLabel}</span>
@@ -309,7 +333,14 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
 
           {oneOpen ? (
             <div className="grid grid-cols-2 gap-2">
-              <StatCard label="Statut" value="Ouvert" accent tone="emerald" />
+              {/* Client figé : accès techniquement ouvert mais consultation seule — jamais
+                  « Ouvert » en vert, qui laisserait croire que le client travaille encore dessus. */}
+              <StatCard
+                label="Statut"
+                value={isFrozen ? 'Figé' : 'Ouvert'}
+                accent
+                tone={isFrozen ? 'amber' : 'emerald'}
+              />
               <StatCard
                 label="Modules actifs"
                 value={activeModuleCount}
@@ -387,6 +418,7 @@ export function ClientCockpitTab({ clientId, supportOpenCount }: ClientCockpitTa
           labModeAvailable={client.config?.labModeAvailable ?? false}
           elioLabEnabled={client.config?.elioLabEnabled ?? false}
           hasActiveParcours={hasActiveParcours}
+          isFrozen={isFrozen}
         />
       </div>
 

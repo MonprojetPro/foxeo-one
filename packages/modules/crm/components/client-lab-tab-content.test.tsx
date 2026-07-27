@@ -95,6 +95,20 @@ describe('ClientLabTabContent', () => {
     expect(screen.getByTestId('lab-activation-badge').textContent).toBe('Lab non activé')
   })
 
+  it('client résilié (subscription_cancelled) : badge « Lab figé » même avec agents actifs en base', () => {
+    mockUseClient.mockReturnValue({
+      data: {
+        id: 'c-1', name: 'Dev Test', company: 'ACME', status: 'subscription_cancelled',
+        config: { dashboardType: 'lab', labModeAvailable: true, elioLabEnabled: true },
+      },
+    })
+    mockUseParcours.mockReturnValue(parcoursEnCours)
+    mockUsePending.mockReturnValue({ data: { count: 0 } })
+
+    render(<ClientLabTabContent clientId="c-1" />)
+    expect(screen.getByTestId('lab-activation-badge').textContent).toBe('Lab figé')
+  })
+
   it('place les slots facturation et config Élio', () => {
     mockUseClient.mockReturnValue(baseClient('lab'))
     mockUseParcours.mockReturnValue(parcoursEnCours)

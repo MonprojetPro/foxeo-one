@@ -10,6 +10,7 @@ import { ClientStatusBadge } from './client-status-badge'
 import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
 import type { SubscriptionTier } from '../types/subscription.types'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
+import { isCancelledSubscription } from '../types/crm.types'
 
 interface ClientHeaderProps {
   client: Client
@@ -50,6 +51,9 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
   // Lecture seule : le header reflète l'état d'accès réel (vrais flags), il ne le pilote pas.
   // Lab a 3 états : agents actifs (violet) / espace présent mais agents coupés = historique
   // (grisé) / pas de Lab (pastille masquée). One = accès One ouvert (vert / grisé).
+  // Client résilié/transféré (isFrozen) : le parcours est figé quels que soient les flags
+  // bruts en base — les pastilles ne doivent jamais dire « actif » dans ce cas.
+  const isFrozen = isCancelledSubscription(client.status)
   const hasLab = client.config?.labModeAvailable ?? (dashboardType === 'lab')
   const labAgentsOn = client.config?.elioLabEnabled ?? false
   const oneEnabled = client.config?.oneModeAvailable ?? (dashboardType === 'one')
@@ -115,28 +119,42 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
           {hasAnyAccess && (
             <div className="flex items-center gap-2 border border-white/10 rounded-xl px-3 py-2">
               {hasLab && (
-                /* Cliquable : ouvre l'onglet Lab, là où vit le levier « Agents du parcours ». */
+                /* Cliquable : ouvre l'onglet Lab, là où vit le levier « Agents du parcours ».
+                   Client figé : jamais violet « actif », même si elio_lab_enabled est encore vrai
+                   en base — le parcours est arrêté par la résiliation, pas par ce flag. */
                 <button
                   type="button"
                   onClick={() => navigateToTab('lab-billing')}
                   className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors cursor-pointer ${
-                    labAgentsOn
-                      ? 'bg-violet-500/15 text-violet-300 border-violet-500/30 hover:bg-violet-500/25'
-                      : 'bg-white/[0.03] text-gray-500 border-white/10 hover:bg-white/[0.08] hover:text-gray-300'
+                    isFrozen
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 hover:bg-amber-500/25'
+                      : labAgentsOn
+                        ? 'bg-violet-500/15 text-violet-300 border-violet-500/30 hover:bg-violet-500/25'
+                        : 'bg-white/[0.03] text-gray-500 border-white/10 hover:bg-white/[0.08] hover:text-gray-300'
                   }`}
-                  title={`${labAgentsOn ? 'Lab — agents actifs' : 'Lab — agents en pause (historique consultable)'} · cliquer pour gérer`}
+                  title={`${
+                    isFrozen
+                      ? 'Lab — parcours figé (abonnement résilié, historique consultable)'
+                      : labAgentsOn
+                        ? 'Lab — agents actifs'
+                        : 'Lab — agents en pause (historique consultable)'
+                  } · cliquer pour gérer`}
                 >
-                  <span className={`h-1.5 w-1.5 rounded-full ${labAgentsOn ? 'bg-violet-400' : 'bg-gray-600'}`} />
-                  {labAgentsOn ? 'Lab · agents actifs' : 'Lab · en pause'}
+                  <span className={`h-1.5 w-1.5 rounded-full ${isFrozen ? 'bg-amber-400' : labAgentsOn ? 'bg-violet-400' : 'bg-gray-600'}`} />
+                  {isFrozen ? 'Lab · figé' : labAgentsOn ? 'Lab · agents actifs' : 'Lab · en pause'}
                 </button>
               )}
               {oneEnabled && (
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border bg-green-500/15 text-green-400 border-green-500/30"
-                  title="Accès One ouvert"
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${
+                    isFrozen
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                      : 'bg-green-500/15 text-green-400 border-green-500/30'
+                  }`}
+                  title={isFrozen ? 'Accès One figé (abonnement résilié, historique consultable)' : 'Accès One ouvert'}
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-                  One
+                  <span className={`h-1.5 w-1.5 rounded-full ${isFrozen ? 'bg-amber-400' : 'bg-green-400'}`} />
+                  {isFrozen ? 'One · figé' : 'One'}
                 </span>
               )}
             </div>

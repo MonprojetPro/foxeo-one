@@ -30,6 +30,12 @@ interface AccessTogglesProps {
   hasActiveParcours: boolean
   /** Onglet Lab : n'affiche que le toggle « Agents du parcours » (l'accès global vit dans le Pilote). */
   showOnlyAgents?: boolean
+  /**
+   * Client résilié/transféré (isReadOnlyClientStatus) : le badge d'état n'affiche jamais
+   * « Actifs », même si elio_lab_enabled est resté vrai en base — la résiliation ne
+   * touche pas ce flag, seul le statut client dit la vérité sur l'arrêt du parcours.
+   */
+  isFrozen?: boolean
 }
 
 /**
@@ -42,6 +48,7 @@ export function AccessToggles({
   elioLabEnabled,
   hasActiveParcours,
   showOnlyAgents = false,
+  isFrozen = false,
 }: AccessTogglesProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -130,13 +137,15 @@ export function AccessToggles({
                   {labModeAvailable && (
                     <span
                       className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
-                        agentsEnabled
-                          ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
-                          : 'border-amber-500/30 bg-amber-500/15 text-amber-400'
+                        isFrozen
+                          ? 'border-amber-500/30 bg-amber-500/15 text-amber-400'
+                          : agentsEnabled
+                            ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
+                            : 'border-amber-500/30 bg-amber-500/15 text-amber-400'
                       }`}
                       data-testid="lab-agents-state"
                     >
-                      {agentsEnabled ? 'Actifs' : 'En pause'}
+                      {isFrozen ? 'Figé' : agentsEnabled ? 'Actifs' : 'En pause'}
                     </span>
                   )}
                 </p>

@@ -71,4 +71,54 @@ describe('ClientHeader', () => {
 
     expect(screen.queryByRole('button', { name: /modifier/i })).not.toBeInTheDocument()
   })
+
+  it('client actif avec Lab + agents actifs : pastille violette « Lab · agents actifs »', () => {
+    render(
+      <ClientHeader
+        client={{ ...mockClient, config: { labModeAvailable: true, elioLabEnabled: true } as never }}
+      />
+    )
+    expect(screen.getByText('Lab · agents actifs')).toBeInTheDocument()
+  })
+
+  it('client résilié (subscription_cancelled) : pastille Lab devient « Lab · figé » (ambre), jamais « agents actifs »', () => {
+    render(
+      <ClientHeader
+        client={{
+          ...mockClient,
+          status: 'subscription_cancelled',
+          config: { labModeAvailable: true, elioLabEnabled: true } as never,
+        }}
+      />
+    )
+    expect(screen.getByText('Lab · figé')).toBeInTheDocument()
+    expect(screen.queryByText('Lab · agents actifs')).not.toBeInTheDocument()
+  })
+
+  it('client résilié avec accès One ouvert : pastille « One · figé » (ambre), jamais « One » vert', () => {
+    render(
+      <ClientHeader
+        client={{
+          ...mockClient,
+          status: 'subscription_cancelled',
+          config: { oneModeAvailable: true } as never,
+        }}
+      />
+    )
+    expect(screen.getByText('One · figé')).toBeInTheDocument()
+    expect(screen.queryByText('One', { exact: true })).not.toBeInTheDocument()
+  })
+
+  it('client transféré (handed_off) : même comportement figé qu\'une résiliation', () => {
+    render(
+      <ClientHeader
+        client={{
+          ...mockClient,
+          status: 'handed_off',
+          config: { labModeAvailable: true, elioLabEnabled: true } as never,
+        }}
+      />
+    )
+    expect(screen.getByText('Lab · figé')).toBeInTheDocument()
+  })
 })
