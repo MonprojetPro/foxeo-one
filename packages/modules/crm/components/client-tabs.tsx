@@ -1,16 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   type LucideIcon,
   Clock, FolderOpen, MessageSquare, Zap,
   Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings,
-  MessageCircle, Code2, Pause, Lock, Gauge,
+  MessageCircle, Code2, Pause, Lock, Gauge, CircleSlash, RotateCcw,
 } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Button, showSuccess } from '@monprojetpro/ui'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Button, showSuccess, showError } from '@monprojetpro/ui'
 import { ClientTimeline } from './client-timeline'
 import { ClientDocumentsTab } from './client-documents-tab'
 import { ClientExchangesTab } from './client-exchanges-tab'
@@ -19,6 +19,8 @@ import { ElioDocForm } from './elio-doc-form'
 import { ClientModulesTab } from './client-modules-tab'
 import { SuspendClientDialog } from './suspend-client-dialog'
 import { CloseClientDialog } from './close-client-dialog'
+import { CancelSubscriptionDialog } from './cancel-subscription-dialog'
+import { reactivateSubscription } from '../actions/cancel-subscription'
 import { buildClientSlug, buildBmadPath, buildCursorUrl } from '../utils/cursor-integration'
 import type { ModuleManifest } from '@monprojetpro/types'
 import type { Client } from '../types/crm.types'
@@ -126,7 +128,9 @@ export function ClientTabs({
   // Dialog states
   const [suspendOpen, setSuspendOpen] = useState(false)
   const [closeOpen, setCloseOpen] = useState(false)
+  const [cancelSubOpen, setCancelSubOpen] = useState(false)
   const [cursorOpen, setCursorOpen] = useState(false)
+  const [isReactivating, startReactivate] = useTransition()
 
   // Cursor integration
   const clientSlug = buildClientSlug(client.name, client.company)
@@ -147,6 +151,22 @@ export function ClientTabs({
 
   const isActive = client.status === 'active'
   const isSuspended = client.status === 'suspended'
+  // Abonnement résilié : le client garde son espace en consultation. Depuis cette barre,
+  // le même emplacement sert alors à FAIRE MACHINE ARRIÈRE — sans ça, MiKL pourrait
+  // résilier depuis ici sans pouvoir réactiver depuis ici.
+  const isSubCancelled = client.status === 'subscription_cancelled'
+
+  function handleReactivateSubscription() {
+    startReactivate(async () => {
+      const result = await reactivateSubscription({ clientId: client.id })
+      if (result.error) {
+        showError(result.error.message)
+        return
+      }
+      showSuccess(`Abonnement de ${client.name} réactivé`)
+      router.refresh()
+    })
+  }
 
   // ── Ordered icon bar (fixed position + palette arc-en-ciel sans doublons adjacents) ──
 
@@ -187,7 +207,14 @@ export function ClientTabs({
     ...(extraTabValues.has('administration') ? [{ type: 'tab' as const, value: 'administration', label: 'Paramètres',  Icon: Settings,      color: '#94a3b8', alwaysFilled: true }] : []),
     // 15 — Suspendre    orange — toujours coloré
     { type: 'action', value: 'suspendre',    label: 'Suspendre',   Icon: Pause,         color: '#fb923c', onClick: () => setSuspendOpen(true),  disabled: !isActive,                  alwaysFilled: true },
-    // 16 — Clôturer     red    — toujours coloré
+    // 16 — Résilier     ambre  — l'abonnement s'arrête mais le client GARDE son espace en
+    //      consultation et peut toujours écrire à MiKL. À ne pas confondre avec Clôturer
+    //      (rouge), qui coupe tout accès. La couleur ambre marque cet entre-deux : ce
+    //      n'est ni une simple pause, ni une fin définitive.
+    isSubCancelled
+      ? { type: 'action' as const, value: 'reactiver-abo', label: 'Réactiver l’abonnement', Icon: RotateCcw,   color: '#34d399', onClick: handleReactivateSubscription, disabled: isReactivating, alwaysFilled: true }
+      : { type: 'action' as const, value: 'resilier',      label: 'Résilier l’abonnement', Icon: CircleSlash, color: '#fbbf24', onClick: () => setCancelSubOpen(true), disabled: !isActive,      alwaysFilled: true },
+    // 17 — Clôturer     red    — toujours coloré
     { type: 'action', value: 'cloturer',     label: 'Clôturer',    Icon: Lock,          color: '#f87171', onClick: () => setCloseOpen(true),    disabled: !isActive && !isSuspended,  alwaysFilled: true },
   ]
 
@@ -252,6 +279,12 @@ export function ClientTabs({
         clientName={client.name}
         open={closeOpen}
         onOpenChange={setCloseOpen}
+      />
+      <CancelSubscriptionDialog
+        clientId={client.id}
+        clientName={client.name}
+        open={cancelSubOpen}
+        onOpenChange={setCancelSubOpen}
       />
       <Dialog open={cursorOpen} onOpenChange={setCursorOpen}>
         <DialogContent>
