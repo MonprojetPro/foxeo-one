@@ -14,6 +14,23 @@
 - **Ne jamais présenter Léa Vasseur ou Thomas Reynaud comme de vrais clients ou de vrais témoignages sur le site.** Les captures illustrent le produit, elles ne prouvent pas un résultat client. Si le site affiche du texte à côté d'une capture, il doit rester au registre « voici l'interface », jamais « voici ce que Madame X a obtenu ». Un faux témoignage attribué à une personne inventée est un dark pattern (et juridiquement une pratique commerciale trompeuse).
 - Formulation sûre : *« Exemple d'un parcours Lab en cours »*, *« Aperçu de l'espace One »*. Mention discrète possible : *« interface réelle, données d'illustration »*.
 
+### Ce qui est authentique, et ce qui ne l'est pas
+
+Distinction importante si le site cite du texte visible sur les captures.
+
+| Contenu | Origine | Fidèle au produit ? |
+|---|---|---|
+| **Bandeaux d'état** (abonnement terminé, parcours en pause…) | Textes en dur dans le code | ✅ **Identiques au caractère près** |
+| **Conversation d'Élio Positionnement** (capture L3) | **Générée par le vrai Élio**, via l'edge function `elio-chat`, avec le prompt de l'agent, les garde-fous coach et le dossier des 3 étapes validées | ✅ **Authentique — c'est le produit qui parle** |
+| **Document de synthèse de l'étape 4** (capture L5 / H3) | **Généré par le vrai Élio** à partir de cette conversation, avec le prompt de génération de l'app | ✅ **Authentique** |
+| **Mots d'Élio des bandeaux** (Lab et One) | **Générés par le vrai Élio** (Haiku), avec les prompts d'événement de l'app | ✅ **Authentique** |
+| Documents des étapes 1, 2, 3 de Léa et des 10 étapes de Thomas | Rédigés à la main pour le scénario | ⚠️ Plausibles, mais pas produits par Élio |
+| Messages du chat avec MiKL, posts de suivi, tickets, notes | Rédigés à la main | ⚠️ Ce sont des textes humains — normal qu'ils soient écrits |
+
+**En clair :** tout ce qu'Élio dit à l'écran a réellement été produit par Élio. Les captures L3, L5, H3 et les bandeaux peuvent être citées telles quelles.
+
+**Un défaut réel repéré au passage** (à ne pas mettre en avant, mais bon à savoir) : dans un mot généré, Élio a écrit « MiKL a bien épluché ta cible et **elle** te propose… ». Le modèle a mis MiKL au féminin. Corrigé à la main sur cette capture, mais le prompt du Concierge Lab gagnerait à préciser le genre.
+
 ---
 
 ## 🔑 Les accès
