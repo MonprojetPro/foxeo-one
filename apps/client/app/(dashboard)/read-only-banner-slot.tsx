@@ -24,7 +24,19 @@ const ELIO_OWNED_ROUTES = [
   '/modules/elio', // le chat Élio lui-même
 ]
 
+/**
+ * Exceptions — sous-routes d'un préfixe « porté » où PERSONNE ne parle.
+ *
+ * `/modules/parcours/steps/N/submission` est une page de consultation pure (lecture d'un
+ * document déjà soumis, sans formulaire ni action) : ni Élio, ni bandeau d'étape, ni
+ * message de soumission n'y annoncent l'abonnement terminé. Sans cette exception, le
+ * préfixe `/modules/parcours` l'aurait masqué avec les autres.
+ */
+const NOT_OWNED_SUFFIXES = ['/submission']
+
 function isElioOwned(pathname: string): boolean {
+  if (NOT_OWNED_SUFFIXES.some(suffix => pathname.endsWith(suffix))) return false
+
   return ELIO_OWNED_ROUTES.some(
     route => pathname === route || (route !== '/' && pathname.startsWith(`${route}/`))
   )

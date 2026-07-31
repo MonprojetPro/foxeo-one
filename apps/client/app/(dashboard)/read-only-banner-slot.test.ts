@@ -11,10 +11,16 @@ describe('isElioOwned — écrans dont Élio porte le message', () => {
     expect(isElioOwned('/')).toBe(true)
   })
 
-  it('masque le bandeau sur le parcours Lab et le détail d\'étape', () => {
+  it('masque le bandeau sur le parcours Lab, le détail d\'étape et le formulaire de soumission', () => {
     expect(isElioOwned('/modules/parcours')).toBe(true)
     expect(isElioOwned('/modules/parcours/steps/3')).toBe(true)
-    expect(isElioOwned('/modules/parcours/steps/3/submission')).toBe(true)
+    expect(isElioOwned('/modules/parcours/steps/3/submit')).toBe(true)
+  })
+
+  it('GARDE le bandeau sur la consultation d\'une soumission — personne n\'y parle', () => {
+    // Page de lecture pure : ni Élio, ni bandeau d'étape, ni message de soumission.
+    // Sans cette exception, le préfixe /modules/parcours l'aurait masquée.
+    expect(isElioOwned('/modules/parcours/steps/3/submission')).toBe(false)
   })
 
   it('masque le bandeau sur le chat Élio', () => {
