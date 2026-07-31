@@ -2,6 +2,7 @@
 
 import { Sparkles } from 'lucide-react'
 import type { ConciergeWord } from '@monprojetpro/module-elio'
+import { useClientReadOnly } from '@monprojetpro/ui'
 import { useOneConciergeWord, useOneConciergeRealtime } from './use-one-concierge'
 
 interface OneConciergeBannerProps {
@@ -35,29 +36,44 @@ export function OneConciergeBanner({
   useOneConciergeRealtime(clientId)
   const { data: word } = useOneConciergeWord(clientId, initialWord)
 
+  // Abonnement terminé — Élio est le porteur UNIQUE du message côté One, comme le
+  // Concierge l'est côté Lab (ElioParcoursPanel). Le bandeau ambre global du layout ne
+  // s'affiche donc plus sur cette page : il répétait ce qu'Élio dit déjà, en double.
+  const frozen = useClientReadOnly()
+
   const greeting = `Bonjour${clientFirstName ? `, ${clientFirstName}` : ''} ! 👋`
 
-  // Fallback élégant : message d'accueil par défaut quand aucun mot proactif n'existe.
-  const message =
-    word?.body?.trim() ||
-    'Bienvenue dans ton espace One : ta console de pilotage et ton lien direct avec MiKL. ' +
-      'Je suis là pour t’aider à t’y retrouver — pose-moi une question quand tu veux.'
+  // Priorité : abonnement terminé (état définitif) > mot d'Élio vivant > accueil par défaut.
+  // `frozen` passe AVANT le mot d'Élio volontairement : un mot généré avant la résiliation
+  // (« je te tiens au courant à chaque avancée ») serait ré-affiché tel quel alors que plus
+  // rien n'avance. On ne le supprime pas — il redeviendra valable si MiKL réactive le
+  // client — on cesse simplement de l'afficher. (Même règle que le Lab.)
+  const message = frozen
+    ? "Ton abonnement est terminé, alors ton espace passe en consultation. Tout ce qu'on a construit reste à toi : tes documents, nos échanges et le suivi de ton outil restent accessibles et téléchargeables autant que tu veux. Si un jour tu souhaites reprendre, parles-en à MiKL — et en attendant, je reste là pour tes questions."
+    : word?.body?.trim() ||
+      'Bienvenue dans ton espace One : ta console de pilotage et ton lien direct avec MiKL. ' +
+        'Je suis là pour t’aider à t’y retrouver — pose-moi une question quand tu veux.'
+
+  // Palette ambre quand l'abonnement est terminé : information, pas erreur — même code
+  // couleur que le Lab et que l'ancien ReadOnlyBanner, pour que l'état reste lisible d'un
+  // coup d'œil sans le vert « tout va bien » du One actif.
+  const accent = frozen ? '#f59e0b' : 'var(--brand-accent, #16a34a)'
+  const accentLight = frozen ? '#fbbf24' : 'var(--brand-accent, #4ade80)'
 
   return (
     <section aria-label="Élio One — ton assistant">
       <div
         className="relative overflow-hidden rounded-2xl border p-5"
         style={{
-          borderColor: 'color-mix(in srgb, var(--brand-accent, #16a34a) 30%, transparent)',
-          background:
-            'linear-gradient(135deg, color-mix(in srgb, var(--brand-accent, #16a34a) 10%, #141414), #141414)',
+          borderColor: `color-mix(in srgb, ${accent} 30%, transparent)`,
+          background: `linear-gradient(135deg, color-mix(in srgb, ${accent} 10%, #141414), #141414)`,
         }}
       >
         {/* Glow subtil */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full blur-3xl"
-          style={{ background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 22%, transparent)' }}
+          style={{ background: `color-mix(in srgb, ${accent} 22%, transparent)` }}
         />
 
         <div className="relative flex items-start justify-between gap-4">
@@ -66,12 +82,12 @@ export function OneConciergeBanner({
             <div className="flex items-center gap-1.5">
               <Sparkles
                 className="h-4 w-4 shrink-0"
-                style={{ color: 'var(--brand-accent, #4ade80)' }}
+                style={{ color: accentLight }}
                 aria-hidden="true"
               />
               <p
                 className="text-[15px] font-semibold tracking-[0.01em] leading-tight"
-                style={{ color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 85%, white)' }}
+                style={{ color: `color-mix(in srgb, ${accentLight} 85%, white)` }}
               >
                 Élio One
               </p>
@@ -81,8 +97,8 @@ export function OneConciergeBanner({
             <div
               className="mt-3 rounded-xl p-4 text-sm leading-relaxed"
               style={{
-                background: 'color-mix(in srgb, var(--brand-accent, #16a34a) 8%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--brand-accent, #16a34a) 22%, transparent)',
+                background: `color-mix(in srgb, ${accent} 8%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${accent} 22%, transparent)`,
               }}
             >
               <p className="text-[15px] font-semibold text-[#f9fafb]">{greeting}</p>
@@ -96,15 +112,19 @@ export function OneConciergeBanner({
             <img
               src="/elio/elio-one.png"
               alt="Élio One"
-              className="h-24 w-24 object-contain drop-shadow-[0_0_12px_rgba(22,163,74,0.3)]"
+              className={
+                frozen
+                  ? 'h-24 w-24 object-contain drop-shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                  : 'h-24 w-24 object-contain drop-shadow-[0_0_12px_rgba(22,163,74,0.3)]'
+              }
             />
             <button
               type="button"
               onClick={onAskConcierge}
               className="w-full rounded-lg border px-3 py-2 text-[13px] font-medium transition-colors hover:bg-white/5"
               style={{
-                borderColor: 'color-mix(in srgb, var(--brand-accent, #16a34a) 55%, transparent)',
-                color: 'color-mix(in srgb, var(--brand-accent, #4ade80) 85%, white)',
+                borderColor: `color-mix(in srgb, ${accent} 55%, transparent)`,
+                color: `color-mix(in srgb, ${accentLight} 85%, white)`,
               }}
             >
               Poser une question

@@ -271,11 +271,13 @@ describe('ParcoursOverview', () => {
       return render(<ParcoursOverview clientId={CLIENT_ID} />)
     }
 
-    it('affiche le message de consultation à la place du bandeau « Parcours libre »', () => {
+    it('masque le bandeau « Parcours libre » sans le remplacer par un second encart', () => {
       const { container } = renderFrozen({ parcoursMode: 'libre' })
 
-      expect(container.textContent).toContain('Ton parcours est arrêté.')
+      // Le bandeau « Parcours libre » inciterait à avancer : il disparaît.
       expect(container.textContent).not.toContain('Toutes les étapes sont ouvertes')
+      // Élio (bandeau ci-dessus) est le porteur UNIQUE du message — pas de doublon ici.
+      expect(container.textContent).not.toContain('Ton parcours est arrêté.')
     })
 
     it('n\'affiche plus le badge « En cours » sur les cartes d\'étape', () => {

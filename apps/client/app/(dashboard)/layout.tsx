@@ -8,9 +8,9 @@ import {
   MODE_TOGGLE_COOKIE,
   ModuleSidebar,
   Button,
-  ReadOnlyBanner,
   ClientAccessProvider,
 } from '@monprojetpro/ui'
+import { ReadOnlyBannerSlot } from './read-only-banner-slot'
 import type { ModuleSidebarBadge } from '@monprojetpro/ui'
 import { manifest as parcoursMani } from '@monprojetpro/module-parcours/manifest'
 import { manifest as elioMani } from '@monprojetpro/module-elio/manifest'
@@ -519,11 +519,9 @@ export default async function DashboardLayout({
     >
       <ImpersonationWrapper session={impersonationSession}>
         <PresenceProvider userId={clientId} userType="client" operatorId={operatorId}>
-          {isReadOnlyAccess && (
-            <div className="mb-6">
-              <ReadOnlyBanner />
-            </div>
-          )}
+          {/* Un seul porteur de message par écran : le slot s'efface là où Élio annonce
+              déjà la fin d'abonnement (accueil One, parcours Lab, chat Élio). */}
+          {isReadOnlyAccess && <ReadOnlyBannerSlot />}
           {children}
         </PresenceProvider>
       </ImpersonationWrapper>

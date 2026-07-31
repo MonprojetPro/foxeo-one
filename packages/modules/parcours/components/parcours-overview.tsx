@@ -113,22 +113,10 @@ export function ParcoursOverview({ clientId, clientFirstName, agentsPaused = fal
       {/* LOT E — Mode libre : bandeau explicatif. Le client peut traiter les étapes
           dans l'ordre qu'il veut (pas de verrou séquentiel). Masqué si parcours en pause
           (abandonné OU Lab suspendu) — il inciterait à avancer alors que tout est gelé. */}
-      {/* Abonnement terminé — message de CONSULTATION, à la place du bandeau « Parcours
-          libre » : le client doit comprendre ce qui reste possible ici, pas ce qu'il a perdu.
-          (Le bandeau ambre global du layout dit l'abonnement ; celui-ci dit le parcours.) */}
-      {readOnly && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3">
-          <svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-xs leading-relaxed text-amber-100/90">
-            <span className="font-semibold text-amber-200">Ton parcours est arrêté.</span>{' '}
-            Tout reste là : tu peux relire chaque étape, retrouver tes échanges avec les agents
-            et télécharger tes documents autant que tu veux. Tu ne peux simplement plus le faire
-            avancer. Envie de reprendre ? Écris à MiKL, il te répond.
-          </p>
-        </div>
-      )}
+      {/* Abonnement terminé — AUCUN encart ici. Élio le Concierge (bandeau ci-dessus) est
+          le porteur UNIQUE du message : il dit déjà, sur cette même page, que le parcours
+          s'arrête et que tout reste consultable. Un second encart ambre à trois lignes de
+          distance répétait le même message avec d'autres mots. */}
 
       {parcours.parcoursMode === 'libre' && !isAbandoned && !agentsPaused && !readOnly && (
         <div className="flex items-start gap-2.5 rounded-lg border border-[rgba(124,58,237,0.35)] bg-[rgba(124,58,237,0.08)] px-4 py-3">
