@@ -112,7 +112,7 @@ const mockPennylaneSub = {
   start_date: '2026-07-07',
   recurring_period: 'monthly',
   line_items: [],
-  amount: 39,
+  amount: 49,
   created_at: '2026-07-07T00:00:00Z',
   updated_at: '2026-07-07T00:00:00Z',
 }
@@ -128,8 +128,8 @@ const baseInput: CreateSubscriptionInput = {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('grille tarifaire v2 (Contrat 6)', () => {
-  it('One (essentiel) = 39 €/mois', () => {
-    expect(PLAN_MONTHLY_PRICE.essentiel).toBe(39)
+  it('One (essentiel) = 49 €/mois', () => {
+    expect(PLAN_MONTHLY_PRICE.essentiel).toBe(49)
   })
 
   it('One+ (agentique) = 99 €/mois', () => {
@@ -217,7 +217,7 @@ describe('createSubscription', () => {
     expect(result.error?.code).toBe('PENNYLANE_500')
   })
 
-  it('sends a single line_item "Abonnement One" at 39 € for essentiel plan', async () => {
+  it('sends a single line_item "Abonnement One" at 49 € for essentiel plan', async () => {
     const supabase = makeSupabaseMock()
     mockCreateServerSupabaseClient.mockResolvedValue(
       supabase as unknown as ReturnType<typeof createServerSupabaseClient>
@@ -237,7 +237,7 @@ describe('createSubscription', () => {
     expect(lineItems[0]).toMatchObject({
       label: 'Abonnement One',
       // toPennylaneLineItem produit raw_currency_unit_price (string) en V2
-      raw_currency_unit_price: '39.00',
+      raw_currency_unit_price: '49.00',
     })
   })
 

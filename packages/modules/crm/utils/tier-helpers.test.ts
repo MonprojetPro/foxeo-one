@@ -32,8 +32,8 @@ describe('TIER_INFO', () => {
     expect(TIER_INFO.ponctuel.elio).toBe('Aucun')
   })
 
-  it('one a le bon prix (grille v2 — One 39 €/mois)', () => {
-    expect(TIER_INFO.one.price).toBe('39€/mois')
+  it('one a le bon prix (grille v2 — One 49 €/mois)', () => {
+    expect(TIER_INFO.one.price).toBe('49€/mois')
     expect(TIER_INFO.one.elio).toBe('Elio One')
   })
 

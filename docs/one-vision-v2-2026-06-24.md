@@ -96,7 +96,7 @@ photos/textes, métriques de visite), Cockpit App (raccourci + métriques + acti
 
 | | **① Ponctuel** | **② One** | **③ One+** |
 |---|---|---|---|
-| **Prix** | Devis projet (one-shot) | **39 €/mois** | **99 €/mois** |
+| **Prix** | Devis projet (one-shot) | **49 €/mois** ⁽¹⁾ | **99 €/mois** |
 | **Promesse** | « Mon outil, livré. » | « Mon outil vit, et je garde le lien. » | « Mon outil vit, et j'ai quelqu'un. » |
 | **Dashboard One** | ❌ (repart avec kit Lab) | ✅ socle + cockpits | ✅ socle + cockpits |
 | **Hébergement + maintenance + débogage** | — | ✅ | ✅ |
@@ -143,7 +143,10 @@ qu'il génère derrière**. → Le One ② peut être volontairement **peu cher*
 ## 8. Décisions finalisées (2026-06-24)
 
 - ✅ **Séances coaching supp.** : facturées, dégressif (45 € One+ / 75 € One).
-- ✅ **Pricing** : ① devis · ② 39 €/mois · ③ 99 €/mois.
+- ✅ **Pricing** : ① devis · ② 49 €/mois ⁽¹⁾ · ③ 99 €/mois.
+
+> ⁽¹⁾ **Actualisation du 31/07/2026** : le prix de One est fixé à **49 €/mois** (décision MiKL).
+> Ce document, daté du 24/06/2026, portait initialement 39 €/mois. Le prix courant est 49 €.
 - ✅ **Phases « en chantier → livré »** : bascule visuelle, onglets identiques, cockpits qui s'allument à la livraison.
 - ✅ **Offre ① Ponctuel** : l'outil est construit **en standalone dès le départ** (Supabase + Vercel propres au client) ; il en repart propriétaire ; pas de récurrent → facturé plus cher en one-shot, maintenance en option.
 - ✅ **Usage IA** : pas de fair-use strict pour l'instant ; si le coût dérape, MiKL change de fournisseur IA.

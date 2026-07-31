@@ -18,7 +18,7 @@ import type { LineItem, PennylaneBillingSubscription } from '../types/billing.ty
 
 // ============================================================
 // createSubscription — crée un abonnement récurrent Pennylane
-// Grille v2 (Contrat 6) : One 39 € (essentiel), One+ 99 € (agentique).
+// Grille v2 (Contrat 6) : One 49 € (essentiel), One+ 99 € (agentique).
 // Constantes de grille : ../config/subscription-plans.ts
 // (fichier 'use server' = exports async uniquement)
 // ============================================================

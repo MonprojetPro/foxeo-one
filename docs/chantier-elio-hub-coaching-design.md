@@ -9,7 +9,7 @@
 2. **Garde-fou par défaut, débrayable** : toute action à effet externe crée une proposition à valider (carte dans le chat). MAIS si MiKL précise explicitement dans son message qu'il n'a pas besoin de vérifier (« sans vérif », « envoie directement »), l'action s'exécute immédiatement. Le débrayage vaut pour la demande en cours, jamais par défaut.
 3. **Multi-LLM obligatoire** : plus aucune dépendance en dur à Claude/Anthropic. Fournisseur + modèle configurables depuis le Hub. Deux adaptateurs : `anthropic` (natif) et `openai-compatible` (couvre OpenAI, Mistral, Groq, DeepSeek, Gemini via endpoint OpenAI, OpenRouter…).
 4. **Coaching One+** : le client réserve seul (Cal.com). 1 crédit/mois par défaut, **configurable par client** et rechargeable manuellement par MiKL. Crédits cumulables (report). Pas de blocage : sans crédit, la séance est facturée 45 € automatiquement, ajoutée à la facturation mensuelle. Toutes les visios enregistrées nourrissent Élio Hub et Élio One.
-5. **Facturation One à remettre en route** : grille v2 (One 39 €/mois = tier `essentiel`, One+ 99 €/mois = tier `agentique`, Ponctuel = devis), UI de création d'abonnement, sync Pennylane opérationnelle.
+5. **Facturation One à remettre en route** : grille v2 (One 49 €/mois = tier `essentiel`, One+ 99 €/mois = tier `agentique`, Ponctuel = devis), UI de création d'abonnement, sync Pennylane opérationnelle.
 
 ## Contrat 1 — Edge Function `elio-chat` v2 (multi-provider + tools)
 
@@ -112,7 +112,7 @@ Facturation mensuelle : cron → les `billable_items` pending du mois écoulé �
 | Tier technique (`subscription_tier`) | Offre commerciale | Prix HT/mois |
 |---|---|---|
 | `base` | Ponctuel (pas d'abonnement) | devis |
-| `essentiel` | **One** | **39 €** |
+| `essentiel` | **One** | **49 €** |
 | `agentique` | **One+** | **99 €** |
 
 `elio_tier` : `one` pour One, `one_plus` pour One+ — la graduation One+ DOIT écrire `elio_tier='one_plus'` (bug actuel : graduate-client.ts force 'one').

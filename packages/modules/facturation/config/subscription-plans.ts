@@ -2,7 +2,7 @@
 // Grille tarifaire v2 — Contrat 6 (chantier 2026-07-06)
 // | Tier technique | Offre commerciale | Prix HT/mois |
 // | base           | Ponctuel (devis)  | devis        |
-// | essentiel      | One               | 39 €         |
+// | essentiel      | One               | 49 €         |
 // | agentique      | One+              | 99 €         |
 //
 // ⚠️ Fichier volontairement SANS 'use server' : il exporte des
@@ -19,7 +19,7 @@ export type PaymentMethod = 'cb' | 'virement' | 'sepa'
 // Prix mensuel HT de base par plan (null = ponctuel → devis / montant variable)
 export const PLAN_MONTHLY_PRICE: Record<SubscriptionPlan, number | null> = {
   ponctuel: null,
-  essentiel: 39,
+  essentiel: 49,
   agentique: 99,
 }
 

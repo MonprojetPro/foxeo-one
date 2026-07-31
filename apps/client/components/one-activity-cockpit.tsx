@@ -37,7 +37,7 @@ interface OneActivityCockpitProps {
 }
 
 const TIER_LABEL: Record<'one' | 'one_plus', { name: string; price: string }> = {
-  one: { name: 'One', price: '39 €/mois' },
+  one: { name: 'One', price: '49 €/mois' },
   one_plus: { name: 'One+', price: '99 €/mois' },
 }
 

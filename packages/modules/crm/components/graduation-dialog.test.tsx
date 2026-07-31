@@ -64,8 +64,8 @@ describe('GraduationDialog', () => {
   it('should pre-select the "One" tier by default', () => {
     render(<GraduationDialog {...defaultProps} />)
 
-    // The default tier (value 'one' → libellé « One — 39 €/mois ») doit être sélectionné
-    const defaultTierButton = screen.getByText('One — 39 €/mois').closest('button')
+    // The default tier (value 'one' → libellé « One — 49 €/mois ») doit être sélectionné
+    const defaultTierButton = screen.getByText('One — 49 €/mois').closest('button')
     expect(defaultTierButton?.className).toContain('border-primary')
   })
 
@@ -73,7 +73,7 @@ describe('GraduationDialog', () => {
     render(<GraduationDialog {...defaultProps} />)
 
     expect(screen.getByText('Ponctuel — devis projet')).toBeDefined()
-    expect(screen.getByText('One — 39 €/mois')).toBeDefined()
+    expect(screen.getByText('One — 49 €/mois')).toBeDefined()
     expect(screen.getByText('One+ — 99 €/mois')).toBeDefined()
   })
 

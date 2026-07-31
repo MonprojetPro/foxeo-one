@@ -48,7 +48,7 @@ describe('SubscriptionForm — grille v2', () => {
   it('displays commercial labels One / One+ with v2 prices', () => {
     render(<SubscriptionForm clients={mockClients} />)
     expect(screen.getByTestId('plan-essentiel')).toHaveTextContent('One')
-    expect(screen.getByTestId('plan-essentiel')).toHaveTextContent('39 €/mois')
+    expect(screen.getByTestId('plan-essentiel')).toHaveTextContent('49 €/mois')
     expect(screen.getByTestId('plan-agentique')).toHaveTextContent('One+')
     expect(screen.getByTestId('plan-agentique')).toHaveTextContent('99 €/mois')
   })
@@ -80,9 +80,9 @@ describe('SubscriptionForm — grille v2', () => {
     expect(screen.getByTestId('custom-amount')).toBeInTheDocument()
   })
 
-  it('shows 39 €/mois total for default One plan', () => {
+  it('shows 49 €/mois total for default One plan', () => {
     render(<SubscriptionForm clients={mockClients} />)
-    expect(screen.getByTestId('total-monthly')).toHaveTextContent('39.00')
+    expect(screen.getByTestId('total-monthly')).toHaveTextContent('49.00')
   })
 
   it('shows 99 €/mois total when One+ is selected', () => {
@@ -93,9 +93,9 @@ describe('SubscriptionForm — grille v2', () => {
 
   it('calculates total for quarterly period (monthly * 3)', () => {
     render(<SubscriptionForm clients={mockClients} />)
-    // One = 39 €/mois → 117 € / trimestre
+    // One = 49 €/mois → 147 € / trimestre
     fireEvent.click(screen.getByTestId('frequency-quarterly'))
-    expect(screen.getByTestId('total-period')).toHaveTextContent('117.00')
+    expect(screen.getByTestId('total-period')).toHaveTextContent('147.00')
   })
 
   it('shows error when submitting without selecting a client', async () => {

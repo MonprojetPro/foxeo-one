@@ -52,7 +52,7 @@ const TIERS: Array<{ value: GraduationTier; label: string; description: string }
   },
   {
     value: 'one',
-    label: 'One — 39 €/mois',
+    label: 'One — 49 €/mois',
     description: 'Élio (assistant), chat & demandes d\'évolution, hébergement + maintenance',
   },
   {

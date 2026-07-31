@@ -12,7 +12,7 @@ import {
 } from '../config/subscription-plans'
 import type { ClientWithPennylane } from '../types/billing.types'
 
-// ── Labels — grille v2 (One 39 € / One+ 99 €) ─────────────────────────────────
+// ── Labels — grille v2 (One 49 € / One+ 99 €) ─────────────────────────────────
 
 const PLAN_DISPLAY: Record<SubscriptionPlan, { label: string; price: string }> = {
   ponctuel: { label: PLAN_COMMERCIAL_NAME.ponctuel, price: 'Variable (devis)' },

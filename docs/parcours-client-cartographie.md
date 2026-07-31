@@ -66,7 +66,7 @@ Chaque ligne est un axe indépendant.
 | Offre | Prix | Dashboard One | Lab | Coaching humain |
 |---|---|---|---|---|
 | ① **Ponctuel** | devis one-shot | ❌ (repart avec kit Lab, standalone) | — | — |
-| ② **One** | 39 €/mois | ✅ socle + cockpits | si besoin | ❌ |
+| ② **One** | 49 €/mois | ✅ socle + cockpits | si besoin | ❌ |
 | ③ **One+** | 99 €/mois | ✅ socle + cockpits | ✅ à vie | ✅ 1 visio/mois, chat illimité |
 
 ### 1.6 Modules activés (`client_configs.active_modules`) — ✅

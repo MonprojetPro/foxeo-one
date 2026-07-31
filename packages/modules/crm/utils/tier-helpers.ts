@@ -10,7 +10,7 @@ export const TIER_INFO: Record<SubscriptionTier, TierInfo> = {
   },
   one: {
     name: 'One',
-    price: '39€/mois',
+    price: '49€/mois',
     elio: 'Elio One',
     description: 'Maintenance continue, mises à jour, Elio One assistant',
   },
@@ -27,7 +27,7 @@ export const TIER_INFO: Record<SubscriptionTier, TierInfo> = {
  * Ponctuel → null (pas d'Elio), One → 'one', One+ → 'one_plus'.
  *
  * Grille v2 (Contrat 6, chantier 2026-07-06 — validé MiKL) : `elio_tier` identifie
- * le niveau d'accès Élio (One 39 € / One+ 99 €). One+ = coaching humain
+ * le niveau d'accès Élio (One 49 € / One+ 99 €). One+ = coaching humain
  * (1 visio/mois, crédits coaching) — PAS d'agentique IA (toujours au devis,
  * décision MiKL 2026-06-26). Le dash One+ affiche en plus la carte Coaching.
  */
