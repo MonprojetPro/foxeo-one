@@ -58,7 +58,7 @@ export async function launchClientParcours(
     // doit s'animer dès le lancement côté Hub (Realtime).
     const { data: clientRow } = await supabase
       .from('clients')
-      .select('auth_user_id, email, name, first_login_at')
+      .select('auth_user_id, email, name, first_name, first_login_at')
       .eq('id', clientId)
       .maybeSingle()
 
@@ -66,6 +66,7 @@ export async function launchClientParcours(
       auth_user_id: string | null
       email: string | null
       name: string | null
+      first_name: string | null
       first_login_at: string | null
     } | null
     const clientAuthUserId = client?.auth_user_id
@@ -101,7 +102,8 @@ export async function launchClientParcours(
       try {
         const invite = await sendWelcomeLabInvite({
           email: client.email,
-          clientName: client.name ?? 'Cher(e) client(e)',
+          // On S'ADRESSE au client : prénom, pas `name` (= nom de famille).
+          clientName: client.first_name?.trim() || client.name || 'Cher(e) client(e)',
           firstStepLabel: steps[0].stepLabel,
         })
         if (!invite.success) {

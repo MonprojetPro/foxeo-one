@@ -133,7 +133,17 @@ function prospectResourcesEmailTemplate(d: { links: Array<{ name: string; url: s
 
 interface SendEmailConfig { supabaseUrl: string; serviceRoleKey: string; resendApiKey: string; emailFrom: string }
 interface NotificationRow { id: string; recipient_type: 'client' | 'operator'; recipient_id: string; type: string; title: string; body: string | null; link: string | null }
-interface RecipientRow { email: string; name: string; company?: string; email_notifications_enabled: boolean }
+interface RecipientRow { email: string; name: string; first_name?: string | null; company?: string; email_notifications_enabled: boolean }
+
+/**
+ * Nom pour S'ADRESSER au destinataire (« Bonjour … »).
+ * `clients.name` est le NOM DE FAMILLE (le formulaire dit « Nom de famille »), le prénom
+ * vit dans `first_name` : tous les emails disaient « Bonjour Vasseur, 🎉 Bienvenue ».
+ * Les operateurs n'ont pas de `first_name` -> fallback sur `name` (MiKL).
+ */
+function greetingName(recipient: RecipientRow): string {
+  return recipient.first_name?.trim() || recipient.name
+}
 
 function buildPlatformUrl(notification: NotificationRow): string {
   // Bases configurables via env (secrets de la fonction). Defauts = URLs Vercel
@@ -186,11 +196,11 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
   const platformUrl = buildPlatformUrl(notification)
   switch (notification.type) {
     case 'validation':
-      return { subject: 'Votre brief a été traité — MonprojetPro', html: validationEmailTemplate({ clientName: recipient.name, briefTitle: notification.title, outcome: notification.body?.includes('refusé') ? 'refused' : 'validated', comment: notification.body ?? undefined, platformUrl }) }
+      return { subject: 'Votre brief a été traité — MonprojetPro', html: validationEmailTemplate({ clientName: greetingName(recipient), briefTitle: notification.title, outcome: notification.body?.includes('refusé') ? 'refused' : 'validated', comment: notification.body ?? undefined, platformUrl }) }
     case 'message': {
       const senderMatch = notification.title.match(/(?:Nouveau message de |New message from )(.+)/)
       const senderName = senderMatch?.[1] ?? (notification.recipient_type === 'client' ? 'votre accompagnateur' : 'votre client')
-      return { subject: notification.title, html: newMessageEmailTemplate({ recipientName: recipient.name, senderName, messagePreview: notification.body ?? '', platformUrl }) }
+      return { subject: notification.title, html: newMessageEmailTemplate({ recipientName: greetingName(recipient), senderName, messagePreview: notification.body ?? '', platformUrl }) }
     }
     case 'inactivity_alert':
     case 'alert': {
@@ -204,13 +214,13 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
       return { subject: notification.title, html: alertInactivityEmailTemplate({ clientName: clientNameMatch[1], daysSinceActivity: daysMatch ? parseInt(daysMatch[1], 10) : 0, lastActivityDate: dateMatch?.[1] ?? '', platformUrl }) }
     }
     case 'graduation':
-      return { subject: 'Félicitations ! Votre espace One est prêt — MonprojetPro', html: graduationEmailTemplate({ clientName: recipient.name, oneUrl: platformUrl }) }
+      return { subject: 'Félicitations ! Votre espace One est prêt — MonprojetPro', html: graduationEmailTemplate({ clientName: greetingName(recipient), oneUrl: platformUrl }) }
     case 'export_ready':
-      return { subject: 'Votre export de données est prêt — MonprojetPro', html: exportReadyEmailTemplate({ clientName: recipient.name, downloadUrl: platformUrl }) }
+      return { subject: 'Votre export de données est prêt — MonprojetPro', html: exportReadyEmailTemplate({ clientName: greetingName(recipient), downloadUrl: platformUrl }) }
     case 'payment':
     case 'billing_payment_failed': {
       const amountMatch = notification.body?.match(/([\d.,]+)\s*(EUR|€)/)
-      return { subject: 'Échec de paiement — MonprojetPro', html: paymentFailedEmailTemplate({ recipientName: recipient.name, amount: amountMatch?.[1] ?? '—', currency: amountMatch?.[2] ?? 'EUR', platformUrl, recipientType: notification.recipient_type }) }
+      return { subject: 'Échec de paiement — MonprojetPro', html: paymentFailedEmailTemplate({ recipientName: greetingName(recipient), amount: amountMatch?.[1] ?? '—', currency: amountMatch?.[2] ?? 'EUR', platformUrl, recipientType: notification.recipient_type }) }
     }
 
     // Accusé de réception de paiement : Pennylane envoie la facture, mais rien
@@ -224,7 +234,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
           ? notification.title
           : 'Paiement bien reçu — MonprojetPro',
         html: paymentReceivedEmailTemplate({
-          recipientName: recipient.name,
+          recipientName: greetingName(recipient),
           amount: amountMatch?.[1]?.trim() ?? '—',
           platformUrl,
           recipientType: notification.recipient_type,
@@ -237,7 +247,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
       return {
         subject: notification.title,
         html: elioEscalationEmailTemplate({
-          recipientName: recipient.name,
+          recipientName: greetingName(recipient),
           subject: notification.title,
           details: notification.body ?? 'Aucun détail fourni.',
           platformUrl,
@@ -279,7 +289,7 @@ async function handleSendEmail(notificationId: string, config: SendEmailConfig):
   // `company` n'existe QUE sur clients : le demander sur operators fait echouer tout
   // le select (colonne inconnue) -> "Recipient not found" -> aucun email operateur.
   const recipientColumns = notif.recipient_type === 'client'
-    ? 'email, name, company, email_notifications_enabled'
+    ? 'email, name, first_name, company, email_notifications_enabled'
     : 'email, name, email_notifications_enabled'
   const { data: recipient, error: recipientError } = await supabase.from(recipientTable).select(recipientColumns).eq('auth_user_id', notif.recipient_id).single()
   if (recipientError || !recipient) { console.error('[EMAIL:SEND] Recipient not found:', notif.recipient_id, recipientError); return { success: false, error: `Recipient not found: ${recipientError?.message}` } }
@@ -294,7 +304,7 @@ async function handleSendEmail(notificationId: string, config: SendEmailConfig):
       const platformUrl = buildPlatformUrl(notif)
       const amountMatch = notif.body?.match(/([\d.,]+)\s*(EUR|€)/)
       const briefTitleMatch = notif.title.match(/^[^—]+—\s*(.+)$/)
-      const vars: Record<string, string> = { prenom: recip.name, entreprise: recip.company ?? '', titre_brief: briefTitleMatch?.[1] ?? notif.title, commentaire: notif.body ?? '', lien: platformUrl, montant: amountMatch ? `${amountMatch[1]} ${amountMatch[2]}` : '' }
+      const vars: Record<string, string> = { prenom: greetingName(recip), entreprise: recip.company ?? '', titre_brief: briefTitleMatch?.[1] ?? notif.title, commentaire: notif.body ?? '', lien: platformUrl, montant: amountMatch ? `${amountMatch[1]} ${amountMatch[2]}` : '' }
       subject = substituteTemplateVars(dbTemplate.subject, vars)
       html = plainTextToHtml(substituteTemplateVars(dbTemplate.body, vars), subject)
     } else {

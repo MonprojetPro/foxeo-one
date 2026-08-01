@@ -75,7 +75,7 @@ export async function sendReminder(
 
   const { data: client } = await supabase
     .from('clients')
-    .select('email, name, auth_user_id')
+    .select('email, name, first_name, auth_user_id')
     .eq('id', reminder.client_id)
     .single()
 
@@ -133,7 +133,8 @@ export async function sendReminder(
       const html = buildReminderEmailHtml({
         body,
         invoiceNumber: reminder.invoice_number,
-        clientName: client.name,
+        // On s'adresse au client : prénom, pas `name` (= nom de famille).
+        clientName: client.first_name?.trim() || client.name,
       })
 
       const emailRes = await fetch('https://api.resend.com/emails', {

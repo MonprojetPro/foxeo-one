@@ -112,8 +112,25 @@ interface NotificationRow {
 interface RecipientRow {
   email: string
   name: string
+  /** Prénom — colonne `clients` uniquement (la table `operators` n'en a pas). */
+  first_name?: string | null
   company?: string
   email_notifications_enabled: boolean
+}
+
+/**
+ * Nom à employer pour S'ADRESSER au destinataire (« Bonjour … »).
+ *
+ * ⚠️ `clients.name` est le NOM DE FAMILLE (le formulaire de création dit « Nom de
+ * famille »), le prénom vit dans `first_name`. Tous les emails écrivaient donc
+ * « Bonjour Vasseur, 🎉 Bienvenue dans MonprojetPro Lab ! » — froid et incorrect, sur
+ * le tout premier email reçu par un nouveau client. Le défaut est resté invisible tant
+ * que le seul client de test s'appelait « Dev Test » (nom complet dans `name`).
+ *
+ * Les opérateurs n'ont pas de `first_name` : le fallback sur `name` leur convient (MiKL).
+ */
+function greetingName(recipient: RecipientRow): string {
+  return recipient.first_name?.trim() || recipient.name
 }
 
 function buildPlatformUrl(notification: NotificationRow): string {
@@ -203,7 +220,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
       return {
         subject: `Votre brief a été traité — MonprojetPro`,
         html: validationEmailTemplate({
-          clientName: recipient.name,
+          clientName: greetingName(recipient),
           briefTitle: notification.title,
           outcome: notification.body?.includes('refusé') ? 'refused' : 'validated',
           comment: notification.body ?? undefined,
@@ -218,7 +235,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
       return {
         subject: notification.title,
         html: newMessageEmailTemplate({
-          recipientName: recipient.name,
+          recipientName: greetingName(recipient),
           senderName,
           messagePreview: notification.body ?? '',
           platformUrl,
@@ -249,7 +266,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
       return {
         subject: 'Félicitations ! Votre espace One est prêt — MonprojetPro',
         html: graduationEmailTemplate({
-          clientName: recipient.name,
+          clientName: greetingName(recipient),
           oneUrl: platformUrl,
         }),
       }
@@ -258,7 +275,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
       return {
         subject: 'Votre export de données est prêt — MonprojetPro',
         html: exportReadyEmailTemplate({
-          clientName: recipient.name,
+          clientName: greetingName(recipient),
           downloadUrl: platformUrl,
         }),
       }
@@ -269,7 +286,7 @@ function renderTemplate(notification: NotificationRow, recipient: RecipientRow):
       return {
         subject: 'Échec de paiement — MonprojetPro',
         html: paymentFailedEmailTemplate({
-          recipientName: recipient.name,
+          recipientName: greetingName(recipient),
           amount: amountMatch?.[1] ?? '—',
           currency: amountMatch?.[2] ?? 'EUR',
           platformUrl,
@@ -358,9 +375,11 @@ export async function handleSendEmail(
   const recipientTable = notif.recipient_type === 'client' ? 'clients' : 'operators'
   // `company` n'existe QUE sur clients : le demander sur operators fait echouer tout
   // le select (colonne inconnue) -> "Recipient not found" -> aucun email operateur.
+  // `first_name` et `company` n'existent QUE sur clients : les demander sur operators
+  // fait echouer tout le select (colonne inconnue) -> "Recipient not found".
   const recipientColumns =
     notif.recipient_type === 'client'
-      ? 'email, name, company, email_notifications_enabled'
+      ? 'email, name, first_name, company, email_notifications_enabled'
       : 'email, name, email_notifications_enabled'
   const { data: recipient, error: recipientError } = await supabase
     .from(recipientTable)
@@ -396,7 +415,9 @@ export async function handleSendEmail(
       const amountMatch = notif.body?.match(/([\d.,]+)\s*(EUR|€)/)
       const briefTitleMatch = notif.title.match(/^[^—]+—\s*(.+)$/)
       const vars: Record<string, string> = {
-        prenom: recip.name,
+        // La variable s'appelle « prenom » dans les templates éditables : elle doit
+        // vraiment contenir le prénom, pas `clients.name` (= le nom de famille).
+        prenom: greetingName(recip),
         entreprise: recip.company ?? '',
         titre_brief: briefTitleMatch?.[1] ?? notif.title,
         commentaire: notif.body ?? '',

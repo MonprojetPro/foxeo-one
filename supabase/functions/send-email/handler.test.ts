@@ -24,6 +24,13 @@ vi.mock('https://esm.sh/@supabase/supabase-js@2', () => ({
   })),
 }))
 
+// Le handler tourne sous Deno en production (`Deno.env.get` dans buildPlatformUrl), mais
+// les tests s'exécutent sous Node : sans ce stub, buildPlatformUrl lève « Deno is not
+// defined » et l'envoi est compté en échec. Le test le plus important du fichier — celui
+// qui vérifie qu'un email part réellement — échouait donc silencieusement pour une raison
+// d'environnement, pas de logique. On stubbe l'env vide : les défauts du code s'appliquent.
+;(globalThis as { Deno?: unknown }).Deno = { env: { get: () => undefined } }
+
 describe('handleSendEmail', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -74,6 +81,85 @@ describe('handleSendEmail', () => {
     )
 
     expect(result.success).toBe(true)
+  })
+
+  // `clients.name` est le NOM DE FAMILLE (le formulaire dit « Nom de famille »), le prénom
+  // vit dans `first_name`. Les emails écrivaient « Bonjour Vasseur, 🎉 Bienvenue » — sur le
+  // tout premier email reçu par un nouveau client. Invisible tant que le seul client de
+  // test s'appelait « Dev Test » (nom complet dans `name`).
+  it('s\'adresse au client par son PRÉNOM, pas par son nom de famille', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'n-9',
+        recipient_type: 'client',
+        recipient_id: 'client-uuid-9',
+        type: 'graduation',
+        title: 'Votre espace One est prêt',
+        body: null,
+        link: '/',
+      },
+      error: null,
+    })
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        email: 'lea@example.com',
+        name: 'Vasseur',
+        first_name: 'Léa',
+        email_notifications_enabled: true,
+      },
+      error: null,
+    })
+    mockInsert.mockResolvedValue({ error: null })
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'activity_logs') return { insert: mockInsert }
+      return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockSingle })) })) }
+    })
+    mockSendWithRetry.mockResolvedValue(undefined)
+
+    const { handleSendEmail } = await import('./handler')
+    await handleSendEmail(
+      { notificationId: 'n-9' },
+      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@monprojet-pro.com' }
+    )
+
+    const html = mockSendWithRetry.mock.calls[0]?.[0]?.html ?? ''
+    expect(html).toContain('Bonjour <strong>Léa</strong>')
+    expect(html).not.toContain('Bonjour <strong>Vasseur</strong>')
+  })
+
+  // Les opérateurs n'ont pas de colonne `first_name` : le fallback sur `name` doit tenir.
+  it('retombe sur `name` quand il n\'y a pas de prénom (opérateur)', async () => {
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'n-10',
+        recipient_type: 'operator',
+        recipient_id: 'op-uuid-1',
+        type: 'message',
+        title: 'Nouveau message de Léa Vasseur',
+        body: 'Une question',
+        link: '/chat',
+      },
+      error: null,
+    })
+    mockSingle.mockResolvedValueOnce({
+      data: { email: 'contact@monprojet-pro.com', name: 'MiKL', email_notifications_enabled: true },
+      error: null,
+    })
+    mockInsert.mockResolvedValue({ error: null })
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'activity_logs') return { insert: mockInsert }
+      return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockSingle })) })) }
+    })
+    mockSendWithRetry.mockResolvedValue(undefined)
+
+    const { handleSendEmail } = await import('./handler')
+    await handleSendEmail(
+      { notificationId: 'n-10' },
+      { supabaseUrl: 'https://test.supabase.co', serviceRoleKey: 'test-key', resendApiKey: 'resend-key', emailFrom: 'noreply@monprojet-pro.com' }
+    )
+
+    const html = mockSendWithRetry.mock.calls[0]?.[0]?.html ?? ''
+    expect(html).toContain('Bonjour <strong>MiKL</strong>')
   })
 
   it('should skip email when email_notifications_enabled is false', async () => {

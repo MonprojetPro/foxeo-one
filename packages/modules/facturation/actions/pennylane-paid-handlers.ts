@@ -65,6 +65,18 @@ async function notifyMiKL(
   }
 }
 
+/**
+ * Nom pour S'ADRESSER au client dans un email (« Bonjour … »).
+ * `clients.name` est le NOM DE FAMILLE (le formulaire dit « Nom de famille ») ; le prénom
+ * vit dans `first_name`. Sans ça, l'email de confirmation de paiement — le premier reçu
+ * après l'achat — disait « Bonjour Vasseur ».
+ */
+function firstNameOrFallback(client: { first_name?: unknown; name?: unknown }): string {
+  const first = typeof client.first_name === 'string' ? client.first_name.trim() : ''
+  if (first) return first
+  return typeof client.name === 'string' && client.name ? client.name : 'Cher(e) client(e)'
+}
+
 async function markQuotePaid(
   supabase: SupabaseClient,
   pennylaneQuoteId: string
@@ -100,7 +112,7 @@ async function sendVentureWelcome(
 ): Promise<void> {
   try {
     const res = await deps.sendDirectEmail('welcome-venture', client.email, {
-      clientName: client.name ?? 'Cher(e) client(e)',
+      clientName: firstNameOrFallback(client),
     })
     if (!res.success) console.warn('[FACTURATION:LAB_PAID] welcome-venture email failed:', res.error)
   } catch (err) {
@@ -196,7 +208,7 @@ export async function handleLabOnboardingPaid(
 
   const { data: client, error: clientError } = await deps.supabase
     .from('clients')
-    .select('id, name, email, auth_user_id')
+    .select('id, name, first_name, email, auth_user_id')
     .eq('id', quote.client_id)
     .single()
 
@@ -307,7 +319,7 @@ export async function handleOneDepositPaid(
 
   const { data: client, error: clientError } = await deps.supabase
     .from('clients')
-    .select('id, name, email, auth_user_id')
+    .select('id, name, first_name, email, auth_user_id')
     .eq('id', quote.client_id)
     .single()
 
@@ -372,7 +384,7 @@ export async function handleOneDepositPaid(
     .eq('id', client.id)
 
   const emailResult = await deps.sendDirectEmail('welcome-one', client.email as string, {
-    clientName: (client.name as string) ?? 'Cher(e) client(e)',
+    clientName: firstNameOrFallback(client),
     // Correctif 2026-07-25 — le fallback `app.monprojet-pro.com` n'existe pas en DNS.
     activationLink: `${getClientAppUrl()}/login`,
     temporaryPassword: tempPassword ?? null,
@@ -420,7 +432,7 @@ export async function handleFinalPaymentPaid(
 
   const { data: client, error: clientError } = await deps.supabase
     .from('clients')
-    .select('id, name, email, auth_user_id')
+    .select('id, name, first_name, email, auth_user_id')
     .eq('id', quote.client_id)
     .single()
 
@@ -462,7 +474,7 @@ export async function handleFinalPaymentPaid(
     'final-payment-confirmation',
     client.email as string,
     {
-      clientName: (client.name as string) ?? 'Cher(e) client(e)',
+      clientName: firstNameOrFallback(client),
     }
   )
 
