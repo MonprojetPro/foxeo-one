@@ -5,6 +5,12 @@ export interface GoogleAccount {
   label: string
   color: string
   email?: string
+  /**
+   * Google a refusé définitivement le renouvellement : le compte est toujours
+   * enregistré (nom, couleur) mais ne rapatrie plus rien tant qu'il n'est pas
+   * reconnecté. Sert au badge « Reconnexion requise » et au bouton associé.
+   */
+  needsReconnect?: boolean
 }
 
 export interface IcalFeed {
@@ -39,11 +45,14 @@ export async function getCalendarStatus(): Promise<{ data: CalendarStatus | null
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) return { data: null, error: 'Non authentifié' }
 
+    // Pas de filtre `connected = true` ici : un compte Google déconnecté par
+    // Google doit RESTER visible, sinon il disparaîtrait de l'écran sans un mot
+    // et la reconnexion serait impossible à trouver. Le filtre est appliqué
+    // provider par provider juste en dessous.
     const { data: integrations } = await supabase
       .from('calendar_integrations')
       .select('provider, connected, label, color, metadata')
       .eq('user_id', user.id)
-      .eq('connected', true)
 
     const googleAccounts: GoogleAccount[] = (integrations ?? [])
       .filter(i => i.provider === 'google')
@@ -51,12 +60,13 @@ export async function getCalendarStatus(): Promise<{ data: CalendarStatus | null
         label: i.label ?? 'Google',
         color: i.color ?? '#06b6d4',
         email: (i.metadata as { email?: string })?.email,
+        needsReconnect: !i.connected,
       }))
 
-    const calcomRow = integrations?.find(i => i.provider === 'calcom')
+    const calcomRow = integrations?.find(i => i.provider === 'calcom' && i.connected)
 
     const icalFeeds: IcalFeed[] = (integrations ?? [])
-      .filter(i => i.provider === 'ical')
+      .filter(i => i.provider === 'ical' && i.connected)
       .map(i => ({
         label: i.label ?? 'iCal',
         color: i.color ?? '#a855f7',
@@ -87,6 +97,30 @@ interface GoogleEvent {
   end: { dateTime?: string; date?: string }
 }
 
+/**
+ * Bascule l'intégration en `connected = false` : c'est le SEUL état fiable de
+ * « ce compte ne fonctionne plus, il faut le reconnecter ». Toutes les surfaces
+ * (Paramètres, agenda, création d'événement) le lisent, donc elles disent
+ * toutes la même chose au même moment.
+ *
+ * La ligne est conservée (label, couleur, email) pour que la reconnexion garde
+ * l'identité du calendrier au lieu d'obliger à tout ressaisir.
+ */
+async function markNeedsReconnect(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  userId: string,
+  label: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('calendar_integrations')
+    .update({ connected: false })
+    .eq('user_id', userId)
+    .eq('provider', 'google')
+    .eq('label', label)
+
+  if (error) console.error(`[CALENDAR:REFRESH:${label}] maj connected=false KO:`, error)
+}
+
 async function refreshGoogleTokenIfNeeded(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   userId: string,
@@ -97,7 +131,11 @@ async function refreshGoogleTokenIfNeeded(
   const needsRefresh = !expiresAt || expiresAt < new Date(Date.now() + 60_000)
   if (!needsRefresh) return integration.access_token
 
-  if (!integration.refresh_token) return null
+  if (!integration.refresh_token) {
+    console.error(`[CALENDAR:REFRESH:${label}] aucun refresh_token en base`)
+    await markNeedsReconnect(supabase, userId, label)
+    return null
+  }
 
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -110,7 +148,22 @@ async function refreshGoogleTokenIfNeeded(
     }),
   })
 
-  if (!res.ok) return null
+  if (!res.ok) {
+    // Sans ce log, un refus de Google était indiscernable d'un token simplement
+    // absent : impossible de savoir si l'accès a été révoqué, si l'app OAuth est
+    // encore en mode « Test » (jetons invalidés au bout de 7 jours), ou si les
+    // identifiants client ont changé. `error_description` le dit explicitement.
+    const body = await res.text().catch(() => '')
+    console.error(`[CALENDAR:REFRESH:${label}] refus Google ${res.status}:`, body)
+
+    // invalid_grant = refus DÉFINITIF (révoqué / expiré). Inutile de réessayer :
+    // on cesse de prétendre que le compte est connecté, sinon l'écran Paramètres
+    // affiche « Connecté » pendant que l'agenda affiche « Token expiré ».
+    if (body.includes('invalid_grant')) {
+      await markNeedsReconnect(supabase, userId, label)
+    }
+    return null
+  }
   const tokens = await res.json()
   const newExpiry = new Date(Date.now() + tokens.expires_in * 1000).toISOString()
 
@@ -131,19 +184,26 @@ async function fetchEventsForAccount(
   from: string,
   to: string
 ): Promise<{ events: ExternalCalendarEvent[]; error: string | null }> {
+  // Sans `connected` dans le SELECT, un compte déjà marqué « à reconnecter »
+  // ressortait vide et SANS message : l'agenda restait muet au lieu de dire quoi faire.
   const { data: integration } = await supabase
     .from('calendar_integrations')
-    .select('access_token, refresh_token, token_expires_at')
+    .select('access_token, refresh_token, token_expires_at, connected')
     .eq('user_id', userId)
     .eq('provider', 'google')
     .eq('label', account.label)
-    .eq('connected', true)
     .maybeSingle()
 
   if (!integration) return { events: [], error: null }
 
+  if (!integration.connected) {
+    return { events: [], error: `"${account.label}" doit être reconnecté — ouvre les paramètres des calendriers` }
+  }
+
   const accessToken = await refreshGoogleTokenIfNeeded(supabase, userId, account.label, integration)
-  if (!accessToken) return { events: [], error: `Token expiré pour "${account.label}" — reconnectez votre compte Google` }
+  if (!accessToken) {
+    return { events: [], error: `"${account.label}" doit être reconnecté — ouvre les paramètres des calendriers` }
+  }
 
   const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events')
   url.searchParams.set('timeMin', from)
@@ -264,17 +324,21 @@ export async function createGoogleCalendarEvent(
 
     const { data: integration } = await supabase
       .from('calendar_integrations')
-      .select('access_token, refresh_token, token_expires_at')
+      .select('access_token, refresh_token, token_expires_at, connected')
       .eq('user_id', user.id)
       .eq('provider', 'google')
       .eq('label', input.label)
-      .eq('connected', true)
       .maybeSingle()
 
     if (!integration) return { data: null, error: 'Compte Google non trouvé' }
+    if (!integration.connected) {
+      return { data: null, error: 'Ce compte Google doit être reconnecté — ouvre les paramètres des calendriers' }
+    }
 
     const accessToken = await refreshGoogleTokenIfNeeded(supabase, user.id, input.label, integration)
-    if (!accessToken) return { data: null, error: 'Token expiré — reconnectez ce compte Google' }
+    if (!accessToken) {
+      return { data: null, error: 'Ce compte Google doit être reconnecté — ouvre les paramètres des calendriers' }
+    }
 
     const pad = (n: number) => String(n).padStart(2, '0')
     const startDateTime = `${input.date}T${pad(input.startHour)}:${pad(input.startMinute)}:00`
@@ -325,17 +389,21 @@ export async function updateGoogleCalendarEvent(
 
     const { data: integration } = await supabase
       .from('calendar_integrations')
-      .select('access_token, refresh_token, token_expires_at')
+      .select('access_token, refresh_token, token_expires_at, connected')
       .eq('user_id', user.id)
       .eq('provider', 'google')
       .eq('label', input.label)
-      .eq('connected', true)
       .maybeSingle()
 
     if (!integration) return { data: null, error: 'Compte Google non trouvé' }
+    if (!integration.connected) {
+      return { data: null, error: 'Ce compte Google doit être reconnecté — ouvre les paramètres des calendriers' }
+    }
 
     const accessToken = await refreshGoogleTokenIfNeeded(supabase, user.id, input.label, integration)
-    if (!accessToken) return { data: null, error: 'Token expiré — reconnectez ce compte Google' }
+    if (!accessToken) {
+      return { data: null, error: 'Ce compte Google doit être reconnecté — ouvre les paramètres des calendriers' }
+    }
 
     const pad = (n: number) => String(n).padStart(2, '0')
     const startDateTime = `${input.date}T${pad(input.startHour)}:${pad(input.startMinute)}:00`
@@ -386,17 +454,21 @@ export async function deleteGoogleCalendarEvent(
 
     const { data: integration } = await supabase
       .from('calendar_integrations')
-      .select('access_token, refresh_token, token_expires_at')
+      .select('access_token, refresh_token, token_expires_at, connected')
       .eq('user_id', user.id)
       .eq('provider', 'google')
       .eq('label', label)
-      .eq('connected', true)
       .maybeSingle()
 
     if (!integration) return { error: 'Compte Google non trouvé' }
+    if (!integration.connected) {
+      return { error: 'Ce compte Google doit être reconnecté — ouvre les paramètres des calendriers' }
+    }
 
     const accessToken = await refreshGoogleTokenIfNeeded(supabase, user.id, label, integration)
-    if (!accessToken) return { error: 'Token expiré — reconnectez ce compte Google' }
+    if (!accessToken) {
+      return { error: 'Ce compte Google doit être reconnecté — ouvre les paramètres des calendriers' }
+    }
 
     // Extraire le vrai ID Google (format stocké : "google-${label}-${googleId}")
     const prefix = `google-${label}-`

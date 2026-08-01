@@ -1,5 +1,5 @@
 'use client'
-import { Settings, Sparkles, Send, Loader2, ExternalLink, Check, X, CalendarPlus } from "lucide-react";
+import { Settings, Sparkles, Send, Loader2, ExternalLink, Check, X, CalendarPlus, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@monprojetpro/utils";
 import { useState } from "react";
@@ -14,6 +14,8 @@ interface DynamicFilter {
   label: string;
   color: string;
   enabled: boolean;
+  /** Compte Google révoqué : il ne rapatrie plus rien tant qu'il n'est pas reconnecté. */
+  needsReconnect?: boolean;
 }
 
 interface PendingEventAction {
@@ -195,6 +197,17 @@ export function AgendaSidebarPanel({
                 {f.enabled && <span className="text-[8px] text-background font-bold">✓</span>}
               </span>
               <span className="text-secondary-foreground group-hover:text-foreground transition-colors truncate">{f.label}</span>
+              {f.needsReconnect && (
+                <button
+                  type="button"
+                  onClick={e => { e.preventDefault(); onOpenSettings(); }}
+                  title={`${f.label} : reconnexion requise — ouvrir les paramètres`}
+                  aria-label={`${f.label} : reconnexion requise, ouvrir les paramètres des calendriers`}
+                  className="ml-auto shrink-0 text-amber-400 hover:text-amber-300 transition-colors"
+                >
+                  <AlertTriangle className="h-3 w-3" />
+                </button>
+              )}
             </label>
           ))}
         </div>

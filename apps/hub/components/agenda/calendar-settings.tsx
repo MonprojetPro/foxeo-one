@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useTransition } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input } from "@monprojetpro/ui";
-import { Check, X, Loader2, ExternalLink, Plus, Trash2 } from "lucide-react";
+import { Check, X, Loader2, ExternalLink, Plus, Trash2, AlertTriangle, RefreshCw } from "lucide-react";
 import { getCalendarStatus, disconnectCalendar, connectCalcom, connectIcal, CalendarStatus, IcalFeed } from "../../app/(dashboard)/modules/agenda/actions/calendar";
 import { showSuccess, showError } from "@monprojetpro/ui";
 
@@ -54,6 +54,13 @@ export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSett
   function handleConnectGoogle() {
     if (!newLabel.trim()) return;
     const params = new URLSearchParams({ label: newLabel.trim(), color: newColor });
+    window.location.href = `/api/auth/google-calendar?${params.toString()}`;
+  }
+
+  // Reconnexion : on repasse le MÊME label et la MÊME couleur, donc le compte
+  // garde son identité dans l'agenda (le callback fait un upsert sur ce label).
+  function handleReconnectGoogle(label: string, color: string) {
+    const params = new URLSearchParams({ label, color });
     window.location.href = `/api/auth/google-calendar?${params.toString()}`;
   }
 
@@ -148,24 +155,49 @@ export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSett
               )}
 
               {status.googleAccounts.map(account => (
-                <div key={account.label} className="flex items-center gap-3 p-3 rounded-lg bg-secondary">
-                  <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: account.color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{account.label}</p>
-                    {account.email && (
-                      <p className="text-[10px] text-muted-foreground truncate">{account.email}</p>
+                <div key={account.label} className="p-3 rounded-lg bg-secondary space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: account.color }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{account.label}</p>
+                      {account.email && (
+                        <p className="text-[10px] text-muted-foreground truncate">{account.email}</p>
+                      )}
+                    </div>
+                    {account.needsReconnect ? (
+                      <span className="flex items-center gap-1 text-[10px] text-amber-400 shrink-0">
+                        <AlertTriangle className="h-3 w-3" />Reconnexion requise
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-[10px] text-green-400 shrink-0">
+                        <Check className="h-3 w-3" />Connecté
+                      </span>
                     )}
+                    <button
+                      onClick={() => handleDisconnectGoogle(account.label)}
+                      disabled={busy}
+                      className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                      aria-label={`Supprimer le calendrier ${account.label}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                  <span className="flex items-center gap-1 text-[10px] text-green-400 shrink-0">
-                    <Check className="h-3 w-3" />Connecté
-                  </span>
-                  <button
-                    onClick={() => handleDisconnectGoogle(account.label)}
-                    disabled={busy}
-                    className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+
+                  {account.needsReconnect && (
+                    <div className="space-y-2">
+                      <p className="text-[11px] text-muted-foreground">
+                        Google a révoqué l&apos;autorisation de ce compte : ses rendez-vous n&apos;apparaissent plus dans l&apos;agenda.
+                      </p>
+                      <Button
+                        variant="default" size="sm" className="w-full"
+                        onClick={() => handleReconnectGoogle(account.label, account.color)}
+                        disabled={busy}
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Reconnecter {account.label}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
 

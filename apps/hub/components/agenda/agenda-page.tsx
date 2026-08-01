@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { addWeeks, subWeeks, addDays, subDays, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Plus, ChevronLeft, ChevronRight, RefreshCw, CalendarDays } from "lucide-react";
@@ -20,6 +20,7 @@ interface DynamicFilter {
   label: string;
   color: string;     // hex ou classe Tailwind
   enabled: boolean;
+  needsReconnect?: boolean;  // compte Google révoqué → pictogramme d'alerte
 }
 
 function externalToCalendarEvent(e: ExternalCalendarEvent): CalendarEvent {
@@ -78,6 +79,7 @@ export function AgendaPage({ userId }: { userId: string }) {
         label: a.label,
         color: a.color,
         enabled: prev.find(p => p.key === `google:${a.label}`)?.enabled ?? true,
+        needsReconnect: a.needsReconnect,
       }));
 
       const calcomFilter: DynamicFilter[] = status.calcom ? [{
@@ -134,14 +136,33 @@ export function AgendaPage({ userId }: { userId: string }) {
     }
   }, [searchParams, rebuildFilters]);
 
+  // Comptes réellement exploitables : tout ce qui ÉCRIT dans Google (formulaire
+  // Nouveau RDV, modification, Élio Agenda) doit s'appuyer là-dessus, sinon on
+  // proposerait de créer un rendez-vous sur un compte qui va refuser.
+  const activeGoogleAccounts = useMemo(
+    () => calendarStatus.googleAccounts.filter(a => !a.needsReconnect),
+    [calendarStatus.googleAccounts]
+  );
+
   // Charger les événements externes
   const loadExternalEvents = useCallback(async () => {
     const { from, to } = getWindowForView(currentDate, viewMode);
     const results: CalendarEvent[] = [];
 
-    if (calendarStatus.googleAccounts.length > 0) {
-      const { data, error } = await getGoogleCalendarEvents(from, to, calendarStatus.googleAccounts);
-      if (error) toast.error(error);
+    // Les comptes révoqués sont écartés : les interroger ne rapporterait rien et
+    // ferait surgir un toast d'erreur à CHAQUE changement de semaine. L'état est
+    // porté par le pictogramme d'alerte de la liste de gauche + les paramètres.
+    if (activeGoogleAccounts.length > 0) {
+      const { data, error } = await getGoogleCalendarEvents(from, to, activeGoogleAccounts);
+      if (error) {
+        toast.error(error);
+        // Le serveur vient peut-être de basculer un compte en « à reconnecter ».
+        // On relit le statut pour que le badge et le pictogramme le disent tout
+        // de suite, sans obliger à recharger la page. Pas de boucle possible :
+        // le compte marqué sort de activeGoogleAccounts, donc n'est plus appelé.
+        const { data: fresh } = await getCalendarStatus();
+        if (fresh) { setCalendarStatus(fresh); rebuildFilters(fresh); }
+      }
       results.push(...data.map(externalToCalendarEvent));
     }
     if (calendarStatus.calcom) {
@@ -154,7 +175,7 @@ export function AgendaPage({ userId }: { userId: string }) {
     }
 
     setExternalEvents(results);
-  }, [currentDate, viewMode, calendarStatus]);
+  }, [currentDate, viewMode, calendarStatus, activeGoogleAccounts, rebuildFilters]);
 
   useEffect(() => { loadExternalEvents(); }, [loadExternalEvents]);
 
@@ -237,7 +258,7 @@ export function AgendaPage({ userId }: { userId: string }) {
         userId={userId}
         events={allEvents}
         currentDate={currentDate}
-        googleAccounts={calendarStatus.googleAccounts}
+        googleAccounts={activeGoogleAccounts}
         onEventCreated={loadExternalEvents}
       />
 
@@ -355,7 +376,7 @@ export function AgendaPage({ userId }: { userId: string }) {
                 <button
                   className="flex-1 rounded-xl border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/10"
                   onClick={async () => {
-                    const label = calendarStatus.googleAccounts.find(a => a.color === selectedEvent.customColor)?.label ?? calendarStatus.googleAccounts[0]?.label ?? "";
+                    const label = activeGoogleAccounts.find(a => a.color === selectedEvent.customColor)?.label ?? activeGoogleAccounts[0]?.label ?? "";
                     const { error } = await deleteGoogleCalendarEvent(selectedEvent.id, label);
                     if (error) { toast.error(error); return; }
                     toast.success("RDV supprimé");
@@ -379,17 +400,17 @@ export function AgendaPage({ userId }: { userId: string }) {
         onOpenSettings={() => { setShowNewRdv(false); setNewRdvSlot(null); setShowSettings(true); }}
         initialDate={newRdvSlot?.date ?? currentDate}
         initialHour={newRdvSlot?.hour}
-        googleAccounts={calendarStatus.googleAccounts}
+        googleAccounts={activeGoogleAccounts}
       />
       <NewRdvDialog
         open={!!editEvent}
         onClose={() => setEditEvent(null)}
         onRefreshEvents={loadExternalEvents}
-        googleAccounts={calendarStatus.googleAccounts}
+        googleAccounts={activeGoogleAccounts}
         editEvent={editEvent ?? undefined}
         editGoogleLabel={
           editEvent?.source === "google"
-            ? (calendarStatus.googleAccounts.find(a => a.color === editEvent.customColor)?.label ?? calendarStatus.googleAccounts[0]?.label)
+            ? (activeGoogleAccounts.find(a => a.color === editEvent.customColor)?.label ?? activeGoogleAccounts[0]?.label)
             : undefined
         }
       />
