@@ -15,7 +15,11 @@ vi.mock('next/link', () => ({
 }))
 
 // Mock @monprojetpro/utils
-vi.mock('@monprojetpro/utils', () => ({
+// importOriginal est indispensable : @monprojetpro/ui importe aussi DEFAULT_LOCALE
+// depuis ce module. Un mock qui ne réexporte que `cn` faisait planter la suite
+// entière au chargement (« No DEFAULT_LOCALE export is defined on the mock »).
+vi.mock('@monprojetpro/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@monprojetpro/utils')>()),
   cn: (...args: (string | boolean | undefined)[]) => args.filter(Boolean).join(' '),
 }))
 

@@ -9,6 +9,7 @@ import {
   EmptyClientList,
   CreateClientDialog,
   ImportCsvDialog,
+  CrmSubNav,
   useClients,
   type ClientFilters,
   type ClientListItem,
@@ -109,6 +110,10 @@ export function CRMPageClient({ initialClients }: CRMPageClientProps) {
           </div>
         }
       />
+
+      {/* Sous-navigation CRM — porte d'entrée du module : sans elle, les pages
+          Rappels et Statistiques n'étaient atteignables qu'en tapant l'URL. */}
+      <CrmSubNav />
 
       {/* Barre recherche + filtres — conteneur cockpit */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 flex flex-col sm:flex-row gap-3">

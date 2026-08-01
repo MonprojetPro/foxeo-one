@@ -9,6 +9,7 @@ import {
   RemindersFilter,
   CreateReminderDialog,
   EditReminderDialog,
+  CrmSubNav,
   useReminders,
 } from '@monprojetpro/modules-crm'
 import type { ReminderFilter, Reminder } from '@monprojetpro/modules-crm'
@@ -50,6 +51,10 @@ export default function RemindersPage() {
           </Button>
         }
       />
+
+      {/* Sous-navigation CRM — sans elle, cette page était un cul-de-sac :
+          on ne pouvait ni y arriver au clic, ni en repartir. */}
+      <CrmSubNav />
 
       {/* Filtre de période */}
       <RemindersFilter value={filter} onChange={setFilter} />
