@@ -8,6 +8,7 @@ import {
   successResponse,
   errorResponse,
 } from '@monprojetpro/types'
+import { getClientAppUrl } from '@monprojetpro/utils'
 import { loginSchema, signupSchema, forgotPasswordSchema } from './schemas'
 
 // --- Server Actions ---
@@ -233,7 +234,11 @@ export async function forgotPasswordAction(
 
   const supabase = await createServerSupabaseClient()
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/auth/callback?next=/reset-password`,
+    // NEXT_PUBLIC_APP_URL n'existe pas côté client : le `?? ''` produisait une URL
+    // relative que Supabase rejette, et le client atterrissait sur l'accueil sans
+    // pouvoir changer son mot de passe. Même base que l'invitation Lab
+    // (send-welcome-lab-invite) pour partager les URLs autorisées Supabase.
+    redirectTo: `${getClientAppUrl()}/auth/callback?next=/reset-password`,
   })
 
   // On retourne toujours succès pour ne pas révéler si l'email existe
