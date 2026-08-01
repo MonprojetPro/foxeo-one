@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { successResponse, errorResponse, type ActionResponse } from '@monprojetpro/types'
+import { OPERATOR_IDENTITY_RULE } from '@monprojetpro/utils'
 import type { CommunicationProfile } from '../types/communication-profile.types'
 import { toCommunicationProfile, type CommunicationProfileDB } from '../types/communication-profile.types'
 import { getProfileLabels } from '../utils/profile-labels'
@@ -46,7 +47,8 @@ function buildDraftPrompt(
 [Brouillon généré]
 ---
 
-[Note sur le profil utilisé]`
+[Note sur le profil utilisé]
+${OPERATOR_IDENTITY_RULE}`
 
   const message = `**Client** : ${input.clientName}
 **Sujet / Demande** : ${input.subject}

@@ -1,3 +1,4 @@
+import { OPERATOR_IDENTITY_RULE } from '@monprojetpro/utils'
 import type { DashboardType, CommunicationProfileFR66, ElioTier } from '../types/elio.types'
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
 import { HUB_FEATURES_DOCUMENTATION } from './hub-features-documentation'
@@ -97,9 +98,12 @@ function buildProfileInstructions(profile: CommunicationProfileFR66): string {
   return lines.join('\n')
 }
 
+// Point d'entrée UNIQUE des quatre prompts de chat (Lab, One, Hub, agent Hub) : la règle
+// d'identité de l'opérateur y est injectée une fois et couvre les quatre.
 const BASE_PROMPT = `Vous êtes Élio, l'assistant IA de la plateforme MonprojetPro.
 Votre mission est d'accompagner les entrepreneurs avec bienveillance, expertise et efficacité.
-Répondez toujours en français sauf si le client écrit dans une autre langue.`
+Répondez toujours en français sauf si le client écrit dans une autre langue.
+${OPERATOR_IDENTITY_RULE}`
 
 /**
  * Posture COACH d'Élio — gravée dans le prompt One (et réutilisable ailleurs).

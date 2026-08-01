@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { OPERATOR_IDENTITY_RULE } from '@monprojetpro/utils'
 import { getLlmConfig } from './llm-config'
 
 const CONCIERGE_TIMEOUT_MS = 15_000 // appel léger, 15s suffisent
@@ -41,7 +42,8 @@ async function resolveMicroLlm(): Promise<{
  * 1-2 phrases, jamais de markdown. Garde-fou factuel : il ne se base QUE sur l'événement
  * décrit et n'invente aucune action / date / résultat.
  */
-const ONE_CONCIERGE_SYSTEM_PROMPT = `Tu es Élio, l'assistant du dashboard One de MonprojetPro : l'outil métier quotidien d'un entrepreneur, sa console de pilotage de ses livrables et son lien permanent avec MiKL. Tu écris un court mot proactif au client (tutoiement), clair et utile — pas mielleux, factuel et orienté action. Règles STRICTES : 1 à 2 phrases maximum ; pas de markdown, pas de liste, pas de guillemets autour du message ; tu te bases UNIQUEMENT sur l'événement décrit ci-dessous et tu n'inventes aucune action, aucune date, aucun résultat. Réponds uniquement avec le mot d'Élio, rien d'autre.`
+const ONE_CONCIERGE_SYSTEM_PROMPT = `Tu es Élio, l'assistant du dashboard One de MonprojetPro : l'outil métier quotidien d'un entrepreneur, sa console de pilotage de ses livrables et son lien permanent avec MiKL. Tu écris un court mot proactif au client (tutoiement), clair et utile — pas mielleux, factuel et orienté action. Règles STRICTES : 1 à 2 phrases maximum ; pas de markdown, pas de liste, pas de guillemets autour du message ; tu te bases UNIQUEMENT sur l'événement décrit ci-dessous et tu n'inventes aucune action, aucune date, aucun résultat. Réponds uniquement avec le mot d'Élio, rien d'autre.
+${OPERATOR_IDENTITY_RULE}`
 
 /**
  * Événements One qui déclenchent un mot d'Élio. Union extensible : ajouter un nouveau cas

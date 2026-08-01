@@ -21,6 +21,7 @@ export {
   type ImpersonationCookieData,
   type ActivityActor,
 } from './impersonation'
+export { OPERATOR_IDENTITY_RULE, OPERATOR_DISPLAY_NAME } from './operator-identity'
 export { getRequiredEnv } from './env'
 export { formatRelativeDate, formatShortDate, formatDate, formatFullDate } from './date'
 export { toCamelCase, toSnakeCase } from './case-transform'

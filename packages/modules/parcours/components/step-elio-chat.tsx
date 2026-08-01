@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { Bot } from 'lucide-react'
 import { useClientReadOnly } from '@monprojetpro/ui'
+import { OPERATOR_IDENTITY_RULE } from '@monprojetpro/utils'
 import { ChatMarkdownRenderer } from './chat-markdown-renderer'
 import { getOrCreateStepConversation } from '../actions/get-or-create-step-conversation'
 import { getParcoursMemory } from '../actions/get-parcours-memory'
@@ -94,7 +95,7 @@ const COACH_GUARDRAILS = `=== POSTURE DE COACH (règles permanentes, prioritaire
 - Tu ne conclus pas, ne résumes pas et ne proposes pas de générer/soumettre le document tant qu'un sujet est en cours d'exploration ou qu'un point reste à creuser. Explorer est le mode par défaut ; conclure est l'exception.
 === FIN POSTURE DE COACH ===
 
-`
+` + OPERATOR_IDENTITY_RULE
 
 /**
  * Invitation à soumettre — volontairement DISCRÈTE. Élio n'invite à générer le document

@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient, checkClientWriteAllowed } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { OPERATOR_IDENTITY_RULE } from '@monprojetpro/utils'
 import { getEffectiveElioConfig } from './get-effective-elio-config'
 
 const MAX_MESSAGES = 30
@@ -111,7 +112,11 @@ export async function generateDocumentFromConversation(
     // Appel via Edge Function elio-chat — clé Anthropic gérée côté Supabase secrets
     const { data: fnData, error: fnError } = await supabase.functions.invoke(ELIO_CHAT_FUNCTION, {
       body: {
-        systemPrompt: 'Tu es Élio, un assistant IA expert en rédaction de documents professionnels structurés en markdown.',
+        // Le document parle de MiKL (« actionnable pour MiKL qui va le valider ») : la règle
+        // d'identité évite qu'il soit rédigé au féminin une fois sur N.
+        systemPrompt:
+          'Tu es Élio, un assistant IA expert en rédaction de documents professionnels structurés en markdown.' +
+          OPERATOR_IDENTITY_RULE,
         message: prompt,
         model: config?.model ?? 'claude-sonnet-4-6',
         maxTokens: config?.maxTokens ?? 2000,

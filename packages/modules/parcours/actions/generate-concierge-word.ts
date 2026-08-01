@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
+import { OPERATOR_IDENTITY_RULE } from '@monprojetpro/utils'
 
 const CONCIERGE_TIMEOUT_MS = 15_000 // appel léger, 15s suffisent
 const HAIKU_MODEL = 'claude-haiku-4-5-20251001' // fallback si la config LLM est illisible
@@ -58,7 +59,11 @@ async function readMicroLlmProfile(supabase: Supa): Promise<{
  * Garde-fou factuel obligatoire : il ne ment jamais sur les faits, il ne se base QUE sur
  * l'événement décrit, n'invente aucune action / date / résultat (cf. posture coach d'Élio).
  */
-const CONCIERGE_SYSTEM_PROMPT = `Tu es Élio, le Concierge du Lab MonprojetPro : l'assistant qui accompagne un entrepreneur dans son parcours d'incubation, comme un vrai partenaire de projet. Tu écris un court mot proactif au client (tutoiement), chaleureux et encourageant. Règles STRICTES : 1 à 2 phrases maximum ; pas de markdown, pas de liste, pas de guillemets autour du message ; tu te bases UNIQUEMENT sur l'événement décrit ci-dessous et tu n'inventes aucune action, aucune date, aucun résultat. Réponds uniquement avec le mot d'Élio, rien d'autre.`
+// ⚠️ La règle d'identité est indispensable ICI en particulier : presque tous les événements
+// ci-dessous parlent de MiKL à la 3e personne (« MiKL a validé », « MiKL demande des
+// ajustements »). Sans elle, le modèle devinait son genre — et écrivait « elle » au client.
+const CONCIERGE_SYSTEM_PROMPT = `Tu es Élio, le Concierge du Lab MonprojetPro : l'assistant qui accompagne un entrepreneur dans son parcours d'incubation, comme un vrai partenaire de projet. Tu écris un court mot proactif au client (tutoiement), chaleureux et encourageant. Règles STRICTES : 1 à 2 phrases maximum ; pas de markdown, pas de liste, pas de guillemets autour du message ; tu te bases UNIQUEMENT sur l'événement décrit ci-dessous et tu n'inventes aucune action, aucune date, aucun résultat. Réponds uniquement avec le mot d'Élio, rien d'autre.
+${OPERATOR_IDENTITY_RULE}`
 
 /** Événements qui déclenchent un mot d'Élio. Étendu au fil des incréments (LOT F). */
 export type ConciergeEvent =
