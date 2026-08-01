@@ -1,6 +1,7 @@
 // API Route: /api/auth/google-calendar/callback
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { getHubUrl } from '@monprojetpro/utils'
 
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'
@@ -13,7 +14,9 @@ interface GoogleTokenResponse {
 }
 
 export async function GET(req: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
+  // Doit être STRICTEMENT identique à celui envoyé par /api/auth/google-calendar,
+  // sinon Google refuse l'échange du code (redirect_uri_mismatch).
+  const appUrl = getHubUrl()
   const agendaUrl = `${appUrl}/modules/agenda`
 
   try {

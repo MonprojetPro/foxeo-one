@@ -1,6 +1,7 @@
 // API Route: /api/auth/google-calendar
 // ?label=MonCalendrier&color=#06b6d4
 import { NextRequest, NextResponse } from 'next/server'
+import { getHubUrl } from '@monprojetpro/utils'
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const SCOPES = [
@@ -12,7 +13,9 @@ const SCOPES = [
 
 export async function GET(req: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'
+  // Jamais de fallback localhost ici : Google renverrait l'utilisateur sur le PC
+  // du navigateur (ERR_CONNECTION_REFUSED). getHubUrl() retombe sur l'URL Vercel.
+  const appUrl = getHubUrl()
 
   if (!clientId) {
     return NextResponse.json({ error: 'GOOGLE_CLIENT_ID manquant' }, { status: 500 })
