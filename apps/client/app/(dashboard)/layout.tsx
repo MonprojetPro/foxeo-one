@@ -101,14 +101,16 @@ function ClientSidebar({
 
 /**
  * Calcule le badge à afficher sur l'item "parcours" de la sidebar gauche client.
- * - rouge : feedbacks MiKL non lus (priorité absolue)
- * - orange : la dernière soumission a été refusée
- * - jaune : soumission en attente de validation
- * Retourne undefined si rien à signaler.
  *
- * Les 3 queries tournent en parallèle (Promise.all) pour réduire la pression sur le pool
- * DB Supabase — au SSR avec `router.refresh()` fréquent, des queries séquentielles ont
- * fait sauter "Connection closed" en mai 2026.
+ * UN SEUL déclencheur : des retours de MiKL que le client n'a pas encore lus.
+ * Le signal suit strictement la logique « cloche » (décision MiKL 2026-08-02) : il annonce
+ * un CHANGEMENT non consulté, et s'éteint tout seul dès que le client ouvre l'étape
+ * (`markInjectionsRead`). Ne JAMAIS y rebrancher un état passif : deux déclencheurs
+ * précédents ont été retirés parce qu'ils restaient allumés des jours sans rien à consulter —
+ * - `pending_review` (« MiKL examine ») : le client n'a rien à faire, c'est de la météo ;
+ * - dernière soumission `rejected` : déjà porté par la cloche (`validate-submission.ts`)
+ *   et par la carte d'étape en rouge sur la page Parcours.
+ * Un signal qui ne s'éteint jamais finit par être ignoré — y compris le jour où il compte.
  */
 async function computeParcoursBadge(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
@@ -116,46 +118,20 @@ async function computeParcoursBadge(
 ): Promise<ModuleSidebarBadge | undefined> {
   if (!clientId) return undefined
 
-  const [unreadFeedbackRes, latestSubmissionRes, pendingReviewRes] = await Promise.all([
-    supabase
-      .from('step_feedback_injections')
-      .select('id', { count: 'exact', head: true })
-      .eq('client_id', clientId)
-      .is('read_at', null),
-    supabase
-      .from('step_submissions')
-      .select('status')
-      .eq('client_id', clientId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from('client_parcours_agents')
-      .select('id')
-      .eq('client_id', clientId)
-      .eq('status', 'pending_review')
-      .limit(1)
-      .maybeSingle(),
-  ])
+  const { count } = await supabase
+    .from('step_feedback_injections')
+    .select('id', { count: 'exact', head: true })
+    .eq('client_id', clientId)
+    .is('read_at', null)
 
-  const unreadFeedbackCount = unreadFeedbackRes.count ?? 0
-  if (unreadFeedbackCount > 0) {
-    return {
-      variant: 'red',
-      count: unreadFeedbackCount,
-      ariaLabel: `${unreadFeedbackCount} feedback(s) MiKL non lu(s)`,
-    }
+  const unreadFeedbackCount = count ?? 0
+  if (unreadFeedbackCount === 0) return undefined
+
+  return {
+    variant: 'red',
+    count: unreadFeedbackCount,
+    ariaLabel: `${unreadFeedbackCount} retour(s) de MiKL non lu(s)`,
   }
-
-  if ((latestSubmissionRes.data as { status: string } | null)?.status === 'rejected') {
-    return { variant: 'orange', ariaLabel: 'Document refusé — à corriger' }
-  }
-
-  if (pendingReviewRes.data) {
-    return { variant: 'yellow', ariaLabel: 'Soumission en attente de validation' }
-  }
-
-  return undefined
 }
 
 /**
