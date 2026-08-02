@@ -63,6 +63,68 @@ export interface MenuFacileTimeseries {
   series: MenuFacileTimeseriesPoint[]
 }
 
+// --- GET /households -------------------------------------------------------
+
+/**
+ * Statut d'un foyer, dérivé côté guichet :
+ * `banned` si tous les membres sont bannis, sinon `dormant` si aucune activité
+ * depuis plus de 30 jours, sinon `active`.
+ */
+export type HouseholdStatus = 'active' | 'dormant' | 'banned'
+
+/** Filtre d'activité de la liste des foyers. */
+export type ActivityFilter = 'all' | '7d' | '30d' | 'dormant'
+
+/** Colonnes triables de la liste des foyers. */
+export type HouseholdSort =
+  | 'last_activity_at'
+  | 'created_at'
+  | 'name'
+  | 'members_count'
+  | 'recipes_count'
+
+export type SortOrder = 'asc' | 'desc'
+
+/**
+ * Une ligne de la liste des foyers.
+ *
+ * ⚠️ Convention du guichet : une valeur `null` signifie « non calculable »,
+ * jamais « zéro ». Le cockpit affiche « — » sur `null` et le chiffre réel sur 0.
+ * Les compteurs sont donc `number | null` et ne doivent JAMAIS être ramenés à 0
+ * par un `?? 0` à l'affichage.
+ */
+export interface HouseholdListItem {
+  id: string
+  name: string
+  created_at: string
+  last_activity_at: string | null
+  members_count: number | null
+  recipes_count: number | null
+  planned_meals_count: number | null
+  friendships_count: number | null
+  is_official: boolean
+  status: HouseholdStatus
+}
+
+/** Enveloppe paginée renvoyée par le guichet (`{ items, total, limit, offset }`). */
+export interface Paginated<T> {
+  items: T[]
+  total: number
+  limit: number
+  offset: number
+}
+
+/** Paramètres de `GET /households`. Tous optionnels. */
+export interface HouseholdsQuery {
+  limit?: number
+  offset?: number
+  search?: string
+  sort?: HouseholdSort
+  order?: SortOrder
+  activity?: ActivityFilter
+  official?: boolean
+}
+
 // --- GET /contact-messages -------------------------------------------------
 
 export interface ContactMessage {

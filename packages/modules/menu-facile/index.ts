@@ -3,6 +3,7 @@ export { manifest } from './manifest'
 // UI
 export { MenuFacileDashboard } from './components/menu-facile-dashboard'
 export { MetricsTab } from './components/metrics-tab'
+export { HouseholdsTab } from './components/households-tab'
 export { ModerationTab } from './components/moderation-tab'
 export { RecipesTab } from './components/recipes-tab'
 export { MessagesTab } from './components/messages-tab'
@@ -12,6 +13,8 @@ export { HomeBannerTab } from './components/home-banner-tab'
 
 // Data
 export { useMenuFacileMetrics } from './hooks/use-menu-facile-metrics'
+export { useHouseholds } from './hooks/use-households'
+export { getHouseholds, getAllHouseholds } from './actions/households'
 export { useHomeBanner, useHomeBannerActions } from './hooks/use-home-banner'
 export { useReports, useModerationActions, useRecipeFull } from './hooks/use-moderation'
 export { useContactMessages, useContactThread, useContactActions } from './hooks/use-contact-messages'
@@ -68,4 +71,11 @@ export type {
   HomeBanner,
   HomeBannerInput,
   BannerTextColor,
+  HouseholdListItem,
+  HouseholdStatus,
+  HouseholdSort,
+  HouseholdsQuery,
+  ActivityFilter,
+  SortOrder,
+  Paginated,
 } from './types'

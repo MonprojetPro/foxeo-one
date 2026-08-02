@@ -7,19 +7,22 @@ import {
   ChefHat,
   MessagesSquare,
   Megaphone,
+  Home,
   type LucideIcon,
 } from 'lucide-react'
 import { useMenuFacileMetrics } from '../hooks/use-menu-facile-metrics'
 import { MetricsTab } from './metrics-tab'
+import { HouseholdsTab } from './households-tab'
 import { ModerationTab } from './moderation-tab'
 import { RecipesTab } from './recipes-tab'
 import { MessagesTab } from './messages-tab'
 import { HomeBannerTab } from './home-banner-tab'
 
-type TabKey = 'metrics' | 'moderation' | 'recipes' | 'messages' | 'home-banner'
+type TabKey = 'metrics' | 'households' | 'moderation' | 'recipes' | 'messages' | 'home-banner'
 
 const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'metrics', label: 'Tableau de bord', icon: LayoutDashboard },
+  { key: 'households', label: 'Foyers', icon: Home },
   { key: 'moderation', label: 'Modération', icon: ShieldAlert },
   { key: 'recipes', label: 'Recettes officielles', icon: ChefHat },
   { key: 'messages', label: 'Messages', icon: MessagesSquare },
@@ -152,6 +155,7 @@ export function MenuFacileDashboard() {
 
       {/* ── Contenu ────────────────────────────────────────────────────── */}
       {tab === 'metrics' && <MetricsTab onNavigate={setTab} />}
+      {tab === 'households' && <HouseholdsTab />}
       {tab === 'moderation' && <ModerationTab />}
       {tab === 'recipes' && <RecipesTab />}
       {tab === 'messages' && <MessagesTab />}

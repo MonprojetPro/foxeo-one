@@ -17,6 +17,11 @@ Composant MetricsTab (client)
 | Méthode | Endpoint | Usage | Statut module |
 |---------|----------|-------|---------------|
 | GET | `/metrics` | KPIs globaux | ✅ branché |
+| GET | `/households` | Liste paginée des foyers (search, sort, order, activity, official) | ✅ onglet Foyers |
+| GET | `/households/:id` | Fiche foyer (membres, plannings, signalements liés) | ⏳ spec livrée, à brancher (lot 2) |
+| GET | `/users` | Liste paginée des utilisateurs | ⏳ spec livrée, à brancher (lot 2) |
+| GET | `/metrics/households-distribution` | Répartition des foyers par taille | ⏳ lot 3 |
+| GET | `/metrics/retention-cohorts` | Cohortes de rétention | ⏳ lot 3 |
 | GET | `/reports?status=` | Signalements (+ `recipe` aperçu, `reporter_name`) | ✅ onglet Modération |
 | GET | `/recipes/:id` | Détail complet d'une recette signalée (pour juger) | ⏳ consommé, attend MenuFacile |
 | POST | `/moderation/hide` | Masquer une recette | ✅ |
@@ -60,6 +65,28 @@ recipe?: { id, name?, photo_url?, is_public?, is_hidden?, author_id?, author_nam
 Le Hub est rétro-compatible : tant que MenuFacile n'envoie pas ce champ, l'UI affiche
 le `recipe_id` brut et masque le bouton « Bannir l'auteur ». Dès que le champ arrive,
 l'aperçu (photo + nom + statut + auteur) et le bouton apparaissent automatiquement.
+
+## Liste des foyers (onglet Foyers)
+
+```
+Composant HouseholdsTab (client)
+  └─ useHouseholds({ limit, offset, search, sort, order, activity, official })
+       └─ getHouseholds()  [Server Action]
+            └─ callMenuFacileAdmin('/households?…')
+       ◀─ { data: { items, total, limit, offset } }
+```
+
+- **Recherche** debouncée à 350 ms — une frappe ne déclenche pas un appel guichet.
+- **`keepPreviousData`** : la page précédente reste affichée pendant le chargement de
+  la suivante (pas de clignotement de la table).
+- Tout changement de critère (recherche, filtre, tri) **remet la pagination à zéro** —
+  sinon on atterrit sur une page qui n'existe plus dans le résultat filtré.
+- **Export CSV** : `getAllHouseholds()` enchaîne les pages de 100 côté serveur (le
+  guichet n'a pas d'endpoint d'export). Un garde-fou stoppe à 5 000 lignes et renvoie
+  `truncated: true` → l'UI le **dit** à l'utilisateur au lieu de livrer un fichier
+  silencieusement incomplet.
+- **Dates** : le guichet renvoie le format `+00:00` (et non `Z`). `new Date()` les lit
+  correctement — ne pas comparer de littéraux `Z` dans un test.
 
 ## Réponses
 
