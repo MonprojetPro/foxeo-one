@@ -370,28 +370,6 @@ export function buildMarkdownPdfDefinition(
     info: { title, creator: 'MonprojetPro', producer: 'MonprojetPro' },
     defaultStyle: { fontSize: 10, color: TEXT_COLOR, lineHeight: 1.3 },
 
-    // En-tête de marque : uniquement sur la première page, comme une page de garde.
-    header: (currentPage: number) =>
-      currentPage === 1
-        ? {
-            margin: [40, 24, 40, 0],
-            stack: [
-              {
-                text: [
-                  { text: 'Monprojet', bold: true, color: accentColor, fontSize: 13 },
-                  { text: 'Pro', bold: true, color: HEADING_COLOR, fontSize: 13 },
-                ],
-              },
-              { text: title, bold: true, fontSize: 16, color: HEADING_COLOR, margin: [0, 8, 0, 0] },
-              ...(dateLabel ? [{ text: dateLabel, fontSize: 8.5, color: MUTED_COLOR, margin: [0, 3, 0, 0] as [number, number, number, number] }] : []),
-              {
-                canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1.5, lineColor: accentColor }],
-                margin: [0, 10, 0, 0],
-              },
-            ],
-          }
-        : undefined,
-
     // Pied de page avec numérotation — impossible à obtenir avec l'impression navigateur.
     footer: (currentPage: number, pageCount: number) => ({
       margin: [40, 12, 40, 0],
@@ -401,8 +379,35 @@ export function buildMarkdownPdfDefinition(
       ],
     }),
 
-    // Décale le corps sous l'en-tête de marque, sur la première page seulement.
-    content: [{ text: '', margin: [0, 62, 0, 0] }, ...content],
+    // ⚠️ Le bandeau de marque est le PREMIER ÉLÉMENT DU CORPS, jamais un `header`.
+    // Un `header` pdfmake est confiné à la marge haute (44 pt ici) : tout ce qui
+    // dépasse est ROGNÉ SANS AVERTISSEMENT, et il faut compenser par un espaceur
+    // en dur dans le corps — ce qui laissait un grand vide sous le logo et faisait
+    // disparaître la date (constaté par MiKL le 2026-08-02 sur les docs de Thomas).
+    // Placé dans le corps, le bandeau occupe sa hauteur réelle : ni trou, ni rognage.
+    //
+    // Il ne répète pas le titre : les documents d'Élio commencent déjà par le leur
+    // (`# …`), et l'afficher deux fois faisait doublon.
+    content: [
+      {
+        columns: [
+          {
+            text: [
+              { text: 'Monprojet', bold: true, color: accentColor, fontSize: 13 },
+              { text: 'Pro', bold: true, color: HEADING_COLOR, fontSize: 13 },
+            ],
+          },
+          ...(dateLabel
+            ? [{ text: dateLabel, fontSize: 8, color: MUTED_COLOR, alignment: 'right', margin: [0, 4, 0, 0] as [number, number, number, number] }]
+            : []),
+        ],
+      },
+      {
+        canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1.5, lineColor: accentColor }],
+        margin: [0, 8, 0, 16],
+      },
+      ...content,
+    ],
   }
 }
 

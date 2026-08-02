@@ -112,14 +112,37 @@ describe('buildMarkdownPdfDefinition', () => {
     })
   })
 
-  describe('en-tête et pied de page', () => {
-    it('n\'affiche l\'en-tête de marque que sur la première page', () => {
+  describe('bandeau de marque et pied de page', () => {
+    // Régression du 2026-08-02 : le bandeau vivait dans `header`, confiné à la marge
+    // haute (44 pt). Tout ce qui dépassait était rogné sans avertissement — la date
+    // n'apparaissait jamais — et l'espaceur qui compensait laissait un grand vide.
+    it('place le bandeau dans le CORPS, jamais dans un header pdfmake', () => {
       const def = buildMarkdownPdfDefinition('# T', { title: 'Doc', dateLabel: 'Généré le 30 juillet 2026' })
-      const header = def.header as (page: number) => unknown
 
-      expect(JSON.stringify(header(1))).toContain('Doc')
-      expect(JSON.stringify(header(1))).toContain('Généré le 30 juillet 2026')
-      expect(header(2)).toBeUndefined()
+      expect(def.header).toBeUndefined()
+      const first = (def.content as Record<string, unknown>[])[0]
+      expect(JSON.stringify(first)).toContain('Monprojet')
+    })
+
+    it('affiche réellement la date de génération', () => {
+      const def = buildMarkdownPdfDefinition('# T', { title: 'Doc', dateLabel: 'Généré le 30 juillet 2026' })
+      expect(JSON.stringify(def.content)).toContain('Généré le 30 juillet 2026')
+    })
+
+    it('n\'insère aucun espaceur en dur sous le bandeau', () => {
+      const def = buildMarkdownPdfDefinition('# T', { title: 'Doc' })
+      const content = def.content as Record<string, unknown>[]
+      // Un nœud de texte vide servant uniquement à pousser le contenu vers le bas
+      // est le symptôme exact du bug : le bandeau doit occuper sa hauteur réelle.
+      expect(content.some((n) => n.text === '' && Boolean(n.margin))).toBe(false)
+    })
+
+    it('ne répète pas le titre du document, déjà porté par son markdown', () => {
+      const def = buildMarkdownPdfDefinition('# Élio Vision', { title: 'Document — 30 juillet 2026' })
+      const bandeau = JSON.stringify((def.content as unknown[]).slice(0, 2))
+      expect(bandeau).not.toContain('Document — 30 juillet 2026')
+      // Le titre reste utilisé pour les métadonnées du fichier.
+      expect((def.info as { title: string }).title).toBe('Document — 30 juillet 2026')
     })
 
     it('numérote les pages — impossible avec l\'impression navigateur', () => {

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Download, ChevronDown, FileText, FileType2, Printer } from 'lucide-react'
 import { toast } from '@monprojetpro/ui'
-import { buildPrintableDocument, printHtmlDocument } from '@monprojetpro/utils'
+import { buildMarkdownPdfDefinition, slugifyDocumentName } from '@monprojetpro/utils'
 import type { Document } from '../types/document.types'
 
 const MARKDOWN_TYPES = ['md', 'markdown']
@@ -54,15 +54,55 @@ export function DocumentExportButton({ document, markdownHtml }: DocumentExportB
     setOpen(false)
   }
 
-  const downloadPdf = () => {
-    // Brique partagée `@monprojetpro/utils` : mêmes règles de saut de page que les
-    // documents du parcours (tableaux et encarts jamais coupés, en-têtes de tableau
-    // répétés). Passe par une iframe cachée plutôt qu'une pop-up — celle-ci était
-    // bloquée par défaut et l'export échouait silencieusement.
-    printHtmlDocument(
-      buildPrintableDocument({ title: baseName, bodyHtml: markdownHtml ?? '' })
-    )
+  /**
+   * Même générateur que les documents du parcours (`buildMarkdownPdfDefinition`) :
+   * un seul moteur PDF dans tout le produit, donc une seule mise en page et un seul
+   * endroit à corriger. Le clic télécharge un fichier — plus de pop-up ni de
+   * dialogue d'impression.
+   *
+   * On repart du markdown SOURCE (et non du HTML déjà rendu) parce que le générateur
+   * raisonne sur la structure du document : c'est ce qui lui permet de ne jamais
+   * couper un tableau ou un encart en deux.
+   */
+  const downloadPdf = async () => {
     setOpen(false)
+    try {
+      const [markdown, pdfMakeMod, vfsMod] = await Promise.all([
+        fetch(`/api/documents/download/${document.id}`).then((r) => {
+          if (!r.ok) throw new Error(`Téléchargement du document impossible (${r.status})`)
+          return r.text()
+        }),
+        import('pdfmake/build/pdfmake'),
+        import('pdfmake/build/vfs_fonts'),
+      ])
+
+      const pdfMake = ((pdfMakeMod as { default?: unknown }).default ?? pdfMakeMod) as {
+        vfs?: unknown
+        createPdf?: (def: unknown) => { download: (name: string) => void }
+      }
+      const vfsExport = ((vfsMod as { default?: unknown }).default ?? vfsMod) as Record<string, unknown>
+      pdfMake.vfs =
+        (vfsExport.pdfMake as { vfs?: unknown } | undefined)?.vfs
+        ?? vfsExport.vfs
+        ?? vfsExport
+
+      if (typeof pdfMake.createPdf !== 'function') {
+        throw new Error('Moteur PDF indisponible')
+      }
+
+      const definition = buildMarkdownPdfDefinition(markdown, {
+        title: baseName,
+        dateLabel: `Généré le ${new Date().toLocaleDateString('fr-FR', {
+          day: 'numeric', month: 'long', year: 'numeric',
+        })}`,
+      })
+
+      pdfMake.createPdf(definition).download(`${slugifyDocumentName(baseName)}.pdf`)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      console.error('[DOCUMENT-EXPORT] Échec génération PDF:', e)
+      toast.error(`Échec de la génération du PDF : ${message}`)
+    }
   }
 
   // Documents non-markdown : simple téléchargement du fichier réel.

@@ -1,11 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { DocumentExportButton } from './document-export-button'
 import type { Document } from '../types/document.types'
 
-const { mockToast } = vi.hoisted(() => ({
-  mockToast: { success: vi.fn(), error: vi.fn() },
-}))
+const { mockToast, mockDownload, mockCreatePdf } = vi.hoisted(() => {
+  const mockDownload = vi.fn()
+  return {
+    mockToast: { success: vi.fn(), error: vi.fn() },
+    mockDownload,
+    mockCreatePdf: vi.fn(() => ({ download: mockDownload })),
+  }
+})
+
+// pdfmake est un bundle navigateur de ~2 Mo : on le simule plutôt que de le charger.
+vi.mock('pdfmake/build/pdfmake', () => ({ default: { createPdf: mockCreatePdf, vfs: {} } }))
+vi.mock('pdfmake/build/vfs_fonts', () => ({ default: {} }))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
@@ -63,42 +72,47 @@ describe('DocumentExportButton', () => {
     expect(mockToast.success).toHaveBeenCalledWith('Document Word téléchargé')
   })
 
-  // 2026-08-02 — l'export PDF passe par une iframe cachée (brique partagée
-  // `printHtmlDocument`) et non plus par `window.open` : la pop-up était bloquée
-  // par défaut et l'export échouait. Il n'y a donc plus de cas « pop-ups bloqués ».
-  it('PDF : imprime via une iframe cachée, sans pop-up', () => {
-    const openSpy = vi.spyOn(window, 'open')
-    const printSpy = vi.fn()
-    // jsdom n'implémente pas l'impression : on intercepte le print de l'iframe.
-    vi.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue({
-      focus: vi.fn(),
-      print: printSpy,
-      addEventListener: vi.fn(),
-    } as unknown as Window)
+  // 2026-08-02 — l'export PDF utilise le générateur partagé (pdfmake), le même que
+  // les documents du parcours : un seul moteur, une seule mise en page, un seul
+  // endroit à corriger. Plus de pop-up (bloquée par défaut) ni de dialogue système.
+  describe('PDF', () => {
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn(async () => ({
+        ok: true,
+        text: async () => '# Brief\n\n| A | B |\n|---|---|\n| 1 | 2 |',
+      })))
+    })
 
-    render(<DocumentExportButton document={mdDoc} markdownHtml="<h1>Brief</h1>" />)
-    fireEvent.click(screen.getByTestId('export-menu-trigger'))
-    fireEvent.click(screen.getByTestId('export-pdf'))
+    it('repart du markdown source et télécharge le fichier', async () => {
+      render(<DocumentExportButton document={mdDoc} markdownHtml="<h1>Brief</h1>" />)
+      fireEvent.click(screen.getByTestId('export-menu-trigger'))
+      fireEvent.click(screen.getByTestId('export-pdf'))
 
-    const iframe = window.document.querySelector('iframe')
-    expect(iframe).toBeTruthy()
-    expect(openSpy).not.toHaveBeenCalled()
-    expect(mockToast.error).not.toHaveBeenCalled()
-  })
+      await waitFor(() => expect(mockDownload).toHaveBeenCalledWith('brief.pdf'))
+      expect(fetch).toHaveBeenCalledWith('/api/documents/download/doc-1')
+      expect(mockToast.error).not.toHaveBeenCalled()
+    })
 
-  it('PDF : le document imprimé porte les règles de saut de page', () => {
-    vi.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue({
-      focus: vi.fn(), print: vi.fn(), addEventListener: vi.fn(),
-    } as unknown as Window)
+    it('applique les garde-fous de pagination du générateur partagé', async () => {
+      render(<DocumentExportButton document={mdDoc} markdownHtml="<h1>Brief</h1>" />)
+      fireEvent.click(screen.getByTestId('export-menu-trigger'))
+      fireEvent.click(screen.getByTestId('export-pdf'))
 
-    render(<DocumentExportButton document={mdDoc} markdownHtml="<h1>Brief</h1>" />)
-    fireEvent.click(screen.getByTestId('export-menu-trigger'))
-    fireEvent.click(screen.getByTestId('export-pdf'))
+      await waitFor(() => expect(mockCreatePdf).toHaveBeenCalled())
+      const def = JSON.stringify(mockCreatePdf.mock.calls[0]?.[0])
+      expect(def).toContain('headerRows')     // en-tête de tableau répété
+      expect(def).toContain('dontBreakRows')  // ligne jamais coupée
+    })
 
-    const srcdoc = window.document.querySelector('iframe')?.getAttribute('srcdoc') ?? ''
-    // Les garde-fous qui empêchent de couper un tableau ou un encart en deux.
-    expect(srcdoc).toContain('break-inside: avoid')
-    expect(srcdoc).toContain('display: table-header-group')
-    expect(srcdoc).toContain('<h1>Brief</h1>')
+    it('prévient l\'utilisateur si le document est introuvable', async () => {
+      vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 404, text: async () => '' })))
+
+      render(<DocumentExportButton document={mdDoc} markdownHtml="<h1>Brief</h1>" />)
+      fireEvent.click(screen.getByTestId('export-menu-trigger'))
+      fireEvent.click(screen.getByTestId('export-pdf'))
+
+      await waitFor(() => expect(mockToast.error).toHaveBeenCalledWith(expect.stringContaining('404')))
+      expect(mockDownload).not.toHaveBeenCalled()
+    })
   })
 })

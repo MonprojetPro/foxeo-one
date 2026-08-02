@@ -24,6 +24,7 @@
     "@monprojetpro/ui": "*",
     "@monprojetpro/utils": "*",
     "@tanstack/react-query": "^5.90.0",
+    "pdfmake": "^0.2.23",
     "react": "^19.0.0",
     "zod": "*"
   },

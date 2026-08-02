@@ -89,11 +89,6 @@ export {
   type ResolvedClientMode,
 } from './client-mode'
 export {
-  buildPrintableDocument,
-  printHtmlDocument,
-  type PrintableDocumentOptions,
-} from './printable-document'
-export {
   buildMarkdownPdfDefinition,
   slugifyDocumentName,
   sanitizeForPdfFont,
