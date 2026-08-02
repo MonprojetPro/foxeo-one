@@ -16,6 +16,7 @@
     "@monprojetpro/types": "*",
     "clsx": "^2.1.1",
     "mammoth": "^1.11.0",
+    "marked": "^18.0.7",
     "pdfjs-dist": "^5.5.207",
     "tailwind-merge": "^2.6.0",
     "zod": "^3.24.0"

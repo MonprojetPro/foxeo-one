@@ -93,3 +93,9 @@ export {
   printHtmlDocument,
   type PrintableDocumentOptions,
 } from './printable-document'
+export {
+  buildMarkdownPdfDefinition,
+  slugifyDocumentName,
+  sanitizeForPdfFont,
+  type MarkdownPdfOptions,
+} from './markdown-to-pdf'

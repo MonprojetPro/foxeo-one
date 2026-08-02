@@ -106,6 +106,18 @@ describe('printHtmlDocument', () => {
 
     const iframe = document.querySelector('iframe')
     expect(iframe?.getAttribute('aria-hidden')).toBe('true')
-    expect(iframe?.style.visibility).toBe('hidden')
+    expect(iframe?.style.opacity).toBe('0')
+  })
+
+  // Régression du 2026-08-02 : une iframe 0×0 n'a pas de viewport, le contenu
+  // n'est jamais mis en page et l'aperçu d'impression sort blanc.
+  it('donne à l\'iframe une taille réelle, sinon l\'impression sort blanche', () => {
+    printHtmlDocument('<p>doc</p>')
+
+    const iframe = document.querySelector('iframe')
+    expect(iframe?.style.width).toBe('210mm')
+    expect(iframe?.style.height).toBe('297mm')
+    // Cachée par décalage hors écran, jamais par des dimensions nulles.
+    expect(iframe?.style.left).toBe('-10000px')
   })
 })

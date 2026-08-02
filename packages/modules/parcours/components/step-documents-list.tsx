@@ -1,7 +1,7 @@
 'use client'
 
 import { showSuccess, showError } from '@monprojetpro/ui'
-import { formatRelativeDate, buildPrintableDocument, printHtmlDocument } from '@monprojetpro/utils'
+import { formatRelativeDate, buildMarkdownPdfDefinition, slugifyDocumentName } from '@monprojetpro/utils'
 import type { StepSubmission } from '../types/parcours.types'
 
 interface DocumentEntry {
@@ -46,42 +46,59 @@ async function copyFormattedText(content: string): Promise<void> {
   await navigator.clipboard.writeText(stripMarkdown(content))
 }
 
-function buildPdfHtml(markdownHtml: string, title: string, dateIso: string): string {
+/**
+ * Fabrique le PDF et le télécharge directement — un clic, un fichier, sans
+ * dialogue d'impression.
+ *
+ * Troisième et dernière génération de ce code. Les deux précédentes ont échoué :
+ * - html2canvas-pro + jsPDF photographiait le document et tranchait l'image tous
+ *   les 297 mm, en plein milieu des tableaux et des encarts ;
+ * - l'impression navigateur paginait correctement mais imposait au client de
+ *   choisir « Enregistrer au format PDF » dans le dialogue système.
+ * On décrit désormais la STRUCTURE du document (voir `buildMarkdownPdfDefinition`)
+ * et pdfmake pagine en connaissance de cause.
+ *
+ * pdfmake pèse ~2 Mo : il est chargé dynamiquement, au clic seulement, pour ne pas
+ * alourdir le chargement de la page.
+ */
+async function downloadPdf(content: string, title: string, dateIso: string): Promise<void> {
+  const [pdfMakeMod, vfsMod] = await Promise.all([
+    import('pdfmake/build/pdfmake'),
+    import('pdfmake/build/vfs_fonts'),
+  ])
+
+  const pdfMake = ((pdfMakeMod as { default?: unknown }).default ?? pdfMakeMod) as {
+    vfs?: unknown
+    createPdf?: (def: unknown) => { download: (name: string) => void }
+  }
+
+  // Les polices vivent dans un système de fichiers virtuel qu'il faut brancher soi-même,
+  // sinon pdfmake ne trouve pas Roboto et ne produit aucun fichier. La forme de l'export
+  // a changé selon les versions : on couvre les trois connues.
+  const vfsExport = ((vfsMod as { default?: unknown }).default ?? vfsMod) as Record<string, unknown>
+  pdfMake.vfs =
+    (vfsExport.pdfMake as { vfs?: unknown } | undefined)?.vfs
+    ?? vfsExport.vfs
+    ?? vfsExport
+
+  const createPdf = pdfMake.createPdf
+  if (typeof createPdf !== 'function') {
+    throw new Error('Impossible de charger le moteur PDF')
+  }
+
   const dateStr = new Date(dateIso).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   })
-  return buildPrintableDocument({
+
+  const definition = buildMarkdownPdfDefinition(content, {
     title,
-    bodyHtml: markdownHtml,
     dateLabel: `Généré le ${dateStr}`,
     accentColor: '#7c3aed',
   })
-}
 
-/**
- * Ouvre le document dans le dialogue d'impression du navigateur (destination
- * « Enregistrer au format PDF »).
- *
- * Remplace l'ancienne chaîne html2canvas-pro + jsPDF, qui photographiait le
- * document puis tranchait l'image tous les 297 mm : elle coupait en plein
- * milieu des tableaux et des encarts (constat MiKL du 2026-08-02). Le moteur
- * d'impression du navigateur, lui, connaît les règles de saut de page — voir
- * PRINT_RULES dans @monprojetpro/utils/printable-document.
- */
-async function downloadPdf(content: string, title: string, dateIso: string): Promise<void> {
-  const markedMod = await import('marked')
-  const marked =
-    (markedMod as { marked?: { parse: (s: string, o?: unknown) => string | Promise<string> } }).marked
-    ?? (markedMod as { default: { parse: (s: string, o?: unknown) => string | Promise<string> } }).default
-
-  if (!marked) {
-    throw new Error('Impossible de charger le convertisseur markdown')
-  }
-
-  const markdownHtml = await marked.parse(content, { gfm: true, breaks: true })
-  printHtmlDocument(buildPdfHtml(String(markdownHtml), title, dateIso))
+  createPdf(definition).download(`${slugifyDocumentName(title)}.pdf`)
 }
 
 export function StepDocumentsList({ submissions }: StepDocumentsListProps) {
@@ -139,8 +156,8 @@ export function StepDocumentsList({ submissions }: StepDocumentsListProps) {
                   }
                 }}
                 className="rounded-lg p-1.5 text-[#6b7280] hover:text-[#a78bfa] hover:bg-[#1a1033] transition-all"
-                title="Enregistrer en PDF (choisir « Enregistrer au format PDF » comme destination)"
-                aria-label="Enregistrer le document en PDF"
+                title="Télécharger en PDF"
+                aria-label="Télécharger le document en PDF"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />

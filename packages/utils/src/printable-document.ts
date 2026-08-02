@@ -194,8 +194,12 @@ export function printHtmlDocument(html: string): void {
   const iframe = document.createElement('iframe')
   iframe.setAttribute('aria-hidden', 'true')
   iframe.setAttribute('title', 'Impression du document')
+  // ⚠️ L'iframe DOIT avoir une taille réelle : avec `width:0;height:0` elle n'a pas de
+  // viewport, le contenu n'est jamais mis en page, et l'aperçu d'impression sort
+  // BLANC sur une seule page (constaté le 2026-08-02). On la dimensionne en A4 et on
+  // la sort du champ de vision par un décalage, plutôt que par des dimensions nulles.
   iframe.style.cssText =
-    'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden'
+    'position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none'
 
   let cleaned = false
   const cleanup = () => {

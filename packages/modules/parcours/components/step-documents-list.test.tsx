@@ -101,6 +101,6 @@ describe('StepDocumentsList', () => {
 
   it('expose un bouton PDF accessible', () => {
     render(<StepDocumentsList submissions={[makeSubmission()]} />)
-    expect(screen.getByLabelText('Enregistrer le document en PDF')).toBeInTheDocument()
+    expect(screen.getByLabelText('Télécharger le document en PDF')).toBeInTheDocument()
   })
 })
