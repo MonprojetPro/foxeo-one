@@ -44,13 +44,34 @@ export async function getDocumentUrl(
 
     const download = parsed.data.download ?? false
 
-    const { data: urlData, error: urlError } = await supabase.storage
-      .from('documents')
-      .createSignedUrl(typedDoc.file_path, 3600, download ? { download: typedDoc.name } : undefined)
+    // Ne passer le 3ᵉ argument QUE pour un téléchargement : un `undefined` explicite
+    // est transmis tel quel au client Storage au lieu d'être omis.
+    const storage = supabase.storage.from('documents')
+    const { data: urlData, error: urlError } = download
+      ? await storage.createSignedUrl(typedDoc.file_path, 3600, { download: typedDoc.name })
+      : await storage.createSignedUrl(typedDoc.file_path, 3600)
 
     if (urlError || !urlData) {
-      console.error('[DOCUMENTS:VIEW] Signed URL error:', urlError)
-      return errorResponse('Erreur lors de la génération de l\'URL', 'STORAGE_ERROR', { message: urlError?.message })
+      // On journalise le chemin exact : sans lui, un fichier absent du Storage est
+      // indiscernable d'une panne réseau ou d'un défaut de droits.
+      console.error(
+        '[DOCUMENTS:VIEW] Signed URL error — path:', typedDoc.file_path,
+        '| message:', urlError?.message,
+      )
+
+      // Cas de loin le plus fréquent : la ligne existe en base mais le fichier n'a
+      // jamais été déposé (ou a été supprimé) dans le Storage. « Erreur lors de la
+      // génération de l'URL » ne voulait rien dire pour un client — constaté par
+      // MiKL le 2026-08-02 sur les documents de démo.
+      const isMissingFile = /not found|does not exist|object.*not.*found/i.test(urlError?.message ?? '')
+
+      return errorResponse(
+        isMissingFile
+          ? 'Ce fichier n\'est plus disponible. Demandez à MiKL de le redéposer.'
+          : 'Impossible d\'ouvrir ce document pour le moment. Réessayez dans un instant.',
+        isMissingFile ? 'STORAGE_FILE_MISSING' : 'STORAGE_ERROR',
+        { message: urlError?.message },
+      )
     }
 
     return successResponse({

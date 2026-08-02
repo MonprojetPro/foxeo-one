@@ -111,4 +111,44 @@ describe('getDocumentUrl Server Action', () => {
 
     expect(mockCreateSignedUrl).toHaveBeenCalledWith(DOC_ROW.file_path, 3600)
   })
+
+  it('passe l\'option de téléchargement uniquement quand elle est demandée', async () => {
+    mockSingle.mockResolvedValue({ data: DOC_ROW, error: null })
+    mockCreateSignedUrl.mockResolvedValue({ data: { signedUrl: 'https://signed.url' }, error: null })
+
+    const { getDocumentUrl } = await import('./get-document-url')
+    await getDocumentUrl({ documentId: DOC_ID, download: true })
+
+    expect(mockCreateSignedUrl).toHaveBeenCalledWith(DOC_ROW.file_path, 3600, { download: DOC_ROW.name })
+  })
+
+  // 2026-08-02 — « Erreur lors de la génération de l'URL » ne disait rien à un client.
+  // Le cas de loin le plus fréquent est un fichier absent du Storage : il mérite son
+  // propre message et son propre code, pour être distingué d'une panne passagère.
+  describe('fichier absent du Storage', () => {
+    beforeEach(() => {
+      mockSingle.mockResolvedValue({ data: DOC_ROW, error: null })
+    })
+
+    it('renvoie un message compréhensible quand l\'objet n\'existe pas', async () => {
+      mockCreateSignedUrl.mockResolvedValue({ data: null, error: { message: 'Object not found' } })
+
+      const { getDocumentUrl } = await import('./get-document-url')
+      const result = await getDocumentUrl({ documentId: DOC_ID })
+
+      expect(result.error?.code).toBe('STORAGE_FILE_MISSING')
+      expect(result.error?.message).toContain('plus disponible')
+      expect(result.error?.message).not.toContain('URL')
+    })
+
+    it('distingue une panne passagère d\'un fichier manquant', async () => {
+      mockCreateSignedUrl.mockResolvedValue({ data: null, error: { message: 'network timeout' } })
+
+      const { getDocumentUrl } = await import('./get-document-url')
+      const result = await getDocumentUrl({ documentId: DOC_ID })
+
+      expect(result.error?.code).toBe('STORAGE_ERROR')
+      expect(result.error?.message).toContain('Réessayez')
+    })
+  })
 })
