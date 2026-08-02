@@ -6,6 +6,7 @@ import {
   Map, MessageCircle, Users, FileText, Send, Bot,
   LayoutDashboard, Settings, BarChart2, Video,
   Bell, HelpCircle, CheckCircle2, Calculator, Box,
+  AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import type { ModuleManifest, ModuleTarget } from '@monprojetpro/types'
@@ -25,13 +26,21 @@ type ModuleSidebarProps = {
   badges?: Record<string, ModuleSidebarBadge>
 }
 
+/**
+ * Signalement sidebar : une icône « attention » teintée, jamais une pastille pleine.
+ * Décision MiKL (2026-08-01) — une gommette de couleur ne dit rien au client : l'icône
+ * signale « il y a quelque chose à aller voir », et c'est Élio le Concierge qui explique
+ * de quoi il s'agit (cf. règles parcours dans `system-prompts.ts`). Le code couleur est
+ * conservé pour la hiérarchie (rouge > orange > jaune), mais il n'est qu'un renfort :
+ * l'information reste lisible sans lui (icône + infobulle + aria-label).
+ */
 const BADGE_VARIANT_CLASSES: Record<ModuleSidebarBadgeVariant, string> = {
-  red:    'bg-red-500 text-white',
-  orange: 'bg-orange-500 text-white',
-  yellow: 'bg-yellow-500 text-black',
-  blue:   'bg-blue-500 text-white',
-  violet: 'bg-[#7c3aed] text-white',
-  green:  'bg-green-500 text-white',
+  red:    'text-red-400',
+  orange: 'text-orange-400',
+  yellow: 'text-yellow-400',
+  blue:   'text-blue-400',
+  violet: 'text-[#a78bfa]',
+  green:  'text-green-400',
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -124,14 +133,18 @@ export function ModuleSidebar({ target, modules, elioWidget, badges }: ModuleSid
               {badge && (badge.count === undefined || badge.count > 0) && (
                 <span
                   className={cn(
-                    'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold px-1.5 shrink-0',
+                    'inline-flex items-center gap-1 shrink-0',
                     BADGE_VARIANT_CLASSES[badge.variant]
                   )}
                   aria-label={badge.ariaLabel}
+                  title={badge.ariaLabel}
                 >
-                  {badge.count !== undefined
-                    ? badge.count > 9 ? '9+' : badge.count
-                    : ''}
+                  <AlertTriangle size={14} aria-hidden="true" />
+                  {badge.count !== undefined && (
+                    <span className="text-[10px] font-bold leading-none">
+                      {badge.count > 9 ? '9+' : badge.count}
+                    </span>
+                  )}
                 </span>
               )}
             </Link>
