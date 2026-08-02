@@ -26,8 +26,6 @@
     "@monprojetpro/utils": "*",
     "@tanstack/react-query": "^5.90.0",
     "date-fns": "^4.1.0",
-    "html2canvas-pro": "^2.0.2",
-    "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "marked": "^18.0.3",
     "react": "^19.0.0",

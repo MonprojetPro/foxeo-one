@@ -9,6 +9,58 @@ const MAX_MESSAGES = 30
 const ELIO_CHAT_FUNCTION = 'elio-chat'
 
 /**
+ * Plafond de rédaction par appel. L'ancienne valeur (2000) coupait les documents
+ * en pleine phrase : un livrable de parcours avec ses tableaux dépasse largement
+ * les ~1400 mots correspondants. 8192 est la valeur par défaut de l'Edge Function
+ * elio-chat — on s'aligne dessus au lieu de la sous-plafonner en silence.
+ */
+const DEFAULT_MAX_TOKENS = 8192
+
+/** Relances autorisées quand le modèle est coupé — 3 × 8192 tokens couvrent tous les cas observés. */
+const MAX_CONTINUATIONS = 2
+
+/**
+ * Demande la suite d'un document tronqué. On renvoie la consigne d'origine (pour que
+ * le ton et la structure restent identiques) puis la fin de ce qui a déjà été écrit,
+ * qui sert de point de raccord. On n'envoie pas le document entier : inutile, et ça
+ * gonflerait le contexte à chaque relance.
+ */
+function buildContinuationPrompt(originalPrompt: string, partialDocument: string): string {
+  const tail = partialDocument.slice(-2000)
+  return `${originalPrompt}
+
+---
+
+**Tu as déjà commencé ce document, mais ta réponse a été coupée avant la fin.**
+Voici la fin de ce qui a été rédigé :
+
+<<<
+${tail}
+>>>
+
+Reprends EXACTEMENT là où la rédaction s'est arrêtée et termine le document.
+Ne répète pas ce qui précède, ne réécris pas l'en-tête, n'ajoute aucun commentaire :
+écris uniquement la suite, en gardant le même ton et le même format markdown.`
+}
+
+/**
+ * Recolle un fragment de continuation au document.
+ *
+ * La coupure tombe presque toujours en plein milieu d'un mot ou d'une ligne. Si le
+ * fragment commence par une ponctuation ou une minuscule, c'est la suite immédiate
+ * de la phrase : on colle sans rien insérer. Sinon, c'est un nouveau bloc et on
+ * rétablit le saut de paragraphe attendu par le markdown.
+ */
+function joinContinuation(document: string, chunk: string): string {
+  const cleanChunk = chunk.replace(/^\s+/, '')
+  const startsNewBlock = /^([#\-*>|]|\d+\.)/.test(cleanChunk) || /^[A-ZÀ-Þ]/.test(cleanChunk)
+
+  return startsNewBlock
+    ? `${document.replace(/\s+$/, '')}\n\n${cleanChunk}`
+    : `${document}${cleanChunk}`
+}
+
+/**
  * Story 14.7 — Génère un document livrable à partir de la conversation Élio d'une étape.
  * Appelle l'Edge Function elio-chat (clé Anthropic gérée côté Supabase secrets uniquement).
  */
@@ -109,33 +161,68 @@ export async function generateDocumentFromConversation(
       customInstructions: config?.customInstructions ?? undefined,
     })
 
+    const systemPrompt =
+      // Le document parle de MiKL (« actionnable pour MiKL qui va le valider ») : la règle
+      // d'identité évite qu'il soit rédigé au féminin une fois sur N.
+      'Tu es Élio, un assistant IA expert en rédaction de documents professionnels structurés en markdown.' +
+      OPERATOR_IDENTITY_RULE
+
+    const model = config?.model ?? 'claude-sonnet-4-6'
+    const maxTokens = config?.maxTokens ?? DEFAULT_MAX_TOKENS
+    const temperature = config?.temperature ?? 1.0
+
     // Appel via Edge Function elio-chat — clé Anthropic gérée côté Supabase secrets
-    const { data: fnData, error: fnError } = await supabase.functions.invoke(ELIO_CHAT_FUNCTION, {
-      body: {
-        // Le document parle de MiKL (« actionnable pour MiKL qui va le valider ») : la règle
-        // d'identité évite qu'il soit rédigé au féminin une fois sur N.
-        systemPrompt:
-          'Tu es Élio, un assistant IA expert en rédaction de documents professionnels structurés en markdown.' +
-          OPERATOR_IDENTITY_RULE,
-        message: prompt,
-        model: config?.model ?? 'claude-sonnet-4-6',
-        maxTokens: config?.maxTokens ?? 2000,
-        temperature: config?.temperature ?? 1.0,
-      },
+    const first = await supabase.functions.invoke(ELIO_CHAT_FUNCTION, {
+      body: { systemPrompt, message: prompt, model, maxTokens, temperature },
     })
 
-    if (fnError) {
-      console.error('[PARCOURS:GENERATE_DOC] Edge function error:', fnError)
-      return errorResponse('Service IA indisponible', 'API_ERROR', { message: fnError.message })
+    if (first.error) {
+      console.error('[PARCOURS:GENERATE_DOC] Edge function error:', first.error)
+      return errorResponse('Service IA indisponible', 'API_ERROR', { message: first.error.message })
     }
 
-    const document = fnData?.content ?? ''
+    let lastResponse = first.data
+    let document: string = lastResponse?.content ?? ''
 
     if (!document.trim()) {
       return errorResponse('Élio n\'a pas pu générer le document — veuillez réessayer', 'API_ERROR')
     }
 
-    console.log('[PARCOURS:GENERATE_DOC] Document généré pour step:', input.stepId, '| longueur:', document.length)
+    // Reprise sur troncature — l'Edge Function renvoie `stopReason: 'max_tokens'` quand le
+    // modèle a été coupé net en cours de rédaction. Ce champ existait déjà mais n'était lu
+    // par personne : les documents partaient amputés en plein milieu d'une phrase, sans que
+    // ni le client ni MiKL n'en soient avertis (constat MiKL du 2026-08-02). On relance donc
+    // la rédaction là où elle s'est arrêtée, en recollant les morceaux.
+    let continuations = 0
+    while (lastResponse?.stopReason === 'max_tokens' && continuations < MAX_CONTINUATIONS) {
+      continuations += 1
+      const next = await supabase.functions.invoke(ELIO_CHAT_FUNCTION, {
+        body: {
+          systemPrompt,
+          message: buildContinuationPrompt(prompt, document),
+          model,
+          maxTokens,
+          temperature,
+        },
+      })
+
+      // Une continuation qui échoue n'annule pas le document déjà produit : on garde ce
+      // qu'on a plutôt que de tout perdre, et on sort de la boucle.
+      const chunk: string = next.data?.content ?? ''
+      if (next.error || !chunk.trim()) {
+        console.error('[PARCOURS:GENERATE_DOC] Continuation échouée:', next.error?.message ?? 'contenu vide')
+        break
+      }
+
+      document = joinContinuation(document, chunk)
+      lastResponse = next.data
+    }
+
+    console.log(
+      '[PARCOURS:GENERATE_DOC] Document généré pour step:', input.stepId,
+      '| longueur:', document.length,
+      '| continuations:', continuations,
+    )
 
     return successResponse({ document })
   } catch (error) {

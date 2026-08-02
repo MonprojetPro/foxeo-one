@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Download, ChevronDown, FileText, FileType2, Printer } from 'lucide-react'
 import { toast } from '@monprojetpro/ui'
+import { buildPrintableDocument, printHtmlDocument } from '@monprojetpro/utils'
 import type { Document } from '../types/document.types'
 
 const MARKDOWN_TYPES = ['md', 'markdown']
@@ -54,17 +55,13 @@ export function DocumentExportButton({ document, markdownHtml }: DocumentExportB
   }
 
   const downloadPdf = () => {
-    // Vue HTML autonome (avec impression auto au chargement) servie via une URL Blob :
-    // pas de document.write, et la fenêtre déclenche elle-même « Enregistrer en PDF ».
-    const html = buildExportHtml(baseName, markdownHtml ?? '', { forPrint: true })
-    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
-    const win = window.open(url, '_blank', 'noopener,noreferrer')
-    if (!win) {
-      toast.error('Autorise les pop-ups pour générer le PDF')
-      URL.revokeObjectURL(url)
-      return
-    }
-    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    // Brique partagée `@monprojetpro/utils` : mêmes règles de saut de page que les
+    // documents du parcours (tableaux et encarts jamais coupés, en-têtes de tableau
+    // répétés). Passe par une iframe cachée plutôt qu'une pop-up — celle-ci était
+    // bloquée par défaut et l'export échouait silencieusement.
+    printHtmlDocument(
+      buildPrintableDocument({ title: baseName, bodyHtml: markdownHtml ?? '' })
+    )
     setOpen(false)
   }
 

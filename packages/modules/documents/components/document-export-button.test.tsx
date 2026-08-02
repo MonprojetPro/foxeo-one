@@ -63,22 +63,42 @@ describe('DocumentExportButton', () => {
     expect(mockToast.success).toHaveBeenCalledWith('Document Word téléchargé')
   })
 
-  it('PDF : ouvre une fenêtre via une URL Blob (impression navigateur)', () => {
-    const openSpy = vi.spyOn(window, 'open').mockReturnValue({} as Window)
+  // 2026-08-02 — l'export PDF passe par une iframe cachée (brique partagée
+  // `printHtmlDocument`) et non plus par `window.open` : la pop-up était bloquée
+  // par défaut et l'export échouait. Il n'y a donc plus de cas « pop-ups bloqués ».
+  it('PDF : imprime via une iframe cachée, sans pop-up', () => {
+    const openSpy = vi.spyOn(window, 'open')
+    const printSpy = vi.fn()
+    // jsdom n'implémente pas l'impression : on intercepte le print de l'iframe.
+    vi.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue({
+      focus: vi.fn(),
+      print: printSpy,
+      addEventListener: vi.fn(),
+    } as unknown as Window)
+
     render(<DocumentExportButton document={mdDoc} markdownHtml="<h1>Brief</h1>" />)
     fireEvent.click(screen.getByTestId('export-menu-trigger'))
     fireEvent.click(screen.getByTestId('export-pdf'))
 
-    expect(openSpy).toHaveBeenCalledWith('blob:test', '_blank', 'noopener,noreferrer')
+    const iframe = window.document.querySelector('iframe')
+    expect(iframe).toBeTruthy()
+    expect(openSpy).not.toHaveBeenCalled()
     expect(mockToast.error).not.toHaveBeenCalled()
   })
 
-  it('PDF : erreur si les pop-ups sont bloqués', () => {
-    vi.spyOn(window, 'open').mockReturnValue(null)
+  it('PDF : le document imprimé porte les règles de saut de page', () => {
+    vi.spyOn(HTMLIFrameElement.prototype, 'contentWindow', 'get').mockReturnValue({
+      focus: vi.fn(), print: vi.fn(), addEventListener: vi.fn(),
+    } as unknown as Window)
+
     render(<DocumentExportButton document={mdDoc} markdownHtml="<h1>Brief</h1>" />)
     fireEvent.click(screen.getByTestId('export-menu-trigger'))
     fireEvent.click(screen.getByTestId('export-pdf'))
 
-    expect(mockToast.error).toHaveBeenCalledWith('Autorise les pop-ups pour générer le PDF')
+    const srcdoc = window.document.querySelector('iframe')?.getAttribute('srcdoc') ?? ''
+    // Les garde-fous qui empêchent de couper un tableau ou un encart en deux.
+    expect(srcdoc).toContain('break-inside: avoid')
+    expect(srcdoc).toContain('display: table-header-group')
+    expect(srcdoc).toContain('<h1>Brief</h1>')
   })
 })

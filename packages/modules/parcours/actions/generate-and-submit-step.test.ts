@@ -155,3 +155,74 @@ describe('generateDocumentFromConversation', () => {
     expect(result.error?.code).toBe('API_ERROR')
   })
 })
+
+// ─── Reprise sur troncature (2026-08-02) ─────────────────────────────────────
+// Le modèle coupé à `max_tokens` livrait un document amputé en silence.
+
+describe('generateDocumentFromConversation — document tronqué', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
+    mockStepSingle.mockResolvedValue({ data: mockStep, error: null })
+    mockClientSingle.mockResolvedValue({ data: { first_name: 'Alice', name: 'Alice Martin' }, error: null })
+    mockConvMaybeSingle.mockResolvedValue({ data: { id: CONV_ID }, error: null })
+    mockMsgLimit.mockResolvedValue({ data: mockMessages, error: null })
+  })
+
+  it('relance la rédaction et recolle les morceaux quand le modèle a été coupé', async () => {
+    mockFunctionsInvoke
+      .mockResolvedValueOnce({ data: { content: 'Le positionnement de Léa repose sur la fra', stopReason: 'max_tokens' }, error: null })
+      .mockResolvedValueOnce({ data: { content: 'îcheur du produit.', stopReason: 'end_turn' }, error: null })
+
+    const { generateDocumentFromConversation } = await import('./generate-and-submit-step')
+    const result = await generateDocumentFromConversation({ stepId: STEP_ID, clientId: CLIENT_ID })
+
+    expect(result.error).toBeNull()
+    // Coupure en plein mot : les morceaux se recollent sans espace parasite.
+    expect(result.data?.document).toBe('Le positionnement de Léa repose sur la fraîcheur du produit.')
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(2)
+  })
+
+  it('insère un saut de paragraphe quand la suite démarre un nouveau bloc markdown', async () => {
+    mockFunctionsInvoke
+      .mockResolvedValueOnce({ data: { content: '## Positionnement\n\nTexte.', stopReason: 'max_tokens' }, error: null })
+      .mockResolvedValueOnce({ data: { content: '## Points de vigilance', stopReason: 'end_turn' }, error: null })
+
+    const { generateDocumentFromConversation } = await import('./generate-and-submit-step')
+    const result = await generateDocumentFromConversation({ stepId: STEP_ID, clientId: CLIENT_ID })
+
+    expect(result.data?.document).toBe('## Positionnement\n\nTexte.\n\n## Points de vigilance')
+  })
+
+  it('conserve le contenu déjà produit si la relance échoue', async () => {
+    mockFunctionsInvoke
+      .mockResolvedValueOnce({ data: { content: 'Début du document', stopReason: 'max_tokens' }, error: null })
+      .mockResolvedValueOnce({ data: null, error: { message: 'timeout' } })
+
+    const { generateDocumentFromConversation } = await import('./generate-and-submit-step')
+    const result = await generateDocumentFromConversation({ stepId: STEP_ID, clientId: CLIENT_ID })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.document).toBe('Début du document')
+  })
+
+  it('borne les relances au lieu de boucler indéfiniment', async () => {
+    mockFunctionsInvoke.mockResolvedValue({ data: { content: 'encore', stopReason: 'max_tokens' }, error: null })
+
+    const { generateDocumentFromConversation } = await import('./generate-and-submit-step')
+    const result = await generateDocumentFromConversation({ stepId: STEP_ID, clientId: CLIENT_ID })
+
+    expect(result.error).toBeNull()
+    // 1 appel initial + MAX_CONTINUATIONS (2) relances, puis on rend la main.
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(3)
+  })
+
+  it('ne relance pas quand la rédaction s\'est terminée normalement', async () => {
+    mockFunctionsInvoke.mockResolvedValue({ data: { content: 'Document complet.', stopReason: 'end_turn' }, error: null })
+
+    const { generateDocumentFromConversation } = await import('./generate-and-submit-step')
+    await generateDocumentFromConversation({ stepId: STEP_ID, clientId: CLIENT_ID })
+
+    expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1)
+  })
+})

@@ -99,8 +99,8 @@ describe('StepDocumentsList', () => {
     })
   })
 
-  it('renders a PDF download button with the correct aria-label', () => {
+  it('expose un bouton PDF accessible', () => {
     render(<StepDocumentsList submissions={[makeSubmission()]} />)
-    expect(screen.getByLabelText('Télécharger le document en PDF')).toBeInTheDocument()
+    expect(screen.getByLabelText('Enregistrer le document en PDF')).toBeInTheDocument()
   })
 })
