@@ -239,6 +239,38 @@ de `POST /contact-messages/:id/reply`, avec l'historique conservé des deux côt
 **Priorité** : 6.2 avant 6.1 — pouvoir joindre un utilisateur qui décroche vaut plus
 qu'un marqueur de démonstration.
 
+### 6.3 `GET /metrics` — deux compteurs pour décomposer les recettes des foyers
+
+Définitions confirmées en base par MenuFacile le 2026-08-03 :
+
+| Compteur | Ce qu'il compte | Axe |
+|----------|-----------------|-----|
+| `recipes.total` | toutes les lignes, copies comprises | — |
+| `recipes.official` | appartenant au **foyer officiel**, quelle que soit la visibilité | propriétaire |
+| `recipes.public` | `visibility = 'public'`, tous foyers confondus | visibilité |
+| `recipes.hidden` | retirées par modération | visibilité |
+| `recipes.total_copies` | somme des `copy_count` — un **nombre d'actions**, pas de lignes | usage |
+
+`official` et `public` coïncident aujourd'hui (63 = 63) **par accident de données**, pas
+par construction : une recette officielle privée, ou une recette de foyer publiée, feront
+diverger les deux. Le cockpit les présente donc sur deux axes séparés, jamais additionnés.
+
+Le Hub dérive « recettes chez les foyers » = `total - official` (66). Ce qu'il **ne peut
+pas** dériver, et qui serait utile :
+
+```json
+"recipes": {
+  "household_created": 3,   // créations propres des foyers
+  "household_copied": 63    // copies du catalogue rapatriées par les foyers
+}
+```
+
+Ces deux-là donneraient la seule décomposition honnête du total :
+`officielles (63) + créations de foyers (3) + copies (63) = 129`. Sans eux, le cockpit
+s'arrête à « chez les foyers : 66 » sans pouvoir dire ce qu'il y a dedans — or la
+différence est de taille : 63 copies du catalogue ne racontent pas la même histoire que
+63 créations originales.
+
 ## Performance
 
 Les listes seront triées et filtrées à chaque affichage. Prévoir des index sur : date de création du foyer, date de dernière connexion des utilisateurs, et le champ servant à `last_activity_at`. Les compteurs (`recipes_count`, `planned_meals_count`, `friendships_count`) sur des tables qui grossissent gagnent à être pré-agrégés plutôt que recalculés en `COUNT` à chaque requête.

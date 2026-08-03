@@ -24,6 +24,14 @@ Hub (ce module) ──HTTP + Bearer──▶ guichet admin-api ──▶ base Me
    > section affiche « le guichet n'expose pas encore cette donnée » **au lieu de
    > disparaître** : une section absente sans explication ressemble à un bug.
    > `retry: false` — inutile de rappeler trois fois un endpoint qui n'existe pas.
+   > **Détail recettes — deux axes, jamais additionnés.** `official` se définit par
+   > PROPRIÉTAIRE (le foyer officiel), `public` par VISIBILITÉ. Les deux valent 63
+   > aujourd'hui par accident de données, pas par construction. Le bloc les sépare donc
+   > en « à qui elles appartiennent » (officielles + chez les foyers = total) et « qui
+   > peut les voir » (publiques, masquées). Empiler les cinq compteurs côte à côte
+   > donnait envie de les additionner et faisait conclure à un double comptage.
+   > « Chez les foyers » est dérivé (`total - official`) ; la répartition
+   > créations / copies **n'est pas dérivable** et n'est donc pas affichée.
 1. **Tableau de bord** — KPIs (`GET /metrics`) : utilisateurs, recettes, foyers,
    modération, top recettes. ✅
 2. **Foyers** — liste des foyers (`GET /households`) : nom, membres, recettes, repas

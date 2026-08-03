@@ -130,6 +130,17 @@ export function MetricsTab({ onNavigate }: { onNavigate?: (tab: 'moderation' | '
   const messagesNew = data?.contact?.new ?? 0
   const hasAlerts = reportsPending > 0 || messagesNew > 0
 
+  /**
+   * Recettes appartenant aux foyers = tout ce qui n'est pas au catalogue officiel.
+   * `official` se définit par PROPRIÉTAIRE (le foyer officiel), pas par visibilité :
+   * les deux ensembles sont donc complémentaires et leur somme fait bien le total.
+   * Le guichet ne distingue pas encore créations et copies — on ne l'invente pas.
+   */
+  const householdRecipes =
+    data?.recipes.total !== undefined && data?.recipes.official !== undefined
+      ? Math.max(0, data.recipes.total - data.recipes.official)
+      : undefined
+
   if (error) {
     return (
       <div className="rounded-2xl border border-red-400/30 bg-red-400/5 p-8 text-center">
@@ -234,9 +245,9 @@ export function MetricsTab({ onNavigate }: { onNavigate?: (tab: 'moderation' | '
             <HeroStat
               icon={Copy}
               tone="emerald"
-              label="Copies de recettes"
+              label="Copies effectuées"
               value={nf(data?.recipes.total_copies)}
-              sub="engagement cumulé"
+              sub="nombre de fois qu'une recette a été reprise"
             />
             <HeroStat
               icon={Home}
@@ -255,28 +266,74 @@ export function MetricsTab({ onNavigate }: { onNavigate?: (tab: 'moderation' | '
       {/* Vues d'ensemble : répartition par taille de foyer + cohortes de rétention */}
       <InsightsSection />
 
-      {/* Détail recettes */}
+      {/* Détail recettes — deux axes de lecture distincts, jamais additionnables */}
       <section>
         <SectionTitle>Détail recettes</SectionTitle>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {isLoading ? (
-            <>
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-            </>
-          ) : (
-            <>
-              <MetricCard label="Total" value={nf(data?.recipes.total)} accent />
-              <MetricCard label="Publiques" value={nf(data?.recipes.public)} />
-              <MetricCard label="Officielles" value={nf(data?.recipes.official)} />
-              <MetricCard label="Masquées" value={nf(data?.recipes.hidden)} />
-              <MetricCard label="Nouvelles (7j)" value={nf(data?.recipes.new_7d)} />
-            </>
-          )}
-        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <MetricCard
+              label="Recettes en base"
+              value={nf(data?.recipes.total)}
+              sub="toutes les fiches, y compris les copies faites par les foyers"
+              accent
+            />
+
+            {/* Axe 1 — à qui elles appartiennent. Complémentaires : somme = total. */}
+            <div>
+              <p className="mb-2 text-[0.7rem] uppercase tracking-wider text-gray-600">
+                À qui elles appartiennent
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <MetricCard
+                  label="Catalogue officiel"
+                  value={nf(data?.recipes.official)}
+                  sub="créées par toi, dans le foyer officiel"
+                />
+                <MetricCard
+                  label="Chez les foyers"
+                  value={nf(householdRecipes)}
+                  sub="leurs créations + les recettes qu'ils ont copiées"
+                />
+              </div>
+            </div>
+
+            {/* Axe 2 — qui peut les voir. Indépendant du propriétaire. */}
+            <div>
+              <p className="mb-2 text-[0.7rem] uppercase tracking-wider text-gray-600">
+                Qui peut les voir
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <MetricCard
+                  label="Publiques"
+                  value={nf(data?.recipes.public)}
+                  sub="visibles par toute la communauté"
+                />
+                <MetricCard
+                  label="Masquées"
+                  value={nf(data?.recipes.hidden)}
+                  sub="retirées par modération"
+                />
+                <MetricCard label="Nouvelles (7 j)" value={nf(data?.recipes.new_7d)} />
+              </div>
+            </div>
+
+            <p className="text-[0.7rem] leading-relaxed text-gray-600">
+              Les deux axes ne s’additionnent pas : une recette du catalogue officiel est
+              aussi comptée dans « publiques » si elle est visible. Aujourd’hui les
+              {' '}{nf(data?.recipes.official)} officielles sont toutes publiques — mais dès
+              qu’un foyer publiera une de ses recettes, les deux chiffres divergeront.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Communauté */}
