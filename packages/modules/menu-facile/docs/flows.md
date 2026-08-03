@@ -18,8 +18,8 @@ Composant MetricsTab (client)
 |---------|----------|-------|---------------|
 | GET | `/metrics` | KPIs globaux | ✅ branché |
 | GET | `/households` | Liste paginée des foyers (search, sort, order, activity, official) | ✅ onglet Foyers |
-| GET | `/households/:id` | Fiche foyer (membres, plannings, signalements liés) | ⏳ spec livrée, à brancher (lot 2) |
-| GET | `/users` | Liste paginée des utilisateurs | ⏳ spec livrée, à brancher (lot 2) |
+| GET | `/households/:id` | Fiche foyer (membres, plannings, signalements liés) | ✅ fiche au clic |
+| GET | `/users` | Liste paginée des utilisateurs | ✅ onglet Utilisateurs |
 | GET | `/metrics/households-distribution` | Répartition des foyers par taille | ⏳ lot 3 |
 | GET | `/metrics/retention-cohorts` | Cohortes de rétention | ⏳ lot 3 |
 | GET | `/reports?status=` | Signalements (+ `recipe` aperçu, `reporter_name`) | ✅ onglet Modération |
@@ -87,6 +87,27 @@ Composant HouseholdsTab (client)
   silencieusement incomplet.
 - **Dates** : le guichet renvoie le format `+00:00` (et non `Z`). `new Date()` les lit
   correctement — ne pas comparer de littéraux `Z` dans un test.
+
+## Fiche foyer et utilisateurs (lot 2)
+
+```
+HouseholdsTab  ──clic sur une ligne──▶  HouseholdDetailDialog
+UsersTab       ──clic sur le foyer ──▶  HouseholdDetailDialog   (même composant)
+                                            └─ useHousehold(id)   [enabled: !!id, retry: false]
+                                                 └─ getHousehold(id) → GET /households/:id
+```
+
+- **Un seul composant de fiche** partagé par les deux onglets : ajouter une info dans
+  la fiche la fait apparaître partout, il n'y a pas deux versions à maintenir.
+- **`retry: false`** sur la fiche : un 404 doit remonter tout de suite à l'écran plutôt
+  que d'être réessayé trois fois en silence.
+- **Bloc absent vs bloc vide** : si `members` / `recent_plannings` / `reports` est
+  absent de la réponse, l'UI affiche « donnée non fournie par le guichet ». S'il est
+  présent mais vide, elle affiche « aucun ». Les deux situations sont différentes et
+  ne doivent jamais se ressembler à l'écran.
+- **Activité 30 j** (onglet Utilisateurs) : `sign_ins_30d` si disponible, sinon
+  `active_days_30d`, sinon « — ». Le libellé change avec la source (« conn. » /
+  « j actifs ») pour qu'on sache toujours ce que compte le chiffre.
 
 ## Réponses
 

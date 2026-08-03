@@ -4,6 +4,8 @@ export { manifest } from './manifest'
 export { MenuFacileDashboard } from './components/menu-facile-dashboard'
 export { MetricsTab } from './components/metrics-tab'
 export { HouseholdsTab } from './components/households-tab'
+export { HouseholdDetailDialog } from './components/household-detail-dialog'
+export { UsersTab } from './components/users-tab'
 export { ModerationTab } from './components/moderation-tab'
 export { RecipesTab } from './components/recipes-tab'
 export { MessagesTab } from './components/messages-tab'
@@ -13,8 +15,10 @@ export { HomeBannerTab } from './components/home-banner-tab'
 
 // Data
 export { useMenuFacileMetrics } from './hooks/use-menu-facile-metrics'
-export { useHouseholds } from './hooks/use-households'
-export { getHouseholds, getAllHouseholds } from './actions/households'
+export { useHouseholds, useHousehold } from './hooks/use-households'
+export { useUsers } from './hooks/use-users'
+export { getHouseholds, getHousehold, getAllHouseholds } from './actions/households'
+export { getUsers } from './actions/users'
 export { useHomeBanner, useHomeBannerActions } from './hooks/use-home-banner'
 export { useReports, useModerationActions, useRecipeFull } from './hooks/use-moderation'
 export { useContactMessages, useContactThread, useContactActions } from './hooks/use-contact-messages'
@@ -75,7 +79,14 @@ export type {
   HouseholdStatus,
   HouseholdSort,
   HouseholdsQuery,
+  HouseholdDetail,
+  HouseholdMember,
+  HouseholdPlanning,
   ActivityFilter,
   SortOrder,
   Paginated,
+  UserListItem,
+  UserSort,
+  UserStatusFilter,
+  UsersQuery,
 } from './types'

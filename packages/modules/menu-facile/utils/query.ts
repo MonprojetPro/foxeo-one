@@ -1,4 +1,4 @@
-import type { HouseholdsQuery } from '../types'
+import type { HouseholdsQuery, UsersQuery } from '../types'
 
 /** Plafond imposé par le guichet : au-delà, il ignore la valeur. */
 export const MAX_LIMIT = 100
@@ -20,6 +20,25 @@ export function buildHouseholdsQuery(q: HouseholdsQuery = {}): string {
   if (q.order) p.set('order', q.order)
   if (q.activity && q.activity !== 'all') p.set('activity', q.activity)
   if (q.official !== undefined) p.set('official', String(q.official))
+
+  const qs = p.toString()
+  return qs ? `?${qs}` : ''
+}
+
+/**
+ * Construit la query string de `GET /users`.
+ * Même principe que les foyers : on omet tout ce qui vaut le défaut du guichet.
+ */
+export function buildUsersQuery(q: UsersQuery = {}): string {
+  const p = new URLSearchParams()
+
+  if (q.limit !== undefined) p.set('limit', String(Math.min(Math.max(1, q.limit), MAX_LIMIT)))
+  if (q.offset !== undefined && q.offset > 0) p.set('offset', String(q.offset))
+  if (q.search?.trim()) p.set('search', q.search.trim())
+  if (q.sort) p.set('sort', q.sort)
+  if (q.order) p.set('order', q.order)
+  if (q.status && q.status !== 'all') p.set('status', q.status)
+  if (q.verified !== undefined) p.set('verified', String(q.verified))
 
   const qs = p.toString()
   return qs ? `?${qs}` : ''

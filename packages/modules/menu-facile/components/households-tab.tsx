@@ -16,6 +16,7 @@ import {
 import { Button, Input, toast } from '@monprojetpro/ui'
 import { useHouseholds } from '../hooks/use-households'
 import { getAllHouseholds } from '../actions/households'
+import { HouseholdDetailDialog } from './household-detail-dialog'
 import { PAGE_SIZE } from '../utils/query'
 import { num, shortDate, fullDate, relativeDate, toCsv, downloadCsv } from '../utils/format'
 import type {
@@ -141,9 +142,13 @@ function SkeletonRows({ rows = 6 }: { rows?: number }) {
 }
 
 /** Carte mobile — le tableau est illisible sous 1024 px. */
-function HouseholdCard({ h }: { h: HouseholdListItem }) {
+function HouseholdCard({ h, onOpen }: { h: HouseholdListItem; onOpen: () => void }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+    <button
+      type="button"
+      onClick={onOpen}
+      className="w-full rounded-xl border border-white/10 bg-white/[0.02] p-4 text-left transition-colors hover:border-white/20 hover:bg-white/[0.04]"
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate font-medium text-white">{h.name}</p>
@@ -172,7 +177,7 @@ function HouseholdCard({ h }: { h: HouseholdListItem }) {
         ))}
       </dl>
       <p className="mt-3 text-[0.7rem] text-gray-500">Créé le {shortDate(h.created_at)}</p>
-    </div>
+    </button>
   )
 }
 
@@ -189,6 +194,7 @@ export function HouseholdsTab() {
   const [order, setOrder] = useState<SortOrder>('desc')
   const [page, setPage] = useState(0)
   const [exporting, setExporting] = useState(false)
+  const [openId, setOpenId] = useState<string | null>(null)
 
   // Debounce de la recherche : une frappe ne déclenche pas un appel guichet.
   useEffect(() => {
@@ -409,7 +415,17 @@ export function HouseholdsTab() {
                 items.map((h) => (
                   <tr
                     key={h.id}
-                    className="border-b border-white/5 transition-colors last:border-0 hover:bg-white/[0.03]"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Ouvrir la fiche du foyer ${h.name}`}
+                    onClick={() => setOpenId(h.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setOpenId(h.id)
+                      }
+                    }}
+                    className="cursor-pointer border-b border-white/5 transition-colors last:border-0 hover:bg-white/[0.03] focus:bg-white/[0.05] focus:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400/50"
                   >
                     <td className="px-4 py-3 text-white">
                       <span className="flex items-center gap-2">
@@ -462,7 +478,7 @@ export function HouseholdsTab() {
               : 'Aucun foyer pour l’instant.'}
           </div>
         ) : (
-          items.map((h) => <HouseholdCard key={h.id} h={h} />)
+          items.map((h) => <HouseholdCard key={h.id} h={h} onOpen={() => setOpenId(h.id)} />)
         )}
       </div>
 
@@ -494,6 +510,9 @@ export function HouseholdsTab() {
           </div>
         </div>
       )}
+
+      {/* Fiche foyer */}
+      <HouseholdDetailDialog householdId={openId} onClose={() => setOpenId(null)} />
     </div>
   )
 }

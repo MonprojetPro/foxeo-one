@@ -125,6 +125,82 @@ export interface HouseholdsQuery {
   official?: boolean
 }
 
+// --- GET /households/:id ---------------------------------------------------
+
+/** Un membre du foyer. `role` distingue le créateur des invités. */
+export interface HouseholdMember {
+  id: string
+  email: string | null
+  display_name: string | null
+  role: 'owner' | 'member'
+  joined_at: string | null
+  last_sign_in_at: string | null
+  is_banned: boolean
+}
+
+/** Une semaine de planning. `week_start` = lundi, format `YYYY-MM-DD`. */
+export interface HouseholdPlanning {
+  week_start: string
+  meals_filled: number | null
+  updated_at: string | null
+}
+
+/**
+ * Fiche complète d'un foyer : les champs de la liste + les blocs de détail.
+ * Tous les blocs sont optionnels — le guichet peut ne pas encore les fournir,
+ * l'UI masque alors la section au lieu d'afficher une liste vide trompeuse.
+ */
+export interface HouseholdDetail extends HouseholdListItem {
+  members?: HouseholdMember[]
+  recent_plannings?: HouseholdPlanning[]
+  reports?: {
+    emitted?: MenuFacileReport[]
+    received?: MenuFacileReport[]
+  }
+}
+
+// --- GET /users ------------------------------------------------------------
+
+/** Colonnes triables de la liste des utilisateurs. */
+export type UserSort = 'last_sign_in_at' | 'created_at' | 'email' | 'recipes_count'
+
+/** Filtre de statut de la liste des utilisateurs. */
+export type UserStatusFilter = 'all' | 'active' | 'banned'
+
+/**
+ * Une ligne de la liste des utilisateurs.
+ *
+ * Même convention que les foyers : `null` = « non calculable », jamais « zéro ».
+ * `sign_ins_30d` est aujourd'hui `null` côté guichet (l'historique de connexions
+ * n'est pas conservé) ; `active_days_30d` le remplace quand il est disponible.
+ */
+export interface UserListItem {
+  id: string
+  email: string | null
+  display_name: string | null
+  household_id: string | null
+  household_name: string | null
+  created_at: string
+  last_sign_in_at: string | null
+  is_banned: boolean
+  email_verified: boolean | null
+  recipes_count: number | null
+  sign_ins_30d: number | null
+  /** Jours distincts avec au moins une action sur 30 jours (ajout du guichet). */
+  active_days_30d?: number | null
+}
+
+/** Paramètres de `GET /users`. Tous optionnels. */
+export interface UsersQuery {
+  limit?: number
+  offset?: number
+  search?: string
+  sort?: UserSort
+  order?: SortOrder
+  status?: UserStatusFilter
+  verified?: boolean
+}
+
 // --- GET /contact-messages -------------------------------------------------
 
 export interface ContactMessage {

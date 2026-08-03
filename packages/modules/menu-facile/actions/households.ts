@@ -3,7 +3,12 @@
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { callMenuFacileAdmin, MenuFacileAdminError } from './admin-client'
 import { buildHouseholdsQuery, MAX_LIMIT } from '../utils/query'
-import type { HouseholdListItem, HouseholdsQuery, Paginated } from '../types'
+import type {
+  HouseholdDetail,
+  HouseholdListItem,
+  HouseholdsQuery,
+  Paginated,
+} from '../types'
 
 /** Garde-fou de l'export : au-delà, on s'arrête et on le signale à l'appelant. */
 const EXPORT_CAP = 5000
@@ -32,6 +37,19 @@ export async function getHouseholds(
       `/households${buildHouseholdsQuery(q)}`,
     )
     return successResponse(data ?? emptyPage(q))
+  } catch (err) {
+    return toError(err)
+  }
+}
+
+/** GET /households/:id — fiche complète d'un foyer. */
+export async function getHousehold(id: string): Promise<ActionResponse<HouseholdDetail>> {
+  try {
+    const data = await callMenuFacileAdmin<HouseholdDetail>(
+      `/households/${encodeURIComponent(id)}`,
+    )
+    if (!data) return errorResponse('Foyer introuvable', 'MENUFACILE_HTTP_404')
+    return successResponse(data)
   } catch (err) {
     return toError(err)
   }

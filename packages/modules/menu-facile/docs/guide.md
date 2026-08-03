@@ -28,16 +28,30 @@ Hub (ce module) ──HTTP + Bearer──▶ guichet admin-api ──▶ base Me
    > un nombre pour une vraie valeur, y compris zéro. L'affichage montre « — » sur `null`.
    > Ne jamais écrire `?? 0` sur ces compteurs : cela ferait passer « inconnu » pour
    > « aucun », ce qui est un mensonge silencieux dans un cockpit de pilotage.
-3. **Modération** — signalements (`GET /reports`) + actions : masquer/réafficher une
+
+   **Fiche foyer** (clic sur une ligne, `GET /households/:id`) : membres (créateur
+   repéré, bannis signalés, dernière connexion), 8 derniers plannings, signalements
+   émis et reçus. Un bloc absent de la réponse est affiché comme « donnée non fournie
+   par le guichet » — pas comme une liste vide, qui ferait croire à tort que le foyer
+   n'a rien.
+3. **Utilisateurs** — liste des comptes (`GET /users`) : email/pseudo, foyer de
+   rattachement (cliquable → ouvre la fiche foyer), recettes créées, activité sur
+   30 jours, inscription, dernière connexion, statut, email vérifié. Recherche,
+   filtres (actifs / bannis / email non vérifié), tri, pagination. ✅
+   > **Activité 30 j** : le guichet expose `sign_ins_30d` (aujourd'hui `null` —
+   > l'historique de connexions n'est pas conservé) et `active_days_30d`. L'UI affiche
+   > celui qui est disponible **en précisant lequel** (« 18 conn. » vs « 12 j actifs »),
+   > plutôt qu'un chiffre nu dont personne ne saurait ce qu'il compte.
+4. **Modération** — signalements (`GET /reports`) + actions : masquer/réafficher une
    recette, résoudre un signalement, bannir/débannir un utilisateur. ✅
-4. **Recettes officielles** — liste (`GET /official-recipes`) + création (POST),
+5. **Recettes officielles** — liste (`GET /official-recipes`) + création (POST),
    édition (PATCH), suppression (DELETE), avec ingrédients & étapes dynamiques. ✅
 
 > Note édition : un PATCH ne remplace les ingrédients/étapes que s'ils sont fournis.
 > Le formulaire ne les envoie donc qu'avec le toggle « Remplacer la liste » activé,
 > pour ne jamais écraser l'existant par erreur.
 
-5. **Messages** — boîte Aide & Contact (`GET /contact-messages`) : filtres par statut
+6. **Messages** — boîte Aide & Contact (`GET /contact-messages`) : filtres par statut
    (nouveaux/lus/résolus) et par sujet (bug/amélioration/autre), marquer lu/résolu/rouvrir
    (`POST /contact-messages/resolve`), répondre par email (`mailto:`). ✅
    Le compteur « messages à traiter » remonte aussi sur le Tableau de bord (`metrics.contact`).
