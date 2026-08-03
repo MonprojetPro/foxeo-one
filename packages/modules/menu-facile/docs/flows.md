@@ -20,8 +20,8 @@ Composant MetricsTab (client)
 | GET | `/households` | Liste paginée des foyers (search, sort, order, activity, official) | ✅ onglet Foyers |
 | GET | `/households/:id` | Fiche foyer (membres, plannings, signalements liés) | ✅ fiche au clic |
 | GET | `/users` | Liste paginée des utilisateurs | ✅ onglet Utilisateurs |
-| GET | `/metrics/households-distribution` | Répartition des foyers par taille | ⏳ lot 3 |
-| GET | `/metrics/retention-cohorts` | Cohortes de rétention | ⏳ lot 3 |
+| GET | `/metrics/households-distribution` | Répartition des foyers par taille | ✅ Tableau de bord (dégradation si 404) |
+| GET | `/metrics/retention-cohorts` | Cohortes de rétention | ✅ Tableau de bord (dégradation si 404) |
 | GET | `/reports?status=` | Signalements (+ `recipe` aperçu, `reporter_name`) | ✅ onglet Modération |
 | GET | `/recipes/:id` | Détail complet d'une recette signalée (pour juger) | ⏳ consommé, attend MenuFacile |
 | POST | `/moderation/hide` | Masquer une recette | ✅ |

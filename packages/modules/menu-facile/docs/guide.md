@@ -17,6 +17,13 @@ Hub (ce module) ──HTTP + Bearer──▶ guichet admin-api ──▶ base Me
 
 ## Écrans (page unique à onglets `/modules/menu-facile`)
 
+0. **Vues d'ensemble** (bas du Tableau de bord) — répartition des foyers par taille
+   (`GET /metrics/households-distribution`) et cohortes de rétention
+   (`GET /metrics/retention-cohorts`). ✅
+   > Ces deux endpoints sont les plus récents du guichet. S'ils répondent 404, la
+   > section affiche « le guichet n'expose pas encore cette donnée » **au lieu de
+   > disparaître** : une section absente sans explication ressemble à un bug.
+   > `retry: false` — inutile de rappeler trois fois un endpoint qui n'existe pas.
 1. **Tableau de bord** — KPIs (`GET /metrics`) : utilisateurs, recettes, foyers,
    modération, top recettes. ✅
 2. **Foyers** — liste des foyers (`GET /households`) : nom, membres, recettes, repas

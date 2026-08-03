@@ -125,6 +125,40 @@ export interface HouseholdsQuery {
   official?: boolean
 }
 
+// --- GET /metrics/households-distribution ----------------------------------
+
+/** Une tranche de taille de foyer. Les 4 tranches sont toujours présentes. */
+export interface HouseholdSizeBucket {
+  size: string // '1' | '2' | '3-4' | '5+'
+  households: number
+}
+
+export interface HouseholdsDistribution {
+  generated_at: string
+  buckets: HouseholdSizeBucket[]
+}
+
+// --- GET /metrics/retention-cohorts ----------------------------------------
+
+/** `month_offset` 0 = le mois d'inscription lui-même. */
+export interface CohortPoint {
+  month_offset: number
+  active: number
+}
+
+export interface RetentionCohort {
+  cohort: string // 'YYYY-MM'
+  signups: number
+  retained: CohortPoint[]
+}
+
+export interface RetentionCohorts {
+  generated_at: string
+  /** Ce que compte la cohorte : des foyers ou des utilisateurs. */
+  unit: 'household' | 'user'
+  cohorts: RetentionCohort[]
+}
+
 // --- GET /households/:id ---------------------------------------------------
 
 /** Un membre du foyer. `role` distingue le créateur des invités. */

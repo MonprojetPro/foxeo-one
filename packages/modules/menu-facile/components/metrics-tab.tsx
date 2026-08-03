@@ -17,6 +17,7 @@ import {
 import { useMenuFacileMetrics } from '../hooks/use-menu-facile-metrics'
 import { MetricCard } from './metric-card'
 import { TimeseriesCharts } from './timeseries-charts'
+import { InsightsSection } from './insights-section'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -250,6 +251,9 @@ export function MetricsTab({ onNavigate }: { onNavigate?: (tab: 'moderation' | '
 
       {/* Graphiques (séries temporelles) */}
       <TimeseriesCharts />
+
+      {/* Vues d'ensemble : répartition par taille de foyer + cohortes de rétention */}
+      <InsightsSection />
 
       {/* Détail recettes */}
       <section>

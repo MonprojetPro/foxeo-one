@@ -6,6 +6,7 @@ export { MetricsTab } from './components/metrics-tab'
 export { HouseholdsTab } from './components/households-tab'
 export { HouseholdDetailDialog } from './components/household-detail-dialog'
 export { UsersTab } from './components/users-tab'
+export { InsightsSection } from './components/insights-section'
 export { ModerationTab } from './components/moderation-tab'
 export { RecipesTab } from './components/recipes-tab'
 export { MessagesTab } from './components/messages-tab'
@@ -19,6 +20,8 @@ export { useHouseholds, useHousehold } from './hooks/use-households'
 export { useUsers } from './hooks/use-users'
 export { getHouseholds, getHousehold, getAllHouseholds } from './actions/households'
 export { getUsers } from './actions/users'
+export { useHouseholdsDistribution, useRetentionCohorts } from './hooks/use-insights'
+export { getHouseholdsDistribution, getRetentionCohorts } from './actions/get-insights'
 export { useHomeBanner, useHomeBannerActions } from './hooks/use-home-banner'
 export { useReports, useModerationActions, useRecipeFull } from './hooks/use-moderation'
 export { useContactMessages, useContactThread, useContactActions } from './hooks/use-contact-messages'
@@ -89,4 +92,9 @@ export type {
   UserSort,
   UserStatusFilter,
   UsersQuery,
+  HouseholdsDistribution,
+  HouseholdSizeBucket,
+  RetentionCohorts,
+  RetentionCohort,
+  CohortPoint,
 } from './types'
