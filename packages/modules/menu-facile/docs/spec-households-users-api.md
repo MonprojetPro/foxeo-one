@@ -206,6 +206,39 @@ Les 4 tranches exactement, toujours présentes même à 0. La somme doit égaler
 
 ---
 
+---
+
+## 6. Demandes complémentaires — actions depuis la fiche foyer (ajout du 2026-08-03)
+
+Le cockpit sait déjà **bannir/débannir un membre**, **masquer/réafficher une recette
+signalée** et **résoudre un signalement** : ces trois actions passent par les endpoints
+`/moderation/*` existants. Deux actions restent impossibles faute d'endpoint.
+
+### 6.1 `PATCH /households/:id` — marquer un foyer comme officiel
+
+```
+Corps : { "is_official": true }        // ou false pour retirer le marqueur
+Réponse : { "data": { …le foyer mis à jour, même forme que GET /households/:id } }
+```
+
+Aujourd'hui `is_official` est en lecture seule : le cockpit l'affiche mais ne peut pas
+le changer, il faut passer par la base. Un `PATCH` suffirait.
+
+### 6.2 `POST /households/:id/message` — écrire au foyer depuis le Hub
+
+```
+Corps : { "body": "texte du message" }
+Réponse : { "ok": true }
+```
+
+Le cockpit ne peut aujourd'hui que proposer un `mailto:` vers l'email du membre — donc
+sortir de l'application et écrire depuis une boîte mail, sans trace dans MenuFacile.
+Un message in-app arriverait dans le fil de l'utilisateur, exactement comme les réponses
+de `POST /contact-messages/:id/reply`, avec l'historique conservé des deux côtés.
+
+**Priorité** : 6.2 avant 6.1 — pouvoir joindre un utilisateur qui décroche vaut plus
+qu'un marqueur de démonstration.
+
 ## Performance
 
 Les listes seront triées et filtrées à chaque affichage. Prévoir des index sur : date de création du foyer, date de dernière connexion des utilisateurs, et le champ servant à `last_activity_at`. Les compteurs (`recipes_count`, `planned_meals_count`, `friendships_count`) sur des tables qui grossissent gagnent à être pré-agrégés plutôt que recalculés en `COUNT` à chaque requête.

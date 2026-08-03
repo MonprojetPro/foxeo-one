@@ -38,8 +38,14 @@ export function useRecipeFull(id: string | null, enabled: boolean) {
 }
 
 /**
- * Mutations de modération. Après succès, on invalide reports + metrics
- * (les compteurs du Tableau de bord doivent bouger immédiatement).
+ * Mutations de modération.
+ *
+ * ⚠️ Une action de modération est lue par bien plus d'écrans que l'onglet
+ * Modération : bannir un membre change son statut dans la liste des
+ * utilisateurs, dans la fiche de son foyer, et peut faire basculer le foyer
+ * entier en « banni » dans la liste des foyers. On invalide donc TOUTES les
+ * vues concernées — sinon MiKL bannit quelqu'un et le voit encore « actif »
+ * deux onglets plus loin.
  */
 export function useModerationActions() {
   const qc = useQueryClient()
@@ -47,6 +53,9 @@ export function useModerationActions() {
     qc.invalidateQueries({ queryKey: ['menu-facile', 'reports'] })
     qc.invalidateQueries({ queryKey: ['menu-facile', 'metrics'] })
     qc.invalidateQueries({ queryKey: ['menu-facile', 'official-recipes'] })
+    qc.invalidateQueries({ queryKey: ['menu-facile', 'households'] })
+    qc.invalidateQueries({ queryKey: ['menu-facile', 'household'] })
+    qc.invalidateQueries({ queryKey: ['menu-facile', 'users'] })
   }
 
   const hide = useMutation({

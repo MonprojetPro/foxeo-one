@@ -109,6 +109,38 @@ UsersTab       ──clic sur le foyer ──▶  HouseholdDetailDialog   (même
   `active_days_30d`, sinon « — ». Le libellé change avec la source (« conn. » /
   « j actifs ») pour qu'on sache toujours ce que compte le chiffre.
 
+## Agir depuis la fiche foyer (lot 4)
+
+Trois actions sont disponibles dans la fiche, toutes via les endpoints
+`/moderation/*` déjà en place :
+
+| Action | Où | Endpoint |
+|--------|-----|----------|
+| Bannir / débannir un membre | ligne de membre | `POST /moderation/ban` |
+| Masquer / réafficher une recette | signalement **reçu** | `POST /moderation/hide` |
+| Marquer un signalement traité | signalement **reçu** en attente | `POST /moderation/resolve-report` |
+| Écrire à un membre | ligne de membre | `mailto:` (pas d'endpoint in-app) |
+
+- **Confirmation en deux temps** (`ConfirmButton`) sur toute action lourde : le premier
+  clic arme le bouton (« Confirmer ? »), le second exécute. Le `onBlur` désarme. Pas de
+  modale par-dessus la fiche, pas de bannissement au clic accidentel.
+- **Actions uniquement sur les signalements REÇUS** : masquer une recette depuis un
+  signalement *émis* par ce foyer toucherait la recette de quelqu'un d'autre, sans que
+  l'écran le dise. Les signalements émis restent en lecture seule ici.
+- **Bannissement sans échéance** : `until` reçoit une date lointaine pour poser le ban,
+  `null` pour le lever. Le même bouton fait les deux, l'action est donc toujours
+  réversible depuis l'endroit où elle a été faite.
+
+⚠️ **Invalidation** — une action de modération est lue par cinq écrans :
+`reports`, `metrics`, `official-recipes`, `households`, `household`, `users`. Les six
+clés sont invalidées ensemble dans `useModerationActions`. Les trois dernières ont été
+ajoutées au lot 4 : sans elles, bannir un membre le laissait « actif » dans l'onglet
+Utilisateurs et dans la liste des foyers.
+
+**Pas encore possibles** (endpoints demandés, cf. `spec-households-users-api.md` §6) :
+marquer un foyer comme officiel (`PATCH /households/:id`) et écrire un message in-app
+(`POST /households/:id/message`).
+
 ## Réponses
 
 - Succès : `{ data: … }` ou `{ ok: true }`
