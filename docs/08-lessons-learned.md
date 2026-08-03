@@ -926,3 +926,28 @@
   (c) Ne jamais laisser un `if (!res.ok) return null` sur un appel a un tiers : logger le **corps** de la reponse (`error_description` nomme la cause). Sans ce log, le diagnostic est impossible a distance.
   (d) Le calendrier Google est un scope « sensible » : en Production non-verifiee, l'ecran « Google n'a pas valide cette application » apparait (limite 100 comptes) — sans consequence en usage interne.
 - **Agents impliques** : MAX, ATLAS
+
+## 2026-08-03 — Un nouvel écran ne se déclare pas tout seul auprès des mutations existantes
+
+- **Categorie** : Data fetching / TanStack Query / Consumers
+- **Symptome** : bannir un membre depuis la fiche foyer du cockpit MenuFacile fonctionnait — mais l'onglet Utilisateurs et la liste des foyers continuaient d'afficher la personne « active » jusqu'au polling suivant.
+- **Cause racine** : `useModerationActions` invalidait `reports`, `metrics` et `official-recipes` — la liste exacte des consumers **au moment où il a été écrit**. Correct à l'époque. Les onglets Foyers et Utilisateurs, ajoutés des mois plus tard, lisent la même entité (`is_banned`) sans que rien ne relie leur ajout à la mutation existante. Le trou était donc **préexistant et invisible** : il n'a pu se manifester qu'une fois les nouveaux écrans livrés.
+- **Ce qui a permis de le trouver** : appliquer l'inspection des consumers **dans le sens inverse de l'habitude**. La règle demande normalement, en codant une mutation, de recenser qui la lit. Ici on codait un **écran**, pas une mutation — il a fallu se demander « quelles mutations existantes touchent l'entité que ce nouvel écran affiche ? », puis relire leur invalidation.
+- **Regle a suivre** :
+  (a) Ajouter un écran qui **lit** une entité déjà mutée ailleurs oblige à rouvrir toutes les mutations de cette entité et à compléter leur invalidation. Le nouvel écran ne se signale pas aux mutations : le lien est à faire à la main, dans le même commit.
+  (b) `queryKey: ['menu-facile', 'household', id]` et `['menu-facile', 'households']` sont **deux clés distinctes** : invalider la liste ne rafraîchit pas la fiche ouverte. Les deux doivent figurer dans l'invalidation.
+  (c) Le symptôme est indétectable en développement isolé — l'action réussit, le toast s'affiche, seule une **autre** vue ment. Se tester en traversant les écrans, pas en restant sur celui qu'on vient d'écrire.
+- **Agents impliques** : MAX, ATLAS
+
+## 2026-08-03 — Des compteurs alignés se lisent comme une décomposition, même quand ils se recoupent
+
+- **Categorie** : Presentation de donnees / Cockpit
+- **Symptome** : MiKL sur le Tableau de bord MenuFacile — « cette notion de recettes, tu comptes 2 fois les mêmes recettes ». Affiché : Total 129, Publiques 63, Officielles 63, Masquées 0.
+- **Cause racine** : **aucun bug de calcul**. Vérification faite en base côté MenuFacile : `official` compte les recettes appartenant au **foyer officiel** (axe propriétaire), `public` celles dont `visibility = 'public'` (axe visibilité). Deux mesures d'axes différents, qui valaient toutes deux 63 **par accident de données** — et qui divergeront dès qu'un foyer publiera une recette. Le défaut était dans la présentation : cinq cartes identiques alignées sous un titre « Détail recettes » invitent à additionner, donc à conclure au double comptage.
+- **Solution validee** : deux groupes étiquetés — « à qui elles appartiennent » (catalogue officiel + chez les foyers, complémentaires, somme = total) et « qui peut les voir » (publiques, masquées) — plus une phrase disant que les axes ne s'additionnent pas et pourquoi ils divergeront. « Chez les foyers » est **dérivé** (`total - official`) ; la répartition créations/copies, connue mais non dérivable de l'API, n'est **pas** affichée et a été demandée au guichet.
+- **Regle a suivre** :
+  (a) Avant d'aligner des compteurs, vérifier qu'ils mesurent **le même axe**. Sinon les séparer visuellement et nommer chaque axe — la mise en page est une affirmation sur les données.
+  (b) Deux compteurs égaux ne sont pas forcément le même compteur. Demander la **définition** (que compte-t-il exactement ?) avant de conclure au doublon.
+  (c) Une valeur exacte mais **non dérivable de l'API** ne se code jamais en dur : elle serait juste aujourd'hui, fausse demain, et rien ne le signalerait. Mieux vaut afficher l'agrégat et demander le compteur manquant.
+  (d) Un compteur d'**actions** (`total_copies` = somme des `copy_count`) ne se place pas au milieu de compteurs de **lignes** : renommé « Copies effectuées » avec sa définition en sous-titre.
+- **Agents impliques** : MAX, ATLAS
