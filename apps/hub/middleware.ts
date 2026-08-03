@@ -14,7 +14,6 @@ export function isStaticOrApi(pathname: string): boolean {
   return (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/webhooks') ||
-    pathname.startsWith('/api/dev-login') ||
     pathname === '/favicon.ico'
   )
 }
@@ -86,34 +85,28 @@ export async function middleware(request: NextRequest) {
       const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
 
       if (aal?.currentLevel !== 'aal2') {
-        // 2FA not yet setup → redirect to setup
-        if (!operator.twoFactorEnabled) {
-          const redirectResponse = NextResponse.redirect(new URL('/setup-mfa', request.url))
-          setLocaleCookie(redirectResponse, locale)
-          return redirectResponse
-        }
-        // Guard against inconsistent state: DB says 2FA enabled but Supabase Auth
-        // has no verified TOTP factor (e.g. factor deleted after session revocation)
+        // L'aiguillage « enrôler un facteur » vs « saisir son code » se décide sur les
+        // facteurs RÉELS, jamais sur le drapeau DB. Un drapeau resté à false alors qu'un
+        // facteur vérifié existe (cas constaté le 2026-08-03) enverrait une session
+        // mot-de-passe-seul vers /setup-mfa — page publique d'enrôlement — au lieu de
+        // /login/verify-mfa qui, lui, exige le code à 6 chiffres.
         const { data: factors } = await supabase.auth.mfa.listFactors()
-        const hasVerifiedFactor = factors?.totp?.some(
-          (f: { status: string }) => f.status === 'verified'
-        )
-        if (!hasVerifiedFactor) {
-          // Re-enrollment required — reset DB flag so setup flow is clean.
-          // Ciblage par auth_user_id, pas par email : une divergence entre
-          // auth.users.email et operators.email ferait échouer cet UPDATE en silence,
-          // et l'opérateur tournerait en boucle sur l'écran de configuration 2FA
-          // (le drapeau resterait à true alors qu'aucun facteur vérifié n'existe).
+        const hasVerifiedFactor =
+          factors?.totp?.some((f: { status: string }) => f.status === 'verified') ?? false
+
+        // Resynchronisation du drapeau dans les DEUX sens — il n'est qu'un miroir d'affichage.
+        // Ciblage par auth_user_id, pas par email : une divergence entre auth.users.email et
+        // operators.email ferait échouer cet UPDATE en silence (0 ligne touchée, aucune erreur).
+        if (hasVerifiedFactor !== operator.twoFactorEnabled) {
           await supabase
             .from('operators')
-            .update({ two_factor_enabled: false } as never)
+            .update({ two_factor_enabled: hasVerifiedFactor } as never)
             .eq('auth_user_id', user.id)
-          const redirectResponse = NextResponse.redirect(new URL('/setup-mfa', request.url))
-          setLocaleCookie(redirectResponse, locale)
-          return redirectResponse
         }
-        // 2FA setup and verified factor exists — just not verified this session yet
-        const redirectResponse = NextResponse.redirect(new URL('/login/verify-mfa', request.url))
+
+        const redirectResponse = NextResponse.redirect(
+          new URL(hasVerifiedFactor ? '/login/verify-mfa' : '/setup-mfa', request.url)
+        )
         setLocaleCookie(redirectResponse, locale)
         return redirectResponse
       }

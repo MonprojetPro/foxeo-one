@@ -80,6 +80,6 @@ Le 🔴 critique (auto-approbation des validations) a été corrigé le 2026-07-
 5. **Buckets `client-assets` et `screenshots` publics et listables** → risque d'énumération cross-client. Fix : buckets privés + URLs signées.
 6. **Aucun header de sécurité** (CSP, HSTS, X-Frame-Options) sur les 2 apps + `typescript.ignoreBuildErrors: true` qui masque des centaines d'erreurs de types périmés (régénérer `database.types.ts` serait le préalable).
 7. **npm audit** : dompurify, postcss, xmldom (high) → bump des versions.
-8. **`api/dev-login`** avec identifiants en clair (protégé dev-only) → à supprimer avant les vrais clients.
+8. ~~**`api/dev-login`** avec identifiants en clair (protégé dev-only) → à supprimer avant les vrais clients.~~ ✅ **Corrigé le 2026-08-03** — route supprimée + exclusion retirée du middleware. Vérifié au passage : le compte `mikl@monprojet-pro.com` du mot de passe en clair n'a jamais existé dans `auth.users`.
 9. **2 migrations en base sans fichier dans le repo** (`tighten_concierge_messages_insert_policy`, `schedule_health_check_cron_fix`) → rapatrier les .sql pour que la base soit reconstructible depuis git.
 10. **OAuth Gmail** : paramètre `state` non signé (CSRF possible sur le lien de compte). Fix : HMAC + cookie de session.

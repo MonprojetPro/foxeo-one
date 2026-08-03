@@ -14,14 +14,19 @@ export default async function SettingsPage() {
   // Résolution par auth_user_id — jamais par email (cf. actions/update-operator-profile.ts).
   const { data: operator } = await supabase
     .from('operators')
-    .select('name, email, role, two_factor_enabled')
+    .select('name, email, role')
     .eq('auth_user_id', user?.id ?? '')
     .maybeSingle()
+
+  // État 2FA dérivé des facteurs réels, JAMAIS du drapeau `operators.two_factor_enabled` :
+  // un drapeau recopié diverge (le 2026-03-24, un facteur vérifié existait avec le drapeau
+  // resté à false, et l'écran annonçait « Inactive » sur un compte pourtant protégé).
+  const { data: factors } = await supabase.auth.mfa.listFactors()
+  const twoFactorEnabled = factors?.totp?.some((f) => f.status === 'verified') ?? false
 
   const name = operator?.name ?? ''
   const email = operator?.email ?? user?.email ?? ''
   const roleLabel = operator?.role === 'admin' ? 'Administrateur' : 'Opérateur'
-  const twoFactorEnabled = operator?.two_factor_enabled ?? false
 
   return (
     <div className="space-y-6 p-6 md:p-8">

@@ -951,3 +951,17 @@
   (c) Une valeur exacte mais **non dérivable de l'API** ne se code jamais en dur : elle serait juste aujourd'hui, fausse demain, et rien ne le signalerait. Mieux vaut afficher l'agrégat et demander le compteur manquant.
   (d) Un compteur d'**actions** (`total_copies` = somme des `copy_count`) ne se place pas au milieu de compteurs de **lignes** : renommé « Copies effectuées » avec sa définition en sous-titre.
 - **Agents impliques** : MAX, ATLAS
+
+## 2026-08-03 — Un drapeau de sécurité recopié n'est pas un miroir inoffensif : il finit par décider
+
+- **Categorie** : Securite / Authentification
+- **Symptome** : MiKL sur son profil Hub — « c'est marqué que ce n'est pas activé et pourtant si ». Le bandeau 2FA affichait « Inactive » alors que la connexion réclamait bien un code toutes les fois.
+- **Cause racine** : deux sources de vérité pour le même fait. La vérité est `auth.mfa_factors` (facteur TOTP `verified` depuis le 2026-03-24) ; la colonne `operators.two_factor_enabled` n'en est qu'une copie. Elle est restée à `false` parce que l'`UPDATE` qui la posait ciblait l'opérateur **par email** — un ciblage qui touchait 0 ligne sans lever d'erreur (corrigé le 2026-07-27 par `auth_user_id`, trop tard pour le facteur déjà enrôlé).
+- **Ce qui rendait ça grave, et n'avait pas été vu** : ce drapeau ne servait pas qu'à l'affichage. `middleware.ts` s'en servait pour choisir, sur une session pas encore `aal2`, entre `/setup-mfa` (page **publique** d'enrôlement d'un nouveau facteur) et `/login/verify-mfa` (saisie du code). Drapeau à `false` ⇒ une session obtenue avec le seul mot de passe était dirigée vers l'écran d'**enrôlement**. Le login lui-même, qui lisait `listFactors()`, restait correct : c'est ce qui a masqué le problème pendant des mois.
+- **Solution validee** : l'état 2FA se **dérive** de `listFactors()` partout où il est décidé ou affiché (middleware, page profil, `hubLoginAction`). Le drapeau redevient un simple miroir, resynchronisé **dans les deux sens** au passage du middleware. Ligne de l'opérateur resynchronisée en base.
+- **Regle a suivre** :
+  (a) Un état de sécurité (2FA actif, session valide, rôle) se lit **à la source**, jamais dans une colonne recopiée. La copie sert au confort d'affichage, jamais à un aiguillage.
+  (b) Avant d'accepter une dénormalisation, chercher **tous** ses lecteurs : le jour où l'un d'eux prend une décision d'accès, la copie périmée devient une faille. Un `grep` sur le nom de colonne aurait suffi.
+  (c) Une resynchronisation à sens unique (ici : `true` → `false` seulement) laisse la moitié des divergences en place. Un miroir se recale dans les deux sens.
+  (d) Le libellé affiché par une application d'authentification (« localhost:3000 ») est **gravé dans le QR au moment de l'enrôlement** : il ne reflète pas la configuration actuelle et ne se corrige qu'en ré-enrôlant.
+- **Agents impliques** : MAX, CERBÈRE, ATLAS

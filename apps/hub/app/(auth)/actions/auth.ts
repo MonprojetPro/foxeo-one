@@ -142,9 +142,12 @@ export async function hubLoginAction(
     })
   }
 
+  // Les deux drapeaux dérivent des facteurs réels, jamais de operators.two_factor_enabled :
+  // un drapeau DB resté à false sur un compte pourtant protégé enverrait vers l'écran
+  // d'enrôlement au lieu de l'écran de saisie du code.
   return successResponse({
     requiresMfa: hasVerifiedTotp,
-    needsSetup: !hasVerifiedTotp && !operator.twoFactorEnabled,
+    needsSetup: !hasVerifiedTotp,
     operatorId: operator.id,
     operatorName: operator.name,
   })
