@@ -965,3 +965,17 @@
   (c) Une resynchronisation à sens unique (ici : `true` → `false` seulement) laisse la moitié des divergences en place. Un miroir se recale dans les deux sens.
   (d) Le libellé affiché par une application d'authentification (« localhost:3000 ») est **gravé dans le QR au moment de l'enrôlement** : il ne reflète pas la configuration actuelle et ne se corrige qu'en ré-enrôlant.
 - **Agents impliques** : MAX, CERBÈRE, ATLAS
+
+## 2026-08-04 — Une session sans fin annule le 2FA sans que personne ne s'en aperçoive
+
+- **Categorie** : Securite / Sessions
+- **Symptome** : MiKL — « le 2FA ne m'a pas été demandé sur le Hub ». Diagnostic : session créée la veille à 10h54, `aal2` (`password + totp`), jamais expirée. Aucune session nouvelle depuis. Le 2FA n'avait pas disparu — il n'avait simplement plus rien à valider.
+- **Cause racine** : les sessions Supabase du Hub étaient posées en cookies de 400 jours (défaut `@supabase/ssr`) sans aucune expiration serveur (`not_after` vide). Une session de juillet était encore valide en août. Le 2FA se demande **à la création d'une session**, donc en pratique presque jamais.
+- **Ce qu'il faut savoir avant de coder ça** :
+  (a) `@supabase/ssr` applique `maxAge: DEFAULT_COOKIE_OPTIONS.maxAge` **en dernier** dans la fusion des options (`cookies.js:171`, v0.6.1). Passer `cookieOptions.maxAge` ne change **rien** — le seul point de contrôle est notre propre implémentation de `setAll`.
+  (b) Le client **navigateur** réécrit les cookies à chaque rafraîchissement de jeton. Sans adaptateur `document.cookie` de notre côté, la politique serveur est annulée quelques minutes après la connexion.
+  (c) Dater le début de session par le `iat` du jeton est faux : il bouge à chaque rafraîchissement, donc une session éternellement rafraîchie paraît éternellement neuve. Le bon horodatage est la **plus ancienne méthode d'authentification** (`currentAuthenticationMethods` de `getAuthenticatorAssuranceLevel`), qui ne bouge pas.
+  (d) Les cookies de suppression posés par `signOut()` dans un middleware atterrissent sur la réponse **interne** du helper Supabase, pas sur la `NextResponse.redirect` créée juste après. Sans effacement explicite des cookies `sb-*` sur la redirection, la déconnexion n'a lieu que côté serveur et le navigateur repart avec sa session.
+  (e) `signOut({ scope: 'local' })` et jamais le scope global : le global révoque les refresh tokens de **toutes** les sessions du compte (le piège d'avril 2026).
+- **Regle a suivre** : distinguer « le 2FA est-il exigé ? » de « une session est-elle en cours ? ». Un mécanisme d'authentification fort ne vaut que par la fréquence à laquelle il est rejoué — vérifier la **durée de vie** des sessions fait partie de l'audit d'un 2FA, pas d'un sujet séparé.
+- **Agents impliques** : MAX, CERBÈRE, ATLAS

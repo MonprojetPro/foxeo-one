@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import type { Database } from '@monprojetpro/types'
 import { getRequiredEnv } from '@monprojetpro/utils'
 import type { CookieToSet } from './cookie-types'
+import { applySessionCookiePolicy } from './session-cookies'
 
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies()
@@ -17,7 +18,7 @@ export async function createServerSupabaseClient() {
         },
         setAll(cookiesToSet: CookieToSet[]) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
+            applySessionCookiePolicy(cookiesToSet).forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
           } catch {

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
+import { hasCrossedNightlyCutoff, getLoginEntryUrl } from '@monprojetpro/utils'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
 
 // `/auth/handoff` : arrivée de l'entrée de connexion unique. Public par nécessité —
@@ -85,6 +86,39 @@ export async function middleware(request: NextRequest) {
     // DEV: Skip MFA check in development
     if (process.env.NODE_ENV !== 'development') {
       const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+
+      // Coupure nocturne (décision MiKL du 2026-08-04) : aucune session du cockpit ne
+      // traverse 2 h du matin. On date le DÉBUT de session par la plus ancienne méthode
+      // d'authentification — contrairement au `iat` du jeton, cet horodatage ne bouge
+      // pas quand la session se rafraîchit, sinon une session éternellement rafraîchie
+      // paraîtrait éternellement neuve.
+      const methods = aal?.currentAuthenticationMethods ?? []
+      const startedAt = methods.length
+        ? Math.min(...methods.map((m: { timestamp: number }) => m.timestamp))
+        : null
+
+      if (startedAt && hasCrossedNightlyCutoff(new Date(startedAt * 1000))) {
+        // Scope 'local' : on ferme CETTE session, pas toutes celles du compte — un
+        // signOut global révoquerait les refresh tokens (le piège d'avril 2026).
+        await supabase.auth.signOut({ scope: 'local' })
+
+        const expiredUrl = new URL(getLoginEntryUrl())
+        expiredUrl.searchParams.set('error', 'session_expired')
+        const redirectResponse = NextResponse.redirect(expiredUrl)
+
+        // Les cookies de suppression posés par signOut atterrissent sur la réponse
+        // interne du helper, pas sur cette redirection-ci : sans effacement explicite,
+        // le navigateur repartirait avec sa session intacte et rien ne serait coupé.
+        request.cookies
+          .getAll()
+          .filter((cookie) => cookie.name.startsWith('sb-'))
+          .forEach((cookie) =>
+            redirectResponse.cookies.set(cookie.name, '', { path: '/', maxAge: 0 })
+          )
+
+        setLocaleCookie(redirectResponse, locale)
+        return redirectResponse
+      }
 
       if (aal?.currentLevel !== 'aal2') {
         // L'aiguillage « enrôler un facteur » vs « saisir son code » se décide sur les

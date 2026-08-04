@@ -9,6 +9,15 @@ export { createServerSupabaseClient } from './server'
 export { createServiceRoleSupabaseClient } from './service-role'
 export { createMiddlewareSupabaseClient } from './middleware'
 
+// Cookies de session — la session meurt avec le navigateur (Hub uniquement)
+export {
+  useSessionCookies,
+  applySessionCookiePolicy,
+  stripCookiePersistence,
+  serializeBrowserCookie,
+  parseBrowserCookies,
+} from './session-cookies'
+
 // Journal d'activité — attribution de l'acteur (impersonation incluse)
 export { resolveLogActor } from './impersonation-actor'
 
