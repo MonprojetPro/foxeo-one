@@ -260,3 +260,102 @@
   from { background-position: 0 0; }
   to   { background-position: 31.113px 0; }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Pilier de lumière — fond de la page de connexion unique.
+
+   Reproduit en CSS le rendu du composant WebGL « LightPillar » : un faisceau
+   incliné dont la couleur passe du violet (espace Lab) au vert (espace One),
+   en fusion « screen » sur fond noir. Deux raisons de ne pas embarquer le
+   shader : une page de connexion doit s'afficher instantanément sur n'importe
+   quelle machine, et un canvas WebGL au premier écran est un point de panne
+   inutile (contexte refusé, GPU désactivé, mode économie d'énergie).
+
+   Seules `transform` et `opacity` sont animées — donc composées par le GPU,
+   sans recalcul de mise en page.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.mpp-pillar {
+  /* `fixed` et non `absolute` : le décor doit couvrir l'écran même quand la page
+     défile (mentions légales, formulaire d'inscription plus haut que le viewport). */
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #020402;
+  z-index: 0;
+}
+
+.mpp-pillar__beam,
+.mpp-pillar__core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  mix-blend-mode: screen;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* Le faisceau large et très diffus : c'est lui qui colore l'écran. */
+.mpp-pillar__beam {
+  width: var(--mpp-pillar-width, 46vmax);
+  height: 150vmax;
+  transform: translate(-50%, -50%) rotate(var(--mpp-pillar-rotation, 206deg));
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--mpp-pillar-top) 22%,
+    var(--mpp-pillar-bottom) 78%,
+    transparent 100%
+  );
+  filter: blur(90px);
+  opacity: calc(0.34 * var(--mpp-pillar-intensity, 1));
+  animation: mpp-pillar-drift 24s ease-in-out infinite alternate;
+}
+
+/* Le cœur étroit et net : sans lui, le faisceau n'est qu'une tache colorée. */
+.mpp-pillar__core {
+  width: calc(var(--mpp-pillar-width, 46vmax) * 0.13);
+  height: 130vmax;
+  transform: translate(-50%, -50%) rotate(var(--mpp-pillar-rotation, 206deg));
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    var(--mpp-pillar-top) 26%,
+    var(--mpp-pillar-bottom) 74%,
+    transparent 100%
+  );
+  filter: blur(24px);
+  opacity: calc(0.5 * var(--mpp-pillar-intensity, 1));
+  animation: mpp-pillar-pulse 12s ease-in-out infinite alternate;
+}
+
+/* Voile sombre au centre : garde le formulaire lisible par-dessus le faisceau. */
+.mpp-pillar__veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 50%,
+    rgba(2, 4, 2, 0.72) 0%,
+    rgba(2, 4, 2, 0.35) 45%,
+    transparent 100%
+  );
+}
+
+@keyframes mpp-pillar-drift {
+  from { transform: translate(-50%, -50%) rotate(calc(var(--mpp-pillar-rotation, 206deg) - 6deg)); }
+  to   { transform: translate(-50%, -50%) rotate(calc(var(--mpp-pillar-rotation, 206deg) + 6deg)); }
+}
+
+@keyframes mpp-pillar-pulse {
+  from { opacity: calc(0.34 * var(--mpp-pillar-intensity, 1)); }
+  to   { opacity: calc(0.62 * var(--mpp-pillar-intensity, 1)); }
+}
+
+/* Le décor ne doit jamais imposer du mouvement à qui n'en veut pas. */
+@media (prefers-reduced-motion: reduce) {
+  .mpp-pillar__beam,
+  .mpp-pillar__core {
+    animation: none;
+  }
+}

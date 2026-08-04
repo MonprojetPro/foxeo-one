@@ -83,7 +83,7 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {serverError && (
         <Alert variant="destructive">
           <AlertDescription>{serverError}</AlertDescription>
@@ -91,7 +91,10 @@ export function LoginForm() {
       )}
 
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">
+        <label
+          htmlFor="email"
+          className="block text-[0.7rem] font-semibold uppercase tracking-wider text-gray-400"
+        >
           Email
         </label>
         <Input
@@ -100,6 +103,7 @@ export function LoginForm() {
           placeholder="vous@example.com"
           autoComplete="email"
           aria-invalid={!!errors.email}
+          className="h-11 border-white/10 bg-black/40 text-white placeholder:text-gray-600 focus-visible:border-white/25"
           {...register('email')}
         />
         {errors.email && (
@@ -108,7 +112,10 @@ export function LoginForm() {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="password" className="text-sm font-medium">
+        <label
+          htmlFor="password"
+          className="block text-[0.7rem] font-semibold uppercase tracking-wider text-gray-400"
+        >
           Mot de passe
         </label>
         <PasswordInput
@@ -116,6 +123,7 @@ export function LoginForm() {
           placeholder="••••••••"
           autoComplete="current-password"
           aria-invalid={!!errors.password}
+          className="h-11 border-white/10 bg-black/40 text-white placeholder:text-gray-600 focus-visible:border-white/25"
           {...register('password')}
         />
         {errors.password && (
@@ -123,7 +131,13 @@ export function LoginForm() {
         )}
       </div>
 
-      <Button type="submit" className="w-full" disabled={isPending}>
+      {/* Le dégradé du bouton reprend celui du faisceau : violet (Lab) → vert (One).
+          Texte noir — seul contraste correct sur ces deux teintes claires. */}
+      <Button
+        type="submit"
+        className="h-11 w-full bg-gradient-to-r from-[#935fee] to-[#09e159] font-semibold text-black transition-opacity hover:opacity-90 disabled:opacity-60"
+        disabled={isPending}
+      >
         {isPending ? 'Connexion...' : 'Se connecter'}
       </Button>
     </form>

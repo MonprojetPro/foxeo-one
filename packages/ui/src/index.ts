@@ -89,3 +89,6 @@ export { ClientAccessProvider, useClientReadOnly } from './components/client-acc
 
 // Cockpit — signature visuelle « Minimal Futuriste » du Hub (issue de MenuFacile)
 export * from './components/cockpit'
+
+// Entrée de connexion unique — décor de la page de login
+export { LightPillar, type LightPillarProps } from './components/auth/light-pillar'
