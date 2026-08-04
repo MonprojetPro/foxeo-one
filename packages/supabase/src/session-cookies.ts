@@ -83,6 +83,21 @@ export function serializeBrowserCookie(
   return parts.join('; ')
 }
 
+/**
+ * Décodage tolérant : `decodeURIComponent` LÈVE une erreur sur un `%` isolé
+ * (`decodeURIComponent('100%')` → URIError). `document.cookie` contient les cookies
+ * de tout le domaine, y compris ceux d'outils tiers qui n'encodent rien — une seule
+ * valeur mal formée ferait échouer la lecture de TOUS les cookies, donc l'authentification
+ * entière côté navigateur. On rend alors la valeur brute plutôt que de tout perdre.
+ */
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
 /** Découpe `document.cookie` en paires nom/valeur. */
 export function parseBrowserCookies(cookieHeader: string): { name: string; value: string }[] {
   if (!cookieHeader) return []
@@ -93,10 +108,10 @@ export function parseBrowserCookies(cookieHeader: string): { name: string; value
       const separator = pair.indexOf('=')
       // Un cookie sans `=` n'est pas exploitable : on le rend avec une valeur vide
       // plutôt que de le laisser corrompre le découpage des suivants.
-      if (separator === -1) return { name: decodeURIComponent(pair), value: '' }
+      if (separator === -1) return { name: safeDecode(pair), value: '' }
       return {
-        name: decodeURIComponent(pair.slice(0, separator)),
-        value: decodeURIComponent(pair.slice(separator + 1)),
+        name: safeDecode(pair.slice(0, separator)),
+        value: safeDecode(pair.slice(separator + 1)),
       }
     })
 }

@@ -110,6 +110,17 @@ describe('parseBrowserCookies', () => {
     expect(parseBrowserCookies('')).toEqual([])
   })
 
+  it('survit a un cookie tiers mal encode sans perdre les autres', () => {
+    // decodeURIComponent('100%') LÈVE une URIError. document.cookie contient les
+    // cookies de tout le domaine : sans tolérance, un cookie d'outil tiers mal formé
+    // ferait échouer la lecture de la session et bloquerait l'authentification.
+    const result = parseBrowserCookies('promo=100%; sb-token=abc')
+    expect(result).toEqual([
+      { name: 'promo', value: '100%' },
+      { name: 'sb-token', value: 'abc' },
+    ])
+  })
+
   it('ne se laisse pas desynchroniser par une valeur contenant un =', () => {
     // Les jetons base64 finissent souvent par '=' : découper sur le PREMIER '='
     // seulement, sinon la valeur est tronquée et la session illisible.
