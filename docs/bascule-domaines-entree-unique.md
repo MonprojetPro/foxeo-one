@@ -82,6 +82,17 @@ NEXT_PUBLIC_HUB_URL    = https://hub.monprojet-pro.com
 NEXT_PUBLIC_SITE_URL   = https://www.monprojet-pro.com
 ```
 
+Sur le projet **hub** uniquement, ajouter en plus :
+
+```
+NEXT_PUBLIC_AUTH_SESSION_COOKIES = true
+```
+
+C'est elle qui rend la session du cockpit éphémère : fermer le navigateur déconnecte.
+Surtout **ne pas la poser sur le projet client** — les clients seraient déconnectés à
+chaque fermeture de navigateur, une friction quotidienne qu'ils te signaleraient vite.
+La coupure de 2 h du matin, elle, est active sans aucune variable.
+
 **À vérifier sur le projet client** : `SUPABASE_SERVICE_ROLE_KEY` doit y être présente —
 c'est elle qui permet d'émettre le jeton de bascule vers le Hub. Si elle manque, le login
 d'un opérateur affiche « Connexion au cockpit indisponible » (le login Hub direct reste
