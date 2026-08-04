@@ -1,7 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { createServerSupabaseClient, buildHubHandoffLink } from '@monprojetpro/supabase'
 import {
   type ActionResponse,
   type UserSession,
@@ -13,9 +13,18 @@ import { loginSchema, signupSchema, forgotPasswordSchema } from './schemas'
 
 // --- Server Actions ---
 
+/**
+ * Résultat du login — l'entrée est unique, la destination ne l'est pas.
+ * `client` : on reste sur place (Lab ou One selon le compte).
+ * `operator` : on repart vers le Hub via un jeton de bascule à usage unique.
+ */
+type LoginOutcome =
+  | ({ kind: 'client' } & UserSession)
+  | { kind: 'operator'; handoffUrl: string }
+
 export async function loginAction(
   formData: FormData
-): Promise<ActionResponse<UserSession>> {
+): Promise<ActionResponse<LoginOutcome>> {
   const raw = {
     email: formData.get('email'),
     password: formData.get('password'),
@@ -80,6 +89,41 @@ export async function loginAction(
     p_success: true,
   } as never)
 
+  // --- Entrée de connexion unique (décision MiKL du 2026-08-03) ---
+  //
+  // Cette page est la SEULE porte d'entrée : clients et opérateur y saisissent le même
+  // formulaire. Un opérateur doit repartir vers le Hub, qui vit sur un autre
+  // sous-domaine et ne partage aucun cookie — d'où le jeton de bascule à usage unique.
+  //
+  // Résolution par auth_user_id, jamais par email (deux sources non synchronisées).
+  // La policy RLS `operators_select_merged` fait le tri toute seule : un client lit
+  // zéro ligne ici, et rien ne lui indique que la question a été posée.
+  const { data: operator } = await supabase
+    .from('operators')
+    .select('id')
+    .eq('auth_user_id', authData.user.id)
+    .maybeSingle()
+
+  if (operator) {
+    const handoff = await buildHubHandoffLink({ email: authData.user.email ?? email })
+
+    // Scope 'local' : on referme CETTE session (un opérateur n'a pas de ligne dans
+    // `clients`, elle ne lui sert à rien ici) sans toucher à ses autres sessions.
+    // Un signOut global révoquerait les refresh tokens et déconnecterait le Hub
+    // déjà ouvert dans un autre onglet — le piège d'avril 2026.
+    await supabase.auth.signOut({ scope: 'local' })
+
+    if (handoff.error) {
+      console.error('[LOGIN:HANDOFF] Génération du lien Hub échouée:', handoff.error)
+      return errorResponse(
+        "Connexion au cockpit indisponible. Réessayez dans un instant.",
+        'HUB_HANDOFF_ERROR'
+      )
+    }
+
+    return successResponse({ kind: 'operator' as const, handoffUrl: handoff.url })
+  }
+
   // Fetch client record to build session
   const { data: client } = await supabase
     .from('clients')
@@ -106,7 +150,7 @@ export async function loginAction(
     displayName: client?.name ?? undefined,
   }
 
-  return successResponse(session)
+  return successResponse({ kind: 'client' as const, ...session })
 }
 
 export async function signupAction(

@@ -12,6 +12,14 @@ export { createMiddlewareSupabaseClient } from './middleware'
 // Journal d'activité — attribution de l'acteur (impersonation incluse)
 export { resolveLogActor } from './impersonation-actor'
 
+// Entrée de connexion unique — passerelle vers le Hub après authentification
+export {
+  buildHubHandoffLink,
+  HUB_HANDOFF_CALLBACK_PATH,
+  type BuildHubHandoffLinkParams,
+  type BuildHubHandoffLinkResult,
+} from './hub-handoff'
+
 // Espace figé — client qui a résilié (lecture seule sur le parcours)
 export {
   READ_ONLY_CLIENT_STATUSES,

@@ -11,6 +11,13 @@ import { loginSchema } from '../actions/schemas'
 
 type LoginFormData = z.infer<typeof loginSchema>
 
+/** Retours de la passerelle Hub (`/auth/handoff`), traduits pour l'écran. */
+const HANDOFF_ERRORS: Record<string, string> = {
+  handoff_expired: 'Le lien de connexion au cockpit a expiré. Reconnectez-vous.',
+  handoff_invalid: 'Lien de connexion au cockpit invalide. Reconnectez-vous.',
+  handoff_unauthorized: 'Ce compte n’a pas accès au cockpit.',
+}
+
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -19,7 +26,11 @@ export function LoginForm() {
   const redirectTo =
     rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
   const [isPending, startTransition] = useTransition()
-  const [serverError, setServerError] = useState<string | null>(null)
+  // Message renvoyé par la passerelle Hub quand le jeton de bascule n'a pas abouti.
+  // Sans ça, l'opérateur reviendrait sur un login muet, sans savoir ce qui a échoué.
+  const [serverError, setServerError] = useState<string | null>(
+    HANDOFF_ERRORS[searchParams.get('error') ?? ''] ?? null
+  )
 
   const {
     register,
@@ -40,6 +51,14 @@ export function LoginForm() {
 
       if (result.error) {
         setServerError(result.error.message)
+        return
+      }
+
+      // Entrée unique : un opérateur repart vers le Hub, qui vit sur un autre
+      // sous-domaine. `router.push` ne sait pas franchir une origine — il faut une
+      // vraie navigation pour que le jeton de bascule soit consommé là-bas.
+      if (result.data?.kind === 'operator') {
+        window.location.href = result.data.handoffUrl
         return
       }
 

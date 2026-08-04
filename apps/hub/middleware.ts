@@ -2,7 +2,9 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareSupabaseClient } from '@monprojetpro/supabase'
 import { detectLocale, setLocaleCookie } from './middleware-locale'
 
-export const PUBLIC_PATHS = ['/login', '/setup-mfa', '/auth/callback']
+// `/auth/handoff` : arrivée de l'entrée de connexion unique. Public par nécessité —
+// c'est cette requête qui crée la session, elle ne peut donc pas en exiger une.
+export const PUBLIC_PATHS = ['/login', '/setup-mfa', '/auth/callback', '/auth/handoff']
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(
