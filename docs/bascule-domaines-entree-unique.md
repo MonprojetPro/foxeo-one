@@ -53,6 +53,23 @@ ne peut s'y ajouter via l'API, seule une intervention service-role le peut. Un c
 absent de cette table est refusé au login Hub, refusé par le middleware, et refusé une
 troisième fois par la passerelle. Une seule ligne y existe : `contact@monprojet-pro.com`.
 
+## ✅ Bascule réalisée le 2026-08-04
+
+Les six étapes de la section 3 ont été exécutées et vérifiées par la preuve :
+
+| Vérification | Résultat |
+|---|---|
+| `www` / `app` / `hub` en HTTPS | 200 / 200 / 200 |
+| URL embarquée dans le build du Hub | `https://app.monprojet-pro.com` (et non plus `vercel.app`) |
+| Parcours complet | Session en base avec méthodes `otp + totp` — passage par l'entrée unique puis 2FA |
+| Anciennes adresses Vercel | Toujours actives — filet de sécurité volontaire |
+
+Reste ouvert (section 6) : bouton « Connexion » sur le site, webhooks tiers, retrait des
+anciennes adresses des autorisations, ré-enrôlement 2FA, CORS d'`elio-chat`.
+
+La section ci-dessous est conservée comme référence — elle documente la procédure exacte,
+utile pour un futur domaine ou une reconstruction.
+
 ## 3. À faire par MiKL — dans cet ordre
 
 ### ⓵ DNS (chez le registrar de `monprojet-pro.com`)
