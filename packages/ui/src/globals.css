@@ -335,9 +335,9 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    ellipse 60% 50% at 50% 50%,
-    rgba(2, 4, 2, 0.72) 0%,
-    rgba(2, 4, 2, 0.35) 45%,
+    ellipse 55% 45% at 50% 50%,
+    rgba(2, 4, 2, 0.88) 0%,
+    rgba(2, 4, 2, 0.55) 50%,
     transparent 100%
   );
 }

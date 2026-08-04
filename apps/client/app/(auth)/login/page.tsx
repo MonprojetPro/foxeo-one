@@ -16,7 +16,10 @@ import { LoginForm } from './login-form'
 export default function LoginPage() {
   return (
     <div className="w-full max-w-sm">
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_24px_80px_-32px_rgba(0,0,0,0.9)] backdrop-blur-xl">
+      {/* Fond noir semi-opaque et non `white/[0.03]` : le faisceau traversait la carte
+          et la teintait en vert, au détriment de la lisibilité des champs. Le flou
+          laisse deviner la lumière derrière sans la laisser colorer le formulaire. */}
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black/55 shadow-[0_24px_80px_-32px_rgba(0,0,0,0.9)] backdrop-blur-2xl">
         {/* Halos d'angle : rappellent les deux destinations possibles derrière
             cette porte unique — violet pour le Lab, vert pour One. */}
         <div
@@ -51,10 +54,10 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <p className="mt-6 text-center text-xs text-gray-500">
+      <p className="mt-6 text-center text-xs text-gray-400">
         <Link
           href="https://www.monprojet-pro.com"
-          className="underline-offset-4 transition-colors hover:text-gray-300 hover:underline"
+          className="underline-offset-4 transition-colors hover:text-white hover:underline"
         >
           monprojet-pro.com
         </Link>
