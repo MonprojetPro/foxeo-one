@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
-import { Paperclip } from 'lucide-react'
+import { Paperclip, Sparkles } from 'lucide-react'
 import type { Message } from '../types/chat.types'
 
 interface ChatMessageProps {
@@ -46,6 +46,19 @@ export function ChatMessage({ message, currentUserType }: ChatMessageProps) {
               'rounded-bl-none border border-white/10 bg-white/[0.04] text-gray-200'
         )}
       >
+        {/* Relais Élio One (2026-08-19) : le message a été posté par Élio avec l'accord du
+            client, pas tapé par lui. Le badge DÉRIVE de `viaElio` — ne jamais le déduire
+            du contenu du message, qui peut dire n'importe quoi. */}
+        {message.viaElio && (
+          <p
+            className="mb-1.5 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide opacity-70"
+            data-testid="relayed-by-elio"
+          >
+            <Sparkles className="h-3 w-3 shrink-0" aria-hidden="true" />
+            Relayé par Élio One
+          </p>
+        )}
+
         {message.content && (
           <p className="whitespace-pre-wrap break-words">{message.content}</p>
         )}

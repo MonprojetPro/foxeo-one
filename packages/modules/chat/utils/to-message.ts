@@ -12,5 +12,6 @@ export function toMessage(row: MessageDB): Message {
     attachmentUrl: row.attachment_url ?? null,
     attachmentName: row.attachment_name ?? null,
     attachmentType: row.attachment_type ?? null,
+    viaElio: row.via_elio ?? false,
   }
 }

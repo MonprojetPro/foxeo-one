@@ -17,6 +17,11 @@ export interface Message {
   attachmentUrl?: string | null
   attachmentName?: string | null
   attachmentType?: string | null
+  /**
+   * Message posté par Élio One comme intermédiaire, avec l'accord du client (2026-08-19).
+   * Le badge « Relayé par Élio One » en dérive — il n'est jamais écrit en dur dans le contenu.
+   */
+  viaElio?: boolean
 }
 
 export interface Conversation {
@@ -44,6 +49,7 @@ export interface MessageDB {
   attachment_url?: string | null
   attachment_name?: string | null
   attachment_type?: string | null
+  via_elio?: boolean
 }
 
 // ============================================================

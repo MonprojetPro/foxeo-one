@@ -120,6 +120,12 @@ export interface ElioMessageMetadata {
   // Story 8.8: évolution détectée — lancer la collecte côté client
   evolutionDetected?: boolean
   evolutionInitialRequest?: string
+  // 2026-08-19 : Élio One propose de prévenir MiKL d'une difficulté sur le projet.
+  // `relayProposed` n'envoie rien — il affiche le bouton d'accord ; seul le clic relaie.
+  relayProposed?: boolean
+  relaySummary?: string
+  // Trace du relais effectué (message d'Élio confirmant la transmission).
+  relaySent?: boolean
   // Story 8.8: fonctionnalité existante détectée
   existingFeatureInstructions?: string
   // Story 8.9a: action module One+ en attente de confirmation

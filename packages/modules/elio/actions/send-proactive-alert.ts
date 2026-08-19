@@ -56,11 +56,28 @@ export async function sendProactiveAlert(
   }
 
   // Task 6.3 — Créer une notification in-app de type 'alert'
+  //
+  // Correction 2026-08-19 : cet INSERT visait `user_id` / `content`, deux colonnes qui
+  // n'existent pas sur `notifications` (schéma réel : recipient_type + recipient_id + body,
+  // et recipient_id = auth_user_id, jamais clients.id). Toutes les alertes partaient donc
+  // en erreur silencieuse. Cf. mémoire projet « Convention INSERT notifications ».
+  const { data: clientRow } = await supabase
+    .from('clients')
+    .select('auth_user_id')
+    .eq('id', clientId)
+    .single()
+
+  if (!clientRow?.auth_user_id) {
+    console.error('[ELIO:ALERTS] auth_user_id introuvable pour le client', clientId)
+    return errorResponse('Destinataire introuvable', 'NOT_FOUND')
+  }
+
   const { error: notifError } = await supabase.from('notifications').insert({
-    user_id: clientId,
+    recipient_type: 'client',
+    recipient_id: clientRow.auth_user_id,
     type: 'alert',
     title: 'Alerte Élio',
-    content: formattedMessage,
+    body: formattedMessage,
     link: `/modules/${alert.moduleId}`,
   })
 

@@ -25,6 +25,7 @@ import { sendToElioHubAgent } from '../actions/elio-hub-agent'
 import { HubActionCards } from './hub-action-card'
 import { escalateToMiKL } from '../actions/escalate-to-mikl'
 import { submitEvolutionRequest } from '../actions/submit-evolution-request'
+import { relayToMiklChat } from '../actions/relay-to-mikl-chat'
 import { getNextQuestion, processResponse, isCancel, type EvolutionCollectionData } from '../utils/evolution-collection'
 import { generateEvolutionBrief } from '../actions/generate-evolution-brief'
 import { DEFAULT_COMMUNICATION_PROFILE_FR66 } from '../types/elio.types'
@@ -163,6 +164,13 @@ function ElioChatSimple({
   const [evolutionDismissed, setEvolutionDismissed] = useState(false)
   const [isSubmittingEvolution, setIsSubmittingEvolution] = useState(false)
   const [evolutionError, setEvolutionError] = useState<string | null>(null)
+
+  // 2026-08-19 — Élio One relaie une difficulté du client à MiKL, avec son accord explicite.
+  // `relayDismissed` : le client a dit non → on n'insiste plus de toute la session.
+  const [relaySent, setRelaySent] = useState(false)
+  const [relayDismissed, setRelayDismissed] = useState(false)
+  const [isRelaying, setIsRelaying] = useState(false)
+  const [relayError, setRelayError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -227,6 +235,36 @@ function ElioChatSimple({
     evolutionRequest.trim().length > 0 &&
     !evolutionSubmitted &&
     !evolutionDismissed
+
+  // Relais vers MiKL : proposé par Élio via le jeton [[prevenir-mikl:…]], jamais envoyé
+  // sans clic du client. Le résumé affiché est celui qui partira réellement dans le chat.
+  const relaySummary = lastAssistant?.metadata?.relaySummary ?? ''
+  const showRelayButton =
+    dashboardType === 'one' &&
+    Boolean(lastAssistant?.metadata?.relayProposed) &&
+    Boolean(clientId) &&
+    relaySummary.trim().length > 0 &&
+    !relaySent &&
+    !relayDismissed
+
+  async function handleRelayToMikl() {
+    if (!clientId || isRelaying || relaySent) return
+    const summary = relaySummary.trim()
+    if (!summary) return
+    setIsRelaying(true)
+    setRelayError(null)
+    const { error: relayFailure } = await relayToMiklChat(clientId, summary)
+    setIsRelaying(false)
+    if (relayFailure) {
+      setRelayError("Je n'ai pas réussi à prévenir MiKL. Réessaie dans un instant.")
+      return
+    }
+    setRelaySent(true)
+    // Le message vient d'atterrir dans le Chat MiKL : les compteurs et la liste doivent
+    // refléter le nouvel échange sans attendre une navigation.
+    void queryClient.invalidateQueries({ queryKey: ['messages', clientId] })
+    void queryClient.invalidateQueries({ queryKey: ['conversations'] })
+  }
 
   async function handleSubmitEvolution() {
     if (!clientId || isSubmittingEvolution || evolutionSubmitted) return
@@ -352,6 +390,57 @@ function ElioChatSimple({
           aria-live="polite"
         >
           ✓ Demande transmise à MiKL
+        </p>
+      )}
+      {showRelayButton && (
+        <div className="px-4 pb-2 shrink-0">
+          <div
+            className="rounded-lg border border-border bg-muted p-3 text-sm"
+            role="status"
+            aria-live="polite"
+          >
+            <p className="text-foreground mb-2">
+              Je peux prévenir MiKL de ce que tu viens de me dire, pour qu&apos;il prenne
+              contact avec toi. Voici ce que je lui transmettrais&nbsp;:
+            </p>
+            {/* Le client voit EXACTEMENT ce qui partira en son nom : pas de zone grise. */}
+            <p className="mb-2 rounded border border-border/60 bg-background/60 px-2 py-1.5 text-xs italic text-muted-foreground">
+              {relaySummary}
+            </p>
+            {relayError && <p className="text-red-400 text-xs mb-2">{relayError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={handleRelayToMikl}
+                disabled={isRelaying}
+                className={[
+                  'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium',
+                  'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50',
+                  'focus-visible:outline-none focus-visible:ring-2',
+                  focusRing,
+                ].join(' ')}
+                aria-label="Prévenir MiKL"
+              >
+                {isRelaying ? 'Envoi…' : 'Oui, préviens MiKL'}
+              </button>
+              <button
+                onClick={() => setRelayDismissed(true)}
+                disabled={isRelaying}
+                className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors"
+                aria-label="Ne pas prévenir MiKL"
+              >
+                Non merci
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {relaySent && (
+        <p
+          className="px-4 pb-2 text-sm text-muted-foreground shrink-0"
+          role="status"
+          aria-live="polite"
+        >
+          ✓ MiKL est prévenu — sa réponse arrivera dans le Chat MiKL
         </p>
       )}
       {showMiklButton && (

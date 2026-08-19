@@ -317,6 +317,23 @@ export {
 } from './types/escalation-config.types'
 export type { EscalationConfig } from './types/escalation-config.types'
 
+// Actions — Élio One extension de MiKL (2026-08-19) : relais vers le Chat MiKL après
+// accord du client, + prise de nouvelles proactive pilotée depuis le Hub.
+export { relayToMiklChat } from './actions/relay-to-mikl-chat'
+export { parseRelayToken } from './utils/parse-relay-token'
+export type { RelayProposal } from './utils/parse-relay-token'
+export { getCheckinConfig, setCheckinConfig } from './actions/checkin-config'
+export {
+  CheckinConfigSchema,
+  DEFAULT_CHECKIN_CONFIG,
+  ELIO_CHECKIN_KEY,
+  CHECKIN_MIN_DAYS,
+  CHECKIN_MAX_DAYS,
+  toCheckinConfig,
+  toCheckinConfigRow,
+} from './types/checkin-config.types'
+export type { CheckinConfig } from './types/checkin-config.types'
+
 // Actions — Navigation deep-links Élio One (lot 3 — pilotage Hub)
 export { getOneNavigationConfig, setOneNavigationConfig } from './actions/one-navigation-config'
 export {

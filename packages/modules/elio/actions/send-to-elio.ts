@@ -10,6 +10,7 @@ import { correctAndAdaptText } from './correct-and-adapt-text'
 import { generateDraft } from './generate-draft'
 import { adjustDraft } from './adjust-draft'
 import { detectIntent } from '../utils/detect-intent'
+import { parseRelayToken } from '../utils/parse-relay-token'
 import { detectLowConfidence } from '../utils/detect-low-confidence'
 import { checkIfFeatureExists } from '../utils/detect-existing-feature'
 import { checkModuleActive, buildModuleNotActiveMessage } from '../utils/check-module-active'
@@ -512,6 +513,25 @@ export async function sendToElio(
     }) + (markdownDocs ? `\n\n${markdownDocs}` : '') + navExtra
 
     const response = await callLLM(supabase, systemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
+
+    // 2026-08-19 — Élio One propose de prévenir MiKL : on extrait le jeton de la réponse
+    // et on le remplace par une metadata. Le jeton ne doit JAMAIS atteindre l'écran du
+    // client (ni le message persisté), et il ne déclenche aucun envoi par lui-même : le
+    // relais n'a lieu qu'après l'accord explicite du client (bouton côté UI).
+    if (response.data && dashboardType === 'one') {
+      const { text, relay } = parseRelayToken(response.data.content)
+      if (relay) {
+        response.data.content = text
+        response.data.metadata = {
+          ...response.data.metadata,
+          relayProposed: true,
+          relaySummary: relay.summary,
+        }
+      } else if (text !== response.data.content) {
+        // Jeton mal formé (résumé vide ou trop court) : on nettoie quand même l'affichage.
+        response.data.content = text
+      }
+    }
 
     // Task 10 — Détecter la faible confiance et signaler pour escalade MiKL.
     // Escalade pilotée depuis le Hub (lot 2) : si l'interrupteur global est OFF, Élio One ne

@@ -6,6 +6,7 @@ import type { ProactiveAlert } from '../types/elio.types'
 
 const mockMaybeSingle = vi.fn()
 const mockInsert = vi.fn()
+const mockClientSingle = vi.fn()
 
 const MOCK_FROM_MAP: Record<string, unknown> = {}
 
@@ -17,6 +18,15 @@ const mockFrom = vi.fn((table: string) => {
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockReturnThis(),
       maybeSingle: mockMaybeSingle,
+    }
+  }
+  // Correction 2026-08-19 : la notification a besoin de l'auth_user_id du client
+  // (recipient_id = auth_user_id, jamais clients.id).
+  if (table === 'clients') {
+    return {
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ single: mockClientSingle })),
+      })),
     }
   }
   if (table === 'elio_messages' || table === 'notifications') {
@@ -63,6 +73,7 @@ describe('sendProactiveAlert (Story 8.9c — Task 6)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockInsert.mockResolvedValue({ error: null })
+    mockClientSingle.mockResolvedValue({ data: { auth_user_id: 'auth-user-1' }, error: null })
   })
 
   // Task 9.2 — message Élio + notification
@@ -95,8 +106,22 @@ describe('sendProactiveAlert (Story 8.9c — Task 6)', () => {
     expect(notifCall).toBeDefined()
     const notifArg = notifCall![0] as Record<string, unknown>
     expect(notifArg.title).toBe('Alerte Élio')
-    expect(notifArg.user_id).toBe('client-uuid')
+    // Schéma réel de `notifications` : recipient_type + recipient_id (= auth_user_id).
+    // L'ancienne version écrivait `user_id: clientId` — colonne inexistante, donc
+    // notification silencieusement perdue.
+    expect(notifArg.recipient_type).toBe('client')
+    expect(notifArg.recipient_id).toBe('auth-user-1')
+    expect(notifArg.user_id).toBeUndefined()
     expect(notifArg.link).toBe('/modules/adhesions')
+  })
+
+  it('échoue explicitement si le client n’a pas d’auth_user_id', async () => {
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+    mockClientSingle.mockResolvedValue({ data: null, error: null })
+
+    const result = await sendProactiveAlert('client-uuid', ALERT, { count: 1 })
+
+    expect(result.error?.code).toBe('NOT_FOUND')
   })
 
   it('Task 6.3 — formate le message avec les données', async () => {
@@ -109,7 +134,8 @@ describe('sendProactiveAlert (Story 8.9c — Task 6)', () => {
       const arg = call[0] as Record<string, unknown>
       return arg.type === 'alert'
     })
-    expect((notifCall![0] as Record<string, unknown>).content).toBe(
+    // Colonne réelle = `body` (et non `content`, qui n'existe pas sur notifications).
+    expect((notifCall![0] as Record<string, unknown>).body).toBe(
       'Vous avez 7 cotisations impayées depuis plus de 30 jours'
     )
   })
