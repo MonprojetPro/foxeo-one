@@ -17,8 +17,11 @@ export const TIER_INFO: Record<SubscriptionTier, TierInfo> = {
   one_plus: {
     name: 'One+',
     price: '99€/mois',
-    elio: 'Elio One+',
-    description: 'Tout One + 1 visio de coaching humain / mois (One+)',
+    // Élio est le MÊME dans les deux offres (décision MiKL 2026-08-19 — modèle Centaure :
+    // One = la partie IA, One+ = IA ET humain). Afficher « Elio One+ » laissait croire à
+    // un assistant supérieur qui n'existe pas.
+    elio: 'Elio One',
+    description: 'Tout One + 1 visio de coaching humain / mois',
   },
 }
 

@@ -344,129 +344,33 @@ export async function sendToElio(
     // Détecter l'intention avant l'appel LLM (Tasks 2, 3, 7, 8)
     const oneIntent = detectIntent(message)
 
-    // Story 8.9b — Task 4 : génération de documents (One+ uniquement)
+    // Génération de documents par Élio — COUPÉE pour TOUS les tiers (décision MiKL
+    // 2026-08-19). One+ = coaching HUMAIN, rien d'autre : aucune capacité agentique ne
+    // distingue les offres. Toute automatisation repasse par MiKL, au cas par cas.
+    // Le gate branchait sur `tier !== 'one_plus'` et laissait donc passer les clients
+    // en elio_tier='one_plus' (2 en base au 2026-08-19) — contradiction avec l'offre.
     if (oneIntent.action === 'generate_document' && oneIntent.documentType) {
-      if (tier !== 'one_plus') {
-        return successResponse<ElioMessage>({
-          id: makeMessageId(),
-          role: 'assistant',
-          content: UPSELL_ONE_PLUS_MESSAGE,
-          createdAt: new Date().toISOString(),
-          dashboardType,
-        })
-      }
-
-      // Vérifier si des informations sont manquantes (collecte)
-      const collectionStatus = getCollectionStatus(
-        oneIntent.documentType,
-        {
-          type: oneIntent.documentType,
-          beneficiary: oneIntent.documentBeneficiary,
-          period: oneIntent.documentPeriod,
-        },
-        communicationProfile
-      )
-
-      if (collectionStatus.state === 'collecting' && collectionStatus.nextQuestion) {
-        // Poser la prochaine question pour collecter les infos manquantes
-        return successResponse<ElioMessage>({
-          id: makeMessageId(),
-          role: 'assistant',
-          content: collectionStatus.nextQuestion,
-          createdAt: new Date().toISOString(),
-          dashboardType,
-          metadata: {
-            documentCollecting: true,
-            documentType: oneIntent.documentType,
-            missingFields: collectionStatus.missingFields,
-          },
-        })
-      }
-
-      // Toutes les infos sont disponibles → générer le document
-      const { data: generatedContent, error: genError } = await generateDocument(
-        clientId,
-        oneIntent.documentType,
-        {
-          beneficiary: oneIntent.documentBeneficiary,
-          period: oneIntent.documentPeriod,
-        }
-      )
-
-      if (genError) {
-        return errorResponse(genError.message, genError.code, genError.details)
-      }
-
       return successResponse<ElioMessage>({
         id: makeMessageId(),
         role: 'assistant',
-        content: generatedContent ?? '',
+        content: UPSELL_ONE_PLUS_MESSAGE,
         createdAt: new Date().toISOString(),
         dashboardType,
-        metadata: {
-          generatedDocument: true,
-          documentType: oneIntent.documentType,
-          documentName: `${oneIntent.documentType.replace('_', ' ')} — ${oneIntent.documentPeriod ?? new Date().toLocaleDateString('fr-FR')}`,
-        },
       })
     }
 
-    // Story 8.9a — Task 2.3/2.4 : bloquer les actions One+ si tier = 'one'
+    // Actions d'Élio sur les modules — COUPÉES pour TOUS les tiers (décision MiKL
+    // 2026-08-19). Même raison que la génération de documents : aucune capacité
+    // agentique ne distingue One de One+, seul le coaching HUMAIN les sépare.
+    // Une automatisation reste possible, mais sur mesure et au devis — via MiKL.
     if (oneIntent.action === 'module_action') {
-      if (tier !== 'one_plus') {
-        // Client One tente une action One+ → message upsell (AC1, Task 2.4)
-        return successResponse<ElioMessage>({
-          id: makeMessageId(),
-          role: 'assistant',
-          content: UPSELL_ONE_PLUS_MESSAGE,
-          createdAt: new Date().toISOString(),
-          dashboardType,
-        })
-      }
-
-      // Client One+ : vérifier que le module est actif (AC3, Task 7)
-      const moduleTarget = oneIntent.moduleTarget ?? 'unknown'
-      if (moduleTarget !== 'unknown' && !checkModuleActive(activeModules, moduleTarget)) {
-        return successResponse<ElioMessage>({
-          id: makeMessageId(),
-          role: 'assistant',
-          content: buildModuleNotActiveMessage(moduleTarget),
-          createdAt: new Date().toISOString(),
-          dashboardType,
-        })
-      }
-
-      // Module actif → appel LLM avec contexte action, retourner avec pendingAction (AC2, Task 4)
-      // Inclure la documentation markdown des modules actifs (Story 12.8)
-      const actionMarkdownDocs = loadModuleDocumentation(activeModules, message)
-      const actionSystemPrompt = buildSystemPrompt({
+      return successResponse<ElioMessage>({
+        id: makeMessageId(),
+        role: 'assistant',
+        content: UPSELL_ONE_PLUS_MESSAGE,
+        createdAt: new Date().toISOString(),
         dashboardType,
-        communicationProfile,
-        tier,
-        activeModulesDocs: modulesDocumentation,
-        customInstructions: elioConfig?.customInstructions,
-        labBriefs: labBriefsText,
-        parcoursContext,
-        oneContextState,
-      }) + (actionMarkdownDocs ? `\n\n${actionMarkdownDocs}` : '') + navExtra
-
-      const actionResponse = await callLLM(supabase, actionSystemPrompt, message, dashboardType, elioConfig, agentOverrides, clientId)
-
-      if (actionResponse.data) {
-        actionResponse.data.metadata = {
-          ...actionResponse.data.metadata,
-          requiresConfirmation: true,
-          pendingAction: {
-            module: moduleTarget,
-            verb: oneIntent.moduleActionVerb ?? 'send',
-            target: String(oneIntent.moduleActionParams?.target ?? ''),
-            params: oneIntent.moduleActionParams,
-            requiresDoubleConfirm: oneIntent.moduleActionVerb === 'delete',
-          },
-        }
-      }
-
-      return actionResponse
+      })
     }
 
     // Story 8.8 — Task 7 : détecter intention évolution avant appel LLM

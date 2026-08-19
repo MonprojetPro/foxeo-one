@@ -39,7 +39,17 @@ describe('TIER_INFO', () => {
 
   it('one_plus a le bon prix', () => {
     expect(TIER_INFO.one_plus.price).toBe('99€/mois')
-    expect(TIER_INFO.one_plus.elio).toBe('Elio One+')
+  })
+
+  it('annonce le MÊME Élio en One et One+', () => {
+    // Décision MiKL 2026-08-19 : seul le coaching HUMAIN sépare les deux offres.
+    // Afficher un « Elio One+ » laisserait croire à un assistant supérieur inexistant.
+    expect(TIER_INFO.one_plus.elio).toBe(TIER_INFO.one.elio)
+  })
+
+  it('ne décrit One+ que par le coaching humain, jamais par une capacité IA', () => {
+    expect(TIER_INFO.one_plus.description).toMatch(/coaching humain/i)
+    expect(TIER_INFO.one_plus.description).not.toMatch(/agentique/i)
   })
 })
 

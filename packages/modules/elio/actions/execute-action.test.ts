@@ -1,65 +1,38 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { checkElioTierAccess } from './execute-action'
 
-const mockMaybySingle = vi.fn()
-
-vi.mock('@monprojetpro/supabase', () => ({
-  createServerSupabaseClient: vi.fn(async () => ({
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          maybeSingle: mockMaybySingle,
-        })),
-      })),
-    })),
-  })),
-}))
-
-describe('checkElioTierAccess (Story 9.4 — AC#5)', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('retourne success si elio_tier = one_plus', async () => {
-    mockMaybySingle.mockResolvedValue({ data: { elio_tier: 'one_plus' }, error: null })
-
+/**
+ * Décision MiKL 2026-08-19 : l'agentique ne distingue plus One de One+ (seul le coaching
+ * HUMAIN les sépare). Ce verrou refuse donc TOUJOURS, quel que soit `elio_tier` — y
+ * compris pour les clients restés en `one_plus` en base.
+ */
+describe('checkElioTierAccess — agentique coupée pour tous les tiers', () => {
+  it('refuse un client quelconque avec le message renvoyant vers MiKL', async () => {
     const result = await checkElioTierAccess('client-1')
-    expect(result.data).toBe(true)
-    expect(result.error).toBeNull()
-  })
 
-  it('retourne TIER_INSUFFICIENT si elio_tier = one', async () => {
-    mockMaybySingle.mockResolvedValue({ data: { elio_tier: 'one' }, error: null })
-
-    const result = await checkElioTierAccess('client-1')
-    expect(result.error?.code).toBe('TIER_INSUFFICIENT')
-    expect(result.error?.message).toContain('One+')
     expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('TIER_INSUFFICIENT')
+    expect(result.error?.message).toContain('MiKL')
   })
 
-  it('retourne TIER_INSUFFICIENT si elio_tier = null (défaut = one)', async () => {
-    mockMaybySingle.mockResolvedValue({ data: { elio_tier: null }, error: null })
+  it('refuse aussi un client historiquement en one_plus', async () => {
+    // Le point de la décision : ces clients ne doivent plus avoir d'Élio agentique.
+    const result = await checkElioTierAccess('client-one-plus')
 
-    const result = await checkElioTierAccess('client-1')
     expect(result.error?.code).toBe('TIER_INSUFFICIENT')
   })
 
-  it('retourne TIER_INSUFFICIENT si config absente', async () => {
-    mockMaybySingle.mockResolvedValue({ data: null, error: null })
-
+  it('ne vend jamais une montée en gamme dans son message', async () => {
+    // L'automatisation est du sur-mesure au devis, pas un argument d'upsell vers One+.
     const result = await checkElioTierAccess('client-1')
-    expect(result.error?.code).toBe('TIER_INSUFFICIENT')
+
+    expect(result.error?.message).not.toMatch(/One\+/)
+    expect(result.error?.message).not.toMatch(/pass(ez|er) à/i)
   })
 
   it('retourne INVALID_INPUT si clientId vide', async () => {
     const result = await checkElioTierAccess('')
+
     expect(result.error?.code).toBe('INVALID_INPUT')
-  })
-
-  it('retourne DATABASE_ERROR si supabase échoue', async () => {
-    mockMaybySingle.mockResolvedValue({ data: null, error: { message: 'DB error' } })
-
-    const result = await checkElioTierAccess('client-1')
-    expect(result.error?.code).toBe('DATABASE_ERROR')
   })
 })

@@ -1,17 +1,22 @@
 'use server'
 
-import { createServerSupabaseClient } from '@monprojetpro/supabase'
-import { errorResponse, successResponse, type ActionResponse } from '@monprojetpro/types'
+import { errorResponse, type ActionResponse } from '@monprojetpro/types'
 import { UPSELL_ONE_PLUS_MESSAGE } from '../config/system-prompts'
 
 /**
- * Vérifie si un client a le tier Élio One+ requis pour exécuter des actions agentiques.
- * Lit `client_configs.elio_tier` depuis la DB — check effectué AVANT tout appel LLM.
+ * Verrou des actions agentiques d'Élio — REFUSE TOUJOURS (décision MiKL 2026-08-19).
  *
- * Story 9.4 — AC#5 : "le check de tier est effectué avant l'appel LLM (pas de tokens gaspillés)"
+ * Historique : ce check autorisait les clients `elio_tier = 'one_plus'` à exécuter des
+ * actions agentiques. L'offre One+ ayant été redéfinie comme « One + coaching HUMAIN »
+ * (modèle Centaure : One = IA, One+ = IA ET humain), aucune capacité agentique ne
+ * distingue plus les deux tiers. Deux clients étaient encore en `one_plus` en base et
+ * conservaient donc, à leur insu, un Élio qui en faisait plus que les autres.
  *
- * @returns { data: true } si le tier est 'one_plus'
- * @returns { error } avec message upsell si tier != 'one_plus'
+ * On ne lit plus `elio_tier` ici : cette colonne reste légitime, mais pour le COACHING
+ * (crédits, visio, facturation), pas pour l'agentique. Un jour où l'automatisation
+ * reviendra, ce sera au cas par cas et au devis — pas par un tier d'abonnement.
+ *
+ * @returns toujours { error } avec le message renvoyant vers MiKL.
  */
 export async function checkElioTierAccess(
   clientId: string
@@ -20,27 +25,5 @@ export async function checkElioTierAccess(
     return errorResponse('Client ID requis', 'INVALID_INPUT')
   }
 
-  try {
-    const supabase = await createServerSupabaseClient()
-
-    const { data: config, error } = await supabase
-      .from('client_configs')
-      .select('elio_tier')
-      .eq('client_id', clientId)
-      .maybeSingle()
-
-    if (error) {
-      return errorResponse('Erreur lors de la vérification du tier', 'DATABASE_ERROR', error)
-    }
-
-    const tier = (config?.elio_tier as 'one' | 'one_plus' | null) ?? 'one'
-
-    if (tier !== 'one_plus') {
-      return errorResponse(UPSELL_ONE_PLUS_MESSAGE, 'TIER_INSUFFICIENT')
-    }
-
-    return successResponse(true as const)
-  } catch (err) {
-    return errorResponse('Erreur inattendue', 'INTERNAL_ERROR', err)
-  }
+  return errorResponse(UPSELL_ONE_PLUS_MESSAGE, 'TIER_INSUFFICIENT')
 }
