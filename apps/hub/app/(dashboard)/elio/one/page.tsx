@@ -5,6 +5,7 @@ import {
   listRecentEscalations,
   getOneActivity,
   getCheckinConfig,
+  listCheckinAnswers,
   DEFAULT_ONE_POPUP_CONFIG,
   DEFAULT_ESCALATION_CONFIG,
   DEFAULT_CHECKIN_CONFIG,
@@ -13,6 +14,7 @@ import { CockpitHeader } from '@monprojetpro/ui'
 import { OnePopupSection } from './one-popup-section'
 import { EscaladeSection } from './escalade-section'
 import { PriseDeNouvellesSection } from './prise-de-nouvelles-section'
+import { ReponsesCheckinSection } from './reponses-checkin-section'
 import { ActiviteSection } from './activite-section'
 
 /**
@@ -39,6 +41,11 @@ export default async function ElioOnePage() {
   // tuple ci-dessus (chaque ajout y décale les positions, source d'erreurs silencieuses).
   const checkinResult = await getCheckinConfig()
 
+  // Réponses des clients aux prises de nouvelles (2026-08-20). Lecture séparée, non bloquante :
+  // en cas d'échec l'action retourne une liste vide, le volet s'affiche « aucune prise de
+  // nouvelles » plutôt que de faire tomber toute la page de pilotage.
+  const checkinAnswersResult = await listCheckinAnswers()
+
   return (
     <div className="p-6 space-y-8">
       {/* En-tête cockpit — ton emerald pour refléter le thème One */}
@@ -63,6 +70,11 @@ export default async function ElioOnePage() {
       {/* Prise de nouvelles proactive d'Élio One (cron one-project-checkin) */}
       <div className="border-t border-white/5 pt-8">
         <PriseDeNouvellesSection initialConfig={checkinResult.data ?? DEFAULT_CHECKIN_CONFIG} />
+      </div>
+
+      {/* Ce que les clients ont répondu à ces prises de nouvelles */}
+      <div className="border-t border-white/5 pt-8">
+        <ReponsesCheckinSection rows={checkinAnswersResult.data ?? []} />
       </div>
 
       {/* Lot 4 — Activité Élio One par client gradué */}

@@ -11,15 +11,35 @@
  */
 const ELIO_ONE_POPUP_OPEN_EVENT = 'elio-one-popup:open'
 
+/**
+ * Amorce d'ouverture (2026-08-20). Quand le client répond « Non, pas trop » à la prise de
+ * nouvelles d'Élio, on n'ouvre pas un chat muet : Élio l'accueille sur le sujet précis, avec
+ * des suggestions de démarrage adaptées.
+ *
+ * L'amorce ne remplace que l'écran d'accueil (état vide) de la pop-up. Si une conversation
+ * est déjà en cours, elle est ignorée — on ne réécrit jamais un échange commencé.
+ */
+export interface ElioOnePopupSeed {
+  greeting?: string
+  suggestions?: string[]
+}
+
 /** Ouvre la pop-up Élio One (depuis le bandeau accueil ou le widget sidebar). */
-export function openElioOnePopup(): void {
+export function openElioOnePopup(seed?: ElioOnePopupSeed): void {
   if (typeof window === 'undefined') return
-  window.dispatchEvent(new Event(ELIO_ONE_POPUP_OPEN_EVENT))
+  window.dispatchEvent(
+    new CustomEvent<ElioOnePopupSeed | undefined>(ELIO_ONE_POPUP_OPEN_EVENT, { detail: seed }),
+  )
 }
 
 /** S'abonne aux demandes d'ouverture. Retourne une fonction de désinscription. */
-export function subscribeElioOnePopup(callback: () => void): () => void {
+export function subscribeElioOnePopup(
+  callback: (seed?: ElioOnePopupSeed) => void,
+): () => void {
   if (typeof window === 'undefined') return () => {}
-  window.addEventListener(ELIO_ONE_POPUP_OPEN_EVENT, callback)
-  return () => window.removeEventListener(ELIO_ONE_POPUP_OPEN_EVENT, callback)
+  const handler = (event: Event) => {
+    callback((event as CustomEvent<ElioOnePopupSeed | undefined>).detail)
+  }
+  window.addEventListener(ELIO_ONE_POPUP_OPEN_EVENT, handler)
+  return () => window.removeEventListener(ELIO_ONE_POPUP_OPEN_EVENT, handler)
 }

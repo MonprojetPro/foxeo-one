@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { ElioChat, type ElioOnePopupConfig } from '@monprojetpro/module-elio'
 import { Dialog, DialogContent, DialogTitle } from '@monprojetpro/ui'
-import { subscribeElioOnePopup } from './use-elio-one-popup'
+import { subscribeElioOnePopup, type ElioOnePopupSeed } from './use-elio-one-popup'
 import { useElioOneSession } from './elio-one-session'
 import { ElioVeille } from './elio-veille'
 
@@ -23,12 +23,29 @@ interface ElioOnePopupProps {
  */
 export function ElioOnePopup({ clientId, iaConsentGranted, popupConfig }: ElioOnePopupProps) {
   const [open, setOpen] = useState(false)
+  // Amorce d'ouverture ponctuelle (ex : « Non, pas trop » sur la prise de nouvelles). Elle
+  // surcharge l'accueil configuré par MiKL le temps de CETTE ouverture seulement.
+  const [seed, setSeed] = useState<ElioOnePopupSeed | null>(null)
   const session = useElioOneSession()
 
-  useEffect(() => subscribeElioOnePopup(() => setOpen(true)), [])
+  useEffect(
+    () =>
+      subscribeElioOnePopup((nextSeed) => {
+        setSeed(nextSeed ?? null)
+        setOpen(true)
+      }),
+    [],
+  )
+
+  // À la fermeture, on oublie l'amorce : la prochaine ouverture « normale » (widget sidebar,
+  // bouton du bandeau) doit retrouver l'accueil configuré, pas le contexte d'un incident passé.
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next)
+    if (!next) setSeed(null)
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
         <DialogTitle className="sr-only">Élio One</DialogTitle>
         <div className="h-[70vh]">
@@ -37,8 +54,8 @@ export function ElioOnePopup({ clientId, iaConsentGranted, popupConfig }: ElioOn
               dashboardType="one"
               clientId={clientId}
               externalSession={session ?? undefined}
-              greeting={popupConfig.greeting}
-              suggestions={popupConfig.suggestions}
+              greeting={seed?.greeting ?? popupConfig.greeting}
+              suggestions={seed?.suggestions ?? popupConfig.suggestions}
               placeholder={popupConfig.placeholder}
             />
           ) : (

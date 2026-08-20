@@ -7,6 +7,7 @@ const mockMaybeSingle = vi.fn()
 const chain = {
   select: vi.fn(() => chain),
   eq: vi.fn(() => chain),
+  is: vi.fn(() => chain),
   order: vi.fn(() => chain),
   limit: vi.fn(() => chain),
   maybeSingle: mockMaybeSingle,
@@ -34,6 +35,7 @@ describe('getOneConciergeWord', () => {
   it('filters on dashboard_context=one and maps the latest word', async () => {
     mockMaybeSingle.mockResolvedValue({
       data: {
+        id: 'aaaaaaaa-0000-0000-0000-000000000001',
         body: 'Du nouveau sur ton outil',
         event_type: 'tool_update',
         agent_label: 'Page contact',
@@ -49,11 +51,23 @@ describe('getOneConciergeWord', () => {
     expect(chain.eq).toHaveBeenCalledWith('client_id', CLIENT_ID)
     expect(chain.eq).toHaveBeenCalledWith('dashboard_context', 'one')
     expect(result).toEqual({
+      id: 'aaaaaaaa-0000-0000-0000-000000000001',
       body: 'Du nouveau sur ton outil',
       eventType: 'tool_update',
       agentLabel: 'Page contact',
       createdAt: '2026-06-25T10:00:00Z',
     })
+  })
+
+  it('ignores answered check-ins so the previous word takes over', async () => {
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+
+    const { getOneConciergeWord } = await import('./get-one-concierge-word')
+    await getOneConciergeWord(CLIENT_ID)
+
+    // Sans ce filtre, une prise de nouvelles répondue resterait affichée à vie par-dessus
+    // le mot utile qui la précédait (livraison d'outil, évolution annoncée…).
+    expect(chain.is).toHaveBeenCalledWith('answered_at', null)
   })
 
   it('returns null when no word exists', async () => {
@@ -72,7 +86,13 @@ describe('getOneConciergeWord', () => {
 
   it('coerces a null agent_label to null in the result', async () => {
     mockMaybeSingle.mockResolvedValue({
-      data: { body: 'x', event_type: 'tier_changed', agent_label: null, created_at: '2026-06-25T10:00:00Z' },
+      data: {
+        id: 'aaaaaaaa-0000-0000-0000-000000000002',
+        body: 'x',
+        event_type: 'tier_changed',
+        agent_label: null,
+        created_at: '2026-06-25T10:00:00Z',
+      },
       error: null,
     })
     const { getOneConciergeWord } = await import('./get-one-concierge-word')

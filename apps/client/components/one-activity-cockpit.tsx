@@ -28,6 +28,8 @@ import {
   useOneCockpitSummary,
   useOneCockpitSummaryRealtime,
 } from './use-one-cockpit-summary'
+// `openElioOnePopup` accepte une amorce optionnelle : toujours l'appeler via une flèche dans
+// un onClick, sinon l'événement du clic lui serait transmis comme amorce.
 import { openElioOnePopup } from './use-elio-one-popup'
 
 interface OneActivityCockpitProps {
@@ -145,7 +147,7 @@ export function OneActivityCockpit({ clientId, userId: _userId }: OneActivityCoc
             Icon={AlertCircle}
             accent="amber"
             href={openTickets > 0 ? '/modules/support' : undefined}
-            onClick={openTickets > 0 ? undefined : openElioOnePopup}
+            onClick={openTickets > 0 ? undefined : () => openElioOnePopup()}
             linkLabel={todoCount > 0 ? 'Ouvrir' : 'Tout est à jour'}
             badge={todoCount}
           >

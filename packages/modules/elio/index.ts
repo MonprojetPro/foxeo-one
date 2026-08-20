@@ -39,6 +39,10 @@ export { sendToElio } from './actions/send-to-elio'
 export { generateOneConciergeWord } from './actions/generate-one-concierge-word'
 export type { OneConciergeEvent } from './actions/generate-one-concierge-word'
 export { getOneConciergeWord } from './actions/get-one-concierge-word'
+// Réponse du client à une prise de nouvelles (2026-08-20) — le mot répondu disparaît du
+// bandeau et le mot précédent reprend sa place.
+export { answerConciergeCheckin } from './actions/answer-concierge-checkin'
+export type { CheckinAnswer } from './actions/answer-concierge-checkin'
 export { getOneContext } from './actions/get-one-context'
 // Réexport du type ConciergeWord (canonique dans module-parcours) pour que l'app cliente
 // l'importe proprement depuis @monprojetpro/module-elio (contrat Concierge One).
@@ -323,6 +327,9 @@ export { relayToMiklChat } from './actions/relay-to-mikl-chat'
 export { parseRelayToken } from './utils/parse-relay-token'
 export type { RelayProposal } from './utils/parse-relay-token'
 export { getCheckinConfig, setCheckinConfig } from './actions/checkin-config'
+// Suivi Hub des réponses aux prises de nouvelles (qui va bien, qui ne va pas, qui n'a pas répondu).
+export { listCheckinAnswers } from './actions/list-checkin-answers'
+export type { CheckinAnswerRow } from './actions/list-checkin-answers'
 export {
   CheckinConfigSchema,
   DEFAULT_CHECKIN_CONFIG,

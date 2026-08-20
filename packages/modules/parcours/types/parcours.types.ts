@@ -140,6 +140,12 @@ export interface ConciergeWord {
   eventType: string
   agentLabel: string | null
   createdAt: string
+  /**
+   * Identifiant du mot. Optionnel car le Lab n'en a pas besoin (son bandeau est purement
+   * informatif). Côté One il est OBLIGATOIREMENT rempli : c'est lui qui permet au client de
+   * répondre à une prise de nouvelles (`answerConciergeCheckin`).
+   */
+  id?: string
 }
 
 export interface CompleteStepResult {
