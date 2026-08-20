@@ -385,12 +385,23 @@
   inherits: false;
 }
 
+/* ⚠️ `position` est isolé dans un `:where()` — spécificité ZÉRO — et ce n'est pas cosmétique.
+   Ce fichier est chargé APRÈS les utilitaires Tailwind : une règle `.mpp-popup-frame {
+   position: relative }` a la même spécificité que `.fixed` et, arrivant plus tard, la battait.
+   Résultat : la pop-up Radix perdait son `position: fixed`, retombait dans le flux en fin de
+   <body>, et `translate-y-[-50%]` l'envoyait hors de l'écran par le haut.
+   Avec `:where()`, cette valeur ne sert plus que de repli pour un élément qui n'aurait aucun
+   positionnement — n'importe quel utilitaire la remplace. Ne jamais la remonter dans le bloc
+   principal. */
+:where(.mpp-popup-frame) {
+  position: relative;
+}
+
 .mpp-popup-frame {
   /* Défaut neutre : sans surcharge de l'appelant, le cadre reste sobre plutôt que faux. */
   --mpp-popup-accent: #64748b;
   /* Épaisseur du liseré — un seul endroit à bouger pour tout le monde. */
   --mpp-popup-ring: 2px;
-  position: relative;
   border-color: color-mix(in srgb, var(--mpp-popup-accent) 55%, transparent);
   /* Halo externe uniquement. Le liseré NE PEUT PAS être un `box-shadow: inset` : une ombre
      interne se peint sous les enfants, et le fond opaque du chat la recouvrirait entièrement.
