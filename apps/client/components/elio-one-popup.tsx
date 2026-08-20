@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { ElioChat, type ElioOnePopupConfig } from '@monprojetpro/module-elio'
 import { Dialog, DialogContent, DialogTitle } from '@monprojetpro/ui'
 import { subscribeElioOnePopup, type ElioOnePopupSeed } from './use-elio-one-popup'
@@ -46,7 +46,13 @@ export function ElioOnePopup({ clientId, iaConsentGranted, popupConfig }: ElioOn
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
+      {/* Cadre « pop-up » vert One (essai avant généralisation Hub/Lab — 2026-08-20).
+          La couleur est passée en littéral : le portail Radix est rendu hors de l'arbre
+          où vit `--brand-accent`, une variable de thème n'y arriverait pas. */}
+      <DialogContent
+        className="sm:max-w-2xl p-0 overflow-hidden mpp-popup-frame"
+        style={{ '--mpp-popup-accent': '#16a34a' } as CSSProperties}
+      >
         <DialogTitle className="sr-only">Élio One</DialogTitle>
         <div className="h-[70vh]">
           {iaConsentGranted ? (

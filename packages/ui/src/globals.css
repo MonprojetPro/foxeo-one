@@ -359,3 +359,86 @@
     animation: none;
   }
 }
+
+/* ============================================================
+   Cadre de pop-up « MonprojetPro » — liseré à la couleur du dashboard
+   ============================================================
+
+   Problème résolu : une pop-up posée sur un fond sombre se confond avec la page,
+   surtout quand elle occupe une grande surface (chat Élio). On l'entoure donc d'un
+   liseré à l'accent du dashboard courant, d'un halo doux, et d'un reflet qui balaie
+   lentement le cadre — assez visible pour dire « ceci est une couche au-dessus »,
+   assez discret pour ne pas attirer l'œil pendant la lecture.
+
+   Usage — la couleur est passée par l'appelant, JAMAIS lue dans le thème :
+   une pop-up Radix est rendue dans un portail, hors de l'arbre où vivent les
+   variables `--brand-accent` (cf. leçon « pop-up = portail hors thème »).
+
+     <DialogContent className="mpp-popup-frame" style={{ '--mpp-popup-accent': '#16a34a' }}>
+
+   Hub = cyan · Lab = violet · One = vert.
+*/
+
+@property --mpp-popup-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.mpp-popup-frame {
+  /* Défaut neutre : sans surcharge de l'appelant, le cadre reste sobre plutôt que faux. */
+  --mpp-popup-accent: #64748b;
+  position: relative;
+  border-color: color-mix(in srgb, var(--mpp-popup-accent) 38%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--mpp-popup-accent) 16%, transparent),
+    0 0 34px -8px color-mix(in srgb, var(--mpp-popup-accent) 40%, transparent),
+    0 24px 64px -16px rgb(0 0 0 / 0.75);
+}
+
+/* Reflet qui balaie le liseré. Technique du « border gradient » : un dégradé conique
+   peint sur tout le cadre, puis masqué pour ne laisser visible que l'épaisseur du bord. */
+.mpp-popup-frame::before {
+  content: '';
+  position: absolute;
+  /* `inset: 0` et non `-1px` : les pop-ups sont souvent en `overflow-hidden`, tout ce qui
+     dépasse de la boîte serait rogné. Le reflet se peint donc sur le bord intérieur. */
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  /* Au-dessus du contenu : sans ça, un enfant avec un fond opaque (le chat) recouvre le
+     liseré sur ses bords. `pointer-events: none` garde le contenu cliquable. */
+  z-index: 2;
+  background: conic-gradient(
+    from var(--mpp-popup-angle),
+    transparent 0deg,
+    transparent 55deg,
+    color-mix(in srgb, var(--mpp-popup-accent) 70%, white) 90deg,
+    transparent 125deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.6;
+  pointer-events: none;
+  animation: mpp-popup-sweep 7s linear infinite;
+}
+
+@keyframes mpp-popup-sweep {
+  to { --mpp-popup-angle: 360deg; }
+}
+
+/* Sans mouvement : le liseré reste, il cesse simplement de tourner. Le repère visuel
+   ne doit pas dépendre de l'animation. */
+@media (prefers-reduced-motion: reduce) {
+  .mpp-popup-frame::before {
+    animation: none;
+    opacity: 0.35;
+  }
+}
