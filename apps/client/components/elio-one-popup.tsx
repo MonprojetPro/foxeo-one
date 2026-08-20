@@ -49,19 +49,21 @@ export function ElioOnePopup({ clientId, iaConsentGranted, popupConfig }: ElioOn
       {/* Cadre « pop-up » vert One (essai avant généralisation Hub/Lab — 2026-08-20).
           La couleur est passée en littéral : le portail Radix est rendu hors de l'arbre
           où vit `--brand-accent`, une variable de thème n'y arriverait pas. */}
-      {/* Hauteur BORNÉE, jamais fixe : `h-[70vh]` sur le contenu ignorait le reste du Dialog
-          (en-tête du chat, marges), si bien que la pop-up dépassait du haut de l'écran — son
-          en-tête sortait du viewport et la barre de défilement se collait au bord.
-          On plafonne donc la boîte à 85% de la hauteur RÉELLE (`dvh`, barre d'URL mobile
-          comprise) et le chat occupe simplement ce qu'on lui donne. */}
+      {/* Hauteur BORNÉE — et surtout `flex flex-col` à la place du `grid` par défaut de
+          DialogContent. C'est là qu'était le débordement : les lignes d'un grid s'ajustent à
+          leur contenu, donc `h-full` sur l'enfant valait « 100 % de sa ligne » et cette ligne
+          s'étirait à la taille du chat. Le plafond de la boîte était contourné, et comme le
+          Dialog est centré par `translate-y-[-50%]`, ce qui dépassait partait vers le haut :
+          l'en-tête du chat sortait de l'écran.
+          En colonne flex, l'enfant `flex-1 min-h-0` ne peut plus faire grandir le parent. */}
       <DialogContent
-        className="sm:max-w-2xl p-0 overflow-hidden mpp-popup-frame rounded-2xl h-[min(78dvh,44rem)] max-h-[85dvh]"
+        className="sm:max-w-2xl p-0 gap-0 overflow-hidden mpp-popup-frame rounded-2xl flex flex-col h-[min(78dvh,44rem)] max-h-[85dvh]"
         style={{ '--mpp-popup-accent': '#16a34a' } as CSSProperties}
       >
         <DialogTitle className="sr-only">Élio One</DialogTitle>
-        {/* `min-h-0` : sans lui, un enfant de grid/flex refuse de rétrécir sous la taille de
-            son contenu et reprend à déborder malgré le plafond ci-dessus. */}
-        <div className="h-full min-h-0 overflow-hidden rounded-2xl">
+        {/* `min-h-0` : sans lui, un enfant de flex refuse de rétrécir sous la taille de son
+            contenu et reprend à déborder malgré le plafond ci-dessus. */}
+        <div className="flex-1 min-h-0 overflow-hidden rounded-2xl">
           {iaConsentGranted ? (
             <ElioChat
               dashboardType="one"
