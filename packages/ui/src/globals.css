@@ -396,17 +396,19 @@
    pseudo-éléments s'y ancrent sans rien déclarer. Sur un élément non positionné, l'appelant
    ajoute `relative` lui-même. Même prudence pour `display`, `inset`, `width`, `height`. */
 .mpp-popup-frame {
-  /* Défaut neutre : sans surcharge de l'appelant, le cadre reste sobre plutôt que faux. */
-  --mpp-popup-accent: #64748b;
+  /* ⚠️ NE PAS déclarer `--mpp-popup-accent` ici. Mesuré au navigateur : une variable définie
+     SUR l'élément écrase la valeur héritée, donc le cadre restait gris dans tous les thèmes
+     alors que `.theme-one` / `.theme-lab` / `.theme-hub` la définissent bien sur <html>.
+     Le repli neutre passe par le 2e argument de `var()` à chaque usage. */
   /* Épaisseur du liseré — un seul endroit à bouger pour tout le monde. */
   --mpp-popup-ring: 2px;
-  border-color: color-mix(in srgb, var(--mpp-popup-accent) 55%, transparent);
+  border-color: color-mix(in srgb, var(--mpp-popup-accent, #64748b) 55%, transparent);
   /* Halo externe uniquement. Le liseré NE PEUT PAS être un `box-shadow: inset` : une ombre
      interne se peint sous les enfants, et le fond opaque du chat la recouvrirait entièrement.
      Il est donc dessiné par ::before, au-dessus du contenu. */
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--mpp-popup-accent) 30%, transparent),
-    0 0 46px -6px color-mix(in srgb, var(--mpp-popup-accent) 55%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--mpp-popup-accent, #64748b) 30%, transparent),
+    0 0 46px -6px color-mix(in srgb, var(--mpp-popup-accent, #64748b) 55%, transparent),
     0 24px 64px -16px rgb(0 0 0 / 0.75);
 }
 
@@ -437,7 +439,7 @@
 }
 
 .mpp-popup-frame::before {
-  background: color-mix(in srgb, var(--mpp-popup-accent) 70%, transparent);
+  background: color-mix(in srgb, var(--mpp-popup-accent, #64748b) 70%, transparent);
 }
 
 /* Reflet clair qui balaie le liseré, par-dessus lui. */
@@ -446,7 +448,7 @@
     from var(--mpp-popup-angle),
     transparent 0deg,
     transparent 50deg,
-    color-mix(in srgb, var(--mpp-popup-accent) 40%, white) 90deg,
+    color-mix(in srgb, var(--mpp-popup-accent, #64748b) 40%, white) 90deg,
     transparent 130deg,
     transparent 360deg
   );

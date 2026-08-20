@@ -3,6 +3,12 @@
    Dark mode par defaut, fond #020402 */
 
 .theme-one {
+  /* Liseré des pop-ups (.mpp-popup-frame) — vert One.
+     Défini ICI, sur la classe de thème portée par <html>, et non sur un conteneur du
+     dashboard : une pop-up Radix est rendue dans un portail en fin de <body>, elle
+     n'hérite donc que des variables déclarées à la racine. */
+  --mpp-popup-accent: #16a34a;
+
   /* Light Mode */
   --background: oklch(0.99 0.003 50);
   --foreground: oklch(0.15 0.02 50);

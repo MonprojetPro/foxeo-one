@@ -3,6 +3,12 @@
    Dark mode par defaut, fond #020402 */
 
 .theme-lab {
+  /* Liseré des pop-ups (.mpp-popup-frame) — violet Lab.
+     Défini ICI, sur la classe de thème portée par <html>, et non sur un conteneur du
+     dashboard : une pop-up Radix est rendue dans un portail en fin de <body>, elle
+     n'hérite donc que des variables déclarées à la racine. */
+  --mpp-popup-accent: #8b5cf6;
+
   /* Light Mode */
   --background: oklch(0.985 0.007 290);
   --foreground: oklch(0.15 0.03 290);
