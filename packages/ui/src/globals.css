@@ -388,35 +388,31 @@
 .mpp-popup-frame {
   /* Défaut neutre : sans surcharge de l'appelant, le cadre reste sobre plutôt que faux. */
   --mpp-popup-accent: #64748b;
+  /* Épaisseur du liseré — un seul endroit à bouger pour tout le monde. */
+  --mpp-popup-ring: 2px;
   position: relative;
-  border-color: color-mix(in srgb, var(--mpp-popup-accent) 38%, transparent);
+  border-color: color-mix(in srgb, var(--mpp-popup-accent) 55%, transparent);
+  /* Halo externe uniquement. Le liseré NE PEUT PAS être un `box-shadow: inset` : une ombre
+     interne se peint sous les enfants, et le fond opaque du chat la recouvrirait entièrement.
+     Il est donc dessiné par ::before, au-dessus du contenu. */
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--mpp-popup-accent) 16%, transparent),
-    0 0 34px -8px color-mix(in srgb, var(--mpp-popup-accent) 40%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--mpp-popup-accent) 30%, transparent),
+    0 0 46px -6px color-mix(in srgb, var(--mpp-popup-accent) 55%, transparent),
     0 24px 64px -16px rgb(0 0 0 / 0.75);
 }
 
-/* Reflet qui balaie le liseré. Technique du « border gradient » : un dégradé conique
-   peint sur tout le cadre, puis masqué pour ne laisser visible que l'épaisseur du bord. */
-.mpp-popup-frame::before {
+/* Liseré permanent — le repère de « couche au-dessus ». Toujours présent, animation ou non. */
+.mpp-popup-frame::before,
+.mpp-popup-frame::after {
   content: '';
   position: absolute;
   /* `inset: 0` et non `-1px` : les pop-ups sont souvent en `overflow-hidden`, tout ce qui
-     dépasse de la boîte serait rogné. Le reflet se peint donc sur le bord intérieur. */
+     dépasse de la boîte serait rogné. Le cadre se peint donc sur le bord intérieur. */
   inset: 0;
   border-radius: inherit;
-  padding: 1px;
-  /* Au-dessus du contenu : sans ça, un enfant avec un fond opaque (le chat) recouvre le
-     liseré sur ses bords. `pointer-events: none` garde le contenu cliquable. */
-  z-index: 2;
-  background: conic-gradient(
-    from var(--mpp-popup-angle),
-    transparent 0deg,
-    transparent 55deg,
-    color-mix(in srgb, var(--mpp-popup-accent) 70%, white) 90deg,
-    transparent 125deg,
-    transparent 360deg
-  );
+  padding: var(--mpp-popup-ring);
+  /* Technique du « border gradient » : on peint toute la boîte, puis on masque l'intérieur
+     pour ne garder que l'épaisseur du bord. */
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -425,8 +421,27 @@
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  opacity: 0.6;
+  /* Au-dessus du contenu : sans ça, un enfant avec un fond opaque (le chat) recouvre le
+     cadre sur ses bords. `pointer-events: none` garde le contenu cliquable. */
+  z-index: 2;
   pointer-events: none;
+}
+
+.mpp-popup-frame::before {
+  background: color-mix(in srgb, var(--mpp-popup-accent) 70%, transparent);
+}
+
+/* Reflet clair qui balaie le liseré, par-dessus lui. */
+.mpp-popup-frame::after {
+  background: conic-gradient(
+    from var(--mpp-popup-angle),
+    transparent 0deg,
+    transparent 50deg,
+    color-mix(in srgb, var(--mpp-popup-accent) 40%, white) 90deg,
+    transparent 130deg,
+    transparent 360deg
+  );
+  opacity: 0.9;
   animation: mpp-popup-sweep 7s linear infinite;
 }
 
@@ -437,7 +452,7 @@
 /* Sans mouvement : le liseré reste, il cesse simplement de tourner. Le repère visuel
    ne doit pas dépendre de l'animation. */
 @media (prefers-reduced-motion: reduce) {
-  .mpp-popup-frame::before {
+  .mpp-popup-frame::after {
     animation: none;
     opacity: 0.35;
   }
