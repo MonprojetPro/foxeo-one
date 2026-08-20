@@ -453,6 +453,28 @@ export default async function DashboardLayout({
 
   const accentFg = computeAccentFg(effectiveAccent)
 
+  // ── Couleur de marque du client dans les POP-UPS ─────────────────────────────────
+  // `accentStyle` ci-dessous est posé sur un div du dashboard ; or une pop-up Radix est
+  // rendue dans un portail en fin de <body>, hors de cet arbre — elle n'hérite donc QUE des
+  // variables déclarées à la racine. Le liseré des pop-ups (`.mpp-popup-frame`) lit
+  // `--mpp-popup-accent`, que les classes de thème posent sur <html> ; on la surcharge ici
+  // avec la couleur du client pour que les pop-ups suivent son branding.
+  //
+  // Comme `--accent`, uniquement en mode One : en mode Lab on garde le violet du thème,
+  // sinon la couleur One baverait sur l'espace d'incubation.
+  //
+  // ⚠️ Validation stricte obligatoire : `accentColor` vient de la base (custom_branding) et
+  // finit dans une feuille de style. Tout ce qui n'est pas un hexadécimal à 6 chiffres est
+  // ignoré plutôt que réécrit — on ne devine pas une couleur, on la refuse.
+  //
+  // SSR sans risque de décalage : la bascule Lab/One fait un rechargement complet
+  // (`window.location.replace` dans ModeToggle), donc ce style est recalculé à chaque fois.
+  const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/
+  const popupAccentCss =
+    activeMode === 'one' && accentColor && HEX_COLOR_PATTERN.test(accentColor)
+      ? `:root{--mpp-popup-accent:${accentColor}}`
+      : null
+
   const accentStyle: React.CSSProperties = {
     '--brand-accent': effectiveAccent,
     '--brand-accent-fg': accentFg,
@@ -509,6 +531,8 @@ export default async function DashboardLayout({
     // enfouis trop profond pour être atteints par des props sans en oublier un.
     <ClientAccessProvider readOnly={isReadOnlyAccess}>
     <div style={accentStyle}>
+      {/* Rend le liseré des pop-ups conforme au branding du client (cf. popupAccentCss). */}
+      {popupAccentCss && <style>{popupAccentCss}</style>}
       <SessionKeepAlive />
       <RealtimeDashboardRefresh clientId={clientId} />
       {/* Bascule maintenance instantanée : redirige le client vers /maintenance dès que
