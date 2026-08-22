@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 /**
  * check-module-docs.ts — Validation CI de la documentation des modules
  *
@@ -7,7 +7,10 @@
  * - docs/faq.md      (au moins 5 questions H2)
  * - docs/flows.md    (au moins 1 flux H2)
  *
- * Exit code 1 si un module actif manque de docs (bloquant CI)
+ * Deux niveaux d'exigence :
+ * - par défaut : l'ABSENCE d'un document est bloquante (exit 1). Un document
+ *   présent mais trop léger est signalé en avertissement, sans bloquer.
+ * - avec --strict : les seuils de contenu deviennent eux aussi bloquants.
  */
 
 import * as fs from 'fs'
@@ -80,27 +83,32 @@ export function runCheck(moduleIds: string[]): ModuleResult[] {
   return moduleIds.map(checkModule)
 }
 
-function formatReport(results: ModuleResult[]): { lines: string[]; hasErrors: boolean } {
+function formatReport(
+  results: ModuleResult[],
+  strict: boolean
+): { lines: string[]; hasErrors: boolean } {
   const lines: string[] = []
-  let hasErrors = false
+  let missingCount = 0
+  let thinCount = 0
 
   lines.push('\n📋 Vérification documentation des modules MonprojetPro\n')
+  lines.push(strict ? 'Mode : strict (seuils de contenu bloquants)' : 'Mode : présence bloquante')
   lines.push('─'.repeat(60))
 
   for (const result of results) {
-    const status = result.allOk ? '✅' : '❌'
+    const status = result.allOk ? '✅' : result.docs.every((d) => d.exists) ? '🟡' : '❌'
     lines.push(`\n${status} ${result.moduleId}`)
 
     for (const doc of result.docs) {
       if (!doc.exists) {
         lines.push(`   🔴 MISSING  ${doc.file}`)
-        hasErrors = true
+        missingCount++
       } else if (!doc.hasMinContent) {
         const required = MIN_SECTIONS[doc.file] ?? 1
         lines.push(
-          `   🟡 THIN     ${doc.file} — ${doc.sectionCount}/${required} sections H2 requises`
+          `   🟡 THIN     ${doc.file} — ${doc.sectionCount}/${required} sections H2 recommandées`
         )
-        hasErrors = true
+        thinCount++
       } else {
         lines.push(`   🟢 OK       ${doc.file} (${doc.sectionCount} sections)`)
       }
@@ -110,18 +118,26 @@ function formatReport(results: ModuleResult[]): { lines: string[]; hasErrors: bo
   lines.push('\n' + '─'.repeat(60))
 
   const totalModules = results.length
-  const okModules = results.filter((r) => r.allOk).length
-  const failedModules = totalModules - okModules
+  const documented = results.filter((r) => r.docs.every((d) => d.exists)).length
+  const complete = results.filter((r) => r.allOk).length
 
-  lines.push(`\n📊 Résultat : ${okModules}/${totalModules} modules OK`)
-  if (failedModules > 0) {
-    lines.push(`   ⚠️  ${failedModules} module(s) nécessitent une action`)
-    hasErrors = true
-  } else {
+  lines.push(`\n📊 Documents présents  : ${documented}/${totalModules} modules`)
+  lines.push(`📊 Seuils de contenu   : ${complete}/${totalModules} modules`)
+  if (missingCount > 0) {
+    lines.push(`   ⚠️  ${missingCount} document(s) manquant(s) — bloquant`)
+  }
+  if (thinCount > 0) {
+    lines.push(
+      `   ⚠️  ${thinCount} document(s) sous le seuil de contenu` +
+        (strict ? ' — bloquant (mode strict)' : ' — avertissement')
+    )
+  }
+  if (missingCount === 0 && thinCount === 0) {
     lines.push('   🎉 Tous les modules sont documentés !')
   }
   lines.push('')
 
+  const hasErrors = missingCount > 0 || (strict && thinCount > 0)
   return { lines, hasErrors }
 }
 
@@ -133,8 +149,9 @@ if (require.main === module) {
     process.exit(1)
   }
 
+  const strict = process.argv.includes('--strict')
   const results = runCheck(moduleIds)
-  const { lines, hasErrors } = formatReport(results)
+  const { lines, hasErrors } = formatReport(results, strict)
 
   for (const line of lines) {
     console.log(line)

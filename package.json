@@ -16,12 +16,15 @@
     "test": "turbo test",
     "clean": "turbo clean",
     "gen:types": "supabase gen types typescript --local > packages/types/src/database.types.ts",
-    "check:docs": "ts-node scripts/check-module-docs.ts"
+    "check:docs": "tsx scripts/check-module-docs.ts",
+    "check:docs:strict": "tsx scripts/check-module-docs.ts --strict",
+    "test:rls": "vitest run tests/rls"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.1",
     "happy-dom": "^20.6.1",
     "supabase": "^2.76.7",
+    "tsx": "^4.23.12",
     "turbo": "^2.3.0",
     "vitest": "^3.0.0"
   },

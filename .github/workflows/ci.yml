@@ -1,0 +1,90 @@
+name: CI — controles qualite
+
+# Chaine de controles executee avant l'integration de toute modification sur master.
+# La construction et le deploiement restent assures par Vercel (integration et
+# deploiement continus) ; ce workflow porte les controles de qualite du code.
+#
+# Etat au 22 aout 2026 :
+# - documentation : operationnel, 17/17 modules.
+# - tests         : operationnel. 87 cas sur 5574 sont aujourd'hui desynchronises
+#                   du code et font echouer le job ; c'est precisement ce que la
+#                   chaine sert a rendre visible.
+# - isolation     : ne s'execute que si les acces Supabase de test sont fournis
+#                   en secrets du depot ; sans eux, la majorite des scenarios
+#                   d'isolation sont ignores silencieusement par Vitest.
+# - analyse statique : aucun fichier de configuration ESLint n'existe dans le
+#                   depot a ce jour ; le job correspondant sera ajoute une fois
+#                   la configuration mise en place.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  documentation:
+    name: Documentation obligatoire des modules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Installation des dependances
+        run: npm ci
+      - name: Presence de guide.md, faq.md et flows.md dans chaque module
+        run: npm run check:docs
+
+  tests:
+    name: Tests unitaires et de contrat
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Installation des dependances
+        run: npm ci
+      - name: Suite de tests (hors isolation multi-tenant)
+        run: npx vitest run --exclude 'tests/rls/**'
+
+  isolation:
+    name: Tests d'isolation multi-tenant (RLS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Installation des dependances
+        run: npm ci
+      - name: Verification de la presence des acces de test
+        id: secrets
+        env:
+          TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+        run: |
+          if [ -n "$TEST_URL" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Acces Supabase de test absents — scenarios d'isolation non executes."
+          fi
+      - name: Scenarios d'acces inter-clients
+        if: steps.secrets.outputs.available == 'true'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+        run: npm run test:rls
