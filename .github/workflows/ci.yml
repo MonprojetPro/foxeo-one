@@ -9,9 +9,8 @@ name: CI — controles qualite
 # - tests         : operationnel. 87 cas sur 5574 sont aujourd'hui desynchronises
 #                   du code et font echouer le job ; c'est precisement ce que la
 #                   chaine sert a rendre visible.
-# - isolation     : ne s'execute que si les acces Supabase de test sont fournis
-#                   en secrets du depot ; sans eux, la majorite des scenarios
-#                   d'isolation sont ignores silencieusement par Vitest.
+# - isolation     : s'execute sur une instance Supabase jetable creee dans le
+#                   runner. Aucun secret, aucune base reelle sollicitee.
 # - analyse statique : aucun fichier de configuration ESLint n'existe dans le
 #                   depot a ce jour ; le job correspondant sera ajoute une fois
 #                   la configuration mise en place.
@@ -70,21 +69,27 @@ jobs:
           cache: npm
       - name: Installation des dependances
         run: npm ci
-      - name: Verification de la presence des acces de test
-        id: secrets
-        env:
-          TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
-        run: |
-          if [ -n "$TEST_URL" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Acces Supabase de test absents — scenarios d'isolation non executes."
-          fi
+
+      # Les scenarios d'isolation s'executent sur une instance Supabase jetable,
+      # creee dans le runner et detruite avec lui : les migrations y sont appliquees
+      # depuis supabase/migrations. Aucune base reelle n'est sollicitee, et les cles
+      # d'une instance locale etant fixes et publiques, aucun secret n'est necessaire.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Demarrage de l'instance Supabase jetable
+        run: supabase start
+
+      - name: Recuperation des acces de l'instance
+        run: supabase status -o env | sed 's/"//g' >> "$GITHUB_ENV"
+
       - name: Scenarios d'acces inter-clients
-        if: steps.secrets.outputs.available == 'true'
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_TEST_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.API_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SERVICE_ROLE_KEY }}
         run: npm run test:rls
+
+      - name: Arret de l'instance
+        if: always()
+        run: supabase stop --no-backup
