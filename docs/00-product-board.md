@@ -56,10 +56,11 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 | T-009 | OAuth Gmail — `state` non signe (CSRF) | Dette technique | Audit secu 07-03 | Should | Interne | M | M | Qualifie | — | 2026-07-03 | — | 2026-08-24 |
 | T-010 | Edge Function `env-probe-temp` active en prod, sans source | Dette technique | Audit secu 07-03 | Must | Interne | M | L | Qualifie | — | 2026-07-03 | — | 2026-08-24 |
 | T-011 | Chaine de controles CI (doc, tests, isolation multi-tenant) | Dette technique | Dossier CII 08-22 | Must | Interne | H | M | En cours | — | 2026-08-22 | — | 2026-08-24 |
-| T-012 | Migration 00094 fantome — `accountant_notifications` absente prod | Dette technique | CI T-011 | Must | Interne | H | S | En cours | — | 2026-08-24 | — | 2026-08-24 |
+| T-012 | Migration 00094 fantome — remettre la base en coherence avec ses migrations | Dette technique | CI T-011 | Should | Interne | M | S | En attente MiKL | — | 2026-08-24 | — | 2026-08-24 |
 | T-013 | 40 tests desynchronises du code | Dette technique | CI T-011 | Should | Interne | M | M | En cours | — | 2026-08-24 | — | 2026-08-24 |
 | T-014 | Aucune config ESLint (15 packages la declarent) | Dette technique | CI T-011 | Should | Interne | M | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
 | T-015 | Droits anon/authenticated absents sur base reconstruite | Dette technique | CI T-011 | Must | Interne | H | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
+| F-010 | Synchronisation Gmail des relances du comptable (Story 13-9, jamais mise en service) | Feature | CI T-011 | Could | A qualifier | M | M | Bloque — entrees MiKL | — | 2026-08-24 | — | 2026-08-24 |
 
 > Perimetre `Interne` = dette invisible du client (jamais `Devis` par defaut, regle OTTO).
 > Statuts "Qualifie" figes faute de suivi ecrit — a confirmer MiKL ce qui est deja traite depuis 07-03.
@@ -111,6 +112,8 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 
 | Quoi | Qui doit agir | Bloque quel item | Depuis |
 |---|---|---|---|
+| Fournir l'adresse e-mail de reference du comptable **et** un exemple d'e-mail Pennylane (pour calibrer la reconnaissance) | MiKL | F-010 | 2026-08-24 |
+| Autoriser le rejeu de la migration 00094 en production (mise en coherence, sans effet visible) | MiKL | T-012 | 2026-08-24 |
 | Ajouter le secret `PENNYLANE_API_TOKEN` dans Supabase Edge Functions (distinct du secret Vercel) | MiKL | Bouton « Sync Comptabilite » | 2026-07-03 |
 | Verifier `CALCOM_WEBHOOK_SECRET` / `CONTACT_FORM_WEBHOOK_SECRET` bien definis dans Vercel | MiKL | T-003 | 2026-07-03 |
 | Supprimer l'Edge Function `env-probe-temp` (sonde debug sans source, active en prod) | MiKL | T-010 | 2026-07-03 |
@@ -126,6 +129,7 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 
 | Date | Evenement | Items concernes | Decide par |
 |---|---|---|---|
+| 2026-08-24 | Impact de T-012 revu a la baisse apres verification : la fonction sync-accountant-emails n'est pas deployee, son declencheur n'est pas arme, son analyseur d'e-mails est un squelette et ses deux ecrans ne sont rendus nulle part. Rien n'etait donc casse en service — seule la reconstruction d'une base neuve etait bloquee. La fonctionnalite elle-meme devient F-010, en attente de deux elements que seul MiKL peut fournir | T-012, F-010 | MAX |
 | 2026-08-24 | Chaine de controles verte sur GitHub Actions : documentation (17/17 modules) et suite de tests (650 fichiers, 5 469 cas) au vert a chaque envoi de code. Le volet isolation reste en declenchement manuel jusqu'a T-015. Aucun fichier de production modifie sur tout le chantier | T-011, T-013 | MAX |
 | 2026-08-24 | T-013 repasse de Livre a En revue : la mesure annoncee comptait les cas de test, pas les fichiers impossibles a charger. Trois fichiers ne s'ouvraient pas — le paquet `server-only`, garde-fou de production, bloque en test tout composant dont la chaine d'imports le traverse. Neutralise par un module de remplacement reserve aux tests ; le garde-fou reste entier dans l'application | T-013 | MAX |
 | 2026-08-24 | Suite de tests entierement verte : 5 455 cas, aucun echec (86 en echec au depart du chantier). Aucun fichier de production modifie — le produit etait correct, c'est la suite de tests qui avait pris du retard sur lui | T-013 | MAX |
