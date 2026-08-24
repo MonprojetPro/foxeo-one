@@ -8,7 +8,9 @@ const mockInsertNotif = vi.fn()
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => ({
     from: vi.fn((table: string) => {
-      if (table === 'clients') {
+      // clients et operators sont tous deux lus en select().eq().single() :
+      // les reponses sont donc empilees dans l'ordre sur mockSingle.
+      if (table === 'clients' || table === 'operators') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
@@ -28,16 +30,30 @@ vi.mock('@monprojetpro/supabase', () => ({
   })),
 }))
 
+/**
+ * Empile les deux lectures que fait l'action : la fiche client, puis l'operateur.
+ * Le destinataire de la notification est l'auth_user_id de l'operateur, et non
+ * son identifiant en table — une notification adressee a operators.id serait
+ * silencieusement perdue.
+ */
+function mockClientThenOperator() {
+  mockSingle.mockResolvedValueOnce({
+    data: { operator_id: 'op-1', name: 'Alice' },
+    error: null,
+  })
+  mockSingle.mockResolvedValueOnce({
+    data: { auth_user_id: 'auth-op-1' },
+    error: null,
+  })
+}
+
 describe('submitEvolutionRequest (Story 8.8 — Task 4)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('Task 4.2 — crée une entrée dans validation_requests avec type=evolution_one', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { operator_id: 'op-1', name: 'Alice' },
-      error: null,
-    })
+    mockClientThenOperator()
     mockInsertVR.mockResolvedValueOnce({ error: null })
     mockInsertNotif.mockResolvedValueOnce({ error: null })
 
@@ -61,10 +77,7 @@ describe('submitEvolutionRequest (Story 8.8 — Task 4)', () => {
   })
 
   it('Task 4.3 — crée une notification pour MiKL', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { operator_id: 'op-1', name: 'Alice' },
-      error: null,
-    })
+    mockClientThenOperator()
     mockInsertVR.mockResolvedValueOnce({ error: null })
     mockInsertNotif.mockResolvedValueOnce({ error: null })
 
@@ -73,7 +86,7 @@ describe('submitEvolutionRequest (Story 8.8 — Task 4)', () => {
     expect(mockInsertNotif).toHaveBeenCalledWith(
       expect.objectContaining({
         recipient_type: 'operator',
-        recipient_id: 'op-1',
+        recipient_id: 'auth-op-1',
         type: 'validation',
         title: expect.stringContaining('Alice'),
       })
@@ -81,10 +94,7 @@ describe('submitEvolutionRequest (Story 8.8 — Task 4)', () => {
   })
 
   it('Task 4.3 — la notification contient le titre de la demande', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { operator_id: 'op-1', name: 'Alice' },
-      error: null,
-    })
+    mockClientThenOperator()
     mockInsertVR.mockResolvedValueOnce({ error: null })
     mockInsertNotif.mockResolvedValueOnce({ error: null })
 
@@ -118,10 +128,7 @@ describe('submitEvolutionRequest (Story 8.8 — Task 4)', () => {
   })
 
   it('retourne DB_ERROR si l\'insertion validation_requests échoue', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { operator_id: 'op-1', name: 'Alice' },
-      error: null,
-    })
+    mockClientThenOperator()
     mockInsertVR.mockResolvedValueOnce({ error: new Error('DB error') })
 
     const result = await submitEvolutionRequest('client-1', 'titre', 'contenu')
@@ -130,10 +137,7 @@ describe('submitEvolutionRequest (Story 8.8 — Task 4)', () => {
   })
 
   it('Task 4.2 — inclut le contenu du brief dans la demande', async () => {
-    mockSingle.mockResolvedValueOnce({
-      data: { operator_id: 'op-1', name: 'Alice' },
-      error: null,
-    })
+    mockClientThenOperator()
     mockInsertVR.mockResolvedValueOnce({ error: null })
     mockInsertNotif.mockResolvedValueOnce({ error: null })
 

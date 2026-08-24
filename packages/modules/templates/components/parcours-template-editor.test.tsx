@@ -13,10 +13,13 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
 }))
 
-vi.mock('@monprojetpro/ui', () => ({
-  showSuccess: vi.fn(),
-  showError: vi.fn(),
-}))
+// On conserve le module reel et on ne remplace que les notifications : le
+// composant s'appuie aussi sur les briques cockpit (CockpitHeader, CockpitPanel...)
+// et une imitation partielle casse des que le design system evolue.
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
+  return { ...actual, showSuccess: vi.fn(), showError: vi.fn() }
+})
 
 vi.mock('../hooks/use-parcours-templates', () => ({
   useParcourTemplates: vi.fn(),
@@ -73,14 +76,13 @@ describe('ParcourTemplateEditor', () => {
 
   it('affiche le bouton "Nouveau template"', () => {
     render(<ParcourTemplateEditor />)
-    expect(screen.getByText('+ Nouveau template')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Nouveau template/ })).toBeTruthy()
   })
 
   it('ouvre le formulaire d\'édition au clic sur "Nouveau template"', () => {
     render(<ParcourTemplateEditor />)
-    fireEvent.click(screen.getByText('+ Nouveau template'))
-    expect(screen.getByText('Nouveau template')).toBeTruthy()
-    expect(screen.getByPlaceholderText('Ex: Parcours Standard')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Nouveau template/ }))
+    expect(screen.getByPlaceholderText(/Parcours Standard/)).toBeTruthy()
   })
 
   it('ouvre le formulaire pré-rempli au clic sur "Modifier"', () => {
@@ -95,9 +97,9 @@ describe('ParcourTemplateEditor', () => {
       error: null,
     })
     render(<ParcourTemplateEditor />)
-    fireEvent.click(screen.getByText('+ Nouveau template'))
+    fireEvent.click(screen.getByRole('button', { name: /Nouveau template/ }))
     // Fill required fields
-    const nameInput = screen.getByPlaceholderText('Ex: Parcours Standard')
+    const nameInput = screen.getByPlaceholderText(/Parcours Standard/)
     fireEvent.change(nameInput, { target: { value: 'Mon Parcours' } })
     // Fill stage names (minimum 2 are pre-filled but empty)
     const stageInputs = screen.getAllByPlaceholderText("Titre de l'étape")

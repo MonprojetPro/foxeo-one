@@ -20,6 +20,16 @@ vi.mock('../hooks/use-presence-status', () => ({
   usePresenceStatus: (...args: unknown[]) => mockUsePresenceStatus(...args),
 }))
 
+// Server Actions appelees par la fenetre de chat : elles chargent le client
+// Supabase serveur, qui ne peut pas etre importe depuis un composant client.
+vi.mock('../actions/upload-message-attachment', () => ({
+  uploadMessageAttachment: vi.fn(async () => ({ data: null, error: null })),
+}))
+
+vi.mock('@monprojetpro/module-elio', () => ({
+  transformMessageForClient: vi.fn(async () => ({ data: null, error: null })),
+}))
+
 const defaultHookReturn = {
   messages: [] as Message[],
   isPending: false,

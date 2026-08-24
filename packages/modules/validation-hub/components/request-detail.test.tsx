@@ -65,6 +65,16 @@ vi.mock('./clarification-dialog', () => ({
     open ? <div data-testid="clarification-dialog" /> : null,
 }))
 
+vi.mock('./action-picker', () => ({
+  ActionPicker: () => <div data-testid="action-picker" />,
+}))
+
+// Le barrel du module parcours expose aussi ses Server Actions : l'importer tel
+// quel dans un test de composant ferait charger du code reserve au serveur.
+vi.mock('@monprojetpro/module-parcours', () => ({
+  FeedbackInjectionForm: () => <div data-testid="feedback-injection-form" />,
+}))
+
 const mockDetail: ValidationRequestDetail = {
   id: 'req-1',
   clientId: 'c-1',

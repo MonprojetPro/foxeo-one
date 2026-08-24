@@ -4,6 +4,9 @@ import { render, screen } from '@testing-library/react'
 
 // Stubs pour Server Components non pertinents dans ce test
 vi.mock('next/navigation', () => ({ notFound: vi.fn() }))
+// Garde d'acces au module : verifie que le module est actif pour le client.
+// Hors sujet ici, le test ne porte que sur le titre de la page.
+vi.mock('../require-active-module', () => ({ requireActiveModule: vi.fn() }))
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u-1' } } }) },

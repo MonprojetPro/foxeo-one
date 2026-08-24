@@ -13,10 +13,13 @@ vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
 }))
 
-vi.mock('@monprojetpro/ui', () => ({
-  showSuccess: vi.fn(),
-  showError: vi.fn(),
-}))
+// On conserve le module reel et on ne remplace que les notifications : le
+// composant s'appuie aussi sur les briques cockpit (CockpitPanel, SectionTitle...)
+// et une imitation partielle casse des que le design system evolue.
+vi.mock('@monprojetpro/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/ui')>()
+  return { ...actual, showSuccess: vi.fn(), showError: vi.fn() }
+})
 
 vi.mock('../hooks/use-email-templates', () => ({
   useEmailTemplates: vi.fn(),

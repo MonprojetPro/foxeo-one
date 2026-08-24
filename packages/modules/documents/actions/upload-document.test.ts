@@ -19,9 +19,16 @@ const mockInsert = vi.fn(() => ({ select: mockInsertSelect }))
 const mockStorageUpload = vi.fn()
 const mockStorageRemove = vi.fn()
 
+// Journalisation d'activite : ecriture sans attente de resultat, le code chaine
+// un .then().catch() sur l'insertion — l'imitation doit donc rendre une promesse.
+const mockActivityLogInsert = vi.fn(() => Promise.resolve({ error: null }))
+
 const mockFrom = vi.fn((table: string) => {
   if (table === 'operators' || table === 'clients') {
     return { select: mockAuthSelect }
+  }
+  if (table === 'activity_logs') {
+    return { insert: mockActivityLogInsert }
   }
   return { insert: mockInsert }
 })

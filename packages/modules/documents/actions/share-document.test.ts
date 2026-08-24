@@ -14,9 +14,14 @@ const mockOperatorSingle = vi.fn()
 const mockOperatorEq = vi.fn(() => ({ single: mockOperatorSingle }))
 const mockOperatorSelect = vi.fn(() => ({ eq: mockOperatorEq }))
 
+// Journalisation d'activite : ecriture sans attente de resultat, le code chaine
+// un .then().catch() sur l'insertion — l'imitation doit donc rendre une promesse.
+const mockActivityLogInsert = vi.fn(() => Promise.resolve({ error: null }))
+
 const mockFrom = vi.fn((table: string) => {
   if (table === 'operators') return { select: mockOperatorSelect }
   if (table === 'notifications') return { insert: mockInsert }
+  if (table === 'activity_logs') return { insert: mockActivityLogInsert }
   return { update: mockUpdate }
 })
 
