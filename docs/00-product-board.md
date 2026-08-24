@@ -126,6 +126,7 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 
 | Date | Evenement | Items concernes | Decide par |
 |---|---|---|---|
+| 2026-08-24 | Chaine de controles verte sur GitHub Actions : documentation (17/17 modules) et suite de tests (650 fichiers, 5 469 cas) au vert a chaque envoi de code. Le volet isolation reste en declenchement manuel jusqu'a T-015. Aucun fichier de production modifie sur tout le chantier | T-011, T-013 | MAX |
 | 2026-08-24 | T-013 repasse de Livre a En revue : la mesure annoncee comptait les cas de test, pas les fichiers impossibles a charger. Trois fichiers ne s'ouvraient pas — le paquet `server-only`, garde-fou de production, bloque en test tout composant dont la chaine d'imports le traverse. Neutralise par un module de remplacement reserve aux tests ; le garde-fou reste entier dans l'application | T-013 | MAX |
 | 2026-08-24 | Suite de tests entierement verte : 5 455 cas, aucun echec (86 en echec au depart du chantier). Aucun fichier de production modifie — le produit etait correct, c'est la suite de tests qui avait pris du retard sur lui | T-013 | MAX |
 | 2026-08-24 | Lot 2 traite : les tests decrivaient l'etat anterieur du produit. Deux d'entre eux validaient encore l'agentique One+ (F-009, ecartee le 19-08) et un troisieme une table supprimee par la migration 00108 — retournes pour proteger ces decisions au lieu d'etre supprimes. Le tri de la file de validation suivait la decision du 02-06 (1f64318) jamais repercutee | T-013, F-009 | MAX |
