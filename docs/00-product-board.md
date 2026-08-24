@@ -62,6 +62,7 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 | T-012 | Migration 00094 fantome — `accountant_notifications` absente en prod | Dette technique | CI T-011 | Must | Interne | H | S | En cours | — | 2026-08-24 | — | 2026-08-24 |
 | T-013 | 40 tests desynchronises du code (lot 2 du chantier T-011) | Dette technique | CI T-011 | Should | Interne | M | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
 | T-014 | Aucune configuration ESLint dans le depot (15 packages la declarent) | Dette technique | CI T-011 | Should | Interne | M | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
+| T-015 | Droits anon/authenticated absents sur une base reconstruite (scenarios d'isolation, kit de sortie) | Dette technique | CI T-011 | Must | Interne | H | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
 
 > Perimetre `Interne` = dette invisible du client (jamais `Devis` par defaut, regle OTTO).
 > Statuts figes "Qualifie" faute de suivi ecrit — a confirmer avec MiKL ce qui est deja traite depuis le 07-03.
@@ -130,6 +131,7 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 
 | Date | Evenement | Items concernes | Decide par |
 |---|---|---|---|
+| 2026-08-24 | Cause racine trouvee : les privileges par defaut Supabase sont poses pour `supabase_admin`, alors que les migrations creent les tables sous un autre role — les tables d'une base reconstruite n'heritent donc pas des droits `anon`/`authenticated`. Correctif non applique : donner ces droits est une decision de securite, a valider (CERBERE + MiKL). Job d'isolation passe en declenchement manuel en attendant | T-015 | MAX |
 | 2026-08-24 | Premiere execution reelle des scenarios d'isolation : `permission denied` sur plusieurs tables, alors que la production porte bien ces droits. Sonde de diagnostic posee avant tout correctif | T-011 | MAX |
 | 2026-08-24 | Migration 00094 inscrite comme appliquee mais jamais executee : `accountant_notifications` absente en prod, synchronisation Gmail comptable inoperante. Fichier corrige, rejeu en production en attente de MiKL | T-012 | MAX |
 | 2026-08-24 | Mise en place de la chaine de controles CI, en appui du dossier CII : le dossier decrivait un dispositif qui n'existait pas encore | T-011 | MiKL |
