@@ -45,8 +45,13 @@ CREATE TRIGGER trg_accountant_notifications_updated_at
 -- system_config — clés comptable (INSERT uniquement si absentes)
 -- ─────────────────────────────────────────────────────────────────────────────
 
-INSERT INTO system_config (key, value, description)
+-- system_config n'a que les colonnes key, value et updated_at (migration 00066).
+-- L'insertion visait une colonne description inexistante : la migration echouait
+-- donc integralement, sans qu'aucun de ses objets ne soit cree.
+--   accountant_email              — adresse email du comptable Pennylane
+--   accountant_email_sync_enabled — active la synchronisation Gmail avec le comptable
+INSERT INTO system_config (key, value)
 VALUES
-  ('accountant_email',              '""',    'Adresse email du comptable Pennylane'),
-  ('accountant_email_sync_enabled', 'false', 'Active la synchronisation Gmail avec le comptable')
+  ('accountant_email',              '""'),
+  ('accountant_email_sync_enabled', 'false')
 ON CONFLICT (key) DO NOTHING;
