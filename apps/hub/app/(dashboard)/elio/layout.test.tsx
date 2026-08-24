@@ -12,9 +12,12 @@ vi.mock('next/link', () => ({
   ),
 }))
 
-vi.mock('@monprojetpro/utils', () => ({
-  cn: (...classes: string[]) => classes.filter(Boolean).join(' '),
-}))
+// On garde le module reel et on ne remplace que l'assemblage de classes : une
+// imitation partielle casse des qu'un nouvel utilitaire est utilise en amont.
+vi.mock('@monprojetpro/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@monprojetpro/utils')>()
+  return { ...actual, cn: (...classes: string[]) => classes.filter(Boolean).join(' ') }
+})
 
 describe('ElioLayout', () => {
   it('renders the three tab links', () => {
