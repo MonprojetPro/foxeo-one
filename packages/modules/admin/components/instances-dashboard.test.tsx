@@ -58,7 +58,9 @@ describe('InstancesDashboard', () => {
     render(<InstancesDashboard />)
     expect(screen.getByLabelText("Vue d'ensemble instances")).toBeDefined()
     expect(screen.getByText('1')).toBeDefined() // activeCount
-    expect(screen.getByText('99€/mois')).toBeDefined() // MRR
+    // Le montant et son unite sont desormais rendus dans deux elements distincts.
+    expect(screen.getByText(/99€/)).toBeDefined() // MRR
+    expect(screen.getByText('/mois')).toBeDefined()
   })
 
   it('affiche le badge OK pour une instance sans alerte', () => {

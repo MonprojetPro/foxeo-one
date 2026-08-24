@@ -67,10 +67,10 @@ describe('AnalyticsDashboard', () => {
 
     render(<AnalyticsDashboard />)
 
-    expect(screen.getByRole('button', { name: '7j' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '30j' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '90j' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '1an' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '7 jours' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '30 jours' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '90 jours' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '1 an' })).toBeInTheDocument()
   })
 
   it('clique sur filtre 30j et change la période active', () => {
@@ -78,7 +78,7 @@ describe('AnalyticsDashboard', () => {
 
     render(<AnalyticsDashboard />)
 
-    const btn30j = screen.getByRole('button', { name: '30j' })
+    const btn30j = screen.getByRole('button', { name: '30 jours' })
     fireEvent.click(btn30j)
 
     // Button should now have active styling

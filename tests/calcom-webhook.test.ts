@@ -32,10 +32,12 @@ describe('Cal.com Webhook Edge Function', () => {
     expect(content).toContain('.insert(')
   })
 
-  it('creates meeting_request on booking', () => {
+  // La table meeting_requests a ete supprimee par la migration 00108 : le rendez-vous
+  // est desormais enregistre directement dans meetings. Ce cas garde la trace de cette
+  // suppression et empechera une reintroduction accidentelle.
+  it("n'ecrit plus dans la table supprimee meeting_requests", () => {
     const content = readFileSync(join(FUNCTION_DIR, 'index.ts'), 'utf-8')
-    expect(content).toContain("from('meeting_requests')")
-    expect(content).toContain("status: 'accepted'")
+    expect(content).not.toContain("from('meeting_requests')")
   })
 
   it('sends notification to client', () => {

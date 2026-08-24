@@ -7,14 +7,14 @@ describe('PresenceIndicator', () => {
     render(<PresenceIndicator status="online" />)
     const dot = screen.getByTestId('presence-dot')
     expect(dot).toBeInTheDocument()
-    expect(dot).toHaveClass('bg-green-500')
+    expect(dot.lastElementChild?.className).toContain('bg-emerald-400')
   })
 
   it('renders gray dot when offline', () => {
     render(<PresenceIndicator status="offline" />)
     const dot = screen.getByTestId('presence-dot')
     expect(dot).toBeInTheDocument()
-    expect(dot).toHaveClass('bg-gray-400')
+    expect(dot.lastElementChild?.className).toContain('bg-white/20')
   })
 
   it('has correct accessible label for online state', () => {

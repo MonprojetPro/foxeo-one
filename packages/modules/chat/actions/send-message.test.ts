@@ -29,10 +29,15 @@ const mockFrom = vi.fn((table: string) => {
   return { insert: mockInsert }
 })
 
+// Les notifications sont ecrites avec un client a privileges eleves : une
+// insertion croisee vers l'autre partie est refusee par la RLS du demandeur.
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
     from: mockFrom,
     auth: { getUser: mockGetUser },
+  })),
+  createServiceRoleSupabaseClient: vi.fn(() => ({
+    from: mockFrom,
   })),
 }))
 

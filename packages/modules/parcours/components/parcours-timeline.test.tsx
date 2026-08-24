@@ -70,13 +70,13 @@ describe('ParcoursTimeline', () => {
     expect(screen.getByText(/aucune étape/i)).toBeDefined()
   })
 
+  // Les cartes d'etape ne portent plus de titre en balise de titre : le libelle
+  // est un simple bloc de texte, et l'etat est porte par le libelle accessible.
   it('renders all step titles', () => {
     render(<ParcoursTimeline steps={mockSteps} />)
-    const headings = screen.getAllByRole('heading')
-    const texts = headings.map((h) => h.textContent ?? '')
-    expect(texts.some((t) => t.includes('Idée'))).toBe(true)
-    expect(texts.some((t) => t.includes('Validation'))).toBe(true)
-    expect(texts.some((t) => t.includes('Lancement'))).toBe(true)
+    expect(screen.getByText(/Idée/)).toBeDefined()
+    expect(screen.getByText(/Validation/)).toBeDefined()
+    expect(screen.getByText(/Lancement/)).toBeDefined()
   })
 
   it('renders step descriptions', () => {
@@ -86,9 +86,9 @@ describe('ParcoursTimeline', () => {
 
   it('renders status badges for each step', () => {
     render(<ParcoursTimeline steps={mockSteps} />)
-    expect(screen.getByText('Validée')).toBeDefined()
-    expect(screen.getByText('En cours')).toBeDefined()
-    expect(screen.getByText('Verrouillée')).toBeDefined()
+    expect(screen.getByLabelText(/Idée — complétée/)).toBeDefined()
+    expect(screen.getByLabelText(/Validation — en cours/)).toBeDefined()
+    expect(screen.getByLabelText(/Lancement — en attente/)).toBeDefined()
   })
 })
 

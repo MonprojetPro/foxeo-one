@@ -95,8 +95,13 @@ describe('ChatList', () => {
   it('renders presence indicator for each conversation', () => {
     mockUseOnlineUsers.mockReturnValue(['client-a'])
     render(<ChatList onSelectClient={vi.fn()} />, { wrapper })
-    expect(screen.getByTestId('presence-client-a')).toBeInTheDocument()
-    expect(screen.getByTestId('presence-client-b')).toBeInTheDocument()
+    // L'indicateur porte desormais son propre identifiant de test, pose par le
+    // composant PresenceIndicator, et non plus un identifiant par client.
+    const dots = screen.getAllByTestId('presence-dot')
+    expect(dots).toHaveLength(2)
+    expect(dots.map((d) => d.getAttribute('aria-label'))).toEqual(
+      expect.arrayContaining(['En ligne', 'Hors ligne'])
+    )
   })
 
   it('renders sort toggle button', () => {

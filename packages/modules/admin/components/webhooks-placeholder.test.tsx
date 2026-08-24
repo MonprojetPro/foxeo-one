@@ -24,8 +24,9 @@ describe('WebhooksPlaceholder', () => {
     expect(desc).toBeTruthy()
   })
 
+  // L'emoji a ete remplace par une icone lucide rendue en SVG.
   it('renders webhook icon', () => {
-    render(<WebhooksPlaceholder />)
-    expect(screen.getByText('🔗')).toBeTruthy()
+    const { container } = render(<WebhooksPlaceholder />)
+    expect(container.querySelector('svg')).toBeTruthy()
   })
 })

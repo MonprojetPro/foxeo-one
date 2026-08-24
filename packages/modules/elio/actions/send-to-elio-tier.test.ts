@@ -112,7 +112,11 @@ describe('sendToElio — Tier check (Story 8.9a — Tasks 2 + 9.1)', () => {
   })
 
   describe('AC2 — One+ avec module actif → confirmation', () => {
-    it('Task 2.1 — One+ avec module actif appelle le LLM et retourne requiresConfirmation', async () => {
+    // F-009 « Elio One+ agentique » a ete ecarte le 2026-08-19 : le One+ se
+    // distingue par l'accompagnement humain (modele Centaure), pas par des
+    // actions executees par l'IA. Ces deux cas verifient desormais qu'aucune
+    // action n'est engagee, et protegent cette decision d'une reintroduction.
+    it("un client One+ obtient une reponse, sans action engagee par l'IA", async () => {
       mockMaybySingle.mockResolvedValue({
         data: {
           elio_tier: 'one_plus',
@@ -131,12 +135,13 @@ describe('sendToElio — Tier check (Story 8.9a — Tasks 2 + 9.1)', () => {
       const result = await sendToElio('one', 'Envoie un rappel de cotisation aux membres en retard', CLIENT_ID)
       expect(result.error).toBeNull()
       expect(result.data).toBeDefined()
-      expect(result.data?.metadata?.requiresConfirmation).toBe(true)
-      expect(result.data?.metadata?.pendingAction?.module).toBe('adhesions')
-      expect(result.data?.metadata?.pendingAction?.verb).toBe('send')
+      // Elio repond, mais n'engage aucune action : ni confirmation a demander,
+      // ni action en attente d'execution.
+      expect(result.data?.metadata?.requiresConfirmation).toBeUndefined()
+      expect(result.data?.metadata?.pendingAction).toBeUndefined()
     })
 
-    it('Task 4.4 — action delete → requiresDoubleConfirm=true dans pendingAction', async () => {
+    it('une demande destructrice ne prepare aucune action', async () => {
       mockMaybySingle.mockResolvedValue({
         data: {
           elio_tier: 'one_plus',
@@ -153,7 +158,8 @@ describe('sendToElio — Tier check (Story 8.9a — Tasks 2 + 9.1)', () => {
       })
 
       const result = await sendToElio('one', 'Supprime les membres inactifs', CLIENT_ID)
-      expect(result.data?.metadata?.pendingAction?.requiresDoubleConfirm).toBe(true)
+      // Meme sur une demande destructrice : aucune action n'est preparee.
+      expect(result.data?.metadata?.pendingAction).toBeUndefined()
     })
   })
 

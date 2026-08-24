@@ -24,8 +24,9 @@ describe('ApiPlaceholder', () => {
     expect(desc).toBeTruthy()
   })
 
+  // L'emoji a ete remplace par une icone lucide rendue en SVG.
   it('renders key icon', () => {
-    render(<ApiPlaceholder />)
-    expect(screen.getByText('🔑')).toBeTruthy()
+    const { container } = render(<ApiPlaceholder />)
+    expect(container.querySelector('svg')).toBeTruthy()
   })
 })

@@ -98,11 +98,13 @@ describe('BillingDashboard — métriques Hub (AC #4)', () => {
     expect(screen.getByTestId('metric-mrr')).toHaveTextContent('999')
   })
 
-  it('affiche "…" pendant le chargement', () => {
+  // Le chargement affiche desormais des squelettes de cartes, et non plus des
+  // points de suspension a la place de chaque valeur.
+  it('affiche des squelettes pendant le chargement', () => {
     ;(useBillingMetrics as Mock).mockReturnValue({ data: undefined, isPending: true, isError: false })
-    render(<BillingDashboard />, { wrapper })
-    const loadingTexts = screen.getAllByText('…')
-    expect(loadingTexts.length).toBeGreaterThan(0)
+    const { container } = render(<BillingDashboard />, { wrapper })
+    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
+    expect(screen.queryByTestId('billing-metrics')).toBeNull()
   })
 })
 

@@ -402,7 +402,9 @@ describe('Seed data', () => {
   })
 
   it('inserts client_config with core-dashboard module', () => {
-    expect(sql).toContain("ARRAY['core-dashboard']")
+    // Le client de demonstration part desormais avec plusieurs modules actifs,
+    // et non plus le seul tableau de bord.
+    expect(sql).toContain("ARRAY['core-dashboard'")
     expect(sql).toContain("'lab'")
   })
 

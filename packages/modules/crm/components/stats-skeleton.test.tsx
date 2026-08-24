@@ -7,7 +7,7 @@ describe('StatsSkeleton', () => {
     const { container } = render(<StatsSkeleton />)
 
     // Should have skeleton elements for loading state
-    const skeletons = container.querySelectorAll('[class*="skeleton" i], [data-slot="skeleton"]')
+    const skeletons = container.querySelectorAll('.animate-pulse')
     expect(skeletons.length).toBeGreaterThan(0)
   })
 
