@@ -28,9 +28,10 @@
     "turbo": "^2.3.0",
     "vitest": "^3.0.0"
   },
-  "packageManager": "npm@10.2.0",
+  "packageManager": "npm@11.6.2",
   "engines": {
-    "node": ">=18"
+    "node": ">=20",
+    "npm": ">=11"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

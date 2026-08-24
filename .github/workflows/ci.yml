@@ -39,6 +39,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+      - name: Alignement de npm sur la version du projet
+        run: npm install -g npm@11.6.2
       - name: Installation des dependances
         run: npm ci
       - name: Presence de guide.md, faq.md et flows.md dans chaque module
@@ -53,6 +55,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+      - name: Alignement de npm sur la version du projet
+        run: npm install -g npm@11.6.2
       - name: Installation des dependances
         run: npm ci
       - name: Suite de tests (hors isolation multi-tenant)
@@ -67,6 +71,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+      - name: Alignement de npm sur la version du projet
+        run: npm install -g npm@11.6.2
       - name: Installation des dependances
         run: npm ci
 
