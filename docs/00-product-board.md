@@ -126,6 +126,7 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 
 | Date | Evenement | Items concernes | Decide par |
 |---|---|---|---|
+| 2026-08-24 | Suite de tests entierement verte : 5 455 cas, aucun echec (86 en echec au depart du chantier). Aucun fichier de production modifie — le produit etait correct, c'est la suite de tests qui avait pris du retard sur lui | T-013 | MAX |
 | 2026-08-24 | Lot 2 traite : les tests decrivaient l'etat anterieur du produit. Deux d'entre eux validaient encore l'agentique One+ (F-009, ecartee le 19-08) et un troisieme une table supprimee par la migration 00108 — retournes pour proteger ces decisions au lieu d'etre supprimes. Le tri de la file de validation suivait la decision du 02-06 (1f64318) jamais repercutee | T-013, F-009 | MAX |
 | 2026-08-24 | Verifie : `.mcp.json` gitignore + deja en variables d'env — alerte audit 07-03 sur le token Supabase levee | — | OTTO |
 | 2026-08-24 | Chaine CI mise en place (dossier CII decrivait un dispositif pas encore existant) ; a fait remonter 3 problemes reels : droits anon/authenticated absents en base reconstruite (cause racine trouvee, fix = decision securite a valider CERBERE+MiKL), migration 00094 jamais executee (accountant_notifications absente prod, corrige, rejeu en attente MiKL), 40 tests desynchronises | T-011, T-012, T-015 | MAX |
