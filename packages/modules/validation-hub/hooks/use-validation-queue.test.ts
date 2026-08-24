@@ -144,7 +144,9 @@ describe('useValidationQueue', () => {
     expect(result.current.filters.status).toBe('all')
     expect(result.current.filters.type).toBe('all')
     expect(result.current.filters.sortBy).toBe('submitted_at')
-    expect(result.current.filters.sortOrder).toBe('asc')
+    // Tri par defaut : la plus recente d'abord. Choix produit du 2026-06-02
+    // (commit 1f64318, retours de test MiKL) — le test decrivait l'ordre initial.
+    expect(result.current.filters.sortOrder).toBe('desc')
   })
 
   it('should update filters when setFilters is called', async () => {

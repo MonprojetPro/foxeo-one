@@ -14,57 +14,57 @@ vi.mock('@monprojetpro/supabase', () => ({
 }))
 
 describe('getWelcomeMessage', () => {
-  it('retourne le message formel par défaut (tutoiement=false)', () => {
-    expect(getWelcomeMessage('lab', false)).toContain('Bienvenue')
-    expect(getWelcomeMessage('hub', false)).toContain('Bonjour MiKL')
-    expect(getWelcomeMessage('one', false)).toContain('Bonjour')
+  it('retourne le message formel par défaut (tutoiement=false)', async () => {
+    expect(await getWelcomeMessage('lab', false)).toContain('Bienvenue')
+    expect(await getWelcomeMessage('hub', false)).toContain('Bonjour MiKL')
+    expect(await getWelcomeMessage('one', false)).toContain('Bonjour')
   })
 
-  it('retourne le message casual (tutoiement=true)', () => {
-    expect(getWelcomeMessage('lab', true)).toContain('Salut')
-    expect(getWelcomeMessage('hub', true)).toContain('Hey MiKL')
-    expect(getWelcomeMessage('one', true)).toContain('Salut')
+  it('retourne le message casual (tutoiement=true)', async () => {
+    expect(await getWelcomeMessage('lab', true)).toContain('Salut')
+    expect(await getWelcomeMessage('hub', true)).toContain('Hey MiKL')
+    expect(await getWelcomeMessage('one', true)).toContain('Salut')
   })
 
-  it('Task 2.2 — message Hub casual contient les capacités spécifiques (AC1)', () => {
-    const msg = getWelcomeMessage('hub', true)
+  it('Task 2.2 — message Hub casual contient les capacités spécifiques (AC1)', async () => {
+    const msg = await getWelcomeMessage('hub', true)
     expect(msg).toContain('naviguer dans le Hub')
     expect(msg).toContain('chercher des infos clients')
     expect(msg).toContain("Qu'est-ce que tu veux faire")
   })
 
-  it('Task 2.2 — message Hub formel contient les capacités spécifiques (AC1)', () => {
-    const msg = getWelcomeMessage('hub', false)
+  it('Task 2.2 — message Hub formel contient les capacités spécifiques (AC1)', async () => {
+    const msg = await getWelcomeMessage('hub', false)
     expect(msg).toContain('naviguer dans le Hub')
     expect(msg).toContain('chercher des infos clients')
   })
 
-  it('couvre tous les dashboardTypes', () => {
+  it('couvre tous les dashboardTypes', async () => {
     const dashboards = ['hub', 'lab', 'one'] as const
-    dashboards.forEach((dt) => {
-      expect(getWelcomeMessage(dt, false)).toBeTruthy()
-      expect(getWelcomeMessage(dt, true)).toBeTruthy()
-    })
+    for (const dt of dashboards) {
+      expect(await getWelcomeMessage(dt, false)).toBeTruthy()
+      expect(await getWelcomeMessage(dt, true)).toBeTruthy()
+    }
   })
 
   describe('Story 8.7 — Task 2.1 : customGreeting', () => {
-    it('Task 2.1 — utilise le customGreeting si fourni', () => {
+    it('Task 2.1 — utilise le customGreeting si fourni', async () => {
       const custom = 'Bienvenue dans votre espace One, Alice !'
-      expect(getWelcomeMessage('one', false, custom)).toBe(custom)
+      expect(await getWelcomeMessage('one', false, custom)).toBe(custom)
     })
 
-    it('Task 2.1 — ignore un customGreeting vide (espaces)', () => {
-      expect(getWelcomeMessage('one', false, '   ')).toContain('Bonjour')
+    it('Task 2.1 — ignore un customGreeting vide (espaces)', async () => {
+      expect(await getWelcomeMessage('one', false, '   ')).toContain('Bonjour')
     })
 
-    it('Task 2.2 — utilise le message par défaut si pas de customGreeting', () => {
-      expect(getWelcomeMessage('one', false)).toContain('Bonjour')
-      expect(getWelcomeMessage('one', true)).toContain('Salut')
+    it('Task 2.2 — utilise le message par défaut si pas de customGreeting', async () => {
+      expect(await getWelcomeMessage('one', false)).toContain('Bonjour')
+      expect(await getWelcomeMessage('one', true)).toContain('Salut')
     })
 
-    it('Task 2.1 — customGreeting prend priorité sur tutoiement', () => {
+    it('Task 2.1 — customGreeting prend priorité sur tutoiement', async () => {
       const custom = 'Salut champion, on y va !'
-      expect(getWelcomeMessage('one', false, custom)).toBe(custom)
+      expect(await getWelcomeMessage('one', false, custom)).toBe(custom)
     })
   })
 })

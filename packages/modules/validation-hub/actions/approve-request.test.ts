@@ -60,6 +60,10 @@ function buildSupabaseMock({
       if (table === 'documents') {
         return { insert: vi.fn().mockResolvedValue({ error: null }) }
       }
+      // Journal d'activite, ecrit apres la decision.
+      if (table === 'activity_logs') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) }
+      }
       return {}
     }),
     storage: {

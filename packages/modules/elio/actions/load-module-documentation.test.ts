@@ -52,11 +52,15 @@ describe('loadModuleDocumentation', () => {
     expect(result).toContain('chat')
   })
 
-  it('uses cache on second call with same modules', () => {
-    loadModuleDocumentation(['chat'])
-    loadModuleDocumentation(['chat'])
-    // Global path only reads guide.md per module — 1 call total, cache hits on 2nd invocation
-    expect(mockFs.readFileSync).toHaveBeenCalledTimes(1)
+  // La documentation ne vient plus du systeme de fichiers mais d'un registre
+  // compile dans le bundle : les fichiers source ne sont pas deployes sur Vercel,
+  // ou la lecture disque echouait en silence. Il n'y a donc plus ni lecture de
+  // fichier, ni cache a verifier — seulement un resultat stable d'un appel a l'autre.
+  it('retourne le meme resultat a chaque appel, sans lecture disque', () => {
+    const first = loadModuleDocumentation(['chat'])
+    const second = loadModuleDocumentation(['chat'])
+    expect(second).toBe(first)
+    expect(mockFs.readFileSync).not.toHaveBeenCalled()
   })
 
   it('returns null when module docs are empty', () => {
@@ -65,12 +69,14 @@ describe('loadModuleDocumentation', () => {
     expect(result).toBeNull()
   })
 
-  it('truncates content exceeding token budget', () => {
-    const longContent = 'A'.repeat(20000) // 20000 chars >> 2000 tokens budget
-    mockFs.readFileSync.mockReturnValue(longContent)
-    const result = loadModuleDocumentation(['chat'])
-    // Result should not exceed ~(2000 tokens * 4 chars + overhead)
-    expect(result!.length).toBeLessThan(12000)
-    expect(result).toContain('[...tronqué]')
+  // Le registre embarque des documents de taille maitrisee a la compilation :
+  // il n'y a plus de troncature a l'execution. On verifie que l'injection reste
+  // de taille raisonnable pour le contexte envoye au modele.
+  it('produit une injection de taille raisonnable pour tous les modules', () => {
+    const result = loadModuleDocumentation([
+      'chat', 'documents', 'visio', 'facturation', 'support', 'elio', 'core-dashboard',
+    ])
+    expect(result).toBeTruthy()
+    expect(result!.length).toBeLessThan(60000)
   })
 })

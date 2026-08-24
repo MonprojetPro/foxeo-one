@@ -100,13 +100,14 @@ describe('ValidationQueue', () => {
 
   it('should display pending count badge when there are pending requests', () => {
     render(<ValidationQueue />)
-    expect(screen.getByText('1 en attente')).toBeInTheDocument()
+    expect(screen.getByText('1')).toBeInTheDocument()
+    expect(screen.getByText(/à traiter/)).toBeInTheDocument()
   })
 
   it('should not display pending badge when pendingCount is 0', () => {
     mockUseValidationQueue.mockReturnValue({ ...defaultHookReturn, pendingCount: 0 })
     render(<ValidationQueue />)
-    expect(screen.queryByText(/en attente/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/à traiter/)).not.toBeInTheDocument()
   })
 
   it('should render client name and company', () => {
@@ -136,24 +137,24 @@ describe('ValidationQueue', () => {
     expect(screen.getAllByText('Approuvé').length).toBeGreaterThan(0)
   })
 
+  // Les filtres sont rendus en pills cliquables (design system cockpit) et non
+  // plus en listes deroulantes etiquetees.
   it('should render filter controls', () => {
     render(<ValidationQueue />)
-    expect(screen.getByLabelText('Statut :')).toBeInTheDocument()
-    expect(screen.getByLabelText('Type :')).toBeInTheDocument()
-    expect(screen.getByLabelText('Trier par :')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'En attente' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Brief Lab' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Plus récente/ })).toBeInTheDocument()
   })
 
   it('should call setFilters when status filter changes', () => {
     render(<ValidationQueue />)
-    const statusFilter = screen.getByLabelText('Statut :')
-    fireEvent.change(statusFilter, { target: { value: 'pending' } })
+    fireEvent.click(screen.getByRole('button', { name: 'En attente' }))
     expect(defaultHookReturn.setFilters).toHaveBeenCalledWith({ status: 'pending' })
   })
 
   it('should call setFilters when type filter changes', () => {
     render(<ValidationQueue />)
-    const typeFilter = screen.getByLabelText('Type :')
-    fireEvent.change(typeFilter, { target: { value: 'brief_lab' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Brief Lab' }))
     expect(defaultHookReturn.setFilters).toHaveBeenCalledWith({ type: 'brief_lab' })
   })
 
@@ -176,8 +177,7 @@ describe('ValidationQueue', () => {
       requests: [],
     })
     render(<ValidationQueue />)
-    // Skeleton elements are present
-    const skeletons = document.querySelectorAll('[data-slot="skeleton"]')
+    const skeletons = document.querySelectorAll('.animate-pulse')
     expect(skeletons.length).toBeGreaterThan(0)
   })
 
@@ -188,7 +188,7 @@ describe('ValidationQueue', () => {
       requests: [],
     })
     render(<ValidationQueue />)
-    expect(screen.getByText('Erreur lors du chargement')).toBeInTheDocument()
+    expect(screen.getByText('Erreur de chargement')).toBeInTheDocument()
     expect(screen.getByText('Erreur de connexion')).toBeInTheDocument()
   })
 

@@ -1,7 +1,6 @@
 # Product Board — MonprojetPro (Hub · Lab · One)
 
-> Source de verite produit. Tenu par OTTO, consultable par MiKL et par toute l'equipe a tout moment.
-> Reconstitue le 2026-08-24 depuis CLAUDE.md, docs/ et l'historique git complet (756 commits, 2026-02-10 -> 2026-08-24).
+> Source de verite produit, tenue par OTTO. Reconstitue le 2026-08-24 depuis CLAUDE.md, docs/ et 756 commits git.
 > **Regle d'or : un identifiant est immortel. On change son statut, jamais son existence.**
 
 | | |
@@ -17,13 +16,12 @@
 ## 1. Vision en 5 lignes
 
 MonprojetPro est une plateforme modulaire de dashboards professionnels (monorepo Turborepo) qui outille
-la relation MiKL <-> ses clients sur tout le cycle de vie : **Hub** (poste de pilotage operateur),
-**Lab** (parcours d'accompagnement pas-a-pas guide par les agents Elio), **One** (dashboard livre au
-client, abonnement recurrent). Vision v2 (2026-06-24) : le One est « la console de pilotage des
-livrables du client + le canal de lien permanent avec MiKL » — un socle universel de modules
-**Relation** (identique pour tous) surmonte de **Cockpits** sur-mesure par projet. Reussi si : le
-client reste dans son One (fidelisation), et chaque module developpe nourrit une bibliotheque
-reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a confirmer par MiKL]
+la relation MiKL <-> ses clients : **Hub** (pilotage operateur), **Lab** (parcours d'accompagnement
+guide par les agents Elio), **One** (dashboard livre au client, abonnement recurrent). Vision v2
+(2026-06-24) : le One est « la console de pilotage des livrables du client + le canal de lien
+permanent avec MiKL » — un socle **Relation** universel surmonte de **Cockpits** sur-mesure par
+projet. Reussi si le client reste dans son One (fidelisation) et si chaque module nourrit une
+bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirmer par MiKL]
 
 ---
 
@@ -33,8 +31,7 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 |---|---|---|---|---|
 | | | | | |
 
-> Rien en attente de tri a la reconstitution — le flux d'idees recentes a ete qualifie directement
-> en items de backlog ci-dessous.
+> Rien en attente de tri — le flux d'idees recentes a ete qualifie directement en backlog.
 
 ---
 
@@ -58,14 +55,14 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 | T-008 | 2 migrations en base sans fichier `.sql` dans le repo | Dette technique | Audit secu 07-03 | Must | Interne | H | L | Qualifie | — | 2026-07-03 | — | 2026-08-24 |
 | T-009 | OAuth Gmail — `state` non signe (CSRF) | Dette technique | Audit secu 07-03 | Should | Interne | M | M | Qualifie | — | 2026-07-03 | — | 2026-08-24 |
 | T-010 | Edge Function `env-probe-temp` active en prod, sans source | Dette technique | Audit secu 07-03 | Must | Interne | M | L | Qualifie | — | 2026-07-03 | — | 2026-08-24 |
-| T-011 | Chaine de controles CI (documentation, tests, isolation multi-tenant) | Dette technique | Dossier CII 08-22 | Must | Interne | H | M | En cours | — | 2026-08-22 | — | 2026-08-24 |
-| T-012 | Migration 00094 fantome — `accountant_notifications` absente en prod | Dette technique | CI T-011 | Must | Interne | H | S | En cours | — | 2026-08-24 | — | 2026-08-24 |
-| T-013 | 40 tests desynchronises du code (lot 2 du chantier T-011) | Dette technique | CI T-011 | Should | Interne | M | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
-| T-014 | Aucune configuration ESLint dans le depot (15 packages la declarent) | Dette technique | CI T-011 | Should | Interne | M | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
-| T-015 | Droits anon/authenticated absents sur une base reconstruite (scenarios d'isolation, kit de sortie) | Dette technique | CI T-011 | Must | Interne | H | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
+| T-011 | Chaine de controles CI (doc, tests, isolation multi-tenant) | Dette technique | Dossier CII 08-22 | Must | Interne | H | M | En cours | — | 2026-08-22 | — | 2026-08-24 |
+| T-012 | Migration 00094 fantome — `accountant_notifications` absente prod | Dette technique | CI T-011 | Must | Interne | H | S | En cours | — | 2026-08-24 | — | 2026-08-24 |
+| T-013 | 40 tests desynchronises du code | Dette technique | CI T-011 | Should | Interne | M | M | En cours | — | 2026-08-24 | — | 2026-08-24 |
+| T-014 | Aucune config ESLint (15 packages la declarent) | Dette technique | CI T-011 | Should | Interne | M | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
+| T-015 | Droits anon/authenticated absents sur base reconstruite | Dette technique | CI T-011 | Must | Interne | H | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
 
 > Perimetre `Interne` = dette invisible du client (jamais `Devis` par defaut, regle OTTO).
-> Statuts figes "Qualifie" faute de suivi ecrit — a confirmer avec MiKL ce qui est deja traite depuis le 07-03.
+> Statuts "Qualifie" figes faute de suivi ecrit — a confirmer MiKL ce qui est deja traite depuis 07-03.
 
 ---
 
@@ -84,8 +81,7 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 | — | Elio One devient l'intermediaire de MiKL (relais chat + prise de nouvelles) | — | 2026-08-19 | A qualifier | Dernier grand chantier avant ce board |
 | — | Ruflo raccorde au MCP (scope User) — pipeline qualite code operationnel | — | 2026-08-19 | Interne | 3 mois sans controle qualite avant ce raccordement |
 
-> 5 items supp. (E-02, E-03, E-07, E-09, E-10) archives dans `docs/00-product-board-archive.md` (§4).
-> Aucun ID perdu. Detail des stories : `docs/patch-log.md` + journal git.
+> 5 items supp. (E-02, E-03, E-07, E-09, E-10) archives dans `00-product-board-archive.md` (§4). Aucun ID perdu.
 
 ---
 
@@ -97,8 +93,7 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 | F-009 | Elio One+ agentique (generation de documents, actions modules) pour l'offre premium | Ecarte / corrige | Contradiction avec le positionnement One+ = coaching humain ; restait actif en base pour 2 clients reels | MiKL | 2026-08-19 | Oui — au devis, jamais inclus dans un tier |
 | — | Prix de l'offre One | Change | 39€/mois -> 49€/mois | MiKL | 2026-07-31 | — |
 
-> 3 items supp. (F-008, offre ① standalone, kit de sortie LAB garde) archives dans
-> `docs/00-product-board-archive.md` (§5).
+> 3 items supp. (F-008, offre ① standalone, kit de sortie LAB garde) archives dans `00-product-board-archive.md` (§5).
 
 ---
 
@@ -108,8 +103,7 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 |---|---|---|---|---|---|---|
 | | | | | | | |
 
-> Aucune trace ecrite de demande client chiffree hors devis — produit interne MPP, pas un chantier
-> facture. A confirmer avec MiKL si des demandes commerciales existent ailleurs.
+> Aucune trace de demande hors devis — produit interne MPP, pas un chantier facture. A confirmer MiKL.
 
 ---
 
@@ -117,13 +111,14 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 
 | Quoi | Qui doit agir | Bloque quel item | Depuis |
 |---|---|---|---|
-| Revoquer/regenerer le token Supabase en clair dans `.mcp.json` (`sbp_…`), passer en variable d'env Windows | MiKL | Securite generale | 2026-07-03 |
 | Ajouter le secret `PENNYLANE_API_TOKEN` dans Supabase Edge Functions (distinct du secret Vercel) | MiKL | Bouton « Sync Comptabilite » | 2026-07-03 |
 | Verifier `CALCOM_WEBHOOK_SECRET` / `CONTACT_FORM_WEBHOOK_SECRET` bien definis dans Vercel | MiKL | T-003 | 2026-07-03 |
 | Supprimer l'Edge Function `env-probe-temp` (sonde debug sans source, active en prod) | MiKL | T-010 | 2026-07-03 |
 | Fournir `VERCEL_TOKEN` / `SUPABASE_MANAGEMENT_TOKEN` pour un kit de sortie complet (non urgent) | MiKL | F-007 si rouvert | 2026-07-03 |
-| Confirmer DNS/SSL sur `hub.`, `app.`, vitrine `monprojet-pro.com` | MiKL | Mise en prod complete | 2026-04-15 |
-| Compte Pennylane prod actif, Resend verifie (SPF/DKIM/DMARC), backups Supabase actives | MiKL | Onboarding client reel | 2026-04-15 |
+| Confirmer DNS/SSL `hub.`/`app.`/vitrine — **suspect deja fait**, commits d'aout montrent la bascule | MiKL | Mise en prod | 2026-04-15 |
+| Compte Pennylane prod actif, Resend verifie (SPF/DKIM/DMARC), backups Supabase actives | MiKL | Onboarding client | 2026-04-15 |
+
+> Suspects "traite mais jamais coche" (a trancher MiKL, non retires) : DNS ci-dessus ; T-010 ; T-003.
 
 ---
 
@@ -131,10 +126,8 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 
 | Date | Evenement | Items concernes | Decide par |
 |---|---|---|---|
-| 2026-08-24 | Cause racine trouvee : les privileges par defaut Supabase sont poses pour `supabase_admin`, alors que les migrations creent les tables sous un autre role — les tables d'une base reconstruite n'heritent donc pas des droits `anon`/`authenticated`. Correctif non applique : donner ces droits est une decision de securite, a valider (CERBERE + MiKL). Job d'isolation passe en declenchement manuel en attendant | T-015 | MAX |
-| 2026-08-24 | Premiere execution reelle des scenarios d'isolation : `permission denied` sur plusieurs tables, alors que la production porte bien ces droits. Sonde de diagnostic posee avant tout correctif | T-011 | MAX |
-| 2026-08-24 | Migration 00094 inscrite comme appliquee mais jamais executee : `accountant_notifications` absente en prod, synchronisation Gmail comptable inoperante. Fichier corrige, rejeu en production en attente de MiKL | T-012 | MAX |
-| 2026-08-24 | Mise en place de la chaine de controles CI, en appui du dossier CII : le dossier decrivait un dispositif qui n'existait pas encore | T-011 | MiKL |
+| 2026-08-24 | Verifie : `.mcp.json` gitignore + deja en variables d'env — alerte audit 07-03 sur le token Supabase levee | — | OTTO |
+| 2026-08-24 | Chaine CI mise en place (dossier CII decrivait un dispositif pas encore existant) ; a fait remonter 3 problemes reels : droits anon/authenticated absents en base reconstruite (cause racine trouvee, fix = decision securite a valider CERBERE+MiKL), migration 00094 jamais executee (accountant_notifications absente prod, corrige, rejeu en attente MiKL), 40 tests desynchronises | T-011, T-012, T-015 | MAX |
 | 2026-08-19 | Ruflo effectivement raccorde au MCP (scope User) apres 3 mois muet (2026-05-27 -> 2026-08-19) | — | MiKL |
 | 2026-08-19 | Elio One+ agentique corrige/ecarte — restait actif en base pour 2 clients malgre la doctrine | F-009 | MiKL |
 | 2026-08-04 | Bascule des adresses Vercel vers le domaine definitif + entree de connexion unique en prod | — | MiKL |
@@ -151,9 +144,8 @@ reutilisable (doctrine FORGE) plutot que d'etre recode a chaque commande. [a con
 
 ## Conventions
 
-Voir `00-product-board.md` du template MPP (`installation WF base/templates-projet/docs/00-product-board.md`).
+Voir le template MPP `installation WF base/templates-projet/docs/00-product-board.md`.
 
 ---
 
-*Reconstitue par OTTO le 2026-08-24 depuis CLAUDE.md, docs/ et 756 commits git. Board vivant des
-maintenant — toute nouvelle idee entre par la section 2 (INBOX).*
+*OTTO. Board vivant — toute nouvelle idee entre par la section 2 (INBOX).*

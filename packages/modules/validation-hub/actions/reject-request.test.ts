@@ -57,6 +57,10 @@ function buildSupabaseMock({
           })),
         }
       }
+      // Journal d'activite, ecrit apres la decision.
+      if (table === 'activity_logs') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) }
+      }
       return {}
     }),
     rpc: vi.fn().mockResolvedValue({ data: rpcData, error: rpcError }),

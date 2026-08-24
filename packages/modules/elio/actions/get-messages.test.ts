@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getMessages, PAGE_SIZE } from './get-messages'
+import { getMessages } from './get-messages'
+
+// get-messages.ts porte 'use server' : un fichier de Server Actions ne peut
+// exporter que des fonctions async. La taille de page y est donc une constante
+// privee, reprise ici a l'identique plutot que reexportee (cf. lecon BUILD-001).
+const PAGE_SIZE = 50
 
 const mockSelect = vi.fn()
 const mockEq = vi.fn()
