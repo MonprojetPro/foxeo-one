@@ -89,6 +89,24 @@ jobs:
       - name: Recuperation des acces de l'instance
         run: supabase status -o env | sed 's/"//g' >> "$GITHUB_ENV"
 
+      # Sonde de diagnostic — les scenarios d'isolation n'avaient jamais ete
+      # executes : on observe l'etat reel de l'instance avant de conclure.
+      - name: Etat de l'instance (diagnostic)
+        run: |
+          echo "--- version du CLI ---"; supabase --version
+          echo "--- privileges sur quelques tables ---"
+          psql "$DB_URL" -c "select table_name, grantee, count(*) as nb_droits
+            from information_schema.role_table_grants
+            where table_schema='public'
+              and table_name in ('clients','client_configs','parcours','consents')
+              and grantee in ('anon','authenticated','service_role')
+            group by 1,2 order by 1,2;"
+          echo "--- privileges par defaut ---"
+          psql "$DB_URL" -c "select defaclrole::regrole as pose_par, defaclnamespace::regnamespace as schema, defaclacl
+            from pg_default_acl;"
+          echo "--- proprietaire des tables ---"
+          psql "$DB_URL" -c "select tableowner, count(*) from pg_tables where schemaname='public' group by 1;"
+
       - name: Scenarios d'acces inter-clients
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ env.API_URL }}
