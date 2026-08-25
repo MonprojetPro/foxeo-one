@@ -46,7 +46,7 @@ export async function submitIaReconsentAction(
     'unknown'
   const userAgent = headersList.get('user-agent') ?? 'unknown'
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const { error: insertError } = await supabase.from('consents').insert({
     client_id: client.id,
     consent_type: 'ia_processing',

@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
-  useSessionCookies,
+  shouldUseSessionCookies,
   stripCookiePersistence,
   applySessionCookiePolicy,
   serializeBrowserCookie,
@@ -11,17 +11,17 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-describe('useSessionCookies', () => {
+describe('shouldUseSessionCookies', () => {
   it('est desactive par defaut — les espaces clients gardent des sessions longues', () => {
     vi.stubEnv('NEXT_PUBLIC_AUTH_SESSION_COOKIES', '')
-    expect(useSessionCookies()).toBe(false)
+    expect(shouldUseSessionCookies()).toBe(false)
   })
 
   it("n'accepte que la chaine 'true', pas une valeur vaguement vraie", () => {
     vi.stubEnv('NEXT_PUBLIC_AUTH_SESSION_COOKIES', '1')
-    expect(useSessionCookies()).toBe(false)
+    expect(shouldUseSessionCookies()).toBe(false)
     vi.stubEnv('NEXT_PUBLIC_AUTH_SESSION_COOKIES', 'true')
-    expect(useSessionCookies()).toBe(true)
+    expect(shouldUseSessionCookies()).toBe(true)
   })
 })
 

@@ -162,7 +162,7 @@ function CommentForm({ postId, clientId }: CommentFormProps) {
     setUploadError(null)
 
     // Upload des images directement vers Supabase Storage depuis le client
-    let imagePaths: string[] = []
+    const imagePaths: string[] = []
     if (selectedFiles.length > 0) {
       const supabase = createBrowserSupabaseClient()
       for (const file of selectedFiles) {

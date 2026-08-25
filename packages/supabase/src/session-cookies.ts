@@ -19,7 +19,7 @@ import type { CookieToSet } from './cookie-types'
  */
 
 /** Le déploiement courant doit-il poser des cookies de session ? */
-export function useSessionCookies(): boolean {
+export function shouldUseSessionCookies(): boolean {
   return process.env.NEXT_PUBLIC_AUTH_SESSION_COOKIES === 'true'
 }
 
@@ -41,7 +41,7 @@ export function stripCookiePersistence(options: CookieOptions): CookieOptions {
 
 /** Applique `stripCookiePersistence` à toute une fournée, si le mode est actif. */
 export function applySessionCookiePolicy(cookiesToSet: CookieToSet[]): CookieToSet[] {
-  if (!useSessionCookies()) return cookiesToSet
+  if (!shouldUseSessionCookies()) return cookiesToSet
   return cookiesToSet.map((cookie) => ({
     ...cookie,
     options: stripCookiePersistence(cookie.options),

@@ -9,9 +9,7 @@
       "default": "./src/index.ts"
     }
   },
-  "scripts": {
-    "lint": "eslint . --max-warnings 0"
-  },
+  "scripts": {},
   "devDependencies": {
     "@monprojetpro/tsconfig": "*",
     "typescript": "^5.7.3"

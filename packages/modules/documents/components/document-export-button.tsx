@@ -47,7 +47,7 @@ export function DocumentExportButton({ document, markdownHtml }: DocumentExportB
 
   const downloadWord = () => {
     const html = buildExportHtml(baseName, markdownHtml ?? '')
-    // Le BOM ﻿ aide Word à interpréter l'UTF-8 ; type msword → ouvert comme document Word.
+    // La marque d'ordre des octets (BOM) aide Word à interpréter l'UTF-8 ; type msword → ouvert comme document Word.
     const blob = new Blob(['﻿', html], { type: 'application/msword' })
     triggerBlobDownload(blob, `${baseName}.doc`)
     toast.success('Document Word téléchargé')

@@ -2,7 +2,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@monprojetpro/types'
 import type { CookieToSet } from './cookie-types'
 import {
-  useSessionCookies,
+  shouldUseSessionCookies,
   serializeBrowserCookie,
   parseBrowserCookies,
 } from './session-cookies'
@@ -23,7 +23,7 @@ export function createClient() {
   // déconnecte » quelques minutes après la connexion. On ne prend la main sur
   // document.cookie que sur les déploiements concernés (le Hub) ; ailleurs, on laisse
   // la bibliothèque faire son travail habituel.
-  if (!useSessionCookies()) {
+  if (!shouldUseSessionCookies()) {
     return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
   }
 

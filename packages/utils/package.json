@@ -9,9 +9,7 @@
       "default": "./src/index.ts"
     }
   },
-  "scripts": {
-    "lint": "eslint . --max-warnings 0"
-  },
+  "scripts": {},
   "dependencies": {
     "@monprojetpro/types": "*",
     "clsx": "^2.1.1",

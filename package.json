@@ -12,20 +12,26 @@
     "dev": "turbo dev",
     "dev:hub": "turbo dev --filter=@monprojetpro/hub",
     "dev:client": "turbo dev --filter=@monprojetpro/client",
-    "lint": "turbo lint",
+    "lint": "eslint .",
     "test": "turbo test",
     "clean": "turbo clean",
     "gen:types": "supabase gen types typescript --local > packages/types/src/database.types.ts",
     "check:docs": "tsx scripts/check-module-docs.ts",
     "check:docs:strict": "tsx scripts/check-module-docs.ts --strict",
-    "test:rls": "vitest run tests/rls"
+    "test:rls": "vitest run tests/rls",
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "^16.3.2",
     "@tailwindcss/postcss": "^4.2.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^17.11.0",
     "happy-dom": "^20.6.1",
     "supabase": "^2.76.7",
     "tsx": "^4.23.12",
     "turbo": "^2.3.0",
+    "typescript-eslint": "^8.68.0",
     "vitest": "^3.0.0"
   },
   "packageManager": "npm@11.6.2",

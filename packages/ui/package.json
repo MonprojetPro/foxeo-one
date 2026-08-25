@@ -13,9 +13,7 @@
     "./themes/lab.css": "./src/themes/lab.css",
     "./themes/one.css": "./src/themes/one.css"
   },
-  "scripts": {
-    "lint": "eslint . --max-warnings 0"
-  },
+  "scripts": {},
   "peerDependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

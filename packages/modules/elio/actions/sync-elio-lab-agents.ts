@@ -38,7 +38,7 @@ const AgentFrontmatterSchema = z.object({
 
 /** Valide qu'un nom de fichier est sûr (pas de path traversal) */
 function isSafeFilename(filename: string): boolean {
-  return /^[a-zA-Z0-9_\-]+\.md$/.test(filename) && !filename.includes('..')
+  return /^[a-zA-Z0-9_-]+\.md$/.test(filename) && !filename.includes('..')
 }
 
 /** Parse un frontmatter YAML simple (--- ... ---) */

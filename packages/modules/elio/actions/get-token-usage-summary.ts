@@ -82,7 +82,7 @@ export async function getTokenUsageSummary(): Promise<ActionResponse<TokenUsageS
 
     // Résoudre les noms de clients
     const clientIds = Array.from(clientMap.keys()).filter((k) => k !== '__no_client__')
-    let clientNames: Record<string, string> = {}
+    const clientNames: Record<string, string> = {}
 
     if (clientIds.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,7 +121,7 @@ export async function getTokenUsageSummary(): Promise<ActionResponse<TokenUsageS
 
     // Résoudre les noms d'agents
     const agentIds = Array.from(agentMap.keys())
-    let agentNames: Record<string, string> = {}
+    const agentNames: Record<string, string> = {}
 
     if (agentIds.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

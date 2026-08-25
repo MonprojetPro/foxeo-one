@@ -11,7 +11,7 @@ export { createMiddlewareSupabaseClient } from './middleware'
 
 // Cookies de session — la session meurt avec le navigateur (Hub uniquement)
 export {
-  useSessionCookies,
+  shouldUseSessionCookies,
   applySessionCookiePolicy,
   stripCookiePersistence,
   serializeBrowserCookie,

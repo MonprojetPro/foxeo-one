@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   HandoffInput,
@@ -340,7 +341,6 @@ async function logError(
 }
 
 function generateDbPassword(): string {
-  const { randomBytes } = require('node:crypto');
   return randomBytes(24).toString('base64url');
 }
 

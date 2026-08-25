@@ -12,9 +12,8 @@ name: CI — controles qualite
 # - isolation     : s'execute sur une instance Supabase jetable creee dans le
 #                   runner (aucun secret, aucune base reelle sollicitee), en
 #                   declenchement manuel tant que T-015 n'est pas traite.
-# - analyse statique : aucun fichier de configuration ESLint n'existe dans le
-#                   depot a ce jour ; le job correspondant sera ajoute une fois
-#                   la configuration mise en place.
+# - analyse statique : operationnel. Les avertissements restent visibles dans le
+#                   journal du job ; seules les erreurs le font echouer.
 
 on:
   push:
@@ -46,6 +45,22 @@ jobs:
         run: npm ci
       - name: Presence de guide.md, faq.md et flows.md dans chaque module
         run: npm run check:docs
+
+  analyse-statique:
+    name: Analyse statique
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - name: Alignement de npm sur la version du projet
+        run: npm install -g npm@11.6.2
+      - name: Installation des dependances
+        run: npm ci
+      - name: ESLint
+        run: npm run lint
 
   tests:
     name: Tests unitaires et de contrat

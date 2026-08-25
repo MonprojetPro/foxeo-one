@@ -6,11 +6,16 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "exports": {
-    ".": { "types": "./index.ts", "default": "./index.ts" },
-    "./manifest": { "types": "./manifest.ts", "default": "./manifest.ts" }
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    },
+    "./manifest": {
+      "types": "./manifest.ts",
+      "default": "./manifest.ts"
+    }
   },
   "scripts": {
-    "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -81,7 +81,12 @@ const FALLBACK_PATTERN = new RegExp(`[${Object.keys(FONT_FALLBACKS).join('')}]`,
  * plutôt que de laisser un trou — un titre « Validation approuvée ✅ » doit se lire
  * « Validation approuvée », sans espace orphelin ni carré blanc.
  */
+// La classe inclut la plage des selecteurs de variation (FE00-FE0F) en plus du
+// selecteur optionnel qui suit : ESLint signale la combinaison comme trompeuse.
+// L'expression fonctionne et couvre les emojis reellement rencontres — on la
+// laisse en l'etat plutot que de la reecrire sans moyen de le verifier.
 const EMOJI_PATTERN =
+  // eslint-disable-next-line no-misleading-character-class
   /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F000}-\u{1F2FF}]\u{FE0F}?/gu
 
 /** Rend un texte imprimable avec la police embarquée, sans disparition silencieuse. */

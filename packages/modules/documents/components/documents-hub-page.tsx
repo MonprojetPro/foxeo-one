@@ -486,7 +486,8 @@ export function DocumentsHubPage({ initialDocuments, initialClients, operatorId 
   const toggleClient = (clientId: string) => {
     setCollapsedClients((prev) => {
       const next = new Set(prev)
-      next.has(clientId) ? next.delete(clientId) : next.add(clientId)
+      if (next.has(clientId)) next.delete(clientId)
+      else next.add(clientId)
       return next
     })
   }

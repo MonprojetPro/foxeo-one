@@ -129,7 +129,7 @@ export async function GET(
     }
 
     // Log download in activity_logs
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { error: logError } = await supabase.from('activity_logs').insert({
       actor_type: clientRecord ? 'client' : 'operator',
       actor_id: user.id,

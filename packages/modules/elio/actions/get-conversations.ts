@@ -47,7 +47,7 @@ export async function getConversations(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )[0]
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     const { elio_messages: _msgs, ...convRow } = row
     const conv = toCamelCase(convRow) as unknown as ElioConversation
     conv.lastMessagePreview = lastMsg?.content ?? ''

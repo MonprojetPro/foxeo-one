@@ -9,8 +9,10 @@ describe('num', () => {
   })
 
   it('formate les milliers à la française', () => {
-    // Espace insécable étroit selon l'ICU — on vérifie les chiffres, pas le séparateur.
-    expect(num(12345).replace(/\s| | /g, '')).toBe('12345')
+    // Le séparateur de milliers depend de l'ICU : espace insécable ou insécable
+    // étroit selon la version. `\s` couvre les deux — on vérifie les chiffres,
+    // pas le séparateur.
+    expect(num(12345).replace(/\s/g, '')).toBe('12345')
   })
 })
 

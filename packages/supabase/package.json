@@ -30,9 +30,7 @@
       "default": "./src/providers/theme-provider.tsx"
     }
   },
-  "scripts": {
-    "lint": "eslint . --max-warnings 0"
-  },
+  "scripts": {},
   "peerDependencies": {
     "next": "^15.0.0",
     "react": "^19.0.0",
