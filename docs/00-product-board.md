@@ -55,10 +55,10 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 | T-008 | 2 migrations en base sans fichier `.sql` dans le repo | Dette technique | Audit secu 07-03 | Must | Interne | H | L | Qualifie | — | 2026-07-03 | — | 2026-08-24 |
 | T-009 | OAuth Gmail — `state` non signe (CSRF) | Dette technique | Audit secu 07-03 | Should | Interne | M | M | Qualifie | — | 2026-07-03 | — | 2026-08-24 |
 | T-010 | Edge Function `env-probe-temp` active en prod, sans source | Dette technique | Audit secu 07-03 | Must | Interne | M | L | Qualifie | — | 2026-07-03 | — | 2026-08-24 |
-| T-011 | Chaine de controles CI (doc, tests, isolation multi-tenant) | Dette technique | Dossier CII 08-22 | Must | Interne | H | M | En cours | — | 2026-08-22 | — | 2026-08-24 |
+| T-011 | Chaine de controles CI (doc, tests, isolation multi-tenant) | Dette technique | Dossier CII 08-22 | Must | Interne | H | M | Livre (isolation -> T-015) | — | 2026-08-22 | — | 2026-08-24 |
 | T-012 | Migration 00094 fantome — remettre la base en coherence avec ses migrations | Dette technique | CI T-011 | Should | Interne | M | S | En attente MiKL | — | 2026-08-24 | — | 2026-08-24 |
-| T-013 | 40 tests desynchronises du code | Dette technique | CI T-011 | Should | Interne | M | M | En cours | — | 2026-08-24 | — | 2026-08-24 |
-| T-014 | Aucune config ESLint (15 packages la declarent) | Dette technique | CI T-011 | Should | Interne | M | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
+| T-013 | 40 tests desynchronises du code | Dette technique | CI T-011 | Should | Interne | M | M | Livre | — | 2026-08-24 | — | 2026-08-24 |
+| T-014 | Aucune config ESLint (15 packages la declarent) | Dette technique | CI T-011 | Should | Interne | M | M | Livre | — | 2026-08-24 | — | 2026-08-24 |
 | T-015 | Droits anon/authenticated absents sur base reconstruite | Dette technique | CI T-011 | Must | Interne | H | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
 | F-010 | Synchronisation Gmail des relances du comptable (Story 13-9, jamais mise en service) | Feature | CI T-011 | Could | A qualifier | M | M | Bloque — entrees MiKL | — | 2026-08-24 | — | 2026-08-24 |
 
