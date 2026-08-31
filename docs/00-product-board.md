@@ -62,7 +62,8 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 | T-015 | Droits anon/authenticated absents sur base reconstruite | Dette technique | CI T-011 | Must | Interne | H | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
 | F-010 | Synchronisation Gmail des relances du comptable (Story 13-9, jamais mise en service) | Feature | CI T-011 | Could | A qualifier | M | M | Bloque — entrees MiKL | — | 2026-08-24 | — | 2026-08-24 |
 | T-016 | Upload de capture d'ecran bloque en silence dans "Signaler un probleme" (Lab) | Bug | MiKL 2026-08-31 | Must | A qualifier | H | S | Livre | — | 2026-08-31 | 2026-08-31 | 2026-08-31 |
-| F-011 | Rendre "Signaler un probleme" visible dans le Lab (bouton + onglet Mes signalements, icone alerte header) + suppression page orpheline /support | Feature | MiKL 2026-08-31 | Should | A qualifier | M | S | Qualifie — attente go MiKL | — | 2026-08-31 | — | 2026-08-31 |
+| F-011 | Rendre "Signaler un probleme" visible dans le Lab (bouton + onglet Mes signalements, icone alerte header) + suppression page orpheline /support | Feature | MiKL 2026-08-31 | Should | A qualifier | M | S | Livre | — | 2026-08-31 | 2026-08-31 | 2026-08-31 |
+| T-017 | Signalement Lab : jusqu'a 3 pieces jointes (au lieu d'1), compression image avant upload, upload direct navigateur->Supabase (pattern GuardVeto) | Amelioration | MiKL 2026-08-31 | Should | A qualifier | M | M | Livre | — | 2026-08-31 | 2026-08-31 | 2026-08-31 |
 
 > Perimetre `Interne` = dette invisible du client (jamais `Devis` par defaut, regle OTTO).
 > Statuts "Qualifie" figes faute de suivi ecrit — a confirmer MiKL ce qui est deja traite depuis 07-03.
@@ -81,6 +82,15 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 | T-016 | Bucket/policies Supabase `screenshots` fonctionnels | Verifie en base reelle (`execute_sql`) : bucket public 5 Mo, policies insert/delete owner actives — non fautifs | OK |
 | T-016 | Cause racine du blocage identifiee et corrigee | `apps/client/next.config.ts` : aucune limite `serverActions.bodySizeLimit` declaree -> defaut Next.js 1 Mo, trop bas pour une capture (5 Mo autorises cote action) ; ajout de `bodySizeLimit: '6mb'` | OK |
 | T-016 | Le bouton reste bloque sans erreur si l'upload echoue | `screenshot-upload.tsx` : l'appel serveur n'etait pas dans un try/catch -> ajout try/catch/finally, erreur affichee, `uploading` toujours remis a `false` | OK |
+| T-017 | Jusqu'a 3 pieces jointes (au lieu d'1) | `support_tickets.screenshot_urls TEXT[]` (migration 00136, verifie en base reelle via `execute_sql`), `MAX_ATTACHMENTS = 3` dans `attachment-constraints.ts`, `AttachmentsPicker` bloque au-dela | OK |
+| T-017 | Compression des images avant upload, sans perte visible | `compress-image.ts` : redimensionnement 1920px max + reencodage WebP qualite 0.82 via canvas ; ne s'applique qu'aux images (PDF/GIF/HEIC passent tels quels) ; retombe sur l'original si echec ou si la compression n'allege pas | OK |
+| T-017 | Upload direct navigateur -> Supabase (pattern GuardVeto), sans passer par le serveur Next.js | `upload-attachments.ts` utilise `createClient()` (client navigateur) au lieu d'une Server Action ; bucket relve a 10 Mo + formats elargis (migration 00137, verifie en base reelle) | OK |
+| T-017 | Nettoyage des fichiers deposes si la creation du ticket echoue | `cleanupUploadedAttachments()` appele dans le `catch` de `ReportIssueDialog.onSubmit` | OK |
+| T-017 | Tous les consommateurs mis a jour (Hub CRM, liste client, tests) | `client-support-tab.tsx` (liens multiples), `my-tickets-list.tsx` (compteur), 4 fichiers de test adaptes a `screenshot_urls[]` — verifie par `npx vitest run packages/modules/support/` -> 8 fichiers, 59 tests passes | OK |
+| T-017 | Build ne casse pas (client + hub, consommateurs du type SupportTicket) | `npx turbo build --filter=@monprojetpro/client` et `--filter=@monprojetpro/hub` -> 1 successful chacun | OK |
+| F-011 | Bouton "+" dans l'onglet "Mes signalements" | `apps/client/app/(dashboard)/modules/support/page.tsx` (route reellement liee par la sidebar, pas la page orpheline) | OK |
+| F-011 | Icone triangle d'alerte dans le header, a cote de la cloche, Lab uniquement, legerement rouge | `ReportIssueHeaderButton` branche dans `layout.tsx` derriere `activeMode === 'lab'`, `text-red-400/70` au repos | OK |
+| F-011 | Suppression de la page orpheline /support (doublon jamais lie a la sidebar) | Fichier supprime, confirme absent de la sortie `turbo build` (route `/support` n'apparait plus) | OK |
 
 **Regles :**
 
@@ -150,8 +160,7 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 | Supprimer l'Edge Function `env-probe-temp` (sonde debug sans source, active en prod) | MiKL | T-010 | 2026-07-03 |
 | Fournir `VERCEL_TOKEN` / `SUPABASE_MANAGEMENT_TOKEN` pour un kit de sortie complet (non urgent) | MiKL | F-007 si rouvert | 2026-07-03 |
 | Confirmer DNS/SSL `hub.`/`app.`/vitrine — **suspect deja fait**, commits d'aout montrent la bascule | MiKL | Mise en prod | 2026-04-15 |
-| Confirmer sur la preview Vercel qu'une vraie capture d'ecran s'uploade desormais dans "Signaler un probleme" (non teste en conditions reelles depuis ce terminal) | MiKL | T-016 | 2026-08-31 |
-| Dire si "vas-y" pour F-011 (visibilite du signalement), et si ScreenshotUpload merite d'etre neutralise/catalogue par FORGE pour reservir sur d'autres projets | MiKL | F-011 | 2026-08-31 |
+| Confirmer sur monprojet-pro.com (prod) que l'upload de plusieurs pieces jointes + la compression fonctionnent reellement (non testable depuis ce terminal — build et tests locaux verts, mais aucun navigateur pilotable ici) | MiKL | T-017 | 2026-08-31 |
 | Compte Pennylane prod actif, Resend verifie (SPF/DKIM/DMARC), backups Supabase actives | MiKL | Onboarding client | 2026-04-15 |
 
 > Suspects "traite mais jamais coche" (a trancher MiKL, non retires) : DNS ci-dessus ; T-010 ; T-003.
@@ -162,6 +171,7 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 
 | Date | Evenement | Items concernes | Decide par |
 |---|---|---|---|
+| 2026-08-31 | MiKL confirme le fix T-016 en prod et va plus loin : jusqu'a 3 pieces jointes (au lieu d'1), compression des images, et va-t'y pour F-011. Le pattern demande explicitement ("celui qu'on a cree pour GuardVeto") existait deja dans GuardVeto (module support B-016, 2026-08-21) : upload direct navigateur -> Supabase Storage, contournant par construction toute limite de taille de requete serveur. Repris et complete pour foxeo-one avec l'ajout de la compression (absente cote GuardVeto). Extrait en meme temps dans la bibliotheque FORGE (`pieces-jointes-supabase`, MiKL a valide la reutilisation). F-011 livre dans la foulee : bouton "+" dans l'onglet Mes signalements, icone triangle Lab-only dans le header, page orpheline /support supprimee | T-017, F-011 | MAX |
 | 2026-08-31 | Bug remonte par MiKL (capture d'ecran) : upload bloque en silence dans "Signaler un probleme". Cause racine trouvee par preuve (bucket/policies Supabase verifies sains en base reelle, puis code inspecte) : `next.config.ts` sans `serverActions.bodySizeLimit` -> defaut Next.js 1 Mo trop bas pour une capture (5 Mo autorises cote action) ; en plus, l'appel serveur n'etait pas dans un try/catch, donc l'echec restait invisible et le bouton bloque. Les deux corriges. A la meme occasion, visibilite insuffisante du signalement releve par MiKL -> F-011 cree, en attente de son feu vert avant dev | T-016, F-011 | MAX |
 | 2026-08-25 | Analyse statique mise en place : ESLint n'etait installe nulle part alors que 15 paquets declaraient la commande. Une seule configuration a la racine, ce qui signale de vrais defauts sans imposer de style. 27 erreurs corrigees, 110 avertissements laisses visibles. Trouvaille au passage : `useSessionCookies` n'etait pas un hook React malgre son nom — renomme `shouldUseSessionCookies` | T-014 | MAX |
 | 2026-08-24 | Impact de T-012 revu a la baisse apres verification : la fonction sync-accountant-emails n'est pas deployee, son declencheur n'est pas arme, son analyseur d'e-mails est un squelette et ses deux ecrans ne sont rendus nulle part. Rien n'etait donc casse en service — seule la reconstruction d'une base neuve etait bloquee. La fonctionnalite elle-meme devient F-010, en attente de deux elements que seul MiKL peut fournir | T-012, F-010 | MAX |

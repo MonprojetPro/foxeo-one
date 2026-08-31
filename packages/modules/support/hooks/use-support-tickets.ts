@@ -27,10 +27,11 @@ export function useCreateSupportTicket() {
 
   return useMutation({
     mutationFn: async (input: {
+      id?: string
       type: string
       subject: string
       description: string
-      screenshotUrl?: string | null
+      screenshotUrls?: string[]
     }) => {
       const response = await createSupportTicket(input)
       if (response.error) {

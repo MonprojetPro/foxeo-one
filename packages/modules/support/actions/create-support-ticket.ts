@@ -14,7 +14,14 @@ import {
 } from '../types/support.types'
 
 export async function createSupportTicket(
-  input: { type: string; subject: string; description: string; screenshotUrl?: string | null }
+  input: {
+    /** Pré-généré côté navigateur pour préfixer le chemin de stockage des pièces jointes déjà déposées. */
+    id?: string
+    type: string
+    subject: string
+    description: string
+    screenshotUrls?: string[]
+  }
 ): Promise<ActionResponse<SupportTicket>> {
   try {
     const supabase = await createServerSupabaseClient()
@@ -47,18 +54,19 @@ export async function createSupportTicket(
       return errorResponse(firstError, 'VALIDATION_ERROR', parsed.error.issues)
     }
 
-    const { type, subject, description, screenshotUrl } = parsed.data
+    const { type, subject, description, screenshotUrls } = parsed.data
 
     // Create ticket
     const { data: ticketData, error: insertError } = await supabase
       .from('support_tickets')
       .insert({
+        ...(input.id ? { id: input.id } : {}),
         client_id: client.id,
         operator_id: client.operator_id,
         type,
         subject,
         description,
-        screenshot_url: screenshotUrl ?? null,
+        screenshot_urls: screenshotUrls ?? [],
       })
       .select()
       .single()

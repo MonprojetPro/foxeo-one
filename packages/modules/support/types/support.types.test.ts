@@ -56,17 +56,30 @@ describe('Support Zod Schemas', () => {
       expect(result.success).toBe(false)
     })
 
-    it('should accept optional screenshotUrl', () => {
+    it('should accept optional screenshotUrls', () => {
       const result = CreateTicketInputSchema.parse({
         ...validInput,
-        screenshotUrl: 'https://example.com/img.png',
+        screenshotUrls: ['https://example.com/img.png'],
       })
-      expect(result.screenshotUrl).toBe('https://example.com/img.png')
+      expect(result.screenshotUrls).toEqual(['https://example.com/img.png'])
     })
 
-    it('should accept null screenshotUrl', () => {
-      const result = CreateTicketInputSchema.parse({ ...validInput, screenshotUrl: null })
-      expect(result.screenshotUrl).toBeNull()
+    it('should default screenshotUrls to an empty array', () => {
+      const result = CreateTicketInputSchema.parse(validInput)
+      expect(result.screenshotUrls).toEqual([])
+    })
+
+    it('should reject more than 3 screenshotUrls', () => {
+      const result = CreateTicketInputSchema.safeParse({
+        ...validInput,
+        screenshotUrls: [
+          'https://example.com/1.png',
+          'https://example.com/2.png',
+          'https://example.com/3.png',
+          'https://example.com/4.png',
+        ],
+      })
+      expect(result.success).toBe(false)
     })
   })
 

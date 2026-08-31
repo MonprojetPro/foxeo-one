@@ -83,15 +83,20 @@ export function ClientSupportTab({ clientId }: { clientId: string }) {
               </div>
               <h3 className="text-sm font-medium text-gray-100">{ticket.subject}</h3>
               <ExpandableText text={ticket.description} />
-              {ticket.screenshotUrl && (
-                <a
-                  href={ticket.screenshotUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block text-xs text-cyan-300/80 underline hover:text-cyan-200"
-                >
-                  Voir la capture
-                </a>
+              {ticket.screenshotUrls.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {ticket.screenshotUrls.map((url, i) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block text-xs text-cyan-300/80 underline hover:text-cyan-200"
+                    >
+                      Pièce jointe {ticket.screenshotUrls.length > 1 ? i + 1 : ''}
+                    </a>
+                  ))}
+                </div>
               )}
             </div>
 

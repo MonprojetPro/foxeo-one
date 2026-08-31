@@ -21,8 +21,10 @@ import {
 } from '@monprojetpro/ui'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { CreateTicketInputSchema, type CreateTicketInput } from '../types/support.types'
-import { ScreenshotUpload } from './screenshot-upload'
+import { AttachmentsPicker } from './attachments-picker'
 import { useCreateSupportTicket } from '../hooks/use-support-tickets'
+import { uploadAttachments, cleanupUploadedAttachments } from '../lib/upload-attachments'
+import { MAX_ATTACHMENTS, readableSize } from '../lib/attachment-constraints'
 
 interface ReportIssueDialogProps {
   open: boolean
@@ -30,7 +32,9 @@ interface ReportIssueDialogProps {
 }
 
 export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps) {
-  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null)
+  const [files, setFiles] = useState<File[]>([])
+  const [fileError, setFileError] = useState<string | null>(null)
+  const [stage, setStage] = useState<null | 'uploading' | 'saving'>(null)
   const createTicket = useCreateSupportTicket()
 
   const {
@@ -45,22 +49,46 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
       type: 'bug',
       subject: '',
       description: '',
+      screenshotUrls: [],
     },
   })
 
+  const busy = isSubmitting || stage !== null
+
   const onSubmit = async (data: CreateTicketInput) => {
+    const ticketId = crypto.randomUUID()
+    let uploadedPaths: string[] = []
+
     try {
+      setFileError(null)
+
+      let screenshotUrls: string[] = []
+      if (files.length > 0) {
+        setStage('uploading')
+        const uploaded = await uploadAttachments(files, ticketId)
+        uploadedPaths = uploaded.map((u) => u.path)
+        screenshotUrls = uploaded.map((u) => u.publicUrl)
+      }
+
+      setStage('saving')
       await createTicket.mutateAsync({
+        id: ticketId,
         ...data,
-        screenshotUrl,
+        screenshotUrls,
       })
+
       showSuccess('Votre signalement a été envoyé')
       reset()
-      setScreenshotUrl(null)
+      setFiles([])
       onOpenChange(false)
     } catch (err) {
+      // La demande n'a pas abouti : on ne laisse pas des pièces jointes
+      // orphelines dans le stockage, rattachées à aucun ticket.
+      await cleanupUploadedAttachments(uploadedPaths)
       const message = err instanceof Error ? err.message : 'Erreur lors de l\'envoi'
       showError(message)
+    } finally {
+      setStage(null)
     }
   }
 
@@ -115,22 +143,44 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
             )}
           </div>
 
-          <ScreenshotUpload
-            currentUrl={screenshotUrl}
-            onUploaded={(url) => setScreenshotUrl(url)}
-            onRemove={() => setScreenshotUrl(null)}
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Pièces jointes</label>
+            <AttachmentsPicker
+              files={files}
+              onChange={(next) => {
+                setFiles(next)
+                setFileError(null)
+              }}
+              onRejected={setFileError}
+              disabled={busy}
+            />
+            <p className="text-xs text-muted-foreground">
+              Images ou PDF, {MAX_ATTACHMENTS} maximum. Les images sont compressées automatiquement
+              avant l'envoi.
+            </p>
+            {files.length > 1 && (
+              <p className="text-xs text-muted-foreground">
+                Total : {readableSize(files.reduce((sum, f) => sum + f.size, 0))}
+              </p>
+            )}
+            {fileError && <p className="text-xs text-destructive">{fileError}</p>}
+          </div>
 
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={busy}
             >
               Annuler
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Envoi...' : 'Envoyer'}
+            <Button type="submit" disabled={busy}>
+              {stage === 'uploading'
+                ? 'Envoi des pièces jointes...'
+                : stage === 'saving'
+                  ? 'Enregistrement...'
+                  : 'Envoyer'}
             </Button>
           </DialogFooter>
         </form>

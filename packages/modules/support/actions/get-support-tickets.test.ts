@@ -52,7 +52,7 @@ const dbRows = [
     type: 'bug',
     subject: 'Test bug',
     description: 'A bug description',
-    screenshot_url: null,
+    screenshot_urls: [],
     status: 'open',
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',

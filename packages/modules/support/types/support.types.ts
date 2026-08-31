@@ -10,7 +10,7 @@ export const CreateTicketInputSchema = z.object({
   type: TicketTypeEnum.default('bug'),
   subject: z.string().min(3, 'Le sujet doit contenir au moins 3 caractères').max(200, 'Le sujet ne doit pas dépasser 200 caractères'),
   description: z.string().min(10, 'La description doit contenir au moins 10 caractères').max(5000, 'La description ne doit pas dépasser 5000 caractères'),
-  screenshotUrl: z.string().url().nullable().optional(),
+  screenshotUrls: z.array(z.string().url()).max(3, 'Trois pièces jointes maximum').optional().default([]),
 })
 
 export type CreateTicketInput = z.infer<typeof CreateTicketInputSchema>
@@ -22,7 +22,7 @@ export type SupportTicket = {
   type: TicketType
   subject: string
   description: string
-  screenshotUrl: string | null
+  screenshotUrls: string[]
   status: TicketStatus
   createdAt: string
   updatedAt: string
@@ -35,7 +35,7 @@ export type SupportTicketDB = {
   type: string
   subject: string
   description: string
-  screenshot_url: string | null
+  screenshot_urls: string[]
   status: string
   created_at: string
   updated_at: string

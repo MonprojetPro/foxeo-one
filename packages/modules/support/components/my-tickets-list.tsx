@@ -59,6 +59,12 @@ export function MyTicketsList() {
               </div>
               <h3 className="font-medium">{ticket.subject}</h3>
               <ExpandableText text={ticket.description} />
+              {ticket.screenshotUrls.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {ticket.screenshotUrls.length} pièce{ticket.screenshotUrls.length > 1 ? 's' : ''} jointe
+                  {ticket.screenshotUrls.length > 1 ? 's' : ''}
+                </p>
+              )}
             </div>
             <span className="shrink-0 text-xs text-muted-foreground">
               {formatRelativeDate(ticket.createdAt)}

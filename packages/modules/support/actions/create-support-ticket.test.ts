@@ -57,7 +57,7 @@ const dbRow = {
   type: 'bug',
   subject: 'Erreur de connexion',
   description: 'Je ne peux pas me connecter depuis ce matin',
-  screenshot_url: null,
+  screenshot_urls: [],
   status: 'open',
   created_at: '2025-01-01T00:00:00Z',
   updated_at: '2025-01-01T00:00:00Z',
@@ -146,19 +146,30 @@ describe('createSupportTicket Server Action', () => {
     expect(result.error?.code).toBe('DB_ERROR')
   })
 
-  it('should accept optional screenshotUrl', async () => {
+  it('should accept optional screenshotUrls', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: testAuthUserId } }, error: null })
     mockInsertSingle.mockResolvedValue({
-      data: { ...dbRow, screenshot_url: 'https://example.com/img.png' },
+      data: { ...dbRow, screenshot_urls: ['https://example.com/img.png'] },
       error: null,
     })
 
     const { createSupportTicket } = await import('./create-support-ticket')
     const result = await createSupportTicket({
       ...validInput,
-      screenshotUrl: 'https://example.com/img.png',
+      screenshotUrls: ['https://example.com/img.png'],
     })
 
-    expect(result.data?.screenshotUrl).toBe('https://example.com/img.png')
+    expect(result.data?.screenshotUrls).toEqual(['https://example.com/img.png'])
+  })
+
+  it('should insert the client-generated id when provided', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: testAuthUserId } }, error: null })
+
+    const { createSupportTicket } = await import('./create-support-ticket')
+    await createSupportTicket({ ...validInput, id: testTicketId })
+
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: testTicketId })
+    )
   })
 })

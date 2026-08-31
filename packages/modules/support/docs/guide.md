@@ -6,8 +6,9 @@ Le module Support permet aux clients MonprojetPro de signaler des problèmes, po
 
 ## Fonctionnalités
 
-- **Signalement** : Dialog pour créer un ticket (bug, question, suggestion) avec capture d'écran optionnelle
-- **Mes signalements** : Liste des tickets du client avec statut en temps réel
+- **Signalement** : Dialog pour créer un ticket (bug, question, suggestion) avec jusqu'à 3 pièces jointes optionnelles (captures d'écran, PDF)
+- **Mes signalements** : Liste des tickets du client avec statut en temps réel, accessible aussi via le bouton "+" de l'onglet
+- **Icône d'alerte (Lab)** : raccourci vers le signalement dans la barre d'en-tête, à côté de la cloche de notification
 - **FAQ** : Page d'aide avec catégories, recherche et liens vers le support
 - **Vue Hub** : MiKL voit tous les tickets dans le CRM et peut changer le statut
 
@@ -15,11 +16,11 @@ Le module Support permet aux clients MonprojetPro de signaler des problèmes, po
 
 ### Signaler un problème (client)
 
-1. Cliquer sur "Signaler" dans le menu utilisateur
+1. Ouvrir le dialog depuis l'icône d'alerte du header (Lab), le bouton en bas de la FAQ, ou le "+" de l'onglet "Mes signalements"
 2. Choisir le type (Bug, Question, Suggestion)
 3. Remplir le sujet et la description
-4. Optionnel : joindre une capture d'écran
-5. Soumettre → notification envoyée à MiKL
+4. Optionnel : joindre jusqu'à 3 pièces jointes (images ou PDF, 10 Mo max chacune avant compression — les images sont compressées automatiquement)
+5. Soumettre → upload direct vers Supabase Storage, puis notification envoyée à MiKL
 
 ### Gérer les tickets (MiKL)
 
