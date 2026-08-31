@@ -26,18 +26,23 @@ export function ScreenshotUpload({ onUploaded, onRemove, currentUrl }: Screensho
     const formData = new FormData()
     formData.append('screenshot', file)
 
-    const result = await uploadScreenshot(formData)
+    try {
+      const result = await uploadScreenshot(formData)
 
-    if (result.error) {
-      setError(result.error.message)
+      if (result.error) {
+        setError(result.error.message)
+        return
+      }
+
+      if (result.data) {
+        onUploaded(result.data)
+      }
+    } catch {
+      setError('Échec de l\'upload — réessayez ou choisissez un fichier plus léger.')
+    } finally {
       setUploading(false)
-      return
+      if (inputRef.current) inputRef.current.value = ''
     }
-
-    if (result.data) {
-      onUploaded(result.data)
-    }
-    setUploading(false)
   }
 
   if (currentUrl) {

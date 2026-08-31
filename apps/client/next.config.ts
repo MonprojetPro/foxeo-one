@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    // Défaut Next.js = 1 Mo, trop bas pour uploadScreenshot() qui autorise
+    // jusqu'à 5 Mo (MAX_SIZE côté action) — sinon la requête est rejetée
+    // silencieusement côté client (bug signalé le 2026-08-31).
+    serverActions: {
+      bodySizeLimit: '6mb',
+    },
+  },
   transpilePackages: [
     '@monprojetpro/ui',
     '@monprojetpro/supabase',

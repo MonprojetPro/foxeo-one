@@ -8,7 +8,7 @@
 | Projet | MonprojetPro (ex-Foxeo/Foxio) — Hub (operateur MiKL) + Lab (parcours accompagne) + One (dashboard client livre) |
 | Proprietaire | MonProjetPro — produit interne, pas un projet client |
 | Phase | Build (en production sur monprojet-pro.com, developpement continu) |
-| Derniere mise a jour | 2026-08-24 par OTTO |
+| Derniere mise a jour | 2026-08-31 par OTTO |
 | Prochain jalon | [a confirmer par MiKL] |
 
 ---
@@ -61,9 +61,40 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 | T-014 | Aucune config ESLint (15 packages la declarent) | Dette technique | CI T-011 | Should | Interne | M | M | Livre | — | 2026-08-24 | — | 2026-08-24 |
 | T-015 | Droits anon/authenticated absents sur base reconstruite | Dette technique | CI T-011 | Must | Interne | H | M | Qualifie | — | 2026-08-24 | — | 2026-08-24 |
 | F-010 | Synchronisation Gmail des relances du comptable (Story 13-9, jamais mise en service) | Feature | CI T-011 | Could | A qualifier | M | M | Bloque — entrees MiKL | — | 2026-08-24 | — | 2026-08-24 |
+| T-016 | Upload de capture d'ecran bloque en silence dans "Signaler un probleme" (Lab) | Bug | MiKL 2026-08-31 | Must | A qualifier | H | S | Livre | — | 2026-08-31 | 2026-08-31 | 2026-08-31 |
+| F-011 | Rendre "Signaler un probleme" visible dans le Lab (bouton + onglet Mes signalements, icone alerte header) + suppression page orpheline /support | Feature | MiKL 2026-08-31 | Should | A qualifier | M | S | Qualifie — attente go MiKL | — | 2026-08-31 | — | 2026-08-31 |
 
 > Perimetre `Interne` = dette invisible du client (jamais `Devis` par defaut, regle OTTO).
 > Statuts "Qualifie" figes faute de suivi ecrit — a confirmer MiKL ce qui est deja traite depuis 07-03.
+
+---
+
+## 4bis. Convergence — controle de sortie avant commit
+
+> **Rempli par OTTO avant CHAQUE commit qui contient du code.** Une ligne par element annonce.
+> C'est la seule section que le harnais lit pour autoriser un commit : sans entree fraiche
+> pour l'item concerne, `gate-commit` refuse. Ce n'est pas de la paperasse — c'est la reponse
+> a la seule question qui compte : *a-t-on livre ce qui etait demande, en ENTIER ?*
+
+| ID | Ce qui etait annonce | Ce qui est reellement livre | Verdict |
+|---|---|---|---|
+| T-016 | Bucket/policies Supabase `screenshots` fonctionnels | Verifie en base reelle (`execute_sql`) : bucket public 5 Mo, policies insert/delete owner actives — non fautifs | OK |
+| T-016 | Cause racine du blocage identifiee et corrigee | `apps/client/next.config.ts` : aucune limite `serverActions.bodySizeLimit` declaree -> defaut Next.js 1 Mo, trop bas pour une capture (5 Mo autorises cote action) ; ajout de `bodySizeLimit: '6mb'` | OK |
+| T-016 | Le bouton reste bloque sans erreur si l'upload echoue | `screenshot-upload.tsx` : l'appel serveur n'etait pas dans un try/catch -> ajout try/catch/finally, erreur affichee, `uploading` toujours remis a `false` | OK |
+
+**Regles :**
+
+- **Une ligne par case cochee** au tableau KIT COMPLET, ou par element de l'item du board.
+- **Verdict** : `OK` · `partiel` · `absent`.
+- **Verifier par la preuve, jamais de memoire** — un grep, un fichier ouvert, un test passe.
+  Ecrire « livre » parce qu'on se souvient l'avoir code est exactement l'erreur que ce
+  controle existe pour attraper.
+- **Partiel ou absent -> ca ne commite pas.** Deux issues, jamais trois : finir maintenant, ou
+  creer le reste-a-faire au board (`B-012` -> `B-012a`, avec son perimetre) et le dire a MiKL.
+- **Le reste-a-faire porte le numero d'origine** : la filiation doit rester lisible six mois plus tard.
+- Ne pas refaire une ligne a l'identique d'un commit a l'autre : le harnais le detecte et refuse.
+
+> Cette section s'archive avec le « Livre » — c'est du passe verifie, reconstituable.
 
 ---
 
@@ -119,6 +150,8 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 | Supprimer l'Edge Function `env-probe-temp` (sonde debug sans source, active en prod) | MiKL | T-010 | 2026-07-03 |
 | Fournir `VERCEL_TOKEN` / `SUPABASE_MANAGEMENT_TOKEN` pour un kit de sortie complet (non urgent) | MiKL | F-007 si rouvert | 2026-07-03 |
 | Confirmer DNS/SSL `hub.`/`app.`/vitrine — **suspect deja fait**, commits d'aout montrent la bascule | MiKL | Mise en prod | 2026-04-15 |
+| Confirmer sur la preview Vercel qu'une vraie capture d'ecran s'uploade desormais dans "Signaler un probleme" (non teste en conditions reelles depuis ce terminal) | MiKL | T-016 | 2026-08-31 |
+| Dire si "vas-y" pour F-011 (visibilite du signalement), et si ScreenshotUpload merite d'etre neutralise/catalogue par FORGE pour reservir sur d'autres projets | MiKL | F-011 | 2026-08-31 |
 | Compte Pennylane prod actif, Resend verifie (SPF/DKIM/DMARC), backups Supabase actives | MiKL | Onboarding client | 2026-04-15 |
 
 > Suspects "traite mais jamais coche" (a trancher MiKL, non retires) : DNS ci-dessus ; T-010 ; T-003.
@@ -129,6 +162,7 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 
 | Date | Evenement | Items concernes | Decide par |
 |---|---|---|---|
+| 2026-08-31 | Bug remonte par MiKL (capture d'ecran) : upload bloque en silence dans "Signaler un probleme". Cause racine trouvee par preuve (bucket/policies Supabase verifies sains en base reelle, puis code inspecte) : `next.config.ts` sans `serverActions.bodySizeLimit` -> defaut Next.js 1 Mo trop bas pour une capture (5 Mo autorises cote action) ; en plus, l'appel serveur n'etait pas dans un try/catch, donc l'echec restait invisible et le bouton bloque. Les deux corriges. A la meme occasion, visibilite insuffisante du signalement releve par MiKL -> F-011 cree, en attente de son feu vert avant dev | T-016, F-011 | MAX |
 | 2026-08-25 | Analyse statique mise en place : ESLint n'etait installe nulle part alors que 15 paquets declaraient la commande. Une seule configuration a la racine, ce qui signale de vrais defauts sans imposer de style. 27 erreurs corrigees, 110 avertissements laisses visibles. Trouvaille au passage : `useSessionCookies` n'etait pas un hook React malgre son nom — renomme `shouldUseSessionCookies` | T-014 | MAX |
 | 2026-08-24 | Impact de T-012 revu a la baisse apres verification : la fonction sync-accountant-emails n'est pas deployee, son declencheur n'est pas arme, son analyseur d'e-mails est un squelette et ses deux ecrans ne sont rendus nulle part. Rien n'etait donc casse en service — seule la reconstruction d'une base neuve etait bloquee. La fonctionnalite elle-meme devient F-010, en attente de deux elements que seul MiKL peut fournir | T-012, F-010 | MAX |
 | 2026-08-24 | Chaine de controles verte sur GitHub Actions : documentation (17/17 modules) et suite de tests (650 fichiers, 5 469 cas) au vert a chaque envoi de code. Le volet isolation reste en declenchement manuel jusqu'a T-015. Aucun fichier de production modifie sur tout le chantier | T-011, T-013 | MAX |
