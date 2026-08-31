@@ -266,7 +266,7 @@ function ClientHeader({
 
       {/* Droite — cloche + avatar */}
       <div className="relative z-10 flex items-center gap-3.5" style={{ width: 220, justifyContent: 'flex-end' }}>
-        {activeMode === 'lab' && <ReportIssueHeaderButton />}
+        <ReportIssueHeaderButton />
         {authUserId && <NotificationBadge recipientId={authUserId} />}
         <div
           className="w-[34px] h-[34px] rounded-full flex items-center justify-center text-white font-bold text-[12px] tracking-[0.5px] shrink-0 cursor-default"

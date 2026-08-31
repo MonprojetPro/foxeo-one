@@ -89,7 +89,7 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 | T-017 | Tous les consommateurs mis a jour (Hub CRM, liste client, tests) | `client-support-tab.tsx` (liens multiples), `my-tickets-list.tsx` (compteur), 4 fichiers de test adaptes a `screenshot_urls[]` — verifie par `npx vitest run packages/modules/support/` -> 8 fichiers, 59 tests passes | OK |
 | T-017 | Build ne casse pas (client + hub, consommateurs du type SupportTicket) | `npx turbo build --filter=@monprojetpro/client` et `--filter=@monprojetpro/hub` -> 1 successful chacun | OK |
 | F-011 | Bouton "+" dans l'onglet "Mes signalements" | `apps/client/app/(dashboard)/modules/support/page.tsx` (route reellement liee par la sidebar, pas la page orpheline) | OK |
-| F-011 | Icone triangle d'alerte dans le header, a cote de la cloche, Lab uniquement, legerement rouge | `ReportIssueHeaderButton` branche dans `layout.tsx` derriere `activeMode === 'lab'`, `text-red-400/70` au repos | OK |
+| F-011 | Icone triangle d'alerte dans le header, a cote de la cloche, Lab ET One, legerement rouge | `ReportIssueHeaderButton` branche dans `layout.tsx` sans condition de mode (corrige le 2026-08-31 : livre Lab-only par erreur, MiKL a demande la parite avec One), `text-red-400/70` au repos | OK |
 | F-011 | Suppression de la page orpheline /support (doublon jamais lie a la sidebar) | Fichier supprime, confirme absent de la sortie `turbo build` (route `/support` n'apparait plus) | OK |
 
 **Regles :**
