@@ -65,9 +65,11 @@ describe('isAttachmentUrlExpired', () => {
     expect(isAttachmentUrlExpired(att({ url_expires_at: '2026-09-15T12:59:00+00:00' }), now)).toBe(false)
   })
 
-  it('lit le format « +00:00 » du guichet comme de l UTC', () => {
-    // Le guichet ecrit « +00:00 », pas « Z » : un parseur qui lirait cette date
-    // en heure locale declencherait un renouvellement a chaque affichage.
+  it('lit l UTC quelle que soit sa notation', () => {
+    // SONDE REELLE du 2026-09-15 : le guichet ecrit « …284Z » (toISOString).
+    // Les deux notations doivent etre lues pareil — un parseur qui prendrait
+    // l une pour de l heure locale renouvellerait l URL a chaque affichage.
+    expect(isAttachmentUrlExpired(att({ url_expires_at: '2026-09-15T13:00:00.284Z' }), now)).toBe(false)
     expect(isAttachmentUrlExpired(att({ url_expires_at: '2026-09-15T13:00:00+00:00' }), now)).toBe(false)
   })
 
