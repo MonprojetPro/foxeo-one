@@ -1,13 +1,19 @@
 // ============================================================
-// Ce qu'une pièce jointe de signalement a le droit d'être
+// Ce qu'une pièce jointe a le droit d'être — valable pour TOUT le produit
 // ============================================================
 // Repris du pattern GuardVeto (src/lib/support/contraintes.ts) à la demande
-// de MiKL le 2026-08-31 — jusqu'à 3 pièces jointes par signalement.
+// de MiKL le 2026-08-31 — jusqu'à 3 pièces jointes.
 //
 // Fichier partagé navigateur/composant : le formulaire refuse poliment avec
 // ces valeurs, le bucket Supabase refuse fermement avec les MÊMES (migration
 // 00137_screenshots_bucket_multi_format.sql). Si l'une des deux bouge,
 // l'autre doit bouger le même jour.
+//
+// Remonté de `modules/support/lib/` vers `@monprojetpro/utils` le 2026-09-15
+// (T-023a) : les pièces jointes de l'opérateur vers MenuFacile ont besoin des
+// mêmes règles, et un module ne peut pas en importer un autre. Heureux hasard
+// vérifié à cette occasion — le guichet MenuFacile applique exactement les
+// mêmes valeurs (10 Mo, 3 fichiers, ces 7 types) : aucune divergence à gérer.
 
 /** 10 Mo par fichier, avant compression. Identique à `file_size_limit` du bucket. */
 export const MAX_FILE_BYTES = 10 * 1024 * 1024

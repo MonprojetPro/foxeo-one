@@ -52,7 +52,7 @@ export async function compressImageIfPossible(file: File): Promise<File> {
     const newName = file.name.replace(/\.[^.]+$/, '') + '.webp'
     return new File([blob], newName, { type: 'image/webp' })
   } catch (error) {
-    console.warn('[SUPPORT:COMPRESS] Compression ignorée, fichier original conservé :', error)
+    console.warn('[COMPRESS] Compression ignorée, fichier original conservé :', error)
     return file
   }
 }

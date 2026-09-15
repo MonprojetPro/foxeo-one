@@ -12,8 +12,7 @@
 // retire alors ce qui vient d'être déposé pour ne rien laisser d'orphelin.
 
 import { createClient } from '@monprojetpro/supabase'
-import { compressImageIfPossible } from './compress-image'
-import { sanitizeFileName } from './attachment-constraints'
+import { compressImageIfPossible, sanitizeFileName } from '@monprojetpro/utils'
 
 const BUCKET = 'screenshots'
 

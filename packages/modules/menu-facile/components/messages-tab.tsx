@@ -21,13 +21,20 @@ import {
   DialogTitle,
   DialogFooter,
   toast,
+  AttachmentsPicker,
 } from '@monprojetpro/ui'
 import {
   useContactMessages,
   useContactActions,
   useContactThread,
 } from '../hooks/use-contact-messages'
+import { compressImageIfPossible } from '@monprojetpro/utils'
 import { adjustContactReply } from '../actions/adjust-reply'
+import { createContactAttachmentUploadUrl } from '../actions/contact-messages'
+import {
+  uploadOperatorAttachments,
+  canSendReply,
+} from '../utils/upload-operator-attachments'
 import { ContactAttachments } from './contact-attachments'
 import type { ContactStatus, ContactTopic } from '../types'
 
@@ -85,6 +92,14 @@ function ThreadDialog({ messageId, onClose }: { messageId: string | null; onClos
   const { reply, setStatus } = useContactActions()
   const [draft, setDraft] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  // Sélection locale seulement : rien n'est déposé tant que MiKL n'a pas
+  // cliqué « Envoyer ». Évite l'état bâtard « fichiers uploadés, message
+  // jamais parti » pendant la rédaction.
+  const [files, setFiles] = useState<File[]>([])
+  const [uploading, setUploading] = useState(false)
+  // Un seul verrou pour toute la zone de réponse : pendant un envoi, ni l'IA ni
+  // le sélecteur de fichiers ne doivent pouvoir modifier ce qui part.
+  const busy = uploading || reply.isPending || aiLoading
 
   const lastUserMessage =
     thread?.messages?.filter((m) => m.sender === 'user').at(-1)?.body ??
@@ -112,17 +127,64 @@ function ThreadDialog({ messageId, onClose }: { messageId: string | null; onClos
     }
   }
 
-  const send = () => {
-    if (!messageId || !draft.trim()) {
-      toast.error('La réponse est vide')
+  /**
+   * Envoi d'une réponse, avec ou sans pièces jointes (guichet v16).
+   *
+   * Les fichiers partent AVANT le message, en direct vers le Storage de
+   * MenuFacile. Si l'un d'eux échoue, **la réponse n'est pas envoyée du tout** :
+   * un message annonçant une capture qui n'est pas arrivée serait pire que pas
+   * de message.
+   */
+  const send = async () => {
+    if (!messageId) return
+    if (!canSendReply(draft, files.length)) {
+      toast.error('Écris une réponse ou joins un fichier')
       return
     }
+
+    let attachmentIds: string[] = []
+    if (files.length > 0) {
+      setUploading(true)
+      try {
+        const outcome = await uploadOperatorAttachments(messageId, files, {
+          compress: compressImageIfPossible,
+          createUploadUrl: (input) =>
+            createContactAttachmentUploadUrl({
+              threadId: input.threadId,
+              fileName: input.fileName,
+              mimeType: input.mimeType,
+              sizeBytes: input.sizeBytes,
+            }),
+          put: async (url, file) => {
+            const res = await fetch(url, {
+              method: 'PUT',
+              headers: { 'Content-Type': file.type },
+              body: file,
+            })
+            return { ok: res.ok, status: res.status }
+          },
+        })
+        if (!outcome.ok) {
+          toast.error(outcome.message)
+          return
+        }
+        attachmentIds = outcome.attachmentIds
+      } finally {
+        setUploading(false)
+      }
+    }
+
     reply.mutate(
-      { id: messageId, body: draft.trim() },
+      { id: messageId, body: draft.trim(), attachmentIds },
       {
         onSuccess: () => {
-          toast.success('Réponse envoyée — le client la reçoit en temps réel')
+          toast.success(
+            attachmentIds.length
+              ? `Réponse envoyée avec ${attachmentIds.length} pièce${attachmentIds.length > 1 ? 's' : ''} jointe${attachmentIds.length > 1 ? 's' : ''}`
+              : 'Réponse envoyée — le client la reçoit en temps réel',
+          )
           setDraft('')
+          setFiles([])
         },
         onError: (e) => toast.error((e as Error).message),
       },
@@ -211,12 +273,18 @@ function ThreadDialog({ messageId, onClose }: { messageId: string | null; onClos
             className="max-h-[25vh]"
             placeholder="Écris ta réponse… (elle arrive en temps réel dans l'app du client)"
           />
+          <AttachmentsPicker
+            files={files}
+            onChange={setFiles}
+            onRejected={(m) => toast.error(m)}
+            disabled={busy}
+          />
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={send} disabled={reply.isPending || aiLoading}>
+            <Button size="sm" onClick={() => void send()} disabled={busy}>
               <Send className="mr-1.5 h-3.5 w-3.5" />
-              {reply.isPending ? 'Envoi…' : 'Envoyer'}
+              {uploading ? 'Envoi des fichiers…' : reply.isPending ? 'Envoi…' : 'Envoyer'}
             </Button>
-            <Button variant="outline" size="sm" onClick={adjust} disabled={aiLoading || reply.isPending}>
+            <Button variant="outline" size="sm" onClick={adjust} disabled={busy}>
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
               {aiLoading ? 'Ajustement…' : 'Ajuster avec l\'IA'}
             </Button>

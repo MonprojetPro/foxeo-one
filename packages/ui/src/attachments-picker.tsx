@@ -2,6 +2,8 @@
 
 // ============================================================
 // Sélection des pièces jointes (jusqu'à 3) — pattern GuardVeto
+// Remonté de modules/support vers @monprojetpro/ui le 2026-09-15 (T-023a) :
+// le cockpit MenuFacile en a besoin, et un module ne peut pas en importer un autre.
 // ============================================================
 // Ce composant ne fait QUE gérer la sélection locale (File[]) et sa
 // validation (nombre, poids, format) — il n'uploade rien. L'upload effectif
@@ -10,14 +12,14 @@
 // « certains fichiers uploadés, d'autres non » pendant la saisie.
 
 import { useRef } from 'react'
-import { Button } from '@monprojetpro/ui'
+import { Button } from './button'
 import { Paperclip, X } from 'lucide-react'
 import {
   ACCEPT_HTML,
   MAX_ATTACHMENTS,
   readableSize,
   rejectFile,
-} from '../lib/attachment-constraints'
+} from '@monprojetpro/utils'
 
 interface AttachmentsPickerProps {
   files: File[]

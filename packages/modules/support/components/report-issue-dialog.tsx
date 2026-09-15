@@ -21,10 +21,10 @@ import {
 } from '@monprojetpro/ui'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { CreateTicketInputSchema, type CreateTicketInput } from '../types/support.types'
-import { AttachmentsPicker } from './attachments-picker'
+import { AttachmentsPicker } from '@monprojetpro/ui'
 import { useCreateSupportTicket } from '../hooks/use-support-tickets'
 import { uploadAttachments, cleanupUploadedAttachments } from '../lib/upload-attachments'
-import { MAX_ATTACHMENTS, readableSize } from '../lib/attachment-constraints'
+import { MAX_ATTACHMENTS, readableSize } from '@monprojetpro/utils'
 
 interface ReportIssueDialogProps {
   open: boolean

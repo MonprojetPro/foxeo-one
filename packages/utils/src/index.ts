@@ -105,3 +105,15 @@ export {
   sanitizeForPdfFont,
   type MarkdownPdfOptions,
 } from './markdown-to-pdf'
+// Pièces jointes — règles partagées par TOUS les modules (un module ne peut pas
+// en importer un autre, ces valeurs doivent donc vivre ici).
+export {
+  MAX_FILE_BYTES,
+  MAX_ATTACHMENTS,
+  ACCEPTED_TYPES,
+  ACCEPT_HTML,
+  readableSize,
+  rejectFile,
+  sanitizeFileName,
+} from './attachment-constraints'
+export { compressImageIfPossible } from './compress-image'

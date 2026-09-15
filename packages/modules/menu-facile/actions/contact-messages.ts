@@ -2,7 +2,12 @@
 
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { callMenuFacileAdmin, MenuFacileAdminError } from './admin-client'
-import type { ContactMessage, ContactStatus, ContactThread } from '../types'
+import type {
+  ContactMessage,
+  ContactStatus,
+  ContactThread,
+  ContactAttachmentUploadTicket,
+} from '../types'
 
 /** Réponse du guichet au renouvellement d'une URL de pièce jointe. */
 interface RefreshedAttachmentUrl {
@@ -101,17 +106,70 @@ export async function resolveContactMessage(input: {
 }
 
 /**
+ * POST /contact-messages/:id/attachments/upload-url — demande l'autorisation de
+ * déposer un fichier dans le dossier Storage du destinataire (guichet v16).
+ *
+ * Ne dépose RIEN : rend seulement une URL signée que le navigateur utilisera
+ * ensuite en direct. C'est ce qui permet de dépasser la limite de taille des
+ * Server Actions — le fichier ne passe jamais par notre serveur.
+ *
+ * Refus possibles, tous explicites côté guichet : 415 (type), 413 (poids),
+ * 404 (fil inexistant), 409 (fil sans destinataire — cas réel des fils créés
+ * avant que MenuFacile exige un compte : ils ont `user_id` NULL, donc aucun
+ * dossier où déposer).
+ */
+export async function createContactAttachmentUploadUrl(input: {
+  threadId: string
+  fileName: string
+  mimeType: string
+  sizeBytes: number
+}): Promise<ActionResponse<ContactAttachmentUploadTicket>> {
+  try {
+    const data = await callMenuFacileAdmin<ContactAttachmentUploadTicket>(
+      `/contact-messages/${encodeURIComponent(input.threadId)}/attachments/upload-url`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          file_name: input.fileName,
+          mime_type: input.mimeType,
+          size_bytes: input.sizeBytes,
+        }),
+      },
+    )
+    return successResponse(data)
+  } catch (err) {
+    return toError(err)
+  }
+}
+
+/**
  * POST /contact-messages/:id/reply — envoie une réponse in-app à l'utilisateur
  * (v7). La réponse arrive en temps réel dans son app ; le fil repasse en `read`.
+ *
+ * `attachmentIds` (v16) cite des pièces DÉJÀ déposées. Le guichet refuse en 409
+ * une pièce citée mais jamais uploadée, plutôt que d'envoyer une réponse
+ * amputée — on ne peut donc pas se retrouver avec un message qui promet une
+ * capture absente.
+ *
+ * Depuis v16, `body` peut être vide À CONDITION qu'une pièce jointe
+ * l'accompagne : envoyer une capture seule est un usage normal. Vide des deux
+ * côtés reste un refus.
  */
 export async function replyToContactMessage(input: {
   id: string
   body: string
+  attachmentIds?: string[]
 }): Promise<ActionResponse<true>> {
   try {
     await callMenuFacileAdmin(`/contact-messages/${encodeURIComponent(input.id)}/reply`, {
       method: 'POST',
-      body: JSON.stringify({ body: input.body }),
+      body: JSON.stringify(
+        // On n'envoie `attachment_ids` que s'il y en a : garder l'appel
+        // identique à celui d'avant v16 quand il n'y a pas de fichier.
+        input.attachmentIds?.length
+          ? { body: input.body, attachment_ids: input.attachmentIds }
+          : { body: input.body },
+      ),
     })
     return successResponse(true)
   } catch (err) {

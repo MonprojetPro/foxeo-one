@@ -65,11 +65,13 @@ export function useContactActions() {
   })
 
   const reply = useMutation({
-    mutationFn: async (input: { id: string; body: string }) => {
+    mutationFn: async (input: { id: string; body: string; attachmentIds?: string[] }) => {
       const res = await replyToContactMessage(input)
       if (res.error) throw new Error(res.error.message)
       return res.data
     },
+    // Invalide le fil ET la liste : `attachment_count` de la carte doit
+    // augmenter tout de suite, sans attendre le polling de 30 s.
     onSuccess: (_d, v) => invalidate(v.id),
   })
 

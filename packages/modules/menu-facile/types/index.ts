@@ -274,6 +274,29 @@ export interface ContactAttachment {
   url_expires_at: string
 }
 
+/**
+ * Autorisation de dépôt rendue par `POST /contact-messages/:id/attachments/upload-url`
+ * (guichet v16). Le fichier part ensuite DIRECTEMENT du navigateur vers Storage :
+ * il ne traverse jamais nos Server Actions, donc aucune limite de taille de
+ * requête serveur ne s'applique.
+ *
+ * ⚠️ Le guichet impose l'extension d'après le `mime_type` déclaré, pas d'après
+ * le nom envoyé : `capture.txt` déclaré `image/png` devient `…-capture.png`.
+ * C'est volontaire de leur part — à la relecture, le type est déduit de
+ * l'extension, et sans cette règle la vignette serait cassée.
+ */
+export interface ContactAttachmentUploadTicket {
+  /** Identifiant à citer dans `attachment_ids` de la réponse. */
+  attachment_id: string
+  /** URL signée de dépôt. Valable `expires_in` secondes (7200 en pratique). */
+  upload_url: string
+  /** Jeton pour `uploadToSignedUrl` de supabase-js. Inutile en PUT direct. */
+  token: string
+  /** Chemin final dans le bucket, pour information. */
+  path: string
+  expires_in: number
+}
+
 export interface ContactThreadMessage {
   sender: 'user' | 'admin'
   body: string
