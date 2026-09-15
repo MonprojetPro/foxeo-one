@@ -269,6 +269,7 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 
 | Quoi | Qui doit agir | Bloque quel item | Depuis |
 |---|---|---|---|
+| Trancher (FORGE, question POSEE le 15-09, sans reponse a ce jour) : extraire `upload-operator-attachments.ts` en kit ? Ce n'est PAS le meme pattern que celui deja extrait — ici on depose chez un TIERS via une URL pre-signee que son API nous rend, avec la regle « tout ou rien » (un fichier echoue = le message ne part pas). 1re occurrence chez MPP, donc rien ne prouve encore que ce soit un pattern. Mon avis : ATTENDRE une 2e occurrence. Item candidat, pas abandonne | MiKL | T-023a | 2026-09-15 |
 | Fournir l'adresse e-mail de reference du comptable **et** un exemple d'e-mail Pennylane (pour calibrer la reconnaissance) | MiKL | F-010 | 2026-08-24 |
 | Autoriser le rejeu de la migration 00094 en production (mise en coherence, sans effet visible) | MiKL | T-012 | 2026-08-24 |
 | Ajouter le secret `PENNYLANE_API_TOKEN` dans Supabase Edge Functions (distinct du secret Vercel) | MiKL | Bouton « Sync Comptabilite » | 2026-07-03 |
