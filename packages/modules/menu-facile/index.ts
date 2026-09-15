@@ -10,6 +10,7 @@ export { InsightsSection } from './components/insights-section'
 export { ModerationTab } from './components/moderation-tab'
 export { RecipesTab } from './components/recipes-tab'
 export { MessagesTab } from './components/messages-tab'
+export { ContactAttachments } from './components/contact-attachments'
 export { RecipeFormModal } from './components/recipe-form-modal'
 export { MetricCard } from './components/metric-card'
 export { HomeBannerTab } from './components/home-banner-tab'
@@ -39,6 +40,7 @@ export {
   resolveContactMessage,
   replyToContactMessage,
   deleteContactMessage,
+  refreshContactAttachmentUrl,
 } from './actions/contact-messages'
 export { adjustContactReply } from './actions/adjust-reply'
 export { hideRecipe, banUser, resolveReport } from './actions/moderation'
@@ -66,6 +68,7 @@ export type {
   ContactMessage,
   ContactThread,
   ContactThreadMessage,
+  ContactAttachment,
   TopRecipe,
   MenuFacileMetrics,
   MenuFacileTimeseries,

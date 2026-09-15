@@ -249,14 +249,40 @@ export interface ContactMessage {
   resolved_at: string | null
   user_email: string | null
   household_name: string | null
+  /**
+   * Nombre de pièces jointes de tout le fil (guichet v13). Optionnel : un
+   * guichet plus ancien ne le renvoie pas, la liste doit rester lisible sans.
+   */
+  attachment_count?: number
 }
 
 // --- GET /contact-messages/:id (fil complet, v7) ---------------------------
+
+/**
+ * Pièce jointe décrite par le guichet MenuFacile (v13). Le bucket est privé :
+ * `url` est une URL SIGNÉE qui expire (`url_expires_at`, 1 h). Passé ce délai,
+ * il faut la renouveler via `refreshContactAttachmentUrl` — d'où l'`id`, stable
+ * lui, contrairement à l'URL.
+ */
+export interface ContactAttachment {
+  id: string
+  file_name: string
+  mime_type: string
+  /** Absent si le guichet n'a pas pu relever la taille — champ non garanti. */
+  size_bytes?: number
+  url: string
+  url_expires_at: string
+}
 
 export interface ContactThreadMessage {
   sender: 'user' | 'admin'
   body: string
   created_at: string
+  /**
+   * Toujours un tableau côté guichet v13 (normalisé à `[]`), optionnel ici pour
+   * qu'un guichet antérieur n'affiche simplement rien au lieu de planter.
+   */
+  attachments?: ContactAttachment[]
 }
 
 export interface ContactThread {

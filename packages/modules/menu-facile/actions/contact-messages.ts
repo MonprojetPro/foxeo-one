@@ -4,6 +4,12 @@ import { type ActionResponse, successResponse, errorResponse } from '@monprojetp
 import { callMenuFacileAdmin, MenuFacileAdminError } from './admin-client'
 import type { ContactMessage, ContactStatus, ContactThread } from '../types'
 
+/** Réponse du guichet au renouvellement d'une URL de pièce jointe. */
+interface RefreshedAttachmentUrl {
+  url: string
+  expires_at: string
+}
+
 function toError(err: unknown): ActionResponse<never> {
   if (err instanceof MenuFacileAdminError) {
     return errorResponse(err.message, `MENUFACILE_HTTP_${err.status}`)
@@ -47,6 +53,30 @@ export async function getContactThread(id: string): Promise<ActionResponse<Conta
   try {
     const data = await callMenuFacileAdmin<ContactThread>(
       `/contact-messages/${encodeURIComponent(id)}`,
+    )
+    return successResponse(data)
+  } catch (err) {
+    return toError(err)
+  }
+}
+
+/**
+ * GET /contact-messages/:id/attachments/:attachmentId/url — renouvelle l'URL
+ * signée d'une pièce jointe.
+ *
+ * Les URL rendues avec le fil expirent au bout d'une heure. Sans ce renouvellement,
+ * un fil resté ouvert (ou rouvert depuis le cache React Query) afficherait des
+ * images cassées, et MiKL croirait la pièce jointe perdue.
+ */
+export async function refreshContactAttachmentUrl(input: {
+  threadId: string
+  attachmentId: string
+}): Promise<ActionResponse<RefreshedAttachmentUrl>> {
+  try {
+    const data = await callMenuFacileAdmin<RefreshedAttachmentUrl>(
+      `/contact-messages/${encodeURIComponent(input.threadId)}/attachments/${encodeURIComponent(
+        input.attachmentId,
+      )}/url`,
     )
     return successResponse(data)
   } catch (err) {

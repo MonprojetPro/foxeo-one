@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Sparkles,
   Send,
+  Paperclip,
 } from 'lucide-react'
 import {
   Badge,
@@ -27,6 +28,7 @@ import {
   useContactThread,
 } from '../hooks/use-contact-messages'
 import { adjustContactReply } from '../actions/adjust-reply'
+import { ContactAttachments } from './contact-attachments'
 import type { ContactStatus, ContactTopic } from '../types'
 
 const STATUS_FILTERS: { key: ContactStatus | 'all'; label: string }[] = [
@@ -184,6 +186,9 @@ function ThreadDialog({ messageId, onClose }: { messageId: string | null; onClos
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{m.body}</p>
+                    {thread && !!m.attachments?.length && (
+                      <ContactAttachments threadId={thread.id} attachments={m.attachments} />
+                    )}
                     <p className="mt-1 text-[0.6rem] text-gray-500">
                       {isAdmin ? 'Toi' : thread?.household_name ?? 'Client'} ·{' '}
                       {new Date(m.created_at).toLocaleString('fr-FR')}
@@ -332,7 +337,20 @@ export function MessagesTab() {
                   <span className="text-sm text-white">{m.household_name ?? 'Foyer inconnu'}</span>
                   {m.user_email && <span className="text-xs text-gray-500">· {m.user_email}</span>}
                 </div>
-                <span className="text-xs text-gray-500 whitespace-nowrap">{fmtDate(m.created_at)}</span>
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  {/* Repère visuel : les fils avec capture d'écran se traitent
+                      souvent en premier, il faut les voir sans ouvrir le fil. */}
+                  {!!m.attachment_count && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[0.65rem] text-gray-300"
+                      title={`${m.attachment_count} pièce${m.attachment_count > 1 ? 's' : ''} jointe${m.attachment_count > 1 ? 's' : ''} dans ce fil`}
+                    >
+                      <Paperclip className="h-3 w-3" />
+                      {m.attachment_count}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-500">{fmtDate(m.created_at)}</span>
+                </div>
               </div>
 
               <p className="text-sm text-gray-200 whitespace-pre-wrap">{m.message}</p>
