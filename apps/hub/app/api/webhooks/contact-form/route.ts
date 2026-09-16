@@ -3,6 +3,7 @@
 // POST → upsert fiche client prospect dans Hub
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { decideWebhookAuth } from '../../../../lib/webhook-auth'
 
 // Mapping type_projet (formulaire site) → project_type DB
 const PROJECT_TYPE_MAP: Record<string, string> = {
@@ -30,17 +31,30 @@ interface ContactFormPayload {
   _token?: string
 }
 
-async function verifyToken(req: NextRequest, body: string): Promise<boolean> {
-  const secret = process.env.CONTACT_FORM_WEBHOOK_SECRET
-  if (!secret) return true // Dev : accepte tout si pas de secret configuré
+type TokenCheck = { ok: true } | { ok: false; status: 401 | 500; error: string }
+
+async function verifyToken(req: NextRequest, body: string): Promise<TokenCheck> {
+  const decision = decideWebhookAuth(
+    process.env.CONTACT_FORM_WEBHOOK_SECRET,
+    process.env.NODE_ENV,
+    'CONTACT_FORM_WEBHOOK_SECRET',
+  )
+
+  // Secret absent EN PRODUCTION : c'est une panne de configuration, pas une
+  // autorisation. Voir l'en-tête de lib/webhook-auth.ts (incident 2026-09-16).
+  if (decision.action === 'misconfigured') {
+    console.error(`[CONTACT_FORM_WEBHOOK] ${decision.message}`)
+    return { ok: false, status: decision.status, error: 'Server configuration error' }
+  }
+  if (decision.action === 'allow') return { ok: true }
 
   const token = req.headers.get('x-contact-token')
-  if (!token) return false
+  if (!token) return { ok: false, status: 401, error: 'Invalid token' }
 
   const encoder = new TextEncoder()
   const key = await crypto.subtle.importKey(
     'raw',
-    encoder.encode(secret),
+    encoder.encode(decision.secret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']
@@ -50,16 +64,17 @@ async function verifyToken(req: NextRequest, body: string): Promise<boolean> {
     .map(b => b.toString(16).padStart(2, '0'))
     .join('')
 
-  return token === expected
+  if (token !== expected) return { ok: false, status: 401, error: 'Invalid token' }
+  return { ok: true }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text()
 
-    const valid = await verifyToken(req, body)
-    if (!valid) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    const check = await verifyToken(req, body)
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error }, { status: check.status })
     }
 
     const payload: ContactFormPayload = JSON.parse(body)

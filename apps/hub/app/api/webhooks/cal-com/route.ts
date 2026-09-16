@@ -3,6 +3,7 @@
 // BOOKING_CREATED → upsert fiche client prospect + calcom_bookings
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { decideWebhookAuth } from '../../../../lib/webhook-auth'
 
 interface CalcomAttendee {
   name: string
@@ -33,17 +34,31 @@ const PROJECT_TYPE_MAP: Record<string, string> = {
   'Autre': 'other',
 }
 
-async function verifySignature(req: NextRequest, body: string): Promise<boolean> {
-  const secret = process.env.CALCOM_WEBHOOK_SECRET
-  if (!secret) return true // Si pas de secret configuré, on accepte (dev)
+type SignatureCheck = { ok: true } | { ok: false; status: 401 | 500; error: string }
+
+async function verifySignature(req: NextRequest, body: string): Promise<SignatureCheck> {
+  const decision = decideWebhookAuth(
+    process.env.CALCOM_WEBHOOK_SECRET,
+    process.env.NODE_ENV,
+    'CALCOM_WEBHOOK_SECRET',
+  )
+
+  // Secret absent EN PRODUCTION : refus. Un booking accepté sans preuve
+  // d'origine crée des `billable_items` à 45 € — c'est de la facturation que
+  // n'importe qui pourrait déclencher. Voir lib/webhook-auth.ts.
+  if (decision.action === 'misconfigured') {
+    console.error(`[CALCOM_WEBHOOK] ${decision.message}`)
+    return { ok: false, status: decision.status, error: 'Server configuration error' }
+  }
+  if (decision.action === 'allow') return { ok: true }
 
   const signature = req.headers.get('x-cal-signature-256')
-  if (!signature) return false
+  if (!signature) return { ok: false, status: 401, error: 'Invalid signature' }
 
   const encoder = new TextEncoder()
   const key = await crypto.subtle.importKey(
     'raw',
-    encoder.encode(secret),
+    encoder.encode(decision.secret),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']
@@ -53,16 +68,17 @@ async function verifySignature(req: NextRequest, body: string): Promise<boolean>
     .map(b => b.toString(16).padStart(2, '0'))
     .join('')}`
 
-  return signature === expected
+  if (signature !== expected) return { ok: false, status: 401, error: 'Invalid signature' }
+  return { ok: true }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text()
 
-    const valid = await verifySignature(req, body)
-    if (!valid) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    const check = await verifySignature(req, body)
+    if (!check.ok) {
+      return NextResponse.json({ error: check.error }, { status: check.status })
     }
 
     const webhook: CalcomWebhookPayload = JSON.parse(body)
