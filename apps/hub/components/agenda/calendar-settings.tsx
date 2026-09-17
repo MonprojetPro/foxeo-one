@@ -11,6 +11,15 @@ interface CalendarSettingsProps {
   onStatusChange?: (status: CalendarStatus) => void;
 }
 
+/**
+ * Adresse à coller dans la configuration webhook de Cal.com.
+ *
+ * Elle est dérivée de l'URL Supabase du projet plutôt qu'écrite en dur : le
+ * Hub tourne sur plusieurs environnements, et une adresse figée enverrait les
+ * réservations d'une preview vers la base de production.
+ */
+const calcomWebhookUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/functions/v1/calcom-webhook`
+
 const PRESET_COLORS = [
   "#06b6d4", // cyan
   "#3b82f6", // bleu
@@ -278,10 +287,18 @@ export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSett
                 {status.calcom ? (
                   <div className="space-y-1.5">
                     <p className="text-[10px] text-muted-foreground">URL : {status.calcomUrl}</p>
+                    {/* L'URL à coller dans Cal.com est celle de l'Edge Function
+                        `calcom-webhook`, PAS une route du Hub. Cet écran affichait
+                        `{origin}/api/webhooks/cal-com` : une route qui doublonnait
+                        l'Edge Function, n'a jamais reçu un seul appel
+                        (`calcom_bookings` vide) et acceptait les requêtes non
+                        signées. Elle a été supprimée le 2026-09-17 — d'où la
+                        correction ici, sans quoi cet écran continuerait à dicter
+                        une adresse morte. */}
                     <p className="text-[10px] text-muted-foreground break-all">
                       Webhook :{" "}
                       <span className="font-mono text-foreground">
-                        {typeof window !== 'undefined' ? window.location.origin : ''}/api/webhooks/cal-com
+                        {calcomWebhookUrl}
                       </span>
                     </p>
                     <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive"

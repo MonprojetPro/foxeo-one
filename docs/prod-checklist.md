@@ -129,7 +129,13 @@ Vérification après création : `SELECT jobname, schedule FROM cron.job ORDER B
 
 ### Cal.com (Story 5.3)
 
-- [ ] Webhook Cal.com → ancienne URL `*.foxeo.io` à remplacer par `https://hub.monprojet-pro.com/api/webhooks/cal-com` au lancement
+- [ ] Webhook Cal.com → l'URL à coller est celle de l'**Edge Function**, pas une route du Hub :
+      `https://<project-ref>.supabase.co/functions/v1/calcom-webhook` (l'écran Agenda → Paramètres l'affiche).
+      ⚠️ Cette ligne indiquait `https://hub.monprojet-pro.com/api/webhooks/cal-com` — une route qui
+      doublonnait l'Edge Function, n'avait **jamais reçu un seul appel** (`calcom_bookings` vide) et
+      acceptait les requêtes non signées. Supprimée le 2026-09-17, voir T-024 au board.
+- [ ] Vérifier que `CALCOM_WEBHOOK_SECRET` est bien dans les secrets **Edge Functions** de Supabase
+      (et non dans Vercel : c'est l'Edge Function qui reçoit). Confirmé présent par MiKL le 2026-09-17.
 
 ### Stripe / autres (à venir avec stories futures)
 
