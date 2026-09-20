@@ -120,12 +120,26 @@ Vérification après création : `SELECT jobname, schedule FROM cron.job ORDER B
 
 ### Pennylane (Story 13.4)
 
-- [ ] Aller dans le dashboard Pennylane → Paramètres → Webhooks
-- [ ] Créer un webhook sur l'événement **"facture payée"** (`invoice.paid` ou équivalent)
-- [ ] URL cible : `https://hub.monprojet-pro.com/api/webhooks/pennylane/paid`
-- [ ] Définir le secret HMAC (mettre la même valeur que `PENNYLANE_WEBHOOK_SECRET` côté Vercel)
-- [ ] Vérifier que le header signature est `x-pennylane-signature` (sinon ajuster `route.ts`)
-- [ ] Tester avec une facture sandbox payée → vérifier qu'un compte est créé
+> ⛔ **SECTION CADUQUE — vérifié le 2026-09-20 dans la documentation Pennylane.**
+> **L'événement « facture payée » n'existe pas.** Les webhooks Pennylane sont en **bêta fermée** et ne
+> couvrent que la création de fichiers DMS et le statut e-invoicing ; le changement de statut de facture
+> est annoncé « sur la roadmap ». Leur documentation demande de **se rabattre sur les endpoints de
+> changelog** — ce que `billing-sync` fait déjà toutes les 5 minutes.
+>
+> Le « ou équivalent » ci-dessous trahissait la supposition : ces lignes ont été écrites sans jamais
+> ouvrir l'interface Pennylane. **Ne pas les réactiver sans avoir reverifié que l'événement existe.**
+>
+> ✅ **Rien à configurer.** Le paiement d'une facture Lab active déjà l'accès automatiquement via
+> `billing-sync` (`index.ts:385-386` puis `:578-598` : `lab_paid`, notification MiKL, notification client).
+> ⚠️ **La vraie condition** : `clients.pennylane_customer_id` doit être renseigné, sinon l'activation
+> est ignorée en silence (`:579`). Cette colonne se remplit quand le devis est créé **depuis le Hub** —
+> donc émettre les devis depuis le Hub, jamais directement dans Pennylane.
+
+- [ ] ~~Aller dans le dashboard Pennylane → Paramètres → Webhooks~~ (n'existe pas)
+- [ ] ~~Créer un webhook sur l'événement "facture payée"~~ (événement inexistant, voir ci-dessus)
+- [ ] ~~Définir le secret HMAC `PENNYLANE_WEBHOOK_SECRET`~~ (sans objet tant qu'il n'y a pas de webhook)
+- [ ] À reverifier le jour où Pennylane ouvre ses webhooks en disponibilité générale : nom exact de
+      l'en-tête de signature (le code attend `x-pennylane-signature`, HMAC-SHA256 hex, jamais confronté au réel)
 
 ### Cal.com (Story 5.3)
 
