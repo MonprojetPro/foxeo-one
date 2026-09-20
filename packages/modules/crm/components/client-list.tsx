@@ -124,6 +124,24 @@ export function ClientList({ clients, onRowClick, showCreateButton = true, onlin
       id: 'company',
       header: 'Entreprise',
       accessorKey: 'company',
+      // Le badge « Démo » vit ici, collé au nom de l'entreprise, parce que
+      // c'est la colonne qu'on lit quand on parcourt la liste. Placé dans une
+      // colonne à part, il serait hors du champ de vision — or tout son intérêt
+      // est qu'un tiers à qui MiKL montre l'écran ne puisse pas prendre ces
+      // clients pour de vrais clients (T-026).
+      cell: (client) => (
+        <span className="flex items-center gap-2">
+          {client.company}
+          {client.isDemo && (
+            <Badge
+              variant="outline"
+              className="border-amber-400/40 bg-amber-400/10 text-amber-300 text-[10px] px-1.5 py-0"
+            >
+              Démo
+            </Badge>
+          )}
+        </span>
+      ),
       sortable: true,
     },
     {

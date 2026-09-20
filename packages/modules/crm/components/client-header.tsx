@@ -77,6 +77,17 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
           <h1 className="text-2xl font-bold tracking-tight leading-tight text-white">{fullName}</h1>
           <p className="text-sm font-mono text-cyan-300/70 mt-0.5">{client.company}</p>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {/* En PREMIER, avant le type et le statut : sur la fiche d'un client
+                fictif, c'est l'information qui prime sur toutes les autres.
+                Libellé complet ici — la fiche a la place, la liste non (T-026). */}
+            {client.isDemo && (
+              <Badge
+                variant="outline"
+                className="border-amber-400/40 bg-amber-400/10 text-amber-300"
+              >
+                Client de démonstration
+              </Badge>
+            )}
             <Badge variant="outline" className="border-white/15 bg-white/[0.04] text-gray-300">
               {clientTypeLabels[client.clientType] ?? client.clientType}
             </Badge>

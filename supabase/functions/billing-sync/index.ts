@@ -21,7 +21,18 @@ import {
 const MAX_CONSECUTIVE_ERRORS = 3
 const CONSECUTIVE_UNPAID_THRESHOLD = 3 // Story 11.4 — alerte critique
 const BATCH_SIZE = 100
-const PENNYLANE_BASE_URL = 'https://app.pennylane.com/api/external/v2'
+// Alignée sur les deux autres chemins d'accès à Pennylane
+// (`facturation/config/pennylane.ts` et `monthly-billing/index.ts`), qui lisent
+// tous deux `PENNYLANE_API_URL` avec ce même repli sur la production.
+//
+// Cette URL était écrite en dur ici, ce qui rendait la consigne de
+// `prod-checklist.md` — « sandbox d'abord, prod ensuite » — intenable : on
+// aurait créé les devis dans le bac à sable tout en relisant la production.
+// Vérifié le 2026-09-20 : la variable vaut bien l'URL de production, donc rien
+// ne change aujourd'hui. Le correctif évite que l'incohérence morde le jour où
+// quelqu'un voudra réellement tester en bac à sable.
+const PENNYLANE_BASE_URL =
+  Deno.env.get('PENNYLANE_API_URL') ?? 'https://app.pennylane.com/api/external/v2'
 const API_2026_HEADER = { 'X-Use-2026-API-Changes': 'true' }
 
 // ── Types locaux (pas d'import workspace en Edge Function) ────────────────────

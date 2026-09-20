@@ -49,6 +49,7 @@ export async function getClients(
         name,
         company,
         email,
+        is_demo,
         sector,
         client_type,
         status,
@@ -90,7 +91,7 @@ export async function getClients(
       console.warn('[CRM:GET_CLIENTS] Prospect columns missing — retrying without them (migration 00080 not applied)')
       let fallbackQuery = supabase
         .from('clients')
-        .select(`id, operator_id, first_name, name, company, email, sector, client_type, status, created_at, is_pinned, deferred_until, archived_at, retention_until`)
+        .select(`id, operator_id, first_name, name, company, email, sector, client_type, status, created_at, is_pinned, deferred_until, archived_at, retention_until, is_demo`)
         .eq('operator_id', operatorId)
 
       const hasStatusFilterFallback = filters?.status && filters.status.length > 0
@@ -133,6 +134,7 @@ export async function getClients(
         name: client.name,
         company: client.company,
         email: client.email ?? undefined,
+        isDemo: client.is_demo ?? false,
         sector: client.sector ?? undefined,
         clientType: client.client_type,
         status: client.status,

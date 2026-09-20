@@ -63,6 +63,13 @@ export const Client = z.object({
   createdAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true }),
   config: ClientConfig.optional(),
+  /**
+   * Client de demonstration : donnees fictives, jamais un vrai client (T-026).
+   * Optionnel a dessein — un appelant qui ne selectionne pas la colonne ne doit
+   * pas planter. En revanche l'affichage traite `undefined` comme « pas demo » :
+   * il vaut mieux oublier un badge que d'en afficher un sur un vrai client.
+   */
+  isDemo: z.boolean().optional(),
 })
 
 export type Client = z.infer<typeof Client>
@@ -90,6 +97,8 @@ export const ClientListItem = z.object({
   prospectStage: ProspectStageEnum.nullable().optional(),
   projectType: z.string().nullable().optional(),
   leadMessage: z.string().nullable().optional(),
+  /** Voir `Client.isDemo` — la liste doit marquer la demo autant que la fiche. */
+  isDemo: z.boolean().optional(),
 })
 
 export type ClientListItem = z.infer<typeof ClientListItem>
@@ -131,6 +140,7 @@ export type ClientDB = {
   previous_status?: string | null
   created_at: string
   updated_at: string
+  is_demo?: boolean
 }
 
 // Activity Log types (for client timeline/history)
