@@ -39,7 +39,9 @@ bibliotheque reutilisable (doctrine FORGE) plutot que d'etre recode. [a confirme
 
 
 
-> 4 idees en attente de tri. T-024 est un point de securite actif en production, pas une idee.
+| T-029 | **Le monitoring n'historise AUCUNE latence — on ne peut pas savoir si un service se degrade.** Constate en traitant T-027 : `health-check-cron` ecrase `system_config.health_checks` a chaque cycle (`update` sur une cle unique). Il ne reste donc **que la photo courante** ; les 273 releves d'une journee sont perdus. Consequence concrete, vecue le 20-09 : pour repondre a « est-ce que Resend est vraiment lent ? », il a fallu **deduire** l'etat depuis `activity_logs` (qui ne porte que les alertes, pas les latences) et depuis les lignes `[HEALTH:CRON] Global:` des logs Edge (qui ne portent que le statut global, jamais le chiffre). **CE QUI RESTE NON TRANCHE FAUTE DE CET HISTORIQUE** : les 3 mesures Resend post-correctif sont **1153 / 3134 / 6010 ms** depuis l'Edge Function, alors que l'API repond en **132 a 163 ms** sur 8 appels consecutifs depuis le poste de MiKL. L'API n'est donc pas lente en soi — la lenteur vient de la liaison depuis l'Edge Function **ou** du fait que la sonde reelle, avec une cle valide, fait un vrai travail de listage de domaines la ou mon `curl` a cle invalide est rejete immediatement. **Hypothese NON verifiee** : je n'ai pas la cle et je ne dois pas y toucher. Une table `health_check_history` (service, latence, statut, horodatage, purge glissante) permettrait de trancher par la mesure au lieu de l'hypothese, et de voir venir une degradation avant qu'elle n'alerte | Constat MAX pendant T-027 | 2026-09-20 | MiKL — a qualifier ; prealable a tout nouveau reglage de seuil |
+
+> 5 idees en attente de tri. T-024 est un point de securite actif en production, pas une idee.
 
 ---
 
