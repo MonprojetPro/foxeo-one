@@ -25,6 +25,9 @@ const LIMITS = {
   link_label: 40,
 } as const
 
+// Aligné sur le bucket `screenshots` et sur `serverActions.bodySizeLimit`.
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024
+
 const EMBED_BASE = 'https://menufacile.app/embed/home-banner'
 
 /** Applique les valeurs par défaut du contrat (overlay 65, texte clair…). */
@@ -122,6 +125,16 @@ export function HomeBannerTab() {
 
   const onFile = async (file: File | undefined) => {
     if (!file) return
+    // Garde-fou AVANT l'envoi : au-delà de la limite du corps des Server Actions,
+    // Next rejette la requête sans jamais exécuter l'action — l'utilisateur ne
+    // verrait rien du tout. On refuse ici, avec un message explicite.
+    if (file.size > MAX_IMAGE_SIZE) {
+      toast.error(
+        `Image trop lourde (${(file.size / 1024 / 1024).toFixed(1)} Mo) — 10 Mo maximum.`,
+      )
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
     setUploading(true)
     try {
       const fd = new FormData()
@@ -133,6 +146,11 @@ export function HomeBannerTab() {
       }
       set('image_url', res.data)
       toast.success('Image importée')
+    } catch (err) {
+      // Sans ce catch, toute erreur levée par la Server Action remontait dans le
+      // vide : le bouton redevenait normal et AUCUN message ne s'affichait.
+      console.error('[MENU-FACILE:BANNER-UPLOAD] Échec côté client:', err)
+      toast.error("L'import a échoué. Réessaie avec une image plus légère.")
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -282,6 +300,7 @@ export function HomeBannerTab() {
               Importe un fichier <em>ou</em> colle une URL. Sans image, l&apos;appli affiche un bloc
               dégradé vert→tangerine (le voile et le choix clair/sombre sont alors ignorés).
             </p>
+            <p className="text-xs text-gray-600">PNG, JPG ou WebP — 10 Mo maximum.</p>
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" onClick={onPickFile} disabled={uploading}>
                 {uploading ? (

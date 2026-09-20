@@ -11,7 +11,7 @@ import {
  * Upload de l'image de fond de l'encart d'accueil MenuFacile.
  *
  * Le fichier est stocké dans le bucket PUBLIC `screenshots` du Hub (déjà en
- * place, 5 Mo, png/jpeg/webp). On renvoie l'URL publique, que l'appli MenuFacile
+ * place, 10 Mo, png/jpeg/webp). On renvoie l'URL publique, que l'appli MenuFacile
  * affiche telle quelle via `image_url`. Rien n'est envoyé au guichet ici :
  * l'URL alimente le brouillon local, publié seulement au « Déployer ».
  *
@@ -20,7 +20,7 @@ import {
  */
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp']
-const MAX_SIZE = 5 * 1024 * 1024 // 5 Mo (aligné sur le bucket)
+const MAX_SIZE = 10 * 1024 * 1024 // 10 Mo (aligné sur le bucket `screenshots`)
 
 export async function uploadBannerImage(
   formData: FormData,
@@ -34,7 +34,7 @@ export async function uploadBannerImage(
       return errorResponse('Format non supporté. Utilisez PNG, JPG ou WebP.', 'VALIDATION_ERROR')
     }
     if (file.size > MAX_SIZE) {
-      return errorResponse('Fichier trop volumineux (max 5 Mo)', 'VALIDATION_ERROR')
+      return errorResponse('Fichier trop volumineux (max 10 Mo)', 'VALIDATION_ERROR')
     }
 
     const supabase = await createServerSupabaseClient()

@@ -9,11 +9,15 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   experimental: {
-    // Défaut Next.js = 1 Mo, trop bas pour uploadScreenshot() qui autorise
-    // jusqu'à 5 Mo (MAX_SIZE côté action) — sinon la requête est rejetée
-    // silencieusement côté client (bug signalé le 2026-08-31).
+    // Défaut Next.js = 1 Mo, trop bas pour les Server Actions d'upload — sinon
+    // la requête est rejetée silencieusement côté client (bug signalé le
+    // 2026-08-31 sur uploadScreenshot, 5 Mo).
+    // Relevé de 6 à 12 Mo le 2026-09-20 : trois actions annonçaient déjà 10 Mo
+    // (chat, elio inject-step-context, facturation justificatif) et étaient donc
+    // coupées entre 6 et 10 Mo, en mentant sur leur propre limite. La marge
+    // au-delà de 10 Mo couvre le surcoût d'encodage multipart.
     serverActions: {
-      bodySizeLimit: '6mb',
+      bodySizeLimit: '12mb',
     },
   },
   transpilePackages: [
