@@ -454,25 +454,34 @@ export function HomeBannerTab() {
               rendu exact de l&apos;appli
             </span>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40">
+          <div className="flex justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/40 py-3">
             {previewSrc ? (
               <iframe
                 key="hb-preview"
                 src={previewSrc}
                 title="Aperçu de l'encart d'accueil MenuFacile"
-                className="h-64 w-full border-0"
+                // Largeur FIXÉE à celle que la page d'embed occupe réellement dans
+                // l'appli : 480 px de carte + 2 × 18 px de marge = 516 px. Tant que
+                // l'iframe était en `w-full` (~700 px), elle étirait la page au-delà
+                // de ce que la carte peut remplir : on voyait du fond clair sur les
+                // côtés, et surtout l'image de fond était recadrée AUTREMENT que dans
+                // l'appli (`object-fit: cover` recadre selon la largeur disponible).
+                // L'aperçu montrait donc un cadrage que le client ne verra jamais.
+                // `max-w-full` garde le tout lisible sur un écran étroit.
+                className="h-[300px] w-[516px] max-w-full border-0"
                 sandbox="allow-scripts allow-same-origin"
                 loading="lazy"
               />
             ) : (
-              <div className="flex h-64 items-center justify-center">
+              <div className="flex h-[300px] w-[516px] max-w-full items-center justify-center">
                 <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
               </div>
             )}
           </div>
           <p className="text-[0.7rem] text-gray-500">
-            Cet aperçu utilise la page d&apos;embed de MenuFacile : ce que tu vois ici est
-            exactement ce que verront les utilisateurs.
+            Cet aperçu charge la page d&apos;embed de MenuFacile, à la largeur qu&apos;elle
+            occupe dans l&apos;appli. Le fond clair autour de la carte est celui de
+            MenuFacile, pas du Hub.
           </p>
         </div>
       </div>
