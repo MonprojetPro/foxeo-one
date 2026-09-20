@@ -27,6 +27,11 @@ export interface HealthCheckData {
 export function useSystemHealth() {
   const queryClient = useQueryClient()
   const [refreshing, setRefreshing] = useState(false)
+  // Échec du rafraîchissement manuel, remonté à l'écran (2026-09-20).
+  // Avant, l'erreur partait dans un console.error : le bouton « Rafraîchir » pouvait
+  // échouer sans que rien ne le dise, et l'écran restait figé sur un vieux snapshot
+  // affiché comme l'état courant. Un bouton muet rend le monitoring indiagnosticable.
+  const [refreshError, setRefreshError] = useState<string | null>(null)
 
   const query = useQuery({
     queryKey: ['system-config', 'health-checks'],
@@ -47,20 +52,28 @@ export function useSystemHealth() {
       return value as HealthCheckData
     },
     refetchInterval: 5 * 60 * 1000, // Rafraîchissement auto toutes les 5 min
+    // Sans ça, TanStack suspend le timer quand l'onglet n'a pas le focus : l'écran
+    // reste figé sur un vieux snapshot présenté comme l'état courant.
+    refetchIntervalInBackground: true,
   })
 
   async function triggerRefresh() {
     setRefreshing(true)
+    setRefreshError(null)
     try {
       const supabase = createBrowserSupabaseClient()
-      await supabase.functions.invoke('health-check-cron')
+      const { error } = await supabase.functions.invoke('health-check-cron')
+      if (error) throw error
       await queryClient.invalidateQueries({ queryKey: ['system-config', 'health-checks'] })
     } catch (err) {
       console.error('[useSystemHealth] Refresh error:', err)
+      setRefreshError(
+        err instanceof Error ? err.message : 'Échec de la vérification — état non rafraîchi.'
+      )
     } finally {
       setRefreshing(false)
     }
   }
 
-  return { ...query, triggerRefresh, refreshing }
+  return { ...query, triggerRefresh, refreshing, refreshError }
 }

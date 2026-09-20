@@ -13,9 +13,25 @@ import {
   type IncidentMap,
 } from './health-check-logic.ts'
 
+// ── CORS ──────────────────────────────────────────────────────────────────────
+// Le bouton « Rafraîchir » du Hub appelle cette fonction depuis le navigateur via
+// supabase.functions.invoke() : le navigateur envoie donc d'abord un préflight OPTIONS.
+// Sans ces en-têtes (et sans la réponse au préflight ci-dessous), le préflight
+// exécutait quand même les 9 sondes, puis le POST était bloqué par le navigateur —
+// le bouton ne rafraîchissait donc jamais l'écran. Même pattern que `elio-chat`.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 // ── Helpers de timing ─────────────────────────────────────────────────────────
 
 const DEFAULT_TIMEOUT_MS = 5000
+
+// Resend : timeout élargi (2026-09-20). L'API répond en ~1150 ms mais connaît des
+// pics ; à 5 s, l'abandon était compté comme une panne et produisait la latence
+// « 5,0 s » ronde affichée dans le Hub — un abandon, jamais une mesure.
+const RESEND_TIMEOUT_MS = 8000
 
 async function timedFetch(
   url: string,
@@ -143,9 +159,11 @@ async function checkResend(apiKey: string | undefined): Promise<ServiceCheck> {
     return { status: 'ok', latencyMs: 0, error: 'RESEND_API_KEY not configured — skipped' }
   }
   // GET /domains : lecture seule (aucun email envoyé), valide la clé + l'API Resend.
-  const { ok, latencyMs } = await timedFetch('https://api.resend.com/domains', {
-    headers: { Authorization: `Bearer ${apiKey}`, Accept: 'application/json' },
-  })
+  const { ok, latencyMs } = await timedFetch(
+    'https://api.resend.com/domains',
+    { headers: { Authorization: `Bearer ${apiKey}`, Accept: 'application/json' } },
+    RESEND_TIMEOUT_MS
+  )
   return {
     status: evaluateServiceStatus('resend', latencyMs, !ok),
     latencyMs,
@@ -234,7 +252,13 @@ async function resolveAlertNotification(
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 
-serve(async (_req: Request) => {
+serve(async (req: Request) => {
+  // Préflight CORS : répondre AVANT toute sonde. Un préflight ne doit rien exécuter
+  // ni rien écrire en base — sinon un simple clic déclenche deux cycles complets.
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const pennylaneToken = Deno.env.get('PENNYLANE_API_TOKEN')
@@ -280,7 +304,7 @@ serve(async (_req: Request) => {
 
   if (upsertError) {
     console.error('[HEALTH:CRON] Failed to upsert health_checks', upsertError)
-    return new Response('Error saving health checks', { status: 500 })
+    return new Response('Error saving health checks', { status: 500, headers: corsHeaders })
   }
 
   // 3. Réconciliation d'incidents : alerter les pannes durables (≥15 min),
@@ -347,6 +371,6 @@ serve(async (_req: Request) => {
 
   return new Response(
     JSON.stringify({ globalStatus: result.globalStatus, checkedAt: result.checkedAt }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } }
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
 })

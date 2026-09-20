@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useSystemHealth, type GlobalStatus, type ServiceStatus } from '../hooks/use-system-health'
 
 // ── Helpers visuels ────────────────────────────────────────────────────────────
@@ -41,6 +42,20 @@ function formatLatency(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
+// Un snapshot de monitoring vieux de plus de 15 min (3 cycles de 5 min manqués) n'est
+// plus l'état courant : le dire explicitement. C'est faute de cette mention qu'une photo
+// vieille d'1 h 35 a été lue comme une panne en cours le 2026-09-20.
+const STALE_AFTER_MS = 15 * 60 * 1000
+
+function formatAge(iso: string, nowMs: number): string | null {
+  const ageMs = nowMs - new Date(iso).getTime()
+  if (!Number.isFinite(ageMs) || ageMs < STALE_AFTER_MS) return null
+  const minutes = Math.floor(ageMs / 60000)
+  if (minutes < 60) return `il y a ${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  return `il y a ${hours} h ${minutes % 60} min`
+}
+
 function formatCheckedAt(iso: string): string {
   try {
     return new Intl.DateTimeFormat('fr-FR', {
@@ -56,7 +71,18 @@ function formatCheckedAt(iso: string): string {
 // ── Composant principal ────────────────────────────────────────────────────────
 
 export function SystemHealth() {
-  const { data, isPending, isError, triggerRefresh, refreshing } = useSystemHealth()
+  const { data, isPending, isError, triggerRefresh, refreshing, refreshError } =
+    useSystemHealth()
+
+  // Horloge locale : indispensable pour que la péremption du relevé s'affiche.
+  // Si le cron meurt, `checkedAt` ne change plus — TanStack renvoie alors le même
+  // objet, aucun rendu n'est déclenché, et l'avertissement n'apparaîtrait jamais.
+  // C'est précisément le cas où il sert le plus.
+  const [nowMs, setNowMs] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   if (isPending) {
     return (
@@ -88,6 +114,7 @@ export function SystemHealth() {
     : 'text-gray-400 bg-white/5 border-white/10'
   const bannerDot = hasData ? STATUS_DOT[globalStatus] : 'bg-gray-500'
   const bannerLabel = hasData ? STATUS_LABEL[globalStatus] : 'Inconnu'
+  const staleAge = hasData ? formatAge(checkedAt!, nowMs) : null
 
   const serviceEntries = Object.entries(SERVICE_DISPLAY).map(([key, label]) => ({
     key,
@@ -114,6 +141,11 @@ export function SystemHealth() {
                 ? `Dernière vérification : ${formatCheckedAt(checkedAt!)}`
                 : 'Jamais vérifié — lance une vérification.'}
             </p>
+            {hasData && staleAge && (
+              <p className="text-xs text-yellow-400" role="status">
+                Relevé daté de {staleAge} — ce n&apos;est plus l&apos;état courant.
+              </p>
+            )}
           </div>
         </div>
         <button
@@ -126,6 +158,17 @@ export function SystemHealth() {
           {refreshing ? 'Vérification...' : 'Rafraîchir'}
         </button>
       </div>
+
+      {/* Échec du rafraîchissement manuel — jamais silencieux : sans ce message,
+          l'écran garde son ancien relevé et rien ne signale qu'il n'a pas bougé. */}
+      {refreshError && (
+        <div
+          role="alert"
+          className="rounded border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-400"
+        >
+          Échec de la vérification — l&apos;état affiché n&apos;a pas été rafraîchi. {refreshError}
+        </div>
+      )}
 
       {/* Tableau des services */}
       <div className="rounded border border-white/10 overflow-hidden">

@@ -161,4 +161,50 @@ describe('SystemHealth', () => {
     render(<SystemHealth />)
     expect(screen.getByText(/Impossible de charger les données de monitoring/i)).toBeTruthy()
   })
+
+  // ── Péremption du relevé et échec du rafraîchissement (2026-09-20) ───────────
+  // Ces trois tests verrouillent ce qui a trompé MiKL le 2026-09-20 : un relevé
+  // vieux d'1 h 35 affiché comme l'état courant, parce que le bouton « Rafraîchir »
+  // échouait en silence et que rien ne datait la photo.
+
+  it('avertit quand le relevé est périmé (> 15 min) — une photo n\'est pas l\'état courant', () => {
+    vi.mocked(useSystemHealthModule.useSystemHealth).mockReturnValue({
+      data: { ...mockHealthData, checkedAt: new Date(Date.now() - 95 * 60 * 1000).toISOString() },
+      isPending: false,
+      isError: false,
+      triggerRefresh: mockTriggerRefresh,
+      refreshing: false,
+    } as ReturnType<typeof useSystemHealthModule.useSystemHealth>)
+
+    render(<SystemHealth />)
+    expect(screen.getByText(/Relevé daté de il y a 1 h 35 min/i)).toBeTruthy()
+    expect(screen.getByText(/plus l'état courant/i)).toBeTruthy()
+  })
+
+  it('n\'avertit PAS quand le relevé est frais (< 15 min)', () => {
+    vi.mocked(useSystemHealthModule.useSystemHealth).mockReturnValue({
+      data: { ...mockHealthData, checkedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString() },
+      isPending: false,
+      isError: false,
+      triggerRefresh: mockTriggerRefresh,
+      refreshing: false,
+    } as ReturnType<typeof useSystemHealthModule.useSystemHealth>)
+
+    render(<SystemHealth />)
+    expect(screen.queryByText(/plus l'état courant/i)).toBeNull()
+  })
+
+  it('affiche l\'échec du rafraîchissement manuel — jamais silencieux', () => {
+    vi.mocked(useSystemHealthModule.useSystemHealth).mockReturnValue({
+      data: mockHealthData,
+      isPending: false,
+      isError: false,
+      triggerRefresh: mockTriggerRefresh,
+      refreshing: false,
+      refreshError: 'Failed to send a request to the Edge Function',
+    } as ReturnType<typeof useSystemHealthModule.useSystemHealth>)
+
+    render(<SystemHealth />)
+    expect(screen.getByRole('alert').textContent).toMatch(/n'a pas été rafraîchi/i)
+  })
 })

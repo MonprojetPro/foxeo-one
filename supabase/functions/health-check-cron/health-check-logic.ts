@@ -34,7 +34,12 @@ export const THRESHOLDS: Record<string, { warn: number; error: number }> = {
   // Apps Vercel (Hub + client) : SSR + middleware + cold start possibles → seuils larges.
   vercel_hub: { warn: 3000, error: 8000 },
   vercel_client: { warn: 3000, error: 8000 },
-  resend: { warn: 1500, error: 3000 },
+  // Recalibré 2026-09-20 : l'API Resend (GET /domains) répond normalement en
+  // ~1150 ms depuis l'Edge Function. Les anciens seuils (1500/3000) laissaient le
+  // service vivre à 77 % de son seuil d'alerte — le moindre pic le faisait basculer
+  // en « error », soit 17 fausses alertes en 30 jours (seul service concerné, mesuré
+  // dans activity_logs). Une vraie panne reste détectée via le timeout (8 s → error).
+  resend: { warn: 2500, error: 5000 },
 }
 
 // Durée minimale d'erreur CONTINUE avant d'alerter (2026-07-11 — anti-fantôme).

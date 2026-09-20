@@ -42,6 +42,30 @@ describe('evaluateServiceStatus', () => {
   it('retourne "degraded" pour service inconnu avec latence > 2000ms', () => {
     expect(evaluateServiceStatus('unknown_service', 2500, false)).toBe('degraded')
   })
+
+  // Recalibrage Resend du 2026-09-20 (seuils 1500/3000 -> 2500/5000).
+  // Verrouille la marge : la latence nominale mesurée en production ne doit plus
+  // vivre à 77 % du seuil d'alerte. C'est l'absence de ces tests qui a laissé
+  // 17 fausses alertes passer en 30 jours sans qu'aucune suite ne le signale.
+  it('retourne "ok" pour Resend à sa latence nominale mesurée en prod (1153ms)', () => {
+    expect(evaluateServiceStatus('resend', 1153, false)).toBe('ok')
+  })
+
+  it('retourne "ok" pour Resend jusqu\'au seuil warn (2500ms)', () => {
+    expect(evaluateServiceStatus('resend', 2499, false)).toBe('ok')
+  })
+
+  it('retourne "degraded" pour Resend entre 2500ms et 5000ms', () => {
+    expect(evaluateServiceStatus('resend', 3000, false)).toBe('degraded')
+  })
+
+  it('retourne "error" pour Resend >= 5000ms', () => {
+    expect(evaluateServiceStatus('resend', 5000, false)).toBe('error')
+  })
+
+  it('retourne "error" pour Resend en cas d\'échec réseau, quelle que soit la latence', () => {
+    expect(evaluateServiceStatus('resend', 120, true)).toBe('error')
+  })
 })
 
 describe('determineGlobalStatus', () => {
