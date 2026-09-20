@@ -25,7 +25,15 @@ export async function compressImageIfPossible(file: File): Promise<File> {
   }
 
   try {
-    const bitmap = await createImageBitmap(file)
+    // `imageOrientation: 'from-image'` est OBLIGATOIRE ici (ajouté 2026-09-20).
+    // Par défaut, `createImageBitmap` ignore l'orientation EXIF : une photo
+    // prise en portrait avec un téléphone est stockée en paysage + un drapeau
+    // de rotation. Le navigateur applique ce drapeau à l'affichage, mais le
+    // canvas dessine les pixels bruts — donc la version compressée ressortait
+    // COUCHÉE, alors que l'aperçu avant envoi était droit. Le symptôme est
+    // sournois : seules les photos de téléphone sont touchées, jamais les
+    // captures d'écran, sur lesquelles la brique avait été mise au point.
+    const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
     const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height))
     const width = Math.round(bitmap.width * scale)
     const height = Math.round(bitmap.height * scale)

@@ -12,6 +12,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { Button, Input, Label, Switch, Textarea, toast } from '@monprojetpro/ui'
+import { compressImageIfPossible } from '@monprojetpro/utils'
 import { useHomeBanner, useHomeBannerActions } from '../hooks/use-home-banner'
 import { uploadBannerImage } from '../actions/upload-banner-image'
 import type { HomeBanner, HomeBannerInput, BannerTextColor } from '../types'
@@ -123,20 +124,27 @@ export function HomeBannerTab() {
 
   const onPickFile = () => fileRef.current?.click()
 
-  const onFile = async (file: File | undefined) => {
-    if (!file) return
-    // Garde-fou AVANT l'envoi : au-delà de la limite du corps des Server Actions,
-    // Next rejette la requête sans jamais exécuter l'action — l'utilisateur ne
-    // verrait rien du tout. On refuse ici, avec un message explicite.
-    if (file.size > MAX_IMAGE_SIZE) {
-      toast.error(
-        `Image trop lourde (${(file.size / 1024 / 1024).toFixed(1)} Mo) — 10 Mo maximum.`,
-      )
-      if (fileRef.current) fileRef.current.value = ''
-      return
-    }
+  const onFile = async (original: File | undefined) => {
+    if (!original) return
     setUploading(true)
     try {
+      // Compression CÔTÉ NAVIGATEUR avant l'envoi (1920 px max, WebP 0.82), la
+      // même brique que les pièces jointes des messages. Une capture d'écran de
+      // 2,7 Mo tombe à quelques centaines de Ko : moins de stockage, et surtout
+      // une bannière qui s'affiche vite chez le client de MenuFacile.
+      const file = await compressImageIfPossible(original)
+
+      // Garde-fou APRÈS compression : au-delà de la limite du corps des Server
+      // Actions, Next rejette la requête sans jamais exécuter l'action —
+      // l'utilisateur ne verrait rien du tout. Placé ici et non avant, sinon on
+      // refuserait une image que la compression aurait fait passer sans peine.
+      if (file.size > MAX_IMAGE_SIZE) {
+        toast.error(
+          `Image trop lourde (${(file.size / 1024 / 1024).toFixed(1)} Mo) — 10 Mo maximum.`,
+        )
+        return
+      }
+
       const fd = new FormData()
       fd.append('image', file)
       const res = await uploadBannerImage(fd)
