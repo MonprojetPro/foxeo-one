@@ -979,3 +979,55 @@
   (e) `signOut({ scope: 'local' })` et jamais le scope global : le global révoque les refresh tokens de **toutes** les sessions du compte (le piège d'avril 2026).
 - **Regle a suivre** : distinguer « le 2FA est-il exigé ? » de « une session est-elle en cours ? ». Un mécanisme d'authentification fort ne vaut que par la fréquence à laquelle il est rejoué — vérifier la **durée de vie** des sessions fait partie de l'audit d'un 2FA, pas d'un sujet séparé.
 - **Agents impliques** : MAX, CERBÈRE, ATLAS
+
+---
+
+## 2026-09-20 — Un plafond de plateforme rejette AVANT ton code : il n'y a rien à déboguer dans ton code
+
+**Symptôme.** MiKL : « je choisis le fichier, je clique Importer, et après rien ». Pas d'image, pas de
+message d'erreur, le bouton redevient simplement normal.
+
+**Ce qui a fait perdre du temps au diagnostic classique.** Tout ce qu'on vérifie d'ordinaire était
+correct, et le confirmer ne rapprochait d'aucune réponse : le bucket `screenshots` existe, il est
+public, sa policy d'écriture est bonne, le `Toaster` est monté, le code est déployé, les autres
+Server Actions du même module fonctionnent. Un diagnostic qui ne trouve que des feux verts doit
+faire **changer de plan d'observation**, pas relire le même code une fois de plus.
+
+**Ce qui a tranché — la donnée, pas le code.** Zéro objet `menu-facile-banner-*` dans le bucket.
+Donc la requête n'atteignait jamais Supabase. Le problème était **en amont de l'action**, là où
+aucun `console.log` de l'action n'aurait jamais rien montré.
+
+**Cause racine.** Next.js plafonne le corps des Server Actions à **1 Mo par défaut**
+(`experimental.serverActions.bodySizeLimit`). Au-delà, il rejette la requête **avant d'exécuter
+l'action** : pas de log serveur, pas de réponse `{ data, error }`, rien. Une image de bannière
+dépasse ce seuil presque toujours ; un logo de 70 Ko passe. C'est cette asymétrie qui a permis à
+MiKL de confirmer la cause racine en trente secondes, avant tout correctif.
+
+**Le défaut qui a réellement coûté cher n'est pas le plafond.** Le handler portait
+`try { … } finally { … }` **sans `catch`**. L'exception levée par Next ne remontait nulle part : le
+`finally` remettait le bouton en état normal et l'utilisateur voyait « rien ».
+➡️ **Un plafond qui refuse bruyamment est un bug de cinq minutes. Un plafond qui refuse en silence
+est une soirée perdue.** Sur toute fonction qui envoie un fichier, l'absence de `catch` n'est pas un
+oubli de style : c'est ce qui transforme une erreur en énigme.
+
+**Ce que l'inspection des consumers a révélé, et qui est le vrai sujet.** Le même correctif avait
+**déjà été appliqué sur `apps/client` le 2026-08-31**, avec un commentaire qui décrit exactement le
+même symptôme (« rejetée silencieusement côté client »). Il n'a jamais été reporté sur `apps/hub`.
+Trois semaines plus tard, même bug, autre app, rediagnostiqué de zéro. Pire : le plafond du client
+était figé à `6mb` alors que **trois** de ses actions annoncent 10 Mo — donc il **mentait sur sa
+propre limite**, et tout fichier entre 6 et 10 Mo y était refusé en silence après avoir passé la
+validation qui l'autorisait.
+
+**Les trois règles à retenir :**
+
+1. **Une limite existe à trois endroits qui doivent s'accorder** : le plafond de la plateforme
+   (`bodySizeLimit`), la validation de l'action (`MAX_SIZE`), et le bucket (`file_size_limit`).
+   Le plus bas des trois gagne — et c'est presque toujours celui qu'on n'a pas écrit.
+2. **La limite doit être annoncée dans l'interface.** Une limite qu'on ne peut découvrir qu'en la
+   heurtant n'est pas une limite, c'est un piège.
+3. **Un correctif de configuration d'app se reporte sur TOUTES les apps du monorepo, le jour même.**
+   `apps/hub` et `apps/client` ont chacun leur `next.config.ts` : rien ne propage, rien n'alerte.
+
+**Reste ouvert (T-030a)** : `upload-document` n'impose aucune limite de taille, ni dans l'action ni
+dans le bucket `documents` (`file_size_limit: null`). Il échouera de la même manière muette au-delà
+du plafond.
