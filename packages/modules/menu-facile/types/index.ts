@@ -468,3 +468,38 @@ export interface OfficialRecipeInput {
   ingredients?: RecipeIngredientInput[]
   steps?: RecipeStepInput[]
 }
+
+// ── Notifications in-app (T-033) ──────────────────────────────────────────
+// Contrat arrêté avec la session MenuFacile le 2026-09-21, après état des lieux.
+//
+// ⚠️ `channel` ne vaut QUE 'in_app' : l'appli est une PWA qui ne collecte AUCUN
+// jeton d'appareil et dont le service worker n'a pas de handler push. Le guichet
+// répond 400 sur 'push' / 'both' — un faux succès serait pire que le refus.
+
+/** Une notification diffusée aux utilisateurs de l'appli MenuFacile. */
+export interface MenuFacileNotification {
+  id: string
+  title: string
+  body: string
+  link_url?: string
+  /** Seule valeur aujourd'hui : « all ». Le ciblage viendra plus tard. */
+  audience: 'all'
+  channel: 'in_app'
+  /** Nombre RÉEL de destinataires touchés, rendu par le guichet à l'envoi. */
+  recipients: number
+  sent_at: string
+}
+
+/** Corps POST /notifications. */
+export interface MenuFacileNotificationInput {
+  title: string
+  body: string
+  link_url?: string
+  audience: 'all'
+  channel: 'in_app'
+}
+
+/** Réponse GET /notifications/audience-count. */
+export interface NotificationAudienceCount {
+  count: number
+}

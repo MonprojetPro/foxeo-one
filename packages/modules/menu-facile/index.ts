@@ -14,6 +14,7 @@ export { ContactAttachments } from './components/contact-attachments'
 export { RecipeFormModal } from './components/recipe-form-modal'
 export { MetricCard } from './components/metric-card'
 export { HomeBannerTab } from './components/home-banner-tab'
+export { NotificationsTab } from './components/notifications-tab'
 
 // Data
 export { useMenuFacileMetrics } from './hooks/use-menu-facile-metrics'
@@ -24,6 +25,11 @@ export { getUsers } from './actions/users'
 export { useHouseholdsDistribution, useRetentionCohorts } from './hooks/use-insights'
 export { getHouseholdsDistribution, getRetentionCohorts } from './actions/get-insights'
 export { useHomeBanner, useHomeBannerActions } from './hooks/use-home-banner'
+export {
+  useNotifications,
+  useNotificationAudienceCount,
+  useNotificationActions,
+} from './hooks/use-notifications'
 export { useReports, useModerationActions, useRecipeFull } from './hooks/use-moderation'
 export { useContactMessages, useContactThread, useContactActions } from './hooks/use-contact-messages'
 export { useOfficialRecipes, useOfficialRecipe, useOfficialRecipeActions } from './hooks/use-official-recipes'
@@ -52,6 +58,12 @@ export {
   deleteOfficialRecipe,
 } from './actions/official-recipes'
 export { getHomeBanner, updateHomeBanner } from './actions/home-banner'
+export {
+  getNotifications,
+  getNotificationAudienceCount,
+  sendNotification,
+  deleteNotification,
+} from './actions/notifications'
 export { uploadBannerImage } from './actions/upload-banner-image'
 
 // Types (le helper serveur `callMenuFacileAdmin` n'est PAS ré-exporté : server-only).
@@ -82,6 +94,9 @@ export type {
   OfficialRecipeInput,
   HomeBanner,
   HomeBannerInput,
+  MenuFacileNotification,
+  MenuFacileNotificationInput,
+  NotificationAudienceCount,
   BannerTextColor,
   HouseholdListItem,
   HouseholdStatus,

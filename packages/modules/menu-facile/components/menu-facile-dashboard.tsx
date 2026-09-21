@@ -9,6 +9,7 @@ import {
   Megaphone,
   Home,
   Users,
+  Bell,
   type LucideIcon,
 } from 'lucide-react'
 import { useMenuFacileMetrics } from '../hooks/use-menu-facile-metrics'
@@ -19,6 +20,7 @@ import { ModerationTab } from './moderation-tab'
 import { RecipesTab } from './recipes-tab'
 import { MessagesTab } from './messages-tab'
 import { HomeBannerTab } from './home-banner-tab'
+import { NotificationsTab } from './notifications-tab'
 
 type TabKey =
   | 'metrics'
@@ -28,6 +30,7 @@ type TabKey =
   | 'recipes'
   | 'messages'
   | 'home-banner'
+  | 'notifications'
 
 const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'metrics', label: 'Tableau de bord', icon: LayoutDashboard },
@@ -37,6 +40,9 @@ const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'recipes', label: 'Recettes officielles', icon: ChefHat },
   { key: 'messages', label: 'Messages', icon: MessagesSquare },
   { key: 'home-banner', label: 'Encart d\'accueil', icon: Megaphone },
+  // Placé juste après l'encart : ce sont les deux canaux de diffusion, l'un
+  // passif (visible à l'ouverture), l'autre actif (va chercher l'utilisateur).
+  { key: 'notifications', label: 'Notifications', icon: Bell },
 ]
 
 /** Point de statut du guichet admin-api (live / injoignable / connexion). */
@@ -171,6 +177,7 @@ export function MenuFacileDashboard() {
       {tab === 'recipes' && <RecipesTab />}
       {tab === 'messages' && <MessagesTab />}
       {tab === 'home-banner' && <HomeBannerTab />}
+      {tab === 'notifications' && <NotificationsTab />}
     </div>
   )
 }
