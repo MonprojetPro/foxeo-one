@@ -78,6 +78,7 @@ export { useNotifications, useMarkNotificationRead, useImportCsv } from './hooks
 // Actions
 export { getClients } from './actions/get-clients'
 export { createClient } from './actions/create-client'
+export { lookupSiret } from './actions/lookup-siret'
 export { updateClient } from './actions/update-client'
 export { getClient } from './actions/get-client'
 export { getActivityLogs } from './actions/get-activity-logs'

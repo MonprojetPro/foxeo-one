@@ -5,6 +5,7 @@ import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
+import { createPennylaneCustomer } from './billing-proxy'
 import type { ActionResponse } from '@monprojetpro/types'
 import type { LineItem, PennylaneQuote, CreateQuoteOptions } from '../types/billing.types'
 
@@ -51,16 +52,18 @@ export async function createAndSendQuote(
         error: { message: 'Email client manquant — impossible de créer le compte Pennylane', code: 'MISSING_EMAIL' },
       }
     }
-    const customerResult = await pennylaneClient.post<{ id: number }>('/company_customers', {
-      name: (client.company as string | null) ?? (client.name as string),
-      emails: [clientEmail],
-      billing_address: { address: '', postal_code: '', city: '', country_alpha2: 'FR' },
-    })
+    // T-035 — passe par la brique commune : elle reprend l'adresse de facturation
+    // de la fiche client (remplie par le SIRET) et enregistre l'identifiant en base.
+    // Le bloc inline d'avant envoyait toujours une adresse vide.
+    const customerResult = await createPennylaneCustomer(
+      clientId,
+      (client.company as string | null) ?? (client.name as string),
+      clientEmail,
+    )
     if (customerResult.error || !customerResult.data) {
       return { data: null, error: customerResult.error ?? { message: 'Échec création Pennylane', code: 'PENNYLANE_ERROR' } }
     }
-    pennylaneCustomerId = String(customerResult.data.id)
-    await supabase.from('clients').update({ pennylane_customer_id: pennylaneCustomerId }).eq('id', clientId)
+    pennylaneCustomerId = customerResult.data
   }
 
   // Deadline = aujourd'hui + 30 jours

@@ -3,6 +3,8 @@ import { createClientSchema, updateClientSchema } from '@monprojetpro/utils'
 
 // Client type enums
 export const ClientTypeEnum = z.enum(['complet', 'direct_one', 'ponctuel'])
+/** T-035 — nature du client : personne physique ou personne morale. */
+export const ClientKindEnum = z.enum(['individual', 'entity'])
 // Miroir du CHECK `clients_status_check` en base. Les 3 derniers y existaient déjà sans
 // être listés ici : `ClientSchema.parse()` (get-client) LEVAIT sur un client résilié,
 // transféré ou archivé Lab — la fiche Hub devenait inaccessible.
@@ -49,6 +51,19 @@ export const Client = z.object({
   firstName: z.string().optional(),
   name: z.string().min(1, 'Le nom est requis'),
   company: z.string().nullable().optional(),
+  /**
+   * T-035 — personne physique ou morale. Optionnel : un appelant qui ne
+   * sélectionne pas la colonne ne doit pas faire échouer le parse, et une
+   * valeur absente se lit comme « particulier » (le comportement historique).
+   */
+  clientKind: ClientKindEnum.optional(),
+  /** Nom du contact chez une entité — n'apparaît JAMAIS en facturation. */
+  contact: z.string().nullable().optional(),
+  siret: z.string().nullable().optional(),
+  nafCode: z.string().nullable().optional(),
+  billingAddress: z.string().nullable().optional(),
+  billingPostalCode: z.string().nullable().optional(),
+  billingCity: z.string().nullable().optional(),
   email: z.string().email('Email invalide'),
   clientType: ClientTypeEnum,
   status: ClientStatusEnum,
@@ -74,6 +89,23 @@ export const Client = z.object({
 
 export type Client = z.infer<typeof Client>
 export type ClientType = z.infer<typeof ClientTypeEnum>
+export type ClientKind = z.infer<typeof ClientKindEnum>
+
+/** Résultat du rapprochement SIRET (T-035) — voir `actions/lookup-siret.ts`. */
+export const SiretLookupResult = z.object({
+  siret: z.string(),
+  siren: z.string().optional(),
+  companyName: z.string().optional(),
+  address: z.string().optional(),
+  postalCode: z.string().optional(),
+  city: z.string().optional(),
+  nafCode: z.string().optional(),
+  sector: z.string().optional(),
+  /** Établissement administrativement fermé — on prévient, on ne bloque pas. */
+  closed: z.boolean().optional(),
+})
+
+export type SiretLookupResult = z.infer<typeof SiretLookupResult>
 export type ClientStatus = z.infer<typeof ClientStatusEnum>
 export type ProspectStage = z.infer<typeof ProspectStageEnum>
 
@@ -83,6 +115,9 @@ export const ClientListItem = z.object({
   firstName: z.string().optional(),
   name: z.string(),
   company: z.string().nullable().optional(),
+  /** Voir `Client.clientKind` — la liste doit pouvoir distinguer une entité. */
+  clientKind: ClientKindEnum.optional(),
+  contact: z.string().nullable().optional(),
   email: z.string().optional(),
   sector: z.string().optional(),
   clientType: ClientTypeEnum,

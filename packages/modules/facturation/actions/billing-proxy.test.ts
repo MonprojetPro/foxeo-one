@@ -43,6 +43,13 @@ function makeSupabaseMock(isOperator = true) {
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ error: null }),
       }),
+      // T-035 — createPennylaneCustomer relit l'adresse de facturation de la fiche
+      // client quand l'appelant ne la fournit pas. Fiche sans adresse ici.
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
     }),
   }
 }

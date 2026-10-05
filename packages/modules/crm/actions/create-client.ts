@@ -46,7 +46,31 @@ export async function createClient(
       return errorResponse(firstError, 'VALIDATION_ERROR', parsed.error.issues)
     }
 
-    const { firstName, name, email, company, phone, sector, clientType } = parsed.data
+    const {
+      clientKind,
+      firstName,
+      name,
+      email,
+      company,
+      contact,
+      siret,
+      nafCode,
+      billingAddress,
+      billingPostalCode,
+      billingCity,
+      phone,
+      sector,
+      clientType,
+    } = parsed.data
+
+    const isEntity = clientKind === 'entity'
+
+    // Pour une entité, l'identité EST la raison sociale : `name` et `company`
+    // portent la même valeur, de sorte que tout l'affichage existant (en-tête,
+    // liste, emails) et la facturation Pennylane montrent la bonne chose sans
+    // avoir à connaître la distinction. Le prénom n'a pas de sens ici.
+    const identityName = (isEntity ? company : name)?.trim() ?? ''
+    const companyName = isEntity ? identityName : company?.trim() || identityName
 
     // Check email uniqueness per operator
     const { data: existing, error: emailCheckError } = await supabase
@@ -73,10 +97,18 @@ export async function createClient(
       .from('clients')
       .insert({
         operator_id: operatorId,
-        first_name: firstName || null,
-        name,
+        client_kind: clientKind,
+        first_name: isEntity ? null : firstName || null,
+        name: identityName,
         email,
-        company: company || name,
+        company: companyName,
+        contact: isEntity ? contact || null : null,
+        siret: siret || null,
+        naf_code: nafCode || null,
+        billing_address: billingAddress || null,
+        billing_postal_code: billingPostalCode || null,
+        billing_city: billingCity || null,
+        billing_country_alpha2: billingAddress ? 'FR' : null,
         phone: phone ?? null,
         sector: sector ?? null,
         client_type: clientType,
@@ -117,6 +149,13 @@ export async function createClient(
       firstName: clientData.first_name ?? undefined,
       name: clientData.name,
       company: clientData.company,
+      clientKind: clientData.client_kind ?? 'individual',
+      contact: clientData.contact ?? undefined,
+      siret: clientData.siret ?? undefined,
+      nafCode: clientData.naf_code ?? undefined,
+      billingAddress: clientData.billing_address ?? undefined,
+      billingPostalCode: clientData.billing_postal_code ?? undefined,
+      billingCity: clientData.billing_city ?? undefined,
       email: clientData.email,
       clientType: clientData.client_type,
       status: clientData.status,
@@ -135,7 +174,7 @@ export async function createClient(
       action: 'client_created',
       entity_type: 'client',
       entity_id: clientData.id,
-      metadata: { client_type: clientType, name, company },
+      metadata: { client_type: clientType, client_kind: clientKind, name: identityName, company: companyName },
     }).then(({ error: logError }) => {
       if (logError) console.error('[CRM:CREATE] Activity log error:', logError)
     }).catch(() => {})

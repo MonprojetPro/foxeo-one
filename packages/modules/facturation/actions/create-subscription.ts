@@ -4,6 +4,7 @@ import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
+import { createPennylaneCustomer } from './billing-proxy'
 import {
   PLAN_MONTHLY_PRICE,
   PLAN_LABEL,
@@ -69,16 +70,17 @@ export async function createSubscription(
         error: { message: 'Email client manquant — impossible de créer le compte Pennylane', code: 'MISSING_EMAIL' },
       }
     }
-    const customerResult = await pennylaneClient.post<{ id: number }>('/company_customers', {
-      name: (client.company as string | null) ?? (client.name as string),
-      emails: [clientEmail],
-      billing_address: { address: '', postal_code: '', city: '', country_alpha2: 'FR' },
-    })
+    // T-035 — même brique commune que les devis et la facture Lab : adresse de
+    // facturation reprise de la fiche client au lieu d'une adresse vide.
+    const customerResult = await createPennylaneCustomer(
+      input.clientId,
+      (client.company as string | null) ?? (client.name as string),
+      clientEmail,
+    )
     if (customerResult.error || !customerResult.data) {
       return { data: null, error: customerResult.error ?? { message: 'Échec création Pennylane', code: 'PENNYLANE_ERROR' } }
     }
-    pennylaneCustomerId = String(customerResult.data.id)
-    await supabase.from('clients').update({ pennylane_customer_id: pennylaneCustomerId }).eq('id', input.clientId)
+    pennylaneCustomerId = customerResult.data
   }
 
   // Construire les line_items — grille v2 : une seule ligne (plus d'extras)

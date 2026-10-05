@@ -69,6 +69,13 @@ export type Database = {
           first_name: string | null
           company: string | null
           contact: string | null
+          client_kind: 'individual' | 'entity' | null
+          siret: string | null
+          naf_code: string | null
+          billing_address: string | null
+          billing_postal_code: string | null
+          billing_city: string | null
+          billing_country_alpha2: string | null
           phone: string | null
           sector: string | null
           client_type: 'complet' | 'direct_one' | 'ponctuel'
@@ -102,6 +109,13 @@ export type Database = {
           first_name?: string | null
           company?: string | null
           contact?: string | null
+          client_kind?: 'individual' | 'entity' | null
+          siret?: string | null
+          naf_code?: string | null
+          billing_address?: string | null
+          billing_postal_code?: string | null
+          billing_city?: string | null
+          billing_country_alpha2?: string | null
           phone?: string | null
           sector?: string | null
           client_type: 'complet' | 'direct_one' | 'ponctuel'
@@ -135,6 +149,13 @@ export type Database = {
           first_name?: string | null
           company?: string | null
           contact?: string | null
+          client_kind?: 'individual' | 'entity' | null
+          siret?: string | null
+          naf_code?: string | null
+          billing_address?: string | null
+          billing_postal_code?: string | null
+          billing_city?: string | null
+          billing_country_alpha2?: string | null
           phone?: string | null
           sector?: string | null
           client_type?: 'complet' | 'direct_one' | 'ponctuel'

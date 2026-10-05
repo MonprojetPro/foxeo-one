@@ -101,7 +101,12 @@ export function ClientList({ clients, onRowClick, showCreateButton = true, onlin
         <div className="flex items-center gap-2">
           {/* AC4 (Story 3.5): Realtime presence dot next to client name */}
           <PresenceDot isOnline={onlineSet.has(client.id)} clientId={client.id} />
-          <span>{client.firstName ? `${client.firstName} ${client.name}` : client.name}</span>
+          {/* Une entité n'a pas de prénom : son identité est sa raison sociale. */}
+          <span>
+            {client.clientKind !== 'entity' && client.firstName
+              ? `${client.firstName} ${client.name}`
+              : client.name}
+          </span>
           {isNewProspect(client) && (
             <Badge
               variant="default"

@@ -89,9 +89,19 @@ export function EditClientDialog({
           onSubmit={handleSubmit}
           onCancel={() => setOpen(false)}
           defaultValues={{
+            clientKind: client.clientKind ?? 'individual',
+            // `firstName` manquait ici : le formulaire repartait donc d'une chaîne
+            // vide et l'enregistrement effaçait le prénom du client sans le dire.
+            firstName: client.firstName ?? '',
             name: client.name,
             email: client.email,
-            company: client.company,
+            company: client.company ?? '',
+            contact: client.contact ?? '',
+            siret: client.siret ?? '',
+            nafCode: client.nafCode ?? '',
+            billingAddress: client.billingAddress ?? '',
+            billingPostalCode: client.billingPostalCode ?? '',
+            billingCity: client.billingCity ?? '',
             phone: client.phone,
             sector: client.sector,
             clientType: client.clientType,

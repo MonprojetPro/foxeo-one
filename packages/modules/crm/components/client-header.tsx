@@ -39,7 +39,16 @@ function getInitials(name: string): string {
 
 export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot }: ClientHeaderProps) {
   const { navigateToTab } = useClientTabNav()
-  const fullName = client.firstName ? `${client.firstName} ${client.name}` : client.name
+  const isEntity = client.clientKind === 'entity'
+  const fullName = !isEntity && client.firstName ? `${client.firstName} ${client.name}` : client.name
+  const subtitle = isEntity
+    ? [
+        client.contact ? `Contact : ${client.contact}` : null,
+        client.siret ? `SIRET ${client.siret}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : client.company
   const creationDate = format(new Date(client.createdAt), 'd MMMM yyyy', { locale: fr })
   const initials = getInitials(fullName)
 
@@ -75,7 +84,12 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
         {/* Infos identité */}
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold tracking-tight leading-tight text-white">{fullName}</h1>
-          <p className="text-sm font-mono text-cyan-300/70 mt-0.5">{client.company}</p>
+          {/* Pour une entité, `name` et `company` portent la même raison sociale :
+              on montre le contact et le SIRET plutôt qu'un doublon du titre.
+              Rien à dire (entité sans contact ni SIRET) = pas de ligne vide. */}
+          {subtitle && (
+            <p className="text-sm font-mono text-cyan-300/70 mt-0.5">{subtitle}</p>
+          )}
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             {/* En PREMIER, avant le type et le statut : sur la fiche d'un client
                 fictif, c'est l'information qui prime sur toutes les autres.

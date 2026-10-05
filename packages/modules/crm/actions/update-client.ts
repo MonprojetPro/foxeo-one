@@ -116,13 +116,39 @@ export async function updateClient(
 
     // Build snake_case update payload
     const dbUpdate: Record<string, unknown> = {}
-    if (updateData.firstName !== undefined) dbUpdate.first_name = updateData.firstName || null
-    if (updateData.name !== undefined) dbUpdate.name = updateData.name
     if (updateData.email !== undefined) dbUpdate.email = updateData.email
-    if (updateData.company !== undefined) dbUpdate.company = updateData.company
     if (updateData.phone !== undefined) dbUpdate.phone = updateData.phone
     if (updateData.sector !== undefined) dbUpdate.sector = updateData.sector
     if (updateData.clientType !== undefined) dbUpdate.client_type = updateData.clientType
+    if (updateData.clientKind !== undefined) dbUpdate.client_kind = updateData.clientKind
+    if (updateData.siret !== undefined) dbUpdate.siret = updateData.siret || null
+    if (updateData.nafCode !== undefined) dbUpdate.naf_code = updateData.nafCode || null
+    if (updateData.billingAddress !== undefined) dbUpdate.billing_address = updateData.billingAddress || null
+    if (updateData.billingPostalCode !== undefined) dbUpdate.billing_postal_code = updateData.billingPostalCode || null
+    if (updateData.billingCity !== undefined) dbUpdate.billing_city = updateData.billingCity || null
+    if (updateData.billingAddress) dbUpdate.billing_country_alpha2 = 'FR'
+
+    // Identité — même règle qu'à la création (T-035) : pour une entité, `name` et
+    // `company` portent tous deux la raison sociale, le prénom est vidé et le
+    // contact est conservé à part (il ne part jamais en facturation).
+    // Seul un appelant qui déclare explicitement `clientKind: 'entity'` bascule
+    // dans ce mode — pas de devinette sur les champs présents : un appelant
+    // historique qui ne connaît pas la notion garde exactement son comportement.
+    const isEntity = updateData.clientKind === 'entity'
+
+    if (isEntity) {
+      if (updateData.company !== undefined) {
+        dbUpdate.company = updateData.company
+        dbUpdate.name = updateData.company
+      }
+      if (updateData.contact !== undefined) dbUpdate.contact = updateData.contact || null
+      if (updateData.clientKind !== undefined) dbUpdate.first_name = null
+    } else {
+      if (updateData.firstName !== undefined) dbUpdate.first_name = updateData.firstName || null
+      if (updateData.name !== undefined) dbUpdate.name = updateData.name
+      if (updateData.company !== undefined) dbUpdate.company = updateData.company
+      if (updateData.contact !== undefined) dbUpdate.contact = updateData.contact || null
+    }
 
     // Update client — double check operator ownership + RLS
     let query = supabase
@@ -158,8 +184,16 @@ export async function updateClient(
     const client: Client = {
       id: clientData.id,
       operatorId: clientData.operator_id,
+      firstName: clientData.first_name ?? undefined,
       name: clientData.name,
       company: clientData.company,
+      clientKind: clientData.client_kind ?? 'individual',
+      contact: clientData.contact ?? undefined,
+      siret: clientData.siret ?? undefined,
+      nafCode: clientData.naf_code ?? undefined,
+      billingAddress: clientData.billing_address ?? undefined,
+      billingPostalCode: clientData.billing_postal_code ?? undefined,
+      billingCity: clientData.billing_city ?? undefined,
       email: clientData.email,
       clientType: clientData.client_type,
       status: clientData.status,

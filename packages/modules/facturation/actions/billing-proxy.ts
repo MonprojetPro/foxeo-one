@@ -72,15 +72,36 @@ export async function createPennylaneCustomer(
     return { data: null, error: { message: 'Email client requis pour créer un compte Pennylane', code: 'MISSING_EMAIL' } }
   }
 
+  // T-035 — à défaut d'adresse fournie, on prend celle de la fiche client, remplie
+  // par le rapprochement SIRET. Jusqu'ici `billing_address` partait TOUJOURS vide
+  // chez Pennylane : les comptes clients y étaient créés sans adresse.
+  let address = billingAddress
+  if (!address?.address) {
+    const { data: clientRow } = await supabase
+      .from('clients')
+      .select('billing_address, billing_postal_code, billing_city, billing_country_alpha2')
+      .eq('id', clientId)
+      .maybeSingle()
+
+    if (clientRow?.billing_address) {
+      address = {
+        address: clientRow.billing_address,
+        postalCode: clientRow.billing_postal_code ?? '',
+        city: clientRow.billing_city ?? '',
+        countryAlpha2: clientRow.billing_country_alpha2 ?? 'FR',
+      }
+    }
+  }
+
   // V2 API : endpoint company_customers, emails = string[], billing_address obligatoire
   const result = await pennylaneClient.post<PennylaneCustomer>('/company_customers', {
     name: companyName,
     emails: [email.trim()],
     billing_address: {
-      address: billingAddress?.address ?? '',
-      postal_code: billingAddress?.postalCode ?? '',
-      city: billingAddress?.city ?? '',
-      country_alpha2: billingAddress?.countryAlpha2 ?? 'FR',
+      address: address?.address ?? '',
+      postal_code: address?.postalCode ?? '',
+      city: address?.city ?? '',
+      country_alpha2: address?.countryAlpha2 ?? 'FR',
     },
   })
 

@@ -187,6 +187,112 @@ describe('createClient Server Action', () => {
     expect(result.data).not.toHaveProperty('created_at')
   })
 
+  // T-035 — client « entité » (personne morale)
+  it("écrit la raison sociale dans name ET company, le contact à part, sans prénom", async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: validAuthUuid } },
+      error: null,
+    })
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+    mockSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        operator_id: testOperatorId,
+        name: 'CSE Habitat 77',
+        company: 'CSE Habitat 77',
+        contact: 'Marie Dupont',
+        client_kind: 'entity',
+        siret: '40073052900023',
+        email: 'cse@habitat77.fr',
+        client_type: 'ponctuel',
+        status: 'active',
+        created_at: '2026-10-05T10:00:00Z',
+        updated_at: '2026-10-05T10:00:00Z',
+      },
+      error: null,
+    })
+
+    const { createClient } = await import('./create-client')
+    const result = await createClient({
+      clientKind: 'entity',
+      company: 'CSE Habitat 77',
+      contact: 'Marie Dupont',
+      siret: '40073052900023',
+      billingAddress: '34 RUE DE MELUN',
+      billingPostalCode: '77930',
+      billingCity: 'PERTHES',
+      email: 'cse@habitat77.fr',
+      clientType: 'ponctuel',
+    })
+
+    expect(result.error).toBeNull()
+
+    const inserted = mockInsert.mock.calls[0][0] as Record<string, unknown>
+    expect(inserted.client_kind).toBe('entity')
+    expect(inserted.name).toBe('CSE Habitat 77')
+    expect(inserted.company).toBe('CSE Habitat 77')
+    expect(inserted.contact).toBe('Marie Dupont')
+    // Le prénom n'a pas de sens pour une personne morale.
+    expect(inserted.first_name).toBeNull()
+    expect(inserted.siret).toBe('40073052900023')
+    expect(inserted.billing_city).toBe('PERTHES')
+    expect(result.data?.contact).toBe('Marie Dupont')
+  })
+
+  it('refuse une entité sans raison sociale', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: validAuthUuid } },
+      error: null,
+    })
+
+    const { createClient } = await import('./create-client')
+    const result = await createClient({
+      clientKind: 'entity',
+      name: 'Dupont',
+      email: 'cse@habitat77.fr',
+      clientType: 'ponctuel',
+    })
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('VALIDATION_ERROR')
+  })
+
+  it("garde le contact à l'écart d'un client particulier", async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: validAuthUuid } },
+      error: null,
+    })
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+    mockSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        operator_id: testOperatorId,
+        name: 'Dupont',
+        company: 'Dupont',
+        email: 'jean@acme.com',
+        client_type: 'ponctuel',
+        status: 'active',
+        created_at: '2026-10-05T10:00:00Z',
+        updated_at: '2026-10-05T10:00:00Z',
+      },
+      error: null,
+    })
+
+    const { createClient } = await import('./create-client')
+    await createClient({
+      clientKind: 'individual',
+      firstName: 'Jean',
+      name: 'Dupont',
+      contact: 'ne doit pas être enregistré',
+      email: 'jean@acme.com',
+      clientType: 'ponctuel',
+    })
+
+    const inserted = mockInsert.mock.calls[0][0] as Record<string, unknown>
+    expect(inserted.first_name).toBe('Jean')
+    expect(inserted.contact).toBeNull()
+  })
+
   it('should return DB_ERROR when insert fails', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: validAuthUuid } },
