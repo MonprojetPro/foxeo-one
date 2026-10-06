@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
   toast,
+  noAutofillProps,
 } from '@monprojetpro/ui'
 import { useOfficialRecipeActions, useOfficialRecipe } from '../hooks/use-official-recipes'
 import type {
@@ -305,9 +306,9 @@ export function RecipeFormModal({
               <Input
                 id="r-name"
                 name="mf-recipe-name"
-                autoComplete="off"
-                data-1p-ignore
-                data-lpignore="true"
+                // Posés ici à la main avant l'existence de la brique commune ;
+                // elle couvre en plus Bitwarden et Dashlane (T-035d).
+                {...noAutofillProps}
                 value={f.name}
                 onChange={(e) => set('name', e.target.value)}
               />

@@ -4,7 +4,14 @@ import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createClientSchema } from '@monprojetpro/utils'
-import { Input, Button, showError, showSuccess } from '@monprojetpro/ui'
+import {
+  Input,
+  Button,
+  showError,
+  showSuccess,
+  noAutofillProps,
+  noAutofillFormProps,
+} from '@monprojetpro/ui'
 import { lookupSiret } from '../actions/lookup-siret'
 import { normalizeSiret } from '../utils/naf-sections'
 import type { CreateClientInput } from '../types/crm.types'
@@ -113,6 +120,7 @@ export function ClientForm({
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
+      {...noAutofillFormProps}
       className="max-h-[65vh] space-y-4 overflow-y-auto overscroll-contain pr-1"
     >
       {/* Nature du client — commande tout le reste du formulaire */}
@@ -153,6 +161,7 @@ export function ClientForm({
                 inputMode="numeric"
                 placeholder="14 chiffres"
                 aria-invalid={!!errors.siret}
+                {...noAutofillProps}
                 {...register('siret')}
               />
               <Button
@@ -184,6 +193,7 @@ export function ClientForm({
               id="client-company"
               placeholder="Ex : CSE Habitat 77"
               aria-invalid={!!errors.company}
+              {...noAutofillProps}
               {...register('company')}
             />
             {errors.company && (
@@ -199,6 +209,7 @@ export function ClientForm({
             <Input
               id="client-contact"
               placeholder="Ex : Marie Dupont (facultatif)"
+              {...noAutofillProps}
               {...register('contact')}
             />
             <p className="text-xs text-muted-foreground">
@@ -214,6 +225,7 @@ export function ClientForm({
             <Input
               id="client-billing-address"
               placeholder="Numéro et voie"
+              {...noAutofillProps}
               {...register('billingAddress')}
             />
             <div className="grid grid-cols-[1fr_2fr] gap-3 pt-1">
@@ -221,12 +233,14 @@ export function ClientForm({
                 id="client-billing-postal-code"
                 placeholder="Code postal"
                 aria-label="Code postal"
+                {...noAutofillProps}
                 {...register('billingPostalCode')}
               />
               <Input
                 id="client-billing-city"
                 placeholder="Ville"
                 aria-label="Ville"
+                {...noAutofillProps}
                 {...register('billingCity')}
               />
             </div>
@@ -243,6 +257,7 @@ export function ClientForm({
               <Input
                 id="client-firstname"
                 placeholder="Prénom"
+                {...noAutofillProps}
                 {...register('firstName')}
               />
             </div>
@@ -254,6 +269,7 @@ export function ClientForm({
                 id="client-name"
                 placeholder="Nom de famille"
                 aria-invalid={!!errors.name}
+                {...noAutofillProps}
                 {...register('name')}
               />
               {errors.name && (
@@ -270,6 +286,7 @@ export function ClientForm({
             <Input
               id="client-company-individual"
               placeholder="Nom de l'entreprise"
+              {...noAutofillProps}
               {...register('company')}
             />
           </div>
@@ -286,6 +303,7 @@ export function ClientForm({
           type="email"
           placeholder="email@exemple.com"
           aria-invalid={!!errors.email || !!serverError?.field}
+          {...noAutofillProps}
           {...register('email')}
         />
         {errors.email && (
@@ -305,6 +323,7 @@ export function ClientForm({
           id="client-phone"
           type="tel"
           placeholder="+33 6 12 34 56 78"
+          {...noAutofillProps}
           {...register('phone')}
         />
       </div>
@@ -317,6 +336,7 @@ export function ClientForm({
         <Input
           id="client-sector"
           placeholder="Ex: Tech, Commerce, Santé..."
+          {...noAutofillProps}
           {...register('sector')}
         />
       </div>

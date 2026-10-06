@@ -90,6 +90,26 @@ describe('ClientForm', () => {
     expect(completRadio.checked).toBe(true)
   })
 
+  // T-035d — les gestionnaires de mots de passe n'ont rien à faire ici.
+  // La page de connexion, elle, garde son auto-remplissage : ces attributs ne
+  // doivent JAMAIS y être posés.
+  it('demande aux gestionnaires de mots de passe de ne pas remplir ce formulaire', () => {
+    const { container } = render(<ClientForm onSubmit={vi.fn()} />)
+
+    const form = container.querySelector('form')!
+    expect(form.getAttribute('autocomplete')).toBe('off')
+    expect(form.getAttribute('data-form-type')).toBe('other')
+
+    const nom = screen.getByLabelText(/^nom \*/i)
+    expect(nom.getAttribute('autocomplete')).toBe('off')
+    expect(nom.getAttribute('data-1p-ignore')).toBe('true')
+    expect(nom.getAttribute('data-lpignore')).toBe('true')
+    expect(nom.getAttribute('data-bwignore')).toBe('true')
+
+    const email = screen.getByLabelText(/email/i)
+    expect(email.getAttribute('data-1p-ignore')).toBe('true')
+  })
+
   // T-035 — client « entité » (personne morale)
   describe('mode entité', () => {
     function renderEntity() {
