@@ -7,6 +7,8 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { showSuccess, showError } from '@monprojetpro/ui'
 import { createInvoice } from '../actions/create-invoice'
+import { CommercialGestureFields } from './commercial-gesture-fields'
+import { DEFAULT_GESTURE_LABEL } from '../utils/commercial-gesture'
 import type { ClientWithPennylane } from '../types/billing.types'
 
 // ============================================================
@@ -26,6 +28,8 @@ const lineItemSchema = z.object({
   unitPrice: z.coerce.number().min(0, 'Prix >= 0'),
   vatRate: z.string().default('FR_200'),
   unit: z.string().default('u'),
+  /** T-037 — prestation offerte : son prix catalogue reste imprimé */
+  offered: z.boolean().default(false),
 })
 
 const invoiceFormSchema = z
@@ -35,6 +39,10 @@ const invoiceFormSchema = z
     date: z.string().min(1, "Date d'émission requise"),
     deadline: z.string().min(1, 'Échéance requise'),
     publicNotes: z.string().nullable().optional(),
+    /** T-037 — prix final HT voulu. Chaîne vide = aucune remise globale. */
+    targetTotalHt: z.string().optional(),
+    /** T-037 — libellé du geste commercial, vide = défaut serveur */
+    gestureLabel: z.string().optional(),
   })
   // Les deux dates sont au format AAAA-MM-JJ : la comparaison de chaines suffit
   // et evite un fuseau horaire parasite.
@@ -87,30 +95,64 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceFormSchema),
     defaultValues: {
       clientId: '',
-      lineItems: [{ label: '', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u' }],
+      lineItems: [
+        { label: '', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u', offered: false },
+      ],
       date: todayIso(),
       deadline: isoPlusDays(30),
       publicNotes: null,
+      targetTotalHt: '',
+      gestureLabel: '',
     },
   })
 
   const { fields, append, remove } = useFieldArray({ control, name: 'lineItems' })
   const watchedItems = useWatch({ control, name: 'lineItems' })
+  const watchedTarget = useWatch({ control, name: 'targetTotalHt' }) ?? ''
+  const watchedGestureLabel = useWatch({ control, name: 'gestureLabel' }) ?? ''
 
-  const totalHt = (watchedItems ?? []).reduce((sum, item) => {
+  // Totaux au TARIF CATALOGUE — ce qui est saisi, gestes non deduits
+  const catalogTotalHt = (watchedItems ?? []).reduce((sum, item) => {
     return sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0)
   }, 0)
 
-  const totalTva = (watchedItems ?? []).reduce((sum, item) => {
+  const offeredTotalHt = (watchedItems ?? []).reduce((sum, item) => {
+    if (item.offered !== true) return sum
+    return sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0)
+  }, 0)
+
+  const parsedTarget = watchedTarget.trim() === '' ? null : Number(watchedTarget)
+  const targetIsUsable = parsedTarget !== null && Number.isFinite(parsedTarget) && parsedTarget >= 0
+
+  // Total HT reellement du, apres gestes — c est lui qui porte la TVA
+  const afterOffersHt = catalogTotalHt - offeredTotalHt
+  const totalHt = targetIsUsable ? Math.min(parsedTarget, afterOffersHt) : afterOffersHt
+
+  // TVA calculee LIGNE PAR LIGNE sur les prestations payantes — appliquer un
+  // taux unique au total serait faux des que les lignes portent des taux
+  // differents, ce que la brique autorise tant qu il n y a pas de remise
+  // globale. Une ligne offerte et sa contre-ligne s annulent, taux compris.
+  const tvaOnPaidLines = (watchedItems ?? []).reduce((sum, item) => {
+    if (item.offered === true) return sum
     const lineHt = (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0)
     return sum + lineHt * vatRateToMultiplier(item.vatRate ?? 'FR_200')
   }, 0)
 
+  // La remise globale porte un taux unique (la brique refuse les taux melanges
+  // dans ce cas), donc on retire sa TVA a ce meme taux.
+  const discountHt = afterOffersHt - totalHt
+  const discountRate =
+    (watchedItems ?? []).find((i) => i.offered !== true && Number(i.unitPrice) > 0)?.vatRate ??
+    (watchedItems ?? [])[0]?.vatRate ??
+    'FR_200'
+
+  const totalTva = tvaOnPaidLines - discountHt * vatRateToMultiplier(discountRate)
   const totalTtc = totalHt + totalTva
 
   async function onSubmit(values: InvoiceFormValues, sendNow: boolean) {
@@ -124,13 +166,19 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
         vatRate: item.vatRate,
         unit: item.unit,
         total: Number(item.quantity) * Number(item.unitPrice),
+        offered: item.offered === true,
       }))
+
+      const rawTarget = values.targetTotalHt?.trim() ?? ''
+      const target = rawTarget === '' ? null : Number(rawTarget)
 
       const result = await createInvoice(values.clientId, lineItems, {
         sendNow,
         publicNotes: values.publicNotes ?? null,
         date: values.date,
         deadline: values.deadline,
+        targetTotalHt: target,
+        gestureLabel: values.gestureLabel?.trim() || null,
       })
 
       if (result.error) {
@@ -239,7 +287,7 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
           <span className="text-sm font-medium">Lignes de la facture</span>
           <button
             type="button"
-            onClick={() => append({ label: '', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u' })}
+            onClick={() => append({ label: '', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u', offered: false })}
             className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground"
             aria-label="Ajouter une ligne"
           >
@@ -341,15 +389,38 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
               </div>
             </div>
 
-            {fields.length > 1 && (
-              <button
-                type="button"
-                onClick={() => remove(index)}
-                className="self-end text-xs text-destructive hover:underline"
+            <div className="flex items-center justify-between">
+              {/* T-037 — offrir CETTE prestation. Son prix catalogue reste
+                  imprimé ; une contre-ligne « Offert — … » le ramène à zéro. */}
+              <label
+                htmlFor={`invoice-line-${index}-offered`}
+                className="flex items-center gap-2 text-xs text-muted-foreground"
               >
-                Supprimer la ligne
-              </button>
-            )}
+                <input
+                  id={`invoice-line-${index}-offered`}
+                  type="checkbox"
+                  {...register(`lineItems.${index}.offered`)}
+                  data-testid={`invoice-line-${index}-offered`}
+                  className="h-4 w-4 rounded border-border bg-background accent-green-500"
+                />
+                Offrir cette prestation
+                {watchedItems?.[index]?.offered === true && (
+                  <span className="rounded-md bg-green-500/15 px-2 py-0.5 text-green-400">
+                    Offert — le prix reste affiché
+                  </span>
+                )}
+              </label>
+
+              {fields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="text-xs text-destructive hover:underline"
+                >
+                  Supprimer la ligne
+                </button>
+              )}
+            </div>
           </div>
         ))}
 
@@ -358,8 +429,28 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
         )}
       </div>
 
-      {/* Totaux */}
+      {/* T-037 — geste commercial, partagé avec le formulaire de devis */}
+      <CommercialGestureFields
+        catalogTotalHt={catalogTotalHt}
+        offeredTotalHt={offeredTotalHt}
+        targetValue={watchedTarget}
+        onTargetChange={(v) => setValue('targetTotalHt', v, { shouldValidate: false })}
+        labelValue={watchedGestureLabel}
+        onLabelChange={(v) => setValue('gestureLabel', v, { shouldValidate: false })}
+        labelPlaceholder={DEFAULT_GESTURE_LABEL}
+        documentWord="facture"
+      />
+
+      {/* Totaux réellement dus */}
       <div className="rounded-lg border border-border p-4 flex flex-col gap-2 bg-muted/30">
+        {catalogTotalHt !== totalHt && (
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Tarif catalogue HT</span>
+            <span className="line-through" data-testid="invoice-catalog-ht">
+              {catalogTotalHt.toFixed(2)} €
+            </span>
+          </div>
+        )}
         <div className="flex justify-between text-sm">
           <span>Total HT</span>
           <span data-testid="invoice-total-ht">{totalHt.toFixed(2)} €</span>

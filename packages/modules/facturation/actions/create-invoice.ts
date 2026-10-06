@@ -2,6 +2,7 @@
 
 import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
+import { applyCommercialGesture } from '../utils/commercial-gesture'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
@@ -40,8 +41,14 @@ export type CreateInvoiceResult = {
   invoiceNumber: string | null
   /** true si l email est reellement parti (retry inclus) */
   emailSent: boolean
-  /** Total HT en euros, tel que calcule depuis les lignes envoyees */
+  /** Total HT reellement du, apres gestes commerciaux */
   totalHt: number
+  /** T-037 — total HT au tarif catalogue, avant tout geste */
+  catalogTotalHt: number
+  /** T-037 — valeur HT offerte (lignes offertes + remise globale) */
+  totalGrantedHt: number
+  /** T-037 — economie en pourcentage du tarif catalogue */
+  savingsPercentage: number
 }
 
 export async function createInvoice(
@@ -148,14 +155,25 @@ export async function createInvoice(
     deadlineStr = deadline.toISOString().split('T')[0]
   }
 
-  const totalHt = lineItems.reduce((sum, li) => sum + li.quantity * li.unitPrice, 0)
+  // T-037 — gestes commerciaux (lignes offertes + remise globale) appliques AVANT
+  // l envoi. La brique pose les contre-lignes ; le tarif catalogue reste visible.
+  const gesture = applyCommercialGesture(lineItems, {
+    targetTotalHt: options.targetTotalHt,
+    label: options.gestureLabel,
+  })
+  if (gesture.error || !gesture.data) {
+    return { data: null, error: gesture.error ?? { message: 'Geste commercial invalide', code: 'VALIDATION_ERROR' } }
+  }
+
+  const finalLines = gesture.data.lineItems
+  const totalHt = gesture.data.finalTotalHt
 
   // POST /customer_invoices — V2 : corps plat, invoice_lines, date obligatoire
   const invoiceResult = await pennylaneClient.post<Record<string, unknown>>('/customer_invoices', {
     customer_id: parseInt(pennylaneCustomerId, 10),
     date,
     deadline: deadlineStr,
-    invoice_lines: lineItems.map(toPennylaneLineItem),
+    invoice_lines: finalLines.map(toPennylaneLineItem),
     pdf_invoice_free_text: options.publicNotes ?? null,
   })
 
@@ -197,7 +215,21 @@ export async function createInvoice(
       status: (createdInvoice.status as string | undefined) ?? 'pending',
       data: {
         ...createdInvoice,
-        original_line_items: lineItems,
+        // `original_line_items` porte les lignes REELLEMENT ENVOYEES, contre-lignes
+        // comprises — c est ce que lit le repli de convertQuoteToInvoice, qui ne
+        // repasse pas par le geste commercial et doublerait donc la remise.
+        original_line_items: finalLines,
+        // Les lignes telles que saisies sont gardees a part : seule trace de
+        // l intention (quelle prestation a ete offerte, et pas juste « -2200 »).
+        submitted_line_items: lineItems,
+        commercial_gesture: {
+          catalog_total_ht: gesture.data.catalogTotalHt,
+          offered_total_ht: gesture.data.offeredTotalHt,
+          discount_ht: gesture.data.discountHt,
+          final_total_ht: gesture.data.finalTotalHt,
+          savings_percentage: gesture.data.savingsPercentage,
+          label: options.gestureLabel ?? null,
+        },
         created_from: 'hub_direct_invoice',
       },
       amount: Number.isFinite(amountCents) ? amountCents : null,
@@ -259,6 +291,9 @@ export async function createInvoice(
       invoice_number: invoiceNumber,
       client_id: clientId,
       total_ht: totalHt,
+      catalog_total_ht: gesture.data.catalogTotalHt,
+      offered_total_ht: gesture.data.offeredTotalHt,
+      discount_ht: gesture.data.discountHt,
       date,
       deadline: deadlineStr,
       send_now: options.sendNow ?? false,
@@ -270,7 +305,15 @@ export async function createInvoice(
   }
 
   return {
-    data: { pennylaneInvoiceId, invoiceNumber, emailSent, totalHt },
+    data: {
+      pennylaneInvoiceId,
+      invoiceNumber,
+      emailSent,
+      totalHt,
+      catalogTotalHt: gesture.data.catalogTotalHt,
+      totalGrantedHt: Math.round((gesture.data.offeredTotalHt + gesture.data.discountHt) * 100) / 100,
+      savingsPercentage: gesture.data.savingsPercentage,
+    },
     error: null,
   }
 }

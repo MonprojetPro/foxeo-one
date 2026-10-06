@@ -253,6 +253,96 @@ describe('InvoiceForm', () => {
     expect(mockCreateInvoice).not.toHaveBeenCalled()
   })
 
+  // ── T-037 — geste commercial ─────────────────────────────────────────────
+
+  it('affiche le panneau de geste commercial', () => {
+    render(<InvoiceForm clients={mockClients} />)
+    expect(screen.getByTestId('commercial-gesture-panel')).toBeInTheDocument()
+    expect(screen.getByTestId('gesture-label')).toHaveAttribute('placeholder', 'Geste commercial')
+  })
+
+  it('calcule l economie quand on saisit le prix final voulu', async () => {
+    render(<InvoiceForm clients={mockClients} />)
+
+    const price = screen.getByLabelText('Prix unitaire HT (€)')
+    await userEvent.clear(price)
+    await userEvent.type(price, '12390')
+
+    fireEvent.change(screen.getByTestId('gesture-target'), { target: { value: '399' } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('gesture-catalog')).toHaveTextContent('12 390,00')
+      expect(screen.getByTestId('gesture-final')).toHaveTextContent('399,00')
+      expect(screen.getByTestId('gesture-savings')).toHaveTextContent('-97 %')
+    })
+  })
+
+  it('refuse un prix final superieur au total, avant meme de soumettre', async () => {
+    render(<InvoiceForm clients={mockClients} />)
+
+    const price = screen.getByLabelText('Prix unitaire HT (€)')
+    await userEvent.clear(price)
+    await userEvent.type(price, '1000')
+
+    fireEvent.change(screen.getByTestId('gesture-target'), { target: { value: '5000' } })
+
+    await waitFor(() => {
+      expect(screen.getByTestId('gesture-error')).toHaveTextContent('majoration')
+    })
+  })
+
+  it('deduit une prestation offerte du total du, catalogue inchange', async () => {
+    render(<InvoiceForm clients={mockClients} />)
+
+    const price = screen.getByLabelText('Prix unitaire HT (€)')
+    await userEvent.clear(price)
+    await userEvent.type(price, '2200')
+
+    await userEvent.click(screen.getByTestId('invoice-line-0-offered'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('gesture-catalog')).toHaveTextContent('2 200,00')
+      expect(screen.getByTestId('gesture-final')).toHaveTextContent('0,00')
+      expect(screen.getByTestId('invoice-total-ht')).toHaveTextContent('0.00 €')
+    })
+  })
+
+  it('transmet le prix cible, le libelle et le marqueur offert a l action', async () => {
+    render(<InvoiceForm clients={mockClients} />)
+    await fillOneLine()
+
+    fireEvent.change(screen.getByTestId('gesture-target'), { target: { value: '399' } })
+    fireEvent.change(screen.getByTestId('gesture-label'), {
+      target: { value: 'Tarif pilote Habitat77' },
+    })
+    await userEvent.click(screen.getByTestId('invoice-line-0-offered'))
+
+    fireEvent.click(screen.getByTestId('invoice-submit-draft'))
+
+    await waitFor(() => {
+      expect(mockCreateInvoice).toHaveBeenCalledWith(
+        CLIENT_UUID,
+        [expect.objectContaining({ offered: true })],
+        expect.objectContaining({ targetTotalHt: 399, gestureLabel: 'Tarif pilote Habitat77' })
+      )
+    })
+  })
+
+  it("n envoie aucun geste quand les champs sont laisses vides", async () => {
+    render(<InvoiceForm clients={mockClients} />)
+    await fillOneLine()
+
+    fireEvent.click(screen.getByTestId('invoice-submit-draft'))
+
+    await waitFor(() => {
+      expect(mockCreateInvoice).toHaveBeenCalledWith(
+        CLIENT_UUID,
+        [expect.objectContaining({ offered: false })],
+        expect.objectContaining({ targetTotalHt: null, gestureLabel: null })
+      )
+    })
+  })
+
   it("previent quand aucun client actif n est disponible", () => {
     render(<InvoiceForm clients={[]} />)
     expect(screen.getByText(/Crée d'abord la fiche client dans le CRM/)).toBeInTheDocument()

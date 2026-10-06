@@ -89,6 +89,13 @@ export type LineItem = {
   unitPrice: number
   vatRate: string
   total: number
+  /**
+   * T-037 — prestation offerte. Marqueur de SAISIE uniquement : il ne part
+   * jamais chez Pennylane. `applyCommercialGesture` le consomme et pose a la
+   * place une contre-ligne « Offert — <label> », pour que la valeur offerte
+   * reste lisible sur le document au lieu de disparaitre derriere un 0 €.
+   */
+  offered?: boolean
 }
 
 export type Quote = {
@@ -215,6 +222,10 @@ export type CreateQuoteOptions = {
   labDeduction?: boolean
   /** Story 13.4 — Typologie du devis (utilise par le webhook paiement) */
   quoteType?: QuoteType
+  /** T-037 — prix final HT voulu : la remise est calculée et posée en ligne négative */
+  targetTotalHt?: number | null
+  /** T-037 — libellé du geste commercial imprimé sur le document */
+  gestureLabel?: string | null
 }
 
 // ============================================================
@@ -224,6 +235,10 @@ export type CreateQuoteOptions = {
 export type CreateInvoiceOptions = {
   /** Déclenche l'envoi par email via Pennylane juste après la création */
   sendNow?: boolean
+  /** T-037 — prix final HT voulu : la remise est calculée et posée en ligne négative */
+  targetTotalHt?: number | null
+  /** T-037 — libellé du geste commercial imprimé sur le document */
+  gestureLabel?: string | null
   /** Texte libre imprimé sur le PDF, visible par le client */
   publicNotes?: string | null
   /**

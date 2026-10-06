@@ -346,6 +346,100 @@ describe('createInvoice', () => {
     expect(mockSendByEmail).toHaveBeenCalledWith('9100', 'customer_invoices')
   })
 
+  // ── T-037 — gestes commerciaux ───────────────────────────────────────────
+
+  it('pose une ligne de remise et garde le tarif catalogue visible', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+
+    const catalogue: LineItem[] = [
+      { label: 'Site vitrine', description: null, quantity: 1, unit: 'u', unitPrice: 12390, vatRate: 'FR_200', total: 12390 },
+    ]
+    const result = await createInvoice('client-1', catalogue, { targetTotalHt: 399 })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.catalogTotalHt).toBe(12390)
+    expect(result.data?.totalHt).toBe(399)
+    expect(result.data?.totalGrantedHt).toBe(11991)
+    expect(result.data?.savingsPercentage).toBe(97)
+
+    const [, body] = mockPennylane.post.mock.calls[0] as [string, Record<string, unknown>]
+    const lines = body.invoice_lines as Record<string, unknown>[]
+    expect(lines).toHaveLength(2)
+    expect(lines[0].raw_currency_unit_price).toBe('12390.00')
+    expect(lines[1].label).toBe('Geste commercial')
+    expect(lines[1].raw_currency_unit_price).toBe('-11991.00')
+  })
+
+  it('utilise le libelle de geste personnalise', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+
+    await createInvoice('client-1', LINES, { targetTotalHt: 100, gestureLabel: 'Tarif pilote' })
+
+    const [, body] = mockPennylane.post.mock.calls[0] as [string, Record<string, unknown>]
+    const lines = body.invoice_lines as Record<string, unknown>[]
+    expect(lines.at(-1)?.label).toBe('Tarif pilote')
+  })
+
+  it('pose une contre-ligne « Offert » sans effacer le prix catalogue', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+
+    const lines: LineItem[] = [
+      { label: 'Dashboard', description: null, quantity: 1, unit: 'u', unitPrice: 2200, vatRate: 'FR_200', total: 2200, offered: true },
+    ]
+    const result = await createInvoice('client-1', lines)
+
+    expect(result.error).toBeNull()
+    expect(result.data?.totalHt).toBe(0)
+    expect(result.data?.catalogTotalHt).toBe(2200)
+
+    const [, body] = mockPennylane.post.mock.calls[0] as [string, Record<string, unknown>]
+    const sent = body.invoice_lines as Record<string, unknown>[]
+    expect(sent).toHaveLength(2)
+    expect(sent[0].raw_currency_unit_price).toBe('2200.00')
+    expect(sent[1].label).toBe('Offert — Dashboard')
+    expect(sent[1].raw_currency_unit_price).toBe('-2200.00')
+  })
+
+  it('refuse un prix final superieur au total, sans rien envoyer', async () => {
+    useSupabase(makeSupabaseMock())
+
+    const result = await createInvoice('client-1', LINES, { targetTotalHt: 99999 })
+
+    expect(result.error?.code).toBe('VALIDATION_ERROR')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
+  })
+
+  it('refuse une remise globale sur des taux de TVA heterogenes', async () => {
+    useSupabase(makeSupabaseMock())
+
+    const mixed: LineItem[] = [
+      { label: 'A', description: null, quantity: 1, unit: 'u', unitPrice: 1000, vatRate: 'FR_200', total: 1000 },
+      { label: 'B', description: null, quantity: 1, unit: 'u', unitPrice: 500, vatRate: 'FR_100', total: 500 },
+    ]
+    const result = await createInvoice('client-1', mixed, { targetTotalHt: 100 })
+
+    expect(result.error?.code).toBe('MIXED_VAT_RATES')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
+  })
+
+  it("ne laisse jamais le marqueur offered partir chez Pennylane", async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+
+    const lines: LineItem[] = [
+      { label: 'Dashboard', description: null, quantity: 1, unit: 'u', unitPrice: 2200, vatRate: 'FR_200', total: 2200, offered: true },
+    ]
+    await createInvoice('client-1', lines)
+
+    const [, body] = mockPennylane.post.mock.calls[0] as [string, Record<string, unknown>]
+    for (const sent of body.invoice_lines as Record<string, unknown>[]) {
+      expect(sent).not.toHaveProperty('offered')
+    }
+  })
+
   it('notifie le client sur son auth_user_id, jamais sur clients.id', async () => {
     const supabase = makeSupabaseMock()
     useSupabase(supabase)

@@ -253,6 +253,125 @@ describe('createAndSendQuote', () => {
 
 // ── Tests déduction Lab (Story 11.6) ──────────────────────────────────────────
 
+// ============================================================
+// T-037 — gestes commerciaux sur le DEVIS. MiKL : « ca doit etre pareil pour
+// les devis puisque c'est censé etre le prolongement de la facture ».
+// ============================================================
+
+describe('createAndSendQuote — geste commercial', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockTriggerBillingSync.mockResolvedValue({ data: { synced: 1 }, error: null })
+  })
+
+  function supabaseWithClient(labPaid = false) {
+    const supabase = makeSupabaseMock({
+      clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: '275890907', lab_paid: labPaid },
+    })
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
+    return supabase
+  }
+
+  function sentLines() {
+    const postCall = mockPennylane.post.mock.calls[0]
+    return postCall[1].invoice_lines as Array<{ label: string; raw_currency_unit_price: string }>
+  }
+
+  it('pose une remise globale et garde le tarif catalogue visible', async () => {
+    supabaseWithClient()
+
+    await createAndSendQuote('client-1', mockLineItems, { targetTotalHt: 399 })
+
+    const lines = sentLines()
+    expect(lines).toHaveLength(2)
+    expect(lines[0].raw_currency_unit_price).toBe('500.00')
+    expect(lines[1].label).toBe('Geste commercial')
+    expect(lines[1].raw_currency_unit_price).toBe('-601.00')
+  })
+
+  it('pose une contre-ligne « Offert » sans effacer le prix', async () => {
+    supabaseWithClient()
+
+    await createAndSendQuote(
+      'client-1',
+      [{ ...mockLineItems[0], offered: true }],
+      {}
+    )
+
+    const lines = sentLines()
+    expect(lines).toHaveLength(2)
+    expect(lines[1].label).toBe('Offert — Conseil stratégique')
+    expect(lines[1].raw_currency_unit_price).toBe('-1000.00')
+  })
+
+  it('cumule le geste commercial ET la deduction Lab, dans cet ordre', async () => {
+    supabaseWithClient(true)
+
+    await createAndSendQuote('client-1', mockLineItems, {
+      targetTotalHt: 399,
+      labDeduction: true,
+    })
+
+    const lines = sentLines()
+    // ligne catalogue · remise globale · deduction Lab
+    expect(lines).toHaveLength(3)
+    expect(lines[1].label).toBe('Geste commercial')
+    expect(lines[2].label).toBe('Déduction forfait Lab MonprojetPro')
+    // La deduction porte sur le prix REELLEMENT du (399 €), pas sur le catalogue
+    expect(lines[2].raw_currency_unit_price).toBe('-199.00')
+  })
+
+  it('plafonne la deduction Lab au prix du apres geste commercial', async () => {
+    supabaseWithClient(true)
+
+    // Prix final voulu 50 € : la deduction Lab ne peut pas depasser 50 €,
+    // sinon le devis deviendrait negatif.
+    await createAndSendQuote('client-1', mockLineItems, {
+      targetTotalHt: 50,
+      labDeduction: true,
+    })
+
+    const lines = sentLines()
+    expect(lines.at(-1)?.raw_currency_unit_price).toBe('-50.00')
+  })
+
+  it('refuse un prix final superieur au total, sans rien envoyer', async () => {
+    supabaseWithClient()
+
+    const result = await createAndSendQuote('client-1', mockLineItems, { targetTotalHt: 99999 })
+
+    expect(result.error?.code).toBe('VALIDATION_ERROR')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
+  })
+
+  it('refuse une remise globale sur des taux de TVA heterogenes', async () => {
+    supabaseWithClient()
+
+    const result = await createAndSendQuote(
+      'client-1',
+      [
+        mockLineItems[0],
+        { label: 'B', description: null, quantity: 1, unitPrice: 500, vatRate: 'FR_100', unit: 'u', total: 500 },
+      ],
+      { targetTotalHt: 100 }
+    )
+
+    expect(result.error?.code).toBe('MIXED_VAT_RATES')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
+  })
+
+  it("ne laisse jamais le marqueur offered partir chez Pennylane", async () => {
+    supabaseWithClient()
+
+    await createAndSendQuote('client-1', [{ ...mockLineItems[0], offered: true }], {})
+
+    for (const line of sentLines()) {
+      expect(line).not.toHaveProperty('offered')
+    }
+  })
+})
+
 describe('createAndSendQuote — Lab deduction', () => {
   beforeEach(() => {
     vi.clearAllMocks()

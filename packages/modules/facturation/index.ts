@@ -43,6 +43,18 @@ export type { ConvertQuoteResult } from './actions/convert-quote-to-invoice'
 export { InvoiceForm } from './components/invoice-form'
 export { createInvoice } from './actions/create-invoice'
 export type { CreateInvoiceResult } from './actions/create-invoice'
+
+// T-037 — Gestes commerciaux (lignes offertes + remise globale), devis ET facture
+export { CommercialGestureFields } from './components/commercial-gesture-fields'
+export {
+  applyCommercialGesture,
+  DEFAULT_GESTURE_LABEL,
+  OFFERED_PREFIX,
+} from './utils/commercial-gesture'
+export type {
+  CommercialGestureOptions,
+  CommercialGestureResult,
+} from './utils/commercial-gesture'
 export { sendQuoteByEmail } from './actions/send-quote-by-email'
 export { cancelQuote } from './actions/cancel-quote'
 export { updateQuote } from './actions/update-quote'

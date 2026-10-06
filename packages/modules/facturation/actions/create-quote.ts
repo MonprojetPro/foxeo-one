@@ -2,6 +2,7 @@
 
 import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
+import { applyCommercialGesture } from '../utils/commercial-gesture'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
@@ -71,17 +72,32 @@ export async function createAndSendQuote(
   deadline.setDate(deadline.getDate() + 30)
   const deadlineStr = deadline.toISOString().split('T')[0]
 
-  // Story 11.6 — Déduction forfait Lab si applicable
+  // T-037 — gestes commerciaux (lignes offertes + remise globale), identiques a
+  // ceux de la facture : « c'est censé etre le prolongement de la facture »
+  // (MiKL, 06-10). Meme brique, pas de logique recopiee.
+  const gesture = applyCommercialGesture(lineItems, {
+    targetTotalHt: options.targetTotalHt,
+    label: options.gestureLabel,
+  })
+  if (gesture.error || !gesture.data) {
+    return { data: null, error: gesture.error ?? { message: 'Geste commercial invalide', code: 'VALIDATION_ERROR' } }
+  }
+  const gesturedLineItems = gesture.data.lineItems
+
+  // Story 11.6 — Déduction forfait Lab si applicable.
+  // Elle s applique APRES le geste commercial : c est un du contractuel (les
+  // 199 € deja payes), pas une remise — les deux se cumulent donc, et la
+  // deduction porte sur le prix reellement du, pas sur le tarif catalogue.
   const clientLabPaid = client.lab_paid as boolean | null
   const applyLabDeduction = options.labDeduction === true && clientLabPaid === true
 
   // Calcul déduction plafonnée (AC#3: si setup < 199€, net = 0€, pas de remboursement)
-  const setupTotalHt = lineItems.reduce((sum, li) => sum + li.quantity * li.unitPrice, 0)
+  const setupTotalHt = gesture.data.finalTotalHt
   const cappedDeduction = Math.min(199, setupTotalHt)
 
   const allLineItems = applyLabDeduction && cappedDeduction > 0
     ? [
-        ...lineItems,
+        ...gesturedLineItems,
         {
           label: 'Déduction forfait Lab MonprojetPro',
           description: 'Le forfait Lab (199€) est déduit du setup One, comme convenu.',
@@ -92,7 +108,7 @@ export async function createAndSendQuote(
           total: -cappedDeduction,
         },
       ]
-    : lineItems
+    : gesturedLineItems
 
   // Mapping LineItems → PennylaneLineItems
   const pennylaneLineItems = allLineItems.map(toPennylaneLineItem)
