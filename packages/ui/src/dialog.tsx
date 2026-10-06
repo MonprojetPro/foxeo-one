@@ -61,6 +61,16 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 outline-none sm:max-w-2xl",
+          // Une pop-up plus haute que l'écran débordait en haut ET en bas, sans
+          // aucun moyen d'atteindre ce qui dépassait (constaté le 2026-10-06 sur le
+          // formulaire client devenu plus long). Ce n'était pas un oubli isolé :
+          // 8 appelants posaient déjà `max-h-[85vh] overflow-y-auto` eux-mêmes —
+          // le symptôme d'un défaut manquant dans la brique, que chacun réparait
+          // dans son coin et que les autres subissaient. Le défaut vit donc ici.
+          // `100dvh` et non `100vh` : sur mobile, la barre d'adresse mangeait le bas.
+          // tailwind-merge laisse gagner tout `max-h-*` / `overflow-*` passé par
+          // l'appelant : les pop-ups qui gèrent déjà leur hauteur ne bougent pas.
+          "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain",
           // Cadre lumineux commun à toutes les pop-ups. La couleur vient de
           // `--mpp-popup-accent`, déclarée par la classe de thème sur <html> : chaque
           // dashboard obtient donc la sienne sans que l'appelant ait rien à faire
