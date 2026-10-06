@@ -217,12 +217,36 @@ export type CreateQuoteOptions = {
   quoteType?: QuoteType
 }
 
+// ============================================================
+// Types T-036 — Facture directe (prestation ponctuelle deja effectuee)
+// ============================================================
+
+export type CreateInvoiceOptions = {
+  /** Déclenche l'envoi par email via Pennylane juste après la création */
+  sendNow?: boolean
+  /** Texte libre imprimé sur le PDF, visible par le client */
+  publicNotes?: string | null
+  /**
+   * Date d'émission (YYYY-MM-DD). Défaut : aujourd'hui.
+   * Pennylane impose une numérotation séquentielle : une date antérieure à la
+   * dernière facture émise peut être refusée côté API.
+   */
+  date?: string
+  /** Échéance de paiement (YYYY-MM-DD). Défaut : date d'émission + 30 jours. */
+  deadline?: string
+}
+
 export type ClientWithPennylane = {
   id: string
   name: string
   company: string | null
   email: string
-  pennylaneCustomerId: string
+  /**
+   * null quand le compte Pennylane n'existe pas encore : il est créé à la volée
+   * à la première émission (devis, facture ou abonnement). Ne jamais filtrer les
+   * clients sur ce champ — c'était la cause de l'impasse T-036.
+   */
+  pennylaneCustomerId: string | null
   /** Story 11.6 — Statut paiement forfait Lab */
   labPaid?: boolean
   labPaidAt?: string | null

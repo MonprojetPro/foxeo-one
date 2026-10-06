@@ -4,6 +4,7 @@ import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
 import { createPennylaneCustomer } from './billing-proxy'
+import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { LAB_INVOICE_TAG } from '../utils/billing-sync-logic'
 import type { ActionResponse } from '@monprojetpro/types'
 
@@ -120,12 +121,19 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
   const rawInvoice = invoiceResult.data as Record<string, unknown>
   const createdInvoice = (rawInvoice.customer_invoice as Record<string, unknown> | undefined) ?? rawInvoice
 
-  // Envoi email automatique au client via Pennylane
+  // Envoi email automatique au client via Pennylane.
+  // T-036 — passe par la brique avec retry : le POST direct echouait en 409
+  // PDF_NOT_READY tant que Pennylane n avait pas fini de generer le PDF (~5 s),
+  // et l echec etait simplement logge — donc la facture Lab pouvait ne jamais
+  // partir sans que personne le sache.
   const invoiceId = String(createdInvoice.id)
-  const emailResult = await pennylaneClient.post(`/customer_invoices/${invoiceId}/send_by_email`, {})
-  if (emailResult.error) {
+  const emailResult = await sendByEmailWithRetry(invoiceId, 'customer_invoices')
+  if (!emailResult.sent) {
     // Non bloquant — la facture est créée, l'envoi email est best-effort
-    console.warn('[LAB_INVOICE] Email send failed (non-blocking):', emailResult.error)
+    console.warn(
+      `[LAB_INVOICE] Email send failed apres ${emailResult.attempts} tentatives (non-blocking):`,
+      emailResult.lastError
+    )
   }
 
   // Stocker dans billing_sync pour tracking

@@ -37,6 +37,12 @@ export { useBillingQuotes, useBillingInvoices, useBillingSubscriptions, useBilli
 export { createPennylaneCustomer, getPennylaneCustomer, listQuotes, listInvoices, listSubscriptions } from './actions/billing-proxy'
 export { createAndSendQuote } from './actions/create-quote'
 export { convertQuoteToInvoice } from './actions/convert-quote-to-invoice'
+export type { ConvertQuoteResult } from './actions/convert-quote-to-invoice'
+
+// T-036 — Facture directe (prestation ponctuelle deja effectuee)
+export { InvoiceForm } from './components/invoice-form'
+export { createInvoice } from './actions/create-invoice'
+export type { CreateInvoiceResult } from './actions/create-invoice'
 export { sendQuoteByEmail } from './actions/send-quote-by-email'
 export { cancelQuote } from './actions/cancel-quote'
 export { updateQuote } from './actions/update-quote'
@@ -98,6 +104,7 @@ export type {
   ListInvoicesFilters,
   ListSubscriptionsFilters,
   CreateQuoteOptions,
+  CreateInvoiceOptions,
   ClientWithPennylane,
   BillingSyncRow,
   QuoteType,

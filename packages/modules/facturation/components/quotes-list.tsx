@@ -208,7 +208,11 @@ export function QuotesList({ clientId, clients }: QuotesListProps) {
       if (result.error) {
         showError(result.error.message)
       } else {
-        showSuccess('Devis converti en facture')
+        const number = result.data?.invoiceNumber
+        showSuccess(number ? `Devis converti en facture ${number}` : 'Devis converti en facture')
+        // La facture est ecrite en miroir dans billing_sync par l action :
+        // sans invalidation, elle n apparaissait pas dans l onglet Factures.
+        await queryClient.invalidateQueries({ queryKey: ['billing'] })
       }
     } finally {
       setConverting(null)

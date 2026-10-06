@@ -26,6 +26,7 @@ import {
 import type { PillTab } from '@monprojetpro/ui'
 
 import { QuoteForm } from './quote-form'
+import { InvoiceForm } from './invoice-form'
 import { QuotesList } from './quotes-list'
 import { InvoicesList } from './invoices-list'
 import { SubscriptionsList } from './subscriptions-list'
@@ -38,14 +39,21 @@ import type { ClientWithPennylane } from '../types/billing.types'
 
 // ── Types d'onglets ──────────────────────────────────────────────────────────
 
-type Tab = 'devis' | 'nouveau-devis' | 'factures' | 'abonnements' | 'justificatifs'
+type Tab =
+  | 'devis'
+  | 'nouveau-devis'
+  | 'factures'
+  | 'nouvelle-facture'
+  | 'abonnements'
+  | 'justificatifs'
 
 const TABS: PillTab<Tab>[] = [
-  { key: 'devis',         label: 'Devis',          icon: FileText },
-  { key: 'nouveau-devis', label: '+ Nouveau devis', icon: Plus },
-  { key: 'factures',      label: 'Factures',        icon: Receipt },
-  { key: 'abonnements',   label: 'Abonnements',     icon: Repeat2 },
-  { key: 'justificatifs', label: 'Justificatifs',   icon: FolderArchive },
+  { key: 'devis',            label: 'Devis',             icon: FileText },
+  { key: 'nouveau-devis',    label: '+ Nouveau devis',   icon: Plus },
+  { key: 'factures',         label: 'Factures',          icon: Receipt },
+  { key: 'nouvelle-facture', label: '+ Nouvelle facture', icon: Plus },
+  { key: 'abonnements',      label: 'Abonnements',       icon: Repeat2 },
+  { key: 'justificatifs',    label: 'Justificatifs',     icon: FolderArchive },
 ]
 
 // ── Formatage monétaire ──────────────────────────────────────────────────────
@@ -202,6 +210,18 @@ export function BillingDashboard() {
         )}
 
         {activeTab === 'factures' && <InvoicesList clients={clients} />}
+
+        {activeTab === 'nouvelle-facture' && (
+          <div
+            className="rounded-2xl border border-white/10 bg-white/[0.02] p-6"
+            data-testid="invoice-form-panel"
+          >
+            <h2 className="text-base font-semibold text-white mb-4">
+              Nouvelle facture — prestation déjà effectuée
+            </h2>
+            <InvoiceForm clients={clients} onSuccess={() => setActiveTab('factures')} />
+          </div>
+        )}
 
         {activeTab === 'abonnements' && (
           <div className="flex flex-col gap-4">
