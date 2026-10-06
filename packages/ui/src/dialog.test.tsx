@@ -3,12 +3,18 @@ import { render, screen } from '@testing-library/react'
 import { Dialog, DialogContent, DialogTitle } from './dialog'
 
 /**
- * Verrou du 2026-10-06 : une pop-up plus haute que l'écran débordait en haut et
- * en bas, sans défilement possible. Huit appelants compensaient déjà à la main.
- * Ces tests empêchent le défaut de disparaître à nouveau de la brique.
+ * Verrou du 2026-10-06, posé APRÈS une tentative ratée le même jour.
+ *
+ * On avait rendu `DialogContent` défilant pour qu'une pop-up trop haute puisse
+ * être parcourue. Constaté sur capture : le liseré de `.mpp-popup-frame`, dessiné
+ * par des pseudo-éléments en `position: absolute; inset: 0`, défile avec le
+ * contenu — le cadre cyan s'arrêtait au milieu du formulaire.
+ *
+ * La boîte qui porte le cadre ne doit donc jamais défiler : c'est le contenu
+ * (formulaire, liste) qui porte sa propre hauteur et son propre défilement.
  */
-describe('DialogContent — hauteur et défilement', () => {
-  it('limite sa hauteur à la fenêtre et défile par défaut', () => {
+describe('DialogContent — le cadre ne doit pas défiler', () => {
+  it('ne rend pas la pop-up défilante par défaut', () => {
     render(
       <Dialog open>
         <DialogContent>
@@ -18,25 +24,23 @@ describe('DialogContent — hauteur et défilement', () => {
     )
 
     const content = screen.getByRole('dialog')
-    expect(content.className).toContain('max-h-[calc(100dvh-2rem)]')
-    expect(content.className).toContain('overflow-y-auto')
+    expect(content.className).not.toContain('overflow-y-auto')
+    expect(content.className).not.toContain('max-h-[calc(100dvh-2rem)]')
   })
 
-  it("laisse l'appelant imposer sa propre hauteur et son propre overflow", () => {
+  it("laisse malgré tout l'appelant décider pour sa propre pop-up", () => {
+    // Plusieurs pop-ups anciennes gèrent leur hauteur elles-mêmes et assument
+    // l'effet sur le cadre : la brique ne doit pas les en empêcher.
     render(
       <Dialog open>
-        <DialogContent className="max-h-[85vh] overflow-hidden">
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogTitle>Titre</DialogTitle>
         </DialogContent>
       </Dialog>
     )
 
     const content = screen.getByRole('dialog')
-    // tailwind-merge doit retirer les valeurs par défaut, sans quoi deux règles
-    // du même groupe cohabiteraient et le résultat dépendrait de l'ordre du CSS.
     expect(content.className).toContain('max-h-[85vh]')
-    expect(content.className).not.toContain('max-h-[calc(100dvh-2rem)]')
-    expect(content.className).toContain('overflow-hidden')
-    expect(content.className).not.toContain('overflow-y-auto')
+    expect(content.className).toContain('overflow-y-auto')
   })
 })

@@ -105,7 +105,16 @@ export function ClientForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+    // Le défilement vit ICI et pas sur la pop-up : le liseré de `.mpp-popup-frame`
+    // est peint par des pseudo-éléments internes, qui défileraient avec elle et
+    // couperaient le cadre en deux (constaté puis annulé le 2026-10-06).
+    // `pr-1` réserve la place de la barre de défilement pour qu'elle ne passe pas
+    // par-dessus les champs.
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
+      className="max-h-[65vh] space-y-4 overflow-y-auto overscroll-contain pr-1"
+    >
       {/* Nature du client — commande tout le reste du formulaire */}
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">Nature du client *</legend>
