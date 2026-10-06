@@ -132,6 +132,18 @@ function roundCents(value: number): number {
   return Math.round(value * 100) / 100
 }
 
+/**
+ * Montant en euros, AU FORMAT FRANCAIS — T-037a.
+ *
+ * 🔑 Pourquoi pas `toFixed(2)` : il ne connait pas la locale et imprimait
+ * « 11991.00 € » sur la premiere facture reelle (F-2026-101), au milieu d'un
+ * document ou Pennylane formate tout le reste en « 11 991,00 € ». L'incoherence
+ * tombait pile sur la ligne qui porte l'argument commercial.
+ */
+function euros(value: number): string {
+  return value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 function lineTotal(line: LineItem): number {
   return roundCents(line.quantity * line.unitPrice)
 }
@@ -209,7 +221,7 @@ export function applyCommercialGesture(
       return {
         data: null,
         error: {
-          message: `Le prix final (${rounded.toFixed(2)} €) dépasse le total après prestations offertes (${afterOffersHt.toFixed(2)} €) — ce serait une majoration, pas un geste commercial`,
+          message: `Le prix final (${euros(rounded)} €) dépasse le total après prestations offertes (${euros(afterOffersHt)} €) — ce serait une majoration, pas un geste commercial`,
           code: 'VALIDATION_ERROR',
         },
       }
@@ -242,8 +254,8 @@ export function applyCommercialGesture(
       withOffers.push({
         label,
         description: showPercentage
-          ? `Remise de ${discountHt.toFixed(2)} € HT sur un tarif catalogue de ${catalogTotalHt.toFixed(2)} € HT (-${percentage} %)`
-          : `Remise de ${discountHt.toFixed(2)} € HT`,
+          ? `Remise de ${euros(discountHt)} € HT sur un tarif catalogue de ${euros(catalogTotalHt)} € HT (-${percentage} %)`
+          : `Remise de ${euros(discountHt)} € HT`,
         quantity: 1,
         unit: 'u',
         unitPrice: -discountHt,

@@ -71,7 +71,13 @@ describe('applyCommercialGesture', () => {
     expect(discountLine.unitPrice).toBe(-11991)
     expect(discountLine.vatRate).toBe('FR_200')
     expect(discountLine.description).toContain('-97 %')
-    expect(discountLine.description).toContain('12390.00')
+    // T-037a — format FRANCAIS sur un document francais. `toFixed(2)` imprimait
+    // « 12390.00 » au milieu des « 3 900,00 € » formates par Pennylane.
+    // Le separateur de milliers de la locale fr-FR est une espace fine
+    // insecable (U+202F), pas une espace ordinaire.
+    expect(discountLine.description).toContain('11 991,00')
+    expect(discountLine.description).toContain('12 390,00')
+    expect(discountLine.description).not.toContain('.00')
   })
 
   it('utilise le libelle personnalise quand il est fourni', () => {
@@ -211,7 +217,7 @@ describe('applyCommercialGesture', () => {
     const { error } = applyCommercialGesture(lines, { targetTotalHt: 800 })
 
     expect(error?.code).toBe('VALIDATION_ERROR')
-    expect(error?.message).toContain('500.00')
+    expect(error?.message).toContain('500,00')
   })
 
   // ── TVA ─────────────────────────────────────────────────────────────────

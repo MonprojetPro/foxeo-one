@@ -26,11 +26,32 @@ export function fromPennylaneLineItem(item: PennylaneLineItem): LineItem {
   }
 }
 
+/**
+ * T-038 — nettoie ce qui part sur un document CLIENT.
+ *
+ * Constate sur la premiere facture reelle (F-2026-101) : un libelle colle
+ * depuis une proposition commerciale arrive avec un espace de tete
+ * (`" Dashboard entreprise anonymisé"`), et rien ne le retirait. Une facture
+ * Pennylane etant definitive, l'espace s'imprime et ne se corrige plus.
+ *
+ * Le nettoyage vit ICI, et pas dans un formulaire, parce que ce mapper est le
+ * passage oblige des QUATRE emetteurs (devis, facture, abonnement, avoir) :
+ * corriger cote saisie aurait laisse les trois autres chemins ouverts.
+ *
+ * On normalise aussi les espaces internes multiples — un double espace colle
+ * depuis un PDF se voit autant qu'un espace de tete. Une description videe par
+ * le nettoyage redevient `null` plutot qu'une chaine vide.
+ */
+function cleanDocumentText(value: string): string {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
 // V2 API : raw_currency_unit_price est une string, pas de plan_item_number
 export function toPennylaneLineItem(item: LineItem): PennylaneLineItem {
+  const description = item.description != null ? cleanDocumentText(item.description) : null
   return {
-    label: item.label,
-    description: item.description,
+    label: cleanDocumentText(item.label),
+    description: description === '' ? null : description,
     quantity: item.quantity,
     unit: item.unit,
     vat_rate: item.vatRate,

@@ -118,6 +118,45 @@ describe('billing-mappers', () => {
       expect(result.vat_rate).toBe('FR_200')
       expect(result.unit).toBe('piece')
     })
+
+    // ── T-038 — propreté de ce qui s'imprime sur un document client ────────
+    // Constaté sur la première facture réelle (F-2026-101) : un libellé collé
+    // depuis une proposition arrivait avec un espace de tête, imprimé tel quel
+    // sur un document définitif.
+
+    it("retire les espaces de tete et de fin du libelle", () => {
+      const result = toPennylaneLineItem({
+        ...FOXEO_LINE_ITEM,
+        label: ' Dashboard entreprise anonymisé ',
+      })
+      expect(result.label).toBe('Dashboard entreprise anonymisé')
+    })
+
+    it('retire les espaces de tete et de fin de la description', () => {
+      const result = toPennylaneLineItem({
+        ...FOXEO_LINE_ITEM,
+        description: ' KPIs temps réel, calcul ROI ',
+      })
+      expect(result.description).toBe('KPIs temps réel, calcul ROI')
+    })
+
+    it('normalise les espaces multiples a l interieur du texte', () => {
+      const result = toPennylaneLineItem({
+        ...FOXEO_LINE_ITEM,
+        label: 'Site   vitrine\tQVCT',
+      })
+      expect(result.label).toBe('Site vitrine QVCT')
+    })
+
+    it('rend null une description qui ne contenait que des espaces', () => {
+      const result = toPennylaneLineItem({ ...FOXEO_LINE_ITEM, description: '   ' })
+      expect(result.description).toBeNull()
+    })
+
+    it('laisse une description deja nulle a null', () => {
+      const result = toPennylaneLineItem({ ...FOXEO_LINE_ITEM, description: null })
+      expect(result.description).toBeNull()
+    })
   })
 
   describe('fromPennylaneQuote', () => {
