@@ -274,7 +274,42 @@ describe('createCreditNote', () => {
     expect((sentBody(1).invoice_lines as unknown[]).length).toBe(2)
   })
 
-  it("ne retente PAS sur une erreur qui n'est pas un 422", async () => {
+  // T-041a — le premier avoir reel a echoue en 400, et le repli n'ecoutait
+  // que le 422 : il n'a pas joue. Les deux codes sont desormais couverts.
+  it('reemet SANS credited_invoice_id si Pennylane le refuse en 400', async () => {
+    useSupabase(makeSupabaseMock())
+    mockPennylane.post
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Bad Request', code: 'PENNYLANE_400' },
+      })
+      .mockResolvedValueOnce({ data: { id: 77003, invoice_number: 'A-2026-003' }, error: null })
+
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.linkedToInvoice).toBe(false)
+    expect(mockPennylane.post).toHaveBeenCalledTimes(2)
+    expect(sentBody(1)).not.toHaveProperty('credited_invoice_id')
+  })
+
+  it("remonte l'erreur si le repli echoue AUSSI — pas de boucle", async () => {
+    useSupabase(makeSupabaseMock())
+    mockPennylane.post.mockResolvedValue({
+      data: null,
+      error: { message: 'Bad Request — ledger_account_id manquant', code: 'PENNYLANE_400' },
+    })
+
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+
+    expect(result.error?.code).toBe('PENNYLANE_400')
+    // Exactement 2 tentatives : l'originale et le repli, jamais plus
+    expect(mockPennylane.post).toHaveBeenCalledTimes(2)
+    // Le motif reel de Pennylane arrive jusqu'a l'appelant
+    expect(result.error?.message).toContain('ledger_account_id')
+  })
+
+  it("ne retente PAS sur une erreur qui n'est ni 400 ni 422", async () => {
     useSupabase(makeSupabaseMock())
     mockPennylane.post.mockResolvedValue({
       data: null,

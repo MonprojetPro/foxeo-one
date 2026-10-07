@@ -27,6 +27,69 @@ function isRetryable(status: number): boolean {
   return status === 408 || (status >= 500 && status <= 599)
 }
 
+/** Longueur au-dela de laquelle le motif est tronque dans le message affiche. */
+const MAX_REASON_LENGTH = 300
+
+/**
+ * T-041a — extrait un motif LISIBLE du corps d'erreur Pennylane.
+ *
+ * Leur format varie selon l'endpoint : tantot `{ message }`, tantot
+ * `{ error }`, tantot `{ errors: [...] }` ou un dictionnaire champ -> messages.
+ * On couvre ces formes et, a defaut, on serialise — mieux vaut un JSON brut
+ * sous les yeux de l'operateur que rien du tout.
+ */
+function extractPennylaneReason(details: unknown): string | null {
+  if (details == null) return null
+
+  const truncate = (s: string): string | null => {
+    const trimmed = s.trim()
+    if (trimmed === '') return null
+    return trimmed.length > MAX_REASON_LENGTH
+      ? `${trimmed.slice(0, MAX_REASON_LENGTH)}…`
+      : trimmed
+  }
+
+  if (typeof details === 'string') return truncate(details)
+
+  if (typeof details === 'object') {
+    const body = details as Record<string, unknown>
+
+    for (const key of ['message', 'error', 'detail', 'title'] as const) {
+      if (typeof body[key] === 'string') return truncate(body[key] as string)
+    }
+
+    const errors = body.errors
+    if (Array.isArray(errors)) {
+      const parts = errors
+        .map((e) =>
+          typeof e === 'string'
+            ? e
+            : typeof e === 'object' && e !== null
+              ? String((e as Record<string, unknown>).message ?? JSON.stringify(e))
+              : String(e)
+        )
+        .filter(Boolean)
+      if (parts.length > 0) return truncate(parts.join(' · '))
+    }
+
+    // Forme « champ -> [messages] », courante sur les erreurs de validation
+    if (errors && typeof errors === 'object') {
+      const parts = Object.entries(errors as Record<string, unknown>).map(
+        ([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : String(msgs)}`
+      )
+      if (parts.length > 0) return truncate(parts.join(' · '))
+    }
+
+    try {
+      return truncate(JSON.stringify(details))
+    } catch {
+      return null
+    }
+  }
+
+  return null
+}
+
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -117,15 +180,37 @@ async function executeRequest<T>(
   }
 
   if (!response.ok) {
-    let details: unknown
-    try {
-      details = await response.json()
-    } catch {
-      details = await response.text()
+    // 🔴 BUG PREEXISTANT CORRIGE (T-041a) — le code lisait `response.json()`
+    // puis, en cas d'echec, `response.text()`. Or **le corps d'une Response ne
+    // se lit qu'UNE fois** : des que Pennylane renvoie un corps vide ou non-JSON
+    // (page HTML d'une passerelle, 502 d'un proxy), le second appel levait
+    // `InvalidStateError: Body has already been used` — une **exception non
+    // attrapee dans une Server Action**, qui remplacait l'erreur API par un
+    // plantage, precisement au moment ou on avait besoin de lire le motif.
+    // Trouve par le test ajoute pour la sonde, pas en lisant le code.
+    const rawBody = await response.text().catch(() => '')
+    let details: unknown = rawBody
+    if (rawBody !== '') {
+      try {
+        details = JSON.parse(rawBody)
+      } catch {
+        details = rawBody
+      }
     }
 
+    // T-041a — le MOTIF du refus remonte jusqu'a l'ecran, pas seulement le code.
+    //
+    // 🔑 Pourquoi : le corps de la reponse partait en `console.error` cote
+    // serveur, donc enferme dans les journaux Vercel, et l'operateur ne lisait
+    // qu'un « Pennylane API error: 400 Bad Request » nu — inexploitable, et
+    // impossible a diagnostiquer sans acces aux journaux. Un message d'erreur
+    // de tiers sans son corps ne sert a personne.
+    const reason = extractPennylaneReason(details)
+
     const error: ActionError = {
-      message: `Pennylane API error: ${response.status} ${response.statusText}`,
+      message: reason
+        ? `Pennylane API error: ${response.status} ${response.statusText} — ${reason}`
+        : `Pennylane API error: ${response.status} ${response.statusText}`,
       code: `PENNYLANE_${response.status}`,
       details,
     }

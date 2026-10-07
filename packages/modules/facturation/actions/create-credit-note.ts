@@ -248,7 +248,13 @@ export async function createCreditNote(
 
   // Repli : si Pennylane refuse le rattachement, on reemet sans lui plutot que
   // d'echouer. L'avoir reste valide, seul le lien machine est perdu.
-  if (result.error && linkedToInvoice && result.error.code === 'PENNYLANE_422') {
+  //
+  // T-041a — le repli n'ecoutait que le 422 annonce par la documentation. Le
+  // premier avoir reel a echoue en **400**, donc il n'a pas joue et MiKL s'est
+  // retrouve avec un refus sec. Les deux codes sont desormais couverts : un
+  // champ inconnu se refuse indifferemment en 400 ou en 422 selon l'endpoint.
+  const REJECTED_FIELD_CODES = ['PENNYLANE_400', 'PENNYLANE_422']
+  if (result.error && linkedToInvoice && REJECTED_FIELD_CODES.includes(result.error.code)) {
     console.warn(
       '[FACTURATION:CREDIT_NOTE] credited_invoice_id refuse par Pennylane, nouvel essai sans :',
       result.error.details

@@ -182,4 +182,65 @@ describe('pennylaneClient', () => {
       expect(result.error).toBeNull()
     })
   })
+
+  // ── T-041a — le MOTIF du refus doit remonter jusqu'a l'appelant ──────────
+  //
+  // Le premier avoir reel a echoue sur un « 400 Bad Request » nu : le corps de
+  // la reponse Pennylane partait dans les journaux Vercel et l'operateur
+  // n'avait rien d'exploitable sous les yeux.
+
+  describe('motif des erreurs', () => {
+    it('reprend le champ `message` du corps dans le message d erreur', async () => {
+      mockFetch.mockResolvedValue(
+        makeErrorResponse(400, { message: 'credited_invoice_id is not a valid attribute' })
+      )
+      const result = await pennylaneClient.post('/customer_invoices', {})
+
+      expect(result.error?.code).toBe('PENNYLANE_400')
+      expect(result.error?.message).toContain('credited_invoice_id is not a valid attribute')
+    })
+
+    it('reprend un tableau `errors`', async () => {
+      mockFetch.mockResolvedValue(
+        makeErrorResponse(422, { errors: ['Ligne 1 invalide', 'Ligne 2 invalide'] })
+      )
+      const result = await pennylaneClient.post('/customer_invoices', {})
+
+      expect(result.error?.message).toContain('Ligne 1 invalide')
+      expect(result.error?.message).toContain('Ligne 2 invalide')
+    })
+
+    it('reprend un dictionnaire champ -> messages', async () => {
+      mockFetch.mockResolvedValue(
+        makeErrorResponse(422, { errors: { invoice_lines: ['ledger_account_id manquant'] } })
+      )
+      const result = await pennylaneClient.post('/customer_invoices', {})
+
+      expect(result.error?.message).toContain('invoice_lines')
+      expect(result.error?.message).toContain('ledger_account_id manquant')
+    })
+
+    it('serialise le corps quand aucune forme connue ne correspond', async () => {
+      mockFetch.mockResolvedValue(makeErrorResponse(400, { unexpected: 'shape' }))
+      const result = await pennylaneClient.post('/customer_invoices', {})
+
+      expect(result.error?.message).toContain('unexpected')
+    })
+
+    it('garde le message nu quand le corps est vide', async () => {
+      mockFetch.mockResolvedValue(new Response('', { status: 400 }))
+      const result = await pennylaneClient.post('/customer_invoices', {})
+
+      expect(result.error?.message).toBe('Pennylane API error: 400 ')
+    })
+
+    it('conserve le corps complet dans `details` meme si le message est tronque', async () => {
+      const long = 'x'.repeat(500)
+      mockFetch.mockResolvedValue(makeErrorResponse(400, { message: long }))
+      const result = await pennylaneClient.post('/customer_invoices', {})
+
+      expect(result.error?.message.length).toBeLessThan(400)
+      expect((result.error?.details as { message: string }).message).toHaveLength(500)
+    })
+  })
 })
