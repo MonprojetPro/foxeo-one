@@ -417,11 +417,39 @@ export function MessagesTab() {
                       {m.attachment_count}
                     </span>
                   )}
-                  <span className="text-xs text-gray-500">{fmtDate(m.created_at)}</span>
+                  {/* F-047 — la date du DERNIER message. Afficher celle de
+                      l'ouverture faisait paraître vieux un fil relancé hier. */}
+                  <span className="text-xs text-gray-500" title={`Fil ouvert le ${fmtDate(m.created_at)}`}>
+                    {fmtDate(m.last_at ?? m.created_at)}
+                  </span>
                 </div>
               </div>
 
-              <p className="text-sm text-gray-200 whitespace-pre-wrap">{m.message}</p>
+              {/* F-047 — ce que la carte montre : le dernier message, et qui
+                  l'a écrit. Avant, c'était toujours le message d'ORIGINE :
+                  trois relances d'une cliente sont restées sans réponse parce
+                  que la carte répétait son texte du premier jour. */}
+              <div className="space-y-1">
+                {m.last_sender && m.last_at !== m.created_at && (
+                  <p className="text-[0.7rem] font-medium uppercase tracking-wide text-gray-500">
+                    {m.last_sender === 'admin' ? 'Dernier message — toi' : 'Dernier message — le client'}
+                  </p>
+                )}
+                <p className="text-sm text-gray-200 whitespace-pre-wrap">
+                  {m.last_message ?? m.message}
+                </p>
+              </div>
+
+              {/* Le signal qui manquait : des messages attendent une réponse.
+                  Le badge « Nouveau » ne le disait pas — il se confond avec un
+                  fil jamais ouvert. */}
+              {!!m.unanswered && (
+                <p className="inline-flex items-center gap-1.5 rounded-md border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-xs font-medium text-amber-200">
+                  {m.unanswered === 1
+                    ? 'En attente de ta réponse'
+                    : `${m.unanswered} messages en attente de ta réponse`}
+                </p>
+              )}
 
               {m.user_agent && (
                 <p className="text-[0.65rem] text-gray-600 truncate" title={m.user_agent}>

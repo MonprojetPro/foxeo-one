@@ -254,6 +254,27 @@ export interface ContactMessage {
    * guichet plus ancien ne le renvoie pas, la liste doit rester lisible sans.
    */
   attachment_count?: number
+
+  // --- F-047 : de quoi voir qu'un fil a bougé SANS l'ouvrir ----------------
+  // Tous optionnels : un guichet antérieur au 2026-10-07 ne les renvoie pas,
+  // et la liste doit rester lisible sans eux — elle retombe alors sur le
+  // message d'origine, c'est-à-dire sur l'ancien comportement.
+
+  /** Date du dernier message du fil, quel qu'en soit l'auteur. */
+  last_at?: string
+  /** Son texte. Repli sur le message d'origine quand il n'y a aucune réponse. */
+  last_message?: string
+  /** Qui a parlé en dernier. */
+  last_sender?: 'user' | 'admin'
+  /**
+   * Messages de l'utilisateur arrivés APRÈS notre dernière intervention.
+   *
+   * « En attente de notre réponse », et non « non lus » — cette dernière notion
+   * n'existe pas côté équipe. C'est ce compteur qui manquait : trois relances
+   * d'une cliente sont restées sans réponse parce que rien, dans la liste, ne
+   * disait qu'elles attendaient.
+   */
+  unanswered?: number
 }
 
 // --- GET /contact-messages/:id (fil complet, v7) ---------------------------
