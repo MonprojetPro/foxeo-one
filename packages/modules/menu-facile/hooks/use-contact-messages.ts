@@ -5,6 +5,7 @@ import {
   resolveContactMessage,
   replyToContactMessage,
   deleteContactMessage,
+  openContactThread,
 } from '../actions/contact-messages'
 import type { ContactMessage, ContactStatus, ContactThread } from '../types'
 
@@ -84,5 +85,22 @@ export function useContactActions() {
     onSuccess: () => invalidate(),
   })
 
-  return { setStatus, reply, remove }
+  /**
+   * F-046 — ouvrir un fil à notre initiative.
+   *
+   * N'invalide PAS de fil précis : il n'en existait aucun avant l'appel. Seule
+   * la liste bouge, et elle doit bouger tout de suite — sans cela, le fil qu'on
+   * vient de créer n'apparaîtrait qu'au bout des 30 s de polling, et on le
+   * croirait perdu.
+   */
+  const open = useMutation({
+    mutationFn: async (input: { userId: string; body: string }) => {
+      const res = await openContactThread(input)
+      if (res.error || !res.data) throw new Error(res.error?.message ?? 'Ouverture impossible')
+      return res.data
+    },
+    onSuccess: () => invalidate(),
+  })
+
+  return { setStatus, reply, remove, open }
 }

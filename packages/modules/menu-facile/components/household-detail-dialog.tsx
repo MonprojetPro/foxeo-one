@@ -14,6 +14,7 @@ import {
   EyeOff,
   Check,
   Undo2,
+  MessageSquarePlus,
 } from 'lucide-react'
 import {
   Dialog,
@@ -22,6 +23,7 @@ import {
   DialogTitle,
   toast,
 } from '@monprojetpro/ui'
+import { OpenThreadDialog } from './open-thread-dialog'
 import { useHousehold } from '../hooks/use-households'
 import { useModerationActions } from '../hooks/use-moderation'
 import { num, shortDate, fullDate, relativeDate } from '../utils/format'
@@ -142,6 +144,7 @@ function MemberRow({
   onBan: (member: HouseholdMember) => void
   busy: boolean
 }) {
+  const [ecrireOuvert, setEcrireOuvert] = useState(false)
   const name = m.display_name?.trim() || m.email || 'Membre sans nom'
 
   // Message pré-rempli : MiKL n'a plus qu'à écrire le corps.
@@ -182,13 +185,32 @@ function MemberRow({
       </div>
 
       <div className="mt-2 flex flex-wrap gap-1.5">
+        {/* F-046 — écrire DANS l'application plutôt que par e-mail. Les deux
+            boutons coexistent : l'e-mail reste le bon outil pour joindre
+            quelqu'un qui ne se connecte plus, mais tout ce qui part par là
+            disparaît de l'historique du fil. */}
+        <button
+          type="button"
+          onClick={() => setEcrireOuvert(true)}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-white/10 px-2 py-1 text-xs text-gray-400 transition-colors hover:border-cyan-400/40 hover:text-cyan-200 disabled:opacity-50"
+        >
+          <MessageSquarePlus className="h-3 w-3" />
+          Écrire dans l&apos;app
+        </button>
+        <OpenThreadDialog
+          open={ecrireOuvert}
+          onOpenChange={setEcrireOuvert}
+          userId={m.id}
+          recipientLabel={name}
+        />
         {mailto && (
           <a
             href={mailto}
             className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-white/10 px-2 py-1 text-xs text-gray-400 transition-colors hover:border-cyan-400/40 hover:text-cyan-200"
           >
             <Mail className="h-3 w-3" />
-            Écrire
+            Par e-mail
           </a>
         )}
         <ConfirmButton

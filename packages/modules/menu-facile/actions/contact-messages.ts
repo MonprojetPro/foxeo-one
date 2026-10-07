@@ -53,6 +53,57 @@ export async function deleteContactMessage(id: string): Promise<ActionResponse<t
   }
 }
 
+/** Ce que le guichet rend quand l'équipe ouvre un fil. */
+export interface OpenedContactThread {
+  /** Identifiant du fil créé — permet de l'ouvrir dans la foulée. */
+  id: string
+  /**
+   * L'e-mail d'avertissement est-il RÉELLEMENT parti ?
+   *
+   * À afficher, toujours. Un fil ouvert sans e-mail est parfaitement valide —
+   * la pastille s'allume dans l'application — mais le destinataire n'a aucune
+   * raison de s'y connecter. Taire ce booléen, c'est laisser croire qu'on a
+   * prévenu quelqu'un qui n'a rien reçu.
+   */
+  emailed: boolean
+}
+
+/**
+ * POST /contact-messages/open — l'ÉQUIPE ouvre un fil (F-046).
+ *
+ * Jusqu'au 2026-10-06, la messagerie ne permettait que de RÉPONDRE : aucune
+ * fonction n'existait pour prendre l'initiative, et le bouton « Écrire » de la
+ * fiche foyer sortait de l'application par e-mail — l'échange disparaissait
+ * alors de l'historique du fil.
+ *
+ * @param input.userId uuid du COMPTE destinataire (`HouseholdMember.id`), pas
+ *   l'identifiant du foyer : plusieurs comptes peuvent partager un foyer, et
+ *   un message s'adresse à une personne.
+ */
+export async function openContactThread(input: {
+  userId: string
+  body: string
+}): Promise<ActionResponse<OpenedContactThread>> {
+  const body = input.body.trim()
+  // Mêmes bornes que la saisie utilisateur et que la RPC. Vérifier ici évite
+  // un aller-retour pour un refus qu'on connaît déjà.
+  if (!body) return errorResponse('Le message est vide.', 'MENUFACILE_EMPTY_BODY')
+  if (body.length > 5000) {
+    return errorResponse('Message trop long (5000 caractères maximum).', 'MENUFACILE_BODY_TOO_LONG')
+  }
+  if (!input.userId) return errorResponse('Destinataire manquant.', 'MENUFACILE_NO_RECIPIENT')
+
+  try {
+    const data = await callMenuFacileAdmin<OpenedContactThread>('/contact-messages/open', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: input.userId, body }),
+    })
+    return successResponse(data)
+  } catch (err) {
+    return toError(err)
+  }
+}
+
 /** GET /contact-messages/:id — fil complet (message initial + réponses). */
 export async function getContactThread(id: string): Promise<ActionResponse<ContactThread>> {
   try {
