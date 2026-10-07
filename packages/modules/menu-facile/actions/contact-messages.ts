@@ -104,6 +104,31 @@ export async function openContactThread(input: {
   }
 }
 
+/**
+ * POST /contact-messages/:id/attach-opening — accroche des fichiers au message
+ * d'OUVERTURE d'un fil que l'équipe vient de créer (F-046a).
+ *
+ * L'ordre est inversé par rapport à une réponse, et c'est inévitable : le
+ * dossier de dépôt est `user_id/message_id`, il n'existe donc qu'une fois le
+ * fil créé. On ouvre, on téléverse, on rattache.
+ */
+export async function attachToThreadOpening(input: {
+  threadId: string
+  attachmentIds: string[]
+}): Promise<ActionResponse<true>> {
+  if (!input.attachmentIds.length) return successResponse(true)
+
+  try {
+    await callMenuFacileAdmin(
+      `/contact-messages/${encodeURIComponent(input.threadId)}/attach-opening`,
+      { method: 'POST', body: JSON.stringify({ attachment_ids: input.attachmentIds }) },
+    )
+    return successResponse(true)
+  } catch (err) {
+    return toError(err)
+  }
+}
+
 /** GET /contact-messages/:id — fil complet (message initial + réponses). */
 export async function getContactThread(id: string): Promise<ActionResponse<ContactThread>> {
   try {
