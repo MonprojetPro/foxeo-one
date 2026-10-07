@@ -132,4 +132,46 @@ describe('InvoicesList', () => {
     render(<InvoicesList />, { wrapper })
     expect(screen.getByRole('link', { name: /payer maintenant/i })).toBeInTheDocument()
   })
+
+  // ── T-041 — l'avoir est reserve a l'operateur ─────────────────────────────
+  //
+  // Le verrou qui compte : CE MEME composant est rendu dans l'app CLIENT
+  // (apps/client/.../modules/facturation et .../settings/billing). Un bouton
+  // d'avoir visible par defaut serait donc sous les yeux du client.
+
+  it("n'affiche PAS le bouton d'avoir par defaut — cas de l'app client", () => {
+    ;(useBillingSyncRows as Mock).mockReturnValue({
+      data: [makeRow()],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    render(<InvoicesList />, { wrapper })
+    expect(screen.queryByTestId('credit-note-button')).not.toBeInTheDocument()
+  })
+
+  it("affiche le bouton d'avoir quand allowCreditNote est demande — cas du Hub", () => {
+    ;(useBillingSyncRows as Mock).mockReturnValue({
+      data: [makeRow()],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    render(<InvoicesList allowCreditNote />, { wrapper })
+    expect(screen.getByTestId('credit-note-button')).toBeInTheDocument()
+  })
+
+  it("ouvre la modale d'avoir au clic", () => {
+    ;(useBillingSyncRows as Mock).mockReturnValue({
+      data: [makeRow()],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    render(<InvoicesList allowCreditNote />, { wrapper })
+
+    expect(screen.queryByTestId('credit-note-modal')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('credit-note-button'))
+    expect(screen.getByTestId('credit-note-modal')).toBeInTheDocument()
+  })
 })

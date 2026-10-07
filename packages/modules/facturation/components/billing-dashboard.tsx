@@ -209,7 +209,9 @@ export function BillingDashboard() {
           />
         )}
 
-        {activeTab === 'factures' && <InvoicesList clients={clients} />}
+        {/* allowCreditNote : le Hub est le SEUL appelant a l'activer — la meme
+            liste est rendue dans l'app client (T-041) */}
+        {activeTab === 'factures' && <InvoicesList clients={clients} allowCreditNote />}
 
         {activeTab === 'nouvelle-facture' && (
           <div

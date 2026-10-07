@@ -1,208 +1,340 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Mock } from 'vitest'
 
-// ── Mocks ─────────────────────────────────────────────────────────────────────
+// ============================================================
+// T-041 — tests REECRITS le 2026-10-06.
+//
+// L'ancienne version validait une action ecrite en API V1 (wrapper
+// `{ customer_invoice }`, `currency_amount`, `linked_to_invoice_number`) que
+// le client HTTP n'appelle plus depuis des mois. Les mocks suivent desormais
+// la forme V2 reelle : corps PLAT, `invoice_lines` a montants NEGATIFS,
+// `credited_invoice_id` pour le rattachement — conformement au changelog
+// Pennylane « Deprecation Credit Notes and Draft Invoices endpoints ».
+// ============================================================
 
-const mockInsert = vi.fn().mockResolvedValue({ data: null, error: null })
-const mockFrom = vi.fn()
-
-const mockSupabase = {
-  from: mockFrom,
-}
-
-vi.mock('./assert-operator', () => ({
-  assertOperator: vi.fn(),
+vi.mock('@monprojetpro/supabase', () => ({
+  createServerSupabaseClient: vi.fn(),
 }))
 
 vi.mock('../config/pennylane', () => ({
-  pennylaneClient: {
-    post: vi.fn(),
-  },
+  pennylaneClient: { get: vi.fn(), post: vi.fn() },
 }))
 
 vi.mock('./trigger-billing-sync', () => ({
-  triggerBillingSync: vi.fn().mockResolvedValue({ data: { synced: 1 }, error: null }),
+  triggerBillingSync: vi.fn().mockResolvedValue({ data: null, error: null }),
 }))
 
-import { assertOperator } from './assert-operator'
+vi.mock('../utils/send-by-email-with-retry', () => ({
+  sendByEmailWithRetry: vi.fn(),
+}))
+
+import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
+import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { createCreditNote } from './create-credit-note'
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const mockCreateServerSupabaseClient = vi.mocked(createServerSupabaseClient)
+const mockPennylane = vi.mocked(pennylaneClient)
+const mockSendByEmail = vi.mocked(sendByEmailWithRetry)
 
-function makeEqChain(finalData: unknown, finalError: unknown = null) {
-  const chain: Record<string, unknown> = {}
-  chain.eq = vi.fn(() => chain)
-  chain.single = vi.fn().mockResolvedValue({ data: finalData, error: finalError })
-  chain.maybeSingle = vi.fn().mockResolvedValue({ data: finalData, error: finalError })
-  return chain
+const INVOICE_UUID = '11111111-1111-4111-8111-111111111111'
+
+const ORIGINAL_LINES = [
+  { label: 'Site vitrine QVCT', description: null, quantity: 1, unit: 'u', unitPrice: 3900, vatRate: 'FR_200', total: 3900 },
+  { label: 'Maintenance', description: null, quantity: 1, unit: 'u', unitPrice: 1990, vatRate: 'FR_200', total: 1990 },
+]
+
+type MockOptions = {
+  isOperator?: boolean
+  invoiceRow?: Record<string, unknown> | null
+  existingCreditNotes?: Array<Record<string, unknown>>
+  pennylaneCustomerId?: string | null
 }
 
-function mockOperator(supabase = mockSupabase) {
-  ;(assertOperator as Mock).mockResolvedValue({
-    supabase,
-    userId: 'operator-uuid',
+function makeSupabaseMock(options: MockOptions = {}) {
+  const {
+    isOperator = true,
+    invoiceRow = {
+      pennylane_id: '31539123748864',
+      client_id: 'client-1',
+      amount: 589000,
+      data: { invoice_number: 'F-2026-101', original_line_items: ORIGINAL_LINES },
+    },
+    existingCreditNotes = [],
+    pennylaneCustomerId = '1558203228160',
+  } = options
+
+  const upsert = vi.fn().mockResolvedValue({ error: null })
+  const insert = vi.fn().mockResolvedValue({ error: null })
+
+  const select = vi.fn(() => {
+    const table = currentTable
+
+    if (table === 'billing_sync') {
+      // Deux lectures distinctes sur la meme table :
+      //   la facture      → .eq().eq().single()
+      //   les avoirs      → .eq().eq()  (liste, pas de .single())
+      const single = vi.fn().mockResolvedValue({
+        data: invoiceRow,
+        error: invoiceRow ? null : { message: 'not found' },
+      })
+      const secondEq = vi.fn(() => {
+        const chain = { single } as Record<string, unknown>
+        // La chaine « avoirs » est awaitee directement : on la rend thenable.
+        ;(chain as { then?: unknown }).then = (resolve: (v: unknown) => void) =>
+          resolve({ data: existingCreditNotes, error: null })
+        return chain
+      })
+      return { eq: vi.fn(() => ({ eq: secondEq, single })) }
+    }
+
+    // clients → .eq().single()
+    const single = vi.fn().mockResolvedValue({
+      data: { pennylane_customer_id: pennylaneCustomerId, auth_user_id: 'auth-1', name: 'CSE HABITAT 77' },
+      error: null,
+    })
+    return { eq: vi.fn(() => ({ single })) }
+  })
+
+  let currentTable = ''
+
+  return {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'operator-1' } }, error: null }),
+    },
+    rpc: vi.fn().mockResolvedValue({ data: isOperator }),
+    from: vi.fn((table: string) => {
+      currentTable = table
+      return { select, upsert, insert }
+    }),
+    __spies: { upsert, insert },
+  }
+}
+
+function useSupabase(mock: ReturnType<typeof makeSupabaseMock>) {
+  mockCreateServerSupabaseClient.mockResolvedValue(
+    mock as unknown as Awaited<ReturnType<typeof createServerSupabaseClient>>
+  )
+}
+
+function mockCreated(id = 77001, number = 'A-2026-001') {
+  mockPennylane.post.mockResolvedValue({
+    data: { id, invoice_number: number, status: 'credit_note' },
     error: null,
   })
 }
 
-function mockOperatorForbidden() {
-  ;(assertOperator as Mock).mockResolvedValue({
-    supabase: null,
-    userId: null,
-    error: { message: 'Accès réservé aux opérateurs', code: 'FORBIDDEN' },
-  })
+function sentBody(call = 0) {
+  return mockPennylane.post.mock.calls[call]?.[1] as Record<string, unknown>
 }
-
-// ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('createCreditNote', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      insert: mockInsert,
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-    })
+    mockSendByEmail.mockResolvedValue({ sent: true, attempts: 1, lastError: null })
   })
 
-  it('retourne FORBIDDEN si non opérateur', async () => {
-    mockOperatorForbidden()
-    const result = await createCreditNote('uuid-invoice', 100, 'remboursement')
+  // ── Garde-fous ───────────────────────────────────────────────────────────
+
+  it('refuse un utilisateur non operateur', async () => {
+    useSupabase(makeSupabaseMock({ isOperator: false }))
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
     expect(result.error?.code).toBe('FORBIDDEN')
-    expect(result.data).toBeNull()
   })
 
-  it('retourne VALIDATION_ERROR si invoiceId invalide (non-UUID)', async () => {
-    mockOperator()
-    const result = await createCreditNote('not-a-uuid', 100, 'remboursement')
+  it('exige un motif', async () => {
+    useSupabase(makeSupabaseMock())
+    const result = await createCreditNote(INVOICE_UUID, { reason: '   ' })
     expect(result.error?.code).toBe('VALIDATION_ERROR')
-    expect(result.data).toBeNull()
+    expect(mockPennylane.post).not.toHaveBeenCalled()
   })
 
-  it('retourne VALIDATION_ERROR si amount <= 0', async () => {
-    mockOperator()
-    const result = await createCreditNote('550e8400-e29b-41d4-a716-446655440000', 0, 'remboursement')
-    expect(result.error?.code).toBe('VALIDATION_ERROR')
-    expect(result.data).toBeNull()
-  })
-
-  it('retourne VALIDATION_ERROR si reason vide', async () => {
-    mockOperator()
-    const result = await createCreditNote('550e8400-e29b-41d4-a716-446655440000', 100, '')
-    expect(result.error?.code).toBe('VALIDATION_ERROR')
-    expect(result.data).toBeNull()
-  })
-
-  it('retourne INVOICE_NOT_FOUND si facture absente', async () => {
-    mockOperator()
-    const chain = makeEqChain(null, { code: 'PGRST116' })
-    mockFrom.mockReturnValue({ select: vi.fn().mockReturnValue(chain) })
-    const result = await createCreditNote('550e8400-e29b-41d4-a716-446655440000', 100, 'remboursement')
+  it('remonte INVOICE_NOT_FOUND quand la facture est introuvable', async () => {
+    useSupabase(makeSupabaseMock({ invoiceRow: null }))
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
     expect(result.error?.code).toBe('INVOICE_NOT_FOUND')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
   })
 
-  it('retourne AMOUNT_EXCEEDS_INVOICE si montant > facture (euros vs centimes)', async () => {
-    mockOperator()
-    // billing_sync.amount = 5000 centimes = 50€; amount param = 100€ → dépasse
-    const invoiceChain = makeEqChain(
-      { pennylane_id: 'pny-inv-1', client_id: 'client-uuid', amount: 5000 },
-      null
+  it('refuse de crediter deux fois la meme facture', async () => {
+    useSupabase(
+      makeSupabaseMock({
+        existingCreditNotes: [
+          { pennylane_id: 'A-99', data: { credited_invoice_pennylane_id: '31539123748864' } },
+        ],
+      })
     )
-    mockFrom.mockReturnValue({ select: vi.fn().mockReturnValue(invoiceChain) })
-    const result = await createCreditNote('550e8400-e29b-41d4-a716-446655440000', 100, 'remboursement')
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Encore une erreur' })
+
+    expect(result.error?.code).toBe('ALREADY_CREDITED')
+    expect(result.error?.message).toContain('A-99')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
+  })
+
+  it('refuse un avoir partiel superieur a la facture', async () => {
+    useSupabase(makeSupabaseMock())
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Trop', amount: 99999 })
     expect(result.error?.code).toBe('AMOUNT_EXCEEDS_INVOICE')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
   })
 
-  it('crée l\'avoir et retourne l\'id si tout est valide', async () => {
-    mockOperator()
+  it('refuse un avoir total quand les lignes d origine sont perdues', async () => {
+    useSupabase(
+      makeSupabaseMock({
+        invoiceRow: {
+          pennylane_id: '31539123748864',
+          client_id: 'client-1',
+          amount: 589000,
+          data: { invoice_number: 'F-2026-101' },
+        },
+      })
+    )
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+    expect(result.error?.code).toBe('ORIGINAL_LINES_MISSING')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
+  })
 
-    let callCount = 0
-    mockFrom.mockImplementation(() => {
-      callCount++
-      if (callCount === 1) {
-        // billing_sync query — amount = 20000 centimes = 200€
-        return {
-          select: vi.fn().mockReturnValue(
-            makeEqChain({ pennylane_id: 'pny-inv-1', client_id: 'client-uuid', amount: 20000 })
-          ),
-        }
-      }
-      if (callCount === 2) {
-        // clients query
-        return {
-          select: vi.fn().mockReturnValue(
-            makeEqChain({ pennylane_customer_id: 'pny-cust-1', auth_user_id: 'user-uuid', name: 'Test Client' })
-          ),
-        }
-      }
-      // notifications / activity_logs
-      return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) }
-    })
+  // ── Avoir total ──────────────────────────────────────────────────────────
 
-    ;(pennylaneClient.post as Mock).mockResolvedValue({
-      data: { customer_invoice: { id: 'credit-note-id-123', invoice_number: 'AV-001', status: 'pending', amount: 100 } },
-      error: null,
-    })
+  it('inverse les lignes d origine et envoie un corps PLAT V2', async () => {
+    useSupabase(makeSupabaseMock())
+    mockCreated()
 
-    // amount = 100€ <= facture de 200€ → OK
-    const result = await createCreditNote('550e8400-e29b-41d4-a716-446655440000', 100, 'Remboursement partiel')
-    expect(result.data).toBe('credit-note-id-123')
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Facture remplacée' })
+
     expect(result.error).toBeNull()
+    expect(result.data?.pennylaneCreditNoteId).toBe('77001')
+    expect(result.data?.creditNoteNumber).toBe('A-2026-001')
+    expect(result.data?.isFullCredit).toBe(true)
+    expect(result.data?.amountHt).toBe(5890)
+
+    const [path, body] = mockPennylane.post.mock.calls[0] as [string, Record<string, unknown>]
+    expect(path).toBe('/customer_invoices')
+    // Verrou anti-regression V1
+    expect(body).not.toHaveProperty('customer_invoice')
+    expect(body).not.toHaveProperty('currency_amount')
+    expect(body).not.toHaveProperty('linked_to_invoice_number')
+    expect(body.customer_id).toBe(1558203228160)
+    expect(body.credited_invoice_id).toBe(31539123748864)
+
+    const lines = body.invoice_lines as Record<string, unknown>[]
+    expect(lines).toHaveLength(2)
+    expect(lines[0].label).toBe('Site vitrine QVCT')
+    expect(lines[0].raw_currency_unit_price).toBe('-3900.00')
+    expect(lines[1].raw_currency_unit_price).toBe('-1990.00')
   })
 
-  it('retourne l\'erreur Pennylane si la création échoue', async () => {
-    mockOperator()
+  it("imprime la reference de la facture sur l'avoir", async () => {
+    useSupabase(makeSupabaseMock())
+    mockCreated()
 
-    let callCount = 0
-    mockFrom.mockImplementation(() => {
-      callCount++
-      if (callCount === 1) {
-        return {
-          select: vi.fn().mockReturnValue(
-            makeEqChain({ pennylane_id: 'pny-inv-1', client_id: 'client-uuid', amount: 20000 })
-          ),
-        }
-      }
-      return {
-        select: vi.fn().mockReturnValue(
-          makeEqChain({ pennylane_customer_id: 'pny-cust-1', auth_user_id: 'user-uuid', name: 'Test' })
-        ),
-      }
-    })
+    await createCreditNote(INVOICE_UUID, { reason: 'Facture remplacée' })
 
-    ;(pennylaneClient.post as Mock).mockResolvedValue({
+    expect(sentBody().pdf_invoice_free_text).toBe(
+      'Avoir sur facture F-2026-101 — Facture remplacée'
+    )
+  })
+
+  // ── Avoir partiel ────────────────────────────────────────────────────────
+
+  it('emet une seule ligne negative pour un avoir partiel', async () => {
+    useSupabase(makeSupabaseMock())
+    mockCreated()
+
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Geste', amount: 500 })
+
+    expect(result.data?.isFullCredit).toBe(false)
+    expect(result.data?.amountHt).toBe(500)
+
+    const lines = sentBody().invoice_lines as Record<string, unknown>[]
+    expect(lines).toHaveLength(1)
+    expect(lines[0].label).toBe('Avoir sur facture F-2026-101')
+    expect(lines[0].raw_currency_unit_price).toBe('-500.00')
+    expect(lines[0].vat_rate).toBe('FR_200')
+  })
+
+  // ── Repli sur credited_invoice_id ────────────────────────────────────────
+
+  it('reemet SANS credited_invoice_id si Pennylane le refuse en 422', async () => {
+    useSupabase(makeSupabaseMock())
+    mockPennylane.post
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'Unprocessable', code: 'PENNYLANE_422' },
+      })
+      .mockResolvedValueOnce({ data: { id: 77002, invoice_number: 'A-2026-002' }, error: null })
+
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.linkedToInvoice).toBe(false)
+    expect(mockPennylane.post).toHaveBeenCalledTimes(2)
+    expect(sentBody(0)).toHaveProperty('credited_invoice_id')
+    expect(sentBody(1)).not.toHaveProperty('credited_invoice_id')
+    // Le second envoi porte les memes lignes : l'avoir reste complet
+    expect((sentBody(1).invoice_lines as unknown[]).length).toBe(2)
+  })
+
+  it("ne retente PAS sur une erreur qui n'est pas un 422", async () => {
+    useSupabase(makeSupabaseMock())
+    mockPennylane.post.mockResolvedValue({
       data: null,
-      error: { message: 'API Pennylane error', code: 'PENNYLANE_ERROR' },
+      error: { message: 'Boom', code: 'PENNYLANE_500' },
     })
 
-    const result = await createCreditNote('550e8400-e29b-41d4-a716-446655440000', 100, 'Remboursement')
-    expect(result.error?.code).toBe('PENNYLANE_ERROR')
-    expect(result.data).toBeNull()
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+
+    expect(result.error?.code).toBe('PENNYLANE_500')
+    expect(mockPennylane.post).toHaveBeenCalledTimes(1)
   })
 
-  it('retourne NO_PENNYLANE_ID si client sans compte Pennylane', async () => {
-    mockOperator()
+  // ── Traces ───────────────────────────────────────────────────────────────
 
-    let callCount = 0
-    mockFrom.mockImplementation(() => {
-      callCount++
-      if (callCount === 1) {
-        return {
-          select: vi.fn().mockReturnValue(
-            makeEqChain({ pennylane_id: 'pny-inv-1', client_id: 'client-uuid', amount: 20000 })
-          ),
-        }
-      }
-      return {
-        select: vi.fn().mockReturnValue(
-          makeEqChain({ pennylane_customer_id: null, auth_user_id: 'user-uuid', name: 'Test' })
-        ),
-      }
-    })
+  it('ecrit le miroir billing_sync en montant NEGATIF, rattache a la facture', async () => {
+    const supabase = makeSupabaseMock()
+    useSupabase(supabase)
+    mockCreated()
 
-    const result = await createCreditNote('550e8400-e29b-41d4-a716-446655440000', 100, 'Remboursement')
-    expect(result.error?.code).toBe('NO_PENNYLANE_ID')
+    await createCreditNote(INVOICE_UUID, { reason: 'Facture remplacée' })
+
+    expect(supabase.__spies.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity_type: 'credit_note',
+        pennylane_id: '77001',
+        client_id: 'client-1',
+        amount: -589000,
+        data: expect.objectContaining({
+          credited_invoice_pennylane_id: '31539123748864',
+          credited_invoice_number: 'F-2026-101',
+          is_full_credit: true,
+        }),
+      }),
+      { onConflict: 'entity_type,pennylane_id' }
+    )
+  })
+
+  it('notifie le client sur son auth_user_id', async () => {
+    const supabase = makeSupabaseMock()
+    useSupabase(supabase)
+    mockCreated()
+
+    await createCreditNote(INVOICE_UUID, { reason: 'Facture remplacée' })
+
+    const notif = supabase.__spies.insert.mock.calls.find(
+      ([p]) => (p as Record<string, unknown>).recipient_type === 'client'
+    )
+    expect(notif?.[0]).toMatchObject({ recipient_id: 'auth-1', type: 'payment' })
+  })
+
+  it("n'envoie l'avoir par email que si on le demande", async () => {
+    useSupabase(makeSupabaseMock())
+    mockCreated()
+
+    const silent = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+    expect(silent.data?.emailSent).toBe(false)
+    expect(mockSendByEmail).not.toHaveBeenCalled()
+
+    const sent = await createCreditNote(INVOICE_UUID, { reason: 'Erreur', sendNow: true })
+    expect(sent.data?.emailSent).toBe(true)
+    expect(mockSendByEmail).toHaveBeenCalledWith('77001', 'customer_invoices')
   })
 })

@@ -1,9 +1,10 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { Skeleton, showSuccess, showError } from '@monprojetpro/ui'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import { triggerClientBillingSync } from '../actions/trigger-client-billing-sync'
+import { CreditNoteModal } from './credit-note-modal'
 import type { BillingSyncRow, ClientWithPennylane } from '../types/billing.types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -46,11 +47,27 @@ type InvoicesListProps = {
   clientId?: string
   showRefreshButton?: boolean
   clients?: ClientWithPennylane[]
+  /**
+   * T-041 — affiche l'action « Émettre un avoir ».
+   *
+   * 🔴 DEFAUT `false`, ET CE DEFAUT EST LE SUJET : ce composant est rendu
+   * TEL QUEL dans l'app CLIENT — `apps/client/.../modules/facturation/page.tsx`
+   * et `.../settings/billing/page.tsx`. Un bouton d'avoir pose sans condition
+   * serait donc visible par le client lui-meme. `assertOperator` protege bien
+   * le serveur, mais un bouton qui n'aboutit qu'a « Accès réservé » n'a rien a
+   * faire sous les yeux d'un client. Seul le Hub passe `allowCreditNote`.
+   */
+  allowCreditNote?: boolean
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function InvoicesList({ clientId, showRefreshButton = false, clients }: InvoicesListProps) {
+export function InvoicesList({
+  clientId,
+  showRefreshButton = false,
+  clients,
+  allowCreditNote = false,
+}: InvoicesListProps) {
   const { data: rows, isPending, isError, refetch } = useBillingSyncRows('invoice', clientId)
   const [isSyncing, startTransition] = useTransition()
 
@@ -103,7 +120,12 @@ export function InvoicesList({ clientId, showRefreshButton = false, clients }: I
 
       <div className="flex flex-col gap-2">
         {allRows.map((row) => (
-          <InvoiceRow key={row.id} row={row} clients={clients} />
+          <InvoiceRow
+            key={row.id}
+            row={row}
+            clients={clients}
+            allowCreditNote={allowCreditNote}
+          />
         ))}
       </div>
     </div>
@@ -112,7 +134,16 @@ export function InvoicesList({ clientId, showRefreshButton = false, clients }: I
 
 // ── Invoice Row ───────────────────────────────────────────────────────────────
 
-function InvoiceRow({ row, clients }: { row: BillingSyncRow; clients?: ClientWithPennylane[] }) {
+function InvoiceRow({
+  row,
+  clients,
+  allowCreditNote = false,
+}: {
+  row: BillingSyncRow
+  clients?: ClientWithPennylane[]
+  allowCreditNote?: boolean
+}) {
+  const [showCreditModal, setShowCreditModal] = useState(false)
   const invoiceData = row.data as {
     invoice_number?: string
     date?: string
@@ -192,8 +223,25 @@ function InvoiceRow({ row, clients }: { row: BillingSyncRow; clients?: ClientWit
               Payer maintenant
             </a>
           )}
+
+          {/* T-041 — opérateur uniquement, voir le commentaire sur allowCreditNote */}
+          {allowCreditNote && (
+            <button
+              type="button"
+              onClick={() => setShowCreditModal(true)}
+              aria-label={`Émettre un avoir sur la facture ${invoiceNumber}`}
+              data-testid="credit-note-button"
+              className="rounded-md border border-orange-400/30 bg-orange-400/10 px-2.5 py-1 text-xs text-orange-300 hover:bg-orange-400/20 transition-colors"
+            >
+              Émettre un avoir
+            </button>
+          )}
         </div>
       </div>
+
+      {showCreditModal && (
+        <CreditNoteModal invoice={row} onClose={() => setShowCreditModal(false)} />
+      )}
     </div>
   )
 }
