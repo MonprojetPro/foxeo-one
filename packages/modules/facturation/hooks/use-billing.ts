@@ -96,16 +96,35 @@ export function useBillingSubscriptions(clientId?: string) {
 }
 
 // Lecture des lignes brutes billing_sync pour affichage dans les listes (Story 11.3)
-export function useBillingSyncRows(entityType: 'quote' | 'invoice' | 'subscription', clientId?: string) {
+export type BillingSyncEntityType = 'quote' | 'invoice' | 'subscription' | 'credit_note'
+
+/**
+ * T-041c — accepte PLUSIEURS types.
+ *
+ * 🔑 Pourquoi : le hook ne savait filtrer que sur un type a la fois, et la
+ * liste des factures demandait `'invoice'`. Les avoirs, qui portent
+ * `'credit_note'`, n'etaient donc **jamais charges** — l'avoir F-2026-102
+ * existait en base et restait invisible a l'ecran. Ecrire une nouvelle entite
+ * sans brancher un seul lecteur, c'est exactement ce que la regle
+ * « inspection des consumers » existe pour empecher.
+ *
+ * Les appelants a type unique sont inchanges.
+ */
+export function useBillingSyncRows(
+  entityType: BillingSyncEntityType | BillingSyncEntityType[],
+  clientId?: string
+) {
+  const types = Array.isArray(entityType) ? entityType : [entityType]
+
   return useQuery<BillingSyncRow[]>({
-    queryKey: ['billing', 'sync-rows', entityType, clientId],
+    queryKey: ['billing', 'sync-rows', ...types, clientId],
     queryFn: async () => {
       const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
       const supabase = createBrowserSupabaseClient()
       let query = supabase
         .from('billing_sync')
         .select('id, entity_type, pennylane_id, client_id, status, amount, data, last_synced_at, created_at, updated_at')
-        .eq('entity_type', entityType)
+        .in('entity_type', types)
         .order('created_at', { ascending: false })
 
       if (clientId) {

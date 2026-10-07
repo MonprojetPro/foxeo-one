@@ -174,4 +174,84 @@ describe('InvoicesList', () => {
     fireEvent.click(screen.getByTestId('credit-note-button'))
     expect(screen.getByTestId('credit-note-modal')).toBeInTheDocument()
   })
+
+  // ── T-041c — les avoirs doivent etre VISIBLES ────────────────────────────
+  //
+  // Ecrire une nouvelle entite sans brancher un seul lecteur : l'avoir
+  // F-2026-102 existait en base et n'apparaissait nulle part a l'ecran.
+
+  function makeCreditNote(creditedPennylaneId = 'pny-inv-1') {
+    return {
+      ...makeRow({ id: 'row-cn', pennylane_id: 'pny-cn-1', amount: -47880 }),
+      entity_type: 'credit_note' as const,
+      data: {
+        invoice_number: 'F-2026-102',
+        date: '2026-10-07',
+        credited_invoice_pennylane_id: creditedPennylaneId,
+        credited_invoice_number: 'FA-2025-001',
+      },
+    }
+  }
+
+  it("affiche l'avoir dans la liste, avec son badge", () => {
+    ;(useBillingSyncRows as Mock).mockReturnValue({
+      data: [makeRow(), makeCreditNote()],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    render(<InvoicesList allowCreditNote />, { wrapper })
+
+    expect(screen.getByText('F-2026-102')).toBeInTheDocument()
+    expect(screen.getByText('Avoir')).toBeInTheDocument()
+    expect(screen.getByText(/Annule la facture FA-2025-001/)).toBeInTheDocument()
+  })
+
+  it("charge bien les DEUX types d'entites", () => {
+    ;(useBillingSyncRows as Mock).mockReturnValue({
+      data: [], isPending: false, isError: false, refetch: vi.fn(),
+    })
+    render(<InvoicesList />, { wrapper })
+
+    expect(useBillingSyncRows).toHaveBeenCalledWith(['invoice', 'credit_note'], undefined)
+  })
+
+  it("n'offre PAS d'emettre un avoir sur un avoir", () => {
+    ;(useBillingSyncRows as Mock).mockReturnValue({
+      data: [makeCreditNote()],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    render(<InvoicesList allowCreditNote />, { wrapper })
+
+    expect(screen.queryByTestId('credit-note-button')).not.toBeInTheDocument()
+  })
+
+  it("desactive le bouton sur une facture qui porte deja un avoir", () => {
+    ;(useBillingSyncRows as Mock).mockReturnValue({
+      data: [makeRow(), makeCreditNote('pny-inv-1')],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    render(<InvoicesList allowCreditNote />, { wrapper })
+
+    const button = screen.getByTestId('credit-note-button')
+    expect(button).toBeDisabled()
+    expect(button).toHaveTextContent('Avoir déjà émis')
+    expect(screen.getByText('Annulée par un avoir')).toBeInTheDocument()
+  })
+
+  it("laisse le bouton actif sur une facture dont l'avoir concerne une AUTRE facture", () => {
+    ;(useBillingSyncRows as Mock).mockReturnValue({
+      data: [makeRow(), makeCreditNote('pny-inv-AUTRE')],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(),
+    })
+    render(<InvoicesList allowCreditNote />, { wrapper })
+
+    expect(screen.getByTestId('credit-note-button')).toBeEnabled()
+  })
 })

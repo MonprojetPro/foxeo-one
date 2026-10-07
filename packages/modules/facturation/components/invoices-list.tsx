@@ -68,7 +68,13 @@ export function InvoicesList({
   clients,
   allowCreditNote = false,
 }: InvoicesListProps) {
-  const { data: rows, isPending, isError, refetch } = useBillingSyncRows('invoice', clientId)
+  // T-041c — les AVOIRS sont charges avec les factures. Ils vivent sous un
+  // autre `entity_type`, donc la liste ne les voyait pas : l'avoir F-2026-102
+  // existait en base et n'apparaissait nulle part a l'ecran.
+  const { data: rows, isPending, isError, refetch } = useBillingSyncRows(
+    ['invoice', 'credit_note'],
+    clientId
+  )
   const [isSyncing, startTransition] = useTransition()
 
   if (isPending) {
@@ -90,6 +96,16 @@ export function InvoicesList({
   }
 
   const allRows = rows ?? []
+
+  // T-041c — quelles factures portent deja un avoir ? La garde serveur refuse
+  // de toute facon un second avoir (ALREADY_CREDITED), mais proposer un bouton
+  // qui ne peut qu'echouer est une promesse qu'on ne tient pas.
+  const creditedInvoiceIds = new Set(
+    allRows
+      .filter((r) => r.entity_type === 'credit_note')
+      .map((r) => (r.data as { credited_invoice_pennylane_id?: string })?.credited_invoice_pennylane_id)
+      .filter((id): id is string => Boolean(id))
+  )
 
   function handleRefresh() {
     startTransition(async () => {
@@ -125,6 +141,7 @@ export function InvoicesList({
             row={row}
             clients={clients}
             allowCreditNote={allowCreditNote}
+            alreadyCredited={creditedInvoiceIds.has(row.pennylane_id)}
           />
         ))}
       </div>
@@ -138,10 +155,12 @@ function InvoiceRow({
   row,
   clients,
   allowCreditNote = false,
+  alreadyCredited = false,
 }: {
   row: BillingSyncRow
   clients?: ClientWithPennylane[]
   allowCreditNote?: boolean
+  alreadyCredited?: boolean
 }) {
   const [showCreditModal, setShowCreditModal] = useState(false)
   const invoiceData = row.data as {
@@ -151,7 +170,11 @@ function InvoiceRow({
     public_file_url?: string
     payment_url?: string
     lab_deduction_applied?: boolean
+    credited_invoice_number?: string
   }
+  // T-041c — un avoir n'est pas une facture : il ne se credite pas lui-meme,
+  // et son montant negatif doit se lire comme tel.
+  const isCreditNote = row.entity_type === 'credit_note'
   const isLab = isLabInvoiceRow(row)
   const clientName = clients?.find((c) => c.id === row.client_id)?.name ?? null
   const pdfUrl = invoiceData.file_url ?? invoiceData.public_file_url ?? null
@@ -183,7 +206,22 @@ function InvoiceRow({
                 Lab
               </span>
             )}
+            {isCreditNote && (
+              <span className="rounded-full bg-orange-400/15 px-2 py-0.5 text-[10px] font-medium text-orange-300">
+                Avoir
+              </span>
+            )}
+            {alreadyCredited && !isCreditNote && (
+              <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium text-gray-400">
+                Annulée par un avoir
+              </span>
+            )}
           </div>
+          {isCreditNote && invoiceData.credited_invoice_number && (
+            <span className="text-[10px] text-muted-foreground">
+              Annule la facture {invoiceData.credited_invoice_number}
+            </span>
+          )}
           <span className="text-xs text-muted-foreground">{formatDate(invoiceData.date)}</span>
           {isLab && row.status === 'paid' && invoiceData.lab_deduction_applied && (
             <span className="text-[10px] text-muted-foreground">Déduit du setup One</span>
@@ -224,16 +262,26 @@ function InvoiceRow({
             </a>
           )}
 
-          {/* T-041 — opérateur uniquement, voir le commentaire sur allowCreditNote */}
-          {allowCreditNote && (
+          {/* T-041 — opérateur uniquement, voir le commentaire sur allowCreditNote.
+              T-041c — jamais sur un avoir (il ne se crédite pas lui-même), et
+              désactivé si la facture en porte déjà un : le serveur refuserait
+              de toute façon, et un bouton qui ne peut qu'échouer est une
+              promesse qu'on ne tient pas. */}
+          {allowCreditNote && !isCreditNote && (
             <button
               type="button"
               onClick={() => setShowCreditModal(true)}
+              disabled={alreadyCredited}
+              title={
+                alreadyCredited
+                  ? 'Cette facture a déjà un avoir — pour une correction supplémentaire, émets une nouvelle facture'
+                  : undefined
+              }
               aria-label={`Émettre un avoir sur la facture ${invoiceNumber}`}
               data-testid="credit-note-button"
-              className="rounded-md border border-orange-400/30 bg-orange-400/10 px-2.5 py-1 text-xs text-orange-300 hover:bg-orange-400/20 transition-colors"
+              className="rounded-md border border-orange-400/30 bg-orange-400/10 px-2.5 py-1 text-xs text-orange-300 hover:bg-orange-400/20 transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-orange-400/10"
             >
-              Émettre un avoir
+              {alreadyCredited ? 'Avoir déjà émis' : 'Émettre un avoir'}
             </button>
           )}
         </div>
