@@ -269,7 +269,10 @@ export type ClientWithPennylane = {
 
 export type BillingSyncRow = {
   id: string
-  entity_type: 'quote' | 'invoice' | 'subscription' | 'customer'
+  // T-041b — `credit_note` a ete ajoute a la contrainte CHECK de la table le
+  // 2026-10-07 (migration billing_sync_allow_credit_note). Il manquait ici ET
+  // en base : les avoirs etaient rejetes silencieusement a l'ecriture.
+  entity_type: 'quote' | 'invoice' | 'subscription' | 'customer' | 'credit_note'
   pennylane_id: string
   client_id: string | null
   status: string

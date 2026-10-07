@@ -63,6 +63,12 @@ export type CreateCreditNoteResult = {
   isFullCredit: boolean
   /** false si Pennylane a refuse `credited_invoice_id` et qu'on a reemis sans */
   linkedToInvoice: boolean
+  /**
+   * false si le miroir local n'a pas pu etre ecrit. L'avoir existe quand meme
+   * chez Pennylane — mais il sera INVISIBLE dans le Hub, et surtout la garde
+   * anti-double-avoir ne le verra pas. Doit etre dit a l'operateur.
+   */
+  mirrored: boolean
   emailSent: boolean
 }
 
@@ -307,8 +313,17 @@ export async function createCreditNote(
     },
     { onConflict: 'entity_type,pennylane_id' }
   )
+  // T-041b — l'echec du miroir N'EST PAS un detail de journalisation.
+  //
+  // 🔑 Il l'etait traite comme tel (un simple console.warn), et le premier avoir
+  // reel l'a prouve : la contrainte CHECK de `billing_sync` n'acceptait pas
+  // `credit_note`, l'upsert echouait a chaque fois, et PERSONNE ne le voyait.
+  // Or la garde anti-double-avoir lit cette table : elle interrogeait donc un
+  // registre condamne a rester vide, et n'empechait rien. Une garde qui ne
+  // garde pas, en silence, est pire que pas de garde du tout.
+  const mirrored = !mirrorError
   if (mirrorError) {
-    console.warn('[FACTURATION:CREDIT_NOTE] billing_sync upsert failed:', mirrorError)
+    console.error('[FACTURATION:CREDIT_NOTE] billing_sync upsert failed:', mirrorError)
   }
 
   // ── 7. Envoi, notification, journal ──────────────────────────────────────
@@ -375,6 +390,7 @@ export async function createCreditNote(
       amountHt,
       isFullCredit,
       linkedToInvoice,
+      mirrored,
       emailSent,
     },
     error: null,

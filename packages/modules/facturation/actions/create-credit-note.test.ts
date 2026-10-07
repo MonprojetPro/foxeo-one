@@ -347,6 +347,33 @@ describe('createCreditNote', () => {
     )
   })
 
+  // T-041b — un miroir non ecrit neutralise la garde anti-double-avoir.
+  // L'echec etait un simple console.warn : invisible, donc jamais corrige.
+  it('rapporte mirrored=true quand le miroir est bien ecrit', async () => {
+    useSupabase(makeSupabaseMock())
+    mockCreated()
+
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+    expect(result.data?.mirrored).toBe(true)
+  })
+
+  it("rapporte mirrored=false quand le miroir echoue, SANS faire echouer l'avoir", async () => {
+    const supabase = makeSupabaseMock()
+    supabase.__spies.upsert.mockResolvedValue({
+      error: { message: 'violates check constraint "billing_sync_entity_type_check"' },
+    })
+    useSupabase(supabase)
+    mockCreated()
+
+    const result = await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+
+    // L'avoir EXISTE chez Pennylane : on ne peut pas le declarer en echec
+    expect(result.error).toBeNull()
+    expect(result.data?.pennylaneCreditNoteId).toBe('77001')
+    // ... mais l'operateur doit savoir qu'il est invisible cote Hub
+    expect(result.data?.mirrored).toBe(false)
+  })
+
   it('notifie le client sur son auth_user_id', async () => {
     const supabase = makeSupabaseMock()
     useSupabase(supabase)

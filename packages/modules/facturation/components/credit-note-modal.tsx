@@ -67,6 +67,14 @@ export function CreditNoteModal({ invoice, onClose }: CreditNoteModalProps) {
         )
       }
 
+      // T-041b — un miroir non ecrit rend l'avoir invisible dans le Hub ET
+      // neutralise la garde anti-double-avoir. Ca ne peut pas rester silencieux.
+      if (result.data?.mirrored === false) {
+        showError(
+          `L'avoir est bien créé chez Pennylane, mais il n'a PAS pu être enregistré dans le Hub : il n'apparaîtra pas dans la liste, et rien n'empêchera d'en créer un second sur la même facture. À signaler avant de recommencer.`
+        )
+      }
+
       await queryClient.invalidateQueries({ queryKey: ['billing'] })
       onClose()
     })
