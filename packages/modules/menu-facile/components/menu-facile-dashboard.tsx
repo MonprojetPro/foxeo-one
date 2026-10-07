@@ -10,6 +10,7 @@ import {
   Home,
   Users,
   Bell,
+  ListTree,
   type LucideIcon,
 } from 'lucide-react'
 import { useMenuFacileMetrics } from '../hooks/use-menu-facile-metrics'
@@ -21,6 +22,7 @@ import { RecipesTab } from './recipes-tab'
 import { MessagesTab } from './messages-tab'
 import { HomeBannerTab } from './home-banner-tab'
 import { NotificationsTab } from './notifications-tab'
+import { AislesTab } from './aisles-tab'
 
 type TabKey =
   | 'metrics'
@@ -31,6 +33,7 @@ type TabKey =
   | 'messages'
   | 'home-banner'
   | 'notifications'
+  | 'aisles'
 
 const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'metrics', label: 'Tableau de bord', icon: LayoutDashboard },
@@ -43,6 +46,10 @@ const TABS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   // Placé juste après l'encart : ce sont les deux canaux de diffusion, l'un
   // passif (visible à l'ouverture), l'autre actif (va chercher l'utilisateur).
   { key: 'notifications', label: 'Notifications', icon: Bell },
+  // F-049 — les corrections de rangement remontees par les foyers. Pas de
+  // compteur d'alerte : chaque foyer a deja son rangement correct, c'est une
+  // file de propositions et non d'incidents.
+  { key: 'aisles', label: 'Rangement', icon: ListTree },
 ]
 
 /** Point de statut du guichet admin-api (live / injoignable / connexion). */
@@ -178,6 +185,7 @@ export function MenuFacileDashboard() {
       {tab === 'messages' && <MessagesTab />}
       {tab === 'home-banner' && <HomeBannerTab />}
       {tab === 'notifications' && <NotificationsTab />}
+      {tab === 'aisles' && <AislesTab />}
     </div>
   )
 }

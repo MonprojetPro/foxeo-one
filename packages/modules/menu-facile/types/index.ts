@@ -524,3 +524,35 @@ export interface MenuFacileNotificationInput {
 export interface NotificationAudienceCount {
   count: number
 }
+
+// ---------------------------------------------------------------------------
+// F-049 — rangement des aliments dans la liste de courses
+// ---------------------------------------------------------------------------
+// Un utilisateur de MenuFacile peut désormais remettre lui-même un aliment dans
+// le bon rayon. Sa correction vaut d'abord pour SON foyer ; elle remonte ici pour
+// que l'équipe l'arbitre et, si elle est juste, la valide pour tout le monde.
+
+/** Une correction de rayon faite par un foyer, telle que la voit l'équipe. */
+export interface MenuFacileAisleCorrection {
+  /** Clé canonique de l'ingrédient — c'est elle qu'on promeut, pas le libellé. */
+  ingredient_key: string
+  /** Libellé tel que l'utilisateur l'a vu dans sa liste. */
+  ingredient_label: string
+  /** Rayon qu'il a choisi. */
+  aisle: string
+  household_id: string
+  household_name: string
+  created_at: string
+  updated_at: string
+  /**
+   * Rayon DÉJÀ validé pour tout le monde, s'il y en a un. Permet de distinguer
+   * une correction à arbitrer d'une décision déjà prise — sans quoi on
+   * revaliderait indéfiniment les mêmes lignes.
+   */
+  global_aisle: string | null
+  /**
+   * Nombre de foyers ayant fait le MÊME choix, indépendamment. Plusieurs foyers
+   * d'accord entre eux est le signe le plus fiable que le référentiel a tort.
+   */
+  same_choice_count: number
+}

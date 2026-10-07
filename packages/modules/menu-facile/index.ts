@@ -16,6 +16,7 @@ export { RecipeFormModal } from './components/recipe-form-modal'
 export { MetricCard } from './components/metric-card'
 export { HomeBannerTab } from './components/home-banner-tab'
 export { NotificationsTab } from './components/notifications-tab'
+export { AislesTab } from './components/aisles-tab'
 
 // Data
 export { useMenuFacileMetrics } from './hooks/use-menu-facile-metrics'
@@ -31,6 +32,7 @@ export {
   useNotificationAudienceCount,
   useNotificationActions,
 } from './hooks/use-notifications'
+export { useAisleCorrections, useAisleCorrectionActions } from './hooks/use-aisle-corrections'
 export { useReports, useModerationActions, useRecipeFull } from './hooks/use-moderation'
 export { useContactMessages, useContactThread, useContactActions } from './hooks/use-contact-messages'
 export { useOfficialRecipes, useOfficialRecipe, useOfficialRecipeActions } from './hooks/use-official-recipes'
@@ -51,6 +53,11 @@ export {
 } from './actions/contact-messages'
 export { adjustContactReply } from './actions/adjust-reply'
 export { hideRecipe, banUser, resolveReport } from './actions/moderation'
+export {
+  getAisleCorrections,
+  promoteAisleCorrection,
+  revokeAisleCorrection,
+} from './actions/aisle-corrections'
 export {
   getOfficialRecipes,
   getOfficialRecipe,
@@ -95,6 +102,7 @@ export type {
   OfficialRecipeInput,
   HomeBanner,
   HomeBannerInput,
+  MenuFacileAisleCorrection,
   MenuFacileNotification,
   MenuFacileNotificationInput,
   NotificationAudienceCount,

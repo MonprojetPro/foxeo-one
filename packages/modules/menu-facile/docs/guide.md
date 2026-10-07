@@ -70,6 +70,18 @@ Hub (ce module) ──HTTP + Bearer──▶ guichet admin-api ──▶ base Me
    (nouveaux/lus/résolus) et par sujet (bug/amélioration/autre), marquer lu/résolu/rouvrir
    (`POST /contact-messages/resolve`), répondre par email (`mailto:`). ✅
    Le compteur « messages à traiter » remonte aussi sur le Tableau de bord (`metrics.contact`).
+7. **Rangement** — corrections de rayon faites par les foyers dans leur liste de courses
+   (`GET /aisle-corrections`), avec validation pour tous (`POST /aisle-corrections/promote`)
+   et retrait d'une validation (`POST /aisle-corrections/revoke`). ✅
+
+> Ce qu'il faut comprendre avant d'arbitrer : dans MenuFacile, le rayon d'un ingrédient
+> est déduit d'un référentiel. Quand il se trompe, l'utilisateur le range désormais
+> lui-même, et sa correction vaut **immédiatement pour son foyer**. Cet onglet n'est donc
+> pas une file d'incidents — rien n'est cassé en attendant — mais une file de
+> **propositions**. Valider écrit dans un référentiel partagé en base : l'effet est
+> immédiat pour tous les foyers qui n'ont pas fait leur propre choix, **sans déploiement**.
+> Le repère le plus fiable est « N foyers du même avis » : plusieurs foyers tombés
+> indépendamment sur le même rangement signalent que le référentiel a tort, pas eux.
 
 ## Configuration
 
