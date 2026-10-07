@@ -41,6 +41,21 @@ const CreateCreditNoteSchema = z.object({
   amount: z.number().positive('Le montant doit être positif').nullable().optional(),
 })
 
+/**
+ * T-041d — montant rendu par Pennylane, quelle que soit la cle employee selon
+ * l'endpoint. Volontairement NON exporte : dans un fichier 'use server', tout
+ * export doit etre une fonction async, un export synchrone casse le build.
+ */
+function readPennylaneAmount(created: Record<string, unknown>): number | null {
+  for (const key of ['amount', 'currency_amount'] as const) {
+    const value = created[key]
+    if (value == null) continue
+    const parsed = typeof value === 'number' ? value : parseFloat(String(value))
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return null
+}
+
 export type CreateCreditNoteOptions = {
   /** Motif imprime sur l'avoir. Obligatoire — un avoir sans motif est inexploitable. */
   reason: string
@@ -290,6 +305,21 @@ export async function createCreditNote(
   const creditNoteId = String(created.id)
   const creditNoteNumber = (created.invoice_number as string | null | undefined) ?? null
 
+  // T-041d — montant du miroir, dans le referentiel de Pennylane (TTC), pour
+  // qu'un avoir compense exactement sa facture. Repli sur le HT seulement si
+  // l'API ne rend aucun montant — mieux vaut un chiffre approchant qu'aucun,
+  // mais le cas est signale dans les journaux pour qu'il ne passe pas inapercu.
+  const rawCreditAmount = readPennylaneAmount(created)
+  if (rawCreditAmount == null) {
+    console.warn(
+      `[FACTURATION:CREDIT_NOTE] Pennylane n'a rendu aucun montant pour l'avoir ${String(created.id)} — repli sur le HT (${amountHt} €), le miroir peut differer du TTC`
+    )
+  }
+  const creditedAmountCents =
+    rawCreditAmount != null
+      ? -Math.abs(Math.round(rawCreditAmount * 100))
+      : -Math.round(amountHt * 100)
+
   // ── 6. Miroir billing_sync ───────────────────────────────────────────────
   // Absent de l'ancienne version : l'avoir n'apparaissait nulle part dans le Hub.
   // C'est aussi cette ligne que relit la garde anti-double-avoir.
@@ -299,7 +329,19 @@ export async function createCreditNote(
       pennylane_id: creditNoteId,
       client_id: clientId,
       status: (created.status as string | undefined) ?? 'credit_note',
-      amount: -Math.round(amountHt * 100),
+      // T-041d — le montant du miroir doit etre dans le MEME referentiel que
+      // celui de la facture, sinon les deux ne se compensent pas.
+      //
+      // 🔑 Il ne l'etait pas : `create-invoice` ecrit le montant renvoye par
+      // Pennylane (donc le TTC), alors qu'on ecrivait ici le HT. Resultat a
+      // l'ecran : une facture a 478,80 € « annulee » par un avoir a -399,00 €.
+      // Une seule colonne, deux unites — tout total qui les additionne est
+      // faux de la TVA. Pennylane, lui, etait juste : l'ecart n'existait que
+      // chez nous, donc invisible en rapprochant les deux outils piece a piece.
+      //
+      // On reprend donc `created.amount`, en forcant le signe negatif : selon
+      // l'endpoint, Pennylane rend ce montant deja negatif ou en valeur absolue.
+      amount: creditedAmountCents,
       data: {
         ...created,
         credited_invoice_pennylane_id: originalPennylaneId,

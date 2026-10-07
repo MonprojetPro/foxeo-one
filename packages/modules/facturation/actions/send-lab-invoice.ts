@@ -136,6 +136,21 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
     )
   }
 
+  // T-041d — le miroir porte le montant RENVOYE PAR PENNYLANE (donc le TTC),
+  // comme `create-invoice` et `create-quote`.
+  //
+  // 🔑 Il portait `LAB_FORFAIT_AMOUNT * 100`, soit 199 € HT, alors que la
+  // facture Lab fait 238,80 € TTC chez Pennylane. Meme defaut que celui trouve
+  // sur l'avoir : une seule colonne `amount`, deux referentiels — tout total
+  // qui additionne ces lignes est faux de la TVA. Repli sur le forfait HT
+  // seulement si l'API ne rend aucun montant.
+  const rawLabAmount = createdInvoice.amount
+  const parsedLabAmount =
+    rawLabAmount != null ? parseFloat(String(rawLabAmount)) : Number.NaN
+  const labAmountCents = Number.isFinite(parsedLabAmount)
+    ? Math.round(parsedLabAmount * 100)
+    : LAB_FORFAIT_AMOUNT * 100
+
   // Stocker dans billing_sync pour tracking
   await supabase
     .from('billing_sync')
@@ -145,7 +160,7 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
         pennylane_id: String(createdInvoice.id),
         client_id: clientId,
         status: 'pending',
-        amount: LAB_FORFAIT_AMOUNT * 100,
+        amount: labAmountCents,
         data: { is_lab_invoice: true, label: 'Forfait Lab MonprojetPro' },
         last_synced_at: new Date().toISOString(),
       },

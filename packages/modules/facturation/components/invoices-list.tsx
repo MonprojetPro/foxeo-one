@@ -14,6 +14,11 @@ const STATUS_LABELS: Record<string, string> = {
   pending: 'En attente',
   paid: 'Payée',
   unpaid: 'Impayée',
+  // T-041d — sans ces deux entrees, le statut brut de Pennylane s'affichait
+  // tel quel a l'ecran : un badge « credit_note » et un badge « upcoming »,
+  // en anglais et en notation technique, au milieu d'une liste en francais.
+  credit_note: 'Avoir',
+  upcoming: 'À échoir',
 }
 
 const LAB_INVOICE_TAG = '[FOXEO_LAB]'

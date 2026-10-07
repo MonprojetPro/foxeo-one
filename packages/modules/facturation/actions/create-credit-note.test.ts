@@ -324,6 +324,50 @@ describe('createCreditNote', () => {
 
   // ── Traces ───────────────────────────────────────────────────────────────
 
+  // T-041d — la facture et son avoir doivent se COMPENSER dans le miroir.
+  // Ils ne le faisaient pas : la facture y porte le TTC rendu par Pennylane,
+  // l'avoir y portait le HT. Une colonne, deux referentiels.
+  it('ecrit le montant TTC de Pennylane, pas le HT recalcule', async () => {
+    const supabase = makeSupabaseMock()
+    useSupabase(supabase)
+    // HT des lignes = 5890 ; TTC rendu par Pennylane = 7068
+    mockPennylane.post.mockResolvedValue({
+      data: { id: 77001, invoice_number: 'A-2026-001', amount: '7068.00' },
+      error: null,
+    })
+
+    await createCreditNote(INVOICE_UUID, { reason: 'Facture remplacée' })
+
+    const payload = supabase.__spies.upsert.mock.calls[0][0] as Record<string, unknown>
+    expect(payload.amount).toBe(-706800)
+    expect(payload.amount).not.toBe(-589000) // le HT, l'ancien comportement
+  })
+
+  it('force le signe negatif meme si Pennylane rend un montant deja negatif', async () => {
+    const supabase = makeSupabaseMock()
+    useSupabase(supabase)
+    mockPennylane.post.mockResolvedValue({
+      data: { id: 77001, amount: '-7068.00' },
+      error: null,
+    })
+
+    await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+
+    const payload = supabase.__spies.upsert.mock.calls[0][0] as Record<string, unknown>
+    expect(payload.amount).toBe(-706800)
+  })
+
+  it('se replie sur le HT quand Pennylane ne rend aucun montant', async () => {
+    const supabase = makeSupabaseMock()
+    useSupabase(supabase)
+    mockPennylane.post.mockResolvedValue({ data: { id: 77001 }, error: null })
+
+    await createCreditNote(INVOICE_UUID, { reason: 'Erreur' })
+
+    const payload = supabase.__spies.upsert.mock.calls[0][0] as Record<string, unknown>
+    expect(payload.amount).toBe(-589000)
+  })
+
   it('ecrit le miroir billing_sync en montant NEGATIF, rattache a la facture', async () => {
     const supabase = makeSupabaseMock()
     useSupabase(supabase)
@@ -336,7 +380,6 @@ describe('createCreditNote', () => {
         entity_type: 'credit_note',
         pennylane_id: '77001',
         client_id: 'client-1',
-        amount: -589000,
         data: expect.objectContaining({
           credited_invoice_pennylane_id: '31539123748864',
           credited_invoice_number: 'F-2026-101',
