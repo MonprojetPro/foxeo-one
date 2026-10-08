@@ -99,7 +99,11 @@ function BillingMetricsSection() {
             label="En attente"
             value={formatCurrency(metrics?.pendingAmount ?? 0)}
             tone={(metrics?.pendingAmount ?? 0) > 0 ? 'red' : 'gray'}
-            sub="factures impayées"
+            // T-042 — le sous-titre disait « factures impayées » alors que le
+            // compteur ne retenait QUE le retard. Il compte desormais tout ce
+            // qui est emis et non encaisse, avoirs deduits : le libelle doit
+            // dire la meme chose que le chiffre.
+            sub="émis, non encaissé"
           />
         </div>
 

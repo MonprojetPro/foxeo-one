@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { computeBillingMetrics, type BillingMetrics, type MetricsRow } from '../utils/billing-metrics'
 import type { Quote, Invoice, BillingSubscription, BillingSummary, BillingSyncRow } from '../types/billing.types'
 
 // Données lues depuis billing_sync (table miroir Story 11.2), pas appels directs Pennylane.
@@ -173,16 +174,17 @@ export function useBillingSummary() {
 
 // ── Métriques financières agrégées pour le Hub (Story 11.5 / AC #4) ──────────
 
-export type BillingMetrics = {
-  /** CA mensuel : SUM amount WHERE entity_type='invoice' AND status='paid' AND mois courant */
-  monthlyRevenue: number
-  /** Montant en attente : SUM amount WHERE entity_type='invoice' AND status='unpaid' */
-  pendingAmount: number
-  /** Nombre de devis en cours : COUNT WHERE entity_type='quote' AND status='pending' */
-  pendingQuotesCount: number
-  /** MRR : SUM abonnements actifs mensualises */
-  mrr: number
-}
+/**
+ * T-042 — le CALCUL vit desormais dans `utils/billing-metrics.ts`, plus ici.
+ *
+ * 🔑 Il etait enferme dans ce `queryFn`, donc derriere un appel reseau :
+ * aucun test ne pouvait l'atteindre. C'est exactement la qu'un defaut s'est
+ * loge sans bruit — « En attente » ne retenait que `unpaid`, alors que
+ * Pennylane rend `upcoming` pour une facture emise non echue, et le compteur
+ * restait a zero tant qu'aucune facture n'etait en retard. Le hook ne fait
+ * plus que chercher les lignes ; la formule est verrouillee par ses tests.
+ */
+export type { BillingMetrics } from '../utils/billing-metrics'
 
 export function useBillingMetrics() {
   return useQuery<BillingMetrics>({
@@ -191,60 +193,17 @@ export function useBillingMetrics() {
       const { createBrowserSupabaseClient } = await import('@monprojetpro/supabase')
       const supabase = createBrowserSupabaseClient()
 
+      // Les AVOIRS entrent dans le calcul : sans eux, une facture annulee
+      // resterait comptee « en attente », et le Hub reclamerait un montant que
+      // le client ne doit plus.
       const { data, error } = await supabase
         .from('billing_sync')
         .select('entity_type, status, amount, data')
-        .in('entity_type', ['invoice', 'quote', 'subscription'])
+        .in('entity_type', ['invoice', 'quote', 'subscription', 'credit_note'])
 
       if (error) throw error
 
-      const rows = data ?? []
-      const now = new Date()
-      const currentMonth = now.getMonth()
-      const currentYear = now.getFullYear()
-
-      let monthlyRevenue = 0
-      let pendingAmount = 0
-      let pendingQuotesCount = 0
-      let mrr = 0
-
-      for (const row of rows) {
-        const amount = row.amount ?? 0
-        const rowData = row.data as Record<string, unknown>
-
-        if (row.entity_type === 'invoice') {
-          if (row.status === 'paid') {
-            // CA mensuel: uniquement mois courant
-            const dateStr = (rowData.date ?? rowData.updated_at) as string | undefined
-            if (dateStr) {
-              const d = new Date(dateStr)
-              if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-                monthlyRevenue += amount
-              }
-            }
-          } else if (row.status === 'unpaid') {
-            pendingAmount += amount
-          }
-        } else if (row.entity_type === 'quote') {
-          if (row.status === 'pending') {
-            pendingQuotesCount++
-          }
-        } else if (row.entity_type === 'subscription') {
-          if (row.status === 'active') {
-            // Normaliser en mensuel selon la période
-            const period = (rowData.recurring_period ?? 'monthly') as string
-            if (period === 'monthly') {
-              mrr += amount
-            } else if (period === 'quarterly') {
-              mrr += amount / 3
-            } else if (period === 'yearly') {
-              mrr += amount / 12
-            }
-          }
-        }
-      }
-
-      return { monthlyRevenue, pendingAmount, pendingQuotesCount, mrr }
+      return computeBillingMetrics((data ?? []) as MetricsRow[])
     },
     staleTime: STALE_TIME,
   })
