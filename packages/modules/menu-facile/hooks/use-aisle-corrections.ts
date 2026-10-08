@@ -3,6 +3,8 @@ import {
   getAisleCorrections,
   promoteAisleCorrection,
   revokeAisleCorrection,
+  dismissAisleCorrection,
+  restoreAisleCorrection,
 } from '../actions/aisle-corrections'
 import type { MenuFacileAisleCorrection } from '../types'
 
@@ -53,6 +55,24 @@ export function useAisleCorrectionActions() {
     revoke: useMutation({
       mutationFn: async (input: { ingredientKey: string }) => {
         const res = await revokeAisleCorrection(input)
+        if (res.error) throw new Error(res.error.message)
+        return true
+      },
+      onSuccess: invalidate,
+    }),
+    // F-049a — écarter / remettre à l'étude. Ces deux-là prennent le foyer en
+    // plus de l'ingrédient : la décision vaut pour CE choix, pas pour tous.
+    dismiss: useMutation({
+      mutationFn: async (input: { householdId: string; ingredientKey: string }) => {
+        const res = await dismissAisleCorrection(input)
+        if (res.error) throw new Error(res.error.message)
+        return true
+      },
+      onSuccess: invalidate,
+    }),
+    restore: useMutation({
+      mutationFn: async (input: { householdId: string; ingredientKey: string }) => {
+        const res = await restoreAisleCorrection(input)
         if (res.error) throw new Error(res.error.message)
         return true
       },

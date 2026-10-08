@@ -6,6 +6,8 @@ import {
   Check,
   Loader2,
   Undo2,
+  XCircle,
+  RotateCcw,
   Users,
   AlertTriangle,
   Info,
@@ -32,22 +34,38 @@ import { fullDate, relativeDate } from '../utils/format'
  * file d'incidents — d'où l'absence de compteur d'alerte sur l'onglet.
  */
 
-type Filter = 'todo' | 'validated' | 'all'
+type Filter = 'todo' | 'validated' | 'dismissed' | 'all'
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'todo', label: 'À arbitrer' },
   { key: 'validated', label: 'Validées' },
+  { key: 'dismissed', label: 'Écartées' },
   { key: 'all', label: 'Toutes' },
 ]
 
-/** Une correction est « à arbitrer » tant que le rayon choisi n'est pas celui déjà validé. */
+/** Validée : le rayon choisi par ce foyer est celui qui fait référence pour tous. */
+function isValidated(c: MenuFacileAisleCorrection): boolean {
+  return c.global_aisle === c.aisle
+}
+
+/** Écartée : l'équipe a dit non. La liste du foyer, elle, n'a pas bougé. */
+function isDismissed(c: MenuFacileAisleCorrection): boolean {
+  return c.dismissed_at != null && !isValidated(c)
+}
+
+/**
+ * À arbitrer : ni validée, ni écartée. Les trois états sont exclusifs, et c'est
+ * ce qui permet aux compteurs de s'additionner jusqu'au total — sans ça, une
+ * ligne écartée resterait comptée « à arbitrer » et la file ne se viderait
+ * jamais, qui est précisément le défaut que F-049a corrige.
+ */
 function isPending(c: MenuFacileAisleCorrection): boolean {
-  return c.global_aisle !== c.aisle
+  return !isValidated(c) && !isDismissed(c)
 }
 
 export function AislesTab() {
   const { data, isLoading, error } = useAisleCorrections()
-  const { promote, revoke } = useAisleCorrectionActions()
+  const { promote, revoke, dismiss, restore } = useAisleCorrectionActions()
   const { confirm, ConfirmDialog } = useConfirmDialog()
   const [filter, setFilter] = useState<Filter>('todo')
   const [busyKey, setBusyKey] = useState<string | null>(null)
@@ -59,7 +77,8 @@ export function AislesTab() {
   const counts = useMemo(
     () => ({
       todo: corrections.filter(isPending).length,
-      validated: corrections.filter((c) => !isPending(c)).length,
+      validated: corrections.filter(isValidated).length,
+      dismissed: corrections.filter(isDismissed).length,
       all: corrections.length,
     }),
     [corrections],
@@ -67,7 +86,8 @@ export function AislesTab() {
 
   const visible = useMemo(() => {
     if (filter === 'todo') return corrections.filter(isPending)
-    if (filter === 'validated') return corrections.filter((c) => !isPending(c))
+    if (filter === 'validated') return corrections.filter(isValidated)
+    if (filter === 'dismissed') return corrections.filter(isDismissed)
     return corrections
   }, [corrections, filter])
 
@@ -90,6 +110,45 @@ export function AislesTab() {
       toast.success(`« ${c.ingredient_label} » est rangé en ${c.aisle} pour tous.`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'La validation a échoué.')
+    } finally {
+      setBusyKey(null)
+    }
+  }
+
+  /**
+   * F-049a — écarter. Le libellé du dialogue insiste sur ce que l'action NE
+   * fait PAS : sans cette phrase, « écarter » se lit naturellement comme
+   * « annuler », et on hésiterait à cliquer de peur de défaire le rangement
+   * d'un utilisateur.
+   */
+  async function handleDismiss(c: MenuFacileAisleCorrection) {
+    const ok = await confirm({
+      title: `Écarter « ${c.ingredient_label} » en ${c.aisle} ?`,
+      description:
+        'La proposition quitte la file d’arbitrage. ' +
+        `${c.household_name} garde ce rangement dans sa propre liste de courses : rien ne change pour ce foyer. ` +
+        'Si le foyer choisit plus tard un autre rayon, la nouvelle proposition reviendra d’elle-même.',
+      confirmLabel: 'Écarter',
+    })
+    if (!ok) return
+    setBusyKey(c.ingredient_key)
+    try {
+      await dismiss.mutateAsync({ householdId: c.household_id, ingredientKey: c.ingredient_key })
+      toast.success('Proposition écartée. La liste du foyer n’a pas changé.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'La mise à l’écart a échoué.')
+    } finally {
+      setBusyKey(null)
+    }
+  }
+
+  async function handleRestore(c: MenuFacileAisleCorrection) {
+    setBusyKey(c.ingredient_key)
+    try {
+      await restore.mutateAsync({ householdId: c.household_id, ingredientKey: c.ingredient_key })
+      toast.success('Proposition remise à l’étude.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'La remise à l’étude a échoué.')
     } finally {
       setBusyKey(null)
     }
@@ -174,12 +233,15 @@ export function AislesTab() {
         <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center text-sm text-gray-400">
           {filter === 'todo'
             ? 'Aucune correction en attente d’arbitrage.'
-            : 'Rien à afficher ici.'}
+            : filter === 'dismissed'
+              ? 'Aucune proposition écartée.'
+              : 'Rien à afficher ici.'}
         </div>
       ) : (
         <div className="space-y-2">
           {visible.map((c) => {
             const pending = isPending(c)
+            const dismissed = isDismissed(c)
             const busy = busyKey === c.ingredient_key
             return (
               <div
@@ -194,10 +256,16 @@ export function AislesTab() {
                       <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 text-xs font-medium text-emerald-200">
                         {c.aisle}
                       </span>
-                      {!pending && (
+                      {isValidated(c) && (
                         <span className="inline-flex items-center gap-1 rounded-full border border-sky-400/30 bg-sky-400/10 px-2.5 py-0.5 text-xs font-medium text-sky-200">
                           <Check className="h-3 w-3" />
                           validé pour tous
+                        </span>
+                      )}
+                      {dismissed && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 text-xs font-medium text-gray-400">
+                          <XCircle className="h-3 w-3" />
+                          écartée — le foyer garde son rangement
                         </span>
                       )}
                       {/*
@@ -223,17 +291,53 @@ export function AislesTab() {
                     </div>
                   </div>
 
+                  {/*
+                    Trois états, trois jeux d'actions. « Valider » reste en
+                    premier et en plein : c'est l'issue attendue d'une
+                    proposition juste. « Écarter » est en retrait — un refus ne
+                    doit pas se cliquer aussi vite qu'un accord.
+                  */}
                   <div className="flex shrink-0 gap-2">
-                    {pending ? (
-                      <Button size="sm" onClick={() => handlePromote(c)} disabled={busy}>
+                    {pending && (
+                      <>
+                        <Button size="sm" onClick={() => handlePromote(c)} disabled={busy}>
+                          {busy ? (
+                            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <ArrowDownToLine className="mr-1.5 h-3.5 w-3.5" />
+                          )}
+                          Valider pour tous
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDismiss(c)}
+                          disabled={busy}
+                          className="text-gray-400 hover:text-gray-200"
+                        >
+                          <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                          Écarter
+                        </Button>
+                      </>
+                    )}
+
+                    {dismissed && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRestore(c)}
+                        disabled={busy}
+                      >
                         {busy ? (
                           <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                         ) : (
-                          <ArrowDownToLine className="mr-1.5 h-3.5 w-3.5" />
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
                         )}
-                        Valider pour tous
+                        Remettre à l’étude
                       </Button>
-                    ) : (
+                    )}
+
+                    {isValidated(c) && (
                       <Button
                         size="sm"
                         variant="outline"

@@ -545,6 +545,14 @@ export interface MenuFacileAisleCorrection {
   created_at: string
   updated_at: string
   /**
+   * F-049a — date à laquelle l'équipe a écarté cette proposition, null sinon.
+   * Écarter ne touche JAMAIS la liste de l'utilisateur : il garde son rangement.
+   * La marque dit seulement « je n'en fais pas une règle, ne me le represente
+   * plus ». Elle porte sur un CHOIX précis : si le foyer change de rayon, elle
+   * est levée automatiquement et la proposition revient (trigger en base).
+   */
+  dismissed_at: string | null
+  /**
    * Rayon DÉJÀ validé pour tout le monde, s'il y en a un. Permet de distinguer
    * une correction à arbitrer d'une décision déjà prise — sans quoi on
    * revaliderait indéfiniment les mêmes lignes.

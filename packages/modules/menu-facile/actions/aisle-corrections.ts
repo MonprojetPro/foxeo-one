@@ -80,3 +80,52 @@ export async function revokeAisleCorrection(input: {
     return toError(err, 'retrait de la validation')
   }
 }
+
+/**
+ * F-049a — POST /aisle-corrections/dismiss : écarter une proposition.
+ *
+ * ⚠️ Ne touche PAS la liste de courses de l'utilisateur : il garde son
+ * rangement. La proposition quitte simplement la file d'arbitrage. Arbitrage
+ * explicite de MiKL le 2026-10-08 — la correction locale existe pour que chacun
+ * range son placard comme il veut, défaire ça depuis le Hub ramènerait le monde
+ * d'avant.
+ *
+ * Vise le couple (foyer, ingrédient), et non l'ingrédient seul : un autre foyer
+ * peut avoir raison là où celui-ci a tort.
+ */
+export async function dismissAisleCorrection(input: {
+  householdId: string
+  ingredientKey: string
+}): Promise<ActionResponse<true>> {
+  try {
+    await callMenuFacileAdmin('/aisle-corrections/dismiss', {
+      method: 'POST',
+      body: JSON.stringify({
+        household_id: input.householdId,
+        ingredient_key: input.ingredientKey,
+      }),
+    })
+    return successResponse(true)
+  } catch (err) {
+    return toError(err, 'mise à l’écart de la proposition')
+  }
+}
+
+/** POST /aisle-corrections/restore — remettre une proposition écartée à l'étude. */
+export async function restoreAisleCorrection(input: {
+  householdId: string
+  ingredientKey: string
+}): Promise<ActionResponse<true>> {
+  try {
+    await callMenuFacileAdmin('/aisle-corrections/restore', {
+      method: 'POST',
+      body: JSON.stringify({
+        household_id: input.householdId,
+        ingredient_key: input.ingredientKey,
+      }),
+    })
+    return successResponse(true)
+  } catch (err) {
+    return toError(err, 'remise à l’étude de la proposition')
+  }
+}
