@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Skeleton, showSuccess, showError } from '@monprojetpro/ui'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import { triggerClientBillingSync } from '../actions/trigger-client-billing-sync'
+import { sendInvoiceByEmail } from '../actions/send-invoice-by-email'
 import { CreditNoteModal } from './credit-note-modal'
 import type { BillingSyncRow, ClientWithPennylane } from '../types/billing.types'
 
@@ -63,6 +64,15 @@ type InvoicesListProps = {
    * faire sous les yeux d'un client. Seul le Hub passe `allowCreditNote`.
    */
   allowCreditNote?: boolean
+  /**
+   * T-044 — affiche l'action « Envoyer au client ».
+   *
+   * 🔴 DEFAUT `false`, pour la MEME raison que `allowCreditNote` : ce composant
+   * est rendu tel quel dans l'app CLIENT. Un bouton d'envoi pose sans condition
+   * permettrait au client de se renvoyer ses propres factures, et surtout
+   * d'ecrire dans `billing_sync.last_sent_at`. Seul le Hub l'active.
+   */
+  allowSend?: boolean
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -72,6 +82,7 @@ export function InvoicesList({
   showRefreshButton = false,
   clients,
   allowCreditNote = false,
+  allowSend = false,
 }: InvoicesListProps) {
   // T-041c — les AVOIRS sont charges avec les factures. Ils vivent sous un
   // autre `entity_type`, donc la liste ne les voyait pas : l'avoir F-2026-102
@@ -146,6 +157,7 @@ export function InvoicesList({
             row={row}
             clients={clients}
             allowCreditNote={allowCreditNote}
+            allowSend={allowSend}
             alreadyCredited={creditedInvoiceIds.has(row.pennylane_id)}
           />
         ))}
@@ -160,14 +172,22 @@ function InvoiceRow({
   row,
   clients,
   allowCreditNote = false,
+  allowSend = false,
   alreadyCredited = false,
 }: {
   row: BillingSyncRow
   clients?: ClientWithPennylane[]
   allowCreditNote?: boolean
+  allowSend?: boolean
   alreadyCredited?: boolean
 }) {
   const [showCreditModal, setShowCreditModal] = useState(false)
+  // T-044 — envoi depuis la liste. `sentAt` est tenu localement EN PLUS de la
+  // base : le toast confirme, mais l'etiquette de la ligne doit changer tout de
+  // suite, sans attendre un rafraichissement.
+  const [sentAt, setSentAt] = useState<string | null>(row.last_sent_at ?? null)
+  const [isSending, setIsSending] = useState(false)
+  const [confirmResend, setConfirmResend] = useState(false)
   const invoiceData = row.data as {
     invoice_number?: string
     date?: string
@@ -184,6 +204,30 @@ function InvoiceRow({
   const clientName = clients?.find((c) => c.id === row.client_id)?.name ?? null
   const pdfUrl = invoiceData.file_url ?? invoiceData.public_file_url ?? null
   const invoiceNumber = invoiceData.invoice_number ?? row.pennylane_id
+  const documentWord = isCreditNote ? 'avoir' : 'facture'
+
+  async function handleSend() {
+    setIsSending(true)
+    setConfirmResend(false)
+    try {
+      const result = await sendInvoiceByEmail(row.pennylane_id)
+      if (result.error || !result.data) {
+        showError(result.error?.message ?? "Échec de l'envoi")
+        return
+      }
+      setSentAt(result.data.sentAt)
+      // On NOMME les adresses servies : « envoyé au client » ne dit pas si la
+      // bonne personne l'a recu, et c'est tout l'objet du carnet (T-039).
+      const where = result.data.sentTo.length > 0 ? result.data.sentTo.join(', ') : 'au client'
+      showSuccess(
+        result.data.usedFallbackRecipient && result.data.sentTo.length > 0
+          ? `${isCreditNote ? 'Avoir' : 'Facture'} ${invoiceNumber} envoyé${isCreditNote ? '' : 'e'} à ${where} — aucun contact « reçoit les factures » n'est coché pour ce client.`
+          : `${isCreditNote ? 'Avoir' : 'Facture'} ${invoiceNumber} envoyé${isCreditNote ? '' : 'e'} à ${where}`
+      )
+    } finally {
+      setIsSending(false)
+    }
+  }
 
   return (
     <div className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-accent/30 transition-colors">
@@ -227,7 +271,12 @@ function InvoiceRow({
               Annule la facture {invoiceData.credited_invoice_number}
             </span>
           )}
-          <span className="text-xs text-muted-foreground">{formatDate(invoiceData.date)}</span>
+          <span className="text-xs text-muted-foreground">
+            {formatDate(invoiceData.date)}
+            {/* T-044 — sans cette mention, rien ne distingue un document envoyé
+                d'un document resté dans le tiroir, et on envoie deux fois. */}
+            {sentAt ? ` · Envoyé${isCreditNote ? '' : 'e'} le ${formatDate(sentAt)}` : ''}
+          </span>
           {isLab && row.status === 'paid' && invoiceData.lab_deduction_applied && (
             <span className="text-[10px] text-muted-foreground">Déduit du setup One</span>
           )}
@@ -265,6 +314,55 @@ function InvoiceRow({
             >
               Payer maintenant
             </a>
+          )}
+
+          {/* T-044 — envoi au client, opérateur uniquement (voir allowSend).
+              Un renvoi est légitime — c'est même la seule relance manuelle
+              disponible — mais il demande confirmation : envoyer deux fois la
+              même facture fait douter le client de ce qu'il doit payer. */}
+          {allowSend && (
+            sentAt && !confirmResend ? (
+              <button
+                type="button"
+                onClick={() => setConfirmResend(true)}
+                disabled={isSending}
+                aria-label={`Renvoyer la ${documentWord} ${invoiceNumber}`}
+                data-testid="send-invoice-button"
+                className="rounded-md border border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors disabled:opacity-40"
+              >
+                Renvoyer
+              </button>
+            ) : confirmResend ? (
+              <span className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={isSending}
+                  data-testid="send-invoice-confirm"
+                  className="rounded-md bg-primary px-2.5 py-1 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-40"
+                >
+                  {isSending ? 'Envoi…' : 'Confirmer le renvoi'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmResend(false)}
+                  className="rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent"
+                >
+                  Annuler
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={isSending}
+                aria-label={`Envoyer la ${documentWord} ${invoiceNumber} au client`}
+                data-testid="send-invoice-button"
+                className="rounded-md bg-primary/10 px-2.5 py-1 text-xs text-primary hover:bg-primary/20 transition-colors disabled:opacity-40"
+              >
+                {isSending ? 'Envoi…' : 'Envoyer au client'}
+              </button>
+            )
           )}
 
           {/* T-041 — opérateur uniquement, voir le commentaire sur allowCreditNote.

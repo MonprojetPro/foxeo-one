@@ -293,6 +293,12 @@ export type BillingSyncRow = {
   status: string
   amount: number | null
   data: Record<string, unknown>
+  /**
+   * T-044 — dernier envoi par email declenche depuis le Hub. `null` = jamais
+   * envoye d'ici. Colonne dediee et NON une cle de `data` : le cron billing-sync
+   * reecrit `data` en entier a chaque passage.
+   */
+  last_sent_at?: string | null
   last_synced_at: string
   created_at: string
   updated_at: string

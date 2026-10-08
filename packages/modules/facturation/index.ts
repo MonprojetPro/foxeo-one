@@ -56,6 +56,7 @@ export type {
   CommercialGestureResult,
 } from './utils/commercial-gesture'
 export { sendQuoteByEmail } from './actions/send-quote-by-email'
+export { sendInvoiceByEmail } from './actions/send-invoice-by-email'
 export { cancelQuote } from './actions/cancel-quote'
 export { updateQuote } from './actions/update-quote'
 export type { UpdateQuotePayload } from './actions/update-quote'

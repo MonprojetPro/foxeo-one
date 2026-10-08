@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -22,9 +22,20 @@ vi.mock('../actions/trigger-client-billing-sync', () => ({
   triggerClientBillingSync: vi.fn().mockResolvedValue({ data: { synced: 1 }, error: null }),
 }))
 
+// T-044 — envoi d'une facture deja emise
+vi.mock('../actions/send-invoice-by-email', () => ({
+  sendInvoiceByEmail: vi.fn(),
+}))
+
 import { useBillingSyncRows } from '../hooks/use-billing'
+import { sendInvoiceByEmail } from '../actions/send-invoice-by-email'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { InvoicesList } from './invoices-list'
 import type { Mock } from 'vitest'
+
+const mockSendInvoice = vi.mocked(sendInvoiceByEmail)
+const mockShowSuccess = vi.mocked(showSuccess)
+const mockShowError = vi.mocked(showError)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -35,10 +46,13 @@ function makeRow(overrides: Partial<{
   status: string
   amount: number | null
   data: Record<string, unknown>
+  entity_type: 'invoice' | 'credit_note'
+  last_sent_at: string | null
 }> = {}) {
   return {
     id: overrides.id ?? 'row-1',
-    entity_type: 'invoice' as const,
+    entity_type: overrides.entity_type ?? ('invoice' as const),
+    last_sent_at: overrides.last_sent_at ?? null,
     pennylane_id: overrides.pennylane_id ?? 'pny-inv-1',
     client_id: overrides.client_id ?? 'client-uuid',
     status: overrides.status ?? 'paid',
@@ -253,5 +267,125 @@ describe('InvoicesList', () => {
     render(<InvoicesList allowCreditNote />, { wrapper })
 
     expect(screen.getByTestId('credit-note-button')).toBeEnabled()
+  })
+
+  // ── T-044 — envoyer une facture deja generee ──────────────────────────────
+  //
+  // Le defaut repare : ce bouton n'existait pas. Une facture creee « sans
+  // envoyer » etait definitive ET injoignable depuis le Hub.
+
+  describe('envoi au client (T-044)', () => {
+    beforeEach(() => {
+      mockSendInvoice.mockResolvedValue({
+        data: { sent: true, sentAt: '2026-10-08T18:00:00Z', sentTo: ['compta@habitat77.fr'], usedFallbackRecipient: false },
+        error: null,
+      })
+    })
+
+    // 🔴 Le verrou qui compte : ce composant est rendu TEL QUEL dans l'app
+    // client. Un bouton d'envoi sans condition laisserait le client se renvoyer
+    // ses factures et ecrire dans billing_sync.
+    it("n'affiche AUCUN bouton d'envoi sans allowSend — cas de l'app client", () => {
+      ;(useBillingSyncRows as Mock).mockReturnValue({ data: [makeRow()], isPending: false, isError: false, refetch: vi.fn() })
+      render(<InvoicesList />, { wrapper })
+
+      expect(screen.queryByTestId('send-invoice-button')).not.toBeInTheDocument()
+    })
+
+    it('affiche « Envoyer au client » sur une facture jamais envoyee', () => {
+      ;(useBillingSyncRows as Mock).mockReturnValue({ data: [makeRow()], isPending: false, isError: false, refetch: vi.fn() })
+      render(<InvoicesList allowSend />, { wrapper })
+
+      expect(screen.getByTestId('send-invoice-button')).toHaveTextContent('Envoyer au client')
+    })
+
+    it('envoie et nomme les adresses reellement servies', async () => {
+      ;(useBillingSyncRows as Mock).mockReturnValue({ data: [makeRow()], isPending: false, isError: false, refetch: vi.fn() })
+      render(<InvoicesList allowSend />, { wrapper })
+
+      fireEvent.click(screen.getByTestId('send-invoice-button'))
+
+      await waitFor(() => {
+        expect(mockSendInvoice).toHaveBeenCalledWith('pny-inv-1')
+      })
+      expect(mockShowSuccess).toHaveBeenCalledWith(expect.stringContaining('compta@habitat77.fr'))
+    })
+
+    it("signale qu'aucun contact n'est coche « recoit les factures »", async () => {
+      mockSendInvoice.mockResolvedValue({
+        data: { sent: true, sentAt: '2026-10-08T18:00:00Z', sentTo: ['login@habitat77.fr'], usedFallbackRecipient: true },
+        error: null,
+      })
+      ;(useBillingSyncRows as Mock).mockReturnValue({ data: [makeRow()], isPending: false, isError: false, refetch: vi.fn() })
+      render(<InvoicesList allowSend />, { wrapper })
+
+      fireEvent.click(screen.getByTestId('send-invoice-button'))
+
+      await waitFor(() => {
+        expect(mockShowSuccess).toHaveBeenCalledWith(expect.stringContaining("n'est coché"))
+      })
+    })
+
+    it("affiche la date d'envoi et passe le bouton en « Renvoyer » quand c'est deja parti", () => {
+      ;(useBillingSyncRows as Mock).mockReturnValue({
+        data: [makeRow({ last_sent_at: '2026-10-07T09:00:00Z' })],
+        isPending: false,
+        isError: false,
+        refetch: vi.fn(),
+      })
+      render(<InvoicesList allowSend />, { wrapper })
+
+      expect(screen.getByTestId('send-invoice-button')).toHaveTextContent('Renvoyer')
+      expect(screen.getByText(/Envoyée le 07\/10\/2026/)).toBeInTheDocument()
+    })
+
+    // Un renvoi est legitime (seule relance manuelle disponible) mais envoyer
+    // deux fois la meme facture fait douter le client de ce qu'il doit payer.
+    it('exige une confirmation pour un RENVOI, et n envoie rien avant', async () => {
+      ;(useBillingSyncRows as Mock).mockReturnValue({
+        data: [makeRow({ last_sent_at: '2026-10-07T09:00:00Z' })],
+        isPending: false,
+        isError: false,
+        refetch: vi.fn(),
+      })
+      render(<InvoicesList allowSend />, { wrapper })
+
+      fireEvent.click(screen.getByTestId('send-invoice-button'))
+      expect(mockSendInvoice).not.toHaveBeenCalled()
+
+      fireEvent.click(screen.getByTestId('send-invoice-confirm'))
+      await waitFor(() => {
+        expect(mockSendInvoice).toHaveBeenCalledWith('pny-inv-1')
+      })
+    })
+
+    it('propose aussi l envoi sur un AVOIR — un avoir dans un tiroir ne previent personne', () => {
+      ;(useBillingSyncRows as Mock).mockReturnValue({
+        data: [makeCreditNote('pny-inv-1')],
+        isPending: false,
+        isError: false,
+        refetch: vi.fn(),
+      })
+      render(<InvoicesList allowSend />, { wrapper })
+
+      expect(screen.getByTestId('send-invoice-button')).toBeInTheDocument()
+    })
+
+    it("remonte l erreur serveur sans annoncer d envoi, et garde le bouton utilisable", async () => {
+      mockSendInvoice.mockResolvedValue({
+        data: null,
+        error: { message: "Le PDF n'est toujours pas prêt après 5 tentatives.", code: 'PDF_NOT_READY' },
+      })
+      ;(useBillingSyncRows as Mock).mockReturnValue({ data: [makeRow()], isPending: false, isError: false, refetch: vi.fn() })
+      render(<InvoicesList allowSend />, { wrapper })
+
+      fireEvent.click(screen.getByTestId('send-invoice-button'))
+
+      await waitFor(() => {
+        expect(mockShowError).toHaveBeenCalledWith(expect.stringContaining('PDF'))
+      })
+      expect(mockShowSuccess).not.toHaveBeenCalled()
+      expect(screen.getByTestId('send-invoice-button')).toBeEnabled()
+    })
   })
 })

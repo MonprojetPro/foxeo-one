@@ -221,7 +221,10 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
         // L envoi a echoue mais la facture EXISTE — ne jamais annoncer un envoi
         // qui n a pas eu lieu.
         showError(
-          `Facture${numberSuffix} créée, mais l'email n'est pas parti. Utilise « Relancer » depuis la liste des factures.`
+          // T-044 — ce message renvoyait vers un bouton « Relancer » QUI N EXISTAIT
+          // PAS : j'avais ecrit une consigne vers un ecran sans le verifier. Le
+          // bouton existe depuis T-044, et le message le nomme exactement.
+          `Facture${numberSuffix} créée, mais l'email n'est pas parti. Utilise « Envoyer au client » depuis la liste des factures.`
         )
       } else if (sendNow) {
         // T-039 — on nomme les ADRESSES reellement servies. « Envoyée à CSE
