@@ -201,20 +201,14 @@ export function ClientForm({
             )}
           </div>
 
-          {/* Contact — facultatif, jamais facturé */}
-          <div className="space-y-1">
-            <label htmlFor="client-contact" className="text-sm font-medium">
-              Nom du contact
-            </label>
-            <Input
-              id="client-contact"
-              placeholder="Ex : Marie Dupont (facultatif)"
-              {...noAutofillProps}
-              {...register('contact')}
-            />
-            <p className="text-xs text-muted-foreground">
-              Interlocuteur chez le client. N&apos;apparaît pas sur les devis et les factures.
-            </p>
+          {/* T-039 — le champ unique « Nom du contact » a été RETIRÉ : il ne
+              savait porter qu'une seule personne, alors qu'un client en a
+              plusieurs (l'interlocuteur, celle qui paie). Les contacts se
+              saisissent dans l'onglet « Contacts » de la fiche, qui gère aussi à
+              qui partent les factures. */}
+          <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            Les contacts de ce client se gèrent dans l&apos;onglet <strong>Contacts</strong> de sa
+            fiche : autant de personnes que tu veux, et le choix de qui reçoit les factures.
           </div>
 
           {/* Adresse de facturation — transmise à Pennylane */}

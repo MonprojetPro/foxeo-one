@@ -343,6 +343,48 @@ describe('InvoiceForm', () => {
     })
   })
 
+  // ── T-039 — dire a QUI la facture est partie ─────────────────────────────
+
+  it("nomme les adresses reellement servies plutot que le client", async () => {
+    mockCreateInvoice.mockResolvedValue({
+      data: {
+        ...okResult().data,
+        sentTo: ['compta@habitat77.fr'],
+        usedFallbackRecipient: false,
+      },
+      error: null,
+    } as Awaited<ReturnType<typeof createInvoice>>)
+    render(<InvoiceForm clients={mockClients} />)
+    await fillOneLine()
+
+    fireEvent.click(screen.getByTestId('invoice-submit-send'))
+
+    await waitFor(() => {
+      expect(mockShowSuccess).toHaveBeenCalledWith(expect.stringContaining('compta@habitat77.fr'))
+    })
+  })
+
+  it("signale que personne n est coche « recoit les factures »", async () => {
+    mockCreateInvoice.mockResolvedValue({
+      data: {
+        ...okResult().data,
+        sentTo: ['login@habitat77.fr'],
+        usedFallbackRecipient: true,
+      },
+      error: null,
+    } as Awaited<ReturnType<typeof createInvoice>>)
+    render(<InvoiceForm clients={mockClients} />)
+    await fillOneLine()
+
+    fireEvent.click(screen.getByTestId('invoice-submit-send'))
+
+    await waitFor(() => {
+      expect(mockShowSuccess).toHaveBeenCalledWith(
+        expect.stringContaining("aucun contact « reçoit les factures » n'est coché")
+      )
+    })
+  })
+
   // ── T-043 — avertissement lignes a 0,00 € ────────────────────────────────
   //
   // Scenario reel de F-2026-103 : une deuxieme ligne « Maintenance &

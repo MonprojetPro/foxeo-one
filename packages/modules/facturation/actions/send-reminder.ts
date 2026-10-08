@@ -1,6 +1,7 @@
 'use server'
 
 import { assertOperator } from './assert-operator'
+import { resolveBillingRecipients } from './resolve-billing-recipients'
 import { successResponse, errorResponse } from '@monprojetpro/types'
 import type { ActionResponse } from '@monprojetpro/types'
 import type { ReminderChannel } from '../types/billing.types'
@@ -121,6 +122,24 @@ export async function sendReminder(
     }
   }
 
+  // T-039 — ZONE D'OMBRE 1, tranchee par defaut : les relances d'impayes vont aux
+  // MEMES destinataires que les factures. C'est la comptable qui paie, donc c'est
+  // elle qu'on relance ; relancer l'adresse de connexion du client reviendrait a
+  // ecrire a quelqu'un qui ne tient pas les comptes.
+  //
+  // ⚠️ Ce circuit est DISTINCT de celui des factures : les relances partent par
+  // Resend, en direct, pas par l'envoi Pennylane. Les deux devaient donc etre
+  // cables separement — un seul des deux aurait laisse la moitie du probleme.
+  const reminderRecipients = await resolveBillingRecipients(reminder.client_id as string)
+  const recipientEmails = reminderRecipients.data?.emails?.length
+    ? reminderRecipients.data.emails
+    : ((client.email as string | null) ? [client.email as string] : [])
+
+  if (recipientEmails.length === 0) {
+    await rollbackReminder()
+    return errorResponse('Aucune adresse de destinataire pour cette relance', 'MISSING_EMAIL')
+  }
+
   // Envoi email si canal email ou both
   if (channel === 'email' || channel === 'both') {
     const resendApiKey = process.env.RESEND_API_KEY
@@ -145,7 +164,8 @@ export async function sendReminder(
         },
         body: JSON.stringify({
           from: process.env.EMAIL_FROM ?? 'MonprojetPro <contact@monprojet-pro.com>',
-          to: client.email,
+          // Resend accepte un tableau : plusieurs destinataires = un seul envoi.
+          to: recipientEmails,
           subject: `Facture ${reminder.invoice_number} — Rappel`,
           html,
         }),

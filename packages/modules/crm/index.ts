@@ -22,6 +22,8 @@ export { AccessToggles } from './components/access-toggles'
 export { ParcoursModeSelector } from './components/parcours-mode-selector'
 export { ParcoursStatusBadge } from './components/parcours-status-badge'
 export { CursorButton } from './components/cursor-button'
+export { ClientContactsTab } from './components/client-contacts-tab'
+export { ClientContactDialog } from './components/client-contact-dialog'
 export { ClientNotesSection } from './components/client-notes-section'
 export { ClientNoteCard } from './components/client-note-card'
 export { PinButton } from './components/pin-button'
@@ -69,6 +71,12 @@ export { useClientParcours } from './hooks/use-client-parcours'
 export { useClientActivitySnapshot } from './hooks/use-client-activity-snapshot'
 export { useClientCockpitRealtime } from './hooks/use-client-cockpit-realtime'
 export { useClientTabNav } from './hooks/use-client-tab-nav'
+export {
+  useClientContacts,
+  useCreateClientContact,
+  useUpdateClientContact,
+  useDeleteClientContact,
+} from './hooks/use-client-contacts'
 export { useClientNotes } from './hooks/use-client-notes'
 export { useReminders, useCreateReminder, useUpdateReminder, useToggleReminderComplete, useDeleteReminder } from './hooks/use-reminders'
 export { usePortfolioStats, useGraduationRate } from './hooks/use-portfolio-stats'
@@ -90,6 +98,10 @@ export { getClientParcours } from './actions/get-client-parcours'
 export { toggleAccess } from './actions/toggle-access'
 export { setParcoursMode } from './actions/set-parcours-mode'
 export { suspendParcours } from './actions/suspend-parcours'
+export { getClientContacts } from './actions/get-client-contacts'
+export { createClientContact } from './actions/create-client-contact'
+export { updateClientContact } from './actions/update-client-contact'
+export { deleteClientContact } from './actions/delete-client-contact'
 export { createClientNote } from './actions/create-client-note'
 export { getClientNotes } from './actions/get-client-notes'
 export { updateClientNote } from './actions/update-client-note'
@@ -171,6 +183,10 @@ export type {
   ParcoursMode,
   ParcoursTemplateDB,
   ParcoursDB,
+  ClientContact,
+  ClientContactDB,
+  CreateClientContactInput,
+  UpdateClientContactInput,
   ClientNote,
   CreateClientNoteInput,
   UpdateClientNoteInput,

@@ -29,6 +29,17 @@ vi.mock('../utils/send-by-email-with-retry', () => ({
   sendByEmailWithRetry: vi.fn(),
 }))
 
+// T-039 — la resolution des destinataires (carnet de contacts) a sa propre suite
+// de tests : ici on la neutralise pour que ces tests restent sur leur sujet,
+// l'emission. Les tests qui verifient le carnet surchargent ce mock.
+vi.mock('./resolve-billing-recipients', () => ({
+  resolveBillingRecipients: vi.fn(async () => ({
+    data: { emails: ['client@exemple.fr'], attentionNames: [], usedFallback: true, pennylaneSynced: false },
+    error: null,
+  })),
+}))
+
+
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
 import { createPennylaneCustomer } from './billing-proxy'
@@ -36,10 +47,14 @@ import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { createInvoice } from './create-invoice'
 import type { LineItem } from '../types/billing.types'
 
+import { resolveBillingRecipients } from './resolve-billing-recipients'
+
 const mockCreateServerSupabaseClient = vi.mocked(createServerSupabaseClient)
 const mockPennylane = vi.mocked(pennylaneClient)
 const mockCreateCustomer = vi.mocked(createPennylaneCustomer)
 const mockSendByEmail = vi.mocked(sendByEmailWithRetry)
+const mockRecipients = vi.mocked(resolveBillingRecipients)
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -114,6 +129,12 @@ describe('createInvoice', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSendByEmail.mockResolvedValue({ sent: true, attempts: 1, lastError: null })
+    // T-039 — destinataires par defaut : le carnet rend une adresse. Reposé a
+    // chaque test parce qu un test qui le vide ne doit pas contaminer les suivants.
+    mockRecipients.mockResolvedValue({
+      data: { emails: ['client@exemple.fr'], attentionNames: [], usedFallback: true, pennylaneSynced: false },
+      error: null,
+    })
   })
 
   it('refuse un utilisateur non authentifie', async () => {
@@ -224,10 +245,12 @@ describe('createInvoice', () => {
     const result = await createInvoice('client-1', LINES)
 
     expect(result.error).toBeNull()
+    // T-039 — le compte nait avec les destinataires du CARNET (un tableau), pas
+    // avec la seule adresse de connexion du client.
     expect(mockCreateCustomer).toHaveBeenCalledWith(
       'client-1',
       'CSE HABITAT 77',
-      'alex.rahli@habitat77.fr'
+      ['client@exemple.fr']
     )
     const [, body] = mockPennylane.post.mock.calls[0] as [string, Record<string, unknown>]
     expect(body.customer_id).toBe(300111222)
@@ -248,12 +271,70 @@ describe('createInvoice', () => {
     useSupabase(
       makeSupabaseMock({ client: { ...DEFAULT_CLIENT, pennylane_customer_id: null, email: null } })
     )
+    // T-039 — carnet vide ET pas d'adresse client : c'est le seul cas ou l'emission
+    // doit refuser, puisqu'il n'existe plus aucune adresse connue.
+    mockRecipients.mockResolvedValue({
+      data: { emails: [], attentionNames: [], usedFallback: true, pennylaneSynced: false },
+      error: null,
+    })
 
     const result = await createInvoice('client-1', LINES)
 
     expect(result.error?.code).toBe('MISSING_EMAIL')
     expect(mockCreateCustomer).not.toHaveBeenCalled()
     expect(mockPennylane.post).not.toHaveBeenCalled()
+  })
+
+  // ── T-039 — carnet de contacts ────────────────────────────────────────────
+
+  it('imprime « A l attention de » en tete des notes publiques, sans les ecraser', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+    mockRecipients.mockResolvedValue({
+      data: {
+        emails: ['compta@habitat77.fr'],
+        attentionNames: ['Alex Rahli'],
+        usedFallback: false,
+        pennylaneSynced: true,
+      },
+      error: null,
+    })
+
+    await createInvoice('client-1', LINES, { publicNotes: 'Prestation de septembre' })
+
+    const [, body] = mockPennylane.post.mock.calls[0] as [string, Record<string, unknown>]
+    expect(body.pdf_invoice_free_text).toBe(
+      ["À l'attention de Alex Rahli", '', 'Prestation de septembre'].join('\n')
+    )
+  })
+
+  it('rend les adresses reellement servies, pour que l ecran puisse les dire', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+    mockRecipients.mockResolvedValue({
+      data: {
+        emails: ['compta@habitat77.fr', 'facture@habitat77.fr'],
+        attentionNames: [],
+        usedFallback: false,
+        pennylaneSynced: true,
+      },
+      error: null,
+    })
+
+    const result = await createInvoice('client-1', LINES)
+
+    expect(result.data?.sentTo).toEqual(['compta@habitat77.fr', 'facture@habitat77.fr'])
+    expect(result.data?.usedFallbackRecipient).toBe(false)
+  })
+
+  it('signale le repli quand aucun contact ne recoit les factures', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+
+    const result = await createInvoice('client-1', LINES)
+
+    // Le mock par defaut rend usedFallback: true — MiKL doit pouvoir le lire.
+    expect(result.data?.usedFallbackRecipient).toBe(true)
   })
 
   it("rejette une date d emission mal formee SANS lever d exception", async () => {

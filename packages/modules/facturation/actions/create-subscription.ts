@@ -5,6 +5,7 @@ import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
 import { createPennylaneCustomer } from './billing-proxy'
+import { resolveBillingRecipients } from './resolve-billing-recipients'
 import {
   PLAN_MONTHLY_PRICE,
   PLAN_LABEL,
@@ -61,9 +62,15 @@ export async function createSubscription(
     pennylaneCustomerId = null
   }
 
+  // T-039 — destinataires issus du carnet de contacts.
+  const recipientsResult = await resolveBillingRecipients(input.clientId, { pennylaneCustomerId })
+  const subscriptionRecipients = recipientsResult.data
+
   // Story G — Auto-créer le compte Pennylane si absent
   if (!pennylaneCustomerId) {
-    const clientEmail = client.email as string | null
+    const clientEmail = subscriptionRecipients?.emails.length
+      ? subscriptionRecipients.emails
+      : (client.email as string | null)
     if (!clientEmail) {
       return {
         data: null,

@@ -20,10 +20,23 @@ vi.mock('./trigger-billing-sync', () => ({
   triggerBillingSync: vi.fn().mockResolvedValue({ data: { synced: 1 }, error: null }),
 }))
 
+// T-039 — la resolution des destinataires (carnet de contacts) a sa propre suite
+// de tests : ici on la neutralise pour que ces tests restent sur leur sujet,
+// l'emission. Les tests qui verifient le carnet surchargent ce mock.
+vi.mock('./resolve-billing-recipients', () => ({
+  resolveBillingRecipients: vi.fn(async () => ({
+    data: { emails: ['client@exemple.fr'], attentionNames: [], usedFallback: true, pennylaneSynced: false },
+    error: null,
+  })),
+}))
+
+
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { createAndSendQuote } from './create-quote'
+
+import { resolveBillingRecipients } from './resolve-billing-recipients'
 
 const mockCreateServerSupabaseClient = vi.mocked(createServerSupabaseClient)
 const mockPennylane = vi.mocked(pennylaneClient)
@@ -156,6 +169,11 @@ describe('createAndSendQuote', () => {
     // Story G : sans pennylane_customer_id, on tente l'auto-création — mais sans email c'est impossible
     const supabase = makeSupabaseMock({ clientData: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-1', pennylane_customer_id: null, email: null } })
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    // T-039 — carnet vide ET pas d'adresse client : seul cas ou l'emission refuse.
+    vi.mocked(resolveBillingRecipients).mockResolvedValue({
+      data: { emails: [], attentionNames: [], usedFallback: true, pennylaneSynced: false },
+      error: null,
+    })
 
     const result = await createAndSendQuote('client-1', mockLineItems, {})
     expect(result.error?.code).toBe('MISSING_EMAIL')

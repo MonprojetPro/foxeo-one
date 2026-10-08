@@ -4,6 +4,8 @@ import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { applyCommercialGesture } from '../utils/commercial-gesture'
 import { findZeroAmountLines, describeZeroAmountLines } from '../utils/zero-amount-lines'
+import { composePublicNotes } from '../utils/billing-recipients'
+import { resolveBillingRecipients } from './resolve-billing-recipients'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
@@ -50,6 +52,14 @@ export type CreateInvoiceResult = {
   totalGrantedHt: number
   /** T-037 — economie en pourcentage du tarif catalogue */
   savingsPercentage: number
+  /** T-039 — adresses auxquelles la facture part reellement (carnet de contacts) */
+  sentTo: string[]
+  /**
+   * T-039 — true quand aucun contact n'etait coche « recoit les factures » : on
+   * est reparti sur l'adresse de connexion du client. L'ecran doit le DIRE, sinon
+   * MiKL croit avoir ecrit a sa comptable.
+   */
+  usedFallbackRecipient: boolean
 }
 
 export async function createInvoice(
@@ -115,8 +125,16 @@ export async function createInvoice(
   // Auto-creation du compte Pennylane si absent (meme logique que create-quote /
   // create-subscription / send-lab-invoice). La brique reprend l adresse de
   // facturation de la fiche client, remplie par le rapprochement SIRET.
+  // T-039 — destinataires issus du carnet de contacts. Resolu AVANT la creation
+  // du compte Pennylane : si le compte n'existe pas encore, il doit naitre avec
+  // les bonnes adresses, pas avec la seule adresse de connexion du client.
+  const recipientsResult = await resolveBillingRecipients(clientId, { pennylaneCustomerId })
+  const recipients = recipientsResult.data
+
   if (!pennylaneCustomerId) {
-    const clientEmail = client.email as string | null
+    // Les adresses du carnet si elles existent, sinon l'adresse du client.
+    const clientEmails = recipients?.emails.length ? recipients.emails : []
+    const clientEmail = clientEmails.length > 0 ? clientEmails : (client.email as string | null)
     if (!clientEmail) {
       return {
         data: null,
@@ -196,7 +214,9 @@ export async function createInvoice(
     date,
     deadline: deadlineStr,
     invoice_lines: finalLines.map(toPennylaneLineItem),
-    pdf_invoice_free_text: options.publicNotes ?? null,
+    // T-039 — la mention « A l'attention de … » passe en tete des notes de MiKL,
+    // sans les ecraser : le nom imprime et les notes publiques coexistent.
+    pdf_invoice_free_text: composePublicNotes(recipients?.attentionNames ?? [], options.publicNotes),
   })
 
   if (invoiceResult.error) {
@@ -335,6 +355,8 @@ export async function createInvoice(
       catalogTotalHt: gesture.data.catalogTotalHt,
       totalGrantedHt: Math.round((gesture.data.offeredTotalHt + gesture.data.discountHt) * 100) / 100,
       savingsPercentage: gesture.data.savingsPercentage,
+      sentTo: recipients?.emails ?? [],
+      usedFallbackRecipient: recipients?.usedFallback ?? true,
     },
     error: null,
   }

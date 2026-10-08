@@ -126,6 +126,25 @@ export async function createClient(
       )
     }
 
+    // T-039 — un contact saisi a la creation (import CSV, appel direct de
+    // l'action) entre AUSSI au carnet. Sans cette reprise, `clients.contact`
+    // porterait un nom que le carnet ne connait pas : le trigger de miroir
+    // l'effacerait au premier contact ajoute a la main, et MiKL verrait un nom
+    // disparaitre sans comprendre pourquoi.
+    if (isEntity && contact && contact.trim() !== '') {
+      const { error: contactError } = await supabase.from('client_contacts').insert({
+        client_id: clientData.id,
+        operator_id: operatorId,
+        full_name: contact.trim(),
+        receives_invoices: false,
+        show_on_invoice: false,
+      })
+      if (contactError) {
+        console.error('[CRM:CREATE] Contact carnet insert error:', contactError)
+        // Non bloquant : le client existe, le contact se resaisit a la main.
+      }
+    }
+
     // Create default client_configs
     const { error: configError } = await supabase
       .from('client_configs')

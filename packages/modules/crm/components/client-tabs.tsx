@@ -6,12 +6,13 @@ import {
   type LucideIcon,
   Clock, FolderOpen, MessageSquare, Zap,
   Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings,
-  MessageCircle, Code2, Pause, Lock, Gauge, CircleSlash, RotateCcw,
+  MessageCircle, Code2, Pause, Lock, Gauge, CircleSlash, RotateCcw, Users,
 } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Button, showSuccess, showError } from '@monprojetpro/ui'
 import { ClientTimeline } from './client-timeline'
+import { ClientContactsTab } from './client-contacts-tab'
 import { ClientDocumentsTab } from './client-documents-tab'
 import { ClientExchangesTab } from './client-exchanges-tab'
 import { ModuleToggleList } from './module-toggle-list'
@@ -185,6 +186,8 @@ export function ClientTabs({
     { type: 'action', value: 'chat',          label: 'Chat',        Icon: MessageCircle, color: '#38bdf8', onClick: () => router.push(`/modules/chat/${client.id}`) },
     // 4 — Emails        amber
     ...(extraTabValues.has('emails')         ? [{ type: 'tab' as const, value: 'emails',        label: 'Emails',      Icon: Mail,          color: '#f59e0b' }] : []),
+    // 4bis — Contacts  rose — T-039, le carnet : qui fait quoi, et a qui partent les factures
+    { type: 'tab',    value: 'contacts',      label: 'Contacts',    Icon: Users,         color: '#f472b6' },
     // 5 — Échanges      lavender
     { type: 'tab',    value: 'echanges',      label: 'Échanges',    Icon: MessageSquare, color: '#a78bfa' },
     // 6 — Documents     emerald
@@ -244,6 +247,7 @@ export function ClientTabs({
 
       {/* Tab content */}
       <div>
+        {activeTab === 'contacts'     && <ClientContactsTab clientId={client.id} clientEmail={client.email} />}
         {activeTab === 'historique'   && <ClientTimeline clientId={client.id} />}
         {activeTab === 'documents'    && <ClientDocumentsTab clientId={client.id} />}
         {activeTab === 'echanges'     && <ClientExchangesTab clientId={client.id} />}

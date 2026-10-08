@@ -224,7 +224,16 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
           `Facture${numberSuffix} créée, mais l'email n'est pas parti. Utilise « Relancer » depuis la liste des factures.`
         )
       } else if (sendNow) {
-        showSuccess(`Facture${numberSuffix} envoyée à ${clientName}`)
+        // T-039 — on nomme les ADRESSES reellement servies. « Envoyée à CSE
+        // Habitat 77 » laissait croire que la bonne personne l'avait recue ;
+        // c'est precisement le malentendu que le carnet existe pour lever.
+        const sentTo = result.data?.sentTo ?? []
+        const where = sentTo.length > 0 ? sentTo.join(', ') : clientName
+        showSuccess(
+          result.data?.usedFallbackRecipient === true && sentTo.length > 0
+            ? `Facture${numberSuffix} envoyée à ${where} — aucun contact « reçoit les factures » n'est coché pour ce client.`
+            : `Facture${numberSuffix} envoyée à ${where}`
+        )
       } else {
         showSuccess(`Facture${numberSuffix} créée sans envoi`)
       }

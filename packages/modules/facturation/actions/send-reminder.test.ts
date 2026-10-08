@@ -31,6 +31,17 @@ vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(async () => mockSupabase),
 }))
 
+// T-039 — la resolution des destinataires (carnet de contacts) a sa propre suite
+// de tests : ici on la neutralise pour que ces tests restent sur leur sujet,
+// l'emission. Les tests qui verifient le carnet surchargent ce mock.
+vi.mock('./resolve-billing-recipients', () => ({
+  resolveBillingRecipients: vi.fn(async () => ({
+    data: { emails: ['client@exemple.fr'], attentionNames: [], usedFallback: true, pennylaneSynced: false },
+    error: null,
+  })),
+}))
+
+
 // Chaîne `update()` compatible avec les deux usages de send-reminder :
 //  - réservation : .update().eq('id').eq('status','pending').select('id')
 //  - rollback    : await .update().eq('id')
@@ -45,6 +56,8 @@ function makeUpdateChain(reserved: Array<{ id: string }> = [{ id: 'rem-1' }]) {
 }
 
 global.fetch = vi.fn()
+
+import { resolveBillingRecipients } from './resolve-billing-recipients'
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -136,6 +149,49 @@ describe('sendReminder — canal email', () => {
       'https://api.resend.com/emails',
       expect.objectContaining({ method: 'POST' })
     )
+  })
+
+  // T-039 — ZONE D'OMBRE 1 : la relance va aux memes destinataires que la
+  // facture. C'est un SECOND circuit (Resend en direct, pas l'envoi Pennylane) :
+  // le cabler cote facture seulement aurait laisse la moitie du probleme.
+  it('relance les destinataires du carnet, pas l adresse de connexion du client', async () => {
+    vi.mocked(resolveBillingRecipients).mockResolvedValue({
+      data: {
+        emails: ['compta@habitat77.fr', 'facture@habitat77.fr'],
+        attentionNames: [],
+        usedFallback: false,
+        pennylaneSynced: true,
+      },
+      error: null,
+    })
+
+    const { sendReminder } = await import('./send-reminder')
+    await sendReminder({ reminderId: 'rem-1', channel: 'email', body: 'Rappel' })
+
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      { body: string },
+    ]
+    expect(JSON.parse(init.body).to).toEqual(['compta@habitat77.fr', 'facture@habitat77.fr'])
+  })
+
+  it('retombe sur l adresse du client quand aucun contact ne recoit les factures', async () => {
+    // Repli volontaire (zone d'ombre 3 de T-039) : jamais d'envoi dans le vide,
+    // jamais de relance bloquee par un carnet vide.
+    vi.mocked(resolveBillingRecipients).mockResolvedValue({
+      data: { emails: [], attentionNames: [], usedFallback: true, pennylaneSynced: false },
+      error: null,
+    })
+
+    const { sendReminder } = await import('./send-reminder')
+    const result = await sendReminder({ reminderId: 'rem-1', channel: 'email', body: 'Rappel' })
+
+    expect(result.error).toBeNull()
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      { body: string },
+    ]
+    expect(JSON.parse(init.body).to).toEqual(['marie@example.com'])
   })
 
   it('retourne erreur si Resend répond non-ok', async () => {

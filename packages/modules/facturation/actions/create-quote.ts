@@ -4,6 +4,8 @@ import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { applyCommercialGesture } from '../utils/commercial-gesture'
 import { findZeroAmountLines, describeZeroAmountLines } from '../utils/zero-amount-lines'
+import { composePublicNotes } from '../utils/billing-recipients'
+import { resolveBillingRecipients } from './resolve-billing-recipients'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
@@ -63,9 +65,17 @@ export async function createAndSendQuote(
     pennylaneCustomerId = null
   }
 
+  // T-039 — destinataires issus du carnet, resolus AVANT la creation du compte :
+  // un compte Pennylane cree avec la seule adresse de connexion du client
+  // enverrait les devis au mauvais interlocuteur pour toujours.
+  const recipientsResult = await resolveBillingRecipients(clientId, { pennylaneCustomerId })
+  const recipients = recipientsResult.data
+
   // Story G — Auto-créer le compte Pennylane si absent
   if (!pennylaneCustomerId) {
-    const clientEmail = client.email as string | null
+    const clientEmail = recipients?.emails.length
+      ? recipients.emails
+      : (client.email as string | null)
     if (!clientEmail) {
       return {
         data: null,
@@ -141,9 +151,11 @@ export async function createAndSendQuote(
     date: today,
     deadline: deadlineStr,
     invoice_lines: pennylaneLineItems,
+    // T-039 — « A l'attention de … » en tete, sans ecraser les notes ni le
+    // marqueur de deduction Lab que relit le webhook de paiement.
     pdf_invoice_free_text: applyLabDeduction
-      ? `${options.publicNotes ?? ''} [LAB_DEDUCTION:19900]`.trim()
-      : (options.publicNotes ?? null),
+      ? `${composePublicNotes(recipients?.attentionNames ?? [], options.publicNotes) ?? ''} [LAB_DEDUCTION:19900]`.trim()
+      : composePublicNotes(recipients?.attentionNames ?? [], options.publicNotes),
   })
 
   if (quoteResult.error) return { data: null, error: quoteResult.error }

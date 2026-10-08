@@ -121,22 +121,29 @@ describe('ClientForm', () => {
       )
     }
 
-    it('remplace prénom/nom par la raison sociale et le contact', () => {
+    it('remplace prénom/nom par la raison sociale', () => {
       renderEntity()
 
       expect(screen.queryByLabelText(/^pr.nom/i)).toBeNull()
       expect(screen.queryByLabelText(/^nom \*/i)).toBeNull()
       expect(screen.getByLabelText(/nom de l.entit. \*/i)).toBeDefined()
-      expect(screen.getByLabelText(/nom du contact/i)).toBeDefined()
       expect(screen.getByLabelText(/siret/i)).toBeDefined()
     })
 
-    it('dit explicitement que le contact ne part pas en facturation', () => {
+    // T-039 — le champ unique « Nom du contact » a ete RETIRE : il ne savait
+    // porter qu'une seule personne alors qu'un client en a plusieurs, et il
+    // faisait doublon avec le carnet. Le formulaire renvoie vers l'onglet.
+    it('ne propose plus de champ « Nom du contact »', () => {
       renderEntity()
 
-      expect(
-        screen.getByText(/n.appara.t pas sur les devis et les factures/i)
-      ).toBeDefined()
+      expect(screen.queryByLabelText(/nom du contact/i)).toBeNull()
+    })
+
+    it('renvoie vers l onglet Contacts, pour que le champ retire ne laisse pas un trou', () => {
+      renderEntity()
+
+      expect(screen.getByText(/onglet/i)).toBeDefined()
+      expect(screen.getByText(/qui re.oit les factures/i)).toBeDefined()
     })
 
     it('exige la raison sociale, pas le nom de famille', async () => {
@@ -157,9 +164,6 @@ describe('ClientForm', () => {
       fireEvent.change(screen.getByLabelText(/nom de l.entit. \*/i), {
         target: { value: 'CSE Habitat 77' },
       })
-      fireEvent.change(screen.getByLabelText(/nom du contact/i), {
-        target: { value: 'Marie Dupont' },
-      })
       fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'cse@habitat77.fr' } })
       fireEvent.click(screen.getByRole('button', { name: /cr.er/i }))
 
@@ -170,7 +174,6 @@ describe('ClientForm', () => {
       const calledWith = onSubmit.mock.calls[0][0]
       expect(calledWith.clientKind).toBe('entity')
       expect(calledWith.company).toBe('CSE Habitat 77')
-      expect(calledWith.contact).toBe('Marie Dupont')
       expect(calledWith.name).toBe('')
     })
   })

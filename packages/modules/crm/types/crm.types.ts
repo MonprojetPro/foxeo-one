@@ -402,6 +402,91 @@ export type ClientNoteDB = {
 }
 
 // ============================================================
+// Carnet de contacts (T-039)
+//
+// Un client = un contact relationnel + un ou plusieurs destinataires de
+// FACTURATION, qui ne sont pas les mêmes personnes. Cas réel (CSE Habitat 77) :
+// le secrétaire est l'interlocuteur, la comptable paie, et elles n'ont pas la
+// même adresse.
+//
+// 🔑 LES DEUX CASES SONT INDÉPENDANTES, et c'est le cœur de la demande de MiKL :
+// il doit pouvoir produire les trois combinaisons — le NOM du secrétaire avec
+// l'ADRESSE de la comptable, les deux pour la comptable, ou aucun nom et juste
+// une adresse. Une seule case ne saurait pas le faire.
+// ============================================================
+
+export const ClientContact = z.object({
+  id: z.string().uuid(),
+  clientId: z.string().uuid(),
+  operatorId: z.string().uuid(),
+  fullName: z.string().min(1, 'Le nom est requis'),
+  email: z.string().nullable().optional(),
+  /** Note libre : statut dans l'entité, anecdotes. JAMAIS visible du client. */
+  note: z.string().nullable().optional(),
+  /** « Envoyer la facture à cette adresse » — alimente les destinataires Pennylane */
+  receivesInvoices: z.boolean(),
+  /** « Ce nom doit apparaître sur la facture » — indépendant de la case ci-dessus */
+  showOnInvoice: z.boolean(),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+})
+
+export type ClientContact = z.infer<typeof ClientContact>
+
+/**
+ * Un destinataire de facture SANS adresse serait un envoi dans le vide : coché à
+ * l'écran, silencieux à l'exécution. La base le refuse aussi (contrainte
+ * `client_contacts_recipient_needs_email_check`) — les deux gardes sont
+ * volontaires, celle-ci pour un message lisible, celle-là pour qu'aucun chemin
+ * d'écriture ne puisse passer à côté.
+ */
+const contactFieldsSchema = {
+  fullName: z.string().trim().min(1, 'Le nom est requis').max(200, 'Nom trop long (200 caractères max)'),
+  email: z
+    .union([z.string().trim().email('Adresse e-mail invalide'), z.literal('')])
+    .nullable()
+    .optional(),
+  note: z.string().trim().max(2000, 'Note trop longue (2000 caractères max)').nullable().optional(),
+  receivesInvoices: z.boolean().optional(),
+  showOnInvoice: z.boolean().optional(),
+}
+
+function requiresEmailWhenRecipient<T extends { email?: string | null; receivesInvoices?: boolean }>(
+  value: T
+): boolean {
+  if (value.receivesInvoices !== true) return true
+  return typeof value.email === 'string' && value.email.trim() !== ''
+}
+
+const EMAIL_REQUIRED_MESSAGE =
+  'Une adresse e-mail est requise pour envoyer la facture à ce contact'
+
+export const CreateClientContactInput = z
+  .object({ clientId: z.string().uuid(), ...contactFieldsSchema })
+  .refine(requiresEmailWhenRecipient, { message: EMAIL_REQUIRED_MESSAGE, path: ['email'] })
+
+export type CreateClientContactInput = z.infer<typeof CreateClientContactInput>
+
+export const UpdateClientContactInput = z
+  .object({ contactId: z.string().uuid(), ...contactFieldsSchema })
+  .refine(requiresEmailWhenRecipient, { message: EMAIL_REQUIRED_MESSAGE, path: ['email'] })
+
+export type UpdateClientContactInput = z.infer<typeof UpdateClientContactInput>
+
+export type ClientContactDB = {
+  id: string
+  client_id: string
+  operator_id: string
+  full_name: string
+  email: string | null
+  note: string | null
+  receives_invoices: boolean
+  show_on_invoice: boolean
+  created_at: string
+  updated_at: string
+}
+
+// ============================================================
 // Reminders types (Story 2.7)
 // ============================================================
 

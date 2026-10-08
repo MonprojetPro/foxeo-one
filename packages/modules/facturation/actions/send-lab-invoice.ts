@@ -4,6 +4,8 @@ import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
 import { createPennylaneCustomer } from './billing-proxy'
+import { resolveBillingRecipients } from './resolve-billing-recipients'
+import { composePublicNotes } from '../utils/billing-recipients'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { LAB_INVOICE_TAG } from '../utils/billing-sync-logic'
 import type { ActionResponse } from '@monprojetpro/types'
@@ -67,9 +69,16 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
     pennylaneCustomerId = null
   }
 
+  // T-039 — destinataires issus du carnet de contacts (facture Lab comprise :
+  // c'est une facture comme une autre pour celui qui la paie).
+  const recipientsResult = await resolveBillingRecipients(clientId, { pennylaneCustomerId })
+  const labRecipients = recipientsResult.data
+
   // Auto-création du compte Pennylane si absent (même logique que create-quote / create-subscription)
   if (!pennylaneCustomerId) {
-    const clientEmail = client.email as string | null
+    const clientEmail = labRecipients?.emails.length
+      ? labRecipients.emails
+      : (client.email as string | null)
     if (!clientEmail) {
       return {
         data: null,
@@ -107,7 +116,11 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
           unit: 'service',
         },
       ],
-      pdf_invoice_free_text: LAB_INVOICE_TAG,
+      // T-039 — « A l'attention de … » devant le marqueur Lab. ⚠️ Le marqueur DOIT
+      // rester dans la chaine : `isLabInvoice()` et l'Edge Function billing-sync le
+      // cherchent par `includes()`. Le mettre en tete l'aurait laisse reconnaissable
+      // aussi, mais la mention se lit mieux en premier sur le PDF.
+      pdf_invoice_free_text: composePublicNotes(labRecipients?.attentionNames ?? [], LAB_INVOICE_TAG),
     }
   )
 

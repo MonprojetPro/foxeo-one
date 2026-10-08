@@ -136,18 +136,22 @@ export async function updateClient(
     // historique qui ne connaît pas la notion garde exactement son comportement.
     const isEntity = updateData.clientKind === 'entity'
 
+    // ⚠️ T-039 — `contact` N'EST PLUS ECRIT ICI. Depuis le carnet de contacts,
+    // cette colonne est un MIROIR D'AFFICHAGE tenu par un trigger en base
+    // (`trg_client_contacts_sync_label`). L'ecrire ici ferait deux ecrivains : la
+    // moindre modification de fiche ecraserait le nom venu du carnet, et il
+    // reapparaitrait au prochain contact touche. Un champ a deux ecrivains finit
+    // toujours par afficher la valeur du plus recent, pas la bonne.
     if (isEntity) {
       if (updateData.company !== undefined) {
         dbUpdate.company = updateData.company
         dbUpdate.name = updateData.company
       }
-      if (updateData.contact !== undefined) dbUpdate.contact = updateData.contact || null
       if (updateData.clientKind !== undefined) dbUpdate.first_name = null
     } else {
       if (updateData.firstName !== undefined) dbUpdate.first_name = updateData.firstName || null
       if (updateData.name !== undefined) dbUpdate.name = updateData.name
       if (updateData.company !== undefined) dbUpdate.company = updateData.company
-      if (updateData.contact !== undefined) dbUpdate.contact = updateData.contact || null
     }
 
     // Update client — double check operator ownership + RLS

@@ -62,13 +62,23 @@ async function assertOperator(): Promise<AssertOperatorResult> {
 export async function createPennylaneCustomer(
   clientId: string,
   companyName: string,
-  email: string,
+  /**
+   * T-039 — accepte plusieurs adresses : le compte Pennylane porte un TABLEAU
+   * `emails`, et un client peut avoir plusieurs destinataires de facturation (le
+   * secretaire ET la comptable). Les appelants historiques passent une chaine,
+   * qui reste valide.
+   */
+  email: string | readonly string[],
   billingAddress?: CreatePennylaneCustomerInput['billingAddress']
 ): Promise<ActionResponse<string>> {
   const { supabase, error: authError } = await assertOperator()
   if (authError || !supabase) return { data: null, error: authError }
 
-  if (!email || email.trim() === '') {
+  const emails = (Array.isArray(email) ? email : [email as string])
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter((value) => value !== '')
+
+  if (emails.length === 0) {
     return { data: null, error: { message: 'Email client requis pour créer un compte Pennylane', code: 'MISSING_EMAIL' } }
   }
 
@@ -96,7 +106,7 @@ export async function createPennylaneCustomer(
   // V2 API : endpoint company_customers, emails = string[], billing_address obligatoire
   const result = await pennylaneClient.post<PennylaneCustomer>('/company_customers', {
     name: companyName,
-    emails: [email.trim()],
+    emails,
     billing_address: {
       address: address?.address ?? '',
       postal_code: address?.postalCode ?? '',

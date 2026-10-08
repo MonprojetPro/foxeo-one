@@ -24,11 +24,24 @@ vi.mock('./billing-proxy', () => ({
   createPennylaneCustomer: vi.fn(),
 }))
 
+// T-039 — la resolution des destinataires (carnet de contacts) a sa propre suite
+// de tests : ici on la neutralise pour que ces tests restent sur leur sujet,
+// l'emission. Les tests qui verifient le carnet surchargent ce mock.
+vi.mock('./resolve-billing-recipients', () => ({
+  resolveBillingRecipients: vi.fn(async () => ({
+    data: { emails: ['client@exemple.fr'], attentionNames: [], usedFallback: true, pennylaneSynced: false },
+    error: null,
+  })),
+}))
+
+
 import { assertOperator } from './assert-operator'
 import { pennylaneClient } from '../config/pennylane'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { createPennylaneCustomer } from './billing-proxy'
 import { sendLabInvoice } from './send-lab-invoice'
+
+import { resolveBillingRecipients } from './resolve-billing-recipients'
 
 const mockAssertOperator = vi.mocked(assertOperator)
 const mockPennylane = vi.mocked(pennylaneClient)
@@ -132,9 +145,32 @@ describe('sendLabInvoice', () => {
     mockPennylane.post.mockResolvedValue({ data: mockInvoiceResponse, error: null })
 
     const result = await sendLabInvoice('client-1')
-    expect(mockCreatePennylaneCustomer).toHaveBeenCalledWith('client-1', 'ACME Corp', 'acme@example.com')
+    // T-039 — le compte nait avec les destinataires du carnet (tableau).
+    expect(mockCreatePennylaneCustomer).toHaveBeenCalledWith('client-1', 'ACME Corp', ['client@exemple.fr'])
     expect(result.error).toBeNull()
     expect(result.data).toBe('4807770487')
+  })
+
+  // T-039 — la mention « A l attention de » ne doit PAS faire disparaitre le
+  // marqueur [FOXEO_LAB] : `isLabInvoice()` et l Edge Function billing-sync le
+  // cherchent dans ce meme champ. Une facture Lab qui cesse d etre reconnue comme
+  // telle casserait tout le suivi du forfait.
+  it('garde le marqueur Lab quand un nom est imprime sur la facture', async () => {
+    const supabase = makeSupabaseMock({
+      clientData: { id: 'client-1', name: 'ACME', company: 'ACME Corp', email: 'acme@example.com', auth_user_id: 'auth-1', pennylane_customer_id: '275890907', lab_paid: false },
+    })
+    mockAssertOperator.mockResolvedValue({ supabase: supabase as never, userId: 'op-1', error: null })
+    mockPennylane.post.mockResolvedValue({ data: mockInvoiceResponse, error: null })
+    vi.mocked(resolveBillingRecipients).mockResolvedValue({
+      data: { emails: ['compta@habitat77.fr'], attentionNames: ['Marie Dupont'], usedFallback: false, pennylaneSynced: true },
+      error: null,
+    })
+
+    await sendLabInvoice('client-1')
+
+    const [, body] = mockPennylane.post.mock.calls[0] as [string, Record<string, unknown>]
+    expect(body.pdf_invoice_free_text).toContain('[FOXEO_LAB]')
+    expect(body.pdf_invoice_free_text).toContain("À l'attention de Marie Dupont")
   })
 
   it('returns MISSING_EMAIL when client has no pennylane_customer_id and no email', async () => {
@@ -142,6 +178,11 @@ describe('sendLabInvoice', () => {
       clientData: { id: 'client-1', name: 'ACME', company: null, email: null, auth_user_id: 'auth-1', pennylane_customer_id: null, lab_paid: false },
     })
     mockAssertOperator.mockResolvedValue({ supabase: supabase as never, userId: 'op-1', error: null })
+    // T-039 — carnet vide ET pas d'adresse client : seul cas ou l'emission refuse.
+    vi.mocked(resolveBillingRecipients).mockResolvedValue({
+      data: { emails: [], attentionNames: [], usedFallback: true, pennylaneSynced: false },
+      error: null,
+    })
 
     const result = await sendLabInvoice('client-1')
     expect(result.error?.code).toBe('MISSING_EMAIL')
