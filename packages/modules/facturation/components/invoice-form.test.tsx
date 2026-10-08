@@ -343,6 +343,107 @@ describe('InvoiceForm', () => {
     })
   })
 
+  // ── T-043 — avertissement lignes a 0,00 € ────────────────────────────────
+  //
+  // Scenario reel de F-2026-103 : une deuxieme ligne « Maintenance &
+  // hebergement » laissee a 0 €, qui s est imprimee sur un document definitif.
+
+  async function addZeroLine(label = 'Maintenance & hébergement') {
+    await userEvent.click(screen.getByRole('button', { name: 'Ajouter une ligne' }))
+    const labels = screen.getAllByPlaceholderText('Prestation réalisée')
+    await userEvent.type(labels[labels.length - 1], label)
+  }
+
+  it("n emet pas et avertit quand une ligne est a 0,00 €", async () => {
+    render(<InvoiceForm clients={mockClients} />)
+    await fillOneLine()
+    await addZeroLine()
+
+    fireEvent.click(screen.getByTestId('invoice-submit-send'))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('invoice-zero-lines-warning')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('invoice-zero-lines-warning')).toHaveTextContent(
+      'Maintenance & hébergement'
+    )
+    expect(mockCreateInvoice).not.toHaveBeenCalled()
+  })
+
+  it("« Retirer ces lignes » retire la ligne et n emet toujours pas", async () => {
+    render(<InvoiceForm clients={mockClients} />)
+    await fillOneLine()
+    await addZeroLine()
+
+    fireEvent.click(screen.getByTestId('invoice-submit-send'))
+    await waitFor(() => {
+      expect(screen.getByTestId('invoice-zero-lines-warning')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByTestId('invoice-zero-lines-remove'))
+
+    expect(screen.getAllByPlaceholderText('Prestation réalisée')).toHaveLength(1)
+    expect(screen.queryByTestId('invoice-zero-lines-warning')).not.toBeInTheDocument()
+    // Le total a change : MiKL doit le revoir, rien ne part automatiquement
+    expect(mockCreateInvoice).not.toHaveBeenCalled()
+  })
+
+  it("« Les garder » emet en confirmant explicitement la ligne a 0 €", async () => {
+    render(<InvoiceForm clients={mockClients} />)
+    await fillOneLine()
+    await addZeroLine('Offert pour le lancement')
+
+    fireEvent.click(screen.getByTestId('invoice-submit-send'))
+    await waitFor(() => {
+      expect(screen.getByTestId('invoice-zero-lines-warning')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByTestId('invoice-zero-lines-keep'))
+
+    await waitFor(() => {
+      expect(mockCreateInvoice).toHaveBeenCalledWith(
+        CLIENT_UUID,
+        expect.any(Array),
+        expect.objectContaining({ sendNow: true, allowZeroAmountLines: true })
+      )
+    })
+  })
+
+  it("l avertissement disparait des que MiKL saisit un prix sur la ligne fautive", async () => {
+    render(<InvoiceForm clients={mockClients} />)
+    await fillOneLine()
+    await addZeroLine()
+
+    fireEvent.click(screen.getByTestId('invoice-submit-send'))
+    await waitFor(() => {
+      expect(screen.getByTestId('invoice-zero-lines-warning')).toBeInTheDocument()
+    })
+
+    // Correction du prix de la 2e ligne : l avertissement n a plus lieu d etre.
+    const prices = screen.getAllByLabelText('Prix unitaire HT (€)')
+    fireEvent.change(prices[prices.length - 1], { target: { value: '250' } })
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('invoice-zero-lines-warning')).not.toBeInTheDocument()
+    })
+  })
+
+  it("n avertit pas sur une facture dont toutes les lignes portent un montant", async () => {
+    render(<InvoiceForm clients={mockClients} />)
+    await fillOneLine()
+
+    fireEvent.click(screen.getByTestId('invoice-submit-draft'))
+
+    await waitFor(() => {
+      expect(mockCreateInvoice).toHaveBeenCalledWith(
+        CLIENT_UUID,
+        expect.any(Array),
+        expect.objectContaining({ allowZeroAmountLines: false })
+      )
+    })
+    expect(screen.queryByTestId('invoice-zero-lines-warning')).not.toBeInTheDocument()
+  })
+
   it("previent quand aucun client actif n est disponible", () => {
     render(<InvoiceForm clients={[]} />)
     expect(screen.getByText(/Crée d'abord la fiche client dans le CRM/)).toBeInTheDocument()

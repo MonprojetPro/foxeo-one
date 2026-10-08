@@ -3,6 +3,7 @@
 import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { applyCommercialGesture } from '../utils/commercial-gesture'
+import { findZeroAmountLines, describeZeroAmountLines } from '../utils/zero-amount-lines'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
@@ -21,6 +22,24 @@ export async function createAndSendQuote(
 ): Promise<ActionResponse<string>> {
   const { supabase, userId, error: authError } = await assertOperator()
   if (authError || !supabase || !userId) return { data: null, error: authError }
+
+  // T-043 — meme garde que la facture : un devis a ligne vide produit le meme
+  // PDF bancal, et il se convertit en facture definitive. Controle sur les
+  // lignes SOUMISES : la deduction Lab et les contre-lignes du geste commercial
+  // sont negatives, donc jamais signalees.
+  if (options.allowZeroAmountLines !== true) {
+    const zeroLines = findZeroAmountLines(lineItems)
+    if (zeroLines.length > 0) {
+      return {
+        data: null,
+        error: {
+          message: `${describeZeroAmountLines(zeroLines, 'ce devis')}. Retire ces lignes, ou confirme qu'elles sont voulues.`,
+          code: 'ZERO_AMOUNT_LINE',
+          details: { zeroLines },
+        },
+      }
+    }
+  }
 
   // Récupérer le client pour obtenir pennylane_customer_id et auth_user_id
   const { data: client, error: clientError } = await supabase

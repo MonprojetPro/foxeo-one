@@ -2,6 +2,7 @@
 
 import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
+import { findZeroAmountLines, describeZeroAmountLines } from '../utils/zero-amount-lines'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { assertOperator } from './assert-operator'
 import type { ActionResponse } from '@monprojetpro/types'
@@ -31,6 +32,8 @@ export interface UpdateQuotePayload {
   publicNotes?: string | null
   /** Si true et que l ancien devis avait sent_at != null, renvoie auto le nouveau */
   autoResend?: boolean
+  /** T-043 — autorise les lignes a 0,00 € (refusees par defaut) */
+  allowZeroAmountLines?: boolean
 }
 
 interface UpdateQuoteResult {
@@ -53,6 +56,23 @@ export async function updateQuote(
   }
   if (!Array.isArray(payload.lineItems) || payload.lineItems.length === 0) {
     return { data: null, error: { message: 'Au moins une ligne requise', code: 'VALIDATION_ERROR' } }
+  }
+
+  // T-043 — ce chemin REEMET un devis (cancel + recreate) : sans cette garde, la
+  // modification d un devis reintroduirait une ligne a 0,00 € que la creation
+  // refuse desormais.
+  if (payload.allowZeroAmountLines !== true) {
+    const zeroLines = findZeroAmountLines(payload.lineItems)
+    if (zeroLines.length > 0) {
+      return {
+        data: null,
+        error: {
+          message: `${describeZeroAmountLines(zeroLines, 'ce devis')}. Retire ces lignes, ou confirme qu'elles sont voulues.`,
+          code: 'ZERO_AMOUNT_LINE',
+          details: { zeroLines },
+        },
+      }
+    }
   }
 
   // 1. Lire les metadonnees actuelles (client_id, quote_type, sent_at, customer)

@@ -149,6 +149,33 @@ describe('updateQuote (cancel + recreate workflow)', () => {
     expect(res.error?.code).toBe('VALIDATION_ERROR')
   })
 
+  // T-043 — la reemission d un devis ne doit pas reintroduire une ligne a 0,00 €
+  it('refuse une ligne a 0,00 € et n annule PAS l ancien devis', async () => {
+    mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
+    const res = await updateQuote('PL-1', {
+      lineItems: [
+        ...sampleLineItems,
+        { label: 'Ligne en trop', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'piece', total: 0 },
+      ],
+    })
+    expect(res.error?.code).toBe('ZERO_AMOUNT_LINE')
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('accepte la ligne a 0 € quand elle est explicitement confirmee', async () => {
+    mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase() as never)
+    mockPut.mockResolvedValue({ data: null, error: null })
+    mockPost.mockResolvedValue({ data: newPennylaneQuote, error: null })
+    const res = await updateQuote('PL-1', {
+      lineItems: [
+        ...sampleLineItems,
+        { label: 'Prestation offerte', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'piece', total: 0 },
+      ],
+      allowZeroAmountLines: true,
+    })
+    expect(res.error).toBeNull()
+  })
+
   it('returns METADATA_NOT_FOUND when quote_metadata row absent', async () => {
     mockCreateServerSupabaseClient.mockResolvedValue(makeSupabase({ metadata: null }) as never)
     const res = await updateQuote('PL-1', { lineItems: sampleLineItems })

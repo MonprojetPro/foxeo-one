@@ -9,6 +9,11 @@ import { showSuccess, showError } from '@monprojetpro/ui'
 import { createInvoice } from '../actions/create-invoice'
 import { CommercialGestureFields } from './commercial-gesture-fields'
 import { DEFAULT_GESTURE_LABEL } from '../utils/commercial-gesture'
+import {
+  findZeroAmountLines,
+  describeZeroAmountLine,
+  type ZeroAmountLine,
+} from '../utils/zero-amount-lines'
 import type { ClientWithPennylane } from '../types/billing.types'
 
 // ============================================================
@@ -88,6 +93,12 @@ type InvoiceFormProps = {
 
 export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // T-043 — l avertissement retient SEULEMENT l intention (emettre, avec ou sans
+  // envoi). La liste des lignes fautives est recalculee a chaque rendu depuis le
+  // formulaire : un etat figé afficherait des numeros de ligne perimes des que
+  // MiKL corrige ou supprime quelque chose, et « Retirer ces lignes » retirerait
+  // alors la mauvaise.
+  const [zeroWarningIntent, setZeroWarningIntent] = useState<{ sendNow: boolean } | null>(null)
   const queryClient = useQueryClient()
 
   const {
@@ -155,20 +166,35 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
   const totalTva = tvaOnPaidLines - discountHt * vatRateToMultiplier(discountRate)
   const totalTtc = totalHt + totalTva
 
-  async function onSubmit(values: InvoiceFormValues, sendNow: boolean) {
+  // T-043 — etat VIVANT des lignes a 0,00 €. Le panneau se vide de lui-meme des
+  // que MiKL saisit un prix : un avertissement qui survit a sa propre correction
+  // apprend a l ignorer.
+  const liveZeroLines: ZeroAmountLine[] = findZeroAmountLines(watchedItems)
+  const showZeroWarning = zeroWarningIntent !== null && liveZeroLines.length > 0
+
+  async function onSubmit(values: InvoiceFormValues, sendNow: boolean, allowZeroLines = false) {
+    const lineItems = values.lineItems.map((item) => ({
+      label: item.label,
+      description: item.description ?? null,
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+      vatRate: item.vatRate,
+      unit: item.unit,
+      total: Number(item.quantity) * Number(item.unitPrice),
+      offered: item.offered === true,
+    }))
+
+    // T-043 — dernier moment utile pour attraper une ligne restee en trop : une
+    // fois chez Pennylane, le document est definitif. On n emet pas encore, on
+    // demande. Les contre-lignes « Offert » sont negatives, donc ignorees.
+    if (!allowZeroLines && findZeroAmountLines(lineItems).length > 0) {
+      setZeroWarningIntent({ sendNow })
+      return
+    }
+    setZeroWarningIntent(null)
+
     setIsSubmitting(true)
     try {
-      const lineItems = values.lineItems.map((item) => ({
-        label: item.label,
-        description: item.description ?? null,
-        quantity: Number(item.quantity),
-        unitPrice: Number(item.unitPrice),
-        vatRate: item.vatRate,
-        unit: item.unit,
-        total: Number(item.quantity) * Number(item.unitPrice),
-        offered: item.offered === true,
-      }))
-
       const rawTarget = values.targetTotalHt?.trim() ?? ''
       const target = rawTarget === '' ? null : Number(rawTarget)
 
@@ -179,6 +205,7 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
         deadline: values.deadline,
         targetTotalHt: target,
         gestureLabel: values.gestureLabel?.trim() || null,
+        allowZeroAmountLines: allowZeroLines,
       })
 
       if (result.error) {
@@ -208,6 +235,30 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // T-043 — « Retirer ces lignes ». On ne REEMET PAS automatiquement derriere :
+  // retirer une ligne change le total HT et la TVA, et MiKL doit les revoir
+  // avant d emettre un document definitif.
+  function handleRemoveZeroLines() {
+    // Indexes relus a l instant du clic, jamais ceux captures a l affichage.
+    const indexes = liveZeroLines.map((l) => l.index)
+    if (indexes.length === 0) return
+    const removesEverything = indexes.length >= (watchedItems?.length ?? fields.length)
+    remove(indexes)
+    if (removesEverything) {
+      append({ label: '', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u', offered: false })
+    }
+    setZeroWarningIntent(null)
+    showSuccess('Lignes retirées — vérifie le total, puis émets.')
+  }
+
+  // « Les garder, c est voulu ». On repasse par handleSubmit pour relire les
+  // valeurs FRAICHES du formulaire : MiKL a pu corriger une ligne entre-temps.
+  function handleKeepZeroLines() {
+    const sendNow = zeroWarningIntent?.sendNow ?? false
+    setZeroWarningIntent(null)
+    void handleSubmit((values) => onSubmit(values, sendNow, true))()
   }
 
   return (
@@ -478,6 +529,51 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
           className="rounded-md border border-border bg-background px-3 py-2 text-sm resize-none"
         />
       </div>
+
+      {/* T-043 — avertissement lignes à 0,00 €, avant émission */}
+      {showZeroWarning && (
+        <div
+          className="rounded-md border border-orange-500/40 bg-orange-500/10 px-4 py-3 flex flex-col gap-3"
+          role="alert"
+          data-testid="invoice-zero-lines-warning"
+        >
+          <div className="text-xs text-orange-200/90">
+            <strong className="text-orange-400">
+              {liveZeroLines.length > 1
+                ? `${liveZeroLines.length} lignes à 0,00 € sur cette facture`
+                : 'Une ligne à 0,00 € sur cette facture'}
+            </strong>
+            <ul className="mt-2 flex flex-col gap-1">
+              {liveZeroLines.map((l) => (
+                <li key={l.index}>{describeZeroAmountLine(l)}</li>
+              ))}
+            </ul>
+            <p className="mt-2">
+              Une ligne à zéro peut être voulue — une prestation affichée comme offerte, par
+              exemple. Mais la facture sera <strong>définitive</strong> : une fois émise, elle ne se
+              corrige que par un avoir.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRemoveZeroLines}
+              data-testid="invoice-zero-lines-remove"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90"
+            >
+              Retirer ces lignes
+            </button>
+            <button
+              type="button"
+              onClick={handleKeepZeroLines}
+              data-testid="invoice-zero-lines-keep"
+              className="rounded-md border border-orange-500/40 px-3 py-1.5 text-xs text-orange-200 hover:bg-orange-500/10"
+            >
+              Les garder, c&apos;est voulu
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-3">

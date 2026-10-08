@@ -3,6 +3,7 @@
 import { pennylaneClient } from '../config/pennylane'
 import { toPennylaneLineItem } from '../utils/billing-mappers'
 import { applyCommercialGesture } from '../utils/commercial-gesture'
+import { findZeroAmountLines, describeZeroAmountLines } from '../utils/zero-amount-lines'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
@@ -64,6 +65,27 @@ export async function createInvoice(
   }
   if (!lineItems || lineItems.length === 0) {
     return { data: null, error: { message: 'Au moins une ligne de facturation est requise', code: 'VALIDATION_ERROR' } }
+  }
+
+  // T-043 — refus par defaut des lignes a 0,00 €. Controle sur les lignes
+  // SOUMISES, avant le geste commercial : les contre-lignes que ce dernier pose
+  // sont negatives, donc jamais concernees.
+  //
+  // La garde vit ICI et pas seulement dans le formulaire : cette action est
+  // exportee et appelee par les outils Elio Hub, qui retombent sur
+  // `unit_price_ht = 0` quand le modele omet le prix (action-tools.ts:304).
+  if (options.allowZeroAmountLines !== true) {
+    const zeroLines = findZeroAmountLines(lineItems)
+    if (zeroLines.length > 0) {
+      return {
+        data: null,
+        error: {
+          message: `${describeZeroAmountLines(zeroLines, 'cette facture')}. Retire ces lignes, ou confirme qu'elles sont voulues.`,
+          code: 'ZERO_AMOUNT_LINE',
+          details: { zeroLines },
+        },
+      }
+    }
   }
 
   const { data: client, error: clientError } = await supabase

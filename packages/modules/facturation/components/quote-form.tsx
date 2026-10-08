@@ -10,6 +10,11 @@ import { createAndSendQuote } from '../actions/create-quote'
 import { updateQuote } from '../actions/update-quote'
 import { CommercialGestureFields } from './commercial-gesture-fields'
 import { DEFAULT_GESTURE_LABEL, reconstructGestureFromLines } from '../utils/commercial-gesture'
+import {
+  findZeroAmountLines,
+  describeZeroAmountLine,
+  type ZeroAmountLine,
+} from '../utils/zero-amount-lines'
 import type { ClientWithPennylane, QuoteType, LineItem } from '../types/billing.types'
 import { QUOTE_TYPE_LABELS } from '../types/billing.types'
 
@@ -102,6 +107,11 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
   // seconde fois par-dessus — remise doublee en silence.
   const restored = initialValues ? reconstructGestureFromLines(initialValues.lineItems) : null
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // T-043 — on ne retient que l intention ; la liste des lignes fautives est
+  // recalculee a chaque rendu depuis le formulaire. Un etat figé afficherait des
+  // numeros perimes des que MiKL corrige une ligne, et « Retirer ces lignes »
+  // retirerait la mauvaise.
+  const [zeroWarningIntent, setZeroWarningIntent] = useState<{ sendNow: boolean } | null>(null)
   const queryClient = useQueryClient()
 
   const {
@@ -198,20 +208,32 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
   const totalTva = tvaOnPaidLines - discountHt * vatRateToMultiplier(discountRate)
   const totalTtc = totalHt + totalTva
 
-  async function onSubmit(values: QuoteFormValues, sendNow: boolean) {
+  // T-043 — etat VIVANT des lignes a 0,00 €, recalcule a chaque frappe.
+  const liveZeroLines: ZeroAmountLine[] = findZeroAmountLines(watchedItems)
+  const showZeroWarning = zeroWarningIntent !== null && liveZeroLines.length > 0
+
+  async function onSubmit(values: QuoteFormValues, sendNow: boolean, allowZeroLines = false) {
+    const lineItems = values.lineItems.map((item) => ({
+      label: item.label,
+      description: item.description ?? null,
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+      vatRate: item.vatRate,
+      unit: item.unit,
+      total: Number(item.quantity) * Number(item.unitPrice),
+      offered: item.offered === true,
+    }))
+
+    // T-043 — avertissement avant emission, creation comme modification. Les
+    // contre-lignes « Offert » sont negatives, donc jamais signalees.
+    if (!allowZeroLines && findZeroAmountLines(lineItems).length > 0) {
+      setZeroWarningIntent({ sendNow })
+      return
+    }
+    setZeroWarningIntent(null)
+
     setIsSubmitting(true)
     try {
-      const lineItems = values.lineItems.map((item) => ({
-        label: item.label,
-        description: item.description ?? null,
-        quantity: Number(item.quantity),
-        unitPrice: Number(item.unitPrice),
-        vatRate: item.vatRate,
-        unit: item.unit,
-        total: Number(item.quantity) * Number(item.unitPrice),
-        offered: item.offered === true,
-      }))
-
       const rawTarget = values.targetTotalHt?.trim() ?? ''
       const target = rawTarget === '' ? null : Number(rawTarget)
       const gestureLabel = values.gestureLabel?.trim() || null
@@ -224,6 +246,7 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
           lineItems,
           publicNotes: values.publicNotes ?? null,
           autoResend: sendNow,
+          allowZeroAmountLines: allowZeroLines,
         })
         if (editResult.error) {
           showError(editResult.error.message)
@@ -259,6 +282,7 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
         quoteType: values.quoteType,
         targetTotalHt: target,
         gestureLabel,
+        allowZeroAmountLines: allowZeroLines,
       })
 
       if (result.error) {
@@ -278,6 +302,29 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // T-043 — « Retirer ces lignes ». Pas de reemission automatique : retirer une
+  // ligne change le total HT et la TVA, MiKL doit les revoir avant d emettre.
+  function handleRemoveZeroLines() {
+    // Indexes relus a l instant du clic, jamais ceux captures a l affichage.
+    const indexes = liveZeroLines.map((l) => l.index)
+    if (indexes.length === 0) return
+    const removesEverything = indexes.length >= (watchedItems?.length ?? fields.length)
+    remove(indexes)
+    if (removesEverything) {
+      append({ label: '', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u', offered: false })
+    }
+    setZeroWarningIntent(null)
+    showSuccess('Lignes retirées — vérifie le total, puis émets.')
+  }
+
+  // « Les garder, c est voulu » — on repasse par handleSubmit pour relire les
+  // valeurs FRAICHES : MiKL a pu corriger une ligne entre-temps.
+  function handleKeepZeroLines() {
+    const sendNow = zeroWarningIntent?.sendNow ?? false
+    setZeroWarningIntent(null)
+    void handleSubmit((values) => onSubmit(values, sendNow, true))()
   }
 
   return (
@@ -557,6 +604,51 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
           />
         </div>
       </div>
+
+      {/* T-043 — avertissement lignes à 0,00 €, avant émission */}
+      {showZeroWarning && (
+        <div
+          className="rounded-md border border-orange-500/40 bg-orange-500/10 px-4 py-3 flex flex-col gap-3"
+          role="alert"
+          data-testid="quote-zero-lines-warning"
+        >
+          <div className="text-xs text-orange-200/90">
+            <strong className="text-orange-400">
+              {liveZeroLines.length > 1
+                ? `${liveZeroLines.length} lignes à 0,00 € sur ce devis`
+                : 'Une ligne à 0,00 € sur ce devis'}
+            </strong>
+            <ul className="mt-2 flex flex-col gap-1">
+              {liveZeroLines.map((l) => (
+                <li key={l.index}>{describeZeroAmountLine(l)}</li>
+              ))}
+            </ul>
+            <p className="mt-2">
+              Une ligne à zéro peut être voulue — une prestation affichée comme offerte, par
+              exemple. Mais ce devis se convertira en facture : la ligne vide s&apos;imprimerait
+              jusque sur le document définitif.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRemoveZeroLines}
+              data-testid="quote-zero-lines-remove"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90"
+            >
+              Retirer ces lignes
+            </button>
+            <button
+              type="button"
+              onClick={handleKeepZeroLines}
+              data-testid="quote-zero-lines-keep"
+              className="rounded-md border border-orange-500/40 px-3 py-1.5 text-xs text-orange-200 hover:bg-orange-500/10"
+            >
+              Les garder, c&apos;est voulu
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-3">

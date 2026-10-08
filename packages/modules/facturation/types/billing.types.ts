@@ -226,6 +226,14 @@ export type CreateQuoteOptions = {
   targetTotalHt?: number | null
   /** T-037 — libellé du geste commercial imprimé sur le document */
   gestureLabel?: string | null
+  /**
+   * T-043 — autorise les lignes dont le montant HT s'imprime à 0,00 €.
+   * Par défaut elles sont REFUSÉES : sur F-2026-103, une ligne restée en trop à
+   * la saisie s'est imprimée sur un document définitif. Le formulaire ne passe
+   * ce drapeau qu'après confirmation explicite de MiKL (ligne offerte affichée
+   * à zéro, par exemple).
+   */
+  allowZeroAmountLines?: boolean
 }
 
 // ============================================================
@@ -249,6 +257,13 @@ export type CreateInvoiceOptions = {
   date?: string
   /** Échéance de paiement (YYYY-MM-DD). Défaut : date d'émission + 30 jours. */
   deadline?: string
+  /**
+   * T-043 — autorise les lignes dont le montant HT s'imprime à 0,00 €.
+   * Par défaut elles sont REFUSÉES (voir `CreateQuoteOptions`). Une facture
+   * Pennylane étant définitive, le refus est le comportement sûr : l'appelant
+   * doit insister sciemment.
+   */
+  allowZeroAmountLines?: boolean
 }
 
 export type ClientWithPennylane = {

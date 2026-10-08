@@ -114,6 +114,36 @@ describe('createAndSendQuote', () => {
     expect(result.error?.code).toBe('FORBIDDEN')
   })
 
+  // T-043 — meme garde que la facture : un devis se convertit en facture definitive
+  it('refuse une ligne a 0,00 € avant tout appel Pennylane', async () => {
+    const supabase = makeSupabaseMock()
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+
+    const result = await createAndSendQuote(
+      'client-1',
+      [...mockLineItems, { label: 'Ligne en trop', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u', total: 0 }],
+      {}
+    )
+
+    expect(result.error?.code).toBe('ZERO_AMOUNT_LINE')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
+  })
+
+  it('cree le devis quand la ligne a 0 € est explicitement confirmee', async () => {
+    const supabase = makeSupabaseMock()
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
+
+    const result = await createAndSendQuote(
+      'client-1',
+      [...mockLineItems, { label: 'Prestation offerte', description: null, quantity: 1, unitPrice: 0, vatRate: 'FR_200', unit: 'u', total: 0 }],
+      { allowZeroAmountLines: true }
+    )
+
+    expect(result.error).toBeNull()
+    expect(mockPennylane.post).toHaveBeenCalled()
+  })
+
   it('returns CLIENT_NOT_FOUND when client does not exist in DB', async () => {
     const supabase = makeSupabaseMock({ clientData: null, clientError: { message: 'Not found' } })
     mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)

@@ -142,6 +142,46 @@ describe('createInvoice', () => {
     expect(mockPennylane.post).not.toHaveBeenCalled()
   })
 
+  // T-043 — une ligne a 0,00 € s est imprimee sur F-2026-103, document definitif.
+  it('refuse une ligne a 0,00 € et ne touche PAS a Pennylane', async () => {
+    useSupabase(makeSupabaseMock())
+
+    const result = await createInvoice('client-1', [
+      ...LINES,
+      { label: 'Maintenance & hébergement', description: null, quantity: 1, unit: 'u', unitPrice: 0, vatRate: 'FR_200', total: 0 },
+    ])
+
+    expect(result.error?.code).toBe('ZERO_AMOUNT_LINE')
+    expect(result.error?.message).toContain('Maintenance & hébergement')
+    expect(mockPennylane.post).not.toHaveBeenCalled()
+  })
+
+  it('emet quand MiKL confirme que la ligne a 0 € est voulue', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+
+    const result = await createInvoice(
+      'client-1',
+      [...LINES, { label: 'Offert pour le lancement', description: null, quantity: 1, unit: 'u', unitPrice: 0, vatRate: 'FR_200', total: 0 }],
+      { allowZeroAmountLines: true }
+    )
+
+    expect(result.error).toBeNull()
+    expect(mockPennylane.post).toHaveBeenCalled()
+  })
+
+  it('laisse passer les contre-lignes negatives du geste commercial', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+
+    const result = await createInvoice('client-1', [
+      ...LINES,
+      { label: 'Offert — Site vitrine', description: null, quantity: 1, unit: 'u', unitPrice: -2200, vatRate: 'FR_200', total: -2200 },
+    ])
+
+    expect(result.error).toBeNull()
+  })
+
   it('remonte CLIENT_NOT_FOUND quand la fiche client est introuvable', async () => {
     useSupabase(makeSupabaseMock({ client: null }))
 

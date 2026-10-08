@@ -154,6 +154,10 @@ describe('QuoteForm', () => {
     expect(mockCreateAndSendQuote).not.toHaveBeenCalled()
   })
 
+  // T-043 — ce test remplissait un libelle SANS prix, donc une ligne a 0,00 €.
+  // Depuis T-043 ce cas declenche l avertissement : on lui donne un prix pour
+  // qu il teste bien ce qu il annonce (le passage de sendNow), et le cas « ligne
+  // a zero » est couvert par les trois tests qui suivent.
   it('calls createAndSendQuote with sendNow=false when saving as draft', async () => {
     render(<QuoteForm clients={mockClients} />)
 
@@ -163,6 +167,10 @@ describe('QuoteForm', () => {
     const labelInput = screen.getByPlaceholderText(/désignation/i)
     await userEvent.type(labelInput, 'Prestation conseil')
 
+    const priceInput = screen.getByPlaceholderText(/prix unitaire/i)
+    await userEvent.clear(priceInput)
+    await userEvent.type(priceInput, '500')
+
     const saveButton = screen.getByText(/créer sans envoyer/i)
     await userEvent.click(saveButton)
 
@@ -170,7 +178,72 @@ describe('QuoteForm', () => {
       expect(mockCreateAndSendQuote).toHaveBeenCalledWith(
         CLIENT_1_UUID,
         expect.arrayContaining([expect.objectContaining({ label: 'Prestation conseil' })]),
-        expect.objectContaining({ sendNow: false })
+        expect.objectContaining({ sendNow: false, allowZeroAmountLines: false })
+      )
+    })
+  })
+
+  // ── T-043 — avertissement lignes a 0,00 € ────────────────────────────────
+
+  async function fillQuoteWithZeroLine() {
+    fireEvent.change(screen.getByLabelText(/client/i), { target: { value: CLIENT_1_UUID } })
+
+    const labelInput = screen.getByPlaceholderText(/désignation/i)
+    await userEvent.type(labelInput, 'Prestation conseil')
+    const priceInput = screen.getByPlaceholderText(/prix unitaire/i)
+    await userEvent.clear(priceInput)
+    await userEvent.type(priceInput, '500')
+
+    await userEvent.click(screen.getByRole('button', { name: /ajouter une ligne/i }))
+    const labels = screen.getAllByPlaceholderText(/désignation/i)
+    await userEvent.type(labels[labels.length - 1], 'Ligne en trop')
+  }
+
+  it("n emet pas et avertit quand une ligne du devis est a 0,00 €", async () => {
+    render(<QuoteForm clients={mockClients} />)
+    await fillQuoteWithZeroLine()
+
+    await userEvent.click(screen.getByText(/créer sans envoyer/i))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('quote-zero-lines-warning')).toBeInTheDocument()
+    })
+    expect(screen.getByTestId('quote-zero-lines-warning')).toHaveTextContent('Ligne en trop')
+    expect(mockCreateAndSendQuote).not.toHaveBeenCalled()
+  })
+
+  it("« Retirer ces lignes » retire la ligne du devis sans emettre", async () => {
+    render(<QuoteForm clients={mockClients} />)
+    await fillQuoteWithZeroLine()
+
+    await userEvent.click(screen.getByText(/créer sans envoyer/i))
+    await waitFor(() => {
+      expect(screen.getByTestId('quote-zero-lines-warning')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByTestId('quote-zero-lines-remove'))
+
+    expect(screen.getAllByPlaceholderText(/désignation/i)).toHaveLength(1)
+    expect(screen.queryByTestId('quote-zero-lines-warning')).not.toBeInTheDocument()
+    expect(mockCreateAndSendQuote).not.toHaveBeenCalled()
+  })
+
+  it("« Les garder » cree le devis en confirmant la ligne a 0 €", async () => {
+    render(<QuoteForm clients={mockClients} />)
+    await fillQuoteWithZeroLine()
+
+    await userEvent.click(screen.getByText(/créer sans envoyer/i))
+    await waitFor(() => {
+      expect(screen.getByTestId('quote-zero-lines-warning')).toBeInTheDocument()
+    })
+
+    await userEvent.click(screen.getByTestId('quote-zero-lines-keep'))
+
+    await waitFor(() => {
+      expect(mockCreateAndSendQuote).toHaveBeenCalledWith(
+        CLIENT_1_UUID,
+        expect.any(Array),
+        expect.objectContaining({ allowZeroAmountLines: true })
       )
     })
   })
