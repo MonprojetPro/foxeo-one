@@ -371,6 +371,36 @@ describe('InvoicesList', () => {
       expect(screen.getByTestId('send-invoice-button')).toBeInTheDocument()
     })
 
+    // T-045a — demande par MiKL : envoyer une facture deja annulee reclamerait
+    // au client un montant qu'il ne doit plus.
+    it("n'offre PAS d'envoyer une facture deja annulee par un avoir", () => {
+      ;(useBillingSyncRows as Mock).mockReturnValue({
+        data: [makeRow(), makeCreditNote('pny-inv-1')],
+        isPending: false,
+        isError: false,
+        refetch: vi.fn(),
+      })
+      render(<InvoicesList allowSend allowCreditNote />, { wrapper })
+
+      // Un seul bouton d'envoi reste : celui de l'AVOIR, qui doit pouvoir partir.
+      const boutons = screen.getAllByTestId('send-invoice-button')
+      expect(boutons).toHaveLength(1)
+      expect(boutons[0]).toHaveAttribute('aria-label', expect.stringContaining('avoir'))
+    })
+
+    it("garde la date d'envoi affichee sur une facture annulee partie avant son avoir", () => {
+      ;(useBillingSyncRows as Mock).mockReturnValue({
+        data: [makeRow({ last_sent_at: '2026-10-07T09:00:00Z' }), makeCreditNote('pny-inv-1')],
+        isPending: false,
+        isError: false,
+        refetch: vi.fn(),
+      })
+      render(<InvoicesList allowSend allowCreditNote />, { wrapper })
+
+      // On retire l'action, pas l'historique : la facture EST partie.
+      expect(screen.getByText(/Envoyée le 07\/10\/2026/)).toBeInTheDocument()
+    })
+
     it("remonte l erreur serveur sans annoncer d envoi, et garde le bouton utilisable", async () => {
       mockSendInvoice.mockResolvedValue({
         data: null,

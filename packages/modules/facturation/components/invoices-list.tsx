@@ -320,7 +320,14 @@ function InvoiceRow({
               Un renvoi est légitime — c'est même la seule relance manuelle
               disponible — mais il demande confirmation : envoyer deux fois la
               même facture fait douter le client de ce qu'il doit payer. */}
-          {allowSend && (
+          {/* T-045a — pas d'envoi sur une facture DEJA ANNULEE par un avoir :
+              l'envoyer reclamerait au client un montant qu'il ne doit plus.
+              ⚠️ La condition exclut les avoirs eux-memes (`!isCreditNote`) :
+              `alreadyCredited` ne vaut que pour une facture creditee, et un
+              avoir doit justement pouvoir partir. La date d'envoi reste
+              affichee si la facture etait partie avant son annulation — on ne
+              reecrit pas l'histoire. */}
+          {allowSend && !(alreadyCredited && !isCreditNote) && (
             sentAt && !confirmResend ? (
               <button
                 type="button"
