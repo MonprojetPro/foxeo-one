@@ -124,7 +124,14 @@ export function useBillingSyncRows(
       const supabase = createBrowserSupabaseClient()
       let query = supabase
         .from('billing_sync')
-        .select('id, entity_type, pennylane_id, client_id, status, amount, data, last_synced_at, created_at, updated_at')
+        // ⚠️ T-044a — `last_sent_at` DOIT rester dans cette liste. Ce `select`
+        // enumere ses colonnes : une colonne absente arrive `undefined` cote
+        // composant, SANS erreur. C'est ce qui est arrive a la date d'envoi
+        // livree avec T-044 — elle etait ecrite en base, lue nulle part, et la
+        // garde anti-double-envoi ne protegeait donc rien.
+        .select(
+          'id, entity_type, pennylane_id, client_id, status, amount, data, last_sent_at, last_synced_at, created_at, updated_at'
+        )
         .in('entity_type', types)
         .order('created_at', { ascending: false })
 
