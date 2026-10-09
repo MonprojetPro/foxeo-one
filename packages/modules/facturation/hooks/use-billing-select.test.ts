@@ -43,6 +43,45 @@ function selectedColumns(): string[] {
   return match[1].split(',').map((c) => c.trim())
 }
 
+/** Colonnes demandees par le `select` de `useBillingMetrics`. */
+function metricsColumns(): string[] {
+  const afterHook = HOOK_SOURCE.split('export function useBillingMetrics')[1] ?? ''
+  const match = afterHook.match(/\.select\(\s*'([^']+)'/)
+  if (!match) return []
+  return match[1].split(',').map((c) => c.trim())
+}
+
+/** Champs lus par `computeBillingMetrics`, declares par `MetricsRow`. */
+function metricsRowFields(): string[] {
+  const source = readFileSync(join(__dirname, '..', 'utils', 'billing-metrics.ts'), 'utf8')
+  const block = source.split('export type MetricsRow = {')[1]?.split('\n}')[0] ?? ''
+  return block
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => /^[a-z_]+\??:/.test(line))
+    .map((line) => line.split(/\??:/)[0].trim())
+}
+
+describe('useBillingMetrics — colonnes demandées', () => {
+  // T-045 — sans `pennylane_id`, le calcul ne peut pas savoir si la facture
+  // qu'un avoir annule avait ete encaissee : aucun avoir ne serait jamais
+  // deduit du CA, et l'erreur serait muette.
+  it('demande pennylane_id — sans lui, aucun avoir ne peut etre rattache a sa facture', () => {
+    expect(metricsColumns()).toContain('pennylane_id')
+  })
+
+  it('ne laisse AUCUN champ de MetricsRow hors du select', () => {
+    const declared = metricsRowFields()
+    const selected = metricsColumns()
+    const missing = declared.filter((field) => !selected.includes(field))
+
+    expect(
+      missing,
+      `Champs lus par computeBillingMetrics mais absents du select de useBillingMetrics : ${missing.join(', ')}. Ils arriveraient \`undefined\`, et le calcul serait faux SANS erreur.`
+    ).toEqual([])
+  })
+})
+
 describe('useBillingSyncRows — colonnes demandées', () => {
   it('demande bien last_sent_at — sans elle, la date d envoi n arrive jamais à l écran', () => {
     expect(selectedColumns()).toContain('last_sent_at')

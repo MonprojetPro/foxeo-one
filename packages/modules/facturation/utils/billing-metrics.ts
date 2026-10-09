@@ -31,6 +31,12 @@ export type MetricsRow = {
   status: string
   amount: number | null
   data: Record<string, unknown> | null
+  /**
+   * T-045 — necessaire pour savoir si la facture qu'un avoir annule a ete
+   * comptee au CA. Optionnel : les appelants anterieurs restent valides, un
+   * avoir sans facture identifiable n'est simplement jamais deduit du CA.
+   */
+  pennylane_id?: string
 }
 
 function isCurrentMonth(data: Record<string, unknown> | null, now: Date): boolean {
@@ -46,6 +52,15 @@ export function computeBillingMetrics(rows: MetricsRow[], now: Date = new Date()
   let pendingAmount = 0
   let pendingQuotesCount = 0
   let mrr = 0
+
+  // T-045 — quelles factures ont REELLEMENT ete comptees au CA, c'est-a-dire
+  // encaissees. Passe prealable : un avoir peut referencer une facture situee
+  // n'importe ou dans la liste, y compris avant lui.
+  const paidInvoiceIds = new Set(
+    rows
+      .filter((r) => r.entity_type === 'invoice' && r.status === 'paid' && r.pennylane_id)
+      .map((r) => r.pennylane_id as string)
+  )
 
   for (const row of rows) {
     const amount = row.amount ?? 0
@@ -63,7 +78,26 @@ export function computeBillingMetrics(rows: MetricsRow[], now: Date = new Date()
       // Montant deja negatif : il se soustrait de lui-meme, ce qui annule
       // naturellement la facture creditee, sans traitement particulier.
       pendingAmount += amount
-      if (isCurrentMonth(data, now)) monthlyRevenue += amount
+
+      // 🔑 T-045 — UN AVOIR NE DIMINUE LE CA QUE S'IL ANNULE UNE RECETTE
+      // REELLEMENT COMPTEE, donc une facture PAYEE.
+      //
+      // Le defaut corrige etait une asymetrie : le Hub affichait « CA mensuel
+      // -478,80 € » alors que RIEN n'avait ete encaisse. La facture F-2026-101
+      // n'etait jamais entree au CA (jamais payee), mais l'avoir qui l'annule,
+      // lui, en sortait. On soustrayait une recette qu'on n'avait jamais
+      // additionnee.
+      //
+      // ⚠️ Le mois pris en compte est celui de L'AVOIR, pas celui de la facture :
+      // un avoir emis en octobre sur une facture payee en septembre diminue le
+      // CA d'octobre. On ne rouvre pas un mois clos.
+      //
+      // ⚠️ LIMITE ASSUMEE : un avoir dont la facture creditee n'est pas
+      // identifiable (champ absent) n'est JAMAIS deduit du CA. On prefere ne
+      // rien deviner — mais si cette facture etait payee, le CA reste trop haut.
+      const creditedId = data.credited_invoice_pennylane_id as string | undefined
+      const annuleUneRecetteEncaissee = creditedId != null && paidInvoiceIds.has(creditedId)
+      if (annuleUneRecetteEncaissee && isCurrentMonth(data, now)) monthlyRevenue += amount
     } else if (row.entity_type === 'quote') {
       if (row.status === 'pending') pendingQuotesCount++
     } else if (row.entity_type === 'subscription') {

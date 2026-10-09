@@ -15,12 +15,34 @@ import { computeBillingMetrics, type MetricsRow } from './billing-metrics'
 
 const JANVIER = new Date('2026-01-15T12:00:00Z')
 
-function invoice(status: string, amountCents: number, date = '2026-01-10'): MetricsRow {
-  return { entity_type: 'invoice', status, amount: amountCents, data: { date } }
+function invoice(
+  status: string,
+  amountCents: number,
+  date = '2026-01-10',
+  pennylaneId = 'inv-1'
+): MetricsRow {
+  return { entity_type: 'invoice', status, amount: amountCents, data: { date }, pennylane_id: pennylaneId }
 }
 
-function creditNote(amountCents: number, date = '2026-01-12'): MetricsRow {
-  return { entity_type: 'credit_note', status: 'credit_note', amount: amountCents, data: { date } }
+/**
+ * T-045 — un avoir porte l'identifiant de la facture qu'il annule. Sans ce
+ * rattachement, le calcul ne peut pas savoir si la recette annulee avait ete
+ * encaissee — et il ne devine pas.
+ */
+function creditNote(
+  amountCents: number,
+  date = '2026-01-12',
+  creditedInvoiceId: string | null = 'inv-1'
+): MetricsRow {
+  return {
+    entity_type: 'credit_note',
+    status: 'credit_note',
+    amount: amountCents,
+    data: creditedInvoiceId
+      ? { date, credited_invoice_pennylane_id: creditedInvoiceId }
+      : { date },
+    pennylane_id: 'cn-1',
+  }
 }
 
 describe('computeBillingMetrics', () => {
@@ -61,9 +83,9 @@ describe('computeBillingMetrics', () => {
   it('cas reel CSE Habitat 77 : une facture annulee + une valide = 478,80 €', () => {
     const m = computeBillingMetrics(
       [
-        invoice('upcoming', 47880), // F-2026-101, annulee
-        creditNote(-47880), //          F-2026-102, l'avoir
-        invoice('upcoming', 47880), // F-2026-103, la bonne
+        invoice('upcoming', 47880, '2026-01-06', 'F-101'), // annulee, jamais payee
+        creditNote(-47880, '2026-01-07', 'F-101'), //        l'avoir qui l'annule
+        invoice('upcoming', 47880, '2026-01-08', 'F-103'), // la bonne
       ],
       JANVIER
     )
@@ -92,9 +114,9 @@ describe('computeBillingMetrics', () => {
     expect(m.monthlyRevenue).toBe(10000)
   })
 
-  it('un avoir du mois DIMINUE le CA du mois', () => {
+  it('un avoir sur une facture PAYEE diminue le CA du mois', () => {
     const m = computeBillingMetrics(
-      [invoice('paid', 47880, '2026-01-05'), creditNote(-47880, '2026-01-12')],
+      [invoice('paid', 47880, '2026-01-05', 'F-1'), creditNote(-47880, '2026-01-12', 'F-1')],
       JANVIER
     )
     expect(m.monthlyRevenue).toBe(0)
@@ -102,10 +124,59 @@ describe('computeBillingMetrics', () => {
 
   it('un avoir hors du mois courant ne touche pas le CA du mois', () => {
     const m = computeBillingMetrics(
-      [invoice('paid', 47880, '2026-01-05'), creditNote(-47880, '2025-12-20')],
+      [invoice('paid', 47880, '2026-01-05', 'F-1'), creditNote(-47880, '2025-12-20', 'F-1')],
       JANVIER
     )
     expect(m.monthlyRevenue).toBe(47880)
+  })
+
+  // ── T-045 — l'asymetrie corrigee ─────────────────────────────────────────
+  //
+  // Vu par MiKL sur une capture : le Hub affichait « CA mensuel -478,80 € »
+  // alors que RIEN n'avait ete encaisse. La facture n'etait jamais entree au CA
+  // (jamais payee), mais l'avoir qui l'annule en sortait : on soustrayait une
+  // recette jamais additionnee.
+
+  it("cas reel du 09-10 : un avoir sur une facture JAMAIS PAYEE ne rend PAS le CA negatif", () => {
+    const m = computeBillingMetrics(
+      [
+        invoice('upcoming', 47880, '2026-01-06', 'F-101'), // emise, jamais encaissee
+        creditNote(-47880, '2026-01-07', 'F-101'), //         son avoir
+        invoice('upcoming', 47880, '2026-01-08', 'F-103'),
+      ],
+      JANVIER
+    )
+    expect(m.monthlyRevenue).toBe(0)
+    // ... et « En attente » reste juste : l'avoir y compense bien la facture due
+    expect(m.pendingAmount).toBe(47880)
+  })
+
+  it('un avoir dont la facture n est pas identifiable ne touche pas le CA — on ne devine pas', () => {
+    const m = computeBillingMetrics(
+      [invoice('paid', 47880, '2026-01-05', 'F-1'), creditNote(-47880, '2026-01-12', null)],
+      JANVIER
+    )
+    expect(m.monthlyRevenue).toBe(47880)
+  })
+
+  it("un avoir visant une AUTRE facture que la payee ne diminue pas le CA", () => {
+    const m = computeBillingMetrics(
+      [
+        invoice('paid', 47880, '2026-01-05', 'F-1'),
+        invoice('upcoming', 30000, '2026-01-06', 'F-2'),
+        creditNote(-30000, '2026-01-12', 'F-2'), // annule la NON payee
+      ],
+      JANVIER
+    )
+    expect(m.monthlyRevenue).toBe(47880)
+  })
+
+  it("deduit du CA du mois de L'AVOIR une facture payee un mois anterieur — on ne rouvre pas un mois clos", () => {
+    const m = computeBillingMetrics(
+      [invoice('paid', 47880, '2025-12-10', 'F-1'), creditNote(-47880, '2026-01-12', 'F-1')],
+      JANVIER
+    )
+    expect(m.monthlyRevenue).toBe(-47880)
   })
 
   it('ignore une piece sans date exploitable pour le CA', () => {

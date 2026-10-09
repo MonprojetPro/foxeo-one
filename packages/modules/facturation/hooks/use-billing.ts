@@ -205,7 +205,11 @@ export function useBillingMetrics() {
       // le client ne doit plus.
       const { data, error } = await supabase
         .from('billing_sync')
-        .select('entity_type, status, amount, data')
+        // ⚠️ T-045 — `pennylane_id` est INDISPENSABLE : c'est par lui que le
+        // calcul sait si la facture qu'un avoir annule avait ete encaissee.
+        // Sans cette colonne, aucun avoir ne serait jamais deduit du CA — et
+        // l'erreur serait silencieuse, comme l'a ete `last_sent_at` (T-044a).
+        .select('entity_type, pennylane_id, status, amount, data')
         .in('entity_type', ['invoice', 'quote', 'subscription', 'credit_note'])
 
       if (error) throw error
