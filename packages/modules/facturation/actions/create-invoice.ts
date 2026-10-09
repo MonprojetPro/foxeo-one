@@ -44,6 +44,11 @@ export type CreateInvoiceResult = {
   invoiceNumber: string | null
   /** true si l email est reellement parti (retry inclus) */
   emailSent: boolean
+  /**
+   * T-046 — motif de l'echec d'envoi, pour que l'ecran puisse le DIRE. `null`
+   * quand l'email est parti ou qu'aucun envoi n'etait demande.
+   */
+  sendFailure: { code: string; message: string; attempts: number } | null
   /** Total HT reellement du, apres gestes commerciaux */
   totalHt: number
   /** T-037 — total HT au tarif catalogue, avant tout geste */
@@ -285,10 +290,25 @@ export async function createInvoice(
 
   // Envoi email via Pennylane, avec retry sur le 409 PDF_NOT_READY
   let emailSent = false
+  // T-046 — SONDE, pas correctif. « L'email n'est pas parti » ne disait PAS
+  // pourquoi : le motif finissait dans un `console.warn`, donc dans les journaux
+  // Vercel, et ni l'ecran ni `activity_logs` n'en gardaient trace. On ne pouvait
+  // donc pas distinguer un 409 « PDF pas pret » epuise d'une tout autre erreur.
+  //
+  // 🔑 Le NOMBRE DE TENTATIVES suffit a trancher : la brique ne retente que sur
+  // 409 (`send-by-email-with-retry.ts`). 5 tentatives = PDF jamais pret ;
+  // 1 tentative = autre refus, dont le message est desormais lisible.
+  let sendFailure: { code: string; message: string; attempts: number } | null = null
   if (options.sendNow === true) {
     const sendResult = await sendByEmailWithRetry(pennylaneInvoiceId, 'customer_invoices')
     emailSent = sendResult.sent
     if (!sendResult.sent) {
+      sendFailure = {
+        code: sendResult.lastError?.code ?? 'UNKNOWN',
+        // Tronque a l'ecran, corps complet conserve dans les journaux serveur.
+        message: (sendResult.lastError?.message ?? 'motif inconnu').slice(0, 300),
+        attempts: sendResult.attempts,
+      }
       console.warn(
         `[FACTURATION:CREATE_INVOICE] send_by_email echoue apres ${sendResult.attempts} tentatives:`,
         sendResult.lastError
@@ -340,6 +360,11 @@ export async function createInvoice(
       deadline: deadlineStr,
       send_now: options.sendNow ?? false,
       email_sent: emailSent,
+      // T-046 — sans ces trois champs, un echec d'envoi restait indiagnosticable
+      // apres coup : le motif vivait seulement dans les journaux Vercel.
+      send_error_code: sendFailure?.code ?? null,
+      send_error_message: sendFailure?.message ?? null,
+      send_attempts: sendFailure?.attempts ?? null,
     },
   })
   if (logError) {
@@ -351,6 +376,7 @@ export async function createInvoice(
       pennylaneInvoiceId,
       invoiceNumber,
       emailSent,
+      sendFailure,
       totalHt,
       catalogTotalHt: gesture.data.catalogTotalHt,
       totalGrantedHt: Math.round((gesture.data.offeredTotalHt + gesture.data.discountHt) * 100) / 100,

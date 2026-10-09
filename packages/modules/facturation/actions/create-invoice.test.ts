@@ -285,6 +285,66 @@ describe('createInvoice', () => {
     expect(mockPennylane.post).not.toHaveBeenCalled()
   })
 
+  // ── T-046 — sonde : POURQUOI l'email n'est pas parti ──────────────────────
+  //
+  // « L'email n'est pas parti » sans motif est indiagnosticable : le detail
+  // finissait dans un console.warn, donc dans les journaux Vercel.
+
+  it('rend le motif de l echec d envoi, avec le nombre de tentatives', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+    mockSendByEmail.mockResolvedValue({
+      sent: false,
+      attempts: 5,
+      lastError: { message: 'PDF not ready', code: 'PENNYLANE_409' },
+    })
+
+    const result = await createInvoice('client-1', LINES, { sendNow: true })
+
+    expect(result.data?.emailSent).toBe(false)
+    // 🔑 Le nombre de tentatives tranche a lui seul : la brique ne retente que
+    // sur 409. 5 = PDF jamais pret ; 1 = autre refus.
+    expect(result.data?.sendFailure).toEqual({
+      code: 'PENNYLANE_409',
+      message: 'PDF not ready',
+      attempts: 5,
+    })
+  })
+
+  it('journalise le motif pour qu un echec reste diagnosticable apres coup', async () => {
+    const supabase = makeSupabaseMock()
+    useSupabase(supabase)
+    mockInvoiceCreated()
+    mockSendByEmail.mockResolvedValue({
+      sent: false,
+      attempts: 1,
+      lastError: { message: 'Recipient address rejected', code: 'PENNYLANE_422' },
+    })
+
+    await createInvoice('client-1', LINES, { sendNow: true })
+
+    expect(supabase.__spies.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'invoice_created',
+        metadata: expect.objectContaining({
+          email_sent: false,
+          send_error_code: 'PENNYLANE_422',
+          send_attempts: 1,
+        }),
+      })
+    )
+  })
+
+  it('ne rend AUCUN motif quand l email est parti', async () => {
+    useSupabase(makeSupabaseMock())
+    mockInvoiceCreated()
+
+    const result = await createInvoice('client-1', LINES, { sendNow: true })
+
+    expect(result.data?.emailSent).toBe(true)
+    expect(result.data?.sendFailure).toBeNull()
+  })
+
   // ── T-039 — carnet de contacts ────────────────────────────────────────────
 
   it('imprime « A l attention de » en tete des notes publiques, sans les ecraser', async () => {

@@ -72,6 +72,23 @@ function vatRateToMultiplier(rate: string): number {
   return VAT_RATES[rate] ?? 0.20
 }
 
+/**
+ * T-046 — met le motif d'un echec d'envoi en francais lisible.
+ *
+ * Le cas « PDF pas pret » est nomme explicitement parce que c'est le seul qui se
+ * resout tout seul : il suffit de reessayer une minute plus tard. Le confondre
+ * avec un refus de fond ferait chercher un bug la ou il n'y en a pas.
+ */
+function describeSendFailure(
+  failure: { code: string; message: string; attempts: number } | null | undefined
+): string {
+  if (!failure) return ''
+  if (failure.code === 'PENNYLANE_409' || failure.attempts >= 5) {
+    return ` — le PDF n'était pas encore prêt chez Pennylane après ${failure.attempts} tentatives`
+  }
+  return ` — ${failure.message}`
+}
+
 function todayIso(): string {
   return new Date().toISOString().split('T')[0]
 }
@@ -224,7 +241,12 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
           // T-044 — ce message renvoyait vers un bouton « Relancer » QUI N EXISTAIT
           // PAS : j'avais ecrit une consigne vers un ecran sans le verifier. Le
           // bouton existe depuis T-044, et le message le nomme exactement.
-          `Facture${numberSuffix} créée, mais l'email n'est pas parti. Utilise « Envoyer au client » depuis la liste des factures.`
+          //
+          // T-046 — et il dit desormais POURQUOI. « L'email n'est pas parti »
+          // sans motif est indiagnosticable : le detail finissait dans les
+          // journaux Vercel. Le nombre de tentatives tranche a lui seul — la
+          // brique ne retente que sur « PDF pas pret ».
+          `Facture${numberSuffix} créée, mais l'email n'est pas parti${describeSendFailure(result.data?.sendFailure)}. Utilise « Envoyer au client » depuis la liste des factures.`
         )
       } else if (sendNow) {
         // T-039 — on nomme les ADRESSES reellement servies. « Envoyée à CSE
