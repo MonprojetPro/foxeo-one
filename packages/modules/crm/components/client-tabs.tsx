@@ -6,7 +6,7 @@ import {
   type LucideIcon,
   Clock, FolderOpen, MessageSquare, Zap,
   Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings,
-  MessageCircle, Code2, Pause, Lock, Gauge, CircleSlash, RotateCcw, Users,
+  MessageCircle, Code2, Pause, Lock, Gauge, CircleSlash, RotateCcw, Users, Video,
 } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
@@ -184,6 +184,11 @@ export function ClientTabs({
     { type: 'action', value: 'cursor',        label: 'Cursor',      Icon: Code2,         color: '#818cf8', onClick: handleOpenCursor },
     // 3 — Chat          sky
     { type: 'action', value: 'chat',          label: 'Chat',        Icon: MessageCircle, color: '#38bdf8', onClick: () => router.push(`/modules/chat/${client.id}`) },
+    // 3bis — Visio      teal — T-051 : envoyer un lien Meet, historique des appels, transcriptions.
+    //                    ⚠️ Un onglet se declare en DEUX endroits : ici, ET dans `extraTabs`
+    //                    (apps/hub/.../client-detail-with-support.tsx). N'en faire qu'un seul
+    //                    rend l'onglet invisible sans aucune erreur.
+    ...(extraTabValues.has('visio')          ? [{ type: 'tab' as const, value: 'visio',         label: 'Visio',       Icon: Video,         color: '#2dd4bf' }] : []),
     // 4 — Emails        amber
     ...(extraTabValues.has('emails')         ? [{ type: 'tab' as const, value: 'emails',        label: 'Emails',      Icon: Mail,          color: '#f59e0b' }] : []),
     // 4bis — Contacts  rose — T-039, le carnet : qui fait quoi, et a qui partent les factures

@@ -1,6 +1,8 @@
 'use client'
 
-import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, ClientCockpitTab, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions } from '@monprojetpro/modules-crm'
+import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, ClientCockpitTab, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions, useClientContacts } from '@monprojetpro/modules-crm'
+import { ClientVisioTab, type VisioRecipient } from '@monprojetpro/module-visio'
+import { sendMeetLink } from '../../../../../../actions/send-meet-link'
 import { ClientSupportTab, useSupportTickets } from '@monprojetpro/modules-support'
 import { SubmissionsList, ClientParcoursAgentsList } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
@@ -11,7 +13,7 @@ import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
 import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Gauge, Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings } from 'lucide-react'
+import { Gauge, Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings, Video } from 'lucide-react'
 
 interface ClientDetailWithSupportProps {
   client: Client
@@ -25,6 +27,37 @@ function CommunicationProfileTabContent({ clientId }: { clientId: string }) {
   }
 
   return <CommunicationProfileForm clientId={clientId} initialProfile={profile} />
+}
+
+/**
+ * Onglet Visio du dossier client — T-051.
+ *
+ * Les contacts du carnet (T-039) sont proposés en plus de l'email de la fiche.
+ * On NE filtre PAS sur `receivesInvoices` : cette case désigne la comptabilité,
+ * pas l'interlocuteur d'une visio. Un contact sans adresse est écarté — il ne
+ * pourrait rien recevoir.
+ */
+function ClientVisioTabContent({ client }: { client: Client }) {
+  const { data: contacts, isLoading: contactsLoading } = useClientContacts(client.id)
+
+  const recipients = useMemo<VisioRecipient[]>(
+    () =>
+      (contacts ?? [])
+        .filter((c): c is typeof c & { email: string } => Boolean(c.email))
+        .map((c) => ({ email: c.email, label: `${c.fullName} (${c.email})` })),
+    [contacts]
+  )
+
+  return (
+    <ClientVisioTab
+      clientId={client.id}
+      clientName={client.name}
+      clientEmail={client.email}
+      contacts={recipients}
+      contactsLoading={contactsLoading}
+      sendMeetLinkAction={sendMeetLink}
+    />
+  )
 }
 
 export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps) {
@@ -53,6 +86,12 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         label: 'Pilote',
         icon: Gauge, color: '#22d3ee',
         content: <ClientCockpitTab clientId={client.id} supportOpenCount={supportOpenCount} />,
+      },
+      {
+        value: 'visio',
+        label: 'Visio',
+        icon: Video, color: '#2dd4bf',
+        content: <ClientVisioTabContent client={client} />,
       },
       {
         value: 'emails',

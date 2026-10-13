@@ -79,4 +79,29 @@ describe('ClientTabs', () => {
     expect(pilote).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByText('Cockpit')).toBeInTheDocument()
   })
+
+  // T-051 — VERROU DES DEUX SURFACES.
+  // Un onglet se déclare en DEUX endroits : la ligne conditionnée par
+  // `extraTabValues.has(...)` ici, ET l'entrée `extraTabs` côté app. Si la
+  // première disparaît, l'app fournit un contenu que personne n'affiche :
+  // l'onglet devient invisible SANS la moindre erreur. Ce test échoue si la
+  // ligne « visio » est retirée de la liste.
+  it('affiche l\'onglet « Visio » et son contenu quand l\'app le fournit en extraTab', () => {
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('tab=visio'))
+    const extraTabs: ExtraTab[] = [
+      { value: 'visio', label: 'Visio', content: <div>Onglet visio du client</div> },
+    ]
+    renderWithQueryClient(<ClientTabs client={mockClient} extraTabs={extraTabs} />)
+
+    const visio = screen.getByRole('button', { name: /visio/i })
+    expect(visio).toBeInTheDocument()
+    expect(visio).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Onglet visio du client')).toBeInTheDocument()
+  })
+
+  it('n\'affiche PAS l\'onglet « Visio » quand l\'app ne le fournit pas', () => {
+    renderWithQueryClient(<ClientTabs client={mockClient} />)
+
+    expect(screen.queryByRole('button', { name: /visio/i })).not.toBeInTheDocument()
+  })
 })
