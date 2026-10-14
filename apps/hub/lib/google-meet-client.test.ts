@@ -49,21 +49,42 @@ describe('google-meet-client', () => {
     expect(client).toBeDefined()
   })
 
-  it('lève GOOGLE_MEET_AUTH_ERROR si GOOGLE_CLIENT_ID manquant', async () => {
+  // T-052 : l'erreur NOMME désormais la variable absente. « Il manque quelque
+  // chose » envoyait chercher dans trois directions à la fois.
+  it('nomme la variable manquante quand GOOGLE_CLIENT_ID est absent', async () => {
     process.env.GOOGLE_CLIENT_ID = ''
     process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret'
     process.env.GOOGLE_MEET_REFRESH_TOKEN = 'test-refresh-token'
 
     const { getGoogleMeetClient } = await import('./google-meet-client')
-    expect(() => getGoogleMeetClient()).toThrow('GOOGLE_MEET_AUTH_ERROR')
+    expect(() => getGoogleMeetClient()).toThrow('GOOGLE_MEET_CONFIG_MISSING: GOOGLE_CLIENT_ID')
   })
 
-  it('lève GOOGLE_MEET_AUTH_ERROR si GOOGLE_MEET_REFRESH_TOKEN manquant', async () => {
+  it('nomme la variable manquante quand GOOGLE_MEET_REFRESH_TOKEN est absent', async () => {
     process.env.GOOGLE_CLIENT_ID = 'test-client-id'
     process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret'
     process.env.GOOGLE_MEET_REFRESH_TOKEN = ''
 
     const { getGoogleMeetClient } = await import('./google-meet-client')
-    expect(() => getGoogleMeetClient()).toThrow('GOOGLE_MEET_AUTH_ERROR')
+    expect(() => getGoogleMeetClient()).toThrow(
+      'GOOGLE_MEET_CONFIG_MISSING: GOOGLE_MEET_REFRESH_TOKEN'
+    )
+  })
+
+  it('porte le nom et la liste exploitables par la sonde, sans jamais exposer de valeur', async () => {
+    process.env.GOOGLE_CLIENT_ID = ''
+    process.env.GOOGLE_CLIENT_SECRET = ''
+    process.env.GOOGLE_MEET_REFRESH_TOKEN = 'valeur-secrete-a-ne-jamais-afficher'
+
+    const { getGoogleMeetClient } = await import('./google-meet-client')
+    try {
+      getGoogleMeetClient()
+      throw new Error('aurait dû lever')
+    } catch (err) {
+      const e = err as { name: string; missing: string[]; message: string }
+      expect(e.name).toBe('GoogleMeetConfigError')
+      expect(e.missing).toEqual(['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'])
+      expect(e.message).not.toContain('valeur-secrete')
+    }
   })
 })

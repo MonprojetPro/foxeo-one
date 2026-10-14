@@ -8,6 +8,7 @@ import { type ActionResponse, successResponse, errorResponse } from '@monprojetp
 import { z } from 'zod'
 import { getGoogleMeetClient } from '../lib/google-meet-client'
 import { buildMeetInvitationBody } from '../lib/meet-invitation'
+import { describeGoogleMeetFailure } from '../lib/google-meet-error'
 
 /**
  * Envoyer un lien Google Meet à un client, depuis son dossier (Hub).
@@ -127,12 +128,15 @@ export async function sendMeetLink(input: {
       meetSpaceName = spaceRes.data.name ?? undefined
       meetUri = spaceRes.data.meetingUri ?? undefined
     } catch (err) {
-      console.error('[HUB:SEND_MEET_LINK] Google Meet API error:', err)
-      return errorResponse(
-        "Impossible de créer la salle Google Meet — la connexion Google est peut-être à renouveler. Aucun rendez-vous n'a été créé ni envoyé.",
-        'GOOGLE_MEET_ERROR',
-        err instanceof Error ? err.message : err
-      )
+      // SONDE T-052 : le motif réel remonte jusqu'à l'écran. « Impossible de
+      // créer la salle » ne disait pas s'il fallait poser un secret, régénérer
+      // un jeton ou activer une API — trois réparations distinctes.
+      const failure = describeGoogleMeetFailure(err)
+      console.error(`[HUB:SEND_MEET_LINK] Google Meet ${failure.kind}:`, failure.detail)
+      return errorResponse(failure.message, 'GOOGLE_MEET_ERROR', {
+        kind: failure.kind,
+        detail: failure.detail,
+      })
     }
 
     if (!meetUri) {
