@@ -18,6 +18,12 @@ export function toMeeting(db: MeetingDB): Meeting {
     metadata: db.metadata ?? {},
     recordingUrl: db.recording_url,
     transcriptUrl: db.transcript_url,
+    // T-056 — LE MAILLON QU'ON AVAIT OUBLIÉ SUR LES FACTURES : une colonne
+    // écrite mais jamais lue laisse l'écran afficher « jamais envoyé » pour
+    // toujours, et la garde anti-double-envoi ne garde alors plus rien.
+    inviteLastSentAt: db.invite_last_sent_at ?? null,
+    inviteLastSentTo: db.invite_last_sent_to ?? null,
+    inviteSentCount: db.invite_sent_count ?? 0,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
   }

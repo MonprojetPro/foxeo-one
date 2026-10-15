@@ -29,8 +29,12 @@ export function ClientEmailTab({ clientId, clientEmail, returnTo }: ClientEmailT
     queryKey: ['gmail-status'],
     queryFn: async () => {
       const r = await getGmailStatus()
-      return r.data ?? { connected: false, email: null }
+      return r.data ?? { connected: false, email: null, state: 'never' as const }
     },
+    // L'état dérive d'un appel réel à Gmail (T-055) : on ne le garde pas en
+    // cache plus de quelques minutes, sinon une connexion qui tombe resterait
+    // affichée « vivante » — le défaut qu'on vient précisément de corriger.
+    staleTime: 2 * 60 * 1000,
   })
 
   // Threads du client
@@ -71,7 +75,10 @@ export function ClientEmailTab({ clientId, clientEmail, returnTo }: ClientEmailT
         <GmailConnectBanner
           returnTo={returnTo}
           connected={false}
-          connectedEmail={null}
+          // On passe l'email MÊME déconnecté : sur une connexion expirée, MiKL
+          // doit savoir QUEL compte reconnecter.
+          connectedEmail={gmailStatus.email}
+          state={gmailStatus.state}
           onDisconnected={() => refetchStatus()}
         />
       </div>
@@ -86,6 +93,7 @@ export function ClientEmailTab({ clientId, clientEmail, returnTo }: ClientEmailT
           returnTo={returnTo}
           connected={gmailStatus.connected}
           connectedEmail={gmailStatus.email}
+          state={gmailStatus.state}
           onDisconnected={() => {
             refetchStatus()
             queryClient.removeQueries({ queryKey: ['email-threads', clientId] })

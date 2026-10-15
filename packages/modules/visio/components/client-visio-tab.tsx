@@ -11,11 +11,16 @@ import {
   showError,
   showSuccess,
 } from '@monprojetpro/ui'
-import { AlertCircle, ExternalLink, FileText, Send, Video } from 'lucide-react'
+import { AlertCircle, Send, Video } from 'lucide-react'
 import type { ActionResponse } from '@monprojetpro/types'
 import { useMeetings } from '../hooks/use-meetings'
-import { MeetingStatusBadge } from './meeting-status-badge'
-import type { Meeting } from '../types/meeting.types'
+import {
+  MeetingRow,
+  type VisioRecipient,
+  type ResendMeetLinkFn,
+  type MeetingActionFn,
+  type RescheduleMeetingFn,
+} from './meeting-row'
 
 /**
  * Onglet « Visio » du dossier client (Hub).
@@ -32,10 +37,7 @@ import type { Meeting } from '../types/meeting.types'
  * l'interlocuteur d'une visio.
  */
 
-export interface VisioRecipient {
-  email: string
-  label: string
-}
+export type { VisioRecipient }
 
 export type SendMeetLinkFn = (input: {
   clientId: string
@@ -59,22 +61,18 @@ interface ClientVisioTabProps {
    * les contacts n'arrivent.
    */
   contactsLoading?: boolean
+  /**
+   * État réel de la messagerie (T-055). `expired` → on prévient AVANT que MiKL
+   * ne crée un rendez-vous dont l'email ne partira pas. C'est exactement ce qui
+   * s'est produit le 15-10 : la salle a été créée, l'email a échoué, et MiKL
+   * ne l'a appris qu'après coup.
+   */
+  mailState?: 'never' | 'connected' | 'expired'
   sendMeetLinkAction: SendMeetLinkFn
-}
-
-function formatDateTime(iso: string | null): string {
-  if (!iso) return 'Date non précisée'
-  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeStyle: 'short' }).format(
-    new Date(iso)
-  )
-}
-
-function formatDuration(seconds: number | null): string | null {
-  if (!seconds || seconds <= 0) return null
-  const minutes = Math.round(seconds / 60)
-  if (minutes < 60) return `${minutes} min`
-  const hours = Math.floor(minutes / 60)
-  return `${hours} h ${String(minutes % 60).padStart(2, '0')}`
+  /** Renvoyer le lien EXISTANT — jamais en recréer un (il invaliderait l'ancien). */
+  onResend?: ResendMeetLinkFn
+  onCancel?: MeetingActionFn
+  onReschedule?: RescheduleMeetingFn
 }
 
 export function ClientVisioTab({
@@ -83,7 +81,11 @@ export function ClientVisioTab({
   clientEmail,
   contacts = [],
   contactsLoading = false,
+  mailState,
   sendMeetLinkAction,
+  onResend,
+  onCancel,
+  onReschedule,
 }: ClientVisioTabProps) {
   const queryClient = useQueryClient()
   const { data: meetings, isPending, error } = useMeetings({ clientId })
@@ -204,6 +206,24 @@ export function ClientVisioTab({
           )}
         </div>
 
+        {mailState && mailState !== 'connected' && (
+          <CockpitCallout tone="amber" icon={AlertCircle} className="mx-3 mb-2">
+            {mailState === 'expired' ? (
+              <>
+                La connexion Gmail a expiré : la salle de visio sera bien créée, mais{' '}
+                <strong>l&apos;email ne partira pas</strong>. Reconnecte Gmail depuis l&apos;onglet
+                Emails, ou transmets le lien à la main.
+              </>
+            ) : (
+              <>
+                Aucun compte Gmail connecté : la salle sera créée, mais{' '}
+                <strong>l&apos;email ne partira pas</strong>. Connecte Gmail depuis l&apos;onglet
+                Emails, ou transmets le lien à la main.
+              </>
+            )}
+          </CockpitCallout>
+        )}
+
         {noRecipient && (
           <CockpitCallout tone="amber" icon={AlertCircle} className="mx-3 mb-2">
             Ce client n&apos;a aucune adresse email — ni sur sa fiche, ni dans son carnet de
@@ -306,7 +326,15 @@ export function ClientVisioTab({
             <CockpitPanel title="À venir">
               <div className="flex flex-col gap-2">
                 {upcoming.map((meeting) => (
-                  <MeetingRow key={meeting.id} meeting={meeting} />
+                  <MeetingRow
+                    key={meeting.id}
+                    meeting={meeting}
+                    recipients={recipients}
+                    onResend={onResend}
+                    onCancel={onCancel}
+                    onReschedule={onReschedule}
+                    onChanged={invalidateMeetings}
+                  />
                 ))}
               </div>
             </CockpitPanel>
@@ -321,7 +349,7 @@ export function ClientVisioTab({
             ) : (
               <div className="flex flex-col gap-2">
                 {past.map((meeting) => (
-                  <MeetingRow key={meeting.id} meeting={meeting} />
+                  <MeetingRow key={meeting.id} meeting={meeting} recipients={recipients} />
                 ))}
               </div>
             )}
@@ -332,58 +360,3 @@ export function ClientVisioTab({
   )
 }
 
-function MeetingRow({ meeting }: { meeting: Meeting }) {
-  const duration = formatDuration(meeting.durationSeconds)
-
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <p className="truncate text-sm font-medium text-foreground">{meeting.title}</p>
-        <p className="text-xs text-muted-foreground">
-          {formatDateTime(meeting.endedAt ?? meeting.scheduledAt)}
-          {duration ? ` · ${duration}` : ''}
-        </p>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-2">
-        <MeetingStatusBadge status={meeting.status} />
-
-        {meeting.meetUri && (
-          <a
-            href={meeting.meetUri}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-md border border-white/15 px-2.5 py-1.5 text-xs hover:bg-white/10"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            Rejoindre
-          </a>
-        )}
-
-        {meeting.recordingUrl && (
-          <a
-            href={meeting.recordingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <Video className="h-3.5 w-3.5" />
-            Enregistrement
-          </a>
-        )}
-
-        {meeting.transcriptUrl && (
-          <a
-            href={meeting.transcriptUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            Transcription
-          </a>
-        )}
-      </div>
-    </div>
-  )
-}

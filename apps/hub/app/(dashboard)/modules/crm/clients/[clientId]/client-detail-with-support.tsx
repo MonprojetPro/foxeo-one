@@ -1,14 +1,15 @@
 'use client'
 
 import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, ClientCockpitTab, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions, useClientContacts } from '@monprojetpro/modules-crm'
-import { ClientVisioTab, type VisioRecipient } from '@monprojetpro/module-visio'
+import { ClientVisioTab, cancelMeeting, rescheduleMeeting, type VisioRecipient } from '@monprojetpro/module-visio'
 import { sendMeetLink } from '../../../../../../actions/send-meet-link'
+import { resendMeetLink } from '../../../../../../actions/resend-meet-link'
 import { ClientSupportTab, useSupportTickets } from '@monprojetpro/modules-support'
 import { SubmissionsList, ClientParcoursAgentsList } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
 import { LabBillingTab, getClientLabStatus } from '@monprojetpro/modules-facturation'
 import { ClientExportButton, ImpersonationButton } from '@monprojetpro/module-admin'
-import { ClientEmailTab } from '@monprojetpro/modules-email'
+import { ClientEmailTab, getGmailStatus } from '@monprojetpro/modules-email'
 import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
 import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
@@ -40,6 +41,16 @@ function CommunicationProfileTabContent({ clientId }: { clientId: string }) {
 function ClientVisioTabContent({ client }: { client: Client }) {
   const { data: contacts, isLoading: contactsLoading } = useClientContacts(client.id)
 
+  // T-055 — l'état RÉEL de Gmail, pour prévenir AVANT l'envoi plutôt qu'après.
+  const { data: gmailStatus } = useQuery({
+    queryKey: ['gmail-status'],
+    queryFn: async () => {
+      const r = await getGmailStatus()
+      return r.data ?? null
+    },
+    staleTime: 2 * 60 * 1000,
+  })
+
   const recipients = useMemo<VisioRecipient[]>(
     () =>
       (contacts ?? [])
@@ -55,7 +66,15 @@ function ClientVisioTabContent({ client }: { client: Client }) {
       clientEmail={client.email}
       contacts={recipients}
       contactsLoading={contactsLoading}
+      mailState={gmailStatus?.state}
       sendMeetLinkAction={sendMeetLink}
+      // ⚠️ Ces trois-là NE SONT PAS OPTIONNELLES EN PRATIQUE : sans elles, les
+      // boutons Renvoyer / Déplacer / Annuler ne s'affichent pas — et le build
+      // reste vert, puisque les props sont facultatives. Exactement le piège
+      // des deux surfaces (T-051).
+      onResend={resendMeetLink}
+      onCancel={cancelMeeting}
+      onReschedule={rescheduleMeeting}
     />
   )
 }

@@ -27,6 +27,13 @@ export interface Meeting {
   metadata: Record<string, unknown>
   recordingUrl: string | null
   transcriptUrl: string | null
+  /**
+   * Trace d'envoi du lien (T-056). Sans elle, « renvoyer le lien » se ferait à
+   * l'aveugle — l'erreur exacte de T-044a sur les factures.
+   */
+  inviteLastSentAt: string | null
+  inviteLastSentTo: string | null
+  inviteSentCount: number
   createdAt: string
   updatedAt: string
 }
@@ -52,6 +59,9 @@ export interface MeetingDB {
   metadata: Record<string, unknown>
   recording_url: string | null
   transcript_url: string | null
+  invite_last_sent_at: string | null
+  invite_last_sent_to: string | null
+  invite_sent_count: number | null
   created_at: string
   updated_at: string
 }

@@ -17,7 +17,12 @@ const mockEq = vi.fn(() => ({
   then: (resolve: (v: unknown) => unknown) => Promise.resolve(mockContactRows()).then(resolve),
 }))
 const mockSelect = vi.fn(() => ({ eq: mockEq }))
-const mockFrom = vi.fn(() => ({ select: mockSelect }))
+// La trace du premier envoi (T-056) écrit dans `meetings` : sans `update` dans
+// le mock, l'action partait en « erreur inattendue » et les tests de succès
+// échouaient — pour une raison qui n'avait rien à voir avec ce qu'ils testent.
+const mockUpdateEq = vi.fn(() => Promise.resolve({ error: null }))
+const mockUpdate = vi.fn(() => ({ eq: mockUpdateEq }))
+const mockFrom = vi.fn(() => ({ select: mockSelect, update: mockUpdate }))
 
 vi.mock('@monprojetpro/supabase', () => ({
   createServerSupabaseClient: vi.fn(() => ({
@@ -117,6 +122,32 @@ describe('sendMeetLink Server Action', () => {
     // Le lien doit figurer dans le corps : un email d'invitation sans lien
     // serait une coquille vide.
     expect(mockSendEmail.mock.calls[0]?.[0].body).toContain('https://meet.google.com/abc-defg-hij')
+  })
+
+  // T-056 : si le PREMIER envoi ne laissait pas de trace, l'écran dirait
+  // « jamais envoyé » sur un lien déjà parti, et le compteur démarrerait faux.
+  it('enregistre la trace du PREMIER envoi', async () => {
+    mockOperatorThenClient()
+
+    const { sendMeetLink } = await import('./send-meet-link')
+    await sendMeetLink(validInput)
+
+    const trace = mockUpdate.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(trace.invite_sent_count).toBe(1)
+    expect(trace.invite_last_sent_to).toBe('contact@cse77.fr')
+    expect(typeof trace.invite_last_sent_at).toBe('string')
+  })
+
+  it('envoie une version HTML en plus du texte', async () => {
+    mockOperatorThenClient()
+
+    const { sendMeetLink } = await import('./send-meet-link')
+    await sendMeetLink(validInput)
+
+    const sent = mockSendEmail.mock.calls[0]?.[0]
+    expect(sent.html).toContain('https://meet.google.com/abc-defg-hij')
+    // Le texte reste présent : on n'envoie jamais de l'HTML seul.
+    expect(sent.body).toBeTruthy()
   })
 
   it('ARRETE TOUT si Google Meet echoue — aucun rendez-vous, aucun email', async () => {

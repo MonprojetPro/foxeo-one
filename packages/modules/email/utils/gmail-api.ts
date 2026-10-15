@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { EmailMessage, EmailThread } from '../types/email.types'
+import { buildMimeMessage } from './mime'
 
 const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
@@ -259,24 +260,28 @@ export async function sendGmailMessage(
     to: string
     subject: string
     body: string
+    /** Version HTML optionnelle — le `body` texte reste le repli universel. */
+    html?: string
     threadId?: string
     inReplyTo?: string
     references?: string
   }
 ): Promise<boolean> {
-  const lines = [
-    `From: ${opts.from}`,
-    `To: ${opts.to}`,
-    `Subject: ${opts.subject}`,
-    'MIME-Version: 1.0',
-    'Content-Type: text/plain; charset=UTF-8',
-    'Content-Transfer-Encoding: quoted-printable',
-  ]
-  if (opts.inReplyTo) lines.push(`In-Reply-To: ${opts.inReplyTo}`)
-  if (opts.references) lines.push(`References: ${opts.references}`)
-  lines.push('', opts.body)
-
-  const raw = encodeBase64Url(lines.join('\r\n'))
+  // T-057 : l'assemblage MIME vit dans `./mime`, en fonctions pures testables.
+  // L'objet y est encodé en RFC 2047 (il arrivait en « Ã¢Â€Â" » sinon) et le
+  // corps part en base64 au lieu d'un quoted-printable annoncé mais jamais
+  // appliqué.
+  const raw = encodeBase64Url(
+    buildMimeMessage({
+      from: opts.from,
+      to: opts.to,
+      subject: opts.subject,
+      text: opts.body,
+      ...(opts.html ? { html: opts.html } : {}),
+      ...(opts.inReplyTo ? { inReplyTo: opts.inReplyTo } : {}),
+      ...(opts.references ? { references: opts.references } : {}),
+    })
+  )
   const sendBody: Record<string, string> = { raw }
   if (opts.threadId) sendBody.threadId = opts.threadId
 

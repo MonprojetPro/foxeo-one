@@ -26,7 +26,7 @@ export async function sendEmail(input: SendEmailInput): Promise<ActionResponse<v
   const accessToken = await getValidAccessToken(supabase, user.id)
   if (!accessToken) return errorResponse('Token Gmail invalide', 'AUTH_ERROR')
 
-  const { to, subject, body, threadId, inReplyTo, references } = parsed.data
+  const { to, subject, body, html, threadId, inReplyTo, references } = parsed.data
 
   try {
     const ok = await sendGmailMessage(accessToken, {
@@ -34,6 +34,7 @@ export async function sendEmail(input: SendEmailInput): Promise<ActionResponse<v
       to,
       subject,
       body,
+      html,
       threadId,
       inReplyTo,
       references,

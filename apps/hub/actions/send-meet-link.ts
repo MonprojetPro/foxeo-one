@@ -7,7 +7,7 @@ import { sendEmail } from '@monprojetpro/modules-email'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { z } from 'zod'
 import { getGoogleMeetClient } from '../lib/google-meet-client'
-import { buildMeetInvitationBody } from '../lib/meet-invitation'
+import { buildMeetInvitationBody, buildMeetInvitationHtml } from '../lib/meet-invitation'
 import { describeGoogleMeetFailure } from '../lib/google-meet-error'
 
 /**
@@ -165,18 +165,21 @@ export async function sendMeetLink(input: {
     }
 
     // 3. L'email — le canal qui atteint AUSSI les clients sans espace
-    const body = buildMeetInvitationBody({
+    const invitation = {
       clientName: (client.name as string) || (client.company as string) || 'Bonjour',
       title: parsed.data.title,
       meetUri,
       ...(parsed.data.scheduledAt ? { scheduledAt: parsed.data.scheduledAt } : {}),
       ...(parsed.data.message ? { message: parsed.data.message } : {}),
-    })
+    }
 
     const emailRes = await sendEmail({
       to: parsed.data.recipientEmail,
+      // Le tiret cadratin est volontaire : l'objet est désormais encodé en
+      // RFC 2047 (T-057). Il s'affichait « Ã¢Â€Â" » avant ce correctif.
       subject: `Visio MonprojetPro — ${parsed.data.title}`,
-      body,
+      body: buildMeetInvitationBody(invitation),
+      html: buildMeetInvitationHtml(invitation),
     })
 
     if (emailRes.error) {
@@ -189,6 +192,23 @@ export async function sendMeetLink(input: {
         'EMAIL_ERROR',
         { meetUri, meetingId: meetingRes.data.id }
       )
+    }
+
+    // Trace du premier envoi (T-056) — écrite seulement après succès, et sur le
+    // MÊME modèle que le renvoi : si le premier envoi ne comptait pas, le
+    // compteur démarrerait à 1 au deuxième et l'écran dirait « jamais envoyé »
+    // sur un lien déjà parti.
+    const { error: traceError } = await supabase
+      .from('meetings')
+      .update({
+        invite_last_sent_at: new Date().toISOString(),
+        invite_last_sent_to: parsed.data.recipientEmail,
+        invite_sent_count: 1,
+      })
+      .eq('id', meetingRes.data.id)
+
+    if (traceError) {
+      console.error('[HUB:SEND_MEET_LINK] Trace non enregistrée:', traceError)
     }
 
     return successResponse({

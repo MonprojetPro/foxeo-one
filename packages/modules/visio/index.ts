@@ -40,6 +40,8 @@ export { startMeeting } from './actions/start-meeting'
 export { endMeeting } from './actions/end-meeting'
 export { getMeetingRecordings } from './actions/get-meeting-recordings'
 export { syncMeetingResults } from './actions/sync-meeting-results'
+export { cancelMeeting } from './actions/cancel-meeting'
+export { rescheduleMeeting } from './actions/reschedule-meeting'
 
 // Post-Meeting Actions (Story 5.4)
 export { createLabOnboarding } from './actions/create-lab-onboarding'
