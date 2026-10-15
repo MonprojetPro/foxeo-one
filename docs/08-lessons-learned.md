@@ -1031,3 +1031,63 @@ validation qui l'autorisait.
 **Reste ouvert (T-030a)** : `upload-document` n'impose aucune limite de taille, ni dans l'action ni
 dans le bucket `documents` (`file_size_limit: null`). Il échouera de la même manière muette au-delà
 du plafond.
+
+## 2026-10-15 — Un motif de `.gitignore` qui énumère laisse toujours passer le cas qu'on n'a pas prévu
+
+**Symptôme** : aucun. C'est tout le problème — le défaut ne se manifeste que le jour où il coûte cher.
+
+**Ce qui s'est passé.** En sauvegardant `.env.local` avant d'en retirer un BOM, vérification réflexe :
+`git check-ignore -v .env.local.bak-bom-2026-10-15` → **« non ignoré »**. Le `.gitignore` listait des
+noms EXACTS (`.env`, `.env.local`, `.env.development.local`, `.env.test.local`, `.env.production.local`).
+Aucune sauvegarde, aucune variante, aucun `.env.old`, `.env.backup`, `.env.prod` n'était couvert.
+Un `git add -A` distrait publiait tous les secrets du projet sur un dépôt GitHub.
+
+**La règle** : pour une famille de fichiers dangereux, écrire un motif **couvrant** (`.env*`) et une
+**exception explicite** (`!.env.example`), jamais une énumération. Une énumération dit « j'ai pensé à
+ces cas-là » ; un motif couvrant dit « tout ce qui ressemble à ça est dangereux par défaut ».
+Et vérifier les DEUX par `git check-ignore` — celui qui doit être ignoré, et celui qui doit rester visible.
+
+**Pourquoi personne ne l'avait vu** : le `.gitignore` était conforme à la règle de sécurité du
+CLAUDE.md (« contient toujours `.env*.local` »). La règle elle-même énumérait. Un contrôle qui vérifie
+la présence d'une ligne ne vérifie pas sa **couverture**.
+
+---
+
+## 2026-10-15 — Un test qui fige une valeur sans vérifier qu'elle marche protège le bug
+
+**Le cas.** `base.test.ts` exigeait : `expect(html).toContain('monprojetpro.biz/logo.png')`.
+Ce domaine **n'existe plus** depuis le rebrand (DNS ne résout pas, vérifié par `curl`). Le logo était
+donc cassé dans **tous** les emails transactionnels envoyés aux clients — bienvenue, graduation,
+validation, relances d'impayés — pendant des mois, **avec un test vert en permanence**.
+
+**Le mécanisme** : le test vérifiait que le code contenait une chaîne, pas que cette chaîne
+désignait quelque chose d'existant. Il transformait un bug en exigence, et aurait fait échouer
+quiconque aurait voulu le corriger.
+
+**La règle** : un test d'URL, d'adresse ou de référence externe doit vérifier un **comportement**
+(« la marque est présente », « aucune image n'est chargée tant qu'aucune URL n'est configurée »),
+jamais une valeur littérale qu'aucun contrôle ne confronte au réel.
+
+**Corollaire opérationnel** : personne ne relit un email transactionnel qu'il a envoyé. Un défaut
+purement visuel dans un email peut vivre indéfiniment — seul un destinataire peut le voir, et il ne
+le signale pas. Ici c'est MiKL, destinataire d'un test, qui l'a attrapé.
+
+---
+
+## 2026-10-15 — Un en-tête d'email n'accepte que l'ASCII : tout objet français soigné arrive illisible
+
+**Symptôme vu par MiKL** : objet affiché `Visio MonprojetPro Ã¢Â€Â" test visio`.
+
+**Cause racine** : `sendGmailMessage` écrivait `Subject: ${subject}` **brut**. Les en-têtes MIME ne
+transportent que de l'ASCII imprimable ; un accent, une apostrophe typographique ou un tiret cadratin
+doit passer par l'encodage **RFC 2047** (`=?UTF-8?B?<base64>?=`). Le corps, lui, s'affichait bien —
+ce qui rendait le défaut d'autant plus déroutant : « pourquoi le titre et pas le texte ? ».
+
+**Le bug jumeau, non signalé mais présent** : l'en-tête annonçait
+`Content-Transfer-Encoding: quoted-printable` alors que le corps n'était pas encodé ainsi. Toléré par
+les clients mail, jusqu'au jour où un corps contient un `=` ou une ligne de plus de 998 caractères —
+typiquement une URL longue ou une ligne de HTML. **Déclarer un encodage qu'on n'applique pas est une
+bombe à retardement silencieuse.** Corps passé en base64, qui ne peut pas être cassé par son contenu.
+
+**Règle de portée** : les deux défauts vivaient dans une **brique partagée**. Un bug d'assemblage
+d'email ne concerne jamais la fonctionnalité qui l'a révélé — il concerne tout ce qui envoie.
