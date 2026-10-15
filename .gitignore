@@ -27,6 +27,14 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+# 🔐 Les motifs ci-dessus listent des noms EXACTS : une sauvegarde comme
+# `.env.local.bak-2026-10-15` n'etait couverte par AUCUN d'eux et serait partie
+# au commit avec tous les secrets dedans. Constate le 2026-10-15 en sauvegardant
+# `.env.local` avant d'en retirer un BOM — `git check-ignore` a repondu « non
+# ignore ». Un motif qui enumere des cas particuliers laisse toujours passer
+# celui auquel personne n'a pense.
+.env*
+!.env.example
 
 # Vercel
 .vercel
