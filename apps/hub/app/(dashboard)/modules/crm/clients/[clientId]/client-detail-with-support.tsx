@@ -1,7 +1,7 @@
 'use client'
 
 import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, ClientCockpitTab, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions, useClientContacts } from '@monprojetpro/modules-crm'
-import { ClientVisioTab, cancelMeeting, rescheduleMeeting, type VisioRecipient } from '@monprojetpro/module-visio'
+import { ClientVisioTab, cancelMeeting, rescheduleMeeting, syncMeetingResults, type VisioRecipient } from '@monprojetpro/module-visio'
 import { sendMeetLink } from '../../../../../../actions/send-meet-link'
 import { resendMeetLink } from '../../../../../../actions/resend-meet-link'
 import { ClientSupportTab, useSupportTickets } from '@monprojetpro/modules-support'
@@ -75,6 +75,7 @@ function ClientVisioTabContent({ client }: { client: Client }) {
       onResend={resendMeetLink}
       onCancel={cancelMeeting}
       onReschedule={rescheduleMeeting}
+      onSyncResults={syncMeetingResults}
     />
   )
 }

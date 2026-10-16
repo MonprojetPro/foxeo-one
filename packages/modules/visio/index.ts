@@ -40,6 +40,8 @@ export { startMeeting } from './actions/start-meeting'
 export { endMeeting } from './actions/end-meeting'
 export { getMeetingRecordings } from './actions/get-meeting-recordings'
 export { syncMeetingResults } from './actions/sync-meeting-results'
+export { downloadTranscript } from './actions/download-transcript'
+export { downloadRecording } from './actions/download-recording'
 export { cancelMeeting } from './actions/cancel-meeting'
 export { rescheduleMeeting } from './actions/reschedule-meeting'
 
@@ -53,6 +55,19 @@ export type { CreateLabOnboardingInput, LabOnboardingResult } from './actions/cr
 export type { SendProspectResourcesInput, ProspectResourcesResult } from './actions/send-prospect-resources'
 export type { ScheduleFollowUpInput, FollowUpResult } from './actions/schedule-follow-up'
 export type { MarkProspectNotInterestedInput, NotInterestedReason } from './actions/mark-prospect-not-interested'
+
+// Récupération des résultats de visio (T-050) — cœur partagé par la Server
+// Action « Récupérer maintenant » et par le cron de rattrapage du Hub.
+export { syncMeetingResultsCore, getGoogleAccessToken } from './lib/meeting-results-sync'
+export type { MeetingSyncOutcome, SyncReason } from './lib/meeting-results-sync'
+export {
+  readTranscriptSyncState,
+  shouldAttemptTranscriptSync,
+  hasExceededGiveUpDelay,
+  describeTranscriptSyncState,
+  TRANSCRIPT_SYNC_GIVE_UP_HOURS,
+} from './utils/transcript-sync-state'
+export type { TranscriptSyncState } from './utils/transcript-sync-state'
 
 // Utils (Story 5.4)
 export { generateResourceLinks } from './utils/generate-resource-links'

@@ -1,6 +1,24 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { RecordingList } from './recording-list'
+
+/**
+ * Les liens bruts vers Google ont été remplacés par des boutons qui passent
+ * par les Server Actions (T-050) : c'est la seule façon de servir en priorité
+ * le PDF déposé dans le dossier du client. Les tests vérifient donc l'APPEL
+ * et l'ouverture, plus un attribut href qui ne disait rien du résultat.
+ */
+
+const mockDownloadTranscript = vi.fn()
+const mockDownloadRecording = vi.fn()
+
+vi.mock('../actions/download-transcript', () => ({
+  downloadTranscript: (input: unknown) => mockDownloadTranscript(input),
+}))
+vi.mock('../actions/download-recording', () => ({
+  downloadRecording: (input: unknown) => mockDownloadRecording(input),
+}))
 import type { MeetingRecording } from '../types/recording.types'
 
 const RECORDING_ID = '00000000-0000-0000-0000-000000000001'
@@ -49,11 +67,22 @@ describe('RecordingList', () => {
     expect(screen.getByText('—')).toBeDefined()
   })
 
-  it('shows Google Drive link when recordingUrl is set', () => {
+  it('ouvre l’enregistrement en passant par l’action, pas par un href figé', async () => {
+    const open = vi.fn()
+    vi.stubGlobal('open', open)
+    mockDownloadRecording.mockResolvedValue({
+      data: { signedUrl: mockRecording.recordingUrl, source: 'google' },
+      error: null,
+    })
+
     render(<RecordingList recordings={[mockRecording]} />)
-    const link = screen.getByText('Enregistrement (Google Drive)')
-    expect(link.closest('a')?.getAttribute('href')).toBe(mockRecording.recordingUrl)
-    expect(link.closest('a')?.getAttribute('target')).toBe('_blank')
+    await userEvent.click(screen.getByText('Enregistrement (Google Drive)'))
+
+    await waitFor(() => {
+      expect(mockDownloadRecording).toHaveBeenCalledWith({ recordingId: RECORDING_ID })
+      expect(open).toHaveBeenCalledWith(mockRecording.recordingUrl, '_blank', 'noopener,noreferrer')
+    })
+    vi.unstubAllGlobals()
   })
 
   it('shows processing message when recordingUrl is empty', () => {
@@ -62,21 +91,37 @@ describe('RecordingList', () => {
     expect(screen.getByText('En cours de traitement...')).toBeDefined()
   })
 
-  it('shows Google Docs link when transcription is completed', () => {
+  it('ouvre LE DOCUMENT SERVI PAR L’ACTION — le PDF archivé prime sur Google', async () => {
+    const open = vi.fn()
+    vi.stubGlobal('open', open)
+    mockDownloadTranscript.mockResolvedValue({
+      data: { signedUrl: 'https://signed.test/compte-rendu.pdf', source: 'archive' },
+      error: null,
+    })
+
     render(<RecordingList recordings={[completedRecording]} />)
-    const link = screen.getByText('Transcription (Google Docs)')
-    expect(link.closest('a')?.getAttribute('href')).toBe(completedRecording.transcriptUrl)
-    expect(link.closest('a')?.getAttribute('target')).toBe('_blank')
+    await userEvent.click(screen.getByRole('button', { name: /Transcription/ }))
+
+    await waitFor(() => {
+      expect(mockDownloadTranscript).toHaveBeenCalledWith({ recordingId: completedRecording.id })
+      expect(open).toHaveBeenCalledWith(
+        'https://signed.test/compte-rendu.pdf',
+        '_blank',
+        'noopener,noreferrer'
+      )
+    })
+    vi.unstubAllGlobals()
   })
 
-  it('does not show Google Docs link when transcription is pending', () => {
+  it('n’offre pas la transcription tant que Google ne l’a pas terminée', () => {
     render(<RecordingList recordings={[mockRecording]} />)
-    expect(screen.queryByText('Transcription (Google Docs)')).toBeNull()
+    // « Transcription » est aussi un en-tête de colonne : on vise le BOUTON.
+    expect(screen.queryByRole('button', { name: /Transcription/ })).toBeNull()
   })
 
-  it('does not show Google Docs link when transcription is processing', () => {
+  it('n’offre pas la transcription pendant le traitement', () => {
     render(<RecordingList recordings={[processingRecording]} />)
-    expect(screen.queryByText('Transcription (Google Docs)')).toBeNull()
+    expect(screen.queryByRole('button', { name: /Transcription/ })).toBeNull()
   })
 
   it('shows pending status badge label', () => {

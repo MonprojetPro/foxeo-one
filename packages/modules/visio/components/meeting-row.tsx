@@ -8,6 +8,7 @@ import {
   Copy,
   ExternalLink,
   FileText,
+  RefreshCw,
   Send,
   Video,
   XCircle,
@@ -15,6 +16,10 @@ import {
 import type { ActionResponse } from '@monprojetpro/types'
 import { MeetingStatusBadge } from './meeting-status-badge'
 import type { Meeting } from '../types/meeting.types'
+import {
+  describeTranscriptSyncState,
+  readTranscriptSyncState,
+} from '../utils/transcript-sync-state'
 
 /**
  * Une visio et TOUT ce qu'on peut en faire — T-056.
@@ -49,12 +54,23 @@ export type RescheduleMeetingFn = (input: {
   scheduledAt: string
 }) => Promise<ActionResponse<unknown>>
 
+/**
+ * Récupération manuelle des résultats de la visio (T-050). Le retour dit ce
+ * qui s'est réellement passé — « rien reçu de Google » et « compte rendu
+ * déposé » ne doivent jamais produire le même message.
+ */
+export type SyncMeetingResultsFn = (input: { meetingId: string }) => Promise<
+  ActionResponse<{ synced: boolean; transcriptReady: boolean; archived: boolean }>
+>
+
 export interface MeetingRowProps {
   meeting: Meeting
   recipients?: VisioRecipient[]
   onResend?: ResendMeetLinkFn
   onCancel?: MeetingActionFn
   onReschedule?: RescheduleMeetingFn
+  /** « Récupérer maintenant » — relance la recherche du compte rendu chez Google. */
+  onSyncResults?: SyncMeetingResultsFn
   onChanged?: () => void
 }
 
@@ -82,9 +98,12 @@ export function MeetingRow({
   onResend,
   onCancel,
   onReschedule,
+  onSyncResults,
   onChanged,
 }: MeetingRowProps) {
   const duration = formatMeetingDuration(meeting.durationSeconds)
+  const syncState = readTranscriptSyncState(meeting.metadata)
+  const syncSentence = describeTranscriptSyncState(syncState)
   const [isBusy, startAction] = useTransition()
   const [resendOpen, setResendOpen] = useState(false)
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
@@ -140,6 +159,30 @@ export function MeetingRow({
         return
       }
       showSuccess('Rendez-vous annulé')
+      onChanged?.()
+    })
+  }
+
+  function handleSync() {
+    if (!onSyncResults) return
+    startAction(async () => {
+      const r = await onSyncResults({ meetingId: meeting.id })
+      if (r.error) {
+        showError(r.error.message)
+        return
+      }
+      // Trois issues distinctes, trois messages distincts : dire « c'est fait »
+      // quand Google n'a encore rien produit, c'est renvoyer MiKL chercher un
+      // document qui n'existe pas.
+      if (r.data?.archived) {
+        showSuccess('Compte rendu déposé dans le dossier du client')
+      } else if (r.data?.transcriptReady) {
+        showSuccess('Transcription récupérée (déjà déposée)')
+      } else if (r.data?.synced) {
+        showSuccess("Enregistrement récupéré — la transcription n'est pas encore prête chez Google")
+      } else {
+        showError("Google n'a encore rien publié pour cette visio. Nouvel essai automatique dans 15 min.")
+      }
       onChanged?.()
     })
   }
@@ -263,8 +306,28 @@ export function MeetingRow({
               Transcription
             </a>
           )}
+
+          {/* La récupération reste offerte même quand tout est déjà là : Google
+              peut publier une transcription après coup, et MiKL ne doit jamais
+              être obligé d'attendre le prochain passage du rattrapage. */}
+          {meeting.status === 'completed' && onSyncResults && meeting.meetSpaceName && (
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={isBusy}
+              title="Redemander à Google l'enregistrement et la transcription de cette visio"
+              className={ACTION_CLASS}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isBusy ? 'animate-spin' : ''}`} />
+              {isBusy ? 'Récupération...' : 'Récupérer maintenant'}
+            </button>
+          )}
         </div>
       </div>
+
+      {syncSentence && (
+        <p className="mt-2 text-xs text-muted-foreground/80">{syncSentence}</p>
+      )}
 
       {resendOpen && (
         <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-white/10 pt-3">

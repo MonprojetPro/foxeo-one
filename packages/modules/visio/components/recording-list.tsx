@@ -1,7 +1,25 @@
 'use client'
 
+import { useTransition } from 'react'
+import { showError } from '@monprojetpro/ui'
 import type { MeetingRecording } from '../types/recording.types'
 import { RecordingStatusBadge } from './recording-status-badge'
+import { downloadTranscript } from '../actions/download-transcript'
+import { downloadRecording } from '../actions/download-recording'
+
+/**
+ * 🔑 POURQUOI DES BOUTONS ET PLUS DES LIENS BRUTS (T-050).
+ *
+ * Le tableau pointait directement sur `rec.transcriptUrl`, l'URL Google. Deux
+ * conséquences : le PDF déposé dans le dossier du client n'était JAMAIS servi,
+ * et les deux Server Actions prévues pour ça (`downloadTranscript`,
+ * `downloadRecording`) n'étaient appelées par personne — on a longtemps cru
+ * qu'elles « ne marchaient pas », alors qu'elles n'étaient simplement jamais
+ * exécutées.
+ *
+ * La règle « archive d'abord, Google ensuite » vit dans l'action, à un seul
+ * endroit. La recopier dans le JSX serait la condamner à diverger.
+ */
 
 interface RecordingListProps {
   recordings: MeetingRecording[]
@@ -42,6 +60,39 @@ function ExternalLinkIcon() {
   )
 }
 
+const LINK_CLASS =
+  'inline-flex items-center rounded-md border border-white/20 px-3 py-1 text-xs font-medium hover:bg-white/10 disabled:opacity-50'
+
+function OpenResourceButton({
+  label,
+  busyLabel,
+  onResolve,
+}: {
+  label: string
+  busyLabel: string
+  onResolve: () => Promise<{ data: { signedUrl: string } | null; error: { message: string } | null }>
+}) {
+  const [isPending, start] = useTransition()
+
+  function handleClick() {
+    start(async () => {
+      const result = await onResolve()
+      if (result.error || !result.data?.signedUrl) {
+        showError(result.error?.message ?? 'Lien indisponible')
+        return
+      }
+      window.open(result.data.signedUrl, '_blank', 'noopener,noreferrer')
+    })
+  }
+
+  return (
+    <button type="button" onClick={handleClick} disabled={isPending} className={LINK_CLASS}>
+      {isPending ? busyLabel : label}
+      {!isPending && <ExternalLinkIcon />}
+    </button>
+  )
+}
+
 export function RecordingList({ recordings }: RecordingListProps) {
   if (recordings.length === 0) {
     return (
@@ -78,30 +129,22 @@ export function RecordingList({ recordings }: RecordingListProps) {
                 <td className="py-3">
                   <div className="flex items-center gap-2">
                     {rec.recordingUrl ? (
-                      <a
-                        href={rec.recordingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center rounded-md border border-white/20 px-3 py-1 text-xs font-medium hover:bg-white/10"
-                      >
-                        Enregistrement (Google Drive)
-                        <ExternalLinkIcon />
-                      </a>
+                      <OpenResourceButton
+                        label="Enregistrement (Google Drive)"
+                        busyLabel="Ouverture..."
+                        onResolve={() => downloadRecording({ recordingId: rec.id })}
+                      />
                     ) : (
                       <span className="text-xs text-muted-foreground">
                         En cours de traitement...
                       </span>
                     )}
-                    {rec.transcriptionStatus === 'completed' && rec.transcriptUrl && (
-                      <a
-                        href={rec.transcriptUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center rounded-md border border-white/20 px-3 py-1 text-xs font-medium hover:bg-white/10"
-                      >
-                        Transcription (Google Docs)
-                        <ExternalLinkIcon />
-                      </a>
+                    {rec.transcriptionStatus === 'completed' && (
+                      <OpenResourceButton
+                        label="Transcription"
+                        busyLabel="Ouverture..."
+                        onResolve={() => downloadTranscript({ recordingId: rec.id })}
+                      />
                     )}
                   </div>
                 </td>

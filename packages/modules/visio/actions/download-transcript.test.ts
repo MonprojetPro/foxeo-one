@@ -1,96 +1,139 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { createFakeSupabase, type FakeSupabaseOptions } from '../test-support/fake-supabase'
 
-const mockGetUser = vi.fn()
-const mockSingle = vi.fn()
-const mockEq = vi.fn(() => ({ single: mockSingle }))
-const mockSelect = vi.fn(() => ({ eq: mockEq }))
-const mockFrom = vi.fn(() => ({ select: mockSelect }))
-const mockCreateSignedUrl = vi.fn()
-
-vi.mock('@monprojetpro/supabase', () => ({
-  createServerSupabaseClient: vi.fn(() => ({
-    auth: { getUser: mockGetUser },
-    from: mockFrom,
-    storage: {
-      from: vi.fn(() => ({
-        createSignedUrl: mockCreateSignedUrl,
-      })),
-    },
-  })),
-}))
+/**
+ * ⚠️ TEST DE VERROUILLAGE. Cette action signait un chemin dans le bucket
+ * `transcripts` à partir d'une URL Google Docs, dans un bucket resté vide
+ * depuis sa création : elle n'a JAMAIS rendu un lien valide. Les tests
+ * d'origine passaient pourtant au vert — ils vérifiaient que le mock de
+ * `createSignedUrl` avait été appelé, pas que le chemin voulait dire quelque
+ * chose. Un mock trop complaisant certifie du code mort.
+ */
 
 const RECORDING_ID = '00000000-0000-0000-0000-000000000001'
+const DOCUMENT_ID = '00000000-0000-0000-0000-0000000000d1'
+const GOOGLE_URL = 'https://docs.google.com/document/d/trans456/view'
 
-describe('downloadTranscript Server Action', () => {
+let currentFake: ReturnType<typeof createFakeSupabase>
+
+vi.mock('@monprojetpro/supabase', () => ({
+  createServerSupabaseClient: vi.fn(async () => currentFake.client),
+}))
+
+function setup(options: FakeSupabaseOptions) {
+  currentFake = createFakeSupabase(options)
+  return currentFake
+}
+
+describe('downloadTranscript', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-id' } }, error: null })
-    mockSingle.mockResolvedValue({
-      data: { transcript_url: 'rec-123.srt', transcription_status: 'completed' },
-      error: null,
-    })
-    mockCreateSignedUrl.mockResolvedValue({
-      data: { signedUrl: 'https://storage.example.com/signed-transcript-url' },
-      error: null,
-    })
   })
 
-  it('returns UNAUTHORIZED when user is not authenticated', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: { message: 'Not authenticated' } })
-
+  it('refuse un appel sans session', async () => {
+    setup({ user: null })
     const { downloadTranscript } = await import('./download-transcript')
     const result = await downloadTranscript({ recordingId: RECORDING_ID })
 
-    expect(result.data).toBeNull()
     expect(result.error?.code).toBe('UNAUTHORIZED')
   })
 
-  it('returns VALIDATION_ERROR for invalid recordingId', async () => {
+  it('refuse un identifiant qui n’est pas un UUID', async () => {
+    setup({})
     const { downloadTranscript } = await import('./download-transcript')
     const result = await downloadTranscript({ recordingId: 'bad' })
 
-    expect(result.data).toBeNull()
     expect(result.error?.code).toBe('VALIDATION_ERROR')
   })
 
-  it('returns NOT_FOUND when recording does not exist', async () => {
-    mockSingle.mockResolvedValue({ data: null, error: { message: 'Not found' } })
-
+  it('rend NOT_FOUND quand l’enregistrement n’existe pas', async () => {
+    setup({ responses: { 'meeting_recordings.select': { data: null, error: null } } })
     const { downloadTranscript } = await import('./download-transcript')
     const result = await downloadTranscript({ recordingId: RECORDING_ID })
 
-    expect(result.data).toBeNull()
     expect(result.error?.code).toBe('NOT_FOUND')
   })
 
-  it('returns NOT_READY when transcription is not completed', async () => {
-    mockSingle.mockResolvedValue({
-      data: { transcript_url: null, transcription_status: 'pending' },
-      error: null,
+  it('sert EN PRIORITÉ le document archivé dans le dossier du client', async () => {
+    setup({
+      responses: {
+        'meeting_recordings.select': {
+          data: {
+            transcript_url: GOOGLE_URL,
+            transcription_status: 'completed',
+            transcript_document_id: DOCUMENT_ID,
+          },
+          error: null,
+        },
+        'documents.select': { data: { file_path: 'op/cli/compte-rendu.pdf' }, error: null },
+      },
     })
 
-    const { downloadTranscript } = await import('./download-transcript')
-    const result = await downloadTranscript({ recordingId: RECORDING_ID })
-
-    expect(result.data).toBeNull()
-    expect(result.error?.code).toBe('NOT_READY')
-  })
-
-  it('returns signed URL on success', async () => {
     const { downloadTranscript } = await import('./download-transcript')
     const result = await downloadTranscript({ recordingId: RECORDING_ID })
 
     expect(result.error).toBeNull()
-    expect(result.data?.signedUrl).toBe('https://storage.example.com/signed-transcript-url')
+    expect(result.data?.source).toBe('archive')
+    expect(result.data?.signedUrl).toContain('op/cli/compte-rendu.pdf')
   })
 
-  it('returns STORAGE_ERROR when signed URL generation fails', async () => {
-    mockCreateSignedUrl.mockResolvedValue({ data: null, error: { message: 'Storage error' } })
+  it('se rabat sur Google quand le fichier archivé a disparu du stockage', async () => {
+    setup({
+      responses: {
+        'meeting_recordings.select': {
+          data: {
+            transcript_url: GOOGLE_URL,
+            transcription_status: 'completed',
+            transcript_document_id: DOCUMENT_ID,
+          },
+          error: null,
+        },
+        'documents.select': { data: { file_path: 'op/cli/disparu.pdf' }, error: null },
+      },
+      signedUrl: { data: null, error: { message: 'Object not found' } },
+    })
 
     const { downloadTranscript } = await import('./download-transcript')
     const result = await downloadTranscript({ recordingId: RECORDING_ID })
 
-    expect(result.data).toBeNull()
-    expect(result.error?.code).toBe('STORAGE_ERROR')
+    expect(result.error).toBeNull()
+    expect(result.data?.source).toBe('google')
+    expect(result.data?.signedUrl).toBe(GOOGLE_URL)
+  })
+
+  it('sert l’URL Google quand rien n’a encore été archivé', async () => {
+    setup({
+      responses: {
+        'meeting_recordings.select': {
+          data: {
+            transcript_url: GOOGLE_URL,
+            transcription_status: 'completed',
+            transcript_document_id: null,
+          },
+          error: null,
+        },
+      },
+    })
+
+    const { downloadTranscript } = await import('./download-transcript')
+    const result = await downloadTranscript({ recordingId: RECORDING_ID })
+
+    expect(result.data?.source).toBe('google')
+  })
+
+  it('rend NOT_READY quand la transcription n’existe sous aucune forme', async () => {
+    setup({
+      responses: {
+        'meeting_recordings.select': {
+          data: { transcript_url: null, transcription_status: 'pending', transcript_document_id: null },
+          error: null,
+        },
+      },
+    })
+
+    const { downloadTranscript } = await import('./download-transcript')
+    const result = await downloadTranscript({ recordingId: RECORDING_ID })
+
+    expect(result.error?.code).toBe('NOT_READY')
   })
 })

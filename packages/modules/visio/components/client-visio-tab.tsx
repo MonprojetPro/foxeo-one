@@ -20,6 +20,7 @@ import {
   type ResendMeetLinkFn,
   type MeetingActionFn,
   type RescheduleMeetingFn,
+  type SyncMeetingResultsFn,
 } from './meeting-row'
 
 /**
@@ -73,6 +74,13 @@ interface ClientVisioTabProps {
   onResend?: ResendMeetLinkFn
   onCancel?: MeetingActionFn
   onReschedule?: RescheduleMeetingFn
+  /**
+   * « Récupérer maintenant » (T-050) — relance la recherche du compte rendu
+   * chez Google pour une visio passée. Présent ICI autant que sur la page
+   * détail du Hub : une action qui n'existe que sur un seul des deux écrans
+   * est une action introuvable (leçon « fiche client = 2 surfaces d'actions »).
+   */
+  onSyncResults?: SyncMeetingResultsFn
 }
 
 export function ClientVisioTab({
@@ -86,6 +94,7 @@ export function ClientVisioTab({
   onResend,
   onCancel,
   onReschedule,
+  onSyncResults,
 }: ClientVisioTabProps) {
   const queryClient = useQueryClient()
   const { data: meetings, isPending, error } = useMeetings({ clientId })
@@ -349,7 +358,13 @@ export function ClientVisioTab({
             ) : (
               <div className="flex flex-col gap-2">
                 {past.map((meeting) => (
-                  <MeetingRow key={meeting.id} meeting={meeting} recipients={recipients} />
+                  <MeetingRow
+                    key={meeting.id}
+                    meeting={meeting}
+                    recipients={recipients}
+                    onSyncResults={onSyncResults}
+                    onChanged={invalidateMeetings}
+                  />
                 ))}
               </div>
             )}

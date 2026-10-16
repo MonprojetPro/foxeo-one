@@ -4,13 +4,34 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { DownloadTranscriptInput } from '../types/recording.types'
 
-export async function downloadTranscript(
-  input: { recordingId: string }
-): Promise<ActionResponse<{ signedUrl: string }>> {
+/**
+ * Lien de téléchargement de la transcription — T-050.
+ *
+ * 🔴 CE QUE CETTE ACTION FAISAIT AVANT, ET POURQUOI ELLE N'A JAMAIS MARCHÉ :
+ * elle appelait `storage.from('transcripts').createSignedUrl(transcript_url)`.
+ * Or `transcript_url` est une **URL Google Docs**, pas un chemin de bucket — et
+ * le bucket `transcripts` est resté VIDE depuis sa création (vérifié dans
+ * `storage.objects`). Elle signait donc un chemin inexistant dans un bucket où
+ * rien n'a jamais été écrit : échec garanti, à chaque appel, depuis l'origine.
+ *
+ * Ce qu'elle fait maintenant, dans cet ordre :
+ *   ① le PDF archivé dans le dossier du client, s'il existe — c'est le
+ *      document que MiKL a sous la main, et il reste lisible même si Google
+ *      supprime le Doc d'origine ;
+ *   ② sinon l'URL Google Docs — lisible tant que le compte Google l'héberge.
+ *
+ * On ne renvoie jamais « indisponible » quand l'une des deux voies existe.
+ */
+export async function downloadTranscript(input: {
+  recordingId: string
+}): Promise<ActionResponse<{ signedUrl: string; source: 'archive' | 'google' }>> {
   try {
     const supabase = await createServerSupabaseClient()
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
     if (userError || !user) {
       return errorResponse('Non authentifié', 'UNAUTHORIZED')
     }
@@ -21,34 +42,56 @@ export async function downloadTranscript(
       return errorResponse(firstError, 'VALIDATION_ERROR', parsed.error.issues)
     }
 
-    // Fetch recording (RLS will filter access)
+    // La RLS filtre : un opérateur ne voit que ses visios, un client les siennes.
     const { data: recording, error: findError } = await supabase
       .from('meeting_recordings')
-      .select('transcript_url, transcription_status')
+      .select('transcript_url, transcription_status, transcript_document_id')
       .eq('id', parsed.data.recordingId)
-      .single()
+      .maybeSingle()
 
     if (findError || !recording) {
-      return errorResponse('Recording non trouvé', 'NOT_FOUND')
+      return errorResponse('Enregistrement introuvable', 'NOT_FOUND')
     }
 
-    if (recording.transcription_status !== 'completed' || !recording.transcript_url) {
-      return errorResponse('Transcription non disponible', 'NOT_READY')
+    // ① Le document archivé dans le dossier du client.
+    if (recording.transcript_document_id) {
+      const { data: document } = await supabase
+        .from('documents')
+        .select('file_path')
+        .eq('id', recording.transcript_document_id)
+        .is('deleted_at', null)
+        .maybeSingle()
+
+      if (document?.file_path) {
+        const { data: signed, error: signedError } = await supabase.storage
+          .from('documents')
+          .createSignedUrl(document.file_path, 3600)
+
+        if (signed?.signedUrl) {
+          return successResponse({ signedUrl: signed.signedUrl, source: 'archive' as const })
+        }
+        // Le document existe en base mais plus dans le stockage : on le DIT
+        // dans les logs, et on se rabat sur Google plutôt que d'échouer.
+        console.error(
+          '[VISIO:DOWNLOAD_TRANSCRIPT] Document archivé introuvable dans le stockage:',
+          signedError?.message
+        )
+      }
     }
 
-    // Generate signed URL (valid 1 hour)
-    const { data: signedData, error: signedError } = await supabase.storage
-      .from('transcripts')
-      .createSignedUrl(recording.transcript_url, 3600)
-
-    if (signedError || !signedData) {
-      console.error('[VISIO:DOWNLOAD_TRANSCRIPT] Signed URL error:', signedError)
-      return errorResponse('Impossible de générer le lien de téléchargement', 'STORAGE_ERROR', signedError)
+    // ② Le document Google d'origine.
+    if (recording.transcript_url) {
+      return successResponse({ signedUrl: recording.transcript_url, source: 'google' as const })
     }
 
-    return successResponse({ signedUrl: signedData.signedUrl })
+    return errorResponse(
+      recording.transcription_status === 'completed'
+        ? "La transcription existe mais aucun lien n'est disponible."
+        : "La transcription n'est pas encore prête.",
+      'NOT_READY'
+    )
   } catch (error) {
-    console.error('[VISIO:DOWNLOAD_TRANSCRIPT] Unexpected error:', error)
+    console.error('[VISIO:DOWNLOAD_TRANSCRIPT] Erreur inattendue:', error)
     return errorResponse('Une erreur inattendue est survenue', 'INTERNAL_ERROR', error)
   }
 }

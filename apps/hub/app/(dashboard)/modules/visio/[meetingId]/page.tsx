@@ -1,6 +1,10 @@
 import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
-import { MeetingStatusBadge } from '@monprojetpro/module-visio'
+import {
+  MeetingStatusBadge,
+  describeTranscriptSyncState,
+  readTranscriptSyncState,
+} from '@monprojetpro/module-visio'
 import type { MeetingStatus } from '@monprojetpro/module-visio'
 import { ExternalLink, FileVideo, Video, VideoOff } from 'lucide-react'
 import { CockpitHeader, SectionTitle } from '@monprojetpro/ui'
@@ -24,6 +28,8 @@ interface MeetingDetailRow {
   status: MeetingStatus
   recording_url: string | null
   transcript_url: string | null
+  meet_space_name: string | null
+  metadata: Record<string, unknown> | null
   clients: { name: string; company: string | null } | { name: string; company: string | null }[] | null
 }
 
@@ -58,13 +64,14 @@ export default async function HubMeetingDetailPage({ params }: Props) {
 
   const { data: meeting } = await supabase
     .from('meetings')
-    .select('id, title, description, scheduled_at, started_at, ended_at, duration_seconds, meet_uri, status, recording_url, transcript_url, clients(name, company)')
+    .select('id, title, description, scheduled_at, started_at, ended_at, duration_seconds, meet_uri, status, recording_url, transcript_url, meet_space_name, metadata, clients(name, company)')
     .eq('id', meetingId)
     .maybeSingle<MeetingDetailRow>()
 
   if (!meeting) notFound()
 
   const clientName = getClientName(meeting.clients)
+  const syncSentence = describeTranscriptSyncState(readTranscriptSyncState(meeting.metadata))
   const isActive = meeting.status === 'scheduled' || meeting.status === 'in_progress'
 
   return (
@@ -81,7 +88,13 @@ export default async function HubMeetingDetailPage({ params }: Props) {
         subtitle={clientName ? `Client : ${clientName}` : undefined}
         tone="cyan"
         status={<MeetingStatusBadge status={meeting.status} />}
-        actions={<MeetingDetailActions meetingId={meeting.id} status={meeting.status} />}
+        actions={
+          <MeetingDetailActions
+            meetingId={meeting.id}
+            status={meeting.status}
+            hasMeetSpace={Boolean(meeting.meet_space_name)}
+          />
+        }
       />
 
       {/* ── Fiche détails ── */}
@@ -168,6 +181,14 @@ export default async function HubMeetingDetailPage({ params }: Props) {
           </a>
         )}
       </div>
+
+      {/* État du rattrapage — T-050. Une récupération qui attend, qui a
+          abandonné ou qui a déposé le compte rendu doit se LIRE : sans cette
+          phrase, un écran sans lien de transcription est indiscernable d'un
+          écran où le système a renoncé en silence. */}
+      {syncSentence && (
+        <p className="text-sm text-gray-400">{syncSentence}</p>
+      )}
     </div>
   )
 }
