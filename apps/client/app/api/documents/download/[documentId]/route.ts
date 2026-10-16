@@ -10,6 +10,17 @@ export async function GET(
 ) {
   const { documentId } = await params
 
+  /**
+   * `?inline=1` → le navigateur AFFICHE le fichier au lieu de le télécharger.
+   *
+   * Pourquoi ça compte (constaté le 16-10) : pour consulter une transcription
+   * de visio, MiKL n'avait aucun moyen d'ouvrir le document — la seule chose
+   * cliquable sur la ligne était le badge de partage, qu'il a donc cliqué.
+   * Le compte rendu est parti chez le client sans qu'il le veuille. Un
+   * document qu'on ne peut pas ouvrir pousse à cliquer sur autre chose.
+   */
+  const inline = req.nextUrl.searchParams.get('inline') === '1'
+
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return new NextResponse('Non autorisé', { status: 401 })
@@ -40,7 +51,7 @@ export async function GET(
     status: 200,
     headers: {
       'Content-Type': contentType,
-      'Content-Disposition': `attachment; filename*=UTF-8''${filename}`,
+      'Content-Disposition': `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${filename}`,
       'Content-Length': buffer.byteLength.toString(),
     },
   })

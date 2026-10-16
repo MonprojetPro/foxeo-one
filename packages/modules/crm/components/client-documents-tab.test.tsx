@@ -111,4 +111,27 @@ describe('ClientDocumentsTab', () => {
 
     expect(await screen.findByText(/aucun document/i)).toBeInTheDocument()
   })
+
+  /**
+   * ⚠️ TEST DE VERROUILLAGE — incident du 16-10, tracé dans activity_logs.
+   * Le badge de partage était la SEULE chose cliquable de la ligne. MiKL,
+   * cherchant à consulter une transcription de visio, a cliqué dessus et l'a
+   * envoyée au client sans le vouloir. Un document qu'on ne peut pas ouvrir
+   * pousse à cliquer sur autre chose.
+   */
+  it('le nom du document ouvre le fichier, sans le telecharger', async () => {
+    renderWithQueryClient(<ClientDocumentsTab clientId="client-1" />)
+
+    const lien = (await screen.findByText('Brief initial')).closest('a')
+    expect(lien).not.toBeNull()
+    expect(lien?.getAttribute('href')).toContain('inline=1')
+    expect(lien?.getAttribute('target')).toBe('_blank')
+  })
+
+  it('le badge de partage annonce ce qu’un clic va FAIRE, pas l’etat courant', async () => {
+    renderWithQueryClient(<ClientDocumentsTab clientId="client-1" />)
+
+    const badge = (await screen.findByText('Privé')).closest('button')
+    expect(badge?.getAttribute('title')).toMatch(/partager ce document avec le client/i)
+  })
 })

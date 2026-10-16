@@ -37,6 +37,8 @@ interface RouteOptions {
   tokenOk?: boolean
   docsOk?: boolean
   driveExportOk?: boolean
+  /** Export texte brut via Drive — le repli quand l'API Docs est refusée. */
+  driveTextOk?: boolean
 }
 
 function routeFetch(options: RouteOptions = {}) {
@@ -53,6 +55,7 @@ function routeFetch(options: RouteOptions = {}) {
     tokenOk = true,
     docsOk = true,
     driveExportOk = true,
+    driveTextOk = true,
   } = options
 
   const fetchMock = vi.fn(async (url: string) => {
@@ -85,6 +88,13 @@ function routeFetch(options: RouteOptions = {}) {
         : { ok: false, status: 403 }
     }
     if (url.includes('/drive/v3/files/')) {
+      // Deux exports distincts sur la même route : le PDF archivé et le texte
+      // brut. Les confondre ferait passer un test pour une mauvaise raison.
+      if (url.includes('mimeType=text')) {
+        return driveTextOk
+          ? { ok: true, text: async () => 'MiKL : on attaque.' }
+          : { ok: false, status: 403 }
+      }
       return driveExportOk
         ? { ok: true, arrayBuffer: async () => new TextEncoder().encode('%PDF-1.4 fake').buffer }
         : { ok: false, status: 403 }
@@ -278,8 +288,25 @@ describe('syncMeetingResultsCore — écriture des résultats', () => {
     })
   })
 
-  it('garde seulement l’URL quand l’API Google Docs refuse le texte', async () => {
-    routeFetch({ docsOk: false, driveExportOk: true })
+  /**
+   * ⚠️ DEFAUT REEL DU 16-10 : le PDF est arrive, le texte non. Les deux
+   * viennent du meme document Google, mais par deux API differentes — et le
+   * jeton ne portait que l'autorisation Drive. Elio se retrouvait avec un
+   * compte rendu dans le dossier client et RIEN a en dire.
+   */
+  it('recupere le texte par Drive quand l’API Google Docs est refusee', async () => {
+    routeFetch({ docsOk: false, driveTextOk: true })
+    const fake = createFakeSupabase({ responses: happyResponses() })
+
+    await syncMeetingResultsCore(fake.client as never, MEETING_ID)
+
+    expect(fake.lastWrite('meeting_recordings', 'insert')?.payload).toMatchObject({
+      transcript_text: 'MiKL : on attaque.',
+    })
+  })
+
+  it('garde seulement l’URL quand AUCUNE des deux voies ne repond', async () => {
+    routeFetch({ docsOk: false, driveTextOk: false })
     const fake = createFakeSupabase({ responses: happyResponses() })
 
     await syncMeetingResultsCore(fake.client as never, MEETING_ID)
@@ -287,6 +314,18 @@ describe('syncMeetingResultsCore — écriture des résultats', () => {
     const payload = fake.lastWrite('meeting_recordings', 'insert')?.payload as Record<string, unknown>
     expect(payload.transcript_url).toBe(DOCS_URL)
     expect(payload.transcript_text).toBeUndefined()
+  })
+
+  it('n’interroge pas Drive pour rien quand l’API Docs a deja rendu le texte', async () => {
+    const fetchMock = routeFetch()
+    const fake = createFakeSupabase({ responses: happyResponses() })
+
+    await syncMeetingResultsCore(fake.client as never, MEETING_ID)
+
+    const textExports = fetchMock.mock.calls.filter(([url]) =>
+      String(url).includes('mimeType=text')
+    )
+    expect(textExports).toHaveLength(0)
   })
 
   it('traduit l’état FAILED de Google en statut failed', async () => {

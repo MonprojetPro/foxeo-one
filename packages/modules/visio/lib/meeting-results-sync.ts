@@ -131,24 +131,64 @@ export async function getGoogleAccessToken(): Promise<
   return { ok: true, accessToken: json.access_token }
 }
 
-/** Texte du transcript via l'API Google Docs. Best-effort : null si refusé. */
+/**
+ * Texte du transcript — DEUX voies, parce qu'elles ne dépendent pas de la
+ * même autorisation Google.
+ *
+ * 🔴 CONSTAT DU 16-10, SUR LA PREMIÈRE VRAIE VISIO : le PDF est arrivé (67 Ko,
+ * vérifié en base) mais `transcript_text` est resté VIDE. Les deux viennent
+ * pourtant du même document Google. L'explication tient à l'API utilisée :
+ * le PDF passe par **Drive** (`drive.readonly`), le texte passait par
+ * **Google Docs** (`documents.readonly`) — et le jeton porte la première,
+ * pas la seconde.
+ *
+ * Conséquence concrète, et c'est elle qui compte : Élio est censé se nourrir
+ * du contenu des visios (contexte One, outils Hub). Sans ce texte, il avait un
+ * compte rendu dans le dossier du client et **rien à en dire**.
+ *
+ * On essaie donc Docs d'abord (texte le plus propre), puis **Drive en export
+ * texte brut** — la voie dont on sait qu'elle fonctionne ici. Deux chemins
+ * pour la même donnée, parce qu'une seule autorisation manquante ne doit pas
+ * priver Élio de tout le contenu.
+ */
 async function fetchTranscriptText(
   documentId: string,
   accessToken: string
 ): Promise<string | null> {
+  const headers = { Authorization: `Bearer ${accessToken}` }
+
+  // ① API Google Docs — rend une structure, dont on extrait le texte.
   try {
-    const res = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-    if (!res.ok) {
+    const res = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}`, { headers })
+    if (res.ok) {
+      const text = extractGoogleDocsText(await res.json(), TRANSCRIPT_TEXT_MAX_LENGTH)
+      if (text) return text
+    } else {
       console.warn(
-        `[VISIO:SYNC] Google Docs ${res.status} — texte non récupéré (scope documents.readonly manquant ?). L'URL reste stockée.`
+        `[VISIO:SYNC] Google Docs ${res.status} — repli sur l'export texte de Drive (scope documents.readonly manquant ?).`
       )
+    }
+  } catch (err) {
+    console.warn('[VISIO:SYNC] Lecture Google Docs impossible — repli sur Drive:', err)
+  }
+
+  // ② Export texte brut via Drive — même autorisation que l'export PDF.
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(documentId)}/export?mimeType=text%2Fplain`,
+      { headers }
+    )
+    if (!res.ok) {
+      console.warn(`[VISIO:SYNC] Export texte Drive refusé (${res.status}) — seule l'URL est conservée.`)
       return null
     }
-    return extractGoogleDocsText(await res.json(), TRANSCRIPT_TEXT_MAX_LENGTH)
+    const text = (await res.text()).trim()
+    if (!text) return null
+    return text.length > TRANSCRIPT_TEXT_MAX_LENGTH
+      ? text.slice(0, TRANSCRIPT_TEXT_MAX_LENGTH)
+      : text
   } catch (err) {
-    console.warn('[VISIO:SYNC] Lecture Google Docs impossible:', err)
+    console.warn('[VISIO:SYNC] Export texte Drive impossible:', err)
     return null
   }
 }

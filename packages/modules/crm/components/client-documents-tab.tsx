@@ -136,23 +136,49 @@ export function ClientDocumentsTab({ clientId }: ClientDocumentsTabProps) {
                 className="flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.03] transition-colors"
               >
                 <FileText className="h-4 w-4 shrink-0 text-gray-500" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-200 truncate">{doc.name}</p>
+                {/*
+                  🔑 LE NOM OUVRE LE DOCUMENT (16-10).
+                  Avant, la SEULE chose cliquable de la ligne était le badge
+                  de partage. MiKL, cherchant à consulter une transcription de
+                  visio, a cliqué dessus — et l'a envoyée au client sans le
+                  vouloir (prouvé dans activity_logs). Un document qu'on ne
+                  peut pas ouvrir pousse à cliquer sur autre chose.
+                  `inline=1` l'affiche dans un onglet au lieu de le télécharger.
+                */}
+                <a
+                  href={`/api/documents/download/${doc.id}?inline=1`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Ouvrir ${doc.name}`}
+                  className="flex-1 min-w-0 group"
+                >
+                  <p className="text-sm font-medium text-gray-200 truncate group-hover:text-cyan-300 transition-colors">
+                    {doc.name}
+                  </p>
                   <p className="text-xs text-gray-500">{formatDate(doc.createdAt)}</p>
-                </div>
+                </a>
+                {/*
+                  Ce badge est un INTERRUPTEUR, pas un simple état. Son libellé
+                  au survol doit donc dire ce qu'un clic va FAIRE, pas ce que
+                  la ligne est — sinon on partage en croyant consulter.
+                */}
                 <button
                   type="button"
-                  title={doc.visibility === 'shared' ? 'Retirer le partage' : 'Partager avec le client'}
+                  title={
+                    doc.visibility === 'shared'
+                      ? 'Cliquer pour retirer le partage — le client ne verra plus ce document'
+                      : 'Cliquer pour partager ce document avec le client'
+                  }
                   disabled={isSharing || isUnsharing}
                   onClick={() => {
                     if (doc.visibility === 'shared') {
                       unshare(doc.id, {
-                        onSuccess: () => showSuccess('Partage retiré'),
+                        onSuccess: () => showSuccess('Partage retiré — le client ne voit plus ce document'),
                         onError: () => showError('Erreur lors de la modification'),
                       })
                     } else {
                       share(doc.id, {
-                        onSuccess: () => showSuccess('Document partagé'),
+                        onSuccess: () => showSuccess('Document partagé — le client peut maintenant le voir'),
                         onError: () => showError('Erreur lors de la modification'),
                       })
                     }
