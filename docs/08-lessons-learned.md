@@ -1123,3 +1123,42 @@ pointait sur des `href` bruts. Les réparer sans les câbler aurait produit un c
 testé vert, et parfaitement inutile. **Avant de réparer une fonction, vérifier qu'elle a un
 appelant** — sinon on soigne un organe débranché.
 
+---
+
+## 2026-10-16 — Un cron « succeeded » qui n'a jamais rien fait, et trois autres façons de rater le dernier mètre
+
+Chantier de la transcription de visio (T-050). Le code métier était juste dès la première
+livraison. **Quatre défauts successifs, tous dans le dernier mètre**, tous trouvés par MiKL en
+testant, aucun par la suite de tests.
+
+**① Le statut que personne n'écrit.** Bouton et cron conditionnés à `status = 'completed'` — un
+statut qu'aucun chemin n'écrivait. Raccrocher dans Google Meet n'informe pas notre base. Le filtre
+excluait donc exactement les visios à rattraper. *Correctif : l'état dérive de Google
+(`conferenceRecords.endTime`) au lieu d'attendre un clic humain qui n'arrive jamais.*
+
+**② La condition juste, pas câblée partout.** Corrigée, elle n'était passée qu'à la liste
+« Historique » — or une visio qui vient d'avoir lieu est encore dans « À venir ».
+
+**③ 🔴 LE CRON RAPPORTAIT « succeeded » À CHAQUE PASSAGE, SANS RIEN FAIRE.** Le middleware du Hub
+n'exemptait que `/api/webhooks` : la route `/api/cron/...` recevait un **307 vers la page de
+login**, et pg_cron récupérait du HTML. **`cron.job_run_details` ne mesure que l'ENVOI de la
+requête, jamais ce qu'elle obtient** — la réponse réelle vit dans `net._http_response`. Un
+indicateur vert sur un travail jamais fait, exactement le mécanisme du badge Gmail.
+**Aucun test unitaire ne pouvait le voir** : le code était bon, c'est le chemin réseau qui ne menait
+pas jusqu'à lui. Seule la sonde `curl` sur la vraie URL le montre.
+
+**④ Deux API pour la même donnée, une seule autorisée.** Le PDF arrivait, le texte non : le PDF
+passe par Drive, le texte par l'API Docs, et le jeton ne portait que la première. Conséquence
+invisible à l'écran : Élio avait un compte rendu dans le dossier client et rien à en dire.
+
+**Et un incident d'ergonomie qui est un incident de confidentialité** : le badge Privé/Partagé était
+la seule chose cliquable de la ligne. MiKL a cliqué pour *consulter* et a *publié* la transcription
+chez le client (tracé dans `activity_logs`). **Un document qu'on ne peut pas ouvrir pousse à cliquer
+sur autre chose** — quand le geste de consultation et le geste de publication sont le même, ce n'est
+pas l'utilisateur qui se trompe.
+
+**La règle à retenir** : pour une fonctionnalité qui traverse plusieurs systèmes, les tests
+unitaires valident le code, jamais la chaîne. Il faut **sonder le chemin réel** — l'URL de
+production, la réponse HTTP réellement reçue, la ligne réellement écrite — et se méfier de tout
+indicateur qui mesure une tentative plutôt qu'un résultat.
+
