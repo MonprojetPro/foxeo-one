@@ -342,6 +342,15 @@ export function ClientVisioTab({
                     onResend={onResend}
                     onCancel={onCancel}
                     onReschedule={onReschedule}
+                    /**
+                     * ⚠️ OUI, AUSSI DANS « À VENIR ». Une visio qui vient
+                     * d'avoir lieu reste listée ici tant que la synchro n'a
+                     * pas lu son horaire de fin chez Google — c'est
+                     * précisément celle qu'il faut pouvoir récupérer. Ne
+                     * passer cette action qu'à l'historique la rend
+                     * introuvable au seul moment où elle sert.
+                     */
+                    onSyncResults={onSyncResults}
                     onChanged={invalidateMeetings}
                   />
                 ))}

@@ -232,4 +232,80 @@ describe('ClientVisioTab', () => {
     expect(screen.getByRole('link', { name: /Transcription/i })).toBeDefined()
     expect(screen.getByText(/45 min/)).toBeDefined()
   })
+
+  /**
+   * ⚠️ TESTS DE VERROUILLAGE — constaté par MiKL le 16-10, deux fois de suite.
+   *
+   * Une visio qui vient d'avoir lieu reste « Planifiée » (raccrocher chez
+   * Google n'écrit rien chez nous), donc elle s'affiche dans « À venir » et
+   * NON dans l'historique. Passer l'action de récupération au seul historique
+   * la rend donc introuvable exactement au moment où elle sert.
+   */
+  it('propose « Récupérer maintenant » sur une visio « À venir » dont l’heure est passée', async () => {
+    const onSyncResults = vi.fn()
+    mockGetMeetings.mockResolvedValue({
+      data: [meeting({ status: 'scheduled', scheduledAt: '2026-01-05T09:00:00.000Z' })],
+      error: null,
+    })
+
+    renderTab({ onSyncResults })
+
+    expect(await screen.findByRole('button', { name: /Récupérer maintenant/i })).toBeDefined()
+  })
+
+  it('ne propose pas la récupération avant l’heure du rendez-vous', async () => {
+    const onSyncResults = vi.fn()
+    const future = new Date(Date.now() + 86_400_000).toISOString()
+    mockGetMeetings.mockResolvedValue({
+      data: [meeting({ status: 'scheduled', scheduledAt: future })],
+      error: null,
+    })
+
+    renderTab({ onSyncResults })
+
+    await screen.findByText(/Point d’avancement/)
+    expect(screen.queryByRole('button', { name: /Récupérer maintenant/i })).toBeNull()
+  })
+
+  it('propose aussi la récupération dans l’historique', async () => {
+    const onSyncResults = vi.fn()
+    mockGetMeetings.mockResolvedValue({
+      data: [
+        meeting({
+          status: 'completed',
+          endedAt: '2026-10-05T10:30:00.000Z',
+          durationSeconds: 2700,
+        }),
+      ],
+      error: null,
+    })
+
+    renderTab({ onSyncResults })
+
+    expect(await screen.findByRole('button', { name: /Récupérer maintenant/i })).toBeDefined()
+  })
+
+  it('appelle l’action et annonce le dépôt du compte rendu', async () => {
+    const onSyncResults = vi.fn().mockResolvedValue({
+      data: { synced: true, transcriptReady: true, archived: true },
+      error: null,
+    })
+    mockGetMeetings.mockResolvedValue({
+      data: [meeting({ status: 'scheduled', scheduledAt: '2026-01-05T09:00:00.000Z' })],
+      error: null,
+    })
+
+    renderTab({ onSyncResults })
+
+    await userEvent.click(await screen.findByRole('button', { name: /Récupérer maintenant/i }))
+
+    await waitFor(() => {
+      expect(onSyncResults).toHaveBeenCalledWith({
+        meetingId: '11111111-1111-1111-1111-111111111111',
+      })
+      expect(mockShowSuccess).toHaveBeenCalledWith(
+        'Compte rendu déposé dans le dossier du client'
+      )
+    })
+  })
 })
