@@ -1091,3 +1091,35 @@ bombe à retardement silencieuse.** Corps passé en base64, qui ne peut pas êtr
 
 **Règle de portée** : les deux défauts vivaient dans une **brique partagée**. Un bug d'assemblage
 d'email ne concerne jamais la fonctionnalité qui l'a révélé — il concerne tout ce qui envoie.
+
+---
+
+## 2026-10-16 — Trois écrans lisaient des colonnes que personne n'écrivait
+
+**Contexte** : chantier de la transcription de visio (T-050). La synchro Google existait, elle
+écrivait bien ses résultats — dans `meeting_recordings`. Or l'onglet Visio du dossier client, la page
+détail du Hub et celle de l'app client lisent toutes les trois `meetings.recording_url` et
+`meetings.transcript_url`. **Un `grep` sur l'ensemble du dépôt n'a trouvé AUCUNE écriture de ces deux
+colonnes.** Seule la page `/recordings`, peu fréquentée, regardait au bon endroit.
+
+**Pourquoi c'est pire qu'un bug ordinaire** : la fonctionnalité aurait pu être réparée à la
+perfection sans que rien ne change à l'écran. On aurait conclu « la récupération ne marche toujours
+pas » et cherché du côté de Google, alors que la donnée était en base depuis le début. C'est la
+symétrie exacte de T-044a (colonne écrite, jamais lue) — ici : **colonne lue, jamais écrite**.
+
+**La règle** : l'inspection des consumers ne consiste pas seulement à lister qui LIT une entité. Pour
+chaque champ qu'un écran affiche, il faut une réponse à *« qui l'écrit, et quand ? »*. Un champ sans
+écrivain est du mobilier : il occupe une ligne de `select`, il ne portera jamais rien.
+
+**Le corollaire appliqué ici** : le miroir vers `meetings` et la trace du rattrapage partent dans la
+**même requête UPDATE**. En deux requêtes, un échec entre les deux laisserait l'écran et l'état du
+rattrapage se contredire — et c'est ce genre d'écart qui finit par faire dire à l'interface le
+contraire de la réalité.
+
+**Deuxième leçon du même chantier — réparer ne suffit pas, il faut brancher** : `downloadTranscript`
+et `downloadRecording` étaient cassées depuis l'origine (elles signaient une URL Google comme un
+chemin de bucket). Elles n'étaient surtout appelées par **personne** : le tableau des enregistrements
+pointait sur des `href` bruts. Les réparer sans les câbler aurait produit un correctif invisible,
+testé vert, et parfaitement inutile. **Avant de réparer une fonction, vérifier qu'elle a un
+appelant** — sinon on soigne un organe débranché.
+
