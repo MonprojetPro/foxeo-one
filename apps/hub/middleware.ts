@@ -13,10 +13,29 @@ export function isPublicPath(pathname: string): boolean {
   )
 }
 
+/**
+ * Chemins qui ne passent PAS par le contrôle de session.
+ *
+ * ⚠️ `/api/cron` ajouté le 2026-10-16, sur sonde `curl`. Le rattrapage des
+ * transcriptions de visio appelait `/api/cron/sync-meeting-results` et
+ * recevait un **307 vers la page de login** : le middleware traitait la route
+ * comme une page protégée, et pg_cron récupérait du HTML au lieu de
+ * déclencher le travail. Le cron rapportait pourtant « succeeded » à chaque
+ * passage — il ne mesure que l'envoi de la requête, jamais ce qu'elle a
+ * obtenu. Aucun test unitaire ne pouvait le voir : il fallait interroger la
+ * vraie URL.
+ *
+ * 🔑 Ces routes ne sont pas pour autant ouvertes : `/api/webhooks` vérifie une
+ * signature ou un secret partagé, `/api/cron` exige
+ * `Authorization: Bearer <CRON_SECRET>` et répond 503 si le secret n'est pas
+ * configuré. On remplace un contrôle de session — qu'une machine ne peut pas
+ * satisfaire — par un contrôle de secret, pas par rien.
+ */
 export function isStaticOrApi(pathname: string): boolean {
   return (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/webhooks') ||
+    pathname.startsWith('/api/cron') ||
     pathname === '/favicon.ico'
   )
 }

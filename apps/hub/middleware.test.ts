@@ -59,6 +59,18 @@ describe('Hub Middleware Helpers', () => {
       expect(isStaticOrApi('/api/webhooks/stripe')).toBe(true)
     })
 
+    /**
+     * ⚠️ TEST DE VERROUILLAGE — défaut prouvé par curl le 2026-10-16.
+     * La route de rattrapage des transcriptions recevait un 307 vers le
+     * login : pg_cron récupérait la page HTML et ne déclenchait rien, tout en
+     * rapportant « succeeded » à chaque passage. Elle se protège par
+     * CRON_SECRET, pas par une session — qu'une machine ne peut de toute
+     * façon pas présenter.
+     */
+    it('laisse passer les routes de cron — une machine ne peut pas se connecter', () => {
+      expect(isStaticOrApi('/api/cron/sync-meeting-results')).toBe(true)
+    })
+
     it('returns true for /favicon.ico', () => {
       expect(isStaticOrApi('/favicon.ico')).toBe(true)
     })
