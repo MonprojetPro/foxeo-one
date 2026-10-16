@@ -28,6 +28,7 @@ import {
   shouldAttemptTranscriptSync,
   hasExceededGiveUpDelay,
   readTranscriptSyncState,
+  transcriptSyncReferenceDate,
 } from '@monprojetpro/module-visio'
 
 export const runtime = 'nodejs'
@@ -42,6 +43,8 @@ const MAX_MEETINGS_PER_RUN = 20
 interface CandidateRow {
   id: string
   title: string
+  status: string
+  scheduled_at: string | null
   ended_at: string | null
   meet_space_name: string | null
   metadata: Record<string, unknown> | null
@@ -65,13 +68,19 @@ export async function POST(request: NextRequest) {
   const now = Date.now()
   const since = new Date(now - LOOKBACK_HOURS * 60 * 60 * 1000).toISOString()
 
+  // ⚠️ ON NE FILTRE PLUS SUR `status = 'completed'`. Raccrocher dans Google
+  // Meet n'ecrit rien chez nous : une visio reellement tenue reste
+  // « Planifiee » tant que la synchro n'a pas lu l'horaire chez Google. Le
+  // filtre precedent excluait donc EXACTEMENT les visios a rattraper.
+  // On selectionne sur l'heure PREVUE, seule date connue avant la synchro.
   const { data: meetings, error } = await supabase
     .from('meetings')
-    .select('id, title, ended_at, meet_space_name, metadata')
-    .eq('status', 'completed')
+    .select('id, title, status, scheduled_at, ended_at, meet_space_name, metadata')
+    .neq('status', 'cancelled')
     .not('meet_space_name', 'is', null)
-    .gte('ended_at', since)
-    .order('ended_at', { ascending: true })
+    .gte('scheduled_at', since)
+    .lte('scheduled_at', new Date(now).toISOString())
+    .order('scheduled_at', { ascending: true })
     .limit(MAX_MEETINGS_PER_RUN * 3)
 
   if (error) {
@@ -85,7 +94,8 @@ export async function POST(request: NextRequest) {
   //    s'écrit. Un rattrapage qui s'arrête en silence laisse l'écran afficher
   //    « en cours » pour l'éternité.
   const givingUp = rows.filter((m) => {
-    if (!hasExceededGiveUpDelay(m.ended_at, now)) return false
+    if (m.status === 'cancelled') return false
+    if (!hasExceededGiveUpDelay(transcriptSyncReferenceDate(m), now)) return false
     const state = readTranscriptSyncState(m.metadata)
     return !state.done && !state.gaveUpAt
   })

@@ -50,7 +50,9 @@ interface MeetingRow {
   client_id: string | null
   operator_id: string
   title: string
+  status: string
   scheduled_at: string | null
+  started_at: string | null
   ended_at: string | null
   meet_space_name: string | null
   metadata: Record<string, unknown> | null
@@ -169,7 +171,7 @@ async function recordSyncAttempt(
    * rattrapage se contredire, et c'est précisément ce genre d'écart qui finit
    * par faire dire à l'interface le contraire de la réalité.
    */
-  mirror?: { recording_url: string | null; transcript_url: string | null }
+  mirror?: Record<string, unknown>
 ): Promise<void> {
   const metadata = (meeting.metadata ?? {}) as Record<string, unknown>
   const previous = (metadata.transcript_sync ?? {}) as Record<string, unknown>
@@ -201,7 +203,9 @@ export async function syncMeetingResultsCore(
 ): Promise<MeetingSyncOutcome> {
   const { data: meeting, error: meetingError } = await supabase
     .from('meetings')
-    .select('id, client_id, operator_id, title, scheduled_at, ended_at, meet_space_name, metadata')
+    .select(
+      'id, client_id, operator_id, title, status, scheduled_at, started_at, ended_at, meet_space_name, metadata'
+    )
     .eq('id', meetingId)
     .maybeSingle<MeetingRow>()
 
@@ -228,9 +232,10 @@ export async function syncMeetingResultsCore(
   }
 
   const conferenceData = (await conferenceRes.json()) as {
-    conferenceRecords?: Array<{ name: string }>
+    conferenceRecords?: Array<{ name: string; startTime?: string; endTime?: string }>
   }
-  const conferenceRecordName = conferenceData.conferenceRecords?.[0]?.name
+  const conferenceRecord = conferenceData.conferenceRecords?.[0]
+  const conferenceRecordName = conferenceRecord?.name
 
   if (!conferenceRecordName) {
     // Cas NORMAL dans les minutes qui suivent la visio : Google n'a pas encore
@@ -391,13 +396,39 @@ export async function syncMeetingResultsCore(
       archiveNote.archiveSkipped === 'no_client' ||
       archiveNote.archiveSkipped === 'already_archived')
 
-  await recordSyncAttempt(
-    supabase,
-    meeting,
-    'ok',
-    { transcriptReady, done, ...archiveNote },
-    { recording_url: recordingUrl, transcript_url: transcriptUrl }
-  )
+  /**
+   * 🔑 LE STATUT DÉRIVE DE GOOGLE, IL N'ATTEND PLUS UN CLIC.
+   *
+   * Défaut constaté par MiKL le 16-10 : il a fait une vraie visio, il a
+   * raccroché — et le rendez-vous est resté « Planifié ». Rien, dans tout le
+   * produit, ne faisait passer une visio à `completed` : le bouton
+   * « Terminer » n'apparaît qu'après un « Démarrer » que personne ne clique.
+   * Or le bouton de récupération ET le cron se fiaient à ce statut. Résultat :
+   * une visio bel et bien terminée restait invisible pour les deux.
+   *
+   * Google, lui, SAIT que l'appel a eu lieu et quand il s'est terminé :
+   * `conferenceRecords` porte `startTime` et `endTime`. On prend donc la
+   * vérité à la source, au lieu d'attendre une action humaine qui n'arrive
+   * jamais — même règle que le badge Gmail (T-055).
+   */
+  const mirror: Record<string, unknown> = {
+    recording_url: recordingUrl,
+    transcript_url: transcriptUrl,
+  }
+
+  if (conferenceRecord?.endTime && meeting.status !== 'completed' && meeting.status !== 'cancelled') {
+    const startedAt = conferenceRecord.startTime ?? meeting.started_at ?? conferenceRecord.endTime
+    const durationSeconds = Math.max(
+      0,
+      Math.round((Date.parse(conferenceRecord.endTime) - Date.parse(startedAt)) / 1000)
+    )
+    mirror.status = 'completed'
+    mirror.started_at = startedAt
+    mirror.ended_at = conferenceRecord.endTime
+    mirror.duration_seconds = durationSeconds
+  }
+
+  await recordSyncAttempt(supabase, meeting, 'ok', { transcriptReady, done, ...archiveNote }, mirror)
 
   return {
     synced: true,

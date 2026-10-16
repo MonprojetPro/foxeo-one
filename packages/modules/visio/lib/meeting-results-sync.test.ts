@@ -22,7 +22,9 @@ const MEETING = {
   client_id: CLIENT_ID,
   operator_id: OPERATOR_ID,
   title: 'Point mensuel',
+  status: 'scheduled',
   scheduled_at: '2026-10-15T09:00:00.000Z',
+  started_at: null,
   ended_at: '2026-10-15T10:00:00.000Z',
   meet_space_name: 'spaces/abc123',
   metadata: {},
@@ -39,7 +41,13 @@ interface RouteOptions {
 
 function routeFetch(options: RouteOptions = {}) {
   const {
-    conferenceRecords = [{ name: 'conferenceRecords/conf-xyz' }],
+    conferenceRecords = [
+      {
+        name: 'conferenceRecords/conf-xyz',
+        startTime: '2026-10-15T09:02:00.000Z',
+        endTime: '2026-10-15T09:48:00.000Z',
+      },
+    ],
     recordings = [{ driveDestination: { exportUri: DRIVE_URL } }],
     transcripts = [{ docsDestination: { exportUri: DOCS_URL }, state: 'FILE_GENERATED' }],
     tokenOk = true,
@@ -367,6 +375,37 @@ describe('syncMeetingResultsCore — dépôt dans le dossier du client', () => {
 
     expect(result.archived).toBe(true)
     expect(fake.lastWrite('documents', 'insert')?.payload).toMatchObject({ file_type: 'txt' })
+  })
+
+  it('MARQUE la visio terminée avec les horaires de Google, sans attendre un clic', async () => {
+    // Defaut du 16-10 : MiKL a raccroche, le rendez-vous est reste
+    // « Planifie » pour toujours — rien n'ecrivait ce statut. Google, lui,
+    // sait quand l'appel s'est termine.
+    routeFetch()
+    const fake = createFakeSupabase({ responses: happyResponses() })
+
+    await syncMeetingResultsCore(fake.client as never, MEETING_ID)
+
+    expect(fake.lastWrite('meetings', 'update')?.payload).toMatchObject({
+      status: 'completed',
+      started_at: '2026-10-15T09:02:00.000Z',
+      ended_at: '2026-10-15T09:48:00.000Z',
+      duration_seconds: 2760,
+    })
+  })
+
+  it('ne retouche pas le statut d’un rendez-vous annulé', async () => {
+    routeFetch()
+    const fake = createFakeSupabase({
+      responses: happyResponses({
+        'meetings.select': { data: { ...MEETING, status: 'cancelled' }, error: null },
+      }),
+    })
+
+    await syncMeetingResultsCore(fake.client as never, MEETING_ID)
+
+    const payload = fake.lastWrite('meetings', 'update')?.payload as Record<string, unknown>
+    expect(payload.status).toBeUndefined()
   })
 
   it('retire son propre doublon quand un autre passage a archivé en premier', async () => {

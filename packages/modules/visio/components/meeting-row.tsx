@@ -17,6 +17,7 @@ import type { ActionResponse } from '@monprojetpro/types'
 import { MeetingStatusBadge } from './meeting-status-badge'
 import type { Meeting } from '../types/meeting.types'
 import {
+  canSyncMeetingResults,
   describeTranscriptSyncState,
   readTranscriptSyncState,
 } from '../utils/transcript-sync-state'
@@ -310,7 +311,7 @@ export function MeetingRow({
           {/* La récupération reste offerte même quand tout est déjà là : Google
               peut publier une transcription après coup, et MiKL ne doit jamais
               être obligé d'attendre le prochain passage du rattrapage. */}
-          {meeting.status === 'completed' && onSyncResults && meeting.meetSpaceName && (
+          {onSyncResults && canSyncMeetingResults(meeting, Date.now()) && (
             <button
               type="button"
               onClick={handleSync}

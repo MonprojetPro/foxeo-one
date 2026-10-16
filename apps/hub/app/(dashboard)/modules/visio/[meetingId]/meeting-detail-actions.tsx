@@ -11,8 +11,16 @@ import type { MeetingStatus } from '@monprojetpro/module-visio'
 interface MeetingDetailActionsProps {
   meetingId: string
   status: MeetingStatus
-  /** Sans salle Google Meet, il n'y a rien à récupérer — le bouton n'a pas lieu d'être. */
-  hasMeetSpace?: boolean
+  /**
+   * Calculé côté serveur par `canSyncMeetingResults` : salle Google Meet
+   * présente, rendez-vous non annulé, et heure prévue passée.
+   *
+   * ⚠️ NE PAS reconditionner ce bouton sur `status === 'completed'` : rien
+   * n'écrit jamais ce statut tant que la synchro n'a pas lu l'horaire réel
+   * chez Google. C'est le défaut constaté par MiKL le 16-10 — il avait fait
+   * une vraie visio, raccroché, et aucun bouton n'apparaissait.
+   */
+  canSync?: boolean
 }
 
 const BUTTON_CLASS =
@@ -21,7 +29,7 @@ const BUTTON_CLASS =
 export function MeetingDetailActions({
   meetingId,
   status,
-  hasMeetSpace = false,
+  canSync = false,
 }: MeetingDetailActionsProps) {
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
@@ -69,7 +77,6 @@ export function MeetingDetailActions({
   }
 
   const isActive = status === 'scheduled' || status === 'in_progress'
-  const canSync = !isActive && hasMeetSpace
 
   if (!isActive && !canSync) return null
 

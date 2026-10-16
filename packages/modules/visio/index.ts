@@ -63,11 +63,13 @@ export type { MeetingSyncOutcome, SyncReason } from './lib/meeting-results-sync'
 export {
   readTranscriptSyncState,
   shouldAttemptTranscriptSync,
+  transcriptSyncReferenceDate,
+  canSyncMeetingResults,
   hasExceededGiveUpDelay,
   describeTranscriptSyncState,
   TRANSCRIPT_SYNC_GIVE_UP_HOURS,
 } from './utils/transcript-sync-state'
-export type { TranscriptSyncState } from './utils/transcript-sync-state'
+export type { TranscriptSyncState, SyncCandidateMeeting } from './utils/transcript-sync-state'
 
 // Utils (Story 5.4)
 export { generateResourceLinks } from './utils/generate-resource-links'

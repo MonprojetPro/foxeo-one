@@ -15,8 +15,10 @@ let selectResult: { data: unknown; error: { message: string } | null } = { data:
 const query = {
   select: () => query,
   eq: () => query,
+  neq: () => query,
   not: () => query,
   gte: () => query,
+  lte: () => query,
   order: () => query,
   limit: async () => selectResult,
   update: mockUpdate,
@@ -46,7 +48,11 @@ function meeting(overrides: Record<string, unknown> = {}) {
   return {
     id: '00000000-0000-0000-0000-000000000001',
     title: 'Point',
-    ended_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    // Statut REEL d'une visio qui vient d'avoir lieu : « Planifiee ».
+    // Raccrocher chez Google n'ecrit rien chez nous.
+    status: 'scheduled',
+    scheduled_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    ended_at: null,
     meet_space_name: 'spaces/abc',
     metadata: {},
     ...overrides,
@@ -111,6 +117,16 @@ describe('POST /api/cron/sync-meeting-results', () => {
     expect(mockSyncCore).toHaveBeenCalledTimes(1)
   })
 
+  it('relance une visio encore « Planifiée » — c’est le cas normal après un raccroché', async () => {
+    // Verrou du defaut du 16-10 : le filtre `status = 'completed'` excluait
+    // exactement les visios a rattraper.
+    selectResult = { data: [meeting({ status: 'scheduled' })], error: null }
+
+    const body = await (await POST(request({ authorization: `Bearer ${SECRET}` }))).json()
+
+    expect(body.processed).toBe(1)
+  })
+
   it('ne relance PAS une visio dont le compte rendu est déjà déposé', async () => {
     selectResult = { data: [meeting({ metadata: { transcript_sync: { done: true } } })], error: null }
 
@@ -122,7 +138,7 @@ describe('POST /api/cron/sync-meeting-results', () => {
 
   it('ÉCRIT l’abandon au-delà de 24 h au lieu de s’arrêter en silence', async () => {
     const old = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()
-    selectResult = { data: [meeting({ ended_at: old })], error: null }
+    selectResult = { data: [meeting({ scheduled_at: old })], error: null }
 
     const body = await (await POST(request({ authorization: `Bearer ${SECRET}` }))).json()
 
@@ -137,7 +153,7 @@ describe('POST /api/cron/sync-meeting-results', () => {
   it('n’enregistre pas deux fois le même abandon', async () => {
     const old = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString()
     selectResult = {
-      data: [meeting({ ended_at: old, metadata: { transcript_sync: { gaveUpAt: old } } })],
+      data: [meeting({ scheduled_at: old, metadata: { transcript_sync: { gaveUpAt: old } } })],
       error: null,
     }
 

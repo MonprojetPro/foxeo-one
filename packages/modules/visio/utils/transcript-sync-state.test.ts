@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   readTranscriptSyncState,
   shouldAttemptTranscriptSync,
+  canSyncMeetingResults,
+  transcriptSyncReferenceDate,
   hasExceededGiveUpDelay,
   describeTranscriptSyncState,
   TRANSCRIPT_SYNC_GIVE_UP_HOURS,
@@ -25,15 +27,49 @@ describe('readTranscriptSyncState', () => {
   })
 })
 
+describe('transcriptSyncReferenceDate', () => {
+  it('se rabat sur l’heure prevue quand la fin reelle est inconnue', () => {
+    // Cas REEL du 16-10 : MiKL a fait la visio et raccroche ; `ended_at` est
+    // reste NULL parce que rien, chez nous, n'apprend que l'appel est fini.
+    expect(
+      transcriptSyncReferenceDate({ scheduled_at: hoursAgo(2), ended_at: null })
+    ).toBe(hoursAgo(2))
+  })
+
+  it('prefere la fin reelle quand on la connait', () => {
+    expect(
+      transcriptSyncReferenceDate({ scheduled_at: hoursAgo(3), ended_at: hoursAgo(1) })
+    ).toBe(hoursAgo(1))
+  })
+})
+
 describe('shouldAttemptTranscriptSync', () => {
   const base = {
-    ended_at: hoursAgo(1),
+    status: 'scheduled',
+    scheduled_at: hoursAgo(1),
+    ended_at: null as string | null,
     meet_space_name: 'spaces/abc',
     metadata: {} as Record<string, unknown>,
   }
 
-  it('réessaie une visio récente jamais aboutie', () => {
+  it('RATTRAPE une visio encore « Planifiee » dont l’heure est passee', () => {
+    // Le defaut du 16-10 : le cron filtrait sur status = 'completed', un
+    // statut que RIEN n'ecrivait. Il excluait donc exactement les visios a
+    // rattraper. Ce test echoue si quelqu'un remet ce filtre.
     expect(shouldAttemptTranscriptSync(base, NOW)).toBe(true)
+  })
+
+  it('n’essaie pas avant l’heure du rendez-vous', () => {
+    const future = new Date(NOW + 3600_000).toISOString()
+    expect(shouldAttemptTranscriptSync({ ...base, scheduled_at: future }, NOW)).toBe(false)
+  })
+
+  it('n’essaie jamais sur un rendez-vous annule', () => {
+    expect(shouldAttemptTranscriptSync({ ...base, status: 'cancelled' }, NOW)).toBe(false)
+  })
+
+  it('réessaie une visio récente jamais aboutie', () => {
+    expect(shouldAttemptTranscriptSync({ ...base, ended_at: hoursAgo(1) }, NOW)).toBe(true)
   })
 
   it('n’essaie jamais une visio sans salle Google Meet', () => {
@@ -57,12 +93,48 @@ describe('shouldAttemptTranscriptSync', () => {
 
   it(`s'arrête au-delà de ${TRANSCRIPT_SYNC_GIVE_UP_HOURS} h après la fin de la visio`, () => {
     expect(
-      shouldAttemptTranscriptSync({ ...base, ended_at: hoursAgo(25) }, NOW)
+      shouldAttemptTranscriptSync({ ...base, scheduled_at: hoursAgo(25) }, NOW)
     ).toBe(false)
   })
 
   it('reste actif juste avant le délai d’abandon', () => {
-    expect(shouldAttemptTranscriptSync({ ...base, ended_at: hoursAgo(23) }, NOW)).toBe(true)
+    expect(shouldAttemptTranscriptSync({ ...base, scheduled_at: hoursAgo(23) }, NOW)).toBe(true)
+  })
+})
+
+describe('canSyncMeetingResults', () => {
+  const base = {
+    status: 'scheduled',
+    scheduledAt: hoursAgo(1),
+    endedAt: null as string | null,
+    meetSpaceName: 'spaces/abc',
+  }
+
+  it('propose le bouton sur une visio « Planifiee » dont l’heure est passee', () => {
+    expect(canSyncMeetingResults(base, NOW)).toBe(true)
+  })
+
+  it('ne propose rien avant l’heure du rendez-vous', () => {
+    expect(
+      canSyncMeetingResults({ ...base, scheduledAt: new Date(NOW + 3600_000).toISOString() }, NOW)
+    ).toBe(false)
+  })
+
+  it('ne propose rien sur un rendez-vous annule', () => {
+    expect(canSyncMeetingResults({ ...base, status: 'cancelled' }, NOW)).toBe(false)
+  })
+
+  it('ne propose rien sans salle Google Meet', () => {
+    expect(canSyncMeetingResults({ ...base, meetSpaceName: null }, NOW)).toBe(false)
+  })
+
+  it('reste propose sur une visio terminee, meme ancienne — Google publie parfois apres coup', () => {
+    expect(
+      canSyncMeetingResults(
+        { ...base, status: 'completed', endedAt: hoursAgo(72), scheduledAt: hoursAgo(73) },
+        NOW
+      )
+    ).toBe(true)
   })
 })
 

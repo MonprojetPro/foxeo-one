@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import {
   MeetingStatusBadge,
+  canSyncMeetingResults,
   describeTranscriptSyncState,
   readTranscriptSyncState,
 } from '@monprojetpro/module-visio'
@@ -72,6 +73,15 @@ export default async function HubMeetingDetailPage({ params }: Props) {
 
   const clientName = getClientName(meeting.clients)
   const syncSentence = describeTranscriptSyncState(readTranscriptSyncState(meeting.metadata))
+  const canSync = canSyncMeetingResults(
+    {
+      status: meeting.status,
+      scheduledAt: meeting.scheduled_at,
+      endedAt: meeting.ended_at,
+      meetSpaceName: meeting.meet_space_name,
+    },
+    Date.now()
+  )
   const isActive = meeting.status === 'scheduled' || meeting.status === 'in_progress'
 
   return (
@@ -92,7 +102,7 @@ export default async function HubMeetingDetailPage({ params }: Props) {
           <MeetingDetailActions
             meetingId={meeting.id}
             status={meeting.status}
-            hasMeetSpace={Boolean(meeting.meet_space_name)}
+            canSync={canSync}
           />
         }
       />
