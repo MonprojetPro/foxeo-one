@@ -5,7 +5,7 @@ vi.mock('@monprojetpro/supabase', () => ({
 }))
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
-import { getCalendarStatus } from './calendar'
+import { getCalendarStatus, connectCalcom } from './calendar'
 
 type Row = {
   provider: string
@@ -82,5 +82,82 @@ describe('getCalendarStatus — état réel des comptes Google', () => {
 
     expect(data.calcom).toBe(false)
     expect(data.icalFeeds).toHaveLength(0)
+  })
+
+  it('expose le lien rdv-offert stocke a cote de l\'URL principale', async () => {
+    const data = await statusFor([
+      {
+        provider: 'calcom',
+        connected: true,
+        label: 'default',
+        color: '#a855f7',
+        metadata: { url: 'https://cal.com/mickael-culus-unpfqq/visio-client', rdvOffertUrl: 'https://cal.com/mickael-culus-unpfqq/rdv-offert' },
+      },
+    ])
+
+    expect(data.calcomUrl).toBe('https://cal.com/mickael-culus-unpfqq/visio-client')
+    expect(data.calcomRdvOffertUrl).toBe('https://cal.com/mickael-culus-unpfqq/rdv-offert')
+  })
+})
+
+describe('connectCalcom — T-048 : ne jamais ecraser rdvOffertUrl en silence', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  function mockUpsertClient(existingMetadata: Record<string, unknown> | null) {
+    const upsert = vi.fn().mockResolvedValue({ error: null })
+    const maybeSingle = vi.fn().mockResolvedValue({ data: existingMetadata ? { metadata: existingMetadata } : null })
+    const eqChain = { eq: vi.fn().mockReturnThis(), maybeSingle }
+    const select = vi.fn(() => eqChain)
+    return {
+      client: {
+        auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null }) },
+        from: vi.fn(() => ({ select, upsert })),
+      },
+      upsert,
+    }
+  }
+
+  it('reecrit rdvOffertUrl quand il est explicitement passe', async () => {
+    const { client, upsert } = mockUpsertClient({ url: 'https://cal.com/old', rdvOffertUrl: 'https://cal.com/old-offert' })
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(client as never)
+
+    await connectCalcom('https://cal.com/mickael-culus-unpfqq/visio-client', 'https://cal.com/mickael-culus-unpfqq/rdv-offert')
+
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { url: 'https://cal.com/mickael-culus-unpfqq/visio-client', rdvOffertUrl: 'https://cal.com/mickael-culus-unpfqq/rdv-offert' },
+      }),
+      expect.anything()
+    )
+  })
+
+  it('preserve rdvOffertUrl existant quand on ne modifie que l\'URL principale', async () => {
+    // Regression visee : avant ce test, re-sauvegarder l'URL principale depuis
+    // l'ecran effacait silencieusement le lien rdv-offert deja stocke.
+    const { client, upsert } = mockUpsertClient({ url: 'https://cal.com/old', rdvOffertUrl: 'https://cal.com/mickael-culus-unpfqq/rdv-offert' })
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(client as never)
+
+    await connectCalcom('https://cal.com/mickael-culus-unpfqq/visio-client')
+
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { url: 'https://cal.com/mickael-culus-unpfqq/visio-client', rdvOffertUrl: 'https://cal.com/mickael-culus-unpfqq/rdv-offert' },
+      }),
+      expect.anything()
+    )
+  })
+
+  it('ecrit rdvOffertUrl a null quand rien n\'existait avant et rien n\'est passe', async () => {
+    const { client, upsert } = mockUpsertClient(null)
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(client as never)
+
+    await connectCalcom('https://cal.com/mickael-culus-unpfqq/visio-client')
+
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { url: 'https://cal.com/mickael-culus-unpfqq/visio-client', rdvOffertUrl: null },
+      }),
+      expect.anything()
+    )
   })
 })

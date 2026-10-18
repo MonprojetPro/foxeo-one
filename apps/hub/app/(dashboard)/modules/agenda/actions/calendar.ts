@@ -23,6 +23,12 @@ export interface CalendarStatus {
   googleAccounts: GoogleAccount[]
   calcom: boolean
   calcomUrl?: string
+  /**
+   * Lien "1er RDV offert" de MiKL (cal.com/.../rdv-offert) — stocké pour qu'il
+   * l'ait sous la main, mais HORS PRODUIT (décision MiKL 2026-10-11 : il le
+   * diffuse déjà depuis son site). Ne jamais le brancher sur un widget client.
+   */
+  calcomRdvOffertUrl?: string
   icalFeeds: IcalFeed[]
 }
 
@@ -78,6 +84,7 @@ export async function getCalendarStatus(): Promise<{ data: CalendarStatus | null
         googleAccounts,
         calcom: !!calcomRow,
         calcomUrl: (calcomRow?.metadata as { url?: string })?.url,
+        calcomRdvOffertUrl: (calcomRow?.metadata as { rdvOffertUrl?: string })?.rdvOffertUrl,
         icalFeeds,
       },
       error: null,
@@ -648,12 +655,28 @@ export async function disconnectCalendar(
 // --- Connexion Cal.com ---
 
 export async function connectCalcom(
-  url: string
+  url: string,
+  rdvOffertUrl?: string
 ): Promise<{ data: boolean; error: string | null }> {
   try {
     const supabase = await createServerSupabaseClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) return { data: false, error: 'Non authentifié' }
+
+    // `metadata` est une seule colonne jsonb : un upsert écrase tout le JSON, donc
+    // on relit rdvOffertUrl existant quand l'appelant ne le repasse pas (sinon le
+    // simple fait de modifier l'URL principale effacerait la reference stockee).
+    let effectiveRdvOffertUrl = rdvOffertUrl
+    if (effectiveRdvOffertUrl === undefined) {
+      const { data: existing } = await supabase
+        .from('calendar_integrations')
+        .select('metadata')
+        .eq('user_id', user.id)
+        .eq('provider', 'calcom')
+        .eq('label', 'default')
+        .maybeSingle()
+      effectiveRdvOffertUrl = (existing?.metadata as { rdvOffertUrl?: string })?.rdvOffertUrl
+    }
 
     const { error } = await supabase
       .from('calendar_integrations')
@@ -663,7 +686,7 @@ export async function connectCalcom(
         label: 'default',
         color: '#a855f7',
         connected: true,
-        metadata: { url },
+        metadata: { url, rdvOffertUrl: effectiveRdvOffertUrl ?? null },
       }, { onConflict: 'user_id,provider,label' })
 
     if (error) return { data: false, error: error.message }

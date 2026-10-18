@@ -33,7 +33,12 @@ const PRESET_COLORS = [
 
 export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSettingsProps) {
   const [status, setStatus] = useState<CalendarStatus>({ googleAccounts: [], calcom: false, icalFeeds: [] });
-  const [calcomUrl, setCalcomUrl] = useState("cal.com/mickael-culus-unpfqq/rdv-offert");
+  // Pas de valeur par defaut devinee ici : un lien pre-rempli au hasard est
+  // exactement le defaut qui a laisse cal.com/mikl-foxeo (mort, pre-rebrand)
+  // en base pendant des mois sans que personne ne le remarque (T-048).
+  const [calcomUrl, setCalcomUrl] = useState("");
+  const [calcomRdvOffertUrl, setCalcomRdvOffertUrl] = useState("");
+  const [editingCalcomUrl, setEditingCalcomUrl] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -55,6 +60,7 @@ export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSett
       if (data) {
         setStatus(data);
         if (data.calcomUrl) setCalcomUrl(data.calcomUrl);
+        if (data.calcomRdvOffertUrl) setCalcomRdvOffertUrl(data.calcomRdvOffertUrl);
       }
       setLoading(false);
     });
@@ -90,12 +96,14 @@ export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSett
   async function handleConnectCalcom() {
     const url = calcomUrl.trim();
     if (!url) return;
+    const rdvOffertUrl = calcomRdvOffertUrl.trim();
     startTransition(async () => {
-      const { error } = await connectCalcom(url);
+      const { error } = await connectCalcom(url, rdvOffertUrl || undefined);
       if (error) { showError(`Erreur: ${error}`); return; }
-      const newStatus = { ...status, calcom: true, calcomUrl: url };
+      const newStatus = { ...status, calcom: true, calcomUrl: url, calcomRdvOffertUrl: rdvOffertUrl || undefined };
       setStatus(newStatus);
       onStatusChange?.(newStatus);
+      setEditingCalcomUrl(false);
       showSuccess("Cal.com connecté");
     });
   }
@@ -278,15 +286,32 @@ export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSett
                   }
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Les RDV clients Cal.com apparaissent automatiquement dans l&apos;agenda. Saisis l&apos;URL complète avec l&apos;event-type (ex&nbsp;: <span className="font-mono">cal.com/username/rdv-offert</span>) pour que la prise de RDV directe fonctionne.
+                  Les RDV clients Cal.com apparaissent automatiquement dans l&apos;agenda. Saisis l&apos;URL complète avec l&apos;event-type (ex&nbsp;: <span className="font-mono">cal.com/username/visio-client</span>) pour que la prise de RDV directe fonctionne — c&apos;est CETTE url que le widget du client utilise.
                 </p>
-                {!status.calcom && (
+                {(!status.calcom || editingCalcomUrl) && (
                   <Input value={calcomUrl} onChange={e => setCalcomUrl(e.target.value)}
-                    placeholder="cal.com/username/event-type" className="text-xs" disabled={busy} />
+                    placeholder="cal.com/username/event-type" className="text-xs" disabled={busy} autoFocus={editingCalcomUrl} />
                 )}
-                {status.calcom ? (
+
+                {/* Lien "1er RDV offert" : stocke pour que MiKL l'ait sous la main
+                    (decision du 11-10, hors produit — il le diffuse deja depuis
+                    son site). Jamais branche sur le widget client. */}
+                {(!status.calcom || editingCalcomUrl) && (
+                  <div className="space-y-1">
+                    <Input value={calcomRdvOffertUrl} onChange={e => setCalcomRdvOffertUrl(e.target.value)}
+                      placeholder="cal.com/username/rdv-offert (optionnel, hors produit)" className="text-xs" disabled={busy} />
+                    <p className="text-[10px] text-muted-foreground">
+                      Lien du 1er RDV offert, pour ton usage perso (ex&nbsp;: depuis ton site). Il n&apos;est jamais proposé au client dans l&apos;app.
+                    </p>
+                  </div>
+                )}
+
+                {status.calcom && !editingCalcomUrl ? (
                   <div className="space-y-1.5">
-                    <p className="text-[10px] text-muted-foreground">URL : {status.calcomUrl}</p>
+                    <p className="text-[10px] text-muted-foreground break-all">URL : {status.calcomUrl}</p>
+                    {status.calcomRdvOffertUrl && (
+                      <p className="text-[10px] text-muted-foreground break-all">RDV offert (hors produit) : {status.calcomRdvOffertUrl}</p>
+                    )}
                     {/* L'URL à coller dans Cal.com est celle de l'Edge Function
                         `calcom-webhook`, PAS une route du Hub. Cet écran affichait
                         `{origin}/api/webhooks/cal-com` : une route qui doublonnait
@@ -301,18 +326,37 @@ export function CalendarSettings({ open, onClose, onStatusChange }: CalendarSett
                         {calcomWebhookUrl}
                       </span>
                     </p>
-                    <Button variant="outline" size="sm" className="w-full text-destructive hover:text-destructive"
-                      onClick={handleDisconnectCalcom} disabled={busy}>
-                      {isPending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
-                      Déconnecter Cal.com
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="flex-1"
+                        onClick={() => setEditingCalcomUrl(true)} disabled={busy}>
+                        Modifier l&apos;URL
+                      </Button>
+                      <Button variant="outline" size="sm" className="flex-1 text-destructive hover:text-destructive"
+                        onClick={handleDisconnectCalcom} disabled={busy}>
+                        {isPending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                        Déconnecter
+                      </Button>
+                    </div>
                   </div>
                 ) : (
-                  <Button variant="default" size="sm" className="w-full"
-                    onClick={handleConnectCalcom} disabled={busy || !calcomUrl.trim()}>
-                    {isPending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
-                    Connecter Cal.com
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="default" size="sm" className="flex-1"
+                      onClick={handleConnectCalcom} disabled={busy || !calcomUrl.trim()}>
+                      {isPending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                      {status.calcom ? "Enregistrer" : "Connecter Cal.com"}
+                    </Button>
+                    {editingCalcomUrl && (
+                      <Button variant="outline" size="sm"
+                        onClick={() => {
+                          setEditingCalcomUrl(false);
+                          setCalcomUrl(status.calcomUrl ?? "");
+                          setCalcomRdvOffertUrl(status.calcomRdvOffertUrl ?? "");
+                        }}
+                        disabled={busy}>
+                        Annuler
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
