@@ -1162,3 +1162,28 @@ unitaires valident le code, jamais la chaîne. Il faut **sonder le chemin réel*
 production, la réponse HTTP réellement reçue, la ligne réellement écrite — et se méfier de tout
 indicateur qui mesure une tentative plutôt qu'un résultat.
 
+
+## 2026-10-18 — Quatre commits, zéro push : la preuve de prod a menti parce qu'elle testait le mauvais dépôt
+
+**Symptôme** : après que MiKL ait posé `CALCOM_MEET_LINK_SECRET` sur Vercel et Supabase, un `curl`
+de vérification sur la route `/api/internal/calcom-meet-link` en production renvoie un **307 vers
+le login** — exactement le défaut déjà payé sur T-050 (middleware qui n'exemptait pas la route).
+Panique de courte durée : le code exemptant `/api/internal` existait bien, relu dans le fichier.
+
+**Cause racine, trouvée en 10 secondes avec la bonne commande** : `git status -sb` → `ahead 4`.
+Les 4 commits de la session (T-047, son rattrapage de fichiers oubliés, T-048, T-049) avaient tous
+été créés avec `git commit`, jamais suivis d'un `git push`. Vercel déploie depuis le dépôt distant,
+pas depuis le disque local — tant que rien n'est poussé, **la production fait tourner l'ancien
+code**, quelle que soit la qualité des tests locaux ou du build.
+
+**Pourquoi la sonde a d'abord fait peur plutôt que d'aider** : elle testait une hypothèse (« le
+secret ne marche pas » ou « le middleware est encore cassé ») sans avoir d'abord écarté
+l'explication la plus bête et la plus rapide à vérifier. `git log origin/master..HEAD` ou
+`git status -sb` se lisent en une commande, avant tout `curl` sur la prod.
+
+**La règle à en tirer** : avant de sonder un comportement de production qui ne correspond pas au
+code lu localement, toujours vérifier d'abord que ce code **a bien atteint** la production — pas
+seulement qu'il a été commité. Un commit sans push est un travail invisible pour tout ce qui
+déploie depuis Git (Vercel, CI, Edge Functions). Combiné à la règle déjà en place « pousser sans
+demander » : elle doit s'appliquer **après chaque commit**, pas une fois à la fin d'une session qui
+en enchaîne plusieurs — sinon le principe reste vrai mais l'exécution lui échappe.
