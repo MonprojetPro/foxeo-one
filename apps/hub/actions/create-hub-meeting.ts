@@ -1,7 +1,7 @@
 'use server'
 
 import { createMeeting } from '@monprojetpro/module-visio'
-import { getGoogleMeetClient } from '../lib/google-meet-client'
+import { createGoogleMeetSpace } from '../lib/google-meet-client'
 import { describeGoogleMeetFailure } from '../lib/google-meet-error'
 import { type ActionResponse, errorResponse } from '@monprojetpro/types'
 import type { Meeting } from '@monprojetpro/module-visio'
@@ -14,17 +14,7 @@ export async function createHubMeeting(input: {
   scheduledAt?: string
 }): Promise<ActionResponse<Meeting>> {
   try {
-    const meetClient = getGoogleMeetClient()
-    const spaceRes = await meetClient.spaces.create({
-      requestBody: {
-        config: {
-          accessType: 'TRUSTED',
-        },
-      },
-    })
-
-    const meetSpaceName = spaceRes.data.name ?? undefined
-    const meetUri = spaceRes.data.meetingUri ?? undefined
+    const { meetSpaceName, meetUri } = await createGoogleMeetSpace()
 
     if (!meetUri) {
       console.error('[HUB:CREATE_HUB_MEETING] Google Meet a répondu sans meetingUri')

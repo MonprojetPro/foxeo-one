@@ -71,6 +71,12 @@ describe('Hub Middleware Helpers', () => {
       expect(isStaticOrApi('/api/cron/sync-meeting-results')).toBe(true)
     })
 
+    // T-049 : l'Edge Function calcom-webhook appelle cette route pour creer
+    // un lien Meet — meme defaut que /api/cron si elle n'etait pas exemptee.
+    it('laisse passer /api/internal — appele par l\'Edge Function calcom-webhook', () => {
+      expect(isStaticOrApi('/api/internal/calcom-meet-link')).toBe(true)
+    })
+
     it('returns true for /favicon.ico', () => {
       expect(isStaticOrApi('/favicon.ico')).toBe(true)
     })

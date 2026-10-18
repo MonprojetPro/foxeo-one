@@ -30,12 +30,18 @@ export function isPublicPath(pathname: string): boolean {
  * `Authorization: Bearer <CRON_SECRET>` et répond 503 si le secret n'est pas
  * configuré. On remplace un contrôle de session — qu'une machine ne peut pas
  * satisfaire — par un contrôle de secret, pas par rien.
+ *
+ * ⚠️ `/api/internal` ajouté le 2026-10-18 (T-049) : appelé par l'Edge Function
+ * `calcom-webhook`, qui ne peut pas non plus présenter de session. Même garde
+ * que `/api/cron` : `Authorization: Bearer <CALCOM_MEET_LINK_SECRET>`, 503 si
+ * le secret n'est pas configuré.
  */
 export function isStaticOrApi(pathname: string): boolean {
   return (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/webhooks') ||
     pathname.startsWith('/api/cron') ||
+    pathname.startsWith('/api/internal') ||
     pathname === '/favicon.ico'
   )
 }

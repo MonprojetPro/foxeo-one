@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+const mockSpacesCreate = vi.fn()
 vi.mock('googleapis', () => {
-  const mockMeet = { version: 'v2' }
+  const mockMeet = { version: 'v2', spaces: { create: mockSpacesCreate } }
   const mockCalendar = { version: 'v3' }
   const mockAuth = {
     OAuth2: vi.fn().mockImplementation(() => ({
@@ -86,5 +87,45 @@ describe('google-meet-client', () => {
       expect(e.missing).toEqual(['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'])
       expect(e.message).not.toContain('valeur-secrete')
     }
+  })
+
+  // T-049 : createGoogleMeetSpace est le coeur partage par createHubMeeting,
+  // sendMeetLink ET la route interne appelee par le webhook Cal.com.
+  describe('createGoogleMeetSpace — brique partagee', () => {
+    beforeEach(() => {
+      process.env.GOOGLE_CLIENT_ID = 'test-client-id'
+      process.env.GOOGLE_CLIENT_SECRET = 'test-client-secret'
+      process.env.GOOGLE_MEET_REFRESH_TOKEN = 'test-refresh-token'
+    })
+
+    it('mappe spaceRes.data vers meetSpaceName/meetUri', async () => {
+      mockSpacesCreate.mockResolvedValue({
+        data: { name: 'spaces/abc', meetingUri: 'https://meet.google.com/abc-defg-hij' },
+      })
+
+      const { createGoogleMeetSpace } = await import('./google-meet-client')
+      const result = await createGoogleMeetSpace()
+
+      expect(result).toEqual({
+        meetSpaceName: 'spaces/abc',
+        meetUri: 'https://meet.google.com/abc-defg-hij',
+      })
+    })
+
+    it('laisse meetUri undefined si Google ne le renvoie pas', async () => {
+      mockSpacesCreate.mockResolvedValue({ data: { name: 'spaces/abc' } })
+
+      const { createGoogleMeetSpace } = await import('./google-meet-client')
+      const result = await createGoogleMeetSpace()
+
+      expect(result.meetUri).toBeUndefined()
+    })
+
+    it('laisse l\'erreur Google remonter telle quelle (pas de catch)', async () => {
+      mockSpacesCreate.mockRejectedValue(new Error('invalid_grant'))
+
+      const { createGoogleMeetSpace } = await import('./google-meet-client')
+      await expect(createGoogleMeetSpace()).rejects.toThrow('invalid_grant')
+    })
   })
 })

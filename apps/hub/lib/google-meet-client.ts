@@ -57,3 +57,29 @@ export function getGoogleMeetClient() {
 export function getGoogleCalendarClient() {
   return createGoogleClients().calendar
 }
+
+export interface GoogleMeetSpace {
+  meetSpaceName?: string
+  meetUri?: string
+}
+
+/**
+ * Crée une salle Google Meet — cœur partagé par `createHubMeeting`,
+ * `sendMeetLink` et la route interne `calcom-meet-link` (T-049). Une seule
+ * fonction qui appelle l'API : un correctif ou une sonde posés ici profitent
+ * aux trois chemins d'un coup, au lieu de devoir être reportés un par un
+ * (lecon T-052 : deux chemins qui créent une salle doivent dire la MÊME chose).
+ *
+ * Ne catch rien : l'appelant reste responsable de `describeGoogleMeetFailure`,
+ * pour garder un seul endroit qui traduit l'erreur en message pour MiKL.
+ */
+export async function createGoogleMeetSpace(): Promise<GoogleMeetSpace> {
+  const meetClient = getGoogleMeetClient()
+  const spaceRes = await meetClient.spaces.create({
+    requestBody: { config: { accessType: 'TRUSTED' } },
+  })
+  return {
+    meetSpaceName: spaceRes.data.name ?? undefined,
+    meetUri: spaceRes.data.meetingUri ?? undefined,
+  }
+}

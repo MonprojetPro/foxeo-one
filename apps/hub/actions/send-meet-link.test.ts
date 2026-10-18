@@ -41,9 +41,12 @@ vi.mock('@monprojetpro/modules-email', () => ({
   sendEmail: (input: unknown) => mockSendEmail(input),
 }))
 
-const mockSpacesCreate = vi.fn()
+// Le mapping spaceRes.data -> { meetSpaceName, meetUri } est teste directement
+// dans google-meet-client.test.ts (brique partagee, T-049). Ici on ne mocke
+// que le resultat de `createGoogleMeetSpace`, pour tester sendMeetLink seul.
+const mockCreateGoogleMeetSpace = vi.fn()
 vi.mock('../lib/google-meet-client', () => ({
-  getGoogleMeetClient: () => ({ spaces: { create: mockSpacesCreate } }),
+  createGoogleMeetSpace: () => mockCreateGoogleMeetSpace(),
 }))
 
 const validInput = {
@@ -71,8 +74,9 @@ describe('sendMeetLink Server Action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetUser.mockResolvedValue({ data: { user: { id: testAuthUserId } }, error: null })
-    mockSpacesCreate.mockResolvedValue({
-      data: { name: 'spaces/abc', meetingUri: 'https://meet.google.com/abc-defg-hij' },
+    mockCreateGoogleMeetSpace.mockResolvedValue({
+      meetSpaceName: 'spaces/abc',
+      meetUri: 'https://meet.google.com/abc-defg-hij',
     })
     mockCreateMeeting.mockResolvedValue({
       data: { id: 'meeting-1', title: 'Point d’avancement' },
@@ -152,7 +156,7 @@ describe('sendMeetLink Server Action', () => {
 
   it('ARRETE TOUT si Google Meet echoue — aucun rendez-vous, aucun email', async () => {
     mockOperatorThenClient()
-    mockSpacesCreate.mockRejectedValue(new Error('invalid_grant'))
+    mockCreateGoogleMeetSpace.mockRejectedValue(new Error('invalid_grant'))
 
     const { sendMeetLink } = await import('./send-meet-link')
     const result = await sendMeetLink(validInput)
@@ -164,7 +168,7 @@ describe('sendMeetLink Server Action', () => {
 
   it('ARRETE TOUT si Google repond sans lien de visio', async () => {
     mockOperatorThenClient()
-    mockSpacesCreate.mockResolvedValue({ data: { name: 'spaces/abc' } })
+    mockCreateGoogleMeetSpace.mockResolvedValue({ meetSpaceName: 'spaces/abc' })
 
     const { sendMeetLink } = await import('./send-meet-link')
     const result = await sendMeetLink(validInput)
@@ -222,7 +226,7 @@ describe('sendMeetLink Server Action', () => {
     const result = await sendMeetLink({ ...validInput, recipientEmail: 'pas-une-adresse' })
 
     expect(result.error?.code).toBe('VALIDATION_ERROR')
-    expect(mockSpacesCreate).not.toHaveBeenCalled()
+    expect(mockCreateGoogleMeetSpace).not.toHaveBeenCalled()
   })
 
   it('transmet la date du rendez-vous quand elle est fournie', async () => {

@@ -6,7 +6,7 @@ import type { Meeting } from '@monprojetpro/module-visio'
 import { sendEmail } from '@monprojetpro/modules-email'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { z } from 'zod'
-import { getGoogleMeetClient } from '../lib/google-meet-client'
+import { createGoogleMeetSpace } from '../lib/google-meet-client'
 import { buildMeetInvitationBody, buildMeetInvitationHtml } from '../lib/meet-invitation'
 import { describeGoogleMeetFailure } from '../lib/google-meet-error'
 
@@ -121,12 +121,9 @@ export async function sendMeetLink(input: {
     let meetSpaceName: string | undefined
     let meetUri: string | undefined
     try {
-      const meetClient = getGoogleMeetClient()
-      const spaceRes = await meetClient.spaces.create({
-        requestBody: { config: { accessType: 'TRUSTED' } },
-      })
-      meetSpaceName = spaceRes.data.name ?? undefined
-      meetUri = spaceRes.data.meetingUri ?? undefined
+      const space = await createGoogleMeetSpace()
+      meetSpaceName = space.meetSpaceName
+      meetUri = space.meetUri
     } catch (err) {
       // SONDE T-052 : le motif réel remonte jusqu'à l'écran. « Impossible de
       // créer la salle » ne disait pas s'il fallait poser un secret, régénérer

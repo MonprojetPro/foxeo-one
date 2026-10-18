@@ -14,6 +14,7 @@
 //   les notifs étaient silencieusement perdues).
 
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { requestMeetLink } from './meet-link.ts'
 
 const COACHING_SESSION_PRICE_CENTS = 4500
 
@@ -191,7 +192,14 @@ async function handleBookingCreated(
     return jsonResponse({ error: 'Missing startTime' }, 400)
   }
 
-  // 1. Créer le meeting (type standard — repassé en 'coaching' par applyCoachingLogic si One+,
+  // 1. Lien Google Meet (T-049) — jamais bloquant : voir requestMeetLink().
+  const { meetSpaceName, meetUri } = await requestMeetLink({
+    secret: Deno.env.get('CALCOM_MEET_LINK_SECRET'),
+    hubUrl: Deno.env.get('HUB_URL') ?? 'https://monprojetpro-hub.vercel.app',
+    fetchImpl: fetch,
+  })
+
+  // 2. Créer le meeting (type standard — repassé en 'coaching' par applyCoachingLogic si One+,
   //    pour rester robuste tant que la migration coaching n'est pas déployée)
   const { data: meeting, error: meetingError } = await supabase
     .from('meetings')
@@ -202,6 +210,8 @@ async function handleBookingCreated(
       scheduled_at: startTime,
       status: 'scheduled',
       metadata: { source: 'calcom', calcomUid },
+      meet_space_name: meetSpaceName,
+      meet_uri: meetUri,
     })
     .select()
     .single()
@@ -211,10 +221,10 @@ async function handleBookingCreated(
     return jsonResponse({ error: 'Failed to create meeting' }, 500)
   }
 
-  // 2. Coaching One+ (non bloquant)
+  // 3. Coaching One+ (non bloquant)
   const coaching = await applyCoachingLogic(supabase, clientId, meeting.id as string, startTime)
 
-  // 3. Notification client adaptée
+  // 4. Notification client adaptée
   const when = formatDateFr(startTime)
   let notifTitle = 'RDV confirmé'
   let notifBody = `Votre rendez-vous avec MiKL est prévu le ${when}.`
