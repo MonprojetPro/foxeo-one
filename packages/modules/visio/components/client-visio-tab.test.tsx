@@ -23,6 +23,27 @@ vi.mock('@monprojetpro/ui', () => ({
   RowSkeleton: () => <div data-testid="skeleton" />,
   showSuccess: (msg: string) => mockShowSuccess(msg),
   showError: (msg: string) => mockShowError(msg),
+  // Stand-in minimal pour le Select Radix (T-059) — rendu en <select> natif,
+  // suffisant pour les tests qui n'interagissent pas avec ce champ.
+  Select: ({
+    value,
+    onValueChange,
+    children,
+  }: {
+    value: string
+    onValueChange: (v: string) => void
+    children: React.ReactNode
+  }) => (
+    <select aria-label="Facturation" value={value} onChange={(e) => onValueChange(e.target.value)}>
+      {children}
+    </select>
+  ),
+  SelectTrigger: () => null,
+  SelectValue: () => null,
+  SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => (
+    <option value={value}>{children}</option>
+  ),
 }))
 
 const mockGetMeetings = vi.fn()

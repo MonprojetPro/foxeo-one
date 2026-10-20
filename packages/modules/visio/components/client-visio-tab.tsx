@@ -8,6 +8,11 @@ import {
   CockpitPanel,
   EmptyRow,
   RowSkeleton,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   showError,
   showSuccess,
 } from '@monprojetpro/ui'
@@ -382,15 +387,20 @@ export function ClientVisioTab({
                 <label htmlFor="visio-billing" className="text-xs font-medium text-muted-foreground">
                   Facturation
                 </label>
-                <select
-                  id="visio-billing"
-                  value={isFree ? 'free' : 'paid'}
-                  onChange={(e) => setIsFree(e.target.value === 'free')}
-                  className="rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/30"
-                >
-                  <option value="free">Gratuite</option>
-                  <option value="paid">Payante</option>
-                </select>
+                {/* `<select>` natif abandonné (T-059) : son menu déroulant
+                    rend en style navigateur par défaut (fond blanc, bleu),
+                    jamais thémé par le CSS de la page — Select Radix déjà
+                    utilisé ailleurs dans l'app (ex: ElioModelSelector) rend
+                    un menu réellement dans le thème sombre. */}
+                <Select value={isFree ? 'free' : 'paid'} onValueChange={(v) => setIsFree(v === 'free')}>
+                  <SelectTrigger id="visio-billing" className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Gratuite</SelectItem>
+                    <SelectItem value="paid">Payante</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               {!isFree && (
                 <div className="flex flex-col gap-1.5">
