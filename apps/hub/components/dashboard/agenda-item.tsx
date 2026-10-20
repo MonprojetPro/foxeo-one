@@ -1,3 +1,13 @@
+'use client'
+
+// Bug pre-existant (pas lie a une session recente) : le <Link> ci-dessous
+// porte un onClick (stopPropagation) sans que ce fichier soit un Client
+// Component. Rendu depuis page.tsx (Server Component), React refuse de
+// serialiser le handler -> crash "Event handlers cannot be passed to Client
+// Component props" des qu'une reunion du jour existe (actionLabel+actionHref
+// tous les deux poses). Trouve le 2026-10-20 via les logs prod (digest
+// 3553753085), reproduit sur un deploiement vieux de 2 jours — donc anterieur
+// a toute session recente.
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 
