@@ -21,7 +21,7 @@ export { ParcoursStageList } from './components/parcours-stage-list'
 export { AccessToggles } from './components/access-toggles'
 export { ParcoursModeSelector } from './components/parcours-mode-selector'
 export { ParcoursStatusBadge } from './components/parcours-status-badge'
-export { CursorButton } from './components/cursor-button'
+export { ClientProjectFolderTab } from './components/client-project-folder-tab'
 export { ClientContactsTab } from './components/client-contacts-tab'
 export { ClientContactDialog } from './components/client-contact-dialog'
 export { ClientNotesSection } from './components/client-notes-section'
@@ -77,6 +77,11 @@ export {
   useUpdateClientContact,
   useDeleteClientContact,
 } from './hooks/use-client-contacts'
+export {
+  useClientProjects,
+  useCreateClientProject,
+  useDeleteClientProject,
+} from './hooks/use-client-projects'
 export { useClientNotes } from './hooks/use-client-notes'
 export { useReminders, useCreateReminder, useUpdateReminder, useToggleReminderComplete, useDeleteReminder } from './hooks/use-reminders'
 export { usePortfolioStats, useGraduationRate } from './hooks/use-portfolio-stats'
@@ -102,6 +107,9 @@ export { getClientContacts } from './actions/get-client-contacts'
 export { createClientContact } from './actions/create-client-contact'
 export { updateClientContact } from './actions/update-client-contact'
 export { deleteClientContact } from './actions/delete-client-contact'
+export { getClientProjects } from './actions/get-client-projects'
+export { createClientProject } from './actions/create-client-project'
+export { deleteClientProject } from './actions/delete-client-project'
 export { createClientNote } from './actions/create-client-note'
 export { getClientNotes } from './actions/get-client-notes'
 export { updateClientNote } from './actions/update-client-note'
@@ -142,12 +150,16 @@ export {
 
 // Utils
 export {
-  buildClientSlug,
-  buildBmadPath,
-  buildCursorUrl,
-  toKebabCase,
-  BMAD_BASE_PATH,
-} from './utils/cursor-integration'
+  isLocalFolderSupported,
+  pickAndStoreFolder,
+  getStoredFolderHandle,
+  removeStoredFolderHandle,
+  hasFolderPermission,
+  requestFolderPermission,
+  writeFileToFolder,
+  LOCAL_FOLDER_CATEGORIES,
+  type LocalFolderCategory,
+} from './utils/local-folder'
 export { TIME_ESTIMATES } from './utils/time-estimates'
 export type { TimeEstimateConfig } from './utils/time-estimates'
 export { parseCsv, generateCsvTemplate } from './utils/csv-parser'
@@ -187,6 +199,9 @@ export type {
   ClientContactDB,
   CreateClientContactInput,
   UpdateClientContactInput,
+  ClientProject,
+  ClientProjectDB,
+  CreateClientProjectInput,
   ClientNote,
   CreateClientNoteInput,
   UpdateClientNoteInput,

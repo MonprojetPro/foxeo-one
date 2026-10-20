@@ -1,6 +1,6 @@
 'use client'
 
-import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, ClientCockpitTab, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions, useClientContacts } from '@monprojetpro/modules-crm'
+import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabContent, ClientAdminTabContent, ClientCockpitTab, ClientProjectFolderTab, CommunicationProfileForm, useClientCommunicationProfile, ClientLifecycleActions, useClientContacts } from '@monprojetpro/modules-crm'
 import { ClientVisioTab, cancelMeeting, rescheduleMeeting, syncMeetingResults, type VisioRecipient } from '@monprojetpro/module-visio'
 import { sendMeetLink } from '../../../../../../actions/send-meet-link'
 import { resendMeetLink } from '../../../../../../actions/resend-meet-link'
@@ -15,7 +15,7 @@ import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
 import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Gauge, Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings, Video } from 'lucide-react'
+import { Gauge, Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings, Video, FolderCog } from 'lucide-react'
 
 interface ClientDetailWithSupportProps {
   client: Client
@@ -126,6 +126,12 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         label: 'Visio',
         icon: Video, color: '#2dd4bf',
         content: <ClientVisioTabContent client={client} />,
+      },
+      {
+        value: 'projet',
+        label: 'Projet',
+        icon: FolderCog, color: '#818cf8',
+        content: <ClientProjectFolderTab clientId={client.id} />,
       },
       {
         value: 'emails',

@@ -6,11 +6,11 @@ import {
   type LucideIcon,
   Clock, FolderOpen, MessageSquare, Zap,
   Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings,
-  MessageCircle, Code2, Pause, Lock, Gauge, CircleSlash, RotateCcw, Users, Video,
+  MessageCircle, Pause, Lock, Gauge, CircleSlash, RotateCcw, Users, Video, FolderCog,
 } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Button, showSuccess, showError } from '@monprojetpro/ui'
+import { showSuccess, showError } from '@monprojetpro/ui'
 import { ClientTimeline } from './client-timeline'
 import { ClientContactsTab } from './client-contacts-tab'
 import { ClientDocumentsTab } from './client-documents-tab'
@@ -22,7 +22,6 @@ import { SuspendClientDialog } from './suspend-client-dialog'
 import { CloseClientDialog } from './close-client-dialog'
 import { CancelSubscriptionDialog } from './cancel-subscription-dialog'
 import { reactivateSubscription } from '../actions/cancel-subscription'
-import { buildClientSlug, buildBmadPath, buildCursorUrl } from '../utils/cursor-integration'
 import type { ModuleManifest } from '@monprojetpro/types'
 import type { Client } from '../types/crm.types'
 
@@ -130,25 +129,7 @@ export function ClientTabs({
   const [suspendOpen, setSuspendOpen] = useState(false)
   const [closeOpen, setCloseOpen] = useState(false)
   const [cancelSubOpen, setCancelSubOpen] = useState(false)
-  const [cursorOpen, setCursorOpen] = useState(false)
   const [isReactivating, startReactivate] = useTransition()
-
-  // Cursor integration
-  const clientSlug = buildClientSlug(client.name, client.company)
-  const bmadPath = buildBmadPath(clientSlug)
-  const cursorUrl = buildCursorUrl(bmadPath)
-
-  function handleOpenCursor() {
-    window.location.href = cursorUrl
-    setTimeout(() => setCursorOpen(true), 1500)
-  }
-
-  async function handleCopyPath() {
-    try {
-      await navigator.clipboard.writeText(bmadPath)
-      showSuccess('Chemin copié dans le presse-papier')
-    } catch { /* silencieux */ }
-  }
 
   const isActive = client.status === 'active'
   const isSuspended = client.status === 'suspended'
@@ -180,8 +161,10 @@ export function ClientTabs({
   const allItems: IconItem[] = [
     // 0 — Pilote        cyan — cockpit (vue d'ensemble + contact/notes), onglet d'accueil
     ...(extraTabValues.has('pilote')         ? [{ type: 'tab' as const, value: 'pilote',        label: 'Pilote',      Icon: Gauge,         color: '#22d3ee' }] : []),
-    // 2 — Cursor        violet
-    { type: 'action', value: 'cursor',        label: 'Cursor',      Icon: Code2,         color: '#818cf8', onClick: handleOpenCursor },
+    // 2 — Dossier projet   violet — T-063, remplace l'onglet "Cursor" (chemin Mac
+    //      en dur, jamais fonctionnel sous Windows). Declare aussi dans extraTabs
+    //      (client-detail-with-support.tsx) — meme regle que les autres onglets.
+    ...(extraTabValues.has('projet')         ? [{ type: 'tab' as const, value: 'projet',        label: 'Projet',      Icon: FolderCog,     color: '#818cf8' }] : []),
     // 3 — Chat          sky
     { type: 'action', value: 'chat',          label: 'Chat',        Icon: MessageCircle, color: '#38bdf8', onClick: () => router.push(`/modules/chat/${client.id}`) },
     // 3bis — Visio      teal — T-051 : envoyer un lien Meet, historique des appels, transcriptions.
@@ -295,20 +278,6 @@ export function ClientTabs({
         open={cancelSubOpen}
         onOpenChange={setCancelSubOpen}
       />
-      <Dialog open={cursorOpen} onOpenChange={setCursorOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ouvrir dans Cursor</DialogTitle>
-            <DialogDescription>
-              Le protocole Cursor n&apos;est pas supporté par votre navigateur. Copiez le chemin et ouvrez-le manuellement (File → Open Folder).
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center gap-2 rounded-md border bg-muted p-3">
-            <code className="flex-1 text-sm break-all">{bmadPath}</code>
-            <Button variant="secondary" size="sm" onClick={handleCopyPath}>Copier</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

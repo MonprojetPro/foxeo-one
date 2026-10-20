@@ -487,6 +487,38 @@ export type ClientContactDB = {
 }
 
 // ============================================================
+// T-063 — Dossier projet (remplace l'onglet "Cursor", jamais fonctionnel sous
+// Windows). Un client peut porter plusieurs projets ; chacun est relie depuis le
+// navigateur a un dossier local (File System Access API), dont le handle vit en
+// IndexedDB — jamais en base, un handle de dossier ne traverse pas le reseau.
+// ============================================================
+
+export const ClientProject = z.object({
+  id: z.string().uuid(),
+  clientId: z.string().uuid(),
+  name: z.string().min(1, 'Le nom du projet est requis'),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+})
+
+export type ClientProject = z.infer<typeof ClientProject>
+
+export const CreateClientProjectInput = z.object({
+  clientId: z.string().uuid(),
+  name: z.string().trim().min(1, 'Le nom du projet est requis').max(200, 'Nom trop long (200 caractères max)'),
+})
+
+export type CreateClientProjectInput = z.infer<typeof CreateClientProjectInput>
+
+export type ClientProjectDB = {
+  id: string
+  client_id: string
+  name: string
+  created_at: string
+  updated_at: string
+}
+
+// ============================================================
 // Reminders types (Story 2.7)
 // ============================================================
 

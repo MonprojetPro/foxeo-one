@@ -152,32 +152,36 @@ Si vous devez temporairement mettre de côté un client, utilisez la fonction "�
 - Aucune action manuelle n'est nécessaire
 - Vous pouvez annuler le report à tout moment en cliquant sur "Annuler le report"
 
-### Ouvrir le dossier client dans Cursor
+### Onglet "Projet" — dossier local relié au client (T-063)
 
-Dans le header de la fiche client, le bouton **"Ouvrir dans Cursor"** vous permet d'accéder directement au dossier BMAD du client pour travailler avec Orpheus.
+L'ancien bouton "Ouvrir dans Cursor" a été retiré : il pointait sur un chemin écrit en
+dur au format Mac (`/Users/mikl/bmad/clients/{slug}`), jamais valide sous Windows. Le
+Hub tourne sur un serveur distant (Vercel) et n'a — et n'aura jamais — d'accès direct
+au disque de l'opérateur. L'onglet **"Projet"** remplace cette intégration par une
+vraie liaison, via la File System Access API du navigateur (Chrome/Edge uniquement).
 
 **Fonctionnement :**
-1. Le bouton génère un lien `cursor://file/` pointant vers le dossier du client
-2. Le chemin est construit selon la convention : `{bmad_base_path}/clients/{client-slug}/`
-3. Le slug est dérivé du nom de l'entreprise (ou du nom client si pas d'entreprise)
-4. Cliquer ouvre Cursor directement dans ce dossier
+1. Un client peut porter **plusieurs projets** (plusieurs chantiers en parallèle) —
+   chacun est une ligne `client_projects`, créée depuis l'onglet avec un nom libre.
+2. Pour chaque projet, le bouton **"Lier un dossier local"** ouvre le sélecteur de
+   dossier Windows. MiKL choisit un dossier existant (Bureau aujourd'hui, disque dur
+   externe demain) et autorise l'accès en lecture/écriture.
+3. Le handle du dossier (`FileSystemDirectoryHandle`) est stocké en **IndexedDB du
+   navigateur** — jamais envoyé au serveur, un handle de dossier ne traverse pas le
+   réseau. Changer de navigateur ou de machine demande de relier le dossier à nouveau.
+4. Les documents du dossier client peuvent être copiés dans le dossier local via le
+   bouton **"Copier ici"**, qui range le fichier dans une sous-arborescence fixe
+   (`Devis & Factures/`, `Documents Élio/`, `Dossier CII/`, `Transcriptions/`,
+   `Consignes/`).
 
-**Si le dossier n'existe pas encore :**
-- Un message d'alerte s'affiche avec le chemin attendu
-- Un bouton "Copier le chemin" copie le chemin dans le presse-papier
-- Créez le dossier manuellement, puis utilisez le bouton
+**Si le navigateur ne supporte pas cette API (Firefox notamment) :**
+- Un message l'indique clairement dans l'onglet
+- Les projets restent utilisables (création, suivi) — seule la liaison au dossier
+  local est indisponible tant que MiKL n'ouvre pas le Hub dans Chrome ou Edge
 
-**Si le protocole Cursor n'est pas supporté :**
-- Un message explique comment ouvrir manuellement
-- Le chemin complet est affiché avec un bouton "Copier"
-- Instructions : File → Open Folder dans Cursor
-
-**Configuration (optionnel) :**
-Vous pouvez personnaliser le chemin de base BMAD via la variable d'environnement :
-```
-NEXT_PUBLIC_BMAD_BASE_PATH=/votre/chemin/bmad
-```
-Par défaut : `/Users/mikl/bmad`
+**Limite assumée :** la copie reste un geste manuel par document ; une copie
+automatique suppose l'onglet Hub ouvert et la permission encore valide au moment où
+un document est généré.
 
 ### Cycle de vie du client — Suspendre, Clôturer, Réactiver
 

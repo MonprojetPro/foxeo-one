@@ -186,25 +186,25 @@ R: Chaque client importé reçoit automatiquement une `client_configs` avec les 
 **Q: Le parsing du CSV gère-t-il les cas spéciaux ?**
 R: Oui, le parser gère : l'encodage UTF-8 avec BOM, les retours chariot Windows (`\r\n`), les valeurs entre guillemets contenant des virgules, les guillemets échappés (`""`), et les lignes vides.
 
-### Intégration Cursor
+### Onglet Projet (dossier local)
 
-**Q: Comment ouvrir le dossier BMAD d'un client dans Cursor ?**
-R: Dans la fiche client, cliquez sur le bouton "Ouvrir dans Cursor" dans le header. Si Cursor est installé et que le dossier existe, l'éditeur s'ouvrira automatiquement dans le dossier du client.
+**Q: Pourquoi le bouton "Ouvrir dans Cursor" a-t-il disparu ?**
+R: Il pointait sur un chemin écrit en dur au format Mac (`/Users/mikl/bmad/clients/...`), jamais valide sous Windows — il n'a jamais fonctionné sur ce poste. Le Hub est hébergé sur Vercel, un serveur distant qui n'a aucun accès au disque de l'opérateur ; aucune intégration de ce type ne peut fonctionner par construction.
 
-**Q: Que faire si le dossier BMAD du client n'existe pas ?**
-R: Un message d'alerte vous indiquera le chemin attendu (ex: `/Users/mikl/bmad/clients/nom-entreprise`). Cliquez sur "Copier le chemin", créez le dossier manuellement, puis utilisez à nouveau le bouton.
+**Q: Comment relier un dossier local à un client ?**
+R: Dans l'onglet "Projet" de la fiche client, créez un projet (un nom libre), puis cliquez sur "Lier un dossier local". Le sélecteur Windows s'ouvre pour choisir le dossier existant.
 
-**Q: Le bouton Cursor ne fonctionne pas, que faire ?**
-R: Si le protocole `cursor://` n'est pas supporté par votre navigateur, un message de fallback s'affichera avec le chemin complet. Copiez-le et ouvrez manuellement dans Cursor via File → Open Folder.
+**Q: Pourquoi dois-je parfois ré-autoriser l'accès à un dossier déjà lié ?**
+R: Le navigateur peut révoquer la permission entre deux sessions. L'onglet affiche "Permission à renouveler" avec un bouton "Autoriser" dans ce cas — rien n'est perdu, la liaison (le handle du dossier) reste enregistrée.
 
-**Q: Comment personnaliser le chemin de base BMAD ?**
-R: Définissez la variable d'environnement `NEXT_PUBLIC_BMAD_BASE_PATH` dans votre fichier `.env.local`. Par défaut, le chemin est `/Users/mikl/bmad`.
+**Q: Le bouton "Lier un dossier local" ne fait rien, que faire ?**
+R: Cette fonction demande Chrome ou Edge (la File System Access API n'existe pas dans Firefox). Un message l'indique dans l'onglet.
 
-**Q: Le slug du client est-il basé sur le nom ou l'entreprise ?**
-R: Si le client a une entreprise renseignée, le slug est basé sur le nom de l'entreprise (ex: "Acme Corp" → `acme-corp`). Sinon, il est basé sur le nom du client (ex: "Jean Dupont" → `jean-dupont`).
+**Q: Un client peut-il avoir plusieurs projets ?**
+R: Oui — autant que nécessaire s'il y a plusieurs chantiers en parallèle. Chaque projet a son propre dossier local.
 
-**Q: Les caractères spéciaux et accents sont-ils gérés ?**
-R: Oui, le slug est normalisé automatiquement : les accents sont retirés, les caractères spéciaux sont remplacés par des tirets, tout est en minuscules (ex: "Café & Restaurant" → `cafe-restaurant`).
+**Q: Que se passe-t-il si je supprime un projet ?**
+R: Seule la liaison dans le Hub disparaît. Le dossier local et son contenu ne sont jamais touchés, et les documents déjà rangés dans ce projet restent référencés (le rattachement repasse simplement à vide).
 
 ### Rappels et calendrier
 
