@@ -34,6 +34,10 @@ export interface Meeting {
   inviteLastSentAt: string | null
   inviteLastSentTo: string | null
   inviteSentCount: number
+  /** T-059 — décidé à la création (Hub). true = aucune facturation. */
+  isFree: boolean
+  /** T-059 — montant HT en centimes, uniquement si isFree = false. */
+  priceCents: number | null
   createdAt: string
   updatedAt: string
 }
@@ -62,6 +66,8 @@ export interface MeetingDB {
   invite_last_sent_at: string | null
   invite_last_sent_to: string | null
   invite_sent_count: number | null
+  is_free: boolean
+  price_cents: number | null
   created_at: string
   updated_at: string
 }
@@ -78,6 +84,10 @@ export const CreateMeetingInput = z.object({
   scheduledAt: z.string().datetime({ offset: true }).optional(),
   meetSpaceName: z.string().optional(),
   meetUri: z.string().url().optional(),
+  /** T-059 — défaut true (gratuite) si omis. */
+  isFree: z.boolean().optional(),
+  /** T-059 — requis et > 0 si isFree = false, ignoré sinon. */
+  priceCents: z.number().int().positive().optional(),
 })
 export type CreateMeetingInput = z.infer<typeof CreateMeetingInput>
 

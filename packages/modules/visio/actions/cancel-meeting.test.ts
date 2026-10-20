@@ -7,7 +7,11 @@ const mockUpdateSingle = vi.fn()
 const mockSelectEq = vi.fn(() => ({ maybeSingle: mockMaybeSingle }))
 const mockSelect = vi.fn(() => ({ eq: mockSelectEq }))
 const mockUpdateSelect = vi.fn(() => ({ single: mockUpdateSingle }))
-const mockUpdateEq = vi.fn(() => ({ select: mockUpdateSelect }))
+// `meetings.update(...).eq(...).select().single()` — chaîne vers mockUpdateSelect.
+// `billable_items.update(...).eq(...).eq(...)` (T-059, annulation de la dette)
+// — la DEUXIÈME eq est le point final, thenable, résolue par mockBillableEq.
+const mockBillableEq = vi.fn(() => Promise.resolve({ error: null }))
+const mockUpdateEq = vi.fn(() => ({ select: mockUpdateSelect, eq: mockBillableEq }))
 const mockUpdate = vi.fn(() => ({ eq: mockUpdateEq }))
 const mockFrom = vi.fn(() => ({ select: mockSelect, update: mockUpdate }))
 
@@ -65,6 +69,22 @@ describe('cancelMeeting', () => {
     expect(r.error).toBeNull()
     expect(r.data?.status).toBe('cancelled')
     expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ status: 'cancelled' }))
+  })
+
+  // T-059 — une séance payante annulée AVANT facturation n'est plus une dette.
+  it('annule aussi le billable_items lié, s’il est encore pending', async () => {
+    mockMaybeSingle.mockResolvedValue({ data: { id: MEETING_ID, status: 'scheduled' }, error: null })
+    mockUpdateSingle.mockResolvedValue({
+      data: { id: MEETING_ID, status: 'cancelled', type: 'standard', metadata: {} },
+      error: null,
+    })
+
+    const { cancelMeeting } = await import('./cancel-meeting')
+    await cancelMeeting({ meetingId: MEETING_ID })
+
+    expect(mockFrom).toHaveBeenCalledWith('billable_items')
+    expect(mockUpdate).toHaveBeenCalledWith({ status: 'cancelled' })
+    expect(mockBillableEq).toHaveBeenCalledWith('status', 'pending')
   })
 
   it('remonte NOT_FOUND sur un identifiant inconnu', async () => {

@@ -4,6 +4,7 @@ import { ClientDetailContent, type ExtraTab, ClientBrandingTab, ClientLabTabCont
 import { ClientVisioTab, cancelMeeting, rescheduleMeeting, syncMeetingResults, type VisioRecipient } from '@monprojetpro/module-visio'
 import { sendMeetLink } from '../../../../../../actions/send-meet-link'
 import { resendMeetLink } from '../../../../../../actions/resend-meet-link'
+import { getClientVisioBillingDefault, getClientVisioDebt, invoiceVisioDebt } from '../../../../../../actions/visio-billing'
 import { ClientSupportTab, useSupportTickets } from '@monprojetpro/modules-support'
 import { SubmissionsList, ClientParcoursAgentsList } from '@monprojetpro/module-parcours'
 import { ElioConfigSection } from '@monprojetpro/module-elio'
@@ -59,6 +60,16 @@ function ClientVisioTabContent({ client }: { client: Client }) {
     [contacts]
   )
 
+  // T-059 — défaut gratuit/payant selon le profil client (one_plus = gratuit).
+  const { data: billingDefault } = useQuery({
+    queryKey: ['visio-billing-default', client.id],
+    queryFn: async () => {
+      const r = await getClientVisioBillingDefault(client.id)
+      return r.data ?? { isFree: true }
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+
   return (
     <ClientVisioTab
       clientId={client.id}
@@ -68,6 +79,9 @@ function ClientVisioTabContent({ client }: { client: Client }) {
       contactsLoading={contactsLoading}
       mailState={gmailStatus?.state}
       sendMeetLinkAction={sendMeetLink}
+      defaultIsFree={billingDefault?.isFree ?? true}
+      getVisioDebtAction={getClientVisioDebt}
+      invoiceVisioDebtAction={invoiceVisioDebt}
       // ⚠️ Ces trois-là NE SONT PAS OPTIONNELLES EN PRATIQUE : sans elles, les
       // boutons Renvoyer / Déplacer / Annuler ne s'affichent pas — et le build
       // reste vert, puisque les props sont facultatives. Exactement le piège

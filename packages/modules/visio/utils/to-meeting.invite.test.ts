@@ -32,6 +32,8 @@ function db(overrides: Partial<MeetingDB> = {}): MeetingDB {
     invite_last_sent_at: null,
     invite_last_sent_to: null,
     invite_sent_count: null,
+    is_free: true,
+    price_cents: null,
     created_at: '2026-10-15T10:00:00.000Z',
     updated_at: '2026-10-15T10:00:00.000Z',
     ...overrides,

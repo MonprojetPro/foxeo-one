@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ClientVisioTab } from './client-visio-tab'
@@ -104,7 +104,10 @@ describe('ClientVisioTab', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: /Envoyer un lien Google Meet/i }))
 
-    const options = screen.getAllByRole('option')
+    // Scopé au select « Destinataire » — le select « Facturation » (T-059) a
+    // lui aussi des <option>, et getAllByRole('option') les prendrait toutes.
+    const recipientSelect = screen.getByLabelText(/Destinataire/i)
+    const options = within(recipientSelect).getAllByRole('option')
     expect(options).toHaveLength(2)
     expect(options.map((o) => (o as HTMLOptionElement).value)).toEqual([
       'contact@cse77.fr',
@@ -128,6 +131,7 @@ describe('ClientVisioTab', () => {
         clientId: '22222222-2222-2222-2222-222222222222',
         title: 'Présentation du devis',
         recipientEmail: 'contact@cse77.fr',
+        isFree: true,
       })
     })
     expect(mockShowSuccess).toHaveBeenCalled()

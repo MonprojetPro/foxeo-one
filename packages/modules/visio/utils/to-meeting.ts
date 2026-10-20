@@ -24,6 +24,8 @@ export function toMeeting(db: MeetingDB): Meeting {
     inviteLastSentAt: db.invite_last_sent_at ?? null,
     inviteLastSentTo: db.invite_last_sent_to ?? null,
     inviteSentCount: db.invite_sent_count ?? 0,
+    isFree: db.is_free ?? true,
+    priceCents: db.price_cents ?? null,
     createdAt: db.created_at,
     updatedAt: db.updated_at,
   }

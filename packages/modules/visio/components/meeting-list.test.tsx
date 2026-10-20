@@ -22,6 +22,11 @@ const mockMeeting: Meeting = {
   metadata: {},
   recordingUrl: null,
   transcriptUrl: null,
+  inviteLastSentAt: null,
+  inviteLastSentTo: null,
+  inviteSentCount: 0,
+  isFree: true,
+  priceCents: null,
   createdAt: '2026-02-20T10:00:00.000Z',
   updatedAt: '2026-02-20T10:00:00.000Z',
 }

@@ -38,6 +38,9 @@ const SendMeetLinkInput = z.object({
   recipientEmail: z.string().email('Adresse email invalide'),
   /** Mot libre ajouté avant le lien. */
   message: z.string().optional(),
+  /** T-059 — si omis, déduit du profil client (one_plus = gratuit, sinon payant). */
+  isFree: z.boolean().optional(),
+  priceCents: z.number().int().positive().optional(),
 })
 
 export interface SendMeetLinkResult {
@@ -52,6 +55,8 @@ export async function sendMeetLink(input: {
   scheduledAt?: string
   recipientEmail: string
   message?: string
+  isFree?: boolean
+  priceCents?: number
 }): Promise<ActionResponse<SendMeetLinkResult>> {
   try {
     const parsed = SendMeetLinkInput.safeParse(input)
@@ -117,6 +122,18 @@ export async function sendMeetLink(input: {
       )
     }
 
+    // T-059 — gratuit par défaut si non précisé (même convention que
+    // createMeeting). Le défaut « intelligent » selon le profil client
+    // (one_plus = gratuit, ponctuel = payant) est résolu côté UI, AVANT
+    // l'appel à cette action (`getClientVisioBillingDefault`, qui préremplit
+    // le toggle du formulaire) — pas ici, pour qu'un appel sans précision ne
+    // devienne jamais un refus de facturation surprise.
+    const isFree = parsed.data.isFree ?? true
+
+    if (!isFree && (!parsed.data.priceCents || parsed.data.priceCents <= 0)) {
+      return errorResponse('Un montant est requis pour une séance payante', 'VALIDATION_ERROR')
+    }
+
     // 1. Salle Google Meet — ÉCHEC = ARRÊT, jamais de meeting sans lien
     let meetSpaceName: string | undefined
     let meetUri: string | undefined
@@ -152,6 +169,8 @@ export async function sendMeetLink(input: {
       ...(parsed.data.scheduledAt ? { scheduledAt: parsed.data.scheduledAt } : {}),
       meetSpaceName,
       meetUri,
+      isFree,
+      ...(parsed.data.priceCents ? { priceCents: parsed.data.priceCents } : {}),
     })
 
     if (meetingRes.error || !meetingRes.data) {

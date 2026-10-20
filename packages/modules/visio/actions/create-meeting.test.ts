@@ -17,9 +17,14 @@ const mockClientSingle = vi.fn()
 const mockClientEq = vi.fn(() => ({ single: mockClientSingle }))
 const mockClientSelect = vi.fn(() => ({ eq: mockClientEq }))
 
+// T-059 — insert de la dette (billable_items), distinct de l'insert meeting :
+// pas de .select().single() derrière, juste un await direct.
+const mockBillableInsert = vi.fn().mockResolvedValue({ data: null, error: null })
+
 const mockFrom = vi.fn((table: string) => {
   if (table === 'notifications') return { insert: vi.fn().mockResolvedValue({ data: null, error: null }) }
   if (table === 'clients') return { select: mockClientSelect }
+  if (table === 'billable_items') return { insert: mockBillableInsert }
   return { insert: mockInsert }
 })
 
@@ -131,6 +136,54 @@ describe('createMeeting Server Action', () => {
 
     expect(result.error).toBeNull()
     expect(result.data?.title).toBe('Test Meeting') // from mockMeetingDB
+  })
+
+  // T-059 — refonte de la facturation visio.
+  it('crée une dette (billable_items) quand la séance est payante', async () => {
+    const { createMeeting } = await import('./create-meeting')
+    const result = await createMeeting({
+      clientId: CLIENT_ID,
+      operatorId: OPERATOR_ID,
+      title: 'Consultation facturée',
+      isFree: false,
+      priceCents: 4500,
+    })
+
+    expect(result.error).toBeNull()
+    expect(mockBillableInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        client_id: CLIENT_ID,
+        item_type: 'visio_session',
+        amount_cents: 4500,
+        status: 'pending',
+        meeting_id: MEETING_ID,
+      })
+    )
+  })
+
+  it('refuse une séance payante sans montant (dette fantôme)', async () => {
+    const { createMeeting } = await import('./create-meeting')
+    const result = await createMeeting({
+      clientId: CLIENT_ID,
+      operatorId: OPERATOR_ID,
+      title: 'Oubli de saisie',
+      isFree: false,
+    })
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('VALIDATION_ERROR')
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('ne crée AUCUNE dette pour une séance gratuite', async () => {
+    const { createMeeting } = await import('./create-meeting')
+    await createMeeting({
+      clientId: CLIENT_ID,
+      operatorId: OPERATOR_ID,
+      title: 'Point gratuit',
+    })
+
+    expect(mockBillableInsert).not.toHaveBeenCalled()
   })
 
   it('returns DB_ERROR on insert failure', async () => {

@@ -71,6 +71,19 @@ export async function cancelMeeting(input: {
       return errorResponse("Erreur lors de l'annulation du rendez-vous", 'DB_ERROR', error)
     }
 
+    // T-059 — une séance payante annulée AVANT facturation n'est plus une
+    // dette. Si elle a déjà été facturée (status != 'pending'), on ne touche
+    // à rien : la facture existe, c'est un avoir qu'il faut faire, pas ce
+    // chantier. Best-effort, non bloquant (même doctrine que le reste du module).
+    const { error: billableCancelError } = await supabase
+      .from('billable_items')
+      .update({ status: 'cancelled' })
+      .eq('meeting_id', parsed.data.meetingId)
+      .eq('status', 'pending')
+    if (billableCancelError) {
+      console.error('[VISIO:CANCEL_MEETING] billable_items cancel error (non-blocking):', billableCancelError)
+    }
+
     return successResponse(toMeeting(data as MeetingDB))
   } catch (error) {
     console.error('[VISIO:CANCEL_MEETING] Unexpected error:', error)
