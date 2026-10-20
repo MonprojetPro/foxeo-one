@@ -93,6 +93,7 @@ export * from './components/cockpit'
 
 // Entrée de connexion unique — décor de la page de login
 export { LightPillar, type LightPillarProps } from './components/auth/light-pillar'
+export { AuthCard, type AuthCardProps } from './components/auth/auth-card'
 
 // Pièces jointes — sélecteur partagé (signalement client, réponse opérateur…).
 // Ne fait QUE la sélection locale et sa validation : il n'uploade rien.

@@ -1,22 +1,17 @@
 import { Suspense } from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Skeleton } from '@monprojetpro/ui'
+import { AuthCard, Skeleton } from '@monprojetpro/ui'
 import { MfaForm } from './mfa-form'
 
 export default function VerifyMfaPage() {
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Verification 2FA</CardTitle>
-        <CardDescription>
-          Saisissez le code de votre application d&apos;authentification
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Suspense fallback={<MfaFormSkeleton />}>
-          <MfaForm />
-        </Suspense>
-      </CardContent>
-    </Card>
+    <AuthCard
+      title="Vérification 2FA"
+      description="Saisissez le code de votre application d'authentification"
+    >
+      <Suspense fallback={<MfaFormSkeleton />}>
+        <MfaForm />
+      </Suspense>
+    </AuthCard>
   )
 }
 

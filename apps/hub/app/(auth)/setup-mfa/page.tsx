@@ -1,22 +1,17 @@
 import { Suspense } from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Skeleton } from '@monprojetpro/ui'
+import { AuthCard } from '@monprojetpro/ui'
 import { SetupMfaForm } from './setup-mfa-form'
 
 export default function SetupMfaPage() {
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Configuration 2FA</CardTitle>
-        <CardDescription>
-          Securisez votre compte avec l&apos;authentification a deux facteurs
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Suspense fallback={<SetupMfaSkeleton />}>
-          <SetupMfaForm />
-        </Suspense>
-      </CardContent>
-    </Card>
+    <AuthCard
+      title="Configuration 2FA"
+      description="Sécurisez votre compte avec l'authentification à deux facteurs"
+    >
+      <Suspense fallback={<SetupMfaSkeleton />}>
+        <SetupMfaForm />
+      </Suspense>
+    </AuthCard>
   )
 }
 

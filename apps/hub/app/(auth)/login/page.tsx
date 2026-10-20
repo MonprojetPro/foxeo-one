@@ -1,20 +1,14 @@
 import { Suspense } from 'react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@monprojetpro/ui'
+import { AuthCard } from '@monprojetpro/ui'
 import { LoginForm } from './login-form'
 
 export default function LoginPage() {
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">MonprojetPro Hub</CardTitle>
-        <CardDescription>Connexion operateur</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Suspense fallback={<LoginFormSkeleton />}>
-          <LoginForm />
-        </Suspense>
-      </CardContent>
-    </Card>
+    <AuthCard title="MonprojetPro Hub" description="Connexion opérateur">
+      <Suspense fallback={<LoginFormSkeleton />}>
+        <LoginForm />
+      </Suspense>
+    </AuthCard>
   )
 }
 
