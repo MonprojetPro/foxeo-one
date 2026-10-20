@@ -1187,3 +1187,42 @@ seulement qu'il a été commité. Un commit sans push est un travail invisible p
 déploie depuis Git (Vercel, CI, Edge Functions). Combiné à la règle déjà en place « pousser sans
 demander » : elle doit s'appliquer **après chaque commit**, pas une fois à la fin d'une session qui
 en enchaîne plusieurs — sinon le principe reste vrai mais l'exécution lui échappe.
+
+
+## 2026-10-20 — Page d'accueil blanche : un onClick dans un Server Component, et la preuve qui a évité une chasse à l'aveugle
+
+**Symptôme** : MiKL se connecte au Hub, la page d'accueil affiche un écran blanc générique
+« Application error: a server-side exception has occurred », avec un digest. Survient juste après
+une session de 4 commits (T-059/T-060/T-061) — le réflexe immédiat est de soupçonner ces commits.
+
+**Le réflexe qui a évité un correctif à l'aveugle** : au lieu de relire le diff en espérant trouver
+le coupable, **rollback l'alias de production** (`vercel alias set <ancien-déploiement>
+hub.monprojet-pro.com`) vers un déploiement vieux de 2 jours, antérieur à toute la session. Le bug
+**a persisté à l'identique** — même digest (`3553753085`), même erreur dans les logs. Verdict en
+2 minutes : **ce n'était pas la session du jour**, sans avoir lu une seule ligne de diff pour le
+prouver. Le rollback a ensuite été annulé (remis sur la dernière version) puisqu'il n'apportait rien.
+
+**Cause racine, trouvée par les VRAIS logs de production** (`vercel logs <url> --since 20m -x`,
+jamais par relecture de code en premier) : `Error: Event handlers cannot be passed to Client
+Component props. {href, className, onClick: function onClick, children}`. Un grep systématique
+(« tout fichier `.tsx` contenant `onClick` sans `'use client'` en première ligne ») a trouvé
+`apps/hub/components/dashboard/agenda-item.tsx` : un `<Link href={actionHref} onClick={(e) =>
+e.stopPropagation()}>` dans un fichier SANS `'use client'`, instancié directement par `page.tsx`
+(Server Component, l'accueil du Hub). React Server Components refuse de sérialiser un handler
+d'événement à travers la frontière serveur/client — crash immédiat dès que `actionLabel` ET
+`actionHref` sont tous les deux posés, ce qui arrive dès qu'**une réunion est programmée pour
+AUJOURD'HUI** (`AgendaItem` dans `page.tsx:535`). Le bug était donc dormant depuis sa création,
+jamais déclenché faute de réunion du jour — les tests de visio créés dans la session l'ont
+**exposé**, sans en être la cause : la preuve en est le rollback, qui a reproduit le même crash sur
+l'ancien code.
+
+**La règle à en tirer** : (1) **avant de corriger un bug de production qui suit de près un
+déploiement**, le rollback d'alias est un test en 2 minutes qui tranche « c'est moi » vs « c'est
+préexistant » plus vite que toute relecture de diff — et c'est réversible immédiatement, sans
+toucher au code. (2) Un diagnostic qui commence par relire le code AVANT de lire les vrais logs
+(`vercel logs --since --status-code -x`, pas seulement `vercel inspect --logs` qui ne montre que le
+build) perd du temps à deviner ce que la prod sait déjà dire. (3) Tout fichier `.tsx` qui passe un
+`onClick` à un élément DOM intrinsèque (`<a>`, `<Link>`, `<button>`) et peut être instancié
+directement depuis un Server Component DOIT porter `'use client'` — même si ça « marchait » jusque-là,
+un composant React Server Components n'échoue qu'au moment où le chemin de rendu qui l'expose se
+déclenche réellement, ce qui peut être des mois après son écriture.
