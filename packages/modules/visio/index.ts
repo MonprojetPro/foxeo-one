@@ -8,7 +8,17 @@ export { MeetingStatusBadge } from './components/meeting-status-badge'
 export { MeetingScheduleDialog } from './components/meeting-schedule-dialog'
 export { CalcomBookingWidget } from './components/calcom-booking-widget'
 export { ClientVisioTab } from './components/client-visio-tab'
-export type { VisioRecipient, SendMeetLinkFn } from './components/client-visio-tab'
+export type {
+  VisioRecipient,
+  SendMeetLinkFn,
+  VisioDebtItem,
+  GetVisioDebtFn,
+  InvoiceVisioDebtFn,
+} from './components/client-visio-tab'
+// T-061 — formulaire « Nouvelle visio », extrait de ClientVisioTab pour être
+// réutilisable sur la page globale du Hub (pas de client fixe).
+export { NewVisioForm } from './components/new-visio-form'
+export type { NewVisioFormProps } from './components/new-visio-form'
 
 // Recording Components
 export { RecordingList } from './components/recording-list'

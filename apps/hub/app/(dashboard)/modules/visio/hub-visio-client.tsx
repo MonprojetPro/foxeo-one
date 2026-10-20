@@ -2,14 +2,14 @@
 
 import { useState, useTransition } from 'react'
 import { ExternalLink, Video, Clock, CheckCircle, Plus } from 'lucide-react'
-import { MeetingStatusBadge, MeetingScheduleDialog } from '@monprojetpro/module-visio'
+import { MeetingStatusBadge } from '@monprojetpro/module-visio'
 import {
   CockpitHeader,
   PillTabs,
   type PillTab,
   StatusPill,
 } from '@monprojetpro/ui'
-import { createHubMeeting } from '../../../../actions/create-hub-meeting'
+import { NewVisioDialog } from './new-visio-dialog'
 import { endHubMeeting } from '../../../../actions/end-hub-meeting'
 import { startMeeting } from '@monprojetpro/module-visio'
 import { useRouter } from 'next/navigation'
@@ -39,10 +39,11 @@ function formatDuration(seconds: number | null): string {
 
 interface HubVisioClientProps {
   meetings: Meeting[]
-  operatorId: string
+  /** Non utilisé depuis T-061 (sendMeetLink résout l'opérateur via la session) — gardé pour ne pas casser `page.tsx`. */
+  operatorId?: string
 }
 
-export function HubVisioClient({ meetings, operatorId }: HubVisioClientProps) {
+export function HubVisioClient({ meetings }: HubVisioClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>('upcoming')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -237,13 +238,14 @@ export function HubVisioClient({ meetings, operatorId }: HubVisioClientProps) {
         </>
       )}
 
-      {/* Dialog nouveau meeting — clientId optionnel depuis le Hub */}
-      <MeetingScheduleDialog
-        operatorId={operatorId}
+      {/* Dialog nouveau meeting — T-061 : même chemin de création que l'onglet
+          Visio du dossier client (salle Google Meet réelle, email, toggle
+          gratuit/payant), avec un sélecteur de client en plus puisqu'il n'y
+          a pas de client fixe sur cette page. */}
+      <NewVisioDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSuccess={() => router.refresh()}
-        createMeetingAction={createHubMeeting}
       />
     </>
   )
