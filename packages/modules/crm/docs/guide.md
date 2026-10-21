@@ -183,14 +183,18 @@ vraie liaison, via la File System Access API du navigateur (Chrome/Edge uniqueme
 automatique suppose l'onglet Hub ouvert et la permission encore valide au moment où
 un document est généré.
 
-**Contenu réel du dossier (lecture seule) :** une fois le dossier lié et la permission
-accordée, l'onglet liste aussi ce qui s'y trouve vraiment — y compris les
-sous-dossiers ou fichiers que MiKL range lui-même directement dans l'Explorateur
-Windows, pas seulement ce que le Hub y a écrit. La lecture est plafonnée à 3 niveaux
-de profondeur (pour ne pas parcourir silencieusement un dossier immense) et se
+**Contenu réel du dossier (lecture seule, dépliable) :** une fois le dossier lié et
+la permission accordée, l'onglet liste aussi ce qui s'y trouve vraiment — y compris
+les sous-dossiers ou fichiers que MiKL range lui-même directement dans l'Explorateur
+Windows, pas seulement ce que le Hub y a écrit. Un sous-dossier se **déplie au clic**
+(chevron) : son contenu n'est lu qu'à ce moment-là, jamais chargé d'avance en entier
+— pour ne jamais parcourir silencieusement un dossier immense. Le niveau racine se
 rafraîchit via le bouton dédié (icône de rafraîchissement) à côté du badge "Dossier
 lié". Le Hub ne modifie jamais ce qu'il lit ici — cette lecture est strictement
-informative.
+informative. **Limite technique assumée** : un fichier ne peut jamais être ouvert
+depuis le Hub — un navigateur ne peut pas ouvrir un fichier local pour des raisons
+de sécurité (même famille de limite que l'ancien bouton Cursor). Pour ouvrir un
+fichier, MiKL passe par l'Explorateur Windows.
 
 ### Cycle de vie du client — Suspendre, Clôturer, Réactiver
 

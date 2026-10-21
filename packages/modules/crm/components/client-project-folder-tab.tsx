@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { FolderOpen, FolderPlus, Link2, Trash2, FileDown, CheckCircle2, AlertTriangle, X, File, RefreshCw } from 'lucide-react'
+import { Folder, FolderOpen, FolderPlus, Link2, Trash2, FileDown, CheckCircle2, AlertTriangle, X, File, RefreshCw, ChevronRight, ChevronDown } from 'lucide-react'
 import {
   Button,
   Input,
@@ -29,8 +29,8 @@ import {
   hasFolderPermission,
   requestFolderPermission,
   writeFileToFolder,
-  listFolderEntries,
-  type FolderEntry,
+  listFolderLevel,
+  type FolderItem,
 } from '../utils/local-folder'
 import type { ClientProject } from '../types/crm.types'
 
@@ -50,26 +50,77 @@ import type { ClientProject } from '../types/crm.types'
 
 type ProjectDocument = { id: string; name: string; url?: string; clientProjectId?: string | null }
 
-function FolderTreeView({ entries, depth = 0 }: { entries: FolderEntry[]; depth?: number }) {
-  if (entries.length === 0 && depth === 0) {
+/**
+ * Un dossier se deplie au clic — ses enfants ne sont lus que a ce moment-la,
+ * jamais pre-charges. C'est ce que MiKL a demande le 21-10 : pouvoir "ouvrir"
+ * un sous-dossier range depuis le Hub pour voir ce qu'il contient, sans pour
+ * autant pouvoir ouvrir un FICHIER (impossible depuis une page web — limite
+ * navigateur, meme famille que l'ancien bouton Cursor).
+ */
+function FolderTreeNode({ item, depth }: { item: FolderItem; depth: number }) {
+  const [expanded, setExpanded] = useState(false)
+  const [children, setChildren] = useState<FolderItem[] | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function handleToggle() {
+    if (item.kind !== 'directory') return
+    if (!expanded && children === null) {
+      setLoading(true)
+      try {
+        setChildren(await listFolderLevel(item.handle as never))
+      } catch {
+        showError(`Impossible de lire « ${item.name} »`)
+        setLoading(false)
+        return
+      }
+      setLoading(false)
+    }
+    setExpanded((e) => !e)
+  }
+
+  return (
+    <li className="text-sm">
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={item.kind !== 'directory'}
+        className="flex items-center gap-1 min-w-0 w-full text-left rounded px-1 py-0.5 hover:bg-accent/50 disabled:hover:bg-transparent"
+        data-testid="folder-tree-item"
+      >
+        {item.kind === 'directory' ? (
+          expanded ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />
+        ) : (
+          <span className="w-3 shrink-0" />
+        )}
+        {item.kind === 'directory' ? (
+          <Folder className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
+        ) : (
+          <File className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        )}
+        <span className="truncate">{item.name}</span>
+        {loading && <span className="text-xs text-muted-foreground">…</span>}
+      </button>
+      {expanded && children && (
+        <ul className="flex flex-col gap-0.5" style={{ paddingLeft: 20 }}>
+          {children.length === 0 ? (
+            <li className="text-xs text-muted-foreground italic pl-1">Dossier vide</li>
+          ) : (
+            children.map((child) => <FolderTreeNode key={child.name} item={child} depth={depth + 1} />)
+          )}
+        </ul>
+      )}
+    </li>
+  )
+}
+
+function FolderTreeView({ items }: { items: FolderItem[] }) {
+  if (items.length === 0) {
     return <span className="text-xs text-muted-foreground italic">Dossier vide</span>
   }
   return (
-    <ul className="flex flex-col gap-0.5" style={{ paddingLeft: depth > 0 ? 16 : 0 }}>
-      {entries.map((entry) => (
-        <li key={entry.name} className="text-sm">
-          <span className="flex items-center gap-1.5 min-w-0">
-            {entry.kind === 'directory' ? (
-              <FolderOpen className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
-            ) : (
-              <File className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            )}
-            <span className="truncate">{entry.name}</span>
-          </span>
-          {entry.children && entry.children.length > 0 && (
-            <FolderTreeView entries={entry.children} depth={depth + 1} />
-          )}
-        </li>
+    <ul className="flex flex-col gap-0.5">
+      {items.map((item) => (
+        <FolderTreeNode key={item.name} item={item} depth={0} />
       ))}
     </ul>
   )
@@ -87,7 +138,7 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
   const [permissionGranted, setPermissionGranted] = useState(false)
   const [checking, setChecking] = useState(true)
   const [copyingId, setCopyingId] = useState<string | null>(null)
-  const [contents, setContents] = useState<FolderEntry[] | null>(null)
+  const [contents, setContents] = useState<FolderItem[] | null>(null)
   const [loadingContents, setLoadingContents] = useState(false)
 
   const refreshContents = useCallback(async () => {
@@ -95,7 +146,7 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
     if (!handle || !(await hasFolderPermission(handle))) return
     setLoadingContents(true)
     try {
-      setContents(await listFolderEntries(handle))
+      setContents(await listFolderLevel(handle))
     } catch {
       showError('Impossible de lire le contenu du dossier')
     } finally {
@@ -232,7 +283,7 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
             {contents === null ? (
               <Skeleton className="h-4 w-full" />
             ) : (
-              <FolderTreeView entries={contents} />
+              <FolderTreeView items={contents} />
             )}
           </div>
         </div>

@@ -130,33 +130,27 @@ export async function writeFileToFolder(
   await writable.close()
 }
 
-export type FolderEntry = {
+export type FolderItem = {
   name: string
   kind: 'file' | 'directory'
-  children?: FolderEntry[]
+  /** Handle reel — permet de depiler un sous-dossier a la demande (clic), jamais pre-charge en entier. */
+  handle: FsDirectoryHandle | FsFileHandle
 }
 
-const MAX_LISTING_DEPTH = 3
-
 /**
- * Lit le contenu REEL du dossier lie — fichiers/sous-dossiers que MiKL y range
- * lui-meme a la main, pas seulement ce que le Hub y a ecrit. Lecture seule,
- * profondeur plafonnee pour ne pas parcourir un dossier enorme sans le dire.
+ * Lit le contenu REEL d'UN niveau du dossier lie — fichiers/sous-dossiers que
+ * MiKL y range lui-meme a la main, pas seulement ce que le Hub y a ecrit.
+ * Lecture seule. Ne descend jamais automatiquement dans les sous-dossiers :
+ * c'est a l'appelant de rappeler cette fonction sur le handle d'un sous-dossier
+ * quand MiKL clique dessus pour le deplier (evite de parcourir un dossier
+ * enorme en silence au premier chargement).
  */
-export async function listFolderEntries(handle: LocalFolderHandle, depth = MAX_LISTING_DEPTH): Promise<FolderEntry[]> {
-  const entries: FolderEntry[] = []
+export async function listFolderLevel(handle: LocalFolderHandle): Promise<FolderItem[]> {
+  const items: FolderItem[] = []
   for await (const [name, child] of handle.entries()) {
-    if (child.kind === 'directory') {
-      entries.push({
-        name,
-        kind: 'directory',
-        children: depth > 0 ? await listFolderEntries(child, depth - 1) : undefined,
-      })
-    } else {
-      entries.push({ name, kind: 'file' })
-    }
+    items.push({ name, kind: child.kind, handle: child })
   }
-  return entries.sort((a, b) =>
+  return items.sort((a, b) =>
     a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === 'directory' ? -1 : 1
   )
 }

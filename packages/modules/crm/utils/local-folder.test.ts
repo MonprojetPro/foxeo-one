@@ -50,7 +50,7 @@ import {
   hasFolderPermission,
   requestFolderPermission,
   writeFileToFolder,
-  listFolderEntries,
+  listFolderLevel,
 } from './local-folder'
 
 // ============================================================
@@ -98,43 +98,39 @@ function makeFakeTree(nodes: FakeNode[]): { kind: 'directory'; entries: () => As
   }
 }
 
-describe('listFolderEntries', () => {
-  it('liste fichiers et sous-dossiers, tries dossiers puis fichiers par ordre alphabetique', async () => {
+describe('listFolderLevel', () => {
+  it('liste fichiers et sous-dossiers d\'UN seul niveau, tries dossiers puis fichiers par ordre alphabetique', async () => {
     const tree = makeFakeTree([
       { name: 'facture.pdf', kind: 'file' },
       { name: 'sous dossier de test', kind: 'directory', children: [{ name: 'note.txt', kind: 'file' }] },
       { name: 'devis.pdf', kind: 'file' },
     ])
 
-    const result = await listFolderEntries(tree as never)
+    const result = await listFolderLevel(tree as never)
 
     expect(result.map((e) => e.name)).toEqual(['sous dossier de test', 'devis.pdf', 'facture.pdf'])
-    expect(result[0]).toMatchObject({ kind: 'directory', children: [{ name: 'note.txt', kind: 'file' }] })
+    // Le sous-dossier porte un HANDLE reel, pas ses enfants deja charges — la
+    // descente est a la demande (clic), jamais automatique.
+    expect(result[0]).toMatchObject({ kind: 'directory' })
+    expect(typeof (result[0] as { handle: { entries: unknown } }).handle.entries).toBe('function')
   })
 
   it('rend un tableau vide pour un dossier vide', async () => {
     const tree = makeFakeTree([])
-    const result = await listFolderEntries(tree as never)
+    const result = await listFolderLevel(tree as never)
     expect(result).toEqual([])
   })
 
-  it('plafonne la profondeur pour ne pas parcourir un dossier sans fin', async () => {
+  it('permet de redescendre dans un sous-dossier via son handle, sur demande', async () => {
     const tree = makeFakeTree([
-      {
-        name: 'a',
-        kind: 'directory',
-        children: [{ name: 'b', kind: 'directory', children: [{ name: 'c', kind: 'directory', children: [{ name: 'd', kind: 'directory', children: [{ name: 'trop-profond.txt', kind: 'file' }] }] }] }],
-      },
+      { name: 'Dossier CII', kind: 'directory', children: [{ name: 'reformulation.md', kind: 'file' }] },
     ])
 
-    const result = await listFolderEntries(tree as never, 2)
+    const topLevel = await listFolderLevel(tree as never)
+    const subFolder = topLevel[0]
+    const subLevel = await listFolderLevel(subFolder!.handle as never)
 
-    // a -> b -> c autorises (depth 2), c.children reste undefined (profondeur epuisee)
-    const a = result[0]
-    const b = a?.children?.[0]
-    const c = b?.children?.[0]
-    expect(c?.name).toBe('c')
-    expect(c?.children).toBeUndefined()
+    expect(subLevel.map((e) => e.name)).toEqual(['reformulation.md'])
   })
 })
 

@@ -26,7 +26,7 @@ vi.mock('../utils/local-folder', () => ({
   hasFolderPermission: vi.fn(async () => false),
   requestFolderPermission: vi.fn(async () => false),
   writeFileToFolder: vi.fn(),
-  listFolderEntries: vi.fn(async () => []),
+  listFolderLevel: vi.fn(async () => []),
 }))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
@@ -41,7 +41,7 @@ import {
   isLocalFolderSupported,
   getStoredFolderHandle,
   hasFolderPermission,
-  listFolderEntries,
+  listFolderLevel,
 } from '../utils/local-folder'
 
 const mockGetProjects = vi.mocked(getClientProjects)
@@ -50,7 +50,7 @@ const mockGetDocuments = vi.mocked(getClientDocuments)
 const mockSupported = vi.mocked(isLocalFolderSupported)
 const mockGetStoredFolderHandle = vi.mocked(getStoredFolderHandle)
 const mockHasFolderPermission = vi.mocked(hasFolderPermission)
-const mockListFolderEntries = vi.mocked(listFolderEntries)
+const mockListFolderLevel = vi.mocked(listFolderLevel)
 
 const CLIENT_ID = '444f3b89-5303-459f-a128-dfb0df99abf7'
 
@@ -184,9 +184,10 @@ describe('ClientProjectFolderTab', () => {
     mockSupported.mockReturnValue(true)
     mockGetStoredFolderHandle.mockResolvedValue({} as never)
     mockHasFolderPermission.mockResolvedValue(true)
-    mockListFolderEntries.mockResolvedValue([
-      { name: 'sous dossier de test', kind: 'directory', children: [] },
-      { name: 'devis.pdf', kind: 'file' },
+    const subFolderHandle = { kind: 'directory' as const }
+    mockListFolderLevel.mockResolvedValueOnce([
+      { name: 'sous dossier de test', kind: 'directory', handle: subFolderHandle as never },
+      { name: 'devis.pdf', kind: 'file', handle: {} as never },
     ])
 
     render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
@@ -196,5 +197,34 @@ describe('ClientProjectFolderTab', () => {
       expect(contents.textContent).toContain('sous dossier de test')
       expect(contents.textContent).toContain('devis.pdf')
     })
+  })
+
+  it('deplie un sous-dossier au clic et lit son contenu a la demande (pas avant)', async () => {
+    mockGetProjects.mockResolvedValue({ data: [project({ id: 'project-1' })], error: null })
+    mockGetDocuments.mockResolvedValue({ data: [], error: null })
+    mockSupported.mockReturnValue(true)
+    mockGetStoredFolderHandle.mockResolvedValue({} as never)
+    mockHasFolderPermission.mockResolvedValue(true)
+    const subFolderHandle = { kind: 'directory' as const }
+    mockListFolderLevel.mockClear()
+    mockListFolderLevel.mockImplementation(async (handle: unknown) => {
+      if (handle === subFolderHandle) {
+        return [{ name: 'reformulation.md', kind: 'file', handle: {} as never }]
+      }
+      return [{ name: 'Dossier CII', kind: 'directory', handle: subFolderHandle as never }]
+    })
+
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+
+    const folderRow = await screen.findByText('Dossier CII')
+    // Pas encore descendu dans le sous-dossier : un seul appel (le niveau racine)
+    expect(mockListFolderLevel).toHaveBeenCalledTimes(1)
+
+    await userEvent.click(folderRow)
+
+    await waitFor(() => {
+      expect(screen.getByText('reformulation.md')).toBeInTheDocument()
+    })
+    expect(mockListFolderLevel).toHaveBeenCalledTimes(2)
   })
 })

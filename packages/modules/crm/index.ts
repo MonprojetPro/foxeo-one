@@ -159,10 +159,10 @@ export {
   hasFolderPermission,
   requestFolderPermission,
   writeFileToFolder,
-  listFolderEntries,
+  listFolderLevel,
   LOCAL_FOLDER_CATEGORIES,
   type LocalFolderCategory,
-  type FolderEntry,
+  type FolderItem,
 } from './utils/local-folder'
 export { TIME_ESTIMATES } from './utils/time-estimates'
 export type { TimeEstimateConfig } from './utils/time-estimates'

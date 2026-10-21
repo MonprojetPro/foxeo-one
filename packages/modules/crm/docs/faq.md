@@ -209,6 +209,9 @@ R: Seule la liaison dans le Hub disparaît. Le dossier local et son contenu ne s
 **Q: Si je crée un sous-dossier moi-même dans l'Explorateur Windows, pourquoi je ne le vois pas tout de suite dans le Hub ?**
 R: Il apparaît, mais seulement après un rafraîchissement — clique sur l'icône de rafraîchissement à côté de "Dossier lié". Le Hub ne surveille pas le disque en continu, il relit le contenu à la demande.
 
+**Q: Je clique sur un sous-dossier affiché mais rien ne s'ouvre, c'est normal ?**
+R: Un clic sur un sous-dossier le **déplie** (tu dois voir un chevron qui change de sens et son contenu apparaître en dessous) — mais un **fichier** ne s'ouvre jamais depuis le Hub, par sécurité navigateur (aucun site web ne peut ouvrir un fichier de ton disque). Pour ouvrir un fichier, passe par l'Explorateur Windows.
+
 ### Rappels et calendrier
 
 **Q: Les rappels sont-ils partagés avec les clients ?**
