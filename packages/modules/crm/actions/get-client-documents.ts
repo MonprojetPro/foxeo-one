@@ -52,6 +52,7 @@ export async function getClientDocuments(
         type,
         url,
         visible_to_client,
+        client_project_id,
         created_at,
         updated_at
       `
@@ -82,6 +83,7 @@ export async function getClientDocuments(
         type: doc.type,
         url: doc.url ?? undefined,
         visibleToClient: doc.visible_to_client,
+        clientProjectId: doc.client_project_id ?? null,
         createdAt: doc.created_at,
         updatedAt: doc.updated_at,
       })

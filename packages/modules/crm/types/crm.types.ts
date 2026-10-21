@@ -211,6 +211,8 @@ export const ClientDocument = z.object({
   type: z.enum(['brief', 'livrable', 'rapport', 'autre']),
   url: z.string().url().optional(),
   visibleToClient: z.boolean(),
+  /** T-063 — projet (dossier local) auquel ce document est range. null = non assigne. */
+  clientProjectId: z.string().uuid().nullable().optional(),
   createdAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true })
 })

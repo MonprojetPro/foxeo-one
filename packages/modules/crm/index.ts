@@ -81,6 +81,7 @@ export {
   useClientProjects,
   useCreateClientProject,
   useDeleteClientProject,
+  useAssignDocumentProject,
 } from './hooks/use-client-projects'
 export { useClientNotes } from './hooks/use-client-notes'
 export { useReminders, useCreateReminder, useUpdateReminder, useToggleReminderComplete, useDeleteReminder } from './hooks/use-reminders'
@@ -110,6 +111,7 @@ export { deleteClientContact } from './actions/delete-client-contact'
 export { getClientProjects } from './actions/get-client-projects'
 export { createClientProject } from './actions/create-client-project'
 export { deleteClientProject } from './actions/delete-client-project'
+export { assignDocumentProject } from './actions/assign-document-project'
 export { createClientNote } from './actions/create-client-note'
 export { getClientNotes } from './actions/get-client-notes'
 export { updateClientNote } from './actions/update-client-note'

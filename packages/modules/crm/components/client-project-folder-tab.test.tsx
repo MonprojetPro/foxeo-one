@@ -17,6 +17,7 @@ vi.mock('../actions/get-client-projects', () => ({ getClientProjects: vi.fn() })
 vi.mock('../actions/create-client-project', () => ({ createClientProject: vi.fn() }))
 vi.mock('../actions/delete-client-project', () => ({ deleteClientProject: vi.fn() }))
 vi.mock('../actions/get-client-documents', () => ({ getClientDocuments: vi.fn() }))
+vi.mock('../actions/assign-document-project', () => ({ assignDocumentProject: vi.fn() }))
 
 vi.mock('../utils/local-folder', () => ({
   isLocalFolderSupported: vi.fn(() => false),
@@ -60,6 +61,10 @@ function project(partial: Partial<ClientProject>): ClientProject {
     updatedAt: '2026-10-20T10:00:00Z',
     ...partial,
   }
+}
+
+function doc(partial: { id: string; name: string; clientProjectId?: string | null }) {
+  return { url: 'https://example.com/file.pdf', ...partial }
 }
 
 describe('ClientProjectFolderTab', () => {
@@ -114,5 +119,53 @@ describe('ClientProjectFolderTab', () => {
     await waitFor(() => {
       expect(mockCreateProject).toHaveBeenCalledWith({ clientId: CLIENT_ID, name: 'Nouveau projet' })
     })
+  })
+
+  it('range un document uniquement sous le projet auquel il est assigne', async () => {
+    mockGetProjects.mockResolvedValue({
+      data: [project({ id: 'project-1', name: 'Site vitrine' }), project({ id: 'project-2', name: 'App mobile' })],
+      error: null,
+    })
+    mockGetDocuments.mockResolvedValue({
+      data: [
+        doc({ id: 'doc-1', name: 'devis-site.pdf', clientProjectId: 'project-1' }),
+        doc({ id: 'doc-2', name: 'devis-app.pdf', clientProjectId: 'project-2' }),
+      ],
+      error: null,
+    })
+    mockSupported.mockReturnValue(true)
+
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('project-card')).toHaveLength(2)
+    })
+
+    const cards = screen.getAllByTestId('project-card')
+    const siteCard = cards.find((c) => c.textContent?.includes('Site vitrine'))
+    const appCard = cards.find((c) => c.textContent?.includes('App mobile'))
+
+    expect(siteCard?.textContent).toContain('devis-site.pdf')
+    expect(siteCard?.textContent).not.toContain('devis-app.pdf')
+    expect(appCard?.textContent).toContain('devis-app.pdf')
+    expect(appCard?.textContent).not.toContain('devis-site.pdf')
+
+    // Aucun document non assigne a afficher dans ce cas
+    expect(screen.queryByTestId('unassigned-document')).not.toBeInTheDocument()
+  })
+
+  it('propose les documents non ranges dans un pool dedie, Ranger desactive sans selection', async () => {
+    mockGetProjects.mockResolvedValue({ data: [project({})], error: null })
+    mockGetDocuments.mockResolvedValue({
+      data: [doc({ id: 'doc-1', name: 'transcription-reunion.pdf', clientProjectId: null })],
+      error: null,
+    })
+    mockSupported.mockReturnValue(true)
+
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+
+    const unassigned = await screen.findByTestId('unassigned-document')
+    expect(unassigned.textContent).toContain('transcription-reunion.pdf')
+    expect(screen.getByTestId('assign-document')).toBeDisabled()
   })
 })
