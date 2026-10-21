@@ -20,14 +20,17 @@
 type FsPermissionState = 'granted' | 'denied' | 'prompt'
 
 interface FsFileHandle {
+  kind: 'file'
   createWritable(): Promise<{ write(data: Blob | ArrayBuffer | string): Promise<void>; close(): Promise<void> }>
 }
 
 interface FsDirectoryHandle {
+  kind: 'directory'
   getDirectoryHandle(name: string, options?: { create?: boolean }): Promise<FsDirectoryHandle>
   getFileHandle(name: string, options?: { create?: boolean }): Promise<FsFileHandle>
   queryPermission(options: { mode: 'readwrite' }): Promise<FsPermissionState>
   requestPermission(options: { mode: 'readwrite' }): Promise<FsPermissionState>
+  entries(): AsyncIterable<[string, FsDirectoryHandle | FsFileHandle]>
 }
 
 type LocalFolderHandle = FsDirectoryHandle
@@ -125,4 +128,35 @@ export async function writeFileToFolder(
   const writable = await fileHandle.createWritable()
   await writable.write(content)
   await writable.close()
+}
+
+export type FolderEntry = {
+  name: string
+  kind: 'file' | 'directory'
+  children?: FolderEntry[]
+}
+
+const MAX_LISTING_DEPTH = 3
+
+/**
+ * Lit le contenu REEL du dossier lie — fichiers/sous-dossiers que MiKL y range
+ * lui-meme a la main, pas seulement ce que le Hub y a ecrit. Lecture seule,
+ * profondeur plafonnee pour ne pas parcourir un dossier enorme sans le dire.
+ */
+export async function listFolderEntries(handle: LocalFolderHandle, depth = MAX_LISTING_DEPTH): Promise<FolderEntry[]> {
+  const entries: FolderEntry[] = []
+  for await (const [name, child] of handle.entries()) {
+    if (child.kind === 'directory') {
+      entries.push({
+        name,
+        kind: 'directory',
+        children: depth > 0 ? await listFolderEntries(child, depth - 1) : undefined,
+      })
+    } else {
+      entries.push({ name, kind: 'file' })
+    }
+  }
+  return entries.sort((a, b) =>
+    a.kind === b.kind ? a.name.localeCompare(b.name) : a.kind === 'directory' ? -1 : 1
+  )
 }

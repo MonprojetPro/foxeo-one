@@ -50,6 +50,7 @@ import {
   hasFolderPermission,
   requestFolderPermission,
   writeFileToFolder,
+  listFolderEntries,
 } from './local-folder'
 
 // ============================================================
@@ -79,6 +80,63 @@ function makeDirectoryHandle() {
     __subDir: subDir,
   }
 }
+
+type FakeNode = { name: string; kind: 'file' } | { name: string; kind: 'directory'; children: FakeNode[] }
+
+function makeFakeTree(nodes: FakeNode[]): { kind: 'directory'; entries: () => AsyncGenerator<[string, unknown]> } {
+  return {
+    kind: 'directory',
+    entries: async function* () {
+      for (const node of nodes) {
+        if (node.kind === 'file') {
+          yield [node.name, { kind: 'file' }] as [string, unknown]
+        } else {
+          yield [node.name, makeFakeTree(node.children)] as [string, unknown]
+        }
+      }
+    },
+  }
+}
+
+describe('listFolderEntries', () => {
+  it('liste fichiers et sous-dossiers, tries dossiers puis fichiers par ordre alphabetique', async () => {
+    const tree = makeFakeTree([
+      { name: 'facture.pdf', kind: 'file' },
+      { name: 'sous dossier de test', kind: 'directory', children: [{ name: 'note.txt', kind: 'file' }] },
+      { name: 'devis.pdf', kind: 'file' },
+    ])
+
+    const result = await listFolderEntries(tree as never)
+
+    expect(result.map((e) => e.name)).toEqual(['sous dossier de test', 'devis.pdf', 'facture.pdf'])
+    expect(result[0]).toMatchObject({ kind: 'directory', children: [{ name: 'note.txt', kind: 'file' }] })
+  })
+
+  it('rend un tableau vide pour un dossier vide', async () => {
+    const tree = makeFakeTree([])
+    const result = await listFolderEntries(tree as never)
+    expect(result).toEqual([])
+  })
+
+  it('plafonne la profondeur pour ne pas parcourir un dossier sans fin', async () => {
+    const tree = makeFakeTree([
+      {
+        name: 'a',
+        kind: 'directory',
+        children: [{ name: 'b', kind: 'directory', children: [{ name: 'c', kind: 'directory', children: [{ name: 'd', kind: 'directory', children: [{ name: 'trop-profond.txt', kind: 'file' }] }] }] }],
+      },
+    ])
+
+    const result = await listFolderEntries(tree as never, 2)
+
+    // a -> b -> c autorises (depth 2), c.children reste undefined (profondeur epuisee)
+    const a = result[0]
+    const b = a?.children?.[0]
+    const c = b?.children?.[0]
+    expect(c?.name).toBe('c')
+    expect(c?.children).toBeUndefined()
+  })
+})
 
 describe('isLocalFolderSupported', () => {
   it('false si showDirectoryPicker est absent de window', () => {

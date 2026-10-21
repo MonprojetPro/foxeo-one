@@ -26,6 +26,7 @@ vi.mock('../utils/local-folder', () => ({
   hasFolderPermission: vi.fn(async () => false),
   requestFolderPermission: vi.fn(async () => false),
   writeFileToFolder: vi.fn(),
+  listFolderEntries: vi.fn(async () => []),
 }))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
@@ -36,12 +37,20 @@ vi.mock('@monprojetpro/ui', async (importOriginal) => {
 import { getClientProjects } from '../actions/get-client-projects'
 import { createClientProject } from '../actions/create-client-project'
 import { getClientDocuments } from '../actions/get-client-documents'
-import { isLocalFolderSupported } from '../utils/local-folder'
+import {
+  isLocalFolderSupported,
+  getStoredFolderHandle,
+  hasFolderPermission,
+  listFolderEntries,
+} from '../utils/local-folder'
 
 const mockGetProjects = vi.mocked(getClientProjects)
 const mockCreateProject = vi.mocked(createClientProject)
 const mockGetDocuments = vi.mocked(getClientDocuments)
 const mockSupported = vi.mocked(isLocalFolderSupported)
+const mockGetStoredFolderHandle = vi.mocked(getStoredFolderHandle)
+const mockHasFolderPermission = vi.mocked(hasFolderPermission)
+const mockListFolderEntries = vi.mocked(listFolderEntries)
 
 const CLIENT_ID = '444f3b89-5303-459f-a128-dfb0df99abf7'
 
@@ -167,5 +176,25 @@ describe('ClientProjectFolderTab', () => {
     const unassigned = await screen.findByTestId('unassigned-document')
     expect(unassigned.textContent).toContain('transcription-reunion.pdf')
     expect(screen.getByTestId('assign-document')).toBeDisabled()
+  })
+
+  it('affiche le contenu reel du dossier lie, y compris ce que MiKL y range a la main', async () => {
+    mockGetProjects.mockResolvedValue({ data: [project({ id: 'project-1' })], error: null })
+    mockGetDocuments.mockResolvedValue({ data: [], error: null })
+    mockSupported.mockReturnValue(true)
+    mockGetStoredFolderHandle.mockResolvedValue({} as never)
+    mockHasFolderPermission.mockResolvedValue(true)
+    mockListFolderEntries.mockResolvedValue([
+      { name: 'sous dossier de test', kind: 'directory', children: [] },
+      { name: 'devis.pdf', kind: 'file' },
+    ])
+
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+
+    const contents = await screen.findByTestId('folder-contents')
+    await waitFor(() => {
+      expect(contents.textContent).toContain('sous dossier de test')
+      expect(contents.textContent).toContain('devis.pdf')
+    })
   })
 })

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { FolderOpen, FolderPlus, Link2, Trash2, FileDown, CheckCircle2, AlertTriangle, X } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { FolderOpen, FolderPlus, Link2, Trash2, FileDown, CheckCircle2, AlertTriangle, X, File, RefreshCw } from 'lucide-react'
 import {
   Button,
   Input,
@@ -29,6 +29,8 @@ import {
   hasFolderPermission,
   requestFolderPermission,
   writeFileToFolder,
+  listFolderEntries,
+  type FolderEntry,
 } from '../utils/local-folder'
 import type { ClientProject } from '../types/crm.types'
 
@@ -48,6 +50,31 @@ import type { ClientProject } from '../types/crm.types'
 
 type ProjectDocument = { id: string; name: string; url?: string; clientProjectId?: string | null }
 
+function FolderTreeView({ entries, depth = 0 }: { entries: FolderEntry[]; depth?: number }) {
+  if (entries.length === 0 && depth === 0) {
+    return <span className="text-xs text-muted-foreground italic">Dossier vide</span>
+  }
+  return (
+    <ul className="flex flex-col gap-0.5" style={{ paddingLeft: depth > 0 ? 16 : 0 }}>
+      {entries.map((entry) => (
+        <li key={entry.name} className="text-sm">
+          <span className="flex items-center gap-1.5 min-w-0">
+            {entry.kind === 'directory' ? (
+              <FolderOpen className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
+            ) : (
+              <File className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            )}
+            <span className="truncate">{entry.name}</span>
+          </span>
+          {entry.children && entry.children.length > 0 && (
+            <FolderTreeView entries={entry.children} depth={depth + 1} />
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 type ProjectCardProps = {
   project: ClientProject
   onDelete: (project: ClientProject) => void
@@ -60,6 +87,21 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
   const [permissionGranted, setPermissionGranted] = useState(false)
   const [checking, setChecking] = useState(true)
   const [copyingId, setCopyingId] = useState<string | null>(null)
+  const [contents, setContents] = useState<FolderEntry[] | null>(null)
+  const [loadingContents, setLoadingContents] = useState(false)
+
+  const refreshContents = useCallback(async () => {
+    const handle = await getStoredFolderHandle(project.id)
+    if (!handle || !(await hasFolderPermission(handle))) return
+    setLoadingContents(true)
+    try {
+      setContents(await listFolderEntries(handle))
+    } catch {
+      showError('Impossible de lire le contenu du dossier')
+    } finally {
+      setLoadingContents(false)
+    }
+  }, [project.id])
 
   useEffect(() => {
     let cancelled = false
@@ -74,14 +116,16 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
         return
       }
       setLinked(true)
-      setPermissionGranted(await hasFolderPermission(handle))
+      const granted = await hasFolderPermission(handle)
+      setPermissionGranted(granted)
       setChecking(false)
+      if (granted) await refreshContents()
     }
     check()
     return () => {
       cancelled = true
     }
-  }, [project.id])
+  }, [project.id, refreshContents])
 
   async function handleLinkFolder() {
     try {
@@ -93,6 +137,7 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
       setLinked(true)
       setPermissionGranted(await hasFolderPermission(handle))
       showSuccess(`Dossier lié à « ${project.name} »`)
+      await refreshContents()
     } catch {
       // L'utilisateur a annulé le sélecteur — rien à signaler.
     }
@@ -103,7 +148,11 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
     if (!handle) return
     const granted = await requestFolderPermission(handle)
     setPermissionGranted(granted)
-    if (!granted) showError('Permission refusée — relie le dossier à nouveau.')
+    if (!granted) {
+      showError('Permission refusée — relie le dossier à nouveau.')
+    } else {
+      await refreshContents()
+    }
   }
 
   async function handleCopyDocument(doc: ProjectDocument) {
@@ -163,10 +212,30 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
           Lier un dossier local
         </Button>
       ) : permissionGranted ? (
-        <Badge variant="outline" className="w-fit gap-1 text-emerald-400 border-emerald-400/40">
-          <CheckCircle2 className="h-3 w-3" />
-          Dossier lié
-        </Badge>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <Badge variant="outline" className="w-fit gap-1 text-emerald-400 border-emerald-400/40">
+              <CheckCircle2 className="h-3 w-3" />
+              Dossier lié
+            </Badge>
+            <button
+              type="button"
+              onClick={refreshContents}
+              aria-label="Actualiser le contenu du dossier"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+              data-testid="refresh-folder-contents"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loadingContents ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+          <div className="rounded-md border border-border bg-muted/30 px-3 py-2 max-h-48 overflow-y-auto" data-testid="folder-contents">
+            {contents === null ? (
+              <Skeleton className="h-4 w-full" />
+            ) : (
+              <FolderTreeView entries={contents} />
+            )}
+          </div>
+        </div>
       ) : (
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="w-fit gap-1 text-orange-400 border-orange-400/40">

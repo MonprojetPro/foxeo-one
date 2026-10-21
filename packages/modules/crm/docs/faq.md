@@ -206,6 +206,9 @@ R: Oui — autant que nécessaire s'il y a plusieurs chantiers en parallèle. Ch
 **Q: Que se passe-t-il si je supprime un projet ?**
 R: Seule la liaison dans le Hub disparaît. Le dossier local et son contenu ne sont jamais touchés, et les documents déjà rangés dans ce projet restent référencés (le rattachement repasse simplement à vide).
 
+**Q: Si je crée un sous-dossier moi-même dans l'Explorateur Windows, pourquoi je ne le vois pas tout de suite dans le Hub ?**
+R: Il apparaît, mais seulement après un rafraîchissement — clique sur l'icône de rafraîchissement à côté de "Dossier lié". Le Hub ne surveille pas le disque en continu, il relit le contenu à la demande.
+
 ### Rappels et calendrier
 
 **Q: Les rappels sont-ils partagés avec les clients ?**
