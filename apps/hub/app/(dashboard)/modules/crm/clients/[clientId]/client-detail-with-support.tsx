@@ -12,10 +12,11 @@ import { LabBillingTab, getClientLabStatus } from '@monprojetpro/modules-factura
 import { ClientExportButton, ImpersonationButton } from '@monprojetpro/module-admin'
 import { ClientEmailTab, getGmailStatus } from '@monprojetpro/modules-email'
 import { OperatorOverrideSection } from '@monprojetpro/modules-notifications'
+import { CiiReformulationTab } from '@monprojetpro/modules-cii'
 import type { Client } from '@monprojetpro/modules-crm'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Gauge, Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings, Video, FolderCog } from 'lucide-react'
+import { Gauge, Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings, Video, FolderCog, BadgePercent } from 'lucide-react'
 
 interface ClientDetailWithSupportProps {
   client: Client
@@ -132,6 +133,12 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         label: 'Projet',
         icon: FolderCog, color: '#818cf8',
         content: <ClientProjectFolderTab clientId={client.id} />,
+      },
+      {
+        value: 'cii',
+        label: 'CII',
+        icon: BadgePercent, color: '#f59e0b',
+        content: <CiiReformulationTab clientId={client.id} />,
       },
       {
         value: 'emails',

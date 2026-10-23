@@ -22,6 +22,7 @@
     "@monprojetpro/module-templates": "*",
     "@monprojetpro/module-visio": "*",
     "@monprojetpro/modules-chat": "*",
+    "@monprojetpro/modules-cii": "*",
     "@monprojetpro/modules-crm": "*",
     "@monprojetpro/modules-email": "*",
     "@monprojetpro/modules-facturation": "*",
