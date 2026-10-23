@@ -6,7 +6,7 @@ import {
   type LucideIcon,
   Clock, FolderOpen, MessageSquare, Zap,
   Mail, Headphones, ClipboardList, Bot, Palette, FlaskConical, Settings,
-  MessageCircle, Pause, Lock, Gauge, CircleSlash, RotateCcw, Users, Video, FolderCog,
+  MessageCircle, Pause, Lock, Gauge, CircleSlash, RotateCcw, Users, Video, FolderCog, BadgePercent,
 } from 'lucide-react'
 import { cn } from '@monprojetpro/utils'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
@@ -174,6 +174,11 @@ export function ClientTabs({
     ...(extraTabValues.has('visio')          ? [{ type: 'tab' as const, value: 'visio',         label: 'Visio',       Icon: Video,         color: '#2dd4bf' }] : []),
     // 4 — Emails        amber
     ...(extraTabValues.has('emails')         ? [{ type: 'tab' as const, value: 'emails',        label: 'Emails',      Icon: Mail,          color: '#f59e0b' }] : []),
+    // 4ter — CII        vert — T-062, assistant de reformulation Credit d'Impot Innovation.
+    //        ⚠️ Un onglet se declare en DEUX endroits : ici, ET dans `extraTabs`
+    //        (apps/hub/.../client-detail-with-support.tsx). N'en faire qu'un seul
+    //        rend l'onglet invisible sans aucune erreur.
+    ...(extraTabValues.has('cii')            ? [{ type: 'tab' as const, value: 'cii',           label: 'CII',         Icon: BadgePercent,  color: '#22c55e' }] : []),
     // 4bis — Contacts  rose — T-039, le carnet : qui fait quoi, et a qui partent les factures
     { type: 'tab',    value: 'contacts',      label: 'Contacts',    Icon: Users,         color: '#f472b6' },
     // 5 — Échanges      lavender

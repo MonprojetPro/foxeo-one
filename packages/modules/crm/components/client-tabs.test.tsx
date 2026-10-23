@@ -104,4 +104,26 @@ describe('ClientTabs', () => {
 
     expect(screen.queryByRole('button', { name: /visio/i })).not.toBeInTheDocument()
   })
+
+  // T-062 — même verrou des deux surfaces que Visio (T-051) : oublié une fois
+  // en livrant le module CII (déclaré dans extraTabs côté app, absent de la
+  // liste `allItems` ici — onglet invisible sans la moindre erreur).
+  it('affiche l\'onglet « CII » et son contenu quand l\'app le fournit en extraTab', () => {
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('tab=cii'))
+    const extraTabs: ExtraTab[] = [
+      { value: 'cii', label: 'CII', content: <div>Onglet CII du client</div> },
+    ]
+    renderWithQueryClient(<ClientTabs client={mockClient} extraTabs={extraTabs} />)
+
+    const cii = screen.getByRole('button', { name: /cii/i })
+    expect(cii).toBeInTheDocument()
+    expect(cii).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Onglet CII du client')).toBeInTheDocument()
+  })
+
+  it('n\'affiche PAS l\'onglet « CII » quand l\'app ne le fournit pas', () => {
+    renderWithQueryClient(<ClientTabs client={mockClient} />)
+
+    expect(screen.queryByRole('button', { name: /^cii$/i })).not.toBeInTheDocument()
+  })
 })

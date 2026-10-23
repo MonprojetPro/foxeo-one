@@ -137,7 +137,7 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
       {
         value: 'cii',
         label: 'CII',
-        icon: BadgePercent, color: '#f59e0b',
+        icon: BadgePercent, color: '#22c55e',
         content: <CiiReformulationTab clientId={client.id} />,
       },
       {
