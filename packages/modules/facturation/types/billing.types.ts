@@ -280,6 +280,8 @@ export type ClientWithPennylane = {
   /** Story 11.6 — Statut paiement forfait Lab */
   labPaid?: boolean
   labPaidAt?: string | null
+  /** T-062a — coche manuelle sur la fiche client (jamais un calcul automatique). */
+  ciiPmeEligible?: boolean
 }
 
 export type BillingSyncRow = {

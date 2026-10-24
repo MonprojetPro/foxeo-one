@@ -62,6 +62,7 @@ export function ClientForm({
       phone: '',
       sector: '',
       clientType: 'ponctuel',
+      ciiPmeEligible: false,
       ...defaultValues,
     },
   })
@@ -371,6 +372,28 @@ export function ClientForm({
           <p className="text-sm text-destructive">{errors.clientType.message}</p>
         )}
       </fieldset>
+
+      {/* T-062a — qualification manuelle, jamais un calcul automatique : l'effectif
+          et le bilan ne sont pas des donnees que le Hub possede. Reservee aux
+          entites (CONSIGNES-CII-HUB.md §2.1 exclut d'office les auto-entrepreneurs
+          et professions liberales en nom propre, modelises ici comme particuliers). */}
+      {isEntity && (
+        <div className="space-y-1">
+          <label htmlFor="client-cii-pme-eligible" className="flex items-center gap-2 text-sm">
+            <input
+              id="client-cii-pme-eligible"
+              type="checkbox"
+              className="h-4 w-4 rounded border-border bg-background accent-primary"
+              {...register('ciiPmeEligible')}
+            />
+            Éligible CII (PME)
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Statut PME au sens communautaire (effectif &lt; 250, CA ≤ 50 M€ ou bilan ≤ 43 M€). À
+            vérifier au cas par cas (ex. SELARL à l&apos;IS).
+          </p>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex justify-end gap-2 pt-2">

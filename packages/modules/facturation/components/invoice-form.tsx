@@ -9,6 +9,8 @@ import { showSuccess, showError } from '@monprojetpro/ui'
 import { createInvoice } from '../actions/create-invoice'
 import { CommercialGestureFields } from './commercial-gesture-fields'
 import { DEFAULT_GESTURE_LABEL } from '../utils/commercial-gesture'
+import { CiiMentionFields } from './cii-mention-fields'
+import { buildCiiInvoiceMention } from '../utils/cii-mention'
 import {
   findZeroAmountLines,
   describeZeroAmountLine,
@@ -144,6 +146,9 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
   const watchedItems = useWatch({ control, name: 'lineItems' })
   const watchedTarget = useWatch({ control, name: 'targetTotalHt' }) ?? ''
   const watchedGestureLabel = useWatch({ control, name: 'gestureLabel' }) ?? ''
+  const watchedClientId = useWatch({ control, name: 'clientId' })
+  const watchedPublicNotes = useWatch({ control, name: 'publicNotes' }) ?? ''
+  const selectedClient = clients.find((c) => c.id === watchedClientId)
 
   // Totaux au TARIF CATALOGUE — ce qui est saisi, gestes non deduits
   const catalogTotalHt = (watchedItems ?? []).reduce((sum, item) => {
@@ -549,6 +554,19 @@ export function InvoiceForm({ clients, onSuccess }: InvoiceFormProps) {
           <span data-testid="invoice-total-ttc">{totalTtc.toFixed(2)} €</span>
         </div>
       </div>
+
+      {/* T-062a — panneau CII, visible seulement si le client est marqué éligible.
+          La clé force un remount au changement de client : la case « Projet
+          innovant CII » ne doit jamais rester cochée pour le client suivant. */}
+      <CiiMentionFields
+        key={watchedClientId}
+        clientPmeEligible={selectedClient?.ciiPmeEligible ?? false}
+        totalHt={totalHt}
+        publicNotesValue={watchedPublicNotes}
+        onPublicNotesChange={(v) => setValue('publicNotes', v, { shouldValidate: false })}
+        mention={buildCiiInvoiceMention()}
+        documentWord="facture"
+      />
 
       {/* Notes */}
       <div className="flex flex-col gap-1">

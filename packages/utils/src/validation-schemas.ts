@@ -55,6 +55,8 @@ const clientIdentityFields = {
   billingCity: z.string().max(120).optional().or(z.literal('')),
   phone: phoneSchema.optional().or(z.literal('')),
   sector: z.string().optional(),
+  /** T-062a — coche manuelle, jamais un calcul automatique (voir CONSIGNES-CII-HUB.md §2.1). */
+  ciiPmeEligible: z.boolean().optional(),
 }
 
 /**

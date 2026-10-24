@@ -85,6 +85,8 @@ export const Client = z.object({
    * il vaut mieux oublier un badge que d'en afficher un sur un vrai client.
    */
   isDemo: z.boolean().optional(),
+  /** T-062a — eligibilite PME au sens CII, coche manuelle valable pour tous les projets du client. */
+  ciiPmeEligible: z.boolean().optional(),
 })
 
 export type Client = z.infer<typeof Client>

@@ -182,6 +182,42 @@ describe('updateClient Server Action', () => {
     expect(result.data).not.toHaveProperty('client_type')
   })
 
+  it('should persist ciiPmeEligible as cii_pme_eligible and return it camelCase (T-062a)', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: validAuthUuid } },
+      error: null,
+    })
+
+    mockSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        operator_id: testOperatorId,
+        name: 'Nouveau Nom',
+        company: 'Acme Corp',
+        email: 'jean@acme.com',
+        client_type: 'complet',
+        status: 'lab-actif',
+        sector: null,
+        phone: null,
+        website: null,
+        notes: null,
+        cii_pme_eligible: true,
+        created_at: '2026-02-13T10:00:00Z',
+        updated_at: '2026-02-13T12:00:00Z',
+      },
+      error: null,
+    })
+
+    const { updateClient } = await import('./update-client')
+    const result = await updateClient(testClientId, { ciiPmeEligible: true })
+
+    expect(result.error).toBeNull()
+    expect(result.data?.ciiPmeEligible).toBe(true)
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ cii_pme_eligible: true })
+    )
+  })
+
   it('should include operator_id filter in update query', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: validAuthUuid } },

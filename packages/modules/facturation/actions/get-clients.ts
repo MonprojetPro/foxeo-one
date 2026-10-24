@@ -18,7 +18,7 @@ export async function getClientsWithPennylane(): Promise<ActionResponse<ClientWi
 
   const { data, error: dbError } = await supabase
     .from('clients')
-    .select('id, name, company, email, pennylane_customer_id, lab_paid, lab_paid_at')
+    .select('id, name, company, email, pennylane_customer_id, lab_paid, lab_paid_at, cii_pme_eligible')
     .eq('status', 'active')
     .order('name')
 
@@ -41,6 +41,7 @@ export async function getClientsWithPennylane(): Promise<ActionResponse<ClientWi
     pennylaneCustomerId: (row.pennylane_customer_id as string | null) ?? null,
     labPaid: (row.lab_paid as boolean | null) ?? false,
     labPaidAt: (row.lab_paid_at as string | null) ?? null,
+    ciiPmeEligible: (row.cii_pme_eligible as boolean | null) ?? false,
   }))
 
   return { data: clients, error: null }

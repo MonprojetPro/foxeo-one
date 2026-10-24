@@ -127,6 +127,7 @@ export async function updateClient(
     if (updateData.billingPostalCode !== undefined) dbUpdate.billing_postal_code = updateData.billingPostalCode || null
     if (updateData.billingCity !== undefined) dbUpdate.billing_city = updateData.billingCity || null
     if (updateData.billingAddress) dbUpdate.billing_country_alpha2 = 'FR'
+    if (updateData.ciiPmeEligible !== undefined) dbUpdate.cii_pme_eligible = updateData.ciiPmeEligible
 
     // Identité — même règle qu'à la création (T-035) : pour une entité, `name` et
     // `company` portent tous deux la raison sociale, le prénom est vidé et le
@@ -205,6 +206,7 @@ export async function updateClient(
       phone: clientData.phone ?? undefined,
       website: clientData.website ?? undefined,
       notes: clientData.notes ?? undefined,
+      ciiPmeEligible: clientData.cii_pme_eligible ?? false,
       createdAt: clientData.created_at,
       updatedAt: clientData.updated_at,
     }

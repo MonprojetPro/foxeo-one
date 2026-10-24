@@ -105,6 +105,7 @@ export function EditClientDialog({
             phone: client.phone,
             sector: client.sector,
             clientType: client.clientType,
+            ciiPmeEligible: client.ciiPmeEligible ?? false,
           }}
           mode="edit"
           isPending={isPending}

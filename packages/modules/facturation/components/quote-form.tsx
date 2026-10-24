@@ -10,6 +10,8 @@ import { createAndSendQuote } from '../actions/create-quote'
 import { updateQuote } from '../actions/update-quote'
 import { CommercialGestureFields } from './commercial-gesture-fields'
 import { DEFAULT_GESTURE_LABEL, reconstructGestureFromLines } from '../utils/commercial-gesture'
+import { CiiMentionFields } from './cii-mention-fields'
+import { buildCiiQuoteMention } from '../utils/cii-mention'
 import {
   findZeroAmountLines,
   describeZeroAmountLine,
@@ -159,6 +161,7 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
   const watchedClientId = useWatch({ control, name: 'clientId' })
   const watchedTarget = useWatch({ control, name: 'targetTotalHt' }) ?? ''
   const watchedGestureLabel = useWatch({ control, name: 'gestureLabel' }) ?? ''
+  const watchedPublicNotes = useWatch({ control, name: 'publicNotes' }) ?? ''
 
   // Auto-remplissage des lignes quand le type de devis change (creation uniquement)
   function handleQuoteTypeChange(newType: string) {
@@ -582,6 +585,19 @@ export function QuoteForm({ clients, onSuccess, initialValues }: QuoteFormProps)
           <span data-testid="total-ttc">{totalTtc.toFixed(2)} €</span>
         </div>
       </div>
+
+      {/* T-062a — panneau CII, visible seulement si le client est marqué éligible.
+          La clé force un remount au changement de client : la case « Projet
+          innovant CII » ne doit jamais rester cochée pour le client suivant. */}
+      <CiiMentionFields
+        key={watchedClientId}
+        clientPmeEligible={selectedClient?.ciiPmeEligible ?? false}
+        totalHt={totalHt}
+        publicNotesValue={watchedPublicNotes}
+        onPublicNotesChange={(v) => setValue('publicNotes', v, { shouldValidate: false })}
+        mention={buildCiiQuoteMention()}
+        documentWord="devis"
+      />
 
       {/* Notes */}
       <div className="grid grid-cols-2 gap-4">
