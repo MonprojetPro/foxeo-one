@@ -2,6 +2,12 @@
 
 > Source de verite produit, tenue par OTTO. Reconstitue le 2026-08-24 depuis CLAUDE.md, docs/ et 756 commits git.
 > **Regle d'or : un identifiant est immortel. On change son statut, jamais son existence.**
+>
+> 📄 **Ce fichier est le carnet de preuve technique (pour Claude Code), pas le document a lire ou a montrer a un client.**
+> La vue lisible, en langage courant, classee par Epic/User Story — exportable en PDF — vit dans
+> `docs/00-product-prd.md`. Regle depuis le 2026-10-26 (proposition EVA validee par MiKL) : **toute
+> convergence qui touche ce board (section 4bis) met AUSSI a jour le PRD lisible, au meme moment,
+> jamais en differe.**
 
 | | |
 |---|---|
