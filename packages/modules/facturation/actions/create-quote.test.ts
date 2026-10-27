@@ -20,6 +20,10 @@ vi.mock('./trigger-billing-sync', () => ({
   triggerBillingSync: vi.fn().mockResolvedValue({ data: { synced: 1 }, error: null }),
 }))
 
+vi.mock('../utils/archive-billing-document', () => ({
+  archiveBillingDocumentAsDocument: vi.fn().mockResolvedValue(undefined),
+}))
+
 // T-039 — la resolution des destinataires (carnet de contacts) a sa propre suite
 // de tests : ici on la neutralise pour que ces tests restent sur leur sujet,
 // l'emission. Les tests qui verifient le carnet surchargent ce mock.
@@ -37,10 +41,12 @@ import { triggerBillingSync } from './trigger-billing-sync'
 import { createAndSendQuote } from './create-quote'
 
 import { resolveBillingRecipients } from './resolve-billing-recipients'
+import { archiveBillingDocumentAsDocument } from '../utils/archive-billing-document'
 
 const mockCreateServerSupabaseClient = vi.mocked(createServerSupabaseClient)
 const mockPennylane = vi.mocked(pennylaneClient)
 const mockTriggerBillingSync = vi.mocked(triggerBillingSync)
+const mockArchive = vi.mocked(archiveBillingDocumentAsDocument)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -68,6 +74,16 @@ function makeSupabaseMock(opts: {
         return {
           select: vi.fn().mockReturnValue(eqChain),
           update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+        }
+      }
+      if (table === 'operators') {
+        // T-063b — lookup operators.id avant l'archivage best-effort.
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'operator-row-1' }, error: null }),
+            }),
+          }),
         }
       }
       return {
@@ -245,6 +261,9 @@ describe('createAndSendQuote', () => {
       if (table === 'clients') {
         return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-user-1', pennylane_customer_id: '275890907' }, error: null }) }) }
       }
+      if (table === 'operators') {
+        return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'operator-row-1' }, error: null }) }) }) }
+      }
       return {
         insert: insertMock,
         upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -279,6 +298,9 @@ describe('createAndSendQuote', () => {
     supabase.from = vi.fn((table: string) => {
       if (table === 'clients') {
         return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnThis(), single: vi.fn().mockResolvedValue({ data: { id: 'client-1', name: 'ACME', auth_user_id: 'auth-user-1', pennylane_customer_id: '275890907' }, error: null }) }) }
+      }
+      if (table === 'operators') {
+        return { select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: { id: 'operator-row-1' }, error: null }) }) }) }
       }
       return {
         insert: insertMock,
@@ -484,5 +506,43 @@ describe('createAndSendQuote — Lab deduction', () => {
     const postCall = mockPennylane.post.mock.calls[0]
     const freeText = postCall[1].pdf_invoice_free_text as string
     expect(freeText).toContain('[LAB_DEDUCTION:19900]')
+  })
+})
+
+describe('createAndSendQuote — T-063b archivage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockTriggerBillingSync.mockResolvedValue({ data: { synced: 1 }, error: null })
+  })
+
+  it('archive le devis dans le dossier du client, sans bloquer si ca echoue', async () => {
+    const supabase = makeSupabaseMock()
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
+
+    const result = await createAndSendQuote('client-1', mockLineItems, {})
+
+    expect(result.error).toBeNull()
+    expect(mockArchive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: 'client-1',
+        operatorId: 'operator-row-1',
+        kind: 'quote',
+        pennylaneId: String(mockPennylaneQuote.id),
+        documentNumber: mockPennylaneQuote.quote_number,
+      })
+    )
+  })
+
+  it('une archive qui plante ne fait jamais echouer le devis', async () => {
+    const supabase = makeSupabaseMock()
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase as unknown as ReturnType<typeof createServerSupabaseClient>)
+    mockPennylane.post.mockResolvedValue({ data: mockPennylaneQuote, error: null })
+    mockArchive.mockRejectedValueOnce(new Error('storage down'))
+
+    const result = await createAndSendQuote('client-1', mockLineItems, {})
+
+    expect(result.error).toBeNull()
+    expect(result.data).not.toBeNull()
   })
 })

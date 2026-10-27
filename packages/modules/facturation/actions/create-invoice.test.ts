@@ -29,6 +29,10 @@ vi.mock('../utils/send-by-email-with-retry', () => ({
   sendByEmailWithRetry: vi.fn(),
 }))
 
+vi.mock('../utils/archive-billing-document', () => ({
+  archiveBillingDocumentAsDocument: vi.fn().mockResolvedValue(undefined),
+}))
+
 // T-039 — la resolution des destinataires (carnet de contacts) a sa propre suite
 // de tests : ici on la neutralise pour que ces tests restent sur leur sujet,
 // l'emission. Les tests qui verifient le carnet surchargent ce mock.
@@ -48,12 +52,14 @@ import { createInvoice } from './create-invoice'
 import type { LineItem } from '../types/billing.types'
 
 import { resolveBillingRecipients } from './resolve-billing-recipients'
+import { archiveBillingDocumentAsDocument } from '../utils/archive-billing-document'
 
 const mockCreateServerSupabaseClient = vi.mocked(createServerSupabaseClient)
 const mockPennylane = vi.mocked(pennylaneClient)
 const mockCreateCustomer = vi.mocked(createPennylaneCustomer)
 const mockSendByEmail = vi.mocked(sendByEmailWithRetry)
 const mockRecipients = vi.mocked(resolveBillingRecipients)
+const mockArchive = vi.mocked(archiveBillingDocumentAsDocument)
 
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -86,7 +92,11 @@ function makeSupabaseMock(options: { isOperator?: boolean; client?: ClientRow | 
     data: client,
     error: client ? null : { message: 'not found' },
   })
-  const select = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ single }) })
+  // T-063b — reutilise par le lookup `operators` (archivage) : .maybeSingle()
+  // rend un id d'operateur bidon, suffisant pour que l'archivage best-effort
+  // soit tente (et intercepte par son propre mock, voir mockArchive).
+  const maybeSingle = vi.fn().mockResolvedValue({ data: { id: 'operator-row-1' }, error: null })
+  const select = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ single, maybeSingle }) })
 
   return {
     auth: {
@@ -650,5 +660,36 @@ describe('createInvoice', () => {
       ([payload]) => (payload as Record<string, unknown>).recipient_type === 'client'
     )
     expect(notifCall).toBeUndefined()
+  })
+
+  it('T-063b — archive la facture dans le dossier du client, sans bloquer si ca echoue', async () => {
+    const supabase = makeSupabaseMock()
+    useSupabase(supabase)
+    mockInvoiceCreated(9100, 'FA-2026-001')
+
+    const result = await createInvoice('client-1', LINES)
+
+    expect(result.error).toBeNull()
+    expect(mockArchive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: 'client-1',
+        operatorId: 'operator-row-1',
+        kind: 'invoice',
+        pennylaneId: '9100',
+        documentNumber: 'FA-2026-001',
+      })
+    )
+  })
+
+  it('T-063b — une archive qui plante ne fait jamais echouer la facture', async () => {
+    const supabase = makeSupabaseMock()
+    useSupabase(supabase)
+    mockInvoiceCreated()
+    mockArchive.mockRejectedValueOnce(new Error('storage down'))
+
+    const result = await createInvoice('client-1', LINES)
+
+    expect(result.error).toBeNull()
+    expect(result.data).not.toBeNull()
   })
 })

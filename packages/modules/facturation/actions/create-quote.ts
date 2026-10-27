@@ -10,6 +10,7 @@ import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
 import { createPennylaneCustomer } from './billing-proxy'
+import { archiveBillingDocumentAsDocument } from '../utils/archive-billing-document'
 import type { ActionResponse } from '@monprojetpro/types'
 import type { LineItem, PennylaneQuote, CreateQuoteOptions } from '../types/billing.types'
 
@@ -269,6 +270,24 @@ export async function createAndSendQuote(
   })
   if (logError) {
     console.warn('[FACTURATION:CREATE_QUOTE] Activity log insert failed:', logError)
+  }
+
+  // T-063b — archivage best-effort dans le dossier du client (jamais bloquant :
+  // le devis est deja acte cote Pennylane a ce stade).
+  try {
+    const { data: operatorRow } = await supabase.from('operators').select('id').eq('auth_user_id', userId).maybeSingle()
+    if (operatorRow?.id) {
+      await archiveBillingDocumentAsDocument({
+        supabase,
+        clientId,
+        operatorId: operatorRow.id,
+        kind: 'quote',
+        pennylaneId: String(createdQuote.id),
+        documentNumber: createdQuote.quote_number ?? null,
+      })
+    }
+  } catch (archiveErr) {
+    console.warn('[FACTURATION:CREATE_QUOTE] Archivage document skipped:', archiveErr)
   }
 
   return { data: String(createdQuote.id), error: null }

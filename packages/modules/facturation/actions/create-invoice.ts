@@ -10,6 +10,7 @@ import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { triggerBillingSync } from './trigger-billing-sync'
 import { assertOperator } from './assert-operator'
 import { createPennylaneCustomer } from './billing-proxy'
+import { archiveBillingDocumentAsDocument } from '../utils/archive-billing-document'
 import type { ActionResponse } from '@monprojetpro/types'
 import type { LineItem, CreateInvoiceOptions } from '../types/billing.types'
 
@@ -369,6 +370,24 @@ export async function createInvoice(
   })
   if (logError) {
     console.warn('[FACTURATION:CREATE_INVOICE] Activity log insert failed:', logError)
+  }
+
+  // T-063b — archivage best-effort dans le dossier du client (jamais bloquant :
+  // la facture est deja actee cote Pennylane a ce stade).
+  try {
+    const { data: operatorRow } = await supabase.from('operators').select('id').eq('auth_user_id', userId).maybeSingle()
+    if (operatorRow?.id) {
+      await archiveBillingDocumentAsDocument({
+        supabase,
+        clientId,
+        operatorId: operatorRow.id,
+        kind: 'invoice',
+        pennylaneId: pennylaneInvoiceId,
+        documentNumber: invoiceNumber,
+      })
+    }
+  } catch (archiveErr) {
+    console.warn('[FACTURATION:CREATE_INVOICE] Archivage document skipped:', archiveErr)
   }
 
   return {
