@@ -205,14 +205,20 @@ export const ActivityLog = z.object({
 export type ActivityLog = z.infer<typeof ActivityLog>
 export type ActivityLogType = string
 
-// Client Document types (stub for Epic 4)
+// Client Document types
+// ⚠️ T-063 (27-10) — alignes sur les VRAIES colonnes de `documents` (verifiees en
+// base), pas sur un schema suppose. L'ancien schema (type/url/visibleToClient)
+// interrogeait des colonnes inexistantes : la requete echouait en silence et
+// l'onglet Dossier n'affichait jamais aucun document, quoi qu'il y ait en base.
+// Pas d'URL stockee (stockage prive) — se resout a la demande via
+// `getDocumentUrl` du module documents (meme precedent que client-documents-tab.tsx).
 export const ClientDocument = z.object({
   id: z.string().uuid(),
   clientId: z.string().uuid(),
   name: z.string(),
-  type: z.enum(['brief', 'livrable', 'rapport', 'autre']),
-  url: z.string().url().optional(),
-  visibleToClient: z.boolean(),
+  fileType: z.string(),
+  visibility: z.enum(['private', 'shared']),
+  tags: z.array(z.string()).default([]),
   /** T-063 — projet (dossier local) auquel ce document est range. null = non assigne. */
   clientProjectId: z.string().uuid().nullable().optional(),
   createdAt: z.string().datetime({ offset: true }),

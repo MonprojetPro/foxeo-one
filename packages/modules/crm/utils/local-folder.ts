@@ -113,9 +113,91 @@ export const LOCAL_FOLDER_CATEGORIES = {
   dossierCii: 'Dossier CII',
   transcriptions: 'Transcriptions',
   consignes: 'Consignes',
+  // T-063 (suite, 27-10) — tout document dont la nature n'est pas reconnue
+  // atterrit ici plutot que d'etre silencieusement ignore.
+  autres: 'Autres documents',
 } as const
 
 export type LocalFolderCategory = keyof typeof LOCAL_FOLDER_CATEGORIES
+
+// ============================================================
+// T-063 (suite, 27-10) — Dossier racine "Projets MPP" lie UNE SEULE FOIS
+// (plus un dossier par projet) : MiKL autorise l'acces a son dossier racine
+// local, et le Hub y cree ensuite tout seul un sous-dossier au nom de chaque
+// client, avec les categories ci-dessus deja en place. Meme mecanisme de
+// stockage (IndexedDB) que pour les handles par projet — seule la cle change.
+// ============================================================
+
+const ROOT_FOLDER_ID = '__root_projets_mpp__'
+
+export async function pickAndStoreRootFolder(): Promise<LocalFolderHandle | null> {
+  return pickAndStoreFolder(ROOT_FOLDER_ID)
+}
+
+export async function getStoredRootFolder(): Promise<LocalFolderHandle | null> {
+  return getStoredFolderHandle(ROOT_FOLDER_ID)
+}
+
+function sanitizeFolderName(name: string): string {
+  const cleaned = name.trim().replace(/[\\/:*?"<>|]/g, '-').replace(/\s{2,}/g, ' ')
+  return cleaned.slice(0, 120) || 'Client'
+}
+
+/**
+ * Cree (ou retrouve) le dossier nomme d'apres le client sous le dossier racine
+ * lie, avec ses sous-dossiers par nature deja presents. Idempotent — rappelable
+ * a chaque fois sans dupliquer quoi que ce soit (getDirectoryHandle create:true
+ * retrouve le dossier s'il existe deja).
+ */
+export async function ensureClientFolder(
+  rootHandle: LocalFolderHandle,
+  clientName: string
+): Promise<LocalFolderHandle> {
+  const clientDir = await rootHandle.getDirectoryHandle(sanitizeFolderName(clientName), { create: true })
+  for (const label of Object.values(LOCAL_FOLDER_CATEGORIES)) {
+    await clientDir.getDirectoryHandle(label, { create: true })
+  }
+  return clientDir
+}
+
+/** Devine le sous-dossier de nature a partir des tags poses par la source (visio, Elio, facturation…). */
+export function inferLocalCategoryFromTags(tags: string[] = []): LocalFolderCategory {
+  const lower = tags.map((t) => t.toLowerCase())
+  if (lower.some((t) => t.includes('transcription') || t.includes('visio'))) return 'transcriptions'
+  if (lower.some((t) => t.includes('parcours') || t.includes('valid'))) return 'documentsElio'
+  if (lower.some((t) => t.includes('facturation') || t.includes('devis') || t.includes('facture'))) return 'devisFactures'
+  return 'autres'
+}
+
+// Documents deja copies dans le dossier local, pour ne pas les re-copier a
+// chaque passage — suivi par client, stocke dans le meme magasin IndexedDB
+// (cle dediee), jamais en base : c'est un etat propre a CE navigateur.
+function archivedDocsKey(clientId: string): string {
+  return `archived-docs:${clientId}`
+}
+
+export async function getArchivedDocumentIds(clientId: string): Promise<Set<string>> {
+  const db = await openDb()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly')
+    const req = tx.objectStore(STORE_NAME).get(archivedDocsKey(clientId))
+    req.onsuccess = () => resolve(new Set((req.result as string[] | undefined) ?? []))
+    req.onerror = () => reject(req.error)
+  })
+}
+
+export async function markDocumentsArchived(clientId: string, documentIds: string[]): Promise<void> {
+  if (documentIds.length === 0) return
+  const existing = await getArchivedDocumentIds(clientId)
+  documentIds.forEach((id) => existing.add(id))
+  const db = await openDb()
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite')
+    tx.objectStore(STORE_NAME).put(Array.from(existing), archivedDocsKey(clientId))
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error)
+  })
+}
 
 export async function writeFileToFolder(
   rootHandle: LocalFolderHandle,

@@ -132,7 +132,7 @@ export function ClientDetailWithSupport({ client }: ClientDetailWithSupportProps
         value: 'projet',
         label: 'Projet',
         icon: FolderCog, color: '#818cf8',
-        content: <ClientProjectFolderTab clientId={client.id} />,
+        content: <ClientProjectFolderTab clientId={client.id} clientName={client.company || client.name} />,
       },
       {
         value: 'cii',

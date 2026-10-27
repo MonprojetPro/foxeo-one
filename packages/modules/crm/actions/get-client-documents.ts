@@ -49,15 +49,16 @@ export async function getClientDocuments(
         id,
         client_id,
         name,
-        type,
-        url,
-        visible_to_client,
+        file_type,
+        visibility,
+        tags,
         client_project_id,
         created_at,
         updated_at
       `
       )
       .eq('client_id', clientId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(100)
 
@@ -80,9 +81,9 @@ export async function getClientDocuments(
         id: doc.id,
         clientId: doc.client_id,
         name: doc.name,
-        type: doc.type,
-        url: doc.url ?? undefined,
-        visibleToClient: doc.visible_to_client,
+        fileType: doc.file_type,
+        visibility: doc.visibility,
+        tags: doc.tags ?? [],
         clientProjectId: doc.client_project_id ?? null,
         createdAt: doc.created_at,
         updatedAt: doc.updated_at,

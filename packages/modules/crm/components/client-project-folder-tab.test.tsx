@@ -27,6 +27,16 @@ vi.mock('../utils/local-folder', () => ({
   requestFolderPermission: vi.fn(async () => false),
   writeFileToFolder: vi.fn(),
   listFolderLevel: vi.fn(async () => []),
+  pickAndStoreRootFolder: vi.fn(),
+  getStoredRootFolder: vi.fn(async () => null),
+  ensureClientFolder: vi.fn(),
+  inferLocalCategoryFromTags: vi.fn(() => 'autres'),
+  getArchivedDocumentIds: vi.fn(async () => new Set()),
+  markDocumentsArchived: vi.fn(),
+}))
+
+vi.mock('@monprojetpro/module-documents', () => ({
+  getDocumentUrl: vi.fn(async () => ({ data: { url: 'https://example.com/file.pdf' }, error: null })),
 }))
 
 vi.mock('@monprojetpro/ui', async (importOriginal) => {
@@ -82,7 +92,7 @@ describe('ClientProjectFolderTab', () => {
     mockGetDocuments.mockResolvedValue({ data: [], error: null })
     mockSupported.mockReturnValue(true)
 
-    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} clientName="Client Test" />)
 
     await waitFor(() => {
       expect(screen.getByText(/aucun projet pour ce client/i)).toBeInTheDocument()
@@ -94,7 +104,7 @@ describe('ClientProjectFolderTab', () => {
     mockGetDocuments.mockResolvedValue({ data: [], error: null })
     mockSupported.mockReturnValue(true)
 
-    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} clientName="Client Test" />)
 
     await waitFor(() => {
       expect(screen.getByText('Refonte site vitrine')).toBeInTheDocument()
@@ -106,7 +116,7 @@ describe('ClientProjectFolderTab', () => {
     mockGetDocuments.mockResolvedValue({ data: [], error: null })
     mockSupported.mockReturnValue(false)
 
-    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} clientName="Client Test" />)
 
     await waitFor(() => {
       expect(screen.getByText(/navigateur non supporté/i)).toBeInTheDocument()
@@ -119,7 +129,7 @@ describe('ClientProjectFolderTab', () => {
     mockSupported.mockReturnValue(true)
     mockCreateProject.mockResolvedValue({ data: project({ name: 'Nouveau projet' }), error: null })
 
-    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} clientName="Client Test" />)
 
     const input = await screen.findByTestId('project-name-input')
     await userEvent.type(input, 'Nouveau projet')
@@ -144,7 +154,7 @@ describe('ClientProjectFolderTab', () => {
     })
     mockSupported.mockReturnValue(true)
 
-    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} clientName="Client Test" />)
 
     await waitFor(() => {
       expect(screen.getAllByTestId('project-card')).toHaveLength(2)
@@ -171,7 +181,7 @@ describe('ClientProjectFolderTab', () => {
     })
     mockSupported.mockReturnValue(true)
 
-    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} clientName="Client Test" />)
 
     const unassigned = await screen.findByTestId('unassigned-document')
     expect(unassigned.textContent).toContain('transcription-reunion.pdf')
@@ -190,7 +200,7 @@ describe('ClientProjectFolderTab', () => {
       { name: 'devis.pdf', kind: 'file', handle: {} as never },
     ])
 
-    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} clientName="Client Test" />)
 
     const contents = await screen.findByTestId('folder-contents')
     await waitFor(() => {
@@ -214,7 +224,7 @@ describe('ClientProjectFolderTab', () => {
       return [{ name: 'Dossier CII', kind: 'directory', handle: subFolderHandle as never }]
     })
 
-    render(<ClientProjectFolderTab clientId={CLIENT_ID} />)
+    render(<ClientProjectFolderTab clientId={CLIENT_ID} clientName="Client Test" />)
 
     const folderRow = await screen.findByText('Dossier CII')
     // Pas encore descendu dans le sous-dossier : un seul appel (le niveau racine)

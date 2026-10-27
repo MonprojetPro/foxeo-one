@@ -16,7 +16,23 @@ import {
 } from '@monprojetpro/ui'
 import { ClientForm } from './client-form'
 import { createClient } from '../actions/create-client'
+import { getStoredRootFolder, hasFolderPermission, ensureClientFolder } from '../utils/local-folder'
 import type { CreateClientInput } from '../types/crm.types'
+
+// T-063 (suite, 27-10) — provisionne tout de suite le dossier local du client,
+// si le dossier racine "Projets MPP" est deja lie dans ce navigateur. Best
+// effort : aucune erreur ne doit empecher la creation du client (navigateur
+// non supporte, dossier racine pas encore lie, permission expiree…) — dans ces
+// cas, le rattrapage se fait depuis l'onglet Dossier du client.
+async function provisionClientFolder(clientName: string) {
+  try {
+    const rootHandle = await getStoredRootFolder()
+    if (!rootHandle || !(await hasFolderPermission(rootHandle))) return
+    await ensureClientFolder(rootHandle, clientName)
+  } catch {
+    // Non bloquant — voir commentaire ci-dessus.
+  }
+}
 
 interface CreateClientDialogProps {
   onClientCreated?: (clientId: string) => void
@@ -47,6 +63,7 @@ export function CreateClientDialog({ onClientCreated }: CreateClientDialogProps)
       if (result.data) {
         showSuccess('Client créé avec succès')
         await queryClient.invalidateQueries({ queryKey: ['clients'] })
+        void provisionClientFolder(result.data.company || result.data.name)
         setOpen(false)
         onClientCreated?.(result.data.id)
         router.push(`/modules/crm/clients/${result.data.id}`)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Folder, FolderOpen, FolderPlus, Link2, Trash2, FileDown, CheckCircle2, AlertTriangle, X, File, RefreshCw, ChevronRight, ChevronDown } from 'lucide-react'
+import { Folder, FolderOpen, FolderPlus, Link2, Trash2, FileDown, CheckCircle2, AlertTriangle, X, File, RefreshCw, ChevronRight, ChevronDown, HardDrive } from 'lucide-react'
 import {
   Button,
   Input,
@@ -15,6 +15,7 @@ import {
   showSuccess,
   showError,
 } from '@monprojetpro/ui'
+import { getDocumentUrl } from '@monprojetpro/module-documents'
 import {
   useClientProjects,
   useCreateClientProject,
@@ -30,6 +31,12 @@ import {
   requestFolderPermission,
   writeFileToFolder,
   listFolderLevel,
+  pickAndStoreRootFolder,
+  getStoredRootFolder,
+  ensureClientFolder,
+  inferLocalCategoryFromTags,
+  getArchivedDocumentIds,
+  markDocumentsArchived,
   type FolderItem,
 } from '../utils/local-folder'
 import type { ClientProject } from '../types/crm.types'
@@ -48,7 +55,7 @@ import type { ClientProject } from '../types/crm.types'
 // projet apparaît dans le pool "Documents non assignés" en attendant.
 // ============================================================
 
-type ProjectDocument = { id: string; name: string; url?: string; clientProjectId?: string | null }
+type ProjectDocument = { id: string; name: string; tags?: string[]; clientProjectId?: string | null }
 
 /**
  * Un dossier se deplie au clic — ses enfants ne sont lus que a ce moment-la,
@@ -207,10 +214,6 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
   }
 
   async function handleCopyDocument(doc: ProjectDocument) {
-    if (!doc.url) {
-      showError('Ce document n\'a pas de fichier associé')
-      return
-    }
     const handle = await getStoredFolderHandle(project.id)
     if (!handle) {
       showError('Lie d\'abord un dossier à ce projet')
@@ -226,10 +229,12 @@ function ProjectFolderCard({ project, onDelete, documents, onUnassign }: Project
     }
     setCopyingId(doc.id)
     try {
-      const response = await fetch(doc.url)
+      const urlResult = await getDocumentUrl({ documentId: doc.id })
+      if (urlResult.error || !urlResult.data) throw new Error(urlResult.error?.message ?? 'URL introuvable')
+      const response = await fetch(urlResult.data.url)
       if (!response.ok) throw new Error('Téléchargement du document échoué')
       const blob = await response.blob()
-      await writeFileToFolder(handle, 'documentsElio', doc.name, blob)
+      await writeFileToFolder(handle, inferLocalCategoryFromTags(doc.tags), doc.name, blob)
       showSuccess(`« ${doc.name} » copié dans le dossier`)
     } catch {
       showError(`Impossible de copier « ${doc.name} »`)
@@ -393,7 +398,157 @@ function UnassignedDocuments({
   )
 }
 
-export function ClientProjectFolderTab({ clientId }: { clientId: string }) {
+// ============================================================
+// T-063 (suite, 27-10) — Dossier racine + archivage automatique
+//
+// Un seul dossier "Projets MPP" lie (une fois, pour tous les clients). Une
+// fois lie, le Hub cree seul le sous-dossier au nom de CE client et y copie,
+// sans action manuelle, chaque document pas encore copie — range dans la
+// bonne categorie selon ses tags (visio, Élio, facturation…). Le dossier
+// client est aussi cree immediatement a la creation de la fiche (voir
+// create-client-dialog.tsx) : ce composant ne fait que rattraper ce qui a pu
+// etre genere depuis.
+// ============================================================
+
+function RootFolderPanel({
+  clientId,
+  clientName,
+  documents,
+}: {
+  clientId: string
+  clientName: string
+  documents: ProjectDocument[]
+}) {
+  const [linked, setLinked] = useState(false)
+  const [permissionGranted, setPermissionGranted] = useState(false)
+  const [checking, setChecking] = useState(true)
+  const [syncing, setSyncing] = useState(false)
+
+  const syncDocuments = useCallback(
+    async (rootHandle: Awaited<ReturnType<typeof getStoredRootFolder>>) => {
+      if (!rootHandle || documents.length === 0) return
+      setSyncing(true)
+      try {
+        const alreadyArchived = await getArchivedDocumentIds(clientId)
+        const pending = documents.filter((d) => !alreadyArchived.has(d.id))
+        if (pending.length === 0) return
+
+        const clientHandle = await ensureClientFolder(rootHandle, clientName)
+        const copied: string[] = []
+        for (const doc of pending) {
+          try {
+            const urlResult = await getDocumentUrl({ documentId: doc.id })
+            if (urlResult.error || !urlResult.data) continue
+            const response = await fetch(urlResult.data.url)
+            if (!response.ok) continue
+            const blob = await response.blob()
+            await writeFileToFolder(clientHandle, inferLocalCategoryFromTags(doc.tags), doc.name, blob)
+            copied.push(doc.id)
+          } catch {
+            // Un document qui echoue ne doit pas bloquer les suivants — il
+            // sera retente au prochain passage (jamais marque archive).
+          }
+        }
+        if (copied.length > 0) {
+          await markDocumentsArchived(clientId, copied)
+          showSuccess(`${copied.length} document(s) rangé(s) dans le dossier de ${clientName}`)
+        }
+      } finally {
+        setSyncing(false)
+      }
+    },
+    [clientId, clientName, documents]
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    async function check() {
+      setChecking(true)
+      const handle = await getStoredRootFolder()
+      if (cancelled) return
+      if (!handle) {
+        setLinked(false)
+        setPermissionGranted(false)
+        setChecking(false)
+        return
+      }
+      setLinked(true)
+      const granted = await hasFolderPermission(handle)
+      setPermissionGranted(granted)
+      setChecking(false)
+      if (granted) await syncDocuments(handle)
+    }
+    check()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncDocuments])
+
+  async function handleLinkRoot() {
+    try {
+      const handle = await pickAndStoreRootFolder()
+      if (!handle) {
+        showError('Ton navigateur ne supporte pas cette fonction — utilise Chrome ou Edge.')
+        return
+      }
+      setLinked(true)
+      const granted = await hasFolderPermission(handle)
+      setPermissionGranted(granted)
+      showSuccess('Dossier « Projets MPP » lié')
+      if (granted) await syncDocuments(handle)
+    } catch {
+      // Picker annulé — rien à signaler.
+    }
+  }
+
+  async function handleRequestPermission() {
+    const handle = await getStoredRootFolder()
+    if (!handle) return
+    const granted = await requestFolderPermission(handle)
+    setPermissionGranted(granted)
+    if (granted) await syncDocuments(handle)
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-4 flex items-center justify-between gap-3" data-testid="root-folder-panel">
+      <div className="flex items-center gap-2 min-w-0">
+        <HardDrive className="h-4 w-4 shrink-0 text-indigo-400" />
+        <div className="min-w-0">
+          <span className="text-sm font-medium">Dossier « Projets MPP »</span>
+          <p className="text-xs text-muted-foreground">
+            Lié une fois pour tous les clients — chaque client y a son propre dossier, rempli tout seul.
+          </p>
+        </div>
+      </div>
+      {checking ? (
+        <Skeleton className="h-8 w-32 shrink-0" />
+      ) : !linked ? (
+        <Button size="sm" variant="outline" onClick={handleLinkRoot} data-testid="link-root-folder" className="shrink-0">
+          <Link2 className="h-4 w-4 mr-1" />
+          Lier le dossier
+        </Button>
+      ) : permissionGranted ? (
+        <Badge variant="outline" className="shrink-0 gap-1 text-emerald-400 border-emerald-400/40">
+          <CheckCircle2 className="h-3 w-3" />
+          {syncing ? 'Rangement…' : 'Lié'}
+        </Badge>
+      ) : (
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge variant="outline" className="gap-1 text-orange-400 border-orange-400/40">
+            <AlertTriangle className="h-3 w-3" />
+            Permission à renouveler
+          </Badge>
+          <Button size="sm" variant="outline" onClick={handleRequestPermission}>
+            Autoriser
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function ClientProjectFolderTab({ clientId, clientName }: { clientId: string; clientName: string }) {
   const { data: projects, isLoading, error } = useClientProjects(clientId)
   const { data: documents } = useClientDocuments(clientId)
   const createProject = useCreateClientProject(clientId)
@@ -455,6 +610,8 @@ export function ClientProjectFolderTab({ clientId }: { clientId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {supported && <RootFolderPanel clientId={clientId} clientName={clientName} documents={allDocuments} />}
+
       {!supported && (
         <div
           className="rounded-md border border-orange-500/40 bg-orange-500/10 px-4 py-3 text-xs text-orange-200/90"
