@@ -22,6 +22,13 @@ export { useChatPresence } from './hooks/use-chat-presence'
 export { usePresenceStatus } from './hooks/use-presence-status'
 export { useOnlineUsers } from './hooks/use-online-users'
 
+// Utils — T-064 (presence sur canaux prives)
+export {
+  clientPresenceTopic,
+  operatorPresenceTopic,
+  MAX_HUB_CLIENT_PRESENCE_CHANNELS,
+} from './utils/presence-topics'
+
 // Actions
 export { sendMessage } from './actions/send-message'
 export { getMessages } from './actions/get-messages'

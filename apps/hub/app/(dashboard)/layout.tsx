@@ -1,7 +1,7 @@
 import { Bell, Search, Sun } from 'lucide-react'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { NotificationBadge } from '@monprojetpro/modules-notifications'
-import { PresenceProvider } from '@monprojetpro/modules-chat'
+import { PresenceProvider, MAX_HUB_CLIENT_PRESENCE_CHANNELS } from '@monprojetpro/modules-chat'
 import { ThemeToggle } from '@monprojetpro/ui'
 import { HubSidebarClient } from '../../components/hub-sidebar-client'
 import { LogoutButton } from './logout-button'
@@ -52,13 +52,34 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const operatorId = (operator as { id: string } | null)?.id ?? ''
 
+  // T-064 : presence sur canaux prives, un sujet par client. Le Hub ecoute chacun de ses
+  // clients encore actifs et dotes d'un compte (sans compte, jamais en ligne), du plus
+  // recent au plus ancien (+1 pour detecter le plafond).
+  const { data: presenceClients } = operatorId
+    ? await supabase
+        .from('clients')
+        .select('id')
+        .eq('operator_id', operatorId)
+        .not('auth_user_id', 'is', null)
+        .not('status', 'in', '(archived,archived_lab,deleted,handed_off)')
+        .order('updated_at', { ascending: false })
+        .limit(MAX_HUB_CLIENT_PRESENCE_CHANNELS + 1)
+    : { data: [] }
+
+  const presenceClientIds = ((presenceClients ?? []) as { id: string }[]).map((c) => c.id)
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <SessionKeepAlive />
       <RealtimeDashboardRefresh operatorId={operatorId} authUserId={user?.id ?? ''} />
       <HubHeader authUserId={user?.id ?? ''} />
       <div className="flex flex-1 overflow-hidden">
-        <PresenceProvider userId={operatorId} userType="operator" operatorId={operatorId}>
+        <PresenceProvider
+          userId={operatorId}
+          userType="operator"
+          operatorId={operatorId}
+          clientIds={presenceClientIds}
+        >
           <HubSidebarClient operatorId={operatorId} userId={user?.id ?? ''} />
           <main className="flex-1 overflow-y-auto">
             {children}

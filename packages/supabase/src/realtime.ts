@@ -5,7 +5,8 @@ export const CHANNEL_PATTERNS = {
   clientNotifications: (clientId: string) =>
     `client:notifications:${clientId}`,
   chatRoom: (clientId: string) => `chat:room:${clientId}`,
-  presence: (operatorId: string) => `presence:operator:${operatorId}`,
+  // Pas de presence ici (T-064) : elle passe par des canaux PRIVES, voir
+  // packages/modules/chat/utils/presence-topics.ts.
   clientConfig: (clientId: string) => `client:config:${clientId}`,
 } as const
 

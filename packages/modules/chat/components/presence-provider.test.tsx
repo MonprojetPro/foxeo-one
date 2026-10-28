@@ -68,7 +68,17 @@ describe('PresenceProvider', () => {
       </PresenceProvider>
     )
 
-    expect(mockUseChatPresence).toHaveBeenCalledWith('op-111', 'u1', 'client')
+    expect(mockUseChatPresence).toHaveBeenCalledWith('op-111', 'u1', 'client', undefined)
+  })
+
+  it('passes the Hub client list to useChatPresence (T-064)', () => {
+    render(
+      <PresenceProvider userId="op-111" userType="operator" operatorId="op-111" clientIds={['c-1', 'c-2']}>
+        <span />
+      </PresenceProvider>
+    )
+
+    expect(mockUseChatPresence).toHaveBeenCalledWith('op-111', 'op-111', 'operator', ['c-1', 'c-2'])
   })
 
   it('context defaults to empty presenceState when no provider', () => {

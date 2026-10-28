@@ -14,7 +14,7 @@
 
 **Statuts utilisés :** 🟢 Livré · 🟡 En cours · ⚪ À faire · 🔵 À qualifier (l'idée existe, le périmètre reste à définir avec toi)
 
-**Dernière mise à jour :** 2026-10-26
+**Dernière mise à jour :** 2026-10-28
 
 ---
 
@@ -262,6 +262,9 @@ silencieuses.
 
 | Story | Statut | Date |
 |---|---|---|
+| Un client ne voit plus qui d'autre est en ligne parmi les clients de MiKL, et personne ne peut faire croire que MiKL est connecté | 🟡 En cours — corrigé et testé, mise en production en attente de ton accord | 2026-10-28 `[T-064]` |
+| Les autres canaux temps réel passent eux aussi en accès privé, puis l'accès public est coupé | ⚪ À faire | — `[T-064a]` |
+| Une base de test neuve ne démarre pas : deux numéros de mise à jour de la base sont en double | 🔵 À qualifier | — `[T-065]` |
 | Les webhooks externes refusent une requête non signée au lieu de l'accepter | 🟢 Livré | 2026-09-16 `[T-024]` |
 | L'assistant IA du Hub n'est plus ouvert sans authentification | ⚪ À faire | — `[T-001]` |
 | Policy d'écriture des notifications trop permissive | ⚪ À faire | — `[T-002]` |

@@ -14,10 +14,8 @@ describe('CHANNEL_PATTERNS', () => {
     )
   })
 
-  it('generates presence channel', () => {
-    expect(CHANNEL_PATTERNS.presence('operator-1')).toBe(
-      'presence:operator:operator-1'
-    )
+  it('no longer exposes a public presence channel name (T-064)', () => {
+    expect('presence' in CHANNEL_PATTERNS).toBe(false)
   })
 
   it('generates client config channel', () => {

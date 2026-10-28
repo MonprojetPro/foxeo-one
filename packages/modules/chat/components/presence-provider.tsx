@@ -23,12 +23,14 @@ export function usePresenceContext(): PresenceContextValue {
 // ---- Provider ----
 
 interface PresenceProviderProps {
-  /** Auth user's unique ID — becomes the presence key */
+  /** Hub : operators.id ; client : clients.id — devient la cle de presence */
   userId: string
   /** 'client' for client dashboard, 'operator' for hub */
   userType: 'client' | 'operator'
-  /** Operator record UUID — used as the Realtime channel identifier */
+  /** Operator record UUID — Hub : soi-meme ; client : son operateur */
   operatorId: string
+  /** Hub uniquement (T-064) : clients dont on suit la presence, du plus recent au plus ancien */
+  clientIds?: string[]
   children: React.ReactNode
 }
 
@@ -42,9 +44,10 @@ export function PresenceProvider({
   userId,
   userType,
   operatorId,
+  clientIds,
   children,
 }: PresenceProviderProps) {
-  const { presenceState } = useChatPresence(operatorId, userId, userType)
+  const { presenceState } = useChatPresence(operatorId, userId, userType, clientIds)
 
   return (
     <PresenceContext.Provider value={{ presenceState, operatorId }}>
