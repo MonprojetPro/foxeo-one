@@ -1,6 +1,10 @@
 'use server'
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import {
+  createClientAuthUser,
+  generateSecureTemporaryPassword,
+} from '@monprojetpro/supabase/admin'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { LaunchClientParcoursInput } from '../types/parcours.types'
 import { generateConciergeWord } from './generate-concierge-word'
@@ -69,7 +73,40 @@ export async function launchClientParcours(
       first_name: string | null
       first_login_at: string | null
     } | null
-    const clientAuthUserId = client?.auth_user_id
+    let clientAuthUserId = client?.auth_user_id ?? null
+
+    // Lancer un parcours Lab ne garantit pas qu'un compte auth existe déjà : seul le
+    // webhook Pennylane et l'onboarding visio en créent un. Un client composé à la main
+    // (CRM) peut arriver ici sans compte — sendWelcomeLabInvite (generateLink type:'recovery')
+    // échouerait silencieusement (best-effort) et le client resterait sans moyen de se
+    // connecter. On crée le compte ICI, au point où il devient réellement nécessaire, quel
+    // que soit le chemin d'entrée du client — mot de passe temporaire jetable, jamais vu par
+    // le client : il définit le sien via le lien de récupération envoyé juste après.
+    if (client && !clientAuthUserId && client.email) {
+      const authResult = await createClientAuthUser({
+        email: client.email,
+        password: generateSecureTemporaryPassword(),
+      })
+
+      if (authResult.error || !authResult.userId) {
+        console.error(
+          '[PARCOURS:LAUNCH_CLIENT_PARCOURS] Création du compte auth échouée:',
+          authResult.error
+        )
+      } else {
+        clientAuthUserId = authResult.userId
+        const { error: linkError } = await supabase
+          .from('clients')
+          .update({ auth_user_id: clientAuthUserId })
+          .eq('id', clientId)
+        if (linkError) {
+          console.error(
+            '[PARCOURS:LAUNCH_CLIENT_PARCOURS] Liaison clients.auth_user_id échouée:',
+            linkError
+          )
+        }
+      }
+    }
 
     if (clientAuthUserId) {
       await supabase.from('notifications').insert({
