@@ -16,7 +16,7 @@
 | DB | Base de données / Schéma | 4 |
 | DEP | Déploiement | 8 |
 | GIT | Git / Workflow | 1 |
-| SEC | Sécurité / Secrets | 2 |
+| SEC | Sécurité / Secrets | 3 |
 | UI | Interface / CSS | 2 |
 | DRY | Logique dupliquée / Architecture | 1 |
 
@@ -1226,3 +1226,36 @@ build) perd du temps à deviner ce que la prod sait déjà dire. (3) Tout fichie
 directement depuis un Server Component DOIT porter `'use client'` — même si ça « marchait » jusque-là,
 un composant React Server Components n'échoue qu'au moment où le chemin de rendu qui l'expose se
 déclenche réellement, ce qui peut être des mois après son écriture.
+
+## 2026-10-28 — Une règle d'accès Realtime juste, refusée par la porte : seul un test sur une vraie instance l'a vu
+
+**Catégorie** : SEC · **Item** : T-064 (faille C-01) · **Commit** : `127454a`
+
+**Contexte** : la présence en ligne passait par un canal PUBLIC commun à tous les clients d'un
+opérateur — chaque client voyait les autres en ligne, et n'importe qui pouvait publier une fausse
+présence. Correctif : un canal PRIVÉ par titulaire et des règles d'accès sur `realtime.messages`.
+
+**Ce qui a failli passer** : les tests unitaires (52/52, Realtime simulé), la revue SCAN et l'audit
+CERBÈRE étaient tous au vert. Pourtant la migration aurait laissé **tous les canaux privés fermés**
+sur un Realtime ancien : jusqu'à la v2.76.0, rejoindre un canal privé exige le droit de lecture
+`broadcast`, et la règle n'accordait que `presence`. Résultat prévisible : tout le monde affiché
+hors ligne, sans erreur visible. La v2.149.1 accepte l'un ou l'autre — la même règle aurait donc
+pu marcher en production et casser ailleurs.
+
+**Comment ça a été trouvé** : par le test d'intégration sur une vraie instance Realtime, et
+précisément par son **témoin positif** (« le client voit bien son propre canal ») — c'est lui qui a
+échoué en premier. Sondes avant correctif (TILT) : journal Realtime (jeton accepté, lecture refusée),
+règle rejouée à la main en base (elle disait oui), code source de Realtime (condition exacte de
+jonction). Cause validée par MiKL, puis une seule correction : lecture `broadcast` + `presence`,
+écriture `presence` seule.
+
+**La règle à en tirer** :
+1. **Une règle d'accès Realtime ne se prouve que sur une vraie instance.** Un mock ne voit jamais
+   la policy : il dira toujours « abonné ».
+2. **Chaque scénario négatif a son témoin positif.** Sans « A voit bien B », un « C ne voit pas A »
+   passe aussi quand plus rien ne circule du tout.
+3. **Contre-épreuve avant d'annoncer un test d'isolation** : relâcher volontairement la règle et
+   vérifier que le test échoue (ici 3 échecs : la fuite C-01 reproduite). Un test qui ne sait pas
+   échouer ne prouve rien.
+4. **Le comportement d'autorisation dépend de la version du service** : écrire la règle pour la
+   version la plus stricte (lecture broadcast + presence), ne pas supposer celle de la production.
