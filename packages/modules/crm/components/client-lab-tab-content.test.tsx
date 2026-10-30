@@ -56,7 +56,7 @@ const parcoursEnCours = {
 import { ClientLabTabContent } from './client-lab-tab-content'
 
 describe('ClientLabTabContent', () => {
-  it('affiche les 3 sections + l\'activation (AccessToggles surfacé)', () => {
+  it('affiche les 3 sections', () => {
     mockUseClient.mockReturnValue(baseClient('lab'))
     mockUseParcours.mockReturnValue(parcoursEnCours)
     mockUsePending.mockReturnValue({ data: { count: 0 } })
@@ -65,6 +65,14 @@ describe('ClientLabTabContent', () => {
     expect(screen.getByText('Activation du Lab')).toBeDefined()
     expect(screen.getByText('Accompagnement')).toBeDefined()
     expect(screen.getByText('Évolution & sortie')).toBeDefined()
+  })
+
+  it('Lab actif : AccessToggles (agents du parcours) surfacé dans Accompagnement', () => {
+    mockUseClient.mockReturnValue(baseClient('lab', { labModeAvailable: true, elioLabEnabled: true }))
+    mockUseParcours.mockReturnValue(parcoursEnCours)
+    mockUsePending.mockReturnValue({ data: { count: 0 } })
+
+    render(<ClientLabTabContent clientId="c-1" />)
     expect(screen.getByTestId('access-toggles-mock')).toBeDefined()
   })
 
@@ -112,19 +120,25 @@ describe('ClientLabTabContent', () => {
     expect(screen.getByTestId('lab-activation-badge').textContent).toBe('Lab figé')
   })
 
-  it('place les slots facturation (toujours visible) et config Élio (Lab actif)', () => {
+  it('place le slot facturation (Lab pas encore actif)', () => {
+    mockUseClient.mockReturnValue(baseClient('hub'))
+    mockUseParcours.mockReturnValue({ data: null })
+    mockUsePending.mockReturnValue({ data: { count: 0 } })
+
+    render(
+      <ClientLabTabContent clientId="c-1" billingSlot={<div data-testid="billing-slot" />} />
+    )
+    expect(screen.getByTestId('billing-slot')).toBeDefined()
+  })
+
+  it('place le slot config Élio (Lab actif)', () => {
     mockUseClient.mockReturnValue(baseClient('lab', { labModeAvailable: true, elioLabEnabled: true }))
     mockUseParcours.mockReturnValue(parcoursEnCours)
     mockUsePending.mockReturnValue({ data: { count: 0 } })
 
     render(
-      <ClientLabTabContent
-        clientId="c-1"
-        billingSlot={<div data-testid="billing-slot" />}
-        elioConfigSlot={<div data-testid="elio-slot" />}
-      />
+      <ClientLabTabContent clientId="c-1" elioConfigSlot={<div data-testid="elio-slot" />} />
     )
-    expect(screen.getByTestId('billing-slot')).toBeDefined()
     expect(screen.getByTestId('elio-slot')).toBeDefined()
   })
 

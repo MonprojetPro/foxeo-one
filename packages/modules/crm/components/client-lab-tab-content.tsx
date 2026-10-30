@@ -135,34 +135,24 @@ export function ClientLabTabContent({
           </CardContent>
         </Card>
 
-        {/* Onglet Lab : uniquement le levier « couper les agents du parcours ».
-            L'accès global Lab/One est piloté depuis le cockpit Pilote. */}
-        <AccessToggles
-          clientId={clientId}
-          labModeAvailable={client.config?.labModeAvailable ?? false}
-          elioLabEnabled={client.config?.elioLabEnabled ?? false}
-          hasActiveParcours={hasActiveParcours}
-          isFrozen={isFrozen}
-          showOnlyAgents
-        />
-
-        {/* Porte d'entrée unique « Déclencher le Lab » — payant (billingSlot, toujours
-            visible pour suivre le statut de facturation) ou gratuit, côte à côte, pour
-            ne plus disperser l'activation dans l'onglet (T-067). L'option gratuite
-            disparaît une fois le Lab actif — son rôle est fait. */}
-        {billingSlot && <Card>{billingSlot}</Card>}
+        {/* Porte d'entrée unique « Déclencher le Lab » — 2 cartes côte à côte, payant ou
+            gratuit, rien d'autre (T-067). Disparaît une fois le Lab actif : l'État du Lab
+            ci-dessus suffit alors. */}
         {!hasLab && (
-          <Card>
-            <CardContent className="flex items-center justify-between pt-6">
-              <div>
-                <p className="text-sm font-medium">Activer sans facturation</p>
-                <p className="text-xs text-muted-foreground">
-                  Ouvre l&apos;espace Lab et crée le compte du client, sans passer par le paiement.
-                </p>
-              </div>
-              <ActivateLabFreeButton clientId={clientId} />
-            </CardContent>
-          </Card>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {billingSlot && <Card>{billingSlot}</Card>}
+            <Card>
+              <CardContent className="flex flex-col gap-3 pt-6">
+                <div>
+                  <p className="text-sm font-medium">Activer sans facturation</p>
+                  <p className="text-xs text-muted-foreground">
+                    Ouvre l&apos;espace Lab et crée le compte du client, sans passer par le paiement.
+                  </p>
+                </div>
+                <ActivateLabFreeButton clientId={clientId} />
+              </CardContent>
+            </Card>
+          </div>
         )}
       </section>
 
@@ -180,6 +170,17 @@ export function ClientLabTabContent({
           </Card>
         ) : (
         <>
+        {/* Onglet Lab : uniquement le levier « couper les agents du parcours ».
+            L'accès global Lab/One est piloté depuis le cockpit Pilote. */}
+        <AccessToggles
+          clientId={clientId}
+          labModeAvailable={client.config?.labModeAvailable ?? false}
+          elioLabEnabled={client.config?.elioLabEnabled ?? false}
+          hasActiveParcours={hasActiveParcours}
+          isFrozen={isFrozen}
+          showOnlyAgents
+        />
+
         {/* Parcours Lab — détaillé */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
