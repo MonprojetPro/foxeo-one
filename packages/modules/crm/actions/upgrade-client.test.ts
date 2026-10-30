@@ -7,6 +7,13 @@ vi.mock('next/cache', () => ({
 
 // ── Supabase mock (top-level chain fns, referenced in factory) ─────────────
 const mockGetUser = vi.fn()
+// `upgrade-client.ts` est importé statiquement plus bas (pas de `await import()` paresseux
+// comme les autres actions) : vi.hoisted() garantit que ces mocks existent avant que les
+// `vi.mock(...)` hoistés ne résolvent le graphe de modules.
+const { mockEnsureClientAuthAccount, mockSendWelcomeOneInvite } = vi.hoisted(() => ({
+  mockEnsureClientAuthAccount: vi.fn(),
+  mockSendWelcomeOneInvite: vi.fn(),
+}))
 
 // operators table
 const mockOperatorSingle = vi.fn()
@@ -66,6 +73,11 @@ vi.mock('@monprojetpro/supabase', () => ({
   ),
 }))
 
+vi.mock('@monprojetpro/supabase/admin', () => ({
+  ensureClientAuthAccount: mockEnsureClientAuthAccount,
+  sendWelcomeOneInvite: mockSendWelcomeOneInvite,
+}))
+
 vi.mock('@monprojetpro/types', () => ({
   successResponse: (data: unknown) => ({ data, error: null }),
   errorResponse: (message: string, code: string, details?: unknown) => ({
@@ -102,10 +114,18 @@ describe('upgradeClient Server Action', () => {
         client_type: 'ponctuel',
         status: 'active',
         operator_id: OPERATOR_ID,
+        email: 'client@example.com',
+        first_name: 'Jean',
+        name: 'ACME',
+        auth_user_id: 'existing-id',
         client_configs: { dashboard_type: 'one', lab_mode_available: false },
       },
       error: null,
     })
+
+    // Default : le compte existe déjà — pas d'email renvoyé (T-067).
+    mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'existing-id', created: false, error: null })
+    mockSendWelcomeOneInvite.mockResolvedValue({ success: true })
 
     // Default: no existing parcours (duplicate check)
     mockParcoursMaybeSingle.mockResolvedValue({ data: null })
@@ -345,5 +365,42 @@ describe('upgradeClient Server Action', () => {
         entity_id: CLIENT_ID,
       })
     )
+  })
+
+  // ── T-067 — compte client garanti pour un upgrade One direct ────────────────
+
+  it('creates the account and sends welcome-one when the client has none yet', async () => {
+    mockClientSingle.mockResolvedValue({
+      data: {
+        id: CLIENT_ID,
+        client_type: 'ponctuel',
+        status: 'active',
+        operator_id: OPERATOR_ID,
+        email: 'nouveau@example.com',
+        first_name: 'Jean',
+        name: 'ACME',
+        auth_user_id: null,
+        client_configs: { dashboard_type: 'one', lab_mode_available: false },
+      },
+      error: null,
+    })
+    mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'new-id', created: true, error: null })
+
+    const result = await upgradeClient({ clientId: CLIENT_ID, targetType: 'direct_one' })
+
+    expect(result.error).toBeNull()
+    expect(mockEnsureClientAuthAccount).toHaveBeenCalledWith({
+      supabase: expect.anything(),
+      clientId: CLIENT_ID,
+      email: 'nouveau@example.com',
+      authUserId: null,
+    })
+    expect(mockSendWelcomeOneInvite).toHaveBeenCalledWith({ email: 'nouveau@example.com', clientName: 'Jean' })
+  })
+
+  it('does not resend the welcome email when the account already existed', async () => {
+    const result = await upgradeClient({ clientId: CLIENT_ID, targetType: 'direct_one' })
+    expect(result.error).toBeNull()
+    expect(mockSendWelcomeOneInvite).not.toHaveBeenCalled()
   })
 })

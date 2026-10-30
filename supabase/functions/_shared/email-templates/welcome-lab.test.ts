@@ -45,4 +45,12 @@ describe('welcomeLabEmailTemplate', () => {
     expect(html).toContain('<!DOCTYPE html>')
     expect(html).toContain('</html>')
   })
+
+  // T-067 — l'email part à l'activation, avant que le parcours ne soit composé.
+  it('works without firstStepLabel and announces the parcours as not yet composed', () => {
+    const { firstStepLabel: _firstStepLabel, ...dataWithoutStep } = data
+    const html = welcomeLabEmailTemplate(dataWithoutStep)
+    expect(html).toContain('MiKL compose votre parcours')
+    expect(html).not.toContain('Identité de marque')
+  })
 })

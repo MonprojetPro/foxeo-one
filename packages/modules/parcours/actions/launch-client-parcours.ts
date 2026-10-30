@@ -1,14 +1,11 @@
 'use server'
 
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
-import {
-  createClientAuthUser,
-  generateSecureTemporaryPassword,
-} from '@monprojetpro/supabase/admin'
+import { ensureClientAuthAccount } from '@monprojetpro/supabase/admin'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { LaunchClientParcoursInput } from '../types/parcours.types'
 import { generateConciergeWord } from './generate-concierge-word'
-import { sendWelcomeLabInvite } from '../utils/send-welcome-lab-invite'
 
 export async function launchClientParcours(
   input: LaunchClientParcoursInput
@@ -62,49 +59,35 @@ export async function launchClientParcours(
     // doit s'animer dès le lancement côté Hub (Realtime).
     const { data: clientRow } = await supabase
       .from('clients')
-      .select('auth_user_id, email, name, first_name, first_login_at')
+      .select('auth_user_id, email')
       .eq('id', clientId)
       .maybeSingle()
 
     const client = clientRow as {
       auth_user_id: string | null
       email: string | null
-      name: string | null
-      first_name: string | null
-      first_login_at: string | null
     } | null
     let clientAuthUserId = client?.auth_user_id ?? null
 
-    // Lancer un parcours Lab ne garantit pas qu'un compte auth existe déjà : seul le
-    // webhook Pennylane et l'onboarding visio en créent un. Un client composé à la main
-    // (CRM) peut arriver ici sans compte — sendWelcomeLabInvite (generateLink type:'recovery')
-    // échouerait silencieusement (best-effort) et le client resterait sans moyen de se
-    // connecter. On crée le compte ICI, au point où il devient réellement nécessaire, quel
-    // que soit le chemin d'entrée du client — mot de passe temporaire jetable, jamais vu par
-    // le client : il définit le sien via le lien de récupération envoyé juste après.
+    // T-067 — Le compte + l'email de bienvenue partent désormais à l'ACTIVATION du Lab
+    // (payante ou gratuite), avant que le parcours ne soit composé. Ce qui suit est un
+    // filet de sécurité, pas le chemin normal : si jamais ce point est atteint sans
+    // compte (données anciennes, chemin legacy), on le crée quand même pour que la
+    // notification ci-dessous ait un destinataire — sans ré-envoyer l'email, déjà parti.
     if (client && !clientAuthUserId && client.email) {
-      const authResult = await createClientAuthUser({
+      const authResult = await ensureClientAuthAccount({
+        supabase: supabase as unknown as SupabaseClient,
+        clientId,
         email: client.email,
-        password: generateSecureTemporaryPassword(),
+        authUserId: null,
       })
-
-      if (authResult.error || !authResult.userId) {
+      if (authResult.error) {
         console.error(
           '[PARCOURS:LAUNCH_CLIENT_PARCOURS] Création du compte auth échouée:',
           authResult.error
         )
       } else {
-        clientAuthUserId = authResult.userId
-        const { error: linkError } = await supabase
-          .from('clients')
-          .update({ auth_user_id: clientAuthUserId })
-          .eq('id', clientId)
-        if (linkError) {
-          console.error(
-            '[PARCOURS:LAUNCH_CLIENT_PARCOURS] Liaison clients.auth_user_id échouée:',
-            linkError
-          )
-        }
+        clientAuthUserId = authResult.authUserId
       }
     }
 
@@ -128,36 +111,6 @@ export async function launchClientParcours(
       })
     } catch (e) {
       console.error('[PARCOURS:LAUNCH_CLIENT_PARCOURS] Mot d\'Élio non généré (ignoré):', e)
-    }
-
-    // LOT C — Email de bienvenue Lab envoyé MAINTENANT (après définition du parcours),
-    // et non plus au paiement. Uniquement pour un client qui ne s'est JAMAIS connecté
-    // (first_login_at null) : il reçoit un lien pour définir son mot de passe. Un client
-    // déjà actif (parcours additionnel) est couvert par la notif + le mot d'Élio ci-dessus.
-    // Best-effort : on ne fait JAMAIS échouer le lancement si l'email échoue.
-    if (client?.email && !client.first_login_at) {
-      try {
-        const invite = await sendWelcomeLabInvite({
-          email: client.email,
-          // On S'ADRESSE au client : prénom, pas `name` (= nom de famille).
-          clientName: client.first_name?.trim() || client.name || 'Cher(e) client(e)',
-          firstStepLabel: steps[0].stepLabel,
-        })
-        if (!invite.success) {
-          console.error('[PARCOURS:LAUNCH_CLIENT_PARCOURS] Email invitation KO:', invite.error)
-          // Prévenir l'opérateur qui a lancé le parcours (lui seul peut agir).
-          await supabase.from('notifications').insert({
-            recipient_type: 'operator',
-            recipient_id: user.id,
-            type: 'alert',
-            title: '⚠️ Email d\'invitation Lab non envoyé',
-            body: `Le parcours est lancé mais l'email d'invitation au client n'a pas pu être envoyé (${invite.error ?? 'erreur inconnue'}). Tu peux le relancer manuellement.`,
-            link: `/modules/crm/clients/${clientId}`,
-          })
-        }
-      } catch (e) {
-        console.error('[PARCOURS:LAUNCH_CLIENT_PARCOURS] Email invitation exception (ignorée):', e)
-      }
     }
 
     return successResponse({ count: rows.length })

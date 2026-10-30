@@ -316,6 +316,15 @@ export const AssignParcoursInput = z.object({
 
 export type AssignParcoursInput = z.infer<typeof AssignParcoursInput>
 
+// T-067 — porte d'entrée unique « Déclencher le Lab », option gratuite (sans facturation).
+// Active l'espace + crée le compte client ; le choix des agents/du parcours se fait
+// séparément, une fois le Lab actif (cf. AssignParcoursInput, inchangé).
+export const ActivateLabFreeInput = z.object({
+  clientId: z.string().uuid(),
+})
+
+export type ActivateLabFreeInput = z.infer<typeof ActivateLabFreeInput>
+
 export const ToggleAccessInput = z.object({
   clientId: z.string().uuid(),
   accessType: z.enum(['lab', 'one']),

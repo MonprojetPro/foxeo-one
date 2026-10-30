@@ -1,7 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import type { SupabaseClient as AdminSupabaseClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { ensureClientAuthAccount, sendWelcomeOneInvite } from '@monprojetpro/supabase/admin'
 import {
   type ActionResponse,
   successResponse,
@@ -70,7 +72,7 @@ export async function upgradeClient(
     // + `lab_mode_available` (source of truth).
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, client_type, status, operator_id, client_configs(dashboard_type, lab_mode_available)')
+      .select('id, client_type, status, operator_id, email, first_name, name, auth_user_id, client_configs(dashboard_type, lab_mode_available)')
       .eq('id', clientId)
       .eq('operator_id', operatorId)
       .single()
@@ -111,7 +113,18 @@ export async function upgradeClient(
       return await upgradeToLab({ supabase, clientId, operatorId, parcoursConfig })
     }
 
-    return await upgradeToOne({ supabase, clientId, operatorId, modules })
+    return await upgradeToOne({
+      supabase,
+      clientId,
+      operatorId,
+      modules,
+      client: {
+        email: client.email as string | null,
+        firstName: client.first_name as string | null,
+        name: client.name as string | null,
+        authUserId: client.auth_user_id as string | null,
+      },
+    })
   } catch (error) {
     console.error('[CRM:UPGRADE_CLIENT] Unexpected error:', error)
     return errorResponse(
@@ -248,11 +261,13 @@ async function upgradeToOne({
   clientId,
   operatorId,
   modules,
+  client,
 }: {
   supabase: SupabaseClient
   clientId: string
   operatorId: string
   modules?: string[]
+  client: { email: string | null; firstName: string | null; name: string | null; authUserId: string | null }
 }): Promise<ActionResponse<{ success: true }>> {
   const activeModules = modules && modules.length > 0 ? modules : ['core-dashboard']
 
@@ -280,6 +295,35 @@ async function upgradeToOne({
   if (configError) {
     console.error('[CRM:UPGRADE_CLIENT] config update error:', configError)
     // Non-bloquant
+  }
+
+  // T-067 — Un client qui arrive directement sur le One (sans passer par le Lab) a
+  // besoin du même compte + email « votre espace est prêt » que les autres chemins
+  // d'activation. Best-effort : ne doit jamais faire échouer l'upgrade.
+  const authResult = await ensureClientAuthAccount({
+    supabase: supabase as unknown as AdminSupabaseClient,
+    clientId,
+    email: client.email,
+    authUserId: client.authUserId,
+  })
+  if (authResult.error) {
+    console.error('[CRM:UPGRADE_CLIENT] Compte auth non créé:', authResult.error)
+  } else if (authResult.created && client.email) {
+    const invite = await sendWelcomeOneInvite({
+      email: client.email,
+      clientName: client.firstName?.trim() || client.name || 'Cher(e) client(e)',
+    })
+    if (!invite.success) {
+      console.error('[CRM:UPGRADE_CLIENT] Email invitation KO:', invite.error)
+      await supabase.from('notifications').insert({
+        recipient_type: 'operator',
+        recipient_id: operatorId,
+        type: 'alert',
+        title: '⚠️ Email d\'invitation One non envoyé',
+        body: `L'upgrade est fait mais l'email d'invitation au client n'a pas pu être envoyé (${invite.error ?? 'erreur inconnue'}). Tu peux le relancer manuellement.`,
+        link: `/modules/crm/clients/${clientId}`,
+      })
+    }
   }
 
   // 3. Activity log

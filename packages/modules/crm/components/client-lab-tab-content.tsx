@@ -7,6 +7,7 @@ import { useClientParcours } from '../hooks/use-client-parcours'
 import { useClientPendingValidations } from '../hooks/use-client-pending-validations'
 import { ParcoursStatusBadge } from './parcours-status-badge'
 import { AccessToggles } from './access-toggles'
+import { ActivateLabFreeButton } from './activate-lab-free-button'
 import { AssignParcoursDialog } from './assign-parcours-dialog'
 import { GraduationDialog } from './graduation-dialog'
 import { ReactivateParcoursDialog } from './reactivate-parcours-dialog'
@@ -145,14 +146,40 @@ export function ClientLabTabContent({
           showOnlyAgents
         />
 
-        {/* Facturation = sous-statut optionnel de l'activation (plus un bloc isolé en bas) */}
+        {/* Porte d'entrée unique « Déclencher le Lab » — payant (billingSlot, toujours
+            visible pour suivre le statut de facturation) ou gratuit, côte à côte, pour
+            ne plus disperser l'activation dans l'onglet (T-067). L'option gratuite
+            disparaît une fois le Lab actif — son rôle est fait. */}
         {billingSlot && <Card>{billingSlot}</Card>}
+        {!hasLab && (
+          <Card>
+            <CardContent className="flex items-center justify-between pt-6">
+              <div>
+                <p className="text-sm font-medium">Activer sans facturation</p>
+                <p className="text-xs text-muted-foreground">
+                  Ouvre l&apos;espace Lab et crée le compte du client, sans passer par le paiement.
+                </p>
+              </div>
+              <ActivateLabFreeButton clientId={clientId} />
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {/* ──────────── ② ACCOMPAGNEMENT ──────────── */}
       <section className="space-y-4">
         <SectionTitle n={2} title="Accompagnement" subtitle="Parcours Lab et configuration d'Élio" />
 
+        {!hasLab ? (
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-sm text-muted-foreground">
+                Activez le Lab (section 1 ci-dessus) avant de composer les agents et le type de parcours.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+        <>
         {/* Parcours Lab — détaillé */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -258,6 +285,8 @@ export function ClientLabTabContent({
             </CardHeader>
             <CardContent>{elioConfigSlot}</CardContent>
           </Card>
+        )}
+        </>
         )}
       </section>
 

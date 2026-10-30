@@ -54,7 +54,12 @@ export async function handleDirectEmail(
       break
     }
     case 'welcome-one': {
-      const d = input.data as { clientName: string; activationLink: string; temporaryPassword: string | null }
+      const d = input.data as {
+        clientName: string
+        activationLink: string
+        temporaryPassword: string | null
+        needsPasswordSetup?: boolean
+      }
       subject = 'Votre espace MonprojetPro One est prêt'
       html = welcomeOneEmailTemplate(d)
       break

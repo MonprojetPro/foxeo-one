@@ -3,10 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const mockGetUser = vi.fn()
 const mockInsert = vi.fn()
 const mockClientsSelectSingle = vi.fn()
-const mockClientsUpdateEq = vi.fn()
 const mockConfigSelectSingle = vi.fn()
-const mockSendInvite = vi.fn()
-const mockCreateClientAuthUser = vi.fn()
+const mockEnsureClientAuthAccount = vi.fn()
 
 // from() router : selon la table appelée, on retourne la chaîne attendue.
 const mockFrom = vi.fn((table: string) => {
@@ -16,9 +14,6 @@ const mockFrom = vi.fn((table: string) => {
         eq: vi.fn().mockReturnValue({
           maybeSingle: mockClientsSelectSingle,
         }),
-      }),
-      update: vi.fn().mockReturnValue({
-        eq: mockClientsUpdateEq,
       }),
     }
   }
@@ -43,14 +38,8 @@ vi.mock('@monprojetpro/supabase', () => ({
   })),
 }))
 
-// LOT C — l'envoi de l'invitation est isolé dans un util mocké ici.
-vi.mock('../utils/send-welcome-lab-invite', () => ({
-  sendWelcomeLabInvite: mockSendInvite,
-}))
-
 vi.mock('@monprojetpro/supabase/admin', () => ({
-  createClientAuthUser: mockCreateClientAuthUser,
-  generateSecureTemporaryPassword: vi.fn(() => 'temp-password-fake'),
+  ensureClientAuthAccount: mockEnsureClientAuthAccount,
 }))
 
 const CLIENT_ID = '00000000-0000-0000-0000-000000000001'
@@ -64,19 +53,11 @@ describe('launchClientParcours Server Action', () => {
     mockInsert.mockResolvedValue({ error: null })
     // Défaut : mode tracé (étape 1 active, suivantes pending).
     mockConfigSelectSingle.mockResolvedValue({ data: { parcours_mode: 'tracee' }, error: null })
-    // Par défaut : client jamais connecté (first_login_at null) → invitation attendue.
+    // Défaut : le compte existe déjà (T-067 — créé à l'activation, avant le lancement).
     mockClientsSelectSingle.mockResolvedValue({
-      data: {
-        auth_user_id: 'auth-client-1',
-        email: 'client@example.com',
-        name: 'ACME SARL',
-        first_login_at: null,
-      },
+      data: { auth_user_id: 'auth-client-1', email: 'client@example.com' },
       error: null,
     })
-    mockSendInvite.mockResolvedValue({ success: true })
-    mockClientsUpdateEq.mockResolvedValue({ error: null })
-    mockCreateClientAuthUser.mockResolvedValue({ userId: 'new-auth-id', error: null })
   })
 
   it('returns UNAUTHORIZED when not authenticated', async () => {
@@ -162,9 +143,11 @@ describe('launchClientParcours Server Action', () => {
       type: 'parcours',
       link: '/modules/parcours/steps/1',
     })
+    // T-067 — le compte existe déjà (créé à l'activation) : pas de filet de sécurité déclenché.
+    expect(mockEnsureClientAuthAccount).not.toHaveBeenCalled()
   })
 
-  it('skips the notification gracefully when the client has no auth_user_id', async () => {
+  it('skips the notification gracefully when the client has no auth_user_id and no email', async () => {
     mockClientsSelectSingle.mockResolvedValue({ data: null, error: null })
     const { launchClientParcours } = await import('./launch-client-parcours')
     const result = await launchClientParcours({
@@ -179,59 +162,14 @@ describe('launchClientParcours Server Action', () => {
     expect(notifCall).toBeUndefined()
   })
 
-  // ── LOT C — Email d'invitation au lancement ──────────────────────────────────
+  // ── Filet de sécurité — compte toujours absent au lancement (chemin legacy) ──
 
-  it('sends the welcome-lab invite to a first-time client (first_login_at null)', async () => {
-    const { launchClientParcours } = await import('./launch-client-parcours')
-    await launchClientParcours({
-      clientId: CLIENT_ID,
-      steps: [
-        { agentId: AGENT_ID_A, stepLabel: 'Identité de marque' },
-        { agentId: AGENT_ID_B, stepLabel: 'Positionnement' },
-      ],
-    })
-
-    expect(mockSendInvite).toHaveBeenCalledTimes(1)
-    expect(mockSendInvite).toHaveBeenCalledWith({
-      email: 'client@example.com',
-      clientName: 'ACME SARL',
-      firstStepLabel: 'Identité de marque',
-    })
-  })
-
-  it('does NOT send the invite if the client already logged in (additional parcours)', async () => {
+  it('falls back to ensureClientAuthAccount when the client still has no account at launch time', async () => {
     mockClientsSelectSingle.mockResolvedValue({
-      data: {
-        auth_user_id: 'auth-client-1',
-        email: 'client@example.com',
-        name: 'ACME SARL',
-        first_login_at: '2026-06-01T10:00:00Z',
-      },
+      data: { auth_user_id: null, email: 'nouveau@example.com' },
       error: null,
     })
-    const { launchClientParcours } = await import('./launch-client-parcours')
-    await launchClientParcours({
-      clientId: CLIENT_ID,
-      steps: [{ agentId: AGENT_ID_A, stepLabel: 'Étape 1' }],
-    })
-    expect(mockSendInvite).not.toHaveBeenCalled()
-  })
-
-  it('does NOT send the invite when the client has no email', async () => {
-    mockClientsSelectSingle.mockResolvedValue({
-      data: { auth_user_id: 'auth-client-1', email: null, name: 'ACME SARL', first_login_at: null },
-      error: null,
-    })
-    const { launchClientParcours } = await import('./launch-client-parcours')
-    await launchClientParcours({
-      clientId: CLIENT_ID,
-      steps: [{ agentId: AGENT_ID_A, stepLabel: 'Étape 1' }],
-    })
-    expect(mockSendInvite).not.toHaveBeenCalled()
-  })
-
-  it('does not fail the launch and alerts the operator when the invite fails', async () => {
-    mockSendInvite.mockResolvedValue({ success: false, error: 'SMTP down' })
+    mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'new-auth-id', created: true, error: null })
     const { launchClientParcours } = await import('./launch-client-parcours')
     const result = await launchClientParcours({
       clientId: CLIENT_ID,
@@ -239,58 +177,22 @@ describe('launchClientParcours Server Action', () => {
     })
 
     expect(result.error).toBeNull()
-    // Une notification opérateur (alerte) doit être insérée vers l'opérateur courant.
-    const operatorAlert = mockInsert.mock.calls.find(
-      call => !Array.isArray(call[0]) && call[0]?.recipient_type === 'operator' && call[0]?.type === 'alert'
-    )
-    expect(operatorAlert).toBeDefined()
-    expect(operatorAlert![0]).toMatchObject({
-      recipient_type: 'operator',
-      recipient_id: 'user-id',
-      link: `/modules/crm/clients/${CLIENT_ID}`,
-    })
-  })
-
-  // ── Fix T-065bis — compte auth créé si absent au lancement ──────────────────
-
-  it('creates the auth account and links it when the client has none yet', async () => {
-    mockClientsSelectSingle.mockResolvedValue({
-      data: {
-        auth_user_id: null,
-        email: 'nouveau@example.com',
-        name: 'Nouveau Client',
-        first_login_at: null,
-      },
-      error: null,
-    })
-    const { launchClientParcours } = await import('./launch-client-parcours')
-    const result = await launchClientParcours({
+    expect(mockEnsureClientAuthAccount).toHaveBeenCalledWith({
+      supabase: expect.anything(),
       clientId: CLIENT_ID,
-      steps: [{ agentId: AGENT_ID_A, stepLabel: 'Étape 1' }],
-    })
-
-    expect(result.error).toBeNull()
-    expect(mockCreateClientAuthUser).toHaveBeenCalledWith({
       email: 'nouveau@example.com',
-      password: 'temp-password-fake',
+      authUserId: null,
     })
-    expect(mockClientsUpdateEq).toHaveBeenCalledWith('id', CLIENT_ID)
 
-    // La notification client et l'invitation utilisent bien le compte fraîchement créé.
     const notifInsertCall = mockInsert.mock.calls.find(
       call => !Array.isArray(call[0]) && call[0]?.recipient_type === 'client'
     )
     expect(notifInsertCall![0]).toMatchObject({ recipient_id: 'new-auth-id' })
-    expect(mockSendInvite).toHaveBeenCalledWith({
-      email: 'nouveau@example.com',
-      clientName: 'Nouveau Client',
-      firstStepLabel: 'Étape 1',
-    })
   })
 
   it('does not attempt to create an account when the client has no email either', async () => {
     mockClientsSelectSingle.mockResolvedValue({
-      data: { auth_user_id: null, email: null, name: 'Sans email', first_login_at: null },
+      data: { auth_user_id: null, email: null },
       error: null,
     })
     const { launchClientParcours } = await import('./launch-client-parcours')
@@ -299,47 +201,17 @@ describe('launchClientParcours Server Action', () => {
       steps: [{ agentId: AGENT_ID_A, stepLabel: 'Étape 1' }],
     })
     expect(result.error).toBeNull()
-    expect(mockCreateClientAuthUser).not.toHaveBeenCalled()
-  })
-
-  it('still notifies the client when the account is created but linking clients.auth_user_id fails', async () => {
-    mockClientsSelectSingle.mockResolvedValue({
-      data: {
-        auth_user_id: null,
-        email: 'non-lie@example.com',
-        name: 'Non Lié',
-        first_login_at: null,
-      },
-      error: null,
-    })
-    mockClientsUpdateEq.mockResolvedValue({ error: { message: 'update failed' } })
-    const { launchClientParcours } = await import('./launch-client-parcours')
-    const result = await launchClientParcours({
-      clientId: CLIENT_ID,
-      steps: [{ agentId: AGENT_ID_A, stepLabel: 'Étape 1' }],
-    })
-
-    expect(result.error).toBeNull()
-    // Le compte a bien été créé, la notification part quand même via la variable locale —
-    // seul le lien en base a échoué (consigné en log pour ATLAS/ops).
-    const notifInsertCall = mockInsert.mock.calls.find(
-      call => !Array.isArray(call[0]) && call[0]?.recipient_type === 'client'
-    )
-    expect(notifInsertCall![0]).toMatchObject({ recipient_id: 'new-auth-id' })
+    expect(mockEnsureClientAuthAccount).not.toHaveBeenCalled()
   })
 
   it('does not fail the launch when the auth account creation fails (logged only)', async () => {
     mockClientsSelectSingle.mockResolvedValue({
-      data: {
-        auth_user_id: null,
-        email: 'echec@example.com',
-        name: 'Echec Client',
-        first_login_at: null,
-      },
+      data: { auth_user_id: null, email: 'echec@example.com' },
       error: null,
     })
-    mockCreateClientAuthUser.mockResolvedValue({
-      userId: null,
+    mockEnsureClientAuthAccount.mockResolvedValue({
+      authUserId: null,
+      created: false,
       error: { code: 'AUTH_ADMIN_CREATE_FAILED', message: 'boom' },
     })
     const { launchClientParcours } = await import('./launch-client-parcours')

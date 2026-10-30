@@ -13,13 +13,15 @@ vi.mock('next/cache', () => ({
 const mockOperatorSingle = vi.fn()
 const mockConfigSingle = vi.fn()
 const mockUpdateEq = vi.fn()
+const mockClientsMaybeSingle = vi.fn()
 const mockParcoursUpdateSelect = vi.fn()
 const mockParcoursUpdateEqStatus = vi.fn(() => ({ select: mockParcoursUpdateSelect }))
 const mockParcoursUpdateEqClient = vi.fn(() => ({ eq: mockParcoursUpdateEqStatus }))
 const mockParcoursUpdate = vi.fn(() => ({ eq: mockParcoursUpdateEqClient }))
 const mockActivityInsert = vi.fn().mockResolvedValue({ error: null })
+const mockNotificationInsert = vi.fn().mockResolvedValue({ error: null })
 
-const mockFrom = vi.fn((table: string) => {
+function defaultFromImpl(table: string) {
   if (table === 'operators') {
     return {
       select: vi.fn(() => ({
@@ -37,14 +39,24 @@ const mockFrom = vi.fn((table: string) => {
       })),
     }
   }
+  if (table === 'clients') {
+    return {
+      select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: mockClientsMaybeSingle })) })),
+    }
+  }
   if (table === 'parcours') {
     return { update: mockParcoursUpdate }
   }
   if (table === 'activity_logs') {
     return { insert: mockActivityInsert }
   }
+  if (table === 'notifications') {
+    return { insert: mockNotificationInsert }
+  }
   return {}
-})
+}
+
+const mockFrom = vi.fn(defaultFromImpl)
 
 const mockGetUser = vi.fn()
 
@@ -55,10 +67,27 @@ vi.mock('@monprojetpro/supabase', () => ({
   })),
 }))
 
+const mockEnsureClientAuthAccount = vi.fn()
+const mockSendWelcomeLabInvite = vi.fn()
+const mockSendWelcomeOneInvite = vi.fn()
+
+vi.mock('@monprojetpro/supabase/admin', () => ({
+  ensureClientAuthAccount: mockEnsureClientAuthAccount,
+  sendWelcomeLabInvite: mockSendWelcomeLabInvite,
+  sendWelcomeOneInvite: mockSendWelcomeOneInvite,
+}))
+
 describe('toggleAccess Server Action', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
+    mockFrom.mockImplementation(defaultFromImpl)
+    // Défaut : le compte existe déjà (cas le plus fréquent) — pas d'email renvoyé.
+    mockClientsMaybeSingle.mockResolvedValue({
+      data: { id: testClientId, email: 'client@example.com', first_name: 'Jean', name: 'ACME', auth_user_id: 'existing-id' },
+      error: null,
+    })
+    mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'existing-id', created: false, error: null })
   })
 
   it('should return UNAUTHORIZED when not authenticated', async () => {
@@ -184,7 +213,7 @@ describe('toggleAccess Server Action', () => {
       }
       if (table === 'parcours') return { update: mockParcoursUpdate }
       if (table === 'activity_logs') return { insert: mockActivityInsert }
-      return {}
+      return defaultFromImpl(table)
     })
 
     const { toggleAccess } = await import('./toggle-access')
@@ -241,7 +270,7 @@ describe('toggleAccess Server Action', () => {
       }
       if (table === 'parcours') return { update: mockParcoursUpdate }
       if (table === 'activity_logs') return { insert: mockActivityInsert }
-      return {}
+      return defaultFromImpl(table)
     })
 
     const { toggleAccess } = await import('./toggle-access')
@@ -298,6 +327,77 @@ describe('toggleAccess Server Action', () => {
     expect(result.data?.labAutoPaused).toBe(false)
     // Pas de suspension de parcours déclenchée par cette ouverture.
     expect(mockParcoursUpdate).not.toHaveBeenCalled()
+  })
+
+  // ── T-067 — compte client garanti quand un accès est accordé ────────────────
+
+  it('creates the account and sends welcome-one when One access is granted to a new account', async () => {
+    mockConfigSingle.mockResolvedValue({
+      data: { dashboard_type: 'lab', lab_mode_available: false, one_mode_available: false, elio_lab_enabled: false },
+      error: null,
+    })
+    mockClientsMaybeSingle.mockResolvedValue({
+      data: { id: testClientId, email: 'nouveau@example.com', first_name: 'Jean', name: 'ACME', auth_user_id: null },
+      error: null,
+    })
+    mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'new-id', created: true, error: null })
+    mockSendWelcomeOneInvite.mockResolvedValue({ success: true })
+
+    const { toggleAccess } = await import('./toggle-access')
+    const result = await toggleAccess({ clientId: testClientId, accessType: 'one', enabled: true })
+
+    expect(result.error).toBeNull()
+    expect(mockEnsureClientAuthAccount).toHaveBeenCalledWith({
+      supabase: expect.anything(),
+      clientId: testClientId,
+      email: 'nouveau@example.com',
+      authUserId: null,
+    })
+    expect(mockSendWelcomeOneInvite).toHaveBeenCalledWith({ email: 'nouveau@example.com', clientName: 'Jean' })
+    expect(mockSendWelcomeLabInvite).not.toHaveBeenCalled()
+  })
+
+  it('sends welcome-lab (not welcome-one) when Lab agents are reactivated for a new account', async () => {
+    mockConfigSingle.mockResolvedValue({
+      data: { dashboard_type: 'lab', lab_mode_available: false, one_mode_available: false, elio_lab_enabled: false },
+      error: null,
+    })
+    mockClientsMaybeSingle.mockResolvedValue({
+      data: { id: testClientId, email: 'nouveau@example.com', first_name: 'Jean', name: 'ACME', auth_user_id: null },
+      error: null,
+    })
+    mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'new-id', created: true, error: null })
+    mockSendWelcomeLabInvite.mockResolvedValue({ success: true })
+
+    const { toggleAccess } = await import('./toggle-access')
+    await toggleAccess({ clientId: testClientId, accessType: 'lab', enabled: true })
+
+    expect(mockSendWelcomeLabInvite).toHaveBeenCalledWith({ email: 'nouveau@example.com', clientName: 'Jean' })
+    expect(mockSendWelcomeOneInvite).not.toHaveBeenCalled()
+  })
+
+  it('does not create an account nor send an email when access is turned off', async () => {
+    mockConfigSingle.mockResolvedValue({
+      data: { dashboard_type: 'lab', lab_mode_available: true, one_mode_available: true, elio_lab_enabled: false },
+      error: null,
+    })
+
+    const { toggleAccess } = await import('./toggle-access')
+    await toggleAccess({ clientId: testClientId, accessType: 'one', enabled: false })
+
+    expect(mockEnsureClientAuthAccount).not.toHaveBeenCalled()
+  })
+
+  it('does not resend an email when the account already existed', async () => {
+    mockConfigSingle.mockResolvedValue({
+      data: { dashboard_type: 'lab', lab_mode_available: false, one_mode_available: false, elio_lab_enabled: false },
+      error: null,
+    })
+
+    const { toggleAccess } = await import('./toggle-access')
+    await toggleAccess({ clientId: testClientId, accessType: 'one', enabled: true })
+
+    expect(mockSendWelcomeOneInvite).not.toHaveBeenCalled()
   })
 
   it('should always return { data, error } format', async () => {

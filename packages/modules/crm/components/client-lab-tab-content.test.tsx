@@ -18,6 +18,9 @@ vi.mock('./access-toggles', () => ({
 }))
 vi.mock('./parcours-status-badge', () => ({ ParcoursStatusBadge: () => <span>statut</span> }))
 vi.mock('./assign-parcours-dialog', () => ({ AssignParcoursDialog: () => null }))
+vi.mock('./activate-lab-free-button', () => ({
+  ActivateLabFreeButton: () => <button data-testid="activate-lab-free-mock">Activer sans facturation</button>,
+}))
 vi.mock('./graduation-dialog', () => ({ GraduationDialog: () => null }))
 vi.mock('./reactivate-parcours-dialog', () => ({ ReactivateParcoursDialog: () => null }))
 vi.mock('./lab-exit-kit-dialog', () => ({ LabExitKitDialog: () => null }))
@@ -109,8 +112,8 @@ describe('ClientLabTabContent', () => {
     expect(screen.getByTestId('lab-activation-badge').textContent).toBe('Lab figé')
   })
 
-  it('place les slots facturation et config Élio', () => {
-    mockUseClient.mockReturnValue(baseClient('lab'))
+  it('place les slots facturation (toujours visible) et config Élio (Lab actif)', () => {
+    mockUseClient.mockReturnValue(baseClient('lab', { labModeAvailable: true, elioLabEnabled: true }))
     mockUseParcours.mockReturnValue(parcoursEnCours)
     mockUsePending.mockReturnValue({ data: { count: 0 } })
 
@@ -123,5 +126,31 @@ describe('ClientLabTabContent', () => {
     )
     expect(screen.getByTestId('billing-slot')).toBeDefined()
     expect(screen.getByTestId('elio-slot')).toBeDefined()
+  })
+
+  // ── T-067 — porte d'entrée unique + section Accompagnement gatée ────────────
+
+  it('Lab non activé : propose l\'activation gratuite et grise la section Accompagnement', () => {
+    mockUseClient.mockReturnValue(baseClient('hub'))
+    mockUseParcours.mockReturnValue({ data: null })
+    mockUsePending.mockReturnValue({ data: { count: 0 } })
+
+    render(
+      <ClientLabTabContent clientId="c-1" elioConfigSlot={<div data-testid="elio-slot" />} />
+    )
+    expect(screen.getByTestId('activate-lab-free-mock')).toBeDefined()
+    expect(screen.queryByTestId('elio-slot')).toBeNull()
+    expect(
+      screen.getByText('Activez le Lab (section 1 ci-dessus) avant de composer les agents et le type de parcours.')
+    ).toBeDefined()
+  })
+
+  it('Lab déjà actif : masque le bouton d\'activation gratuite', () => {
+    mockUseClient.mockReturnValue(baseClient('lab', { labModeAvailable: true, elioLabEnabled: true }))
+    mockUseParcours.mockReturnValue(parcoursEnCours)
+    mockUsePending.mockReturnValue({ data: { count: 0 } })
+
+    render(<ClientLabTabContent clientId="c-1" />)
+    expect(screen.queryByTestId('activate-lab-free-mock')).toBeNull()
   })
 })

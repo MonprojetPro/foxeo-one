@@ -101,15 +101,20 @@ function exportReadyEmailTemplate(d: { clientName: string; downloadUrl: string }
   return baseTemplate({ title: 'Votre export de données est prêt', body, ctaUrl: d.downloadUrl, ctaText: 'Télécharger mes données' })
 }
 
-function welcomeLabEmailTemplate(d: { clientName: string; firstStepLabel: string; activationLink: string }): string {
-  const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>🎉 Bienvenue dans <strong>MonprojetPro Lab</strong> !</p><p>Votre parcours d'incubation est prêt. Vous commencerez par l'étape <strong>${escapeHtml(d.firstStepLabel)}</strong>.</p><p>Pour accéder à votre espace, cliquez sur le bouton ci-dessous et choisissez votre mot de passe :</p><p style="color:#6b7280;font-size:14px;">Ce lien personnel est valable 1 heure. Passé ce délai, utilisez « Mot de passe oublié » sur la page de connexion.</p>`
+function welcomeLabEmailTemplate(d: { clientName: string; firstStepLabel?: string; activationLink: string }): string {
+  const parcoursLine = d.firstStepLabel
+    ? `<p>Votre parcours d'incubation est prêt. Vous commencerez par l'étape <strong>${escapeHtml(d.firstStepLabel)}</strong>.</p>`
+    : `<p>Votre espace d'incubation est prêt. MiKL compose votre parcours — vous recevrez une notification dès qu'une première étape sera disponible.</p>`
+  const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>🎉 Bienvenue dans <strong>MonprojetPro Lab</strong> !</p>${parcoursLine}<p>Pour accéder à votre espace, cliquez sur le bouton ci-dessous et choisissez votre mot de passe :</p><p style="color:#6b7280;font-size:14px;">Ce lien personnel est valable 1 heure. Passé ce délai, utilisez « Mot de passe oublié » sur la page de connexion.</p>`
   return baseTemplate({ title: 'Bienvenue dans MonprojetPro Lab !', body, ctaUrl: d.activationLink, ctaText: 'Définir mon mot de passe' })
 }
 
-function welcomeOneEmailTemplate(d: { clientName: string; activationLink: string; temporaryPassword: string | null }): string {
+function welcomeOneEmailTemplate(d: { clientName: string; activationLink: string; temporaryPassword: string | null; needsPasswordSetup?: boolean }): string {
   const pwdBlock = d.temporaryPassword
     ? `<p>Votre mot de passe temporaire : <code style="background:#f4f4f5;padding:4px 8px;border-radius:4px;font-family:monospace;">${escapeHtml(d.temporaryPassword)}</code></p>`
-    : `<p style="color:#6b7280;font-size:14px;">Utilisez l'email et le mot de passe que vous avez déjà définis.</p>`
+    : d.needsPasswordSetup
+      ? `<p style="color:#6b7280;font-size:14px;">Cliquez sur le bouton ci-dessous pour définir votre mot de passe et accéder à votre espace.</p>`
+      : `<p style="color:#6b7280;font-size:14px;">Utilisez l'email et le mot de passe que vous avez déjà définis.</p>`
   const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>🎉 Votre espace <strong>MonprojetPro One</strong> est maintenant actif.</p>${pwdBlock}`
   return baseTemplate({ title: 'Votre espace One est prêt !', body, ctaUrl: d.activationLink, ctaText: 'Accéder à mon espace' })
 }
@@ -375,8 +380,8 @@ async function handleDirectEmail(input: { to: string; template: DirectEmailTempl
   let subject: string
   let html: string
   switch (input.template) {
-    case 'welcome-lab': { const d = input.data as { clientName: string; firstStepLabel: string; activationLink: string }; subject = 'Bienvenue dans MonprojetPro Lab !'; html = welcomeLabEmailTemplate(d); break }
-    case 'welcome-one': { const d = input.data as { clientName: string; activationLink: string; temporaryPassword: string | null }; subject = 'Votre espace MonprojetPro One est prêt'; html = welcomeOneEmailTemplate(d); break }
+    case 'welcome-lab': { const d = input.data as { clientName: string; firstStepLabel?: string; activationLink: string }; subject = 'Bienvenue dans MonprojetPro Lab !'; html = welcomeLabEmailTemplate(d); break }
+    case 'welcome-one': { const d = input.data as { clientName: string; activationLink: string; temporaryPassword: string | null; needsPasswordSetup?: boolean }; subject = 'Votre espace MonprojetPro One est prêt'; html = welcomeOneEmailTemplate(d); break }
     case 'welcome-venture': { const d = input.data as { clientName: string }; subject = 'Bienvenue dans l’aventure MonprojetPro !'; html = welcomeVentureEmailTemplate(d); break }
     case 'final-payment-confirmation': { const d = input.data as { clientName: string }; subject = 'Projet livré — MonprojetPro'; html = finalPaymentConfirmationEmailTemplate(d); break }
     case 'prospect-resources': { const d = input.data as { links: Array<{ name: string; url: string }> }; subject = 'Vos ressources MonprojetPro'; html = prospectResourcesEmailTemplate(d); break }

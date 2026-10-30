@@ -1,6 +1,12 @@
 'use server'
 
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import {
+  ensureClientAuthAccount,
+  sendWelcomeLabInvite,
+  sendWelcomeOneInvite,
+} from '@monprojetpro/supabase/admin'
 import {
   type ActionResponse,
   successResponse,
@@ -116,6 +122,55 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
         'DATABASE_ERROR',
         updateError
       )
+    }
+
+    // T-067 — Garantit un compte client (+ email « votre espace est prêt ») dès qu'un
+    // accès est ACCORDÉ, quel que soit le levier (One ouvert, ou agents Lab réactivés
+    // sans être jamais passé par une activation payante/gratuite). Filet de sécurité :
+    // dans l'immense majorité des cas le compte existe déjà (activation en amont).
+    if (enabled) {
+      const { data: clientRow } = await supabase
+        .from('clients')
+        .select('id, email, first_name, name, auth_user_id')
+        .eq('id', clientId)
+        .maybeSingle()
+
+      const client = clientRow as {
+        id: string
+        email: string | null
+        first_name: string | null
+        name: string | null
+        auth_user_id: string | null
+      } | null
+
+      if (client) {
+        const authResult = await ensureClientAuthAccount({
+          supabase: supabase as unknown as SupabaseClient,
+          clientId: client.id,
+          email: client.email,
+          authUserId: client.auth_user_id,
+        })
+
+        if (authResult.error) {
+          console.error('[CRM:TOGGLE_ACCESS] Compte auth non créé:', authResult.error)
+        } else if (authResult.created && client.email) {
+          const clientName = client.first_name?.trim() || client.name || 'Cher(e) client(e)'
+          const invite = accessType === 'one'
+            ? await sendWelcomeOneInvite({ email: client.email, clientName })
+            : await sendWelcomeLabInvite({ email: client.email, clientName })
+          if (!invite.success) {
+            console.error('[CRM:TOGGLE_ACCESS] Email invitation KO:', invite.error)
+            await supabase.from('notifications').insert({
+              recipient_type: 'operator',
+              recipient_id: user.id,
+              type: 'alert',
+              title: '⚠️ Email d\'invitation non envoyé',
+              body: `L'accès est activé mais l'email d'invitation au client n'a pas pu être envoyé (${invite.error ?? 'erreur inconnue'}). Tu peux le relancer manuellement.`,
+              link: `/modules/crm/clients/${clientId}`,
+            })
+          }
+        }
+      }
     }
 
     // Permanence : l'espace Lab restant toujours accessible (historique à vie), il n'y a
