@@ -66,7 +66,14 @@ interface GraduationDialogProps {
   clientId: string
   clientName: string
   clientCompany: string
-  parcours: Parcours
+  /**
+   * Optionnel depuis T-067d : la table `parcours` (progression formelle) n'a plus aucun
+   * moyen d'être peuplée depuis l'UI (voir T-067c — composition du parcours faite via
+   * `client_parcours_agents` / « Configuration Élio par étape »). Sans elle, la graduation
+   * reste une décision manuelle de MiKL — le serveur (`graduateClient`, `force: true`)
+   * le permet déjà, ce dialogue doit juste cesser d'en dépendre pour s'afficher.
+   */
+  parcours?: Parcours
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
@@ -85,13 +92,14 @@ export function GraduationDialog({
   const [selectedModules, setSelectedModules] = useState<string[]>(DEFAULT_MODULES)
   const [notes, setNotes] = useState('')
   // Forçage opérateur : graduer même si le parcours n'est pas terminé (cf. graduateClient).
-  const [forceGraduation, setForceGraduation] = useState(false)
+  // Sans parcours formel du tout, le forçage est la SEULE voie possible — coché d'office.
+  const [forceGraduation, setForceGraduation] = useState(!parcours)
   const [isPending, startTransition] = useTransition()
   const queryClient = useQueryClient()
 
-  const completedSteps = parcours.activeStages.filter((s) => s.status === 'completed').length
-  const totalSteps = parcours.activeStages.filter((s) => s.active).length
-  const durationDays = differenceInDays(new Date(), new Date(parcours.startedAt))
+  const completedSteps = parcours?.activeStages.filter((s) => s.status === 'completed').length ?? 0
+  const totalSteps = parcours?.activeStages.filter((s) => s.active).length ?? 0
+  const durationDays = parcours ? differenceInDays(new Date(), new Date(parcours.startedAt)) : null
 
   // L'offre IMPLIQUE Élio : Essentiel/Agentique → Élio activé ; Ponctuel → Élio retiré.
   // Évite l'incohérence « Ponctuel (sans Élio) mais case Élio cochée ».
@@ -163,20 +171,28 @@ export function GraduationDialog({
               <span className="text-sm">{clientCompany}</span>
             </div>
             <Separator />
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Durée parcours</span>
-              <span className="text-sm">{durationDays} jours</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Étapes complétées</span>
-              <Badge variant="secondary">{completedSteps} / {totalSteps}</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Démarré le</span>
-              <span className="text-sm">
-                {format(new Date(parcours.startedAt), 'd MMMM yyyy', { locale: fr })}
-              </span>
-            </div>
+            {parcours ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Durée parcours</span>
+                  <span className="text-sm">{durationDays} jours</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Étapes complétées</span>
+                  <Badge variant="secondary">{completedSteps} / {totalSteps}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Démarré le</span>
+                  <span className="text-sm">
+                    {format(new Date(parcours.startedAt), 'd MMMM yyyy', { locale: fr })}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Aucun parcours formel suivi pour ce client — la graduation sera forcée (voir ci-dessous).
+              </p>
+            )}
           </div>
 
           {/* Choix du tier */}
@@ -259,17 +275,19 @@ export function GraduationDialog({
             />
           </div>
 
-          {/* Forçage — graduer même si le parcours n'est pas terminé */}
-          <label className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 cursor-pointer">
+          {/* Forçage — graduer même si le parcours n'est pas terminé. Sans parcours formel
+              du tout, c'est la seule voie possible : coché et non décochable. */}
+          <label className={`flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 ${parcours ? 'cursor-pointer' : 'cursor-not-allowed opacity-80'}`}>
             <input
               type="checkbox"
               checked={forceGraduation}
               onChange={(e) => setForceGraduation(e.target.checked)}
+              disabled={!parcours}
               className="w-4 h-4 mt-0.5 shrink-0"
             />
             <span className="text-sm">
               <span className="font-medium text-amber-600 dark:text-amber-400">
-                Graduer même si le parcours n&apos;est pas terminé
+                {parcours ? "Graduer même si le parcours n'est pas terminé" : 'Graduation forcée (aucun parcours formel à vérifier)'}
               </span>
               <span className="block text-xs text-muted-foreground mt-0.5">
                 Ignore les étapes restantes et les demandes de validation en attente. À utiliser

@@ -166,4 +166,16 @@ describe('ClientLabTabContent', () => {
     render(<ClientLabTabContent clientId="c-1" />)
     expect(screen.queryByTestId('activate-lab-free-mock')).toBeNull()
   })
+
+  // ── T-067d — Graduation accessible sans parcours formel ──────────────────────
+
+  it('Lab actif sans parcours formel : le bouton Graduer reste cliquable', () => {
+    mockUseClient.mockReturnValue(baseClient('lab', { labModeAvailable: true, elioLabEnabled: true }))
+    mockUseParcours.mockReturnValue({ data: null })
+    mockUsePending.mockReturnValue({ data: { count: 0 } })
+
+    render(<ClientLabTabContent clientId="c-1" />)
+    const graduationButton = screen.getByTestId('graduation-button') as HTMLButtonElement
+    expect(graduationButton.disabled).toBe(false)
+  })
 })

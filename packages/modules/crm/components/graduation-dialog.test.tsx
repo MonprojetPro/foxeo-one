@@ -155,4 +155,37 @@ describe('GraduationDialog', () => {
   it('should have correct displayName', () => {
     expect(GraduationDialog.displayName).toBe('GraduationDialog')
   })
+
+  // ── T-067d — utilisable sans parcours formel (plus aucun moyen de le peupler) ──
+
+  describe('without a parcours (T-067d)', () => {
+    const propsWithoutParcours = { ...defaultProps, parcours: undefined }
+
+    it('renders without crashing and explains the forced graduation', () => {
+      render(<GraduationDialog {...propsWithoutParcours} />)
+      expect(
+        screen.getByText(/Aucun parcours formel suivi pour ce client/)
+      ).toBeDefined()
+    })
+
+    it('forces graduation by default, checkbox locked checked', () => {
+      render(<GraduationDialog {...propsWithoutParcours} />)
+      const forceLabel = screen.getByText('Graduation forcée (aucun parcours formel à vérifier)')
+      const checkbox = forceLabel.closest('label')?.querySelector('input[type="checkbox"]') as HTMLInputElement
+      expect(checkbox.checked).toBe(true)
+      expect(checkbox.disabled).toBe(true)
+    })
+
+    it('does not display parcours stats (duration/steps)', () => {
+      render(<GraduationDialog {...propsWithoutParcours} />)
+      expect(screen.queryByText('Durée parcours')).toBeNull()
+      expect(screen.queryByText('Étapes complétées')).toBeNull()
+    })
+
+    it('still allows confirming the graduation (modules pré-cochés)', () => {
+      render(<GraduationDialog {...propsWithoutParcours} />)
+      const confirmBtn = screen.getByText('Confirmer la graduation').closest('button')
+      expect(confirmBtn?.disabled).toBe(false)
+    })
+  })
 })

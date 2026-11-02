@@ -97,14 +97,19 @@ export function ClientLabTabContent({
         : labState === 'paused' ? 'Lab en pause'
           : 'Lab actif'
 
+  // T-067d — la table `parcours` n'a plus aucun moyen d'être peuplée depuis l'UI (T-067c
+  // a retiré son seul créateur, mort et dupliqué). Sans elle, bloquer sur « parcours non
+  // terminé » reviendrait à bloquer TOUJOURS : ce motif ne s'applique donc que si un
+  // `parcours` existe réellement (legacy). Sans lui, la graduation reste une décision
+  // manuelle de MiKL (le dialogue force déjà via `graduateClient({ force: true })`).
   const graduationTooltip = !isLabClient
     ? null
     : isFrozen
       // Priorité sur les autres motifs : réactiver l'abonnement est le vrai préalable.
       ? 'Abonnement résilié — réactivez-le (barre d\'actions) avant de graduer'
-      : !parcoursCompleted
+      : parcours && !parcoursCompleted
         ? `Parcours non terminé — ${
-            parcours?.activeStages.filter((s) => s.active && s.status !== 'completed').length ?? '?'
+            parcours.activeStages.filter((s) => s.active && s.status !== 'completed').length
           } étape(s) restante(s)`
         : !noPendingValidations
           ? `Demandes de validation en attente — traitez-les d'abord`
@@ -356,12 +361,12 @@ export function ClientLabTabContent({
       )}
 
       {/* Dialogs */}
-      {isLabClient && parcours && (
+      {isLabClient && (
         <GraduationDialog
           clientId={clientId}
           clientName={client.name}
           clientCompany={client.company}
-          parcours={parcours}
+          parcours={parcours ?? undefined}
           open={graduationDialogOpen}
           onOpenChange={setGraduationDialogOpen}
         />
