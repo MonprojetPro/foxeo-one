@@ -17,7 +17,6 @@ vi.mock('./access-toggles', () => ({
   AccessToggles: () => <div data-testid="access-toggles-mock" />,
 }))
 vi.mock('./parcours-status-badge', () => ({ ParcoursStatusBadge: () => <span>statut</span> }))
-vi.mock('./assign-parcours-dialog', () => ({ AssignParcoursDialog: () => null }))
 vi.mock('./activate-lab-free-button', () => ({
   ActivateLabFreeButton: () => <button data-testid="activate-lab-free-mock">Activer sans facturation</button>,
 }))

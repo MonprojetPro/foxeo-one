@@ -8,7 +8,6 @@ import { useClientPendingValidations } from '../hooks/use-client-pending-validat
 import { ParcoursStatusBadge } from './parcours-status-badge'
 import { AccessToggles } from './access-toggles'
 import { ActivateLabFreeButton } from './activate-lab-free-button'
-import { AssignParcoursDialog } from './assign-parcours-dialog'
 import { GraduationDialog } from './graduation-dialog'
 import { ReactivateParcoursDialog } from './reactivate-parcours-dialog'
 import { LabExitKitDialog } from './lab-exit-kit-dialog'
@@ -51,7 +50,6 @@ export function ClientLabTabContent({
   const { data: parcours } = useClientParcours(clientId)
   const { data: pendingValidations } = useClientPendingValidations(clientId)
 
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [graduationDialogOpen, setGraduationDialogOpen] = useState(false)
   const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false)
   const [labExitKitDialogOpen, setLabExitKitDialogOpen] = useState(false)
@@ -181,18 +179,17 @@ export function ClientLabTabContent({
           showOnlyAgents
         />
 
-        {/* Parcours Lab — détaillé */}
+        {/* Parcours Lab — détaillé. N'existe que pour un parcours déjà assigné par
+            l'ancien mécanisme (table `parcours`, templates jamais livrés — Epic 12).
+            Composer un parcours se fait désormais uniquement via « Configuration Élio
+            par étape » ci-dessous (T-067 : plus de bouton « Assigner un parcours »,
+            qui renvoyait vers un dialogue mort et dupliquait cette carte). */}
+        {parcours && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle>Parcours Lab</CardTitle>
-            {!parcours && (
-              <Button variant="outline" size="sm" onClick={() => setAssignDialogOpen(true)}>
-                Assigner un parcours
-              </Button>
-            )}
           </CardHeader>
           <CardContent>
-            {parcours ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-muted-foreground">Statut</span>
@@ -272,11 +269,9 @@ export function ClientLabTabContent({
                   </>
                 )}
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Aucun parcours Lab assigné.</p>
-            )}
           </CardContent>
         </Card>
+        )}
 
         {/* Configuration Élio par étape */}
         {elioConfigSlot && (
@@ -361,7 +356,6 @@ export function ClientLabTabContent({
       )}
 
       {/* Dialogs */}
-      <AssignParcoursDialog clientId={clientId} open={assignDialogOpen} onOpenChange={setAssignDialogOpen} />
       {isLabClient && parcours && (
         <GraduationDialog
           clientId={clientId}
