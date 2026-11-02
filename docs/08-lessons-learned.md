@@ -13,7 +13,7 @@
 | DL | Téléchargement / Storage | 5 |
 | API | Intégration API externe | 5 |
 | RSC | Next.js Server/Client | 6 |
-| DB | Base de données / Schéma | 4 |
+| DB | Base de données / Schéma | 5 |
 | DEP | Déploiement | 8 |
 | GIT | Git / Workflow | 1 |
 | SEC | Sécurité / Secrets | 3 |
@@ -841,6 +841,18 @@
 - **Solution validee** : une seule autorité par responsabilité. Le `ThemeProvider` ne gère plus que `light`/`dark` ; la classe de dashboard est posée **côté serveur** dans le `className` de `<html>` (déduite du cookie du toggle Lab/One, donc sans flash), puis ajustée par `ThemeClassSetter` pour le clamp aux modes réellement autorisés.
 - **Regle a suivre** : (a) une propriété globale du DOM (`documentElement.classList`, `dataset`, `<title>`) ne doit avoir **qu'un seul écrivain**. Deux composants qui la modifient = le plus proche de la racine gagne, quelle que soit l'intention. (b) Se rappeler que les effets remontent des **enfants vers les parents** : un correctif appliqué « plus bas » ne corrige rien si un parent réécrit la même chose. (c) **Symptôme signature** : des couleurs forcées en littéral dispersées dans le code = quelqu'un contourne un thème qui ne s'applique pas. Chercher l'écrivain concurrent avant d'ajouter un nouveau `!important` ou une valeur en dur.
 - **Agents impliques** : SPARK (fix), PIXEL (thème), ATLAS
+
+---
+
+## DB-005 — Un `.insert()` non bloquant peut échouer à 100 %, pour TOUS les clients, sans jamais le dire
+
+- **Date** : 2026-11-02
+- **Categorie** : Base de données / Schéma
+- **Symptome** : T-067 ajoute un bouton « Activer sans facturation » — MiKL clique, le toast dit « c'est bon », mais rien ne suit (badge toujours « Lab non activé », section Accompagnement toujours grisée). Creusé par sondes (protocole TILT) : `client_configs` pour le client testé = **0 ligne**. Élargi à toute la base : **les 3 clients de `clients` avaient 0 ligne `client_configs`, sans exception**, depuis l'origine du projet — pas un bug de T-067, un bug fondateur qui dormait dessous.
+- **Cause racine** : `client_configs.operator_id` est `NOT NULL` sans valeur par défaut. `create-client.ts` n'a **jamais** inclus `operator_id` dans son `.insert()` — chaque création de client viole donc la contrainte, à chaque fois, sans exception. L'erreur est bien renvoyée par Postgrest... mais atterrit dans un bloc `if (configError) { console.error(...) }` **non bloquant**, commenté « le client est créé, la config pourra être corrigée plus tard ». Elle ne l'a jamais été : rien ne relit ces logs, et chaque écran qui lit `client.config` (badge Lab, dashboard_type, modules actifs) tournait simplement à vide — jamais une erreur visible à l'écran, juste un état qui ne bouge jamais.
+- **Solution validee** : `operator_id: operatorId` ajouté à l'insert (la variable existait déjà dans le scope, inutilisée à cet endroit). Rattrapage des 3 clients existants par INSERT direct (2 clients réels en `one` par défaut, le client de test en `lab` actif pour refléter les 2 tentatives d'activation déjà faites). Validé par MiKL avant toute écriture (portée = tous les clients, pas un cas isolé).
+- **Regle a suivre** : (a) un `.insert()` marqué « non-bloquant » avec juste un `console.error` est un angle mort total si personne ne lit ces logs — pour une ligne de config **structurellement nécessaire** (lue par tout le dashboard), l'échec doit soit bloquer, soit déclencher une alerte visible, jamais un simple log perdu. (b) **Symptôme signature** : un toast de succès suivi d'aucun effet visible → vérifier d'abord si la ligne attendue existe réellement en base, avant de chercher un bug de cache ou de query key côté front. (c) Avant de corriger une table qui semble vide pour UN client, vérifier si elle est vide pour TOUS — la portée change complètement la gravité et la réponse (patch local vs rattrapage de données).
+- **Agents impliques** : Claude Code (protocole TILT), MiKL (validation avant fix), ATLAS
 
 ---
 

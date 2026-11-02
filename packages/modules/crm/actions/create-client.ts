@@ -146,10 +146,14 @@ export async function createClient(
     }
 
     // Create default client_configs
+    // operator_id est NOT NULL sans défaut — l'oublier fait échouer l'insert à CHAQUE
+    // fois (contrainte base), silencieusement absorbé par le non-blocking ci-dessous.
+    // Preuve du 02-11 : les 3 clients en prod avaient 0 ligne client_configs.
     const { error: configError } = await supabase
       .from('client_configs')
       .insert({
         client_id: clientData.id,
+        operator_id: operatorId,
         active_modules: ['core-dashboard', 'chat', 'documents', 'visio'],
         dashboard_type: 'one',
         // Client One direct : Mode One débloqué, pas d'accès Lab (cf. matrice ADR-01).

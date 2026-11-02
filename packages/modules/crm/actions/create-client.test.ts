@@ -24,12 +24,14 @@ const mockOpSingle = vi.fn()
 const mockOpEq = vi.fn(() => ({ single: mockOpSingle }))
 const mockOpSelect = vi.fn(() => ({ eq: mockOpEq }))
 
+const mockConfigInsert = vi.fn().mockResolvedValue({ error: null })
+
 const mockFrom = vi.fn((table: string) => {
   if (table === 'operators') {
     return { select: mockOpSelect }
   }
   if (table === 'client_configs') {
-    return { insert: vi.fn().mockResolvedValue({ error: null }) }
+    return { insert: mockConfigInsert }
   }
   if (table === 'activity_logs') {
     // fire-and-forget: insert().then().catch() — must be thenable
@@ -185,6 +187,38 @@ describe('createClient Server Action', () => {
     expect(result.data).toHaveProperty('createdAt')
     expect(result.data).not.toHaveProperty('client_type')
     expect(result.data).not.toHaveProperty('created_at')
+  })
+
+  // T-067b — operator_id manquant faisait échouer SILENCIEUSEMENT la création de
+  // client_configs (contrainte NOT NULL) pour les 3 clients de prod. Verrou.
+  it('inclut operator_id dans l\'insert client_configs (contrainte NOT NULL)', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: validAuthUuid } }, error: null })
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+    mockSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        operator_id: testOperatorId,
+        name: 'Jean Dupont',
+        company: 'Jean Dupont',
+        email: 'jean@acme.com',
+        client_type: 'ponctuel',
+        status: 'lab-actif',
+        sector: null,
+        phone: null,
+        website: null,
+        notes: null,
+        created_at: '2026-02-13T10:00:00Z',
+        updated_at: '2026-02-13T10:00:00Z',
+      },
+      error: null,
+    })
+
+    const { createClient } = await import('./create-client')
+    await createClient({ name: 'Jean Dupont', email: 'jean@acme.com', clientType: 'ponctuel' })
+
+    expect(mockConfigInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ client_id: testClientId, operator_id: testOperatorId })
+    )
   })
 
   // T-035 — client « entité » (personne morale)
