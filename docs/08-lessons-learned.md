@@ -1271,3 +1271,16 @@ jonction). Cause validée par MiKL, puis une seule correction : lecture `broadca
    échouer ne prouve rien.
 4. **Le comportement d'autorisation dépend de la version du service** : écrire la règle pour la
    version la plus stricte (lecture broadcast + presence), ne pas supposer celle de la production.
+
+## 2026-11-03 — Élio en panne sans que personne le voie : la même clé, deux boîtes aux lettres
+
+**Contexte** : T-069 (enrichir les agents Élio Lab). Le banc d'essai (`scripts/elio-qa/run.mjs`) renvoie 192 erreurs sur 192 appels : `Claude API 401 — invalid x-api-key`.
+
+**Ce qui se passait** : la clé `ANTHROPIC_API_KEY` existe à deux endroits indépendants. Vercel (variables du Hub) sert les appels directs (briefs, module CII) ; les secrets des Edge Functions Supabase servent TOUTES les conversations Élio (`elio-chat` : Lab, One, agent du Hub, Concierge). MiKL avait posé la nouvelle clé dans Vercel ; Supabase gardait l'ancienne, refusée. Depuis quand : non prouvé (aucune consommation enregistrée depuis le 2026-08-01, journaux limités à 24 h).
+
+**Pourquoi personne ne l'a vu** : aucun appel réel dans la fenêtre des journaux, et l'échec ne laisse aucune trace dans `elio_token_usage` (seuls les succès y sont écrits). Une panne totale ressemble à une absence d'usage.
+
+**Leçons** :
+1. Toute clé qui porte le même nom dans Vercel et dans Supabase se pose AUX DEUX endroits (déjà payé avec `PENNYLANE_API_TOKEN`). Après chaque rotation : un `curl` sur `elio-chat` qui doit répondre du texte.
+2. Un compteur qui n'enregistre que les succès ne peut pas signaler une panne : « zéro usage » doit faire vérifier, pas rassurer.
+3. Le banc d'essai Élio sert aussi de sonde de vie : le lancer avant tout chantier sur les agents.
