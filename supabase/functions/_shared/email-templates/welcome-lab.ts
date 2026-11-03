@@ -25,7 +25,7 @@ export function welcomeLabEmailTemplate(data: WelcomeLabEmailData): string {
     <p>🎉 Bienvenue dans <strong>MonprojetPro Lab</strong> !</p>
     ${parcoursLine}
     <p>Pour accéder à votre espace, cliquez sur le bouton ci-dessous et choisissez votre mot de passe :</p>
-    <p style="color:#6b7280;font-size:14px;">Ce lien personnel est valable 1 heure. Passé ce délai, utilisez « Mot de passe oublié » sur la page de connexion pour en recevoir un nouveau.</p>
+    <p style="color:#6b7280;font-size:14px;">Ce lien personnel est valable 24 heures. Passé ce délai, utilisez « Mot de passe oublié » sur la page de connexion pour en recevoir un nouveau.</p>
   `
 
   return baseTemplate({

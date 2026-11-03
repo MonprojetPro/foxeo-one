@@ -42,7 +42,7 @@ Confirmez votre adresse email — MonprojetPro
       <p>Chez MonprojetPro, notre métier tient en une phrase : <strong>donner à chaque projet la chance de devenir réalité</strong>. Le vôtre commence ici.</p>
     </div>
     <a href="{{ .ConfirmationURL }}" style="display:inline-block;margin-top:24px;padding:12px 24px;background:#059669;color:#ffffff;border-radius:6px;text-decoration:none;font-family:'Poppins',sans-serif;font-weight:600;">Confirmer mon adresse</a>
-    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien est valable 1 heure. Passé ce délai, demandez-en un nouveau depuis la page de connexion.</p>
+    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien est valable 24 heures. Passé ce délai, demandez-en un nouveau depuis la page de connexion.</p>
     <p style="color:#6b7280;font-size:14px;">Vous n'êtes pas à l'origine de cette inscription ? Ignorez simplement cet email, aucun compte ne sera activé.</p>
     <hr style="margin-top:32px;border:none;border-top:1px solid #e4e4e7;" />
     <p style="font-size:12px;color:#a1a1aa;margin:16px 0 0;">MonprojetPro — une question ? <a href="mailto:contact@monprojet-pro.com" style="color:#059669;">contact@monprojet-pro.com</a></p>
@@ -75,7 +75,7 @@ Réinitialisez votre mot de passe — MonprojetPro
       <p>Vous avez demandé à réinitialiser le mot de passe de votre espace MonprojetPro. Cliquez sur le bouton ci-dessous pour en choisir un nouveau.</p>
     </div>
     <a href="{{ .ConfirmationURL }}" style="display:inline-block;margin-top:24px;padding:12px 24px;background:#059669;color:#ffffff;border-radius:6px;text-decoration:none;font-family:'Poppins',sans-serif;font-weight:600;">Choisir un nouveau mot de passe</a>
-    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien est valable 1 heure et ne fonctionne qu'une seule fois.</p>
+    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien est valable 24 heures et ne fonctionne qu'une seule fois.</p>
     <p style="color:#6b7280;font-size:14px;">Vous n'avez rien demandé ? Ignorez cet email : votre mot de passe actuel reste valable et personne n'a accès à votre compte.</p>
     <hr style="margin-top:32px;border:none;border-top:1px solid #e4e4e7;" />
     <p style="font-size:12px;color:#a1a1aa;margin:16px 0 0;">MonprojetPro — une question ? <a href="mailto:contact@monprojet-pro.com" style="color:#059669;">contact@monprojet-pro.com</a></p>
@@ -108,7 +108,7 @@ Votre lien de connexion — MonprojetPro
       <p>Voici votre accès direct à votre espace MonprojetPro — pas de mot de passe à saisir, un simple clic suffit.</p>
     </div>
     <a href="{{ .ConfirmationURL }}" style="display:inline-block;margin-top:24px;padding:12px 24px;background:#059669;color:#ffffff;border-radius:6px;text-decoration:none;font-family:'Poppins',sans-serif;font-weight:600;">Accéder à mon espace</a>
-    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien est valable 1 heure et ne fonctionne qu'une seule fois. Ne le transmettez à personne : il donne accès à votre compte.</p>
+    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien est valable 24 heures et ne fonctionne qu'une seule fois. Ne le transmettez à personne : il donne accès à votre compte.</p>
     <p style="color:#6b7280;font-size:14px;">Vous n'avez pas demandé à vous connecter ? Ignorez cet email.</p>
     <hr style="margin-top:32px;border:none;border-top:1px solid #e4e4e7;" />
     <p style="font-size:12px;color:#a1a1aa;margin:16px 0 0;">MonprojetPro — une question ? <a href="mailto:contact@monprojet-pro.com" style="color:#059669;">contact@monprojet-pro.com</a></p>
@@ -142,7 +142,7 @@ Votre espace MonprojetPro vous attend
       <p>Pour y accéder, définissez votre mot de passe :</p>
     </div>
     <a href="{{ .ConfirmationURL }}" style="display:inline-block;margin-top:24px;padding:12px 24px;background:#059669;color:#ffffff;border-radius:6px;text-decoration:none;font-family:'Poppins',sans-serif;font-weight:600;">Définir mon mot de passe</a>
-    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien personnel est valable 1 heure. Passé ce délai, utilisez « Mot de passe oublié » sur la page de connexion : vous recevrez un nouveau lien immédiatement.</p>
+    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien personnel est valable 24 heures. Passé ce délai, utilisez « Mot de passe oublié » sur la page de connexion : vous recevrez un nouveau lien immédiatement.</p>
     <hr style="margin-top:32px;border:none;border-top:1px solid #e4e4e7;" />
     <p style="font-size:12px;color:#a1a1aa;margin:16px 0 0;">MonprojetPro — une question ? <a href="mailto:contact@monprojet-pro.com" style="color:#059669;">contact@monprojet-pro.com</a></p>
   </div>
@@ -175,7 +175,7 @@ Confirmez votre nouvelle adresse email — MonprojetPro
       <p>Confirmez ce changement pour l'activer — c'est cette adresse qui servira ensuite à vous connecter.</p>
     </div>
     <a href="{{ .ConfirmationURL }}" style="display:inline-block;margin-top:24px;padding:12px 24px;background:#059669;color:#ffffff;border-radius:6px;text-decoration:none;font-family:'Poppins',sans-serif;font-weight:600;">Confirmer le changement</a>
-    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien est valable 1 heure. Tant que vous n'avez pas confirmé, votre ancienne adresse reste active.</p>
+    <p style="color:#6b7280;font-size:14px;margin-top:24px;">Ce lien est valable 24 heures. Tant que vous n'avez pas confirmé, votre ancienne adresse reste active.</p>
     <p style="color:#6b7280;font-size:14px;">Vous n'êtes pas à l'origine de cette demande ? Ne cliquez pas et prévenez-nous à <a href="mailto:contact@monprojet-pro.com" style="color:#059669;">contact@monprojet-pro.com</a>.</p>
     <hr style="margin-top:32px;border:none;border-top:1px solid #e4e4e7;" />
     <p style="font-size:12px;color:#a1a1aa;margin:16px 0 0;">MonprojetPro — une question ? <a href="mailto:contact@monprojet-pro.com" style="color:#059669;">contact@monprojet-pro.com</a></p>
@@ -223,7 +223,7 @@ Votre code de confirmation — MonprojetPro
 
 1. **Testez le plus utilisé** : « Mot de passe oublié » depuis la page de connexion client. Vérifiez le rendu sur mobile (la carte doit rester lisible, le bouton cliquable au pouce).
 2. **Vérifiez l'expéditeur** : `MonprojetPro <contact@monprojet-pro.com>`. S'il affiche encore `supabase.io`, le SMTP personnalisé n'a pas été sauvegardé.
-3. **Durée de validité des liens** : les textes annoncent « 1 heure », qui est la valeur par défaut de Supabase. Si vous modifiez `Email OTP Expiration` dans les réglages Auth, pensez à mettre à jour les 6 textes en conséquence — un mail qui annonce un délai faux génère des tickets support.
+3. **Durée de validité des liens** : les textes annoncent désormais « 24 heures » (réglage `Email OTP Expiration` remonté le 2026-11-03 — T-071, la valeur par défaut de Supabase, 1h, était trop courte pour un client qui ne regarde pas son mail tout de suite). Si vous modifiez à nouveau `Email OTP Expiration` dans les réglages Auth, pensez à mettre à jour les 6 textes en conséquence — un mail qui annonce un délai faux génère des tickets support.
 
 ## Cohérence avec le reste de la chaîne
 

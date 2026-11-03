@@ -17,6 +17,7 @@ const HANDOFF_ERRORS: Record<string, string> = {
   handoff_invalid: 'Lien de connexion au cockpit invalide. Reconnectez-vous.',
   handoff_unauthorized: 'Ce compte n’a pas accès au cockpit.',
   session_expired: 'Votre session a expiré (coupure de 2 h du matin). Reconnectez-vous.',
+  callback_failed: 'Ce lien a expiré ou a déjà été utilisé. Cliquez sur « Mot de passe oublié ? » ci-dessous pour en recevoir un nouveau.',
 }
 
 export function LoginForm() {

@@ -105,7 +105,7 @@ function welcomeLabEmailTemplate(d: { clientName: string; firstStepLabel?: strin
   const parcoursLine = d.firstStepLabel
     ? `<p>Votre parcours d'incubation est prêt. Vous commencerez par l'étape <strong>${escapeHtml(d.firstStepLabel)}</strong>.</p>`
     : `<p>Votre espace d'incubation est prêt. MiKL compose votre parcours — vous recevrez une notification dès qu'une première étape sera disponible.</p>`
-  const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>🎉 Bienvenue dans <strong>MonprojetPro Lab</strong> !</p>${parcoursLine}<p>Pour accéder à votre espace, cliquez sur le bouton ci-dessous et choisissez votre mot de passe :</p><p style="color:#6b7280;font-size:14px;">Ce lien personnel est valable 1 heure. Passé ce délai, utilisez « Mot de passe oublié » sur la page de connexion.</p>`
+  const body = `<p>Bonjour <strong>${escapeHtml(d.clientName)}</strong>,</p><p>🎉 Bienvenue dans <strong>MonprojetPro Lab</strong> !</p>${parcoursLine}<p>Pour accéder à votre espace, cliquez sur le bouton ci-dessous et choisissez votre mot de passe :</p><p style="color:#6b7280;font-size:14px;">Ce lien personnel est valable 24 heures. Passé ce délai, utilisez « Mot de passe oublié » sur la page de connexion.</p>`
   return baseTemplate({ title: 'Bienvenue dans MonprojetPro Lab !', body, ctaUrl: d.activationLink, ctaText: 'Définir mon mot de passe' })
 }
 
