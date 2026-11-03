@@ -226,3 +226,70 @@ describe('generateDocumentFromConversation — document tronqué', () => {
     expect(mockFunctionsInvoke).toHaveBeenCalledTimes(1)
   })
 })
+
+// ─── Structure du livrable et derniers messages (T-069) ──────────────────────
+
+describe('generateDocumentFromConversation — structure et conversation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetUser.mockResolvedValue({ data: { user: { id: USER_ID } }, error: null })
+    mockClientSingle.mockResolvedValue({ data: { first_name: 'Alice', name: 'Alice Martin' }, error: null })
+    mockConvMaybeSingle.mockResolvedValue({ data: { id: CONV_ID }, error: null })
+    mockFunctionsInvoke.mockResolvedValue({ data: { content: 'Doc.', stopReason: 'end_turn' }, error: null })
+  })
+
+  it('impose la structure du livrable de l’agent et interdit d’inventer les rubriques manquantes', async () => {
+    mockStepSingle.mockResolvedValue({
+      data: {
+        ...mockStep,
+        elio_lab_agents: {
+          name: 'Élio Offre',
+          description: 'Offre',
+          system_prompt: '## Qui tu es\nExpert.\n\n## Le livrable — Offre documentée\n- **Équation de valeur** — les 4 notes',
+        },
+      },
+      error: null,
+    })
+    mockMsgLimit.mockResolvedValue({ data: mockMessages, error: null })
+
+    const { generateDocumentFromConversation } = await import('./generate-and-submit-step')
+    await generateDocumentFromConversation({ stepId: STEP_ID, clientId: CLIENT_ID })
+
+    const sent = (mockFunctionsInvoke.mock.calls[0] as unknown as [string, { body: { message: string } }])[1].body.message
+    expect(sent).toContain('Structure attendue du document')
+    expect(sent).toContain('**Équation de valeur** — les 4 notes')
+    expect(sent).toContain('[non traité dans la conversation]')
+    expect(sent).not.toContain('Expert.')
+  })
+
+  it('n’ajoute aucune structure quand l’agent n’en définit pas', async () => {
+    mockStepSingle.mockResolvedValue({ data: mockStep, error: null })
+    mockMsgLimit.mockResolvedValue({ data: mockMessages, error: null })
+
+    const { generateDocumentFromConversation } = await import('./generate-and-submit-step')
+    await generateDocumentFromConversation({ stepId: STEP_ID, clientId: CLIENT_ID })
+
+    const sent = (mockFunctionsInvoke.mock.calls[0] as unknown as [string, { body: { message: string } }])[1].body.message
+    expect(sent).not.toContain('Structure attendue du document')
+  })
+
+  it('lit les DERNIERS messages et les remet dans l’ordre chronologique', async () => {
+    mockStepSingle.mockResolvedValue({ data: mockStep, error: null })
+    // La requête trie du plus récent au plus ancien : la base renvoie donc la fin en premier.
+    mockMsgLimit.mockResolvedValue({
+      data: [
+        { role: 'assistant', content: 'Synthèse finale' },
+        { role: 'user', content: 'Premier message' },
+      ],
+      error: null,
+    })
+
+    const { generateDocumentFromConversation } = await import('./generate-and-submit-step')
+    await generateDocumentFromConversation({ stepId: STEP_ID, clientId: CLIENT_ID })
+
+    expect(mockMsgOrder).toHaveBeenCalledWith('created_at', { ascending: false })
+    expect(mockMsgLimit).toHaveBeenCalledWith(80)
+    const sent = (mockFunctionsInvoke.mock.calls[0] as unknown as [string, { body: { message: string } }])[1].body.message
+    expect(sent.indexOf('Premier message')).toBeLessThan(sent.indexOf('Synthèse finale'))
+  })
+})

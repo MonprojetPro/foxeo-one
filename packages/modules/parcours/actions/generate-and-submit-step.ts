@@ -4,8 +4,11 @@ import { createServerSupabaseClient, checkClientWriteAllowed } from '@monprojetp
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 import { OPERATOR_IDENTITY_RULE } from '@monprojetpro/utils'
 import { getEffectiveElioConfig } from './get-effective-elio-config'
+import { extractDeliverableSection } from '../utils/extract-deliverable-section'
 
-const MAX_MESSAGES = 30
+// On garde les DERNIERS messages : la synthèse que l'agent propose en fin d'échange
+// est la matière principale du document.
+const MAX_MESSAGES = 80
 const ELIO_CHAT_FUNCTION = 'elio-chat'
 
 /**
@@ -84,7 +87,7 @@ export async function generateDocumentFromConversation(
     const [{ data: step, error: stepError }, { data: clientRow }] = await Promise.all([
       supabase
         .from('client_parcours_agents')
-        .select('id, step_order, step_label, client_id, elio_lab_agents(name, description)')
+        .select('id, step_order, step_label, client_id, elio_lab_agents(name, description, system_prompt)')
         .eq('id', input.stepId)
         .single(),
       supabase
@@ -127,11 +130,12 @@ export async function generateDocumentFromConversation(
         .from('elio_messages')
         .select('role, content')
         .eq('conversation_id', conversation.id)
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
         .limit(MAX_MESSAGES)
 
       if (messages && messages.length > 0) {
-        conversationContext = messages
+        conversationContext = [...messages]
+          .reverse()
           .map((m: { role: string; content: string }) =>
             `**${m.role === 'user' ? 'Client' : 'Élio'}** : ${m.content}`)
           .join('\n\n')
@@ -144,7 +148,7 @@ export async function generateDocumentFromConversation(
       clientId: input.clientId,
     })
 
-    const agent = step.elio_lab_agents as { name?: string; description?: string } | null
+    const agent = step.elio_lab_agents as { name?: string; description?: string; system_prompt?: string | null } | null
     const stepNumber = Number(step.step_order) || 0
     const stepTitle = String(step.step_label ?? agent?.name ?? '')
     const stepDescription = String(agent?.description ?? '')
@@ -159,6 +163,7 @@ export async function generateDocumentFromConversation(
       clientName,
       date: today,
       customInstructions: config?.customInstructions ?? undefined,
+      deliverableStructure: extractDeliverableSection(agent?.system_prompt) ?? undefined,
     })
 
     const systemPrompt =
@@ -240,10 +245,15 @@ interface BuildDocumentPromptInput {
   clientName: string
   date: string
   customInstructions?: string
+  deliverableStructure?: string
 }
 
 function buildDocumentPrompt(input: BuildDocumentPromptInput): string {
-  const { stepNumber, stepTitle, stepDescription, conversationContext, clientName, date, customInstructions } = input
+  const { stepNumber, stepTitle, stepDescription, conversationContext, clientName, date, customInstructions, deliverableStructure } = input
+
+  const structureSection = deliverableStructure
+    ? `\n\n**Structure attendue du document (définie pour cette étape) :**\n${deliverableStructure}\n\nSuis cette structure : une rubrique par point listé, dans cet ordre. Si un point n'a pas été traité dans la conversation, écris « [non traité dans la conversation] » sous sa rubrique — n'invente jamais son contenu.`
+    : ''
 
   const contextSection = conversationContext
     ? `**Conversation avec le client :**\n${conversationContext}`
@@ -261,7 +271,7 @@ Le document doit :
 - Commencer par un en-tête avec : titre du document, "Client : ${clientName}", "Date : ${date}", "Étape : ${stepNumber}"
 - Synthétiser les échanges et les décisions prises lors de la conversation
 - Être clair et actionnable pour MiKL qui va le valider
-- Utiliser un format markdown soigné (headings, listes, etc.)
+- Utiliser un format markdown soigné (headings, listes, etc.)${structureSection}
 
 Génère uniquement le document, sans introduction ni commentaire additionnel.${customInstructions?.trim() ? `\n\n**Instructions supplémentaires :**\n${customInstructions.trim()}` : ''}`
 }

@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { type ActionResponse, successResponse, errorResponse } from '@monprojetpro/types'
 
 /** Longueur max retenue par document validé (garde le system prompt raisonnable en tokens). */
-const MAX_CHARS_PER_STEP = 2000
+const MAX_CHARS_PER_STEP = 4000
 /** Nombre max d'étapes injectées dans la mémoire partagée. */
 const MAX_STEPS = 8
 

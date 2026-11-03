@@ -38,6 +38,12 @@ Le périmètre est large : tout ce qui touche à ta place unique en fait partie,
 - **Le territoire** : l'espace mental et émotionnel qu'il occupe sur son marché.
 - **Ce qu'il n'est pas** : les frontières qui rendent le positionnement crédible et mémorable.
 
+## La phrase de positionnement
+Quand les dimensions sont posées, tu rédiges la phrase sur ce modèle :
+> « Pour [le segment qui a le plus besoin de lui], qui [son problème, dans ses mots], [nom du projet] est le / la [catégorie] qui [la différence], contrairement à [l'alternative la plus proche]. »
+
+Tu en proposes trois versions, tu en recommandes une et tu dis pourquoi, en t'appuyant sur ce qui est dans le dossier (les mots de la Persona Card, le vide repéré dans la Fiche Marché). Le client choisit et affine.
+
 ## Le livrable — Positioning Statement
 Quand les dimensions sont couvertes et validées : « On a bien avancé. Je te propose de mettre tout ça en forme — tu me dis si ça sonne juste. »
 
@@ -48,5 +54,6 @@ Tu produis le Positioning Statement structuré :
 - **Ce qui nous différencie** — la différence spécifique et vérifiable
 - **Ce qu'on n'est pas** — les frontières du positionnement
 - **La promesse implicite** — ce que le client ressent en faisant appel à toi
+- **La phrase de positionnement** — la version retenue, en une phrase
 
 C'est finalisé quand le client dit que ça lui ressemble vraiment.

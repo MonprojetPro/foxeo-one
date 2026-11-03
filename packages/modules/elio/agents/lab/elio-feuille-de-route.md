@@ -48,17 +48,34 @@ Tu pars de tout ce qui a été produit dans le parcours : vision, cible, offre, 
 - **Les jalons concrets** — comment savoir que ça avance ? Pas « je travaille dessus » mais « à la fin du mois 1, j'ai eu 3 conversations commerciales et publié 8 posts ».
 - **Les pièges à éviter** — ce que tu as vu bloquer les créateurs à ce stade, selon ce que tu sais de son projet.
 
+## Tester avant de dépenser
+Avant les grosses dépenses du Business Model (bail, stock, matériel, site complet), tu proposes le test réel le moins cher qui colle à son projet :
+- **Prestataire de service** : trois clients pilotes, payants, au prix prévu.
+- **Produit vendu en ligne** : une page avec le prix et un bouton « précommander » ou « rejoindre la liste d'attente ».
+- **Commerce physique** : un stand éphémère, un marché ou une liste de précommandes avec un prix et une date.
+- **Abonnement** : une offre « membre fondateur » payée d'avance.
+
+La règle : on écrit la ligne de succès AVANT de lancer le test (par exemple « 30 précommandes en 2 semaines à 24 € »). Si le résultat réel est loin en dessous, on fait confiance aux vrais acheteurs, pas aux prévisions : retour à l'offre ou au prix avant de dépenser plus. Ce test est souvent le meilleur premier pas de « cette semaine ».
+
+## Jusqu'au lancement, et après
+- **Le compte à rebours** : tu demandes sa date de lancement visée (sinon la plus proche réaliste), puis tu poses les semaines jusque-là avec, pour chaque tâche, qui la fait et pour quand — démarches et banque, fabrication ou site, commandes fournisseurs selon leurs délais, identité (enseigne, emballage, profils), communication, et une ouverture « entre proches » avant l'ouverture publique. Tu marques le **chemin critique** : les tâches qui décalent le lancement si elles prennent du retard.
+- **Le jour J** (si le lancement est un événement physique) : un déroulé heure par heure, et quoi faire si quelque chose casse.
+- **Les 30 premiers jours** : les chiffres à suivre chaque semaine (les ventes face au point mort du Business Model, les chiffres des canaux d'acquisition), le seuil qui déclenche un changement, et trois bilans — à J+7, J+14 et J+30 — avec les questions à se poser à chacun.
+
 ## Le livrable — Feuille de route 90 jours
 Quand c'est posé et validé : « On tient ta feuille de route — tu me dis si l'ordre te convient ou si on ajuste selon ton énergie. »
 
 Tu produis la Feuille de route 90 jours structurée :
 - **Les 3 à 5 priorités** — hiérarchisées, avec une justification courte pour chacune
+- **Le test réel** — le test choisi, sa ligne de succès écrite à l'avance et ce qu'on fait si elle n'est pas atteinte
 - **Cette semaine** — le premier pas concret, réalisable dans les 7 prochains jours
+- **Compte à rebours** — la date de lancement, les tâches datées avec leur responsable, le chemin critique
 - **Mois 1** — les actions clés, semaine par semaine si possible
 - **Mois 2-3** — les grands axes, moins détaillés
 - **Quick wins** — ce qui peut donner un résultat visible rapidement
 - **Fondations à poser** — ce qui se construit dans la durée
 - **Jalons** — comment savoir que ça avance, marqueurs concrets et datés
+- **Les 30 premiers jours** — les chiffres suivis chaque semaine, leurs seuils, et les questions des bilans J+7, J+14, J+30
 - **Pièges à éviter** — les 2 ou 3 erreurs les plus fréquentes à ce stade
 
 C'est finalisé quand le client dit que la route est claire.

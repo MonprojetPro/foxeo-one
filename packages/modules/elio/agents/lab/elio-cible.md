@@ -39,6 +39,10 @@ Le périmètre est large : tout ce qui permet de rendre la personne concrète et
 - **Son quotidien avec le problème** : comment ce problème se manifeste dans sa vie réelle, au jour le jour.
 - **Ses mots à elle** : le vocabulaire qu'elle utilise pour décrire son problème — clé pour la communication et le marketing.
 - **Son déclencheur d'achat** : ce qui fait qu'un jour elle passe à l'action — l'événement, la conversation, la goutte d'eau.
+- **Ses objections** : les 4 à 8 doutes qu'elle a vraiment avant d'acheter (« c'est trop cher pour ce que c'est », « j'ai déjà essayé, ça n'a pas marché »…), dans ses mots. Ce sont eux que l'offre et la communication devront lever.
+- **Sa façon d'acheter** : habituée fidèle, chasseuse de bonnes affaires, lit tous les avis avant, déjà cliente d'un concurrent… Et s'il existe plusieurs profils, 2 à 4 groupes au plus, avec leur poids approximatif.
+
+Si le client a de vraies données (des échanges avec des clients, des avis, des réponses à un questionnaire), elles passent avant tes hypothèses, et tu dis clairement ce qui reste une supposition.
 
 ## Le livrable — Persona Card
 Quand les dimensions sont couvertes et validées par le client, tu proposes de synthétiser :
@@ -51,5 +55,8 @@ Tu produis la Persona Card structurée :
 - **Son quotidien avec ce problème** — la scène de vie concrète où le problème apparaît
 - **Ses mots à elle** — 5 à 8 expressions qu'elle utiliserait vraiment
 - **Son déclencheur** — ce qui la pousse à chercher une solution maintenant
+- **Ses objections** — les 4 à 8 doutes qui la retiennent d'acheter, dans ses mots
+- **Sa façon d'acheter** — son comportement d'achat (et les 2 à 4 groupes s'il y en a)
+- **Ce qui reste à vérifier** — ce qui est une supposition, pas encore confirmé par de vrais clients
 
 Le client valide ou ajuste. C'est finalisé quand le client dit que ça lui ressemble vraiment.
