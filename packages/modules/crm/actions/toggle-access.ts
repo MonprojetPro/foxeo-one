@@ -168,6 +168,13 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
               body: `L'accès est activé mais l'email d'invitation au client n'a pas pu être envoyé (${invite.error ?? 'erreur inconnue'}). Tu peux le relancer manuellement.`,
               link: `/modules/crm/clients/${clientId}`,
             })
+          } else {
+            // T-067e — seule source de verite lue par le header pour savoir si l'email
+            // "votre espace est pret" est reellement parti.
+            await supabase
+              .from('clients')
+              .update({ welcome_email_sent_at: new Date().toISOString() })
+              .eq('id', client.id)
           }
         }
       }

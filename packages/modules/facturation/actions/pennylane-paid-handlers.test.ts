@@ -160,6 +160,11 @@ describe('handleLabOnboardingPaid', () => {
     expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ lab_paid: true })
     )
+    // T-067e — welcome-venture réellement parti doit être tracé, sinon le header du
+    // dossier client mentirait pour tous les clients onboardés via Pennylane.
+    expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ welcome_email_sent_at: expect.any(String) })
+    )
     // MiKL est invité à configurer le parcours, lien vers la fiche client.
     // notifyMiKL insère un tableau (une ligne par opérateur).
     expect(mockSupabase.mocks.notificationsInsert).toHaveBeenCalledWith(
@@ -200,6 +205,9 @@ describe('handleLabOnboardingPaid', () => {
     )
     expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ lab_paid: true })
+    )
+    expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ welcome_email_sent_at: expect.any(String) })
     )
     expect(mockSupabase.mocks.configUpdate).toHaveBeenCalled()
   })
@@ -248,8 +256,11 @@ describe('handleOneDepositPaid', () => {
         deposit_paid_at: expect.any(String),
       })
     )
-    // clients.update pour password_change_required + project_status
-    expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledTimes(2)
+    // clients.update pour password_change_required + project_status + welcome_email_sent_at (T-067e)
+    expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledTimes(3)
+    expect(mockSupabase.mocks.clientsUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ welcome_email_sent_at: expect.any(String) })
+    )
   })
 
   it('ne touche jamais lab_mode_available — permanence de l\'accès Lab (même sur un client qui l\'avait déjà à true)', async () => {

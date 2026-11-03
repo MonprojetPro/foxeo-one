@@ -26,9 +26,17 @@ const mockClientEqTwo = vi.fn(() => ({ single: mockClientSingle }))
 const mockClientEqOne = vi.fn(() => ({ eq: mockClientEqTwo }))
 const mockClientSelect = vi.fn(() => ({ eq: mockClientEqOne }))
 
-// clients update
+// clients update — 2 formes distinctes coexistent dans upgrade-client.ts :
+//  - update({ client_type }).eq('id', ...).eq('operator_id', ...)  (pré-existant)
+//  - update({ welcome_email_sent_at }).eq('id', clientId)          (T-067e)
 const mockClientUpdateEq = vi.fn().mockResolvedValue({ error: null })
-const mockClientUpdate = vi.fn(() => ({ eq: vi.fn(() => ({ eq: mockClientUpdateEq })) }))
+const mockClientTypeUpdateEq2 = vi.fn().mockResolvedValue({ error: null })
+const mockClientUpdate = vi.fn((payload: Record<string, unknown>) => {
+  if (payload && 'welcome_email_sent_at' in payload) {
+    return { eq: mockClientUpdateEq }
+  }
+  return { eq: vi.fn(() => ({ eq: mockClientTypeUpdateEq2 })) }
+})
 
 // parcours duplicate check: select → eq → eq → limit → maybeSingle
 const mockParcoursMaybeSingle = vi.fn()
@@ -396,11 +404,13 @@ describe('upgradeClient Server Action', () => {
       authUserId: null,
     })
     expect(mockSendWelcomeOneInvite).toHaveBeenCalledWith({ email: 'nouveau@example.com', clientName: 'Jean' })
+    expect(mockClientUpdateEq).toHaveBeenCalled()
   })
 
   it('does not resend the welcome email when the account already existed', async () => {
     const result = await upgradeClient({ clientId: CLIENT_ID, targetType: 'direct_one' })
     expect(result.error).toBeNull()
     expect(mockSendWelcomeOneInvite).not.toHaveBeenCalled()
+    expect(mockClientUpdateEq).not.toHaveBeenCalled()
   })
 })

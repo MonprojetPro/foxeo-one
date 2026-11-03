@@ -20,6 +20,7 @@ const mockParcoursUpdateEqClient = vi.fn(() => ({ eq: mockParcoursUpdateEqStatus
 const mockParcoursUpdate = vi.fn(() => ({ eq: mockParcoursUpdateEqClient }))
 const mockActivityInsert = vi.fn().mockResolvedValue({ error: null })
 const mockNotificationInsert = vi.fn().mockResolvedValue({ error: null })
+const mockClientUpdateEq = vi.fn().mockResolvedValue({ error: null })
 
 function defaultFromImpl(table: string) {
   if (table === 'operators') {
@@ -42,6 +43,7 @@ function defaultFromImpl(table: string) {
   if (table === 'clients') {
     return {
       select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: mockClientsMaybeSingle })) })),
+      update: vi.fn(() => ({ eq: mockClientUpdateEq })),
     }
   }
   if (table === 'parcours') {
@@ -355,6 +357,7 @@ describe('toggleAccess Server Action', () => {
     })
     expect(mockSendWelcomeOneInvite).toHaveBeenCalledWith({ email: 'nouveau@example.com', clientName: 'Jean' })
     expect(mockSendWelcomeLabInvite).not.toHaveBeenCalled()
+    expect(mockClientUpdateEq).toHaveBeenCalled()
   })
 
   it('sends welcome-lab (not welcome-one) when Lab agents are reactivated for a new account', async () => {
@@ -398,6 +401,7 @@ describe('toggleAccess Server Action', () => {
     await toggleAccess({ clientId: testClientId, accessType: 'one', enabled: true })
 
     expect(mockSendWelcomeOneInvite).not.toHaveBeenCalled()
+    expect(mockClientUpdateEq).not.toHaveBeenCalled()
   })
 
   it('should always return { data, error } format', async () => {

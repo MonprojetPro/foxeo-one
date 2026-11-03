@@ -108,13 +108,24 @@ async function markLabPaidOnClient(
 // Best-effort : n'échoue jamais le webhook.
 async function sendVentureWelcome(
   deps: HandlerDeps,
-  client: { name: string | null; email: string }
+  client: { id: string; name: string | null; email: string }
 ): Promise<void> {
   try {
     const res = await deps.sendDirectEmail('welcome-venture', client.email, {
       clientName: firstNameOrFallback(client),
     })
-    if (!res.success) console.warn('[FACTURATION:LAB_PAID] welcome-venture email failed:', res.error)
+    if (!res.success) {
+      console.warn('[FACTURATION:LAB_PAID] welcome-venture email failed:', res.error)
+    } else {
+      // T-067e — même source de vérité (clients.welcome_email_sent_at) que les 3 autres
+      // points d'entrée (activate-lab-free, toggle-access, upgrade-client) : sans elle, le
+      // header du dossier client afficherait "Email non envoyé" pour TOUS les clients
+      // onboardés via Pennylane, alors que ce mail est réellement parti.
+      await deps.supabase
+        .from('clients')
+        .update({ welcome_email_sent_at: new Date().toISOString() })
+        .eq('id', client.id)
+    }
   } catch (err) {
     console.warn('[FACTURATION:LAB_PAID] welcome-venture email threw:', err)
   }
@@ -237,7 +248,7 @@ export async function handleLabOnboardingPaid(
 
     await markLabPaidOnClient(deps.supabase, client.id, quote.total_amount_ht)
     await markQuotePaid(deps.supabase, quote.pennylane_quote_id)
-    await sendVentureWelcome(deps, { name: client.name as string | null, email: client.email as string })
+    await sendVentureWelcome(deps, { id: client.id, name: client.name as string | null, email: client.email as string })
     await logActivity(deps.supabase, 'lab_access_activated', client.id, {
       pennylane_quote_id: quote.pennylane_quote_id,
       reused_existing_account: true,
@@ -284,7 +295,7 @@ export async function handleLabOnboardingPaid(
 
   await markLabPaidOnClient(deps.supabase, client.id, quote.total_amount_ht)
   await markQuotePaid(deps.supabase, quote.pennylane_quote_id)
-  await sendVentureWelcome(deps, { name: client.name as string | null, email: client.email as string })
+  await sendVentureWelcome(deps, { id: client.id, name: client.name as string | null, email: client.email as string })
   await logActivity(deps.supabase, 'lab_access_activated', client.id, {
     pennylane_quote_id: quote.pennylane_quote_id,
     parcours_pending: true,
@@ -397,6 +408,13 @@ export async function handleOneDepositPaid(
       `⚠️ Email One non envoye — ${client.name}`,
       `Acompte recu, compte ${isReused ? 'reactive' : 'cree'} mais email d invitation en echec.`
     )
+  } else {
+    // T-067e — voir le commentaire de sendVentureWelcome : même source de vérité pour
+    // le header du dossier client.
+    await deps.supabase
+      .from('clients')
+      .update({ welcome_email_sent_at: new Date().toISOString() })
+      .eq('id', client.id)
   }
 
   await markQuotePaid(deps.supabase, quote.pennylane_quote_id)

@@ -11,6 +11,7 @@ import { TIER_INFO, TIER_BADGE_CLASSES } from '../utils/tier-helpers'
 import type { SubscriptionTier } from '../types/subscription.types'
 import { useClientTabNav } from '../hooks/use-client-tab-nav'
 import { isCancelledSubscription } from '../types/crm.types'
+import { ResendCredentialsButton } from './resend-credentials-button'
 
 interface ClientHeaderProps {
   client: Client
@@ -182,6 +183,12 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
                   {isFrozen ? 'One · figé' : 'One'}
                 </span>
               )}
+              {/* T-067e — etat compte/email + renvoi, a cote des pastilles d'acces */}
+              <ResendCredentialsButton
+                clientId={client.id}
+                authUserId={client.authUserId}
+                welcomeEmailSentAt={client.welcomeEmailSentAt}
+              />
             </div>
           )}
 

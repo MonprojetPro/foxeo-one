@@ -12,13 +12,17 @@ const mockClientSingle = vi.fn()
 const mockConfigUpdateEq = vi.fn()
 const mockActivityInsert = vi.fn().mockResolvedValue({ error: null })
 const mockNotificationInsert = vi.fn().mockResolvedValue({ error: null })
+const mockClientUpdateEq = vi.fn().mockResolvedValue({ error: null })
 
 const mockFrom = vi.fn((table: string) => {
   if (table === 'operators') {
     return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockOperatorSingle })) })) }
   }
   if (table === 'clients') {
-    return { select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockClientSingle })) })) }
+    return {
+      select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockClientSingle })) })),
+      update: vi.fn(() => ({ eq: mockClientUpdateEq })),
+    }
   }
   if (table === 'client_configs') {
     return { update: vi.fn(() => ({ eq: mockConfigUpdateEq })) }
@@ -114,6 +118,7 @@ describe('activateLabFree Server Action', () => {
       email: 'client@example.com',
       clientName: 'Jean',
     })
+    expect(mockClientUpdateEq).toHaveBeenCalled()
   })
 
   it('does not resend the welcome email when the account already existed', async () => {
@@ -144,5 +149,6 @@ describe('activateLabFree Server Action', () => {
     expect(mockNotificationInsert).toHaveBeenCalledWith(
       expect.objectContaining({ recipient_type: 'operator', type: 'alert' })
     )
+    expect(mockClientUpdateEq).not.toHaveBeenCalled()
   })
 })

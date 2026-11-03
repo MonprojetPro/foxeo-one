@@ -87,6 +87,10 @@ export const Client = z.object({
   isDemo: z.boolean().optional(),
   /** T-062a — eligibilite PME au sens CII, coche manuelle valable pour tous les projets du client. */
   ciiPmeEligible: z.boolean().optional(),
+  /** T-067e — compte de connexion cree (ou pas). Lu par le header pour l'etat compte/email. */
+  authUserId: z.string().uuid().nullable().optional(),
+  /** T-067e — dernier envoi reussi de l'email "votre espace est pret". null = jamais envoye. */
+  welcomeEmailSentAt: z.string().datetime({ offset: true }).nullable().optional(),
 })
 
 export type Client = z.infer<typeof Client>

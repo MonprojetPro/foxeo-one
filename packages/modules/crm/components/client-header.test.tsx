@@ -121,4 +121,38 @@ describe('ClientHeader', () => {
     )
     expect(screen.getByText('Lab · figé')).toBeInTheDocument()
   })
+
+  // ── T-067e — état compte/email dans le header ───────────────────────────────
+
+  it('aucun compte créé : pastille « Pas de compte »', () => {
+    render(
+      <ClientHeader
+        client={{ ...mockClient, config: { labModeAvailable: true } as never, authUserId: null, welcomeEmailSentAt: null }}
+      />
+    )
+    expect(screen.getByText('Pas de compte')).toBeInTheDocument()
+  })
+
+  it('compte créé mais email jamais parti : pastille « Email non envoyé »', () => {
+    render(
+      <ClientHeader
+        client={{ ...mockClient, config: { labModeAvailable: true } as never, authUserId: 'auth-1', welcomeEmailSentAt: null }}
+      />
+    )
+    expect(screen.getByText('Email non envoyé')).toBeInTheDocument()
+  })
+
+  it('email envoyé : pastille « Identifiants envoyés le … »', () => {
+    render(
+      <ClientHeader
+        client={{
+          ...mockClient,
+          config: { labModeAvailable: true } as never,
+          authUserId: 'auth-1',
+          welcomeEmailSentAt: '2026-11-03T10:00:00Z',
+        }}
+      />
+    )
+    expect(screen.getByText(/Identifiants envoyés le/)).toBeInTheDocument()
+  })
 })
