@@ -1,3 +1,6 @@
 {
-  "ignoreCommand": "npx turbo-ignore"
+  "ignoreCommand": "npx turbo-ignore",
+  "regions": [
+    "cdg1"
+  ]
 }
