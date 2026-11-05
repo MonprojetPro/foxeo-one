@@ -122,27 +122,20 @@ describe('ClientHeader', () => {
     expect(screen.getByText('Lab · figé')).toBeInTheDocument()
   })
 
-  // ── T-067e — état compte/email dans le header ───────────────────────────────
+  // ── T-067e/T-073a — statut compte/activation dans le header ─────────────────
+  // Le libellé reflète ce qui s'est réellement passé (pas juste « un email est parti ») :
+  // first_login_at est la preuve que le client a utilisé son lien, pas welcomeEmailSentAt.
 
-  it('aucun compte créé : pastille « Pas de compte »', () => {
+  it('aucun compte créé : pastille « Aucune création »', () => {
     render(
       <ClientHeader
-        client={{ ...mockClient, config: { labModeAvailable: true } as never, authUserId: null, welcomeEmailSentAt: null }}
+        client={{ ...mockClient, config: { labModeAvailable: true } as never, authUserId: null, welcomeEmailSentAt: null, firstLoginAt: null }}
       />
     )
-    expect(screen.getByText('Pas de compte')).toBeInTheDocument()
+    expect(screen.getByText('Aucune création')).toBeInTheDocument()
   })
 
-  it('compte créé mais email jamais parti : pastille « Email non envoyé »', () => {
-    render(
-      <ClientHeader
-        client={{ ...mockClient, config: { labModeAvailable: true } as never, authUserId: 'auth-1', welcomeEmailSentAt: null }}
-      />
-    )
-    expect(screen.getByText('Email non envoyé')).toBeInTheDocument()
-  })
-
-  it('email envoyé : pastille « Identifiants envoyés le … »', () => {
+  it('compte créé, email envoyé mais jamais activé : pastille « Renvoyer le lien »', () => {
     render(
       <ClientHeader
         client={{
@@ -150,9 +143,25 @@ describe('ClientHeader', () => {
           config: { labModeAvailable: true } as never,
           authUserId: 'auth-1',
           welcomeEmailSentAt: '2026-11-03T10:00:00Z',
+          firstLoginAt: null,
         }}
       />
     )
-    expect(screen.getByText(/Identifiants envoyés le/)).toBeInTheDocument()
+    expect(screen.getByText('Renvoyer le lien')).toBeInTheDocument()
+  })
+
+  it('client déjà connecté au moins une fois : pastille « Espace actif »', () => {
+    render(
+      <ClientHeader
+        client={{
+          ...mockClient,
+          config: { labModeAvailable: true } as never,
+          authUserId: 'auth-1',
+          welcomeEmailSentAt: '2026-11-03T10:00:00Z',
+          firstLoginAt: '2026-11-04T08:00:00Z',
+        }}
+      />
+    )
+    expect(screen.getByText('Espace actif')).toBeInTheDocument()
   })
 })

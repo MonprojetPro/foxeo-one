@@ -221,6 +221,43 @@ describe('createClient Server Action', () => {
     )
   })
 
+  // T-073a — avant ce correctif, `client_configs` posait TOUJOURS dashboard_type:'one' +
+  // one_mode_available:true, quel que soit le clientType choisi au formulaire. Un client
+  // créé en "Complet" (chemin Lab) se retrouvait donc avec le One débloqué sans aucun Lab
+  // actif (badge vert vu par MiKL sur un client réel, 05-11). Seul "direct_one" doit
+  // débloquer quelque chose dès la création.
+  it.each([
+    ['ponctuel', { dashboard_type: 'lab', one_mode_available: false }],
+    ['complet', { dashboard_type: 'lab', one_mode_available: false }],
+    ['direct_one', { dashboard_type: 'one', one_mode_available: true }],
+  ] as const)('clientType=%s pose les bons flags client_configs', async (clientType, expectedFlags) => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: validAuthUuid } }, error: null })
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null })
+    mockSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        operator_id: testOperatorId,
+        name: 'Jean Dupont',
+        company: 'Jean Dupont',
+        email: 'jean@acme.com',
+        client_type: clientType,
+        status: 'active',
+        sector: null,
+        phone: null,
+        website: null,
+        notes: null,
+        created_at: '2026-02-13T10:00:00Z',
+        updated_at: '2026-02-13T10:00:00Z',
+      },
+      error: null,
+    })
+
+    const { createClient } = await import('./create-client')
+    await createClient({ name: 'Jean Dupont', email: 'jean@acme.com', clientType })
+
+    expect(mockConfigInsert).toHaveBeenCalledWith(expect.objectContaining(expectedFlags))
+  })
+
   // T-035 — client « entité » (personne morale)
   it("écrit la raison sociale dans name ET company, le contact à part, sans prénom", async () => {
     mockGetUser.mockResolvedValue({

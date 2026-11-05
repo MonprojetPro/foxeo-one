@@ -91,6 +91,8 @@ export const Client = z.object({
   authUserId: z.string().uuid().nullable().optional(),
   /** T-067e — dernier envoi reussi de l'email "votre espace est pret". null = jamais envoye. */
   welcomeEmailSentAt: z.string().datetime({ offset: true }).nullable().optional(),
+  /** T-073a — premiere connexion reelle du client (clients.first_login_at). null = jamais active. */
+  firstLoginAt: z.string().datetime({ offset: true }).nullable().optional(),
 })
 
 export type Client = z.infer<typeof Client>

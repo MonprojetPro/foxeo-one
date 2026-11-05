@@ -73,6 +73,7 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
         updated_at,
         auth_user_id,
         welcome_email_sent_at,
+        first_login_at,
         client_configs (
           active_modules,
           dashboard_type,
@@ -145,6 +146,7 @@ export async function getClient(clientId: string): Promise<ActionResponse<Client
       updatedAt: data.updated_at,
       authUserId: data.auth_user_id ?? null,
       welcomeEmailSentAt: data.welcome_email_sent_at ?? null,
+      firstLoginAt: data.first_login_at ?? null,
       config: configRaw
         ? {
             activeModules: (configRaw.active_modules as string[]) ?? [],

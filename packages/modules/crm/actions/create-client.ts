@@ -149,15 +149,25 @@ export async function createClient(
     // operator_id est NOT NULL sans défaut — l'oublier fait échouer l'insert à CHAQUE
     // fois (contrainte base), silencieusement absorbé par le non-blocking ci-dessous.
     // Preuve du 02-11 : les 3 clients en prod avaient 0 ligne client_configs.
+    //
+    // T-073a — les flags d'acces suivent desormais le `clientType` choisi au formulaire,
+    // au lieu d'un defaut unique « One direct » applique a tous. Avant ce correctif,
+    // un client cree en « Complet » (chemin Lab) se retrouvait quand meme avec le One
+    // debloque (badge vert, aucun Lab) — prouve par MiKL le 05-11 sur un client reel.
+    // Seul `direct_one` debloque reellement quelque chose a la creation ; `ponctuel` et
+    // `complet` restent sans aucun acces tant qu'un geste explicite (Activer le Lab /
+    // ouvrir le One) n'a pas eu lieu.
+    const isDirectOne = clientType === 'direct_one'
     const { error: configError } = await supabase
       .from('client_configs')
       .insert({
         client_id: clientData.id,
         operator_id: operatorId,
         active_modules: ['core-dashboard', 'chat', 'documents', 'visio'],
-        dashboard_type: 'one',
-        // Client One direct : Mode One débloqué, pas d'accès Lab (cf. matrice ADR-01).
-        one_mode_available: true,
+        dashboard_type: isDirectOne ? 'one' : 'lab',
+        // Client One direct : Mode One débloqué dès la création (cf. matrice ADR-01).
+        // Ponctuel/Complet : aucun accès tant que MiKL n'a rien déclenché explicitement.
+        one_mode_available: isDirectOne,
       })
 
     if (configError) {

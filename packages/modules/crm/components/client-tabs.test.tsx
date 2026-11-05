@@ -126,4 +126,15 @@ describe('ClientTabs', () => {
 
     expect(screen.queryByRole('button', { name: /^cii$/i })).not.toBeInTheDocument()
   })
+
+  // T-073a — le déclencheur d'accès One doit être visible DANS l'onglet qui porte le nom
+  // « One » (il ne vivait jusque-là que dans l'onglet Pilote, invisible pour MiKL qui
+  // cherchait au bon endroit — constat du 05-11).
+  it('affiche le declencheur « Accès One » dans l\'onglet One (value: modules)', () => {
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('tab=modules'))
+    renderWithQueryClient(<ClientTabs client={mockClient} />)
+
+    expect(screen.getByText('Accès One')).toBeInTheDocument()
+    expect(screen.getByTestId('toggle-one')).toBeInTheDocument()
+  })
 })

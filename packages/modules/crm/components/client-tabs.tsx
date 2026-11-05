@@ -18,6 +18,7 @@ import { ClientExchangesTab } from './client-exchanges-tab'
 import { ModuleToggleList } from './module-toggle-list'
 import { ElioDocForm } from './elio-doc-form'
 import { ClientModulesTab } from './client-modules-tab'
+import { OneAccessToggle } from './one-access-toggle'
 import { SuspendClientDialog } from './suspend-client-dialog'
 import { CloseClientDialog } from './close-client-dialog'
 import { CancelSubscriptionDialog } from './cancel-subscription-dialog'
@@ -246,6 +247,18 @@ export function ClientTabs({
         {activeTab === 'echanges'     && <ClientExchangesTab clientId={client.id} />}
         {activeTab === 'modules' && (
           <div className="space-y-8">
+            {/* T-073a — déclencheur d'accès One déplacé/dupliqué ici : jusque-là, ce
+                levier ne vivait que dans l'onglet Pilote, invisible depuis l'onglet
+                qui porte justement le nom « One » (constat de MiKL le 05-11). */}
+            <section className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
+              <div>
+                <h3 className="text-sm font-semibold">Accès One</h3>
+                <p className="text-xs text-muted-foreground">
+                  Débloque le dashboard One du client (email d&apos;activation envoyé à l&apos;ouverture).
+                </p>
+              </div>
+              <OneAccessToggle clientId={client.id} oneModeAvailable={client.config?.oneModeAvailable ?? false} />
+            </section>
             <section>
               <h3 className="text-lg font-semibold mb-4">Modules actifs — Catalogue</h3>
               <ClientModulesTab
