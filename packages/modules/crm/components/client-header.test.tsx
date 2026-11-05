@@ -37,6 +37,28 @@ describe('ClientHeader', () => {
     expect(screen.getByText('Pas d\'espace client')).toBeInTheDocument()
   })
 
+  // T-073c — subscription_tier vaut 'ponctuel' PAR DEFAUT en base des la creation (colonne
+  // NOT NULL DEFAULT), meme sans aucun acces reel : l'afficher annoncerait un statut qui
+  // n'existe pas encore (MiKL, 05-11 : « ça ne sert à rien de l'afficher si aucun statut
+  // n'est réel »). Masqué tant qu'aucun Lab/One n'est actif, affiché dès qu'un accès existe.
+  it('aucun acces reel : le badge de palier d\'abonnement est masque, meme si subscriptionTier est renseigne', () => {
+    render(
+      <ClientHeader
+        client={{ ...mockClient, config: { subscriptionTier: 'ponctuel' } as never }}
+      />
+    )
+    expect(screen.queryByText('Ponctuel')).not.toBeInTheDocument()
+  })
+
+  it('un acces reel existe (One ouvert) : le badge de palier d\'abonnement s\'affiche', () => {
+    render(
+      <ClientHeader
+        client={{ ...mockClient, config: { subscriptionTier: 'one_plus', oneModeAvailable: true } as never }}
+      />
+    )
+    expect(screen.getByText('One+')).toBeInTheDocument()
+  })
+
   it('should render client name as h1', () => {
     render(<ClientHeader client={mockClient} />)
 

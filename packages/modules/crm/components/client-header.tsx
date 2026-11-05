@@ -111,7 +111,11 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
               suspendedAt={client.suspendedAt}
               archivedAt={client.archivedAt}
             />
-            {tierInfo && (
+            {/* T-073c — le palier d'abonnement vaut 'ponctuel' PAR DEFAUT en base (colonne
+                NOT NULL DEFAULT 'ponctuel') des la creation, meme sans aucun espace actif :
+                l'afficher dans ce cas annoncait un statut qui n'existe pas encore (constat
+                de MiKL le 05-11). Masque tant qu'aucun acces reel (Lab ou One) n'existe. */}
+            {tierInfo && hasAnyAccess && (
               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tierBadgeClass}`}>{tierInfo.name}</span>
             )}
             <span className="flex items-center gap-1.5 text-xs text-gray-500 ml-1">
