@@ -90,7 +90,10 @@ function makeAdminForLink(generateLinkImpl: () => unknown): SupabaseClient {
   } as unknown as SupabaseClient
 }
 
-const ACTION_LINK = 'https://supabase.example/verify?token=xyz&redirect_to=cb'
+const HASHED_TOKEN = 'xyz-hashed-token'
+// T-073 — action_link (flow implicite, tokens dans le fragment #) n'est plus utilisé :
+// notre callback serveur ne peut lire qu'un ?code= ou un ?token_hash=, jamais un fragment.
+const EXPECTED_LINK = `https://app.monprojet-pro.com/auth/callback?next=/reset-password&token_hash=${HASHED_TOKEN}&type=recovery`
 
 describe('generatePasswordSetupLink', () => {
   beforeEach(() => {
@@ -98,12 +101,12 @@ describe('generatePasswordSetupLink', () => {
   })
   afterEach(() => vi.unstubAllEnvs())
 
-  it('generates a recovery link redirecting to /reset-password', async () => {
-    const admin = makeAdminForLink(() => ({ data: { properties: { action_link: ACTION_LINK } }, error: null }))
+  it('generates a recovery link redirecting to /reset-password via token_hash (pas action_link)', async () => {
+    const admin = makeAdminForLink(() => ({ data: { properties: { hashed_token: HASHED_TOKEN } }, error: null }))
     const result = await generatePasswordSetupLink({ email: 'client@example.com', adminClient: admin })
 
     expect(result.error).toBeNull()
-    expect(result.link).toBe(ACTION_LINK)
+    expect(result.link).toBe(EXPECTED_LINK)
     expect(admin.auth.admin.generateLink).toHaveBeenCalledWith({
       type: 'recovery',
       email: 'client@example.com',
@@ -232,7 +235,7 @@ describe('sendWelcomeLabInvite / sendWelcomeOneInvite', () => {
   })
 
   it('sendWelcomeLabInvite posts the welcome-lab template with the recovery link', async () => {
-    const admin = makeAdminForLink(() => ({ data: { properties: { action_link: ACTION_LINK } }, error: null }))
+    const admin = makeAdminForLink(() => ({ data: { properties: { hashed_token: HASHED_TOKEN } }, error: null }))
     const result = await sendWelcomeLabInvite({
       email: 'client@example.com',
       clientName: 'ACME SARL',
@@ -247,12 +250,12 @@ describe('sendWelcomeLabInvite / sendWelcomeOneInvite', () => {
     expect(payload).toMatchObject({
       to: 'client@example.com',
       template: 'welcome-lab',
-      data: { clientName: 'ACME SARL', firstStepLabel: 'Identité de marque', activationLink: ACTION_LINK },
+      data: { clientName: 'ACME SARL', firstStepLabel: 'Identité de marque', activationLink: EXPECTED_LINK },
     })
   })
 
   it('sendWelcomeLabInvite works without a firstStepLabel (activation avant composition du parcours)', async () => {
-    const admin = makeAdminForLink(() => ({ data: { properties: { action_link: ACTION_LINK } }, error: null }))
+    const admin = makeAdminForLink(() => ({ data: { properties: { hashed_token: HASHED_TOKEN } }, error: null }))
     const result = await sendWelcomeLabInvite({ email: 'client@example.com', clientName: 'ACME SARL', adminClient: admin })
     expect(result.success).toBe(true)
     const [, initNoStep] = fetchMock.mock.calls[0] as [string, RequestInit]
@@ -261,7 +264,7 @@ describe('sendWelcomeLabInvite / sendWelcomeOneInvite', () => {
   })
 
   it('sendWelcomeOneInvite posts the welcome-one template with needsPasswordSetup', async () => {
-    const admin = makeAdminForLink(() => ({ data: { properties: { action_link: ACTION_LINK } }, error: null }))
+    const admin = makeAdminForLink(() => ({ data: { properties: { hashed_token: HASHED_TOKEN } }, error: null }))
     const result = await sendWelcomeOneInvite({ email: 'client@example.com', clientName: 'ACME SARL', adminClient: admin })
 
     expect(result.success).toBe(true)
@@ -272,7 +275,7 @@ describe('sendWelcomeLabInvite / sendWelcomeOneInvite', () => {
       template: 'welcome-one',
       data: {
         clientName: 'ACME SARL',
-        activationLink: ACTION_LINK,
+        activationLink: EXPECTED_LINK,
         temporaryPassword: null,
         needsPasswordSetup: true,
       },
@@ -288,7 +291,7 @@ describe('sendWelcomeLabInvite / sendWelcomeOneInvite', () => {
 
   it('returns an error when send-email responds non-ok', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 500, text: async () => 'boom' })
-    const admin = makeAdminForLink(() => ({ data: { properties: { action_link: ACTION_LINK } }, error: null }))
+    const admin = makeAdminForLink(() => ({ data: { properties: { hashed_token: HASHED_TOKEN } }, error: null }))
     const result = await sendWelcomeLabInvite({ email: 'client@example.com', clientName: 'ACME SARL', adminClient: admin })
     expect(result.success).toBe(false)
     expect(result.error).toContain('500')

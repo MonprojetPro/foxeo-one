@@ -132,18 +132,27 @@ export async function generatePasswordSetupLink(options: {
     email: options.email,
     options: { redirectTo },
   })
-  const link = (data as { properties?: { action_link?: string } } | null)?.properties?.action_link
+  // T-073 — NE PAS utiliser `action_link` : il pointe vers {SUPABASE_URL}/auth/v1/verify,
+  // qui répond toujours en flow implicite (tokens dans le fragment #, jamais envoyé au
+  // serveur) quel que soit le flowType du client. Le callback (route serveur) ne peut lire
+  // qu'un `?code=` (PKCE) ou un `?token_hash=` — jamais un fragment. Preuve par les logs
+  // Supabase (login_method: "implicit", request 01a1ac23-3899...) : le /verify a reussi,
+  // mais aucun code n'a jamais atteint notre route → "lien expire" alors qu'il etait valide.
+  // On construit donc notre propre lien, verifie server-side via verifyOtp({ token_hash }).
+  const hashedToken = (data as { properties?: { hashed_token?: string } } | null)?.properties?.hashed_token
 
-  if (error || !link) {
+  if (error || !hashedToken) {
     return {
       link: null,
       error: {
         code: 'GENERATE_LINK_FAILED',
-        message: error?.message ?? 'generateLink: action_link vide',
+        message: error?.message ?? 'generateLink: hashed_token vide',
         details: error,
       },
     }
   }
+
+  const link = `${redirectTo}&token_hash=${encodeURIComponent(hashedToken)}&type=recovery`
 
   return { link, error: null }
 }

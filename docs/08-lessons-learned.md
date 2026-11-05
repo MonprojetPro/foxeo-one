@@ -880,6 +880,19 @@
 
 ---
 
+## DEP-008 — Un lien généré par l'Admin API Supabase ne peut JAMAIS être un lien PKCE (`?code=`)
+
+- **Date** : 2026-11-05
+- **Categorie** : Déploiement / Authentification
+- **Symptome** : T-073 — un lien d'activation fraîchement envoyé (< 1 minute) renvoyait systématiquement vers `/login?error=callback_failed`, alors que le message affiché laissait croire à une expiration ou un lien déjà utilisé.
+- **Cause racine** : `auth.admin.generateLink()` (Admin API, côté serveur, sans session navigateur) ne sait produire qu'un lien **implicite** : son `action_link` pointe vers `{SUPABASE_URL}/auth/v1/verify?type=...&token=...`, qui répond par une redirection **avec les jetons dans le fragment `#access_token=...`** — un fragment n'est, par construction du protocole HTTP, **jamais envoyé au serveur** par le navigateur. Notre route `/auth/callback` (Route Handler Next.js, donc server-side) ne savait lire qu'un `?code=` (flow PKCE, le seul que produit le client navigateur `createBrowserClient` via `resetPasswordForEmail`). Résultat : GoTrue voyait un succès (log réel : `GET /verify → 303, login_method: implicit`) pendant que notre serveur, n'ayant jamais reçu de `code`, tombait dans la branche d'erreur — un échec qui n'existait que côté serveur, invisible de Supabase.
+- **Preuve avant correctif (TILT)** : `query_logs` sur `auth_logs` a montré un **unique** appel `/verify` pour le client de test (pas de double-consommation par un scanner d'email, hypothèse écartée), avec `status 303` et succès de connexion déclaré par GoTrue. Lecture du type `GenerateLinkResponse` dans `node_modules/@supabase/auth-js` confirmant noir sur blanc : *"The action_link follows the following format: auth/v1/verify?type={verification_type}&token={hashed_token}&redirect_to={redirect_to}"* — implicite par construction, sans option pour forcer PKCE côté Admin API.
+- **Solution validee** : ne jamais envoyer `action_link` tel quel dans un email quand le callback est géré par une route serveur. Utiliser `data.properties.hashed_token` + `type` pour construire SOI-MÊME l'URL de callback (`/auth/callback?token_hash=...&type=recovery`), et faire vérifier ce `token_hash` **côté serveur** via `supabase.auth.verifyOtp({ token_hash, type })` — équivalent serveur de ce que GoTrue aurait fait côté navigateur, mais dont le résultat (la session) reste sur notre domaine.
+- **Regle a suivre** : (a) tout lien d'auth envoyé par email et généré via l'**Admin API** (service role, pas de session navigateur) doit être construit à partir de `hashed_token`/`type`, jamais de `action_link` — sauf si le callback qui le reçoit est un **Client Component** capable de lire `window.location.hash` (ce qui n'est pas le cas ici, et complexifierait inutilement une route déjà serveur). (b) Un callback d'auth qui gère plusieurs origines de liens (ici : « mot de passe oublié » côté navigateur en PKCE, ET invitation générée côté serveur) doit explicitement brancher sur les DEUX formats (`code` vs `token_hash`+`type`), jamais supposer qu'un seul suffit parce que l'un des deux chemins a été testé en premier. (c) Un lien qui "a l'air" expiré au clic MAIS a été généré il y a quelques secondes doit faire suspecter le callback, pas l'expiration — vérifier les logs `auth_logs` AVANT de toucher au réglage `Email OTP Expiration` (déjà remonté à 24h pour T-071, ce n'était pas la cause ici).
+- **Agents impliques** : FIX (protocole TILT), ATLAS
+
+---
+
 ## DB-004 — « Marqué fait » avant l'effet de bord : l'UI ment et la tâche disparaît
 
 - **Date** : 2026-07-26
