@@ -37,6 +37,15 @@ describe('ClientHeader', () => {
     expect(screen.getByText('Pas d\'espace client')).toBeInTheDocument()
   })
 
+  // T-073d — le bouton ne doit plus jamais pouvoir declencher un envoi quand aucun
+  // acces (Lab/One) n'est actif : il n'y a rien a renvoyer, et il ne doit pas en
+  // inventer un a la place de MiKL (demande de MiKL le 05-11).
+  it('aucun Lab ni One actif : le bouton de renvoi est desactive', () => {
+    render(<ClientHeader client={{ ...mockClient, config: undefined }} />)
+
+    expect(screen.getByTestId('resend-credentials-button')).toBeDisabled()
+  })
+
   // T-073c — subscription_tier vaut 'ponctuel' PAR DEFAUT en base des la creation (colonne
   // NOT NULL DEFAULT), meme sans aucun acces reel : l'afficher annoncerait un statut qui
   // n'existe pas encore (MiKL, 05-11 : « ça ne sert à rien de l'afficher si aucun statut

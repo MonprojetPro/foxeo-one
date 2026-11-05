@@ -46,7 +46,7 @@ export async function resendClientCredentials(
 
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, name, first_name, email, auth_user_id, client_configs(dashboard_type)')
+      .select('id, name, first_name, email, auth_user_id, client_configs(lab_mode_available, one_mode_available)')
       .eq('id', clientId)
       .single()
 
@@ -56,6 +56,25 @@ export async function resendClientCredentials(
 
     if (!client.email) {
       return errorResponse('Ce client n\'a pas d\'email — impossible d\'envoyer les identifiants', 'NO_EMAIL')
+    }
+
+    type ConfigJoin = { lab_mode_available: boolean | null; one_mode_available: boolean | null } | null
+    const rawConfig = (client as unknown as { client_configs: ConfigJoin | ConfigJoin[] }).client_configs
+    const config: ConfigJoin = Array.isArray(rawConfig) ? (rawConfig[0] ?? null) : rawConfig
+    const hasLab = config?.lab_mode_available === true
+    const hasOne = config?.one_mode_available === true
+
+    // T-073d — ce bouton ne DECIDE plus jamais Lab ou One tout seul : il ne peut que
+    // renvoyer un lien pour un accès déjà déclenché par un vrai parcours (« Activer le
+    // Lab » ou le toggle One). Sans ça, il devait deviner via `dashboard_type` — qui ne
+    // reflète qu'un défaut d'affichage, jamais une décision réelle (cf. T-073a/b/c, même
+    // root cause). Demande de MiKL : « on ne sait pas si l'espace doit être ouvert au
+    // Lab, au One ou les deux » — la réponse est : CE bouton ne doit jamais trancher ça.
+    if (!hasLab && !hasOne) {
+      return errorResponse(
+        'Aucun espace activé pour ce client — utilise « Activer le Lab » ou ouvre l\'accès One avant de pouvoir envoyer un lien',
+        'NO_ACCESS_ACTIVATED'
+      )
     }
 
     const authResult = await ensureClientAuthAccount({
@@ -70,12 +89,12 @@ export async function resendClientCredentials(
       return errorResponse('Impossible de créer le compte du client', 'AUTH_ERROR', authResult.error)
     }
 
-    type ConfigJoin = { dashboard_type: string | null } | null
-    const rawConfig = (client as unknown as { client_configs: ConfigJoin | ConfigJoin[] }).client_configs
-    const config: ConfigJoin = Array.isArray(rawConfig) ? (rawConfig[0] ?? null) : rawConfig
     const clientName = (client.first_name as string | null)?.trim() || (client.name as string | null) || 'Cher(e) client(e)'
 
-    const invite = config?.dashboard_type === 'one'
+    // Si les deux sont ouverts (client gradué), le lien sert d'abord le One — l'accès
+    // Lab reste de toute façon disponible une fois connecté (même compte, les deux
+    // modes cohabitent — cf. resolveClientMode).
+    const invite = hasOne
       ? await sendWelcomeOneInvite({ email: client.email as string, clientName })
       : await sendWelcomeLabInvite({ email: client.email as string, clientName })
 

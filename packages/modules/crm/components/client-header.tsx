@@ -205,6 +205,7 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
                 authUserId={client.authUserId}
                 welcomeEmailSentAt={client.welcomeEmailSentAt}
                 firstLoginAt={client.firstLoginAt}
+                hasAnyAccess={hasAnyAccess}
               />
           </div>
 

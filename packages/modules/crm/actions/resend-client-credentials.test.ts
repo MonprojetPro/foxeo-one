@@ -54,7 +54,7 @@ describe('resendClientCredentials Server Action', () => {
         first_name: 'Jean',
         email: 'client@example.com',
         auth_user_id: 'existing-id',
-        client_configs: { dashboard_type: 'lab' },
+        client_configs: { lab_mode_available: true, one_mode_available: false },
       },
       error: null,
     })
@@ -70,6 +70,29 @@ describe('resendClientCredentials Server Action', () => {
     expect(result.error?.code).toBe('UNAUTHORIZED')
   })
 
+  // T-073d — ce bouton ne doit plus jamais DEVINER Lab ou One via dashboard_type (qui
+  // n'est qu'un defaut d'affichage) : sans aucun vrai flag d'acces actif, il n'y a rien
+  // a renvoyer, et il ne doit pas en creer un a la place de MiKL.
+  it('returns NO_ACCESS_ACTIVATED without creating an account when neither Lab nor One is active', async () => {
+    mockClientSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        name: 'ACME SARL',
+        first_name: 'Jean',
+        email: 'client@example.com',
+        auth_user_id: null,
+        client_configs: { lab_mode_available: false, one_mode_available: false },
+      },
+      error: null,
+    })
+    const { resendClientCredentials } = await import('./resend-client-credentials')
+    const result = await resendClientCredentials(testClientId)
+    expect(result.error?.code).toBe('NO_ACCESS_ACTIVATED')
+    expect(mockEnsureClientAuthAccount).not.toHaveBeenCalled()
+    expect(mockSendWelcomeLabInvite).not.toHaveBeenCalled()
+    expect(mockSendWelcomeOneInvite).not.toHaveBeenCalled()
+  })
+
   it('resends the Lab invite and marks welcome_email_sent_at even when the account already existed', async () => {
     const { resendClientCredentials } = await import('./resend-client-credentials')
     const result = await resendClientCredentials(testClientId)
@@ -81,7 +104,7 @@ describe('resendClientCredentials Server Action', () => {
     expect(mockClientUpdateEq).toHaveBeenCalled()
   })
 
-  it('sends welcome-one (not welcome-lab) when the client dashboard is One', async () => {
+  it('sends welcome-one (not welcome-lab) when one_mode_available is true', async () => {
     mockClientSingle.mockResolvedValue({
       data: {
         id: testClientId,
@@ -89,7 +112,7 @@ describe('resendClientCredentials Server Action', () => {
         first_name: 'Jean',
         email: 'client@example.com',
         auth_user_id: 'existing-id',
-        client_configs: { dashboard_type: 'one' },
+        client_configs: { lab_mode_available: false, one_mode_available: true },
       },
       error: null,
     })
@@ -97,6 +120,25 @@ describe('resendClientCredentials Server Action', () => {
     await resendClientCredentials(testClientId)
 
     expect(mockSendWelcomeOneInvite).toHaveBeenCalledWith({ email: 'client@example.com', clientName: 'Jean' })
+    expect(mockSendWelcomeLabInvite).not.toHaveBeenCalled()
+  })
+
+  it('sends welcome-one en priorite quand Lab ET One sont actifs (client gradue)', async () => {
+    mockClientSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        name: 'ACME SARL',
+        first_name: 'Jean',
+        email: 'client@example.com',
+        auth_user_id: 'existing-id',
+        client_configs: { lab_mode_available: true, one_mode_available: true },
+      },
+      error: null,
+    })
+    const { resendClientCredentials } = await import('./resend-client-credentials')
+    await resendClientCredentials(testClientId)
+
+    expect(mockSendWelcomeOneInvite).toHaveBeenCalled()
     expect(mockSendWelcomeLabInvite).not.toHaveBeenCalled()
   })
 
@@ -108,7 +150,7 @@ describe('resendClientCredentials Server Action', () => {
         first_name: 'Jean',
         email: 'client@example.com',
         auth_user_id: null,
-        client_configs: { dashboard_type: 'lab' },
+        client_configs: { lab_mode_available: true, one_mode_available: false },
       },
       error: null,
     })
@@ -135,7 +177,7 @@ describe('resendClientCredentials Server Action', () => {
         first_name: 'Jean',
         email: null,
         auth_user_id: null,
-        client_configs: { dashboard_type: 'lab' },
+        client_configs: { lab_mode_available: true, one_mode_available: false },
       },
       error: null,
     })
