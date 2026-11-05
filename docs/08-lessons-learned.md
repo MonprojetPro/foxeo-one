@@ -880,7 +880,7 @@
 
 ---
 
-## DEP-008 — Un lien généré par l'Admin API Supabase ne peut JAMAIS être un lien PKCE (`?code=`)
+## DEP-009 — Un lien généré par l'Admin API Supabase ne peut JAMAIS être un lien PKCE (`?code=`)
 
 - **Date** : 2026-11-05
 - **Categorie** : Déploiement / Authentification
