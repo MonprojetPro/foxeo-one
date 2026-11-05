@@ -27,6 +27,16 @@ describe('ClientHeader', () => {
     updatedAt: '2024-01-20T14:30:00Z',
   }
 
+  // T-073a — avant ce correctif, le bloc entier (y compris le bouton de statut compte)
+  // disparaissait silencieusement quand un client n'avait ni Lab ni One actif, au lieu
+  // de dire explicitement qu'il n'y a pas d'espace (constat de MiKL le 05-11 sur un
+  // client "Complet" tout juste créé, sans aucun accès).
+  it('aucun Lab ni One actif : pastille explicite « Pas d\'espace client »', () => {
+    render(<ClientHeader client={{ ...mockClient, config: undefined }} />)
+
+    expect(screen.getByText('Pas d\'espace client')).toBeInTheDocument()
+  })
+
   it('should render client name as h1', () => {
     render(<ClientHeader client={mockClient} />)
 

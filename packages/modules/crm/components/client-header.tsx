@@ -141,9 +141,21 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
 
         {/* Zone droite — indicateurs d'accès + actions */}
         <div className="flex items-center gap-4 shrink-0 mt-1">
-          {/* Pastilles d'accès Lab/One (lecture seule) — Lab = violet, One = vert ; grisé si inactif */}
-          {hasAnyAccess && (
-            <div className="flex items-center gap-2 border border-white/10 rounded-xl px-3 py-2">
+          {/* Pastilles d'accès Lab/One (lecture seule) — Lab = violet, One = vert ; grisé si inactif.
+              T-073a — le bloc reste TOUJOURS visible, même sans aucun accès : avant, il
+              disparaissait entièrement (hasAnyAccess) dès qu'un client frais n'avait ni
+              Lab ni One — MiKL s'attendait à un statut explicite, pas à un silence
+              (constat du 05-11 sur un client "Complet" tout juste créé). */}
+          <div className="flex items-center gap-2 border border-white/10 rounded-xl px-3 py-2">
+              {!hasAnyAccess && (
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border bg-white/[0.03] text-gray-500 border-white/10"
+                  title="Aucun espace Lab ni One activé pour ce client"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-gray-600" />
+                  Pas d&apos;espace client
+                </span>
+              )}
               {hasLab && (
                 /* Cliquable : ouvre l'onglet Lab, là où vit le levier « Agents du parcours ».
                    Client figé : jamais violet « actif », même si elio_lab_enabled est encore vrai
@@ -190,8 +202,7 @@ export function ClientHeader({ client, onEdit, dashboardType, headerActionsSlot 
                 welcomeEmailSentAt={client.welcomeEmailSentAt}
                 firstLoginAt={client.firstLoginAt}
               />
-            </div>
-          )}
+          </div>
 
           {/* Action injectée par le Hub (ex. « Se connecter comme ») */}
           {headerActionsSlot}
