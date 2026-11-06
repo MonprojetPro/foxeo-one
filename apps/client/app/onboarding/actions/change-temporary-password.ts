@@ -36,14 +36,19 @@ export async function changeTemporaryPassword(
     return errorResponse('Echec mise a jour mot de passe', 'AUTH_UPDATE_FAILED', updateAuthError)
   }
 
-  // Retombe le flag password_change_required
-  const { error: flagError } = await supabase
-    .from('clients')
-    .update({ password_change_required: false })
-    .eq('auth_user_id', user.id)
+  // T-076 — un .update() direct est filtré EN SILENCE par la RLS (aucune policy
+  // n'autorise un client à modifier sa propre fiche) : flagError restait toujours
+  // null, le client restait bloqué en boucle sur /onboarding/password-change même
+  // après avoir changé son mot de passe. RPC SECURITY DEFINER + résultat vérifié.
+  const { data: cleared, error: flagError } = await supabase.rpc('fn_clear_password_change_required')
 
   if (flagError) {
     return errorResponse('Echec mise a jour du profil', 'DATABASE_ERROR', flagError)
+  }
+
+  if (!cleared) {
+    console.error('[ONBOARDING:PASSWORD_CHANGE] Aucune ligne modifiée pour', user.id)
+    return errorResponse('Echec mise a jour du profil', 'DATABASE_ERROR')
   }
 
   return successResponse({ ok: true })

@@ -36,15 +36,22 @@ export async function completeOnboarding(): Promise<ActionResponse<CompleteOnboa
     return errorResponse('Client non trouvé', 'NOT_FOUND')
   }
 
-  // Mettre à jour onboarding_completed
-  const { error: updateError } = await supabase
-    .from('clients')
-    .update({ onboarding_completed: true })
-    .eq('auth_user_id', user.id)
+  // T-076 — un .update() direct est filtré EN SILENCE par la RLS (aucune policy
+  // n'autorise un client à modifier sa propre fiche) : updateError restait toujours
+  // null (0 ligne changée n'est pas une erreur pour Postgres), donc cette action
+  // répondait "succès" sans que onboarding_completed ne passe jamais à true en base
+  // — le client rebouclait indéfiniment sur l'écran de bienvenue. RPC SECURITY
+  // DEFINER (même pattern que fn_mark_graduation_screen_shown) + résultat vérifié.
+  const { data: completed, error: updateError } = await supabase.rpc('fn_complete_client_onboarding')
 
   if (updateError) {
     console.error('[ONBOARDING:COMPLETE] Update failed:', updateError)
     return errorResponse('Erreur lors de la finalisation', 'DATABASE_ERROR', updateError)
+  }
+
+  if (!completed && !client.onboarding_completed) {
+    console.error('[ONBOARDING:COMPLETE] Aucune ligne modifiée pour', client.id)
+    return errorResponse('Impossible de finaliser l\'onboarding', 'DATABASE_ERROR')
   }
 
   console.log('[ONBOARDING:COMPLETE] Client:', client.id)

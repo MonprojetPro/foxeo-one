@@ -215,7 +215,13 @@ export async function middleware(request: NextRequest) {
   // (par le check maintenance ci-dessus) est aussitôt renvoyé vers / → qui le renvoie
   // vers /maintenance → boucle infinie (ERR_TOO_MANY_REDIRECTS). La page /maintenance
   // gère elle-même sa sortie : quand la maintenance est coupée, elle redirige vers /.
-  if (user && isPublic && request.nextUrl.pathname !== '/maintenance') {
+  // ⚠️ On EXCLUT AUSSI /reset-password (T-076) : qu'il vienne d'un lien d'invitation
+  // (verifyOtp côté serveur) ou d'un "mot de passe oublié" (exchangeCodeForSession côté
+  // serveur, PKCE), /auth/callback établit DÉJÀ la session AVANT de rediriger ici — donc
+  // "user" est vrai dès l'arrivée sur cette page publique, et cette règle l'expulsait
+  // aussitôt vers "/" sans jamais lui laisser le temps de choisir un mot de passe
+  // (constat de MiKL le 06-11 : jamais invité à créer son mot de passe).
+  if (user && isPublic && request.nextUrl.pathname !== '/maintenance' && request.nextUrl.pathname !== '/reset-password') {
     const redirectResponse = NextResponse.redirect(new URL('/', request.url))
     setLocaleCookie(redirectResponse, locale)
     return redirectResponse
@@ -308,13 +314,17 @@ export async function middleware(request: NextRequest) {
       if (!impersonationSession && !isOnboardingExcluded(request.nextUrl.pathname)) {
         // First login detection: first_login_at IS NULL
         if (!client.first_login_at) {
-          // Record first login timestamp
-          await supabase
-            .from('clients')
-            .update({ first_login_at: new Date().toISOString() })
-            .eq('auth_user_id', user.id)
+          // T-076 — un .update() direct est filtré EN SILENCE par la RLS (aucune policy
+          // n'autorise un client à modifier sa propre fiche) : 0 ligne changée, aucune
+          // erreur renvoyée. RPC SECURITY DEFINER (même pattern que
+          // fn_mark_graduation_screen_shown, déjà fiable) + résultat booléen vérifié.
+          const { data: marked, error: markError } = await supabase.rpc('fn_mark_first_login')
 
-          console.log('[ONBOARDING:FIRST_LOGIN] Client:', user.id)
+          if (markError || !marked) {
+            console.error('[ONBOARDING:FIRST_LOGIN] Échec de l\'écriture first_login_at:', markError ?? 'aucune ligne modifiée')
+          } else {
+            console.log('[ONBOARDING:FIRST_LOGIN] Client:', user.id)
+          }
 
           // Redirect to welcome screen
           const welcomeUrl = request.nextUrl.clone()

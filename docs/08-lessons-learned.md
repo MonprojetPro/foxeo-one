@@ -906,6 +906,20 @@
 
 ---
 
+## DEP-011 — Un correctif RLS ponctuel doit faire chercher le même schéma ailleurs dans le même domaine
+
+- **Date** : 2026-11-06
+- **Categorie** : Base de données / Sécurité (RLS)
+- **Symptome** : T-076 — l'onboarding client était cassé de bout en bout : jamais invité à créer son mot de passe après avoir cliqué le lien d'activation, puis tutoriel qui reboucle à l'infini sur « Terminer » et « Passer le tutoriel ». MiKL : « on a déjà vu ça, je pensais que c'était réglé... il faut revoir tout ce process de A à Z ».
+- **Cause racine** : la table `clients` n'a qu'**une seule** policy RLS `UPDATE` (`clients_update_operator`, réservée à `is_operator(operator_id)`) — aucune ne permet à un client authentifié de modifier sa propre fiche. 3 endroits du code client essaient pourtant de le faire directement (`middleware.ts` pour `first_login_at`, `complete-onboarding.ts` pour `onboarding_completed`, `change-temporary-password.ts` pour `password_change_required`) : la RLS filtre ces `UPDATE` **en silence** (0 ligne modifiée, Postgres ne renvoie aucune erreur pour un filtre RLS — ce n'est pas un échec de requête, juste une absence de ligne correspondante), et aucun des 3 appelants ne vérifiait le résultat.
+- **Le plus révélateur** : ce exact défaut avait **déjà été rencontré et corrigé une fois**, pour un champ voisin du même domaine (`graduation_screen_shown`), via une fonction `SECURITY DEFINER` dédiée (`fn_mark_graduation_screen_shown`, commentée dans le code : *« La RLS clients ne donne aucun droit UPDATE au client... »*). Ce correctif n'a jamais été généralisé aux 3 autres champs qui suivent exactement le même schéma (un client doit faire évoluer un indicateur sur sa propre ligne `clients`) — chacun a été découvert et corrigé séparément, à des mois d'écart, avec la même frustration à chaque fois.
+- **Preuve avant correctif (TILT)** : lecture de `pg_policies` sur `clients` (une seule UPDATE, condition opérateur) + test direct en base avec le rôle `authenticated` et le JWT du client (`set local request.jwt.claims`) : `fn_mark_first_login()` renvoie `true` et la colonne change réellement, confirmant le mécanisme AVANT toute écriture de code.
+- **Solution validee** : 3 fonctions `SECURITY DEFINER` sur le modèle exact de `fn_mark_graduation_screen_shown` (bornées à `auth_user_id = auth.uid()`, renvoient le nombre de lignes modifiées), et les 3 points d'appel vérifient désormais ce résultat au lieu de le supposer.
+- **Regle a suivre** : quand un correctif RLS ponctuel est trouvé pour UN champ d'une table (« le client ne peut pas modifier sa propre ligne, il faut une RPC `SECURITY DEFINER` »), **chercher immédiatement les autres champs du même domaine qui suivraient la même logique** (ici : tout ce qui touche au cycle de vie client — onboarding, premier login, changement de mot de passe) plutôt que d'attendre que chacun casse séparément. **Symptôme signature** : « l'action affiche un succès mais l'état ne change jamais en base, et ça boucle » sur une table protégée par RLS où seul un rôle `operator`/`admin` a des droits d'écriture.
+- **Agents impliques** : FIX (protocole TILT), ATLAS
+
+---
+
 ## DB-004 — « Marqué fait » avant l'effet de bord : l'UI ment et la tâche disparaît
 
 - **Date** : 2026-07-26

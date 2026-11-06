@@ -22,6 +22,7 @@ const mockSupabase = {
     getUser: vi.fn(),
   },
   from: vi.fn(),
+  rpc: vi.fn(),
 }
 
 describe('completeOnboarding', () => {
@@ -61,7 +62,7 @@ describe('completeOnboarding', () => {
     expect(result.error?.code).toBe('NOT_FOUND')
   })
 
-  it('returns DATABASE_ERROR when update fails', async () => {
+  it('returns DATABASE_ERROR when the RPC errors', async () => {
     mockSupabase.auth.getUser.mockResolvedValue({
       data: { user: { id: 'user-123' } },
       error: null,
@@ -69,26 +70,41 @@ describe('completeOnboarding', () => {
 
     const dbError = { message: 'DB error', code: 'PGRST001' }
 
-    let callCount = 0
-    mockSupabase.from.mockImplementation(() => {
-      callCount++
-      if (callCount === 1) {
-        // First call: select client
-        return {
-          select: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn().mockResolvedValue({
-            data: { id: 'client-456', onboarding_completed: false },
-            error: null,
-          }),
-        }
-      }
-      // Second call: update
-      return {
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ error: dbError }),
-      }
+    mockSupabase.from.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { id: 'client-456', onboarding_completed: false },
+        error: null,
+      }),
     })
+    mockSupabase.rpc.mockResolvedValue({ data: null, error: dbError })
+
+    const result = await completeOnboarding()
+
+    expect(result.data).toBeNull()
+    expect(result.error?.code).toBe('DATABASE_ERROR')
+  })
+
+  // T-076 — un .update() direct était filtré en silence par la RLS (aucune policy
+  // n'autorise un client à modifier sa propre fiche) : updateError restait toujours
+  // null, donc cette action répondait "succès" sans que onboarding_completed ne
+  // passe jamais à true en base. La RPC renvoie explicitement false dans ce cas.
+  it('returns DATABASE_ERROR when the RPC succeeds but updates no row', async () => {
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'user-123' } },
+      error: null,
+    })
+
+    mockSupabase.from.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { id: 'client-456', onboarding_completed: false },
+        error: null,
+      }),
+    })
+    mockSupabase.rpc.mockResolvedValue({ data: false, error: null })
 
     const result = await completeOnboarding()
 
@@ -116,13 +132,6 @@ describe('completeOnboarding', () => {
           }),
         }
       }
-      if (callCount === 2) {
-        // update onboarding_completed
-        return {
-          update: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        }
-      }
       // select parcours
       return {
         select: vi.fn().mockReturnThis(),
@@ -133,6 +142,7 @@ describe('completeOnboarding', () => {
         }),
       }
     })
+    mockSupabase.rpc.mockResolvedValue({ data: true, error: null })
 
     const result = await completeOnboarding()
 
@@ -160,12 +170,6 @@ describe('completeOnboarding', () => {
           }),
         }
       }
-      if (callCount === 2) {
-        return {
-          update: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        }
-      }
       // No parcours
       return {
         select: vi.fn().mockReturnThis(),
@@ -173,10 +177,46 @@ describe('completeOnboarding', () => {
         maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
       }
     })
+    mockSupabase.rpc.mockResolvedValue({ data: true, error: null })
 
     const result = await completeOnboarding()
 
     expect(result.error).toBeNull()
     expect(result.data?.redirectTo).toBe('/')
+  })
+
+  // T-076 — appeler Terminer une 2e fois (ex. double-clic) alors que onboarding_completed
+  // est déjà true ne doit pas être traité comme un échec : la RPC renvoie false (aucune
+  // ligne à modifier) mais c'est l'état déjà en base qui tranche, pas la RPC seule.
+  it('treats a second call as success when onboarding_completed is already true', async () => {
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'user-123' } },
+      error: null,
+    })
+
+    let callCount = 0
+    mockSupabase.from.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { id: 'client-456', onboarding_completed: true },
+            error: null,
+          }),
+        }
+      }
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      }
+    })
+    mockSupabase.rpc.mockResolvedValue({ data: false, error: null })
+
+    const result = await completeOnboarding()
+
+    expect(result.error).toBeNull()
   })
 })
