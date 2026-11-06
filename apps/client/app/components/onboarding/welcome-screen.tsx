@@ -1,34 +1,35 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { Route, Bot, FileText, Handshake, LayoutDashboard, Link2, type LucideIcon } from 'lucide-react'
 
 interface Feature {
-  icon: string
+  icon: LucideIcon
   title: string
   description: string
 }
 
 const LAB_FEATURES: Feature[] = [
   {
-    icon: '🎯',
+    icon: Route,
     title: 'Un parcours guidé, étape par étape',
     description:
       "Chaque étape (offre, cible, business model, identité, acquisition...) est validée avant de passer à la suivante. Vous avancez à votre rythme, jamais seul.",
   },
   {
-    icon: '🧠',
+    icon: Bot,
     title: 'Élio, votre copilote de création',
     description:
       "Élio n'est pas un chatbot générique : il connaît l'historique de votre parcours et vous aide à structurer vos idées en documents clairs à chaque étape, 24/7. Il répond à vos questions sur VOTRE projet, et sait reconnaître quand une décision a besoin de l'avis de MiKL plutôt que du sien.",
   },
   {
-    icon: '📄',
+    icon: FileText,
     title: 'Vos documents centralisés',
     description:
       'Tous vos livrables (briefs, étapes validées) sont rassemblés au même endroit, consultables à tout moment.',
   },
   {
-    icon: '🤝',
+    icon: Handshake,
     title: 'Accompagnement MiKL',
     description:
       'Chaque étape que vous soumettez est relue, validée ou commentée par MiKL — un vrai regard humain, pas une simple case cochée.',
@@ -37,19 +38,19 @@ const LAB_FEATURES: Feature[] = [
 
 const ONE_FEATURES: Feature[] = [
   {
-    icon: '📊',
+    icon: LayoutDashboard,
     title: 'Le pilotage de vos livrables',
     description:
       'Retrouvez tout ce qui a été construit pour vous (documents, modules actifs) au même endroit, à jour en permanence.',
   },
   {
-    icon: '🧠',
+    icon: Bot,
     title: 'Élio, une extension de MiKL',
     description:
       "Élio répond à vos questions du quotidien sur votre outil et peut relayer une demande au chat avec MiKL si besoin — toujours avec votre accord. Ce n'est pas un chatbot générique : il connaît votre espace et votre historique.",
   },
   {
-    icon: '🔗',
+    icon: Link2,
     title: 'Un lien direct avec MiKL',
     description:
       'Chat, support, visio : vous restez en contact permanent, pas juste un outil livré puis laissé de côté.',
@@ -85,7 +86,7 @@ export function WelcomeScreen({ firstName, variant, mode }: WelcomeScreenProps) 
           : 'flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-emerald-950 via-emerald-900 to-black text-white px-4 py-10'
       }
     >
-      <div className="max-w-2xl w-full text-center space-y-8">
+      <div className="max-w-5xl w-full text-center space-y-8">
         {/* Header */}
         <div className="space-y-4">
           <div className="text-6xl">👋</div>
@@ -99,24 +100,23 @@ export function WelcomeScreen({ firstName, variant, mode }: WelcomeScreenProps) 
           </p>
         </div>
 
-        {/* Fonctionnalités */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 text-left">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className={`rounded-xl p-6 border transition-colors ${
-                isLab
-                  ? 'bg-white/10 backdrop-blur-sm border-white/10 hover:bg-white/15'
-                  : 'bg-white/10 backdrop-blur-sm border-white/10 hover:bg-white/15'
-              }`}
-            >
-              <div className="text-3xl mb-3">{feature.icon}</div>
-              <h3 className="font-semibold text-base mb-1">{feature.title}</h3>
-              <p className={`text-sm ${isLab ? 'text-purple-200' : 'text-emerald-200'}`}>
-                {feature.description}
-              </p>
-            </div>
-          ))}
+        {/* Fonctionnalités — alignées horizontalement (4 max), le CTA vient après, pas à côté */}
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${features.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 mt-8 text-left`}>
+          {features.map((feature) => {
+            const Icon = feature.icon
+            return (
+              <div
+                key={feature.title}
+                className="rounded-xl p-6 border bg-white/10 backdrop-blur-sm border-white/10 hover:bg-white/15 transition-colors"
+              >
+                <Icon className={`h-7 w-7 mb-3 ${isLab ? 'text-purple-300' : 'text-emerald-300'}`} aria-hidden="true" />
+                <h3 className="font-semibold text-base mb-1">{feature.title}</h3>
+                <p className={`text-sm ${isLab ? 'text-purple-200' : 'text-emerald-200'}`}>
+                  {feature.description}
+                </p>
+              </div>
+            )
+          })}
         </div>
 
         {/* CTA */}

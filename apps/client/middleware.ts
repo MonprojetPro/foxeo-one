@@ -15,7 +15,11 @@ import {
 
 export const PUBLIC_PATHS = ['/login', '/signup', '/auth/callback', '/auth/impersonation', '/forgot-password', '/reset-password', '/maintenance']
 export const CONSENT_EXCLUDED_PATHS = ['/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
-export const ONBOARDING_EXCLUDED_PATHS = ['/onboarding', '/login', '/signup', '/auth/callback', '/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
+// T-078 — '/reset-password' manquait ici : un client en plein onboarding (onboarding_completed
+// = false) qui cliquait "On y va" sur la page de presentation etait aussitot rebondi vers
+// /onboarding/welcome par la detection plus bas (le CTA semblait ne "rien faire", constat de
+// MiKL le 06-11) au lieu d'atteindre la page de creation du mot de passe.
+export const ONBOARDING_EXCLUDED_PATHS = ['/onboarding', '/reset-password', '/login', '/signup', '/auth/callback', '/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/graduation', '/archived', '/maintenance']
 export const GRADUATION_EXCLUDED_PATHS = ['/graduation', '/login', '/signup', '/auth/callback', '/consent-update', '/ia-consent-update', '/legal', '/api', '/suspended', '/transferred', '/onboarding', '/archived', '/maintenance']
 export const MAINTENANCE_EXCLUDED_PATHS = ['/maintenance', '/login', '/signup', '/auth/callback', '/api']
 

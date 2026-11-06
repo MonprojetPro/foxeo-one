@@ -146,6 +146,13 @@ describe('middleware routing logic', () => {
       expect(isOnboardingExcluded('/auth/callback')).toBe(true)
     })
 
+    // T-078 — sans cette exclusion, un client en plein onboarding qui clique "On y va"
+    // (page de presentation -> /reset-password) etait aussitot rebondi vers
+    // /onboarding/welcome : le CTA semblait ne rien faire (constat de MiKL le 06-11).
+    it('returns true for /reset-password (to avoid bouncing the onboarding CTA)', () => {
+      expect(isOnboardingExcluded('/reset-password')).toBe(true)
+    })
+
     it('returns true for consent and legal paths', () => {
       expect(isOnboardingExcluded('/consent-update')).toBe(true)
       expect(isOnboardingExcluded('/legal')).toBe(true)
