@@ -5,8 +5,10 @@ import {
   buildHealthCheckResult,
   reconcileIncidents,
   SUSTAINED_ERROR_MS,
+  ALERT_COOLDOWN_MS,
   type ServiceCheck,
   type IncidentMap,
+  type CooldownMap,
 } from './health-check-logic'
 
 describe('evaluateServiceStatus', () => {
@@ -236,5 +238,76 @@ describe('reconcileIncidents — panne durable + auto-résolution (2026-07-11)',
     expect(toAlert).toHaveLength(0)
     expect(toResolve).toHaveLength(0)
     expect(nextIncidents).toEqual({})
+  })
+})
+
+describe('reconcileIncidents — cooldown anti-spam des alertes recurrentes (2026-11-06)', () => {
+  const nowMs = Date.parse('2026-07-11T12:00:00Z')
+  const err = (latencyMs = 3000): ServiceCheck => ({ status: 'error', latencyMs })
+  const ok = (latencyMs = 100): ServiceCheck => ({ status: 'ok', latencyMs })
+  const sustainedSince = new Date(nowMs - SUSTAINED_ERROR_MS).toISOString()
+
+  it('1ere alerte jamais vue (pas de cooldown) → alerte et pose le cooldown a occurrenceCount=1', () => {
+    const prev: IncidentMap = { resend: { errorSince: sustainedSince, notificationId: null } }
+    const { toAlert, nextCooldowns } = reconcileIncidents({ resend: err() }, prev, nowMs, {})
+    expect(toAlert).toEqual(['resend'])
+    expect(nextCooldowns.resend).toEqual({
+      lastAlertedAt: new Date(nowMs).toISOString(),
+      occurrenceCount: 1,
+    })
+  })
+
+  it('panne durable mais le meme service a deja alerte il y a MOINS de 3h → pas de nouvel email', () => {
+    const prev: IncidentMap = { resend: { errorSince: sustainedSince, notificationId: null } }
+    const cooldowns: CooldownMap = {
+      resend: {
+        lastAlertedAt: new Date(nowMs - ALERT_COOLDOWN_MS + 60_000).toISOString(), // 1 min avant la fin du cooldown
+        occurrenceCount: 1,
+      },
+    }
+    const { toAlert, nextCooldowns } = reconcileIncidents({ resend: err() }, prev, nowMs, cooldowns)
+    expect(toAlert).toHaveLength(0)
+    // l'occurrence est comptee meme sans email, pour tracer la recurrence
+    expect(nextCooldowns.resend.occurrenceCount).toBe(2)
+    expect(nextCooldowns.resend.lastAlertedAt).toBe(cooldowns.resend.lastAlertedAt)
+  })
+
+  it('panne durable et le cooldown de 3h est ecoule depuis le dernier email → ralerte', () => {
+    const prev: IncidentMap = { resend: { errorSince: sustainedSince, notificationId: null } }
+    const cooldowns: CooldownMap = {
+      resend: {
+        lastAlertedAt: new Date(nowMs - ALERT_COOLDOWN_MS - 1000).toISOString(), // juste au-dela
+        occurrenceCount: 1,
+      },
+    }
+    const { toAlert, nextCooldowns } = reconcileIncidents({ resend: err() }, prev, nowMs, cooldowns)
+    expect(toAlert).toEqual(['resend'])
+    expect(nextCooldowns.resend).toEqual({
+      lastAlertedAt: new Date(nowMs).toISOString(),
+      occurrenceCount: 2,
+    })
+  })
+
+  it('le cooldown SURVIT a la resolution de l\'incident (couvre l\'episode suivant de la meme panne)', () => {
+    const prev: IncidentMap = {
+      resend: { errorSince: '2026-07-11T11:00:00Z', notificationId: 'notif-123' },
+    }
+    const cooldowns: CooldownMap = {
+      resend: { lastAlertedAt: '2026-07-11T11:05:00.000Z', occurrenceCount: 1 },
+    }
+    const { toResolve, nextIncidents, nextCooldowns } = reconcileIncidents(
+      { resend: ok() },
+      prev,
+      nowMs,
+      cooldowns
+    )
+    expect(toResolve).toEqual([{ service: 'resend', notificationId: 'notif-123' }])
+    expect(nextIncidents.resend).toBeUndefined() // incident bien clos
+    expect(nextCooldowns.resend).toEqual(cooldowns.resend) // cooldown, lui, persiste
+  })
+
+  it('sans cooldown prealable, un service sans incident ne cree rien', () => {
+    const { nextCooldowns } = reconcileIncidents({ db: ok() }, {}, nowMs, {})
+    expect(nextCooldowns).toEqual({})
   })
 })

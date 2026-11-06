@@ -108,19 +108,46 @@ export interface Incident {
 
 export type IncidentMap = Record<string, Incident>
 
+// ── Anti-spam des alertes recurrentes (2026-11-06) ────────────────────────────
+//
+// Le probleme vecu par MiKL : un service qui flanche par intermittence (ex.
+// supabase_db, plusieurs pannes de 15-25 min par jour) auto-resout son incident
+// a chaque retour a la normale (cf. ci-dessus), donc CHAQUE nouvelle panne repart
+// de zero et declenche sa PROPRE alerte email — 5 a 7 mails en quelques jours
+// pour le meme probleme sous-jacent jamais diagnostique entre deux mails.
+//
+// Le cooldown ci-dessous est INDEPENDANT du cycle de vie de l'incident (qui, lui,
+// reste auto-resolu des le retour a la normale — on garde ce comportement pour
+// la cloche du Hub, qui ne doit jamais montrer une panne terminee). Il ne fait
+// que RETARDER le prochain EMAIL pour le meme service, pas la detection.
+
+/** Duree minimale entre deux emails d'alerte pour le MEME service (3h). */
+export const ALERT_COOLDOWN_MS = 3 * 60 * 60 * 1000
+
+export interface AlertCooldown {
+  /** ISO — date du dernier email d'alerte reellement envoye pour ce service */
+  lastAlertedAt: string
+  /** Nombre d'alertes (envoyees OU supprimees par le cooldown) depuis la 1ere */
+  occurrenceCount: number
+}
+
+export type CooldownMap = Record<string, AlertCooldown>
+
 export interface IncidentReconciliation {
-  /** Services à alerter maintenant (panne durable, pas encore notifiée) */
+  /** Services à alerter maintenant (panne durable, pas encore notifiée, hors cooldown) */
   toAlert: string[]
   /** Alertes ouvertes à supprimer (service revenu à la normale) */
   toResolve: { service: string; notificationId: string }[]
   /** État d'incidents à persister pour le prochain cycle */
   nextIncidents: IncidentMap
+  /** État des cooldowns d'alerte à persister pour le prochain cycle */
+  nextCooldowns: CooldownMap
 }
 
 /**
  * Compare l'état courant des services aux incidents connus et décide :
- * qui alerter (panne durable), quelles alertes fermer (service rétabli),
- * et l'état d'incidents à sauvegarder.
+ * qui alerter (panne durable, hors cooldown), quelles alertes fermer (service
+ * rétabli), et l'état d'incidents + de cooldowns à sauvegarder.
  *
  * Note : pour les services `toAlert`, le `notificationId` reste `null` dans
  * `nextIncidents` — l'appelant le renseigne après l'insertion réelle de la notif.
@@ -128,11 +155,13 @@ export interface IncidentReconciliation {
 export function reconcileIncidents(
   services: Record<string, ServiceCheck>,
   prevIncidents: IncidentMap = {},
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
+  prevCooldowns: CooldownMap = {}
 ): IncidentReconciliation {
   const toAlert: string[] = []
   const toResolve: { service: string; notificationId: string }[] = []
   const nextIncidents: IncidentMap = {}
+  const nextCooldowns: CooldownMap = { ...prevCooldowns }
 
   for (const [service, check] of Object.entries(services)) {
     const prev = prevIncidents[service]
@@ -144,7 +173,25 @@ export function reconcileIncidents(
 
       // Alerte seulement si l'erreur dure ET qu'aucune alerte n'est déjà ouverte
       if (!notificationId && sustainedMs >= SUSTAINED_ERROR_MS) {
-        toAlert.push(service)
+        const cooldown = prevCooldowns[service]
+        const msSinceLastAlert = cooldown
+          ? nowMs - new Date(cooldown.lastAlertedAt).getTime()
+          : Infinity
+
+        if (msSinceLastAlert >= ALERT_COOLDOWN_MS) {
+          toAlert.push(service)
+          nextCooldowns[service] = {
+            lastAlertedAt: new Date(nowMs).toISOString(),
+            occurrenceCount: (cooldown?.occurrenceCount ?? 0) + 1,
+          }
+        } else {
+          // Panne reelle et durable, mais le meme service a deja alerte il y a
+          // moins de ALERT_COOLDOWN_MS : on compte l'occurrence, pas d'email.
+          nextCooldowns[service] = {
+            lastAlertedAt: cooldown!.lastAlertedAt,
+            occurrenceCount: cooldown!.occurrenceCount + 1,
+          }
+        }
       }
       nextIncidents[service] = { errorSince, notificationId }
     } else {
@@ -152,9 +199,12 @@ export function reconcileIncidents(
       if (prev?.notificationId) {
         toResolve.push({ service, notificationId: prev.notificationId })
       }
-      // Incident clos → on ne le persiste pas (absent de nextIncidents)
+      // Incident clos → on ne le persiste pas (absent de nextIncidents).
+      // Le cooldown, lui, SURVIT a la resolution (deja copie dans nextCooldowns
+      // par le spread initial) : c'est tout l'interet, il couvre les episodes
+      // suivants de la meme panne intermittente.
     }
   }
 
-  return { toAlert, toResolve, nextIncidents }
+  return { toAlert, toResolve, nextIncidents, nextCooldowns }
 }

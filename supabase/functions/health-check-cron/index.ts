@@ -11,6 +11,7 @@ import {
   reconcileIncidents,
   type ServiceCheck,
   type IncidentMap,
+  type CooldownMap,
 } from './health-check-logic.ts'
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
@@ -179,9 +180,18 @@ async function sendAlertNotification(
   supabase: ReturnType<typeof createClient>,
   operatorAuthId: string,
   serviceName: string,
-  serviceStatus: string
+  serviceStatus: string,
+  occurrenceCount: number
 ): Promise<string | null> {
   const displayName = serviceName.replace(/_/g, ' ')
+
+  // A partir de la 2e occurrence (la 1ere panne de ce service depuis plus de
+  // ALERT_COOLDOWN_MS), on le dit explicitement : ce n'est pas un nouvel
+  // incident isole, c'est une panne intermittente qui revient.
+  const recurrenceNote =
+    occurrenceCount > 1
+      ? ` (${occurrenceCount}e alerte pour ce service — panne intermittente qui revient, pas un nouvel incident)`
+      : ''
 
   // service_role → RLS bypass, .select() après insert est sûr ici
   const { data: notif, error: notifError } = await supabase
@@ -191,7 +201,7 @@ async function sendAlertNotification(
       recipient_id: operatorAuthId,
       type: 'system',
       title: `Alerte système — ${displayName}`,
-      body: `Le service ${displayName} est en panne depuis plus de 15 min (statut: ${serviceStatus}). Cette alerte disparaîtra automatiquement au rétablissement du service.`,
+      body: `Le service ${displayName} est en panne depuis plus de 15 min (statut: ${serviceStatus})${recurrenceNote}. Cette alerte disparaîtra automatiquement au rétablissement du service. Prochaine alerte pour ce service au plus tôt dans 3h, même si la panne se reproduit entre-temps.`,
       link: '/modules/admin/system',
     })
     .select('id')
@@ -315,12 +325,20 @@ serve(async (req: Request) => {
     .eq('key', 'health_incidents')
     .maybeSingle()
 
+  const { data: cooldownRow } = await supabase
+    .from('system_config')
+    .select('value')
+    .eq('key', 'health_alert_cooldowns')
+    .maybeSingle()
+
   const prevIncidents = (incidentRow?.value ?? {}) as IncidentMap
+  const prevCooldowns = (cooldownRow?.value ?? {}) as CooldownMap
   const nowMs = Date.now()
-  const { toAlert, toResolve, nextIncidents } = reconcileIncidents(
+  const { toAlert, toResolve, nextIncidents, nextCooldowns } = reconcileIncidents(
     services,
     prevIncidents,
-    nowMs
+    nowMs,
+    prevCooldowns
   )
 
   if (toAlert.length > 0 || toResolve.length > 0) {
@@ -342,7 +360,8 @@ serve(async (req: Request) => {
           supabase,
           operatorAuthId,
           service,
-          services[service].status
+          services[service].status,
+          nextCooldowns[service]?.occurrenceCount ?? 1
         )
         if (notifId && nextIncidents[service]) {
           nextIncidents[service].notificationId = notifId
@@ -363,6 +382,15 @@ serve(async (req: Request) => {
 
   if (incidentUpsertError) {
     console.error('[HEALTH:CRON] Failed to upsert health_incidents', incidentUpsertError)
+  }
+
+  // Persister l'état des cooldowns d'alerte (anti-spam) pour le prochain cycle
+  const { error: cooldownUpsertError } = await supabase
+    .from('system_config')
+    .upsert({ key: 'health_alert_cooldowns', value: nextCooldowns })
+
+  if (cooldownUpsertError) {
+    console.error('[HEALTH:CRON] Failed to upsert health_alert_cooldowns', cooldownUpsertError)
   }
 
   console.info(
