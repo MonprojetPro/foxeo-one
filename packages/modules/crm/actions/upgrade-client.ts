@@ -72,7 +72,7 @@ export async function upgradeClient(
     // + `lab_mode_available` (source of truth).
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, client_type, status, operator_id, email, first_name, name, auth_user_id, client_configs(dashboard_type, lab_mode_available)')
+      .select('id, client_type, status, operator_id, email, first_name, name, auth_user_id, first_login_at, client_configs(dashboard_type, lab_mode_available)')
       .eq('id', clientId)
       .eq('operator_id', operatorId)
       .single()
@@ -122,6 +122,7 @@ export async function upgradeClient(
         email: client.email as string | null,
         firstName: client.first_name as string | null,
         name: client.name as string | null,
+        firstLoginAt: client.first_login_at as string | null,
         authUserId: client.auth_user_id as string | null,
       },
     })
@@ -267,7 +268,7 @@ async function upgradeToOne({
   clientId: string
   operatorId: string
   modules?: string[]
-  client: { email: string | null; firstName: string | null; name: string | null; authUserId: string | null }
+  client: { email: string | null; firstName: string | null; name: string | null; authUserId: string | null; firstLoginAt: string | null }
 }): Promise<ActionResponse<{ success: true }>> {
   const activeModules = modules && modules.length > 0 ? modules : ['core-dashboard']
 
@@ -308,7 +309,9 @@ async function upgradeToOne({
   })
   if (authResult.error) {
     console.error('[CRM:UPGRADE_CLIENT] Compte auth non créé:', authResult.error)
-  } else if (authResult.created && client.email) {
+    // T-074 — « jamais connecté » (first_login_at nul), pas « compte venant d'être
+    // créé » : un compte peut déjà exister sans que le client l'ait jamais activé.
+  } else if (!client.firstLoginAt && client.email) {
     const invite = await sendWelcomeOneInvite({
       email: client.email,
       clientName: client.firstName?.trim() || client.name || 'Cher(e) client(e)',

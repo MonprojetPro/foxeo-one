@@ -84,9 +84,11 @@ describe('toggleAccess Server Action', () => {
     vi.clearAllMocks()
     vi.resetModules()
     mockFrom.mockImplementation(defaultFromImpl)
-    // Défaut : le compte existe déjà (cas le plus fréquent) — pas d'email renvoyé.
+    // Défaut : le compte existe déjà ET le client s'est déjà connecté (cas le plus
+    // fréquent) — pas d'email renvoyé. Le signal est first_login_at, pas « created »
+    // (T-074 — un compte peut exister sans jamais avoir été activé).
     mockClientsMaybeSingle.mockResolvedValue({
-      data: { id: testClientId, email: 'client@example.com', first_name: 'Jean', name: 'ACME', auth_user_id: 'existing-id' },
+      data: { id: testClientId, email: 'client@example.com', first_name: 'Jean', name: 'ACME', auth_user_id: 'existing-id', first_login_at: '2026-10-01T10:00:00Z' },
       error: null,
     })
     mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'existing-id', created: false, error: null })
@@ -377,6 +379,28 @@ describe('toggleAccess Server Action', () => {
 
     expect(mockSendWelcomeLabInvite).toHaveBeenCalledWith({ email: 'nouveau@example.com', clientName: 'Jean' })
     expect(mockSendWelcomeOneInvite).not.toHaveBeenCalled()
+  })
+
+  // T-074 — un compte auth peut déjà exister (créé lors d'une tentative antérieure,
+  // ou d'un accès déjà ouvert sur l'autre volet) sans que le client ne se soit jamais
+  // connecté : le mail doit quand même partir. Bug constaté par MiKL le 06-11 (Lab
+  // activé sans facturation, aucun mail reçu malgré un compte auth préexistant).
+  it('sends welcome-lab even when the account already existed, as long as the client never logged in', async () => {
+    mockConfigSingle.mockResolvedValue({
+      data: { dashboard_type: 'lab', lab_mode_available: false, one_mode_available: false, elio_lab_enabled: false },
+      error: null,
+    })
+    mockClientsMaybeSingle.mockResolvedValue({
+      data: { id: testClientId, email: 'nouveau@example.com', first_name: 'Jean', name: 'ACME', auth_user_id: 'existing-id', first_login_at: null },
+      error: null,
+    })
+    mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'existing-id', created: false, error: null })
+    mockSendWelcomeLabInvite.mockResolvedValue({ success: true })
+
+    const { toggleAccess } = await import('./toggle-access')
+    await toggleAccess({ clientId: testClientId, accessType: 'lab', enabled: true })
+
+    expect(mockSendWelcomeLabInvite).toHaveBeenCalledWith({ email: 'nouveau@example.com', clientName: 'Jean' })
   })
 
   it('does not create an account nor send an email when access is turned off', async () => {

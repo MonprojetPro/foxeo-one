@@ -50,7 +50,7 @@ export async function activateLabFree(
 
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('id, name, first_name, email, auth_user_id, client_configs(lab_mode_available)')
+      .select('id, name, first_name, email, auth_user_id, first_login_at, client_configs(lab_mode_available)')
       .eq('id', clientId)
       .single()
 
@@ -100,9 +100,12 @@ export async function activateLabFree(
       )
     }
 
-    // Email « votre espace Lab est prêt », uniquement si le compte vient d'être créé —
-    // un client déjà existant (réactivation) n'a pas besoin d'un nouveau lien.
-    if (authResult.created && client.email) {
+    // Email « votre espace Lab est prêt » — tant que le client ne s'est JAMAIS connecté
+    // (first_login_at nul), il n'a pas de lien utilisable, peu importe que le compte auth
+    // existe déjà ou vienne d'être créé (T-074 : authResult.created disait « le compte
+    // existe déjà » dans des cas où le client ne l'avait jamais activé → email jamais
+    // envoyé, constat répété de MiKL sur plusieurs activations).
+    if (!client.first_login_at && client.email) {
       const invite = await sendWelcomeLabInvite({
         email: client.email as string,
         clientName: (client.first_name as string | null)?.trim() || (client.name as string | null) || 'Cher(e) client(e)',

@@ -126,12 +126,14 @@ describe('upgradeClient Server Action', () => {
         first_name: 'Jean',
         name: 'ACME',
         auth_user_id: 'existing-id',
+        first_login_at: '2026-10-01T10:00:00Z',
         client_configs: { dashboard_type: 'one', lab_mode_available: false },
       },
       error: null,
     })
 
-    // Default : le compte existe déjà — pas d'email renvoyé (T-067).
+    // Default : le compte existe déjà ET le client s'est déjà connecté — pas d'email
+    // renvoyé (T-067). Le signal est first_login_at, pas « created » (T-074).
     mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'existing-id', created: false, error: null })
     mockSendWelcomeOneInvite.mockResolvedValue({ success: true })
 
@@ -388,6 +390,7 @@ describe('upgradeClient Server Action', () => {
         first_name: 'Jean',
         name: 'ACME',
         auth_user_id: null,
+        first_login_at: null,
         client_configs: { dashboard_type: 'one', lab_mode_available: false },
       },
       error: null,
@@ -407,10 +410,36 @@ describe('upgradeClient Server Action', () => {
     expect(mockClientUpdateEq).toHaveBeenCalled()
   })
 
-  it('does not resend the welcome email when the account already existed', async () => {
+  it('does not resend the welcome email when the client has already logged in once', async () => {
     const result = await upgradeClient({ clientId: CLIENT_ID, targetType: 'direct_one' })
     expect(result.error).toBeNull()
     expect(mockSendWelcomeOneInvite).not.toHaveBeenCalled()
     expect(mockClientUpdateEq).not.toHaveBeenCalled()
+  })
+
+  // T-074 — un compte auth peut déjà exister sans que le client ne se soit jamais
+  // connecté : le mail doit quand même partir (bug constaté par MiKL le 06-11).
+  it('sends welcome-one even when the account already existed, as long as the client never logged in', async () => {
+    mockClientSingle.mockResolvedValue({
+      data: {
+        id: CLIENT_ID,
+        client_type: 'ponctuel',
+        status: 'active',
+        operator_id: OPERATOR_ID,
+        email: 'client@example.com',
+        first_name: 'Jean',
+        name: 'ACME',
+        auth_user_id: 'existing-id',
+        first_login_at: null,
+        client_configs: { dashboard_type: 'one', lab_mode_available: false },
+      },
+      error: null,
+    })
+    mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'existing-id', created: false, error: null })
+
+    const result = await upgradeClient({ clientId: CLIENT_ID, targetType: 'direct_one' })
+
+    expect(result.error).toBeNull()
+    expect(mockSendWelcomeOneInvite).toHaveBeenCalledWith({ email: 'client@example.com', clientName: 'Jean' })
   })
 })

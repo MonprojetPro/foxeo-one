@@ -131,7 +131,7 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
     if (enabled) {
       const { data: clientRow } = await supabase
         .from('clients')
-        .select('id, email, first_name, name, auth_user_id')
+        .select('id, email, first_name, name, auth_user_id, first_login_at')
         .eq('id', clientId)
         .maybeSingle()
 
@@ -141,6 +141,7 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
         first_name: string | null
         name: string | null
         auth_user_id: string | null
+        first_login_at: string | null
       } | null
 
       if (client) {
@@ -153,7 +154,10 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
 
         if (authResult.error) {
           console.error('[CRM:TOGGLE_ACCESS] Compte auth non créé:', authResult.error)
-        } else if (authResult.created && client.email) {
+          // T-074 — le signal est « jamais connecté » (first_login_at nul), pas
+          // « compte venant d'être créé » : un compte peut déjà exister sans que
+          // le client l'ait jamais activé (email jamais envoyé sinon).
+        } else if (!client.first_login_at && client.email) {
           const clientName = client.first_name?.trim() || client.name || 'Cher(e) client(e)'
           const invite = accessType === 'one'
             ? await sendWelcomeOneInvite({ email: client.email, clientName })

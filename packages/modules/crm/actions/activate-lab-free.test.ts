@@ -60,6 +60,7 @@ describe('activateLabFree Server Action', () => {
         first_name: 'Jean',
         email: 'client@example.com',
         auth_user_id: null,
+        first_login_at: null,
         client_configs: { lab_mode_available: false },
       },
       error: null,
@@ -121,12 +122,47 @@ describe('activateLabFree Server Action', () => {
     expect(mockClientUpdateEq).toHaveBeenCalled()
   })
 
-  it('does not resend the welcome email when the account already existed', async () => {
+  it('does not resend the welcome email when the client has already logged in once', async () => {
+    mockClientSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        name: 'ACME SARL',
+        first_name: 'Jean',
+        email: 'client@example.com',
+        auth_user_id: 'existing-id',
+        first_login_at: '2026-10-01T10:00:00Z',
+        client_configs: { lab_mode_available: false },
+      },
+      error: null,
+    })
     mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'existing-id', created: false, error: null })
     const { activateLabFree } = await import('./activate-lab-free')
     const result = await activateLabFree({ clientId: testClientId })
     expect(result.error).toBeNull()
     expect(mockSendWelcomeLabInvite).not.toHaveBeenCalled()
+  })
+
+  // T-074 — un compte auth peut déjà exister (créé lors d'une tentative antérieure)
+  // sans que le client ne se soit jamais connecté : l'email doit quand même partir.
+  // C'est exactement le bug constaté par MiKL le 06-11 (Lab activé, aucun mail reçu).
+  it('sends the welcome email even when the account already existed, as long as the client never logged in', async () => {
+    mockClientSingle.mockResolvedValue({
+      data: {
+        id: testClientId,
+        name: 'ACME SARL',
+        first_name: 'Jean',
+        email: 'client@example.com',
+        auth_user_id: 'existing-id',
+        first_login_at: null,
+        client_configs: { lab_mode_available: false },
+      },
+      error: null,
+    })
+    mockEnsureClientAuthAccount.mockResolvedValue({ authUserId: 'existing-id', created: false, error: null })
+    const { activateLabFree } = await import('./activate-lab-free')
+    const result = await activateLabFree({ clientId: testClientId })
+    expect(result.error).toBeNull()
+    expect(mockSendWelcomeLabInvite).toHaveBeenCalledWith({ email: 'client@example.com', clientName: 'Jean' })
   })
 
   it('returns AUTH_ERROR without activating the Lab when the account cannot be created', async () => {

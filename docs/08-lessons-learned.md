@@ -893,6 +893,19 @@
 
 ---
 
+## DEP-010 — « Compte créé » et « client déjà activé » sont deux signaux différents, jamais le même booléen
+
+- **Date** : 2026-11-06
+- **Categorie** : Logique métier / Authentification
+- **Symptome** : T-074 — un client dont le Lab venait d'être activé (sans facturation) ne recevait aucun email « votre espace est prêt », alors que l'activation elle-même réussissait (`lab_mode_available` bien à `true`). MiKL : « ça fait combien de fois qu'on galère là-dessus ! » — signe que le même défaut est apparu plusieurs fois sans être nommé comme un seul et même problème.
+- **Cause racine** : les 3 points d'entrée qui accordent un accès (`activate-lab-free.ts`, `toggle-access.ts`, `upgrade-client.ts`) conditionnaient l'envoi de l'email au retour `authResult.created` d'`ensureClientAuthAccount` — vrai seulement quand le compte `auth.users` vient d'être créé à l'instant. Mais un compte peut déjà exister (reset de test, tentative antérieure, accès ouvert sur l'autre volet Lab/One) sans que le client ne se soit **jamais connecté** : dans ce cas `created` est faux, et l'email ne partait jamais — alors que c'est exactement le client qui en a besoin.
+- **Preuve avant correctif** : lecture directe en base (`execute_sql`) sur le client de test : `lab_mode_available: true`, `welcome_email_sent_at: null`, `auth_user_id` déjà renseigné (posé par un reset de test plus tôt dans la session) ET `first_login_at: null`. Confirmé par lecture du code (`activate-lab-free.ts:105` à l'époque) : `if (authResult.created && client.email)`. Grep sur les 2 autres fichiers : même condition mot pour mot.
+- **Solution validee** : remplacer `authResult.created` par `!client.first_login_at` (le client ne s'est jamais connecté — signal déjà introduit en T-073a pour le statut du bouton « Renvoyer les identifiants », et déjà fiable). `first_login_at` ajouté aux 3 requêtes SQL qui ne le sélectionnaient pas encore.
+- **Regle a suivre** : avant de conditionner un envoi/une action sur le fait qu'une ressource ait été « créée à l'instant », se demander si la vraie question n'est pas « cette ressource a-t-elle déjà été **utilisée** » — ce sont deux horloges différentes (création vs. premier usage), et confondre les deux fait disparaître silencieusement l'action pour toute ressource pré-existante mais jamais activée. **Symptôme signature** : « l'action a réussi mais l'email/la notification n'est jamais parti » sur un compte qui existait déjà.
+- **Agents impliques** : FIX (protocole TILT), ATLAS
+
+---
+
 ## DB-004 — « Marqué fait » avant l'effet de bord : l'UI ment et la tâche disparaît
 
 - **Date** : 2026-07-26
