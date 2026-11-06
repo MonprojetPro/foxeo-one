@@ -920,6 +920,19 @@
 
 ---
 
+## DEP-012 — Un ciblage DOM par `id` doit être vérifié par grep AVANT d'être construit dessus
+
+- **Date** : 2026-11-06
+- **Categorie** : Frontend / Fiabilité
+- **Symptome** : T-078 — MiKL, excédé par le tutoriel Lab (« ce tutoriel de merde »), demande une refonte complète. En creusant ce qui ne marchait pas dans le mécanisme de surbrillance (spotlight) des 5 étapes du tour.
+- **Cause racine** : le composant `onboarding-tour.tsx` ciblait 4 éléments par `document.getElementById(step.targetId)` : `sidebar-navigation`, `module-parcours`, `elio-chat-button`, `module-documents`. **Aucun de ces 4 `id` n'existait dans aucun fichier du dépôt** — vérifié par `grep` exhaustif avant toute décision. Le tour n'avait donc **jamais** pu mettre en valeur quoi que ce soit, pour aucun client, depuis sa création : il retombait systématiquement sur le fallback « carte centrée sans highlight », ce qui *ressemblait* à un rendu voulu plutôt qu'à un échec silencieux.
+- **Pourquoi ça n'a jamais été vu** : le composant a un fallback visuel correct (carte centrée) quand la cible est absente — donc rien ne « plantait » à l'écran. Le symptôme (pas de highlight) se confond avec un choix de design tant qu'on ne compare pas le code au DOM réel.
+- **Solution validee** : le nouveau parcours d'onboarding abandonne ce mécanisme de spotlight au profit d'une page de présentation unique (sans ciblage DOM fragile).
+- **Regle a suivre** : avant d'écrire ou de garder un composant qui cible un élément par `id`/`querySelector`, vérifier par `grep` que cet `id` est bien posé quelque part dans le code qu'il est censé cibler — surtout s'il existe un fallback qui rend l'absence de cible invisible à l'œil. **Symptôme signature** : un mécanisme de mise en avant (highlight, spotlight, scroll-to, tooltip positionné) qui semble "juste ne jamais bien se positionner", jamais clairement cassé.
+- **Agents impliques** : ATLAS
+
+---
+
 ## DB-004 — « Marqué fait » avant l'effet de bord : l'UI ment et la tâche disparaît
 
 - **Date** : 2026-07-26

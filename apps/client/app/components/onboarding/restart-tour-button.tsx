@@ -3,16 +3,17 @@
 import { useRouter } from 'next/navigation'
 import { Button } from '@monprojetpro/ui'
 
+/**
+ * T-078 — l'ancien tutoriel à 5 étapes (ciblage DOM fragile, jamais vraiment
+ * fonctionnel) est remplacé par la page de présentation unique de l'onboarding,
+ * revue ici en mode purement informatif (`?replay=1`, n'affecte jamais
+ * onboarding_completed).
+ */
 export function RestartTourButton() {
   const router = useRouter()
 
   function handleRestart() {
-    // Supprimer le flag localStorage pour permettre de relancer le tour
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('monprojetpro-onboarding-tour-completed')
-    }
-    // Rediriger vers la page du tour (sans toucher onboarding_completed en DB)
-    router.push('/onboarding/tour')
+    router.push('/onboarding/welcome?replay=1')
   }
 
   return (
@@ -22,7 +23,7 @@ export function RestartTourButton() {
       onClick={handleRestart}
       className="w-full sm:w-auto"
     >
-      Revoir le tutoriel
+      Revoir la présentation
     </Button>
   )
 }

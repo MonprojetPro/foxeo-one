@@ -304,9 +304,15 @@ export async function forgotPasswordAction(
   return successResponse(null)
 }
 
+export interface ResetPasswordResult {
+  /** T-078 — en plein onboarding (onboarding_completed=false), on enchaîne sur la
+   * vérification des coordonnées plutôt que d'atterrir directement sur le dashboard. */
+  nextPath: string
+}
+
 export async function resetPasswordAction(
   formData: FormData
-): Promise<ActionResponse<null>> {
+): Promise<ActionResponse<ResetPasswordResult>> {
   const password = formData.get('password') as string
   if (!password || password.length < 8) {
     return errorResponse('Minimum 8 caracteres', 'VALIDATION_ERROR')
@@ -335,9 +341,19 @@ export async function resetPasswordAction(
     if (notifError) {
       console.error('[AUTH:RESET_PASSWORD] Notification securite non creee:', notifError.message)
     }
+
+    const { data: client } = await supabase
+      .from('clients')
+      .select('onboarding_completed')
+      .eq('auth_user_id', updated.user.id)
+      .maybeSingle()
+
+    if (client && !client.onboarding_completed) {
+      return successResponse({ nextPath: '/onboarding/profile' })
+    }
   }
 
-  return successResponse(null)
+  return successResponse({ nextPath: '/' })
 }
 
 export async function logoutAction(): Promise<ActionResponse<null>> {

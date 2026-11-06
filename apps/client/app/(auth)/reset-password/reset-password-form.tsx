@@ -37,7 +37,7 @@ export function ResetPasswordForm() {
         setServerError(result.error.message)
         return
       }
-      router.push('/')
+      router.push(result.data?.nextPath ?? '/')
     })
   }
 

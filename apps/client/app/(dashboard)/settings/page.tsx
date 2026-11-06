@@ -100,16 +100,16 @@ export default async function SettingsPage() {
         <span className="text-muted-foreground">&rarr;</span>
       </Link>
 
-      {/* AC6 — Revoir le tutoriel.
-          Masqué en mode One : ce bouton relance le tutoriel du LAB. En mode One il
-          annonçait « découverte de votre espace Lab » et aurait rejoué un tour hors
+      {/* AC6 — Revoir la présentation (T-078, remplace l'ancien tutoriel à 5 étapes).
+          Masqué en mode One : ce bouton relance la présentation du LAB. En mode One il
+          annonçait « découverte de votre espace Lab » et aurait rejoué un contenu hors
           contexte (retour MiKL 2026-07-25 : les Paramètres Lab et One étaient identiques). */}
       {!isOneMode && (
         <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
           <div>
-            <h2 className="text-base font-medium text-foreground">Tutoriel interactif</h2>
+            <h2 className="text-base font-medium text-foreground">Présentation du Lab</h2>
             <p className="text-sm text-muted-foreground">
-              Relancez le tutoriel de découverte de votre espace Lab
+              Revoyez la présentation de découverte de votre espace Lab
             </p>
           </div>
           <RestartTourButton />
