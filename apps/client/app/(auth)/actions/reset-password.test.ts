@@ -46,6 +46,22 @@ describe('resetPasswordAction — T-078 (nouveau parcours d\'activation)', () =>
     updateUser.mockResolvedValue({ data: { user: null }, error: { message: 'boom' } })
     const result = await resetPasswordAction(formDataWith('StrongPassword1'))
     expect(result.error?.code).toBe('AUTH_ERROR')
+    expect(result.error?.message).toBe('boom')
+  })
+
+  // T-079 — constat MiKL du 10-11 : le message générique cachait la vraie raison
+  // Supabase (protection anti-mot de passe-fuité, HaveIBeenPwned) et bloquait le test
+  // du parcours One sans aucune piste.
+  it('translates the leaked-password error into an explicit French message', async () => {
+    updateUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: 'Password is known to be weak and easy to guess, please choose a different one.' },
+    })
+    const result = await resetPasswordAction(formDataWith('Testtest1'))
+    expect(result.error?.code).toBe('AUTH_ERROR')
+    expect(result.error?.message).toBe(
+      'Ce mot de passe est trop commun ou a déjà fuité ailleurs sur le web — choisissez-en un autre.'
+    )
   })
 
   // En plein onboarding (onboarding_completed=false) : on enchaîne sur la vérification

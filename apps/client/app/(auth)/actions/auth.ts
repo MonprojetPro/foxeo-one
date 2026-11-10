@@ -322,7 +322,16 @@ export async function resetPasswordAction(
   const { data: updated, error } = await supabase.auth.updateUser({ password })
 
   if (error) {
-    return errorResponse('Erreur lors de la mise a jour du mot de passe', 'AUTH_ERROR')
+    // Avaler la raison réelle de Supabase (ex. mot de passe trouvé dans une fuite
+    // connue, HaveIBeenPwned) forçait l'utilisateur à deviner pourquoi ça échoue —
+    // constat MiKL du 10-11, log serveur confirmant "Password is known to be weak
+    // and easy to guess". GoTrue répond en anglais : on traduit les cas connus,
+    // on retombe sur le message brut sinon (mieux qu'un message générique muet).
+    console.error('[AUTH:RESET_PASSWORD] updateUser a échoué:', error.message)
+    const message = error.message.toLowerCase().includes('weak and easy to guess')
+      ? 'Ce mot de passe est trop commun ou a déjà fuité ailleurs sur le web — choisissez-en un autre.'
+      : error.message || 'Erreur lors de la mise a jour du mot de passe'
+    return errorResponse(message, 'AUTH_ERROR')
   }
 
   // Alerte de securite : le titulaire du compte doit etre prevenu qu'on vient de

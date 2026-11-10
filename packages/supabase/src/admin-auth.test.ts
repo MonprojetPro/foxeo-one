@@ -93,7 +93,7 @@ function makeAdminForLink(generateLinkImpl: () => unknown): SupabaseClient {
 const HASHED_TOKEN = 'xyz-hashed-token'
 // T-073 — action_link (flow implicite, tokens dans le fragment #) n'est plus utilisé :
 // notre callback serveur ne peut lire qu'un ?code= ou un ?token_hash=, jamais un fragment.
-const EXPECTED_LINK = `https://app.monprojet-pro.com/auth/callback?next=/reset-password&token_hash=${HASHED_TOKEN}&type=recovery`
+const EXPECTED_LINK = `https://app.monprojet-pro.com/auth/callback?next=/onboarding/welcome&token_hash=${HASHED_TOKEN}&type=recovery`
 
 describe('generatePasswordSetupLink', () => {
   beforeEach(() => {
@@ -101,7 +101,7 @@ describe('generatePasswordSetupLink', () => {
   })
   afterEach(() => vi.unstubAllEnvs())
 
-  it('generates a recovery link redirecting to /reset-password via token_hash (pas action_link)', async () => {
+  it('generates a recovery link redirecting to /onboarding/welcome via token_hash (pas action_link)', async () => {
     const admin = makeAdminForLink(() => ({ data: { properties: { hashed_token: HASHED_TOKEN } }, error: null }))
     const result = await generatePasswordSetupLink({ email: 'client@example.com', adminClient: admin })
 
@@ -110,7 +110,7 @@ describe('generatePasswordSetupLink', () => {
     expect(admin.auth.admin.generateLink).toHaveBeenCalledWith({
       type: 'recovery',
       email: 'client@example.com',
-      options: { redirectTo: 'https://app.monprojet-pro.com/auth/callback?next=/reset-password' },
+      options: { redirectTo: 'https://app.monprojet-pro.com/auth/callback?next=/onboarding/welcome' },
     })
   })
 

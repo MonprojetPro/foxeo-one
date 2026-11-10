@@ -105,9 +105,16 @@ export type GeneratePasswordSetupLinkResult =
 
 /**
  * Lien à usage unique (`generateLink` type `recovery`) par lequel un client définit
- * lui-même son mot de passe — jamais un mot de passe en clair dans un email. Redirige
- * vers le même chemin public que « mot de passe oublié » (mêmes URLs déjà autorisées
- * côté Supabase). Partagé entre Lab et One pour ne pas dupliquer cette construction.
+ * lui-même son mot de passe — jamais un mot de passe en clair dans un email. Partagé
+ * entre Lab et One pour ne pas dupliquer cette construction.
+ *
+ * T-078 — redirige vers `/onboarding/welcome`, PAS directement vers `/reset-password` :
+ * un nouveau client doit d'abord voir la page de présentation (Lab/One selon
+ * `dashboard_type`), qui enchaîne elle-même sur `/reset-password` via son CTA. Rediriger
+ * ici droit vers `/reset-password` (comme le fait « mot de passe oublié », cas différent
+ * : un client déjà onboardé) sautait purement et simplement cette présentation — jamais
+ * atteignable dans le parcours réel d'activation, ni pour le Lab ni pour le One (constat
+ * MiKL du 10-11 sur le One, bug en réalité partagé par les deux).
  */
 export async function generatePasswordSetupLink(options: {
   email: string
@@ -125,7 +132,7 @@ export async function generatePasswordSetupLink(options: {
     }
   }
 
-  const redirectTo = `${getClientAppUrl()}/auth/callback?next=/reset-password`
+  const redirectTo = `${getClientAppUrl()}/auth/callback?next=/onboarding/welcome`
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: 'recovery',
