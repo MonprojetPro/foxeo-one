@@ -180,6 +180,47 @@ describe('toggleAccess Server Action', () => {
     expect(result.data?.dashboardType).toBe('lab')
   })
 
+  // T-079b — sans ce merge, un client active gratuitement (ou re-active via ce switch)
+  // se retrouve en mode Lab sans 'parcours' ni 'elio' dans ses modules actifs et
+  // retombe sur la home One (repli degrade) — constat MiKL du 10-11.
+  it('ajoute les modules Lab par defaut (union, sans ecraser les modules One deja actifs) quand les agents Lab sont (re)actives', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: testOperatorId } }, error: null })
+    mockOperatorSingle.mockResolvedValue({ data: { id: testOperatorDbId }, error: null })
+    mockConfigSingle.mockResolvedValue({
+      data: {
+        dashboard_type: 'one',
+        lab_mode_available: false,
+        one_mode_available: true,
+        elio_lab_enabled: false,
+        active_modules: ['core-dashboard', 'chat', 'documents', 'facturation'],
+      },
+      error: null,
+    })
+    mockUpdateEq.mockResolvedValue({ error: null })
+
+    let capturedUpdate: Record<string, unknown> | null = null
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'client_configs') {
+        return {
+          select: vi.fn(() => ({ eq: vi.fn(() => ({ single: mockConfigSingle })) })),
+          update: vi.fn((payload: Record<string, unknown>) => {
+            capturedUpdate = payload
+            return { eq: mockUpdateEq }
+          }),
+        }
+      }
+      return defaultFromImpl(table)
+    })
+
+    const { toggleAccess } = await import('./toggle-access')
+    const result = await toggleAccess({ clientId: testClientId, accessType: 'lab', enabled: true })
+
+    expect(result.error).toBeNull()
+    expect((capturedUpdate as Record<string, unknown> | null)?.active_modules).toEqual(
+      expect.arrayContaining(['core-dashboard', 'chat', 'documents', 'facturation', 'parcours', 'elio', 'visio'])
+    )
+  })
+
   it('coupe les agents Lab SANS retirer lab_mode_available (permanence)', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: testOperatorId } },

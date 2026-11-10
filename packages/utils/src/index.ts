@@ -119,3 +119,4 @@ export {
   sanitizeFileName,
 } from './attachment-constraints'
 export { compressImageIfPossible } from './compress-image'
+export { LAB_DEFAULT_MODULES, ONE_DEFAULT_MODULES } from './default-modules'

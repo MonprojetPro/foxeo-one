@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
 import { ensureClientAuthAccount, sendWelcomeLabInvite } from '@monprojetpro/supabase/admin'
+import { LAB_DEFAULT_MODULES } from '@monprojetpro/utils'
 import {
   type ActionResponse,
   successResponse,
@@ -82,12 +83,17 @@ export async function activateLabFree(
       )
     }
 
+    // T-079b — `active_modules` manquait ici (seul le webhook Pennylane payant le
+    // posait) : un client active gratuitement se retrouvait en mode Lab sans
+    // `parcours` ni `elio` dans ses modules actifs, et retombait en repli degrade
+    // (home One affichee malgre le mode Lab) des qu'il visitait son accueil.
     const { error: configError } = await supabase
       .from('client_configs')
       .update({
         dashboard_type: 'lab',
         lab_mode_available: true,
         elio_lab_enabled: true,
+        active_modules: LAB_DEFAULT_MODULES,
       })
       .eq('client_id', clientId)
 

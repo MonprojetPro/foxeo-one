@@ -12,6 +12,7 @@ import {
   successResponse,
   errorResponse,
 } from '@monprojetpro/types'
+import { LAB_DEFAULT_MODULES } from '@monprojetpro/utils'
 import { ToggleAccessInput as ToggleAccessInputSchema } from '../types/crm.types'
 import type { ToggleAccessInput } from '../types/crm.types'
 
@@ -65,7 +66,7 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
     // Get current client config — on lit les VRAIS flags (plus de dérivation depuis dashboard_type)
     const { data: config, error: configError } = await supabase
       .from('client_configs')
-      .select('dashboard_type, lab_mode_available, one_mode_available, elio_lab_enabled')
+      .select('dashboard_type, lab_mode_available, one_mode_available, elio_lab_enabled, active_modules')
       .eq('client_id', clientId)
       .single()
 
@@ -86,6 +87,7 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
       lab_mode_available?: boolean
       one_mode_available?: boolean
       elio_lab_enabled?: boolean
+      active_modules?: string[]
     } = { dashboard_type: newDashboardType }
 
     // Règle métier (décision MiKL 2026-07-16) : quand le One est déclenché, le Lab se met
@@ -107,6 +109,14 @@ export async function toggleAccess(input: ToggleAccessInput): Promise<ActionResp
       // On NE remet JAMAIS lab_mode_available à false (permanence : l'espace + l'historique restent à vie).
       if (enabled) {
         configUpdate.lab_mode_available = true
+        // T-079b — sans ce merge, un client active gratuitement (jamais passe par le
+        // webhook Pennylane payant, seul chemin qui posait LAB_DEFAULT_MODULES) se
+        // retrouve en mode Lab sans `parcours` ni `elio` dans ses modules actifs : sa
+        // propre home le renvoie alors en repli degrade (home One affichee malgre le
+        // mode Lab, cf. apps/client/.../page.tsx) — constat MiKL du 10-11. Union, pas
+        // ecrasement : un client gradue garde ses modules One deja actifs.
+        const existing = config.active_modules ?? []
+        configUpdate.active_modules = Array.from(new Set([...existing, ...LAB_DEFAULT_MODULES]))
       }
     }
 

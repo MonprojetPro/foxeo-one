@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getClientAppUrl } from '@monprojetpro/utils'
+import { getClientAppUrl, LAB_DEFAULT_MODULES, ONE_DEFAULT_MODULES } from '@monprojetpro/utils'
 import type { QuoteMetadataRow, QuoteType } from '../types/billing.types'
 import { createClientAuthUser, generateSecureTemporaryPassword } from '@monprojetpro/supabase/admin'
 
@@ -10,17 +10,6 @@ import { createClientAuthUser, generateSecureTemporaryPassword } from '@monproje
 //  - retournent { data, error } jamais throw
 //  - recoivent un SupabaseClient SERVICE_ROLE injecte par le webhook route
 //  - notifient MiKL en in-app apres succes
-
-const LAB_DEFAULT_MODULES = [
-  'core-dashboard',
-  'parcours',
-  'documents',
-  'chat',
-  'elio',
-  'visio',
-]
-
-const ONE_DEFAULT_MODULES = ['core-dashboard', 'chat', 'documents', 'elio']
 
 export type HandlerResult =
   | { data: { action: string; clientId: string; tempPassword?: string }; error: null }

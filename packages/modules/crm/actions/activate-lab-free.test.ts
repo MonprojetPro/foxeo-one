@@ -10,6 +10,7 @@ const mockGetUser = vi.fn()
 const mockOperatorSingle = vi.fn()
 const mockClientSingle = vi.fn()
 const mockConfigUpdateEq = vi.fn()
+const mockConfigUpdate = vi.fn(() => ({ eq: mockConfigUpdateEq }))
 const mockActivityInsert = vi.fn().mockResolvedValue({ error: null })
 const mockNotificationInsert = vi.fn().mockResolvedValue({ error: null })
 const mockClientUpdateEq = vi.fn().mockResolvedValue({ error: null })
@@ -25,7 +26,7 @@ const mockFrom = vi.fn((table: string) => {
     }
   }
   if (table === 'client_configs') {
-    return { update: vi.fn(() => ({ eq: mockConfigUpdateEq })) }
+    return { update: mockConfigUpdate }
   }
   if (table === 'activity_logs') {
     return { insert: mockActivityInsert }
@@ -115,6 +116,13 @@ describe('activateLabFree Server Action', () => {
       authUserId: null,
     })
     expect(mockConfigUpdateEq).toHaveBeenCalled()
+    // T-079b — sans ce champ, un client active gratuitement se retrouve en mode Lab
+    // sans 'parcours' ni 'elio' et retombe sur la home One (repli degrade).
+    expect(mockConfigUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        active_modules: ['core-dashboard', 'parcours', 'documents', 'chat', 'elio', 'visio'],
+      })
+    )
     expect(mockSendWelcomeLabInvite).toHaveBeenCalledWith({
       email: 'client@example.com',
       clientName: 'Jean',
