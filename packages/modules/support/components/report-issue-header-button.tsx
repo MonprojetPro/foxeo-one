@@ -8,12 +8,13 @@
 // notification, visible sur tout le dashboard Lab — pas seulement sur
 // l'écran support.
 //
-// Triangle d'alerte plutôt qu'un icône neutre, légèrement rouge au repos
-// (jamais rouge plein — cette teinte reste réservée aux vraies alertes/
-// erreurs) pour attirer l'œil sans crier.
+// T-081 — bulle de message + alerte (plutôt que le triangle d'origine, jugé
+// trop générique/« IA » par MiKL le 11-11) : évoque directement « signaler un
+// message/problème », légèrement rouge au repos (jamais rouge plein — cette
+// teinte reste réservée aux vraies alertes/erreurs) pour attirer l'œil sans crier.
 
 import { useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { MessageSquareWarning } from 'lucide-react'
 import { ReportIssueDialog } from './report-issue-dialog'
 
 export function ReportIssueHeaderButton() {
@@ -28,7 +29,7 @@ export function ReportIssueHeaderButton() {
         title="Signaler un problème"
         aria-label="Signaler un problème"
       >
-        <AlertTriangle className="h-[18px] w-[18px]" />
+        <MessageSquareWarning className="h-[18px] w-[18px]" />
       </button>
       <ReportIssueDialog open={open} onOpenChange={setOpen} />
     </>
