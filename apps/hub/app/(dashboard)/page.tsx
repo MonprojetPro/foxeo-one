@@ -18,6 +18,11 @@ import { MessageItem } from '../../components/dashboard/message-item'
 import { AlertItem } from '../../components/dashboard/alert-item'
 import { DashboardCard } from '../../components/dashboard/dashboard-card'
 import { SystemHealthAlert } from '@monprojetpro/module-admin'
+import {
+  computeBillingMetrics,
+  isInvoiceAwaitingPayment,
+  type MetricsRow,
+} from '@monprojetpro/modules-facturation/server'
 import { getClientsBreakdown } from '../../actions/get-clients-breakdown'
 import { ProjectCorner, ProjectCornerSkeleton } from '../../components/dashboard/project-corner'
 
@@ -164,39 +169,23 @@ async function getHubStats(operatorId: string) {
       .map((m) => ({ ...m, clients: null }))
   }
 
-  // MRR + impayés
-  type BillingRow = { amount: number | null; data: Record<string, unknown> | null }
-  const { data: rawSubscriptions } = await supabase
+  // MRR + impayés + devis — T-083 : MEME formule que le cockpit Comptabilite
+  // (computeBillingMetrics). Cette page recalculait la sienne : elle ignorait
+  // les factures `upcoming` et lisait `billing_period` au lieu de
+  // `recurring_period`, d'ou des chiffres differents d'un ecran a l'autre.
+  const { data: rawBilling } = await supabase
     .from('billing_sync')
-    .select('amount, data')
-    .eq('entity_type', 'subscription')
-    .eq('status', 'active')
-  const subscriptions = (rawSubscriptions ?? []) as BillingRow[]
+    .select('entity_type, pennylane_id, status, amount, data')
+    .in('entity_type', ['invoice', 'quote', 'subscription', 'credit_note'])
+  const billingRows = (rawBilling ?? []) as MetricsRow[]
+  const billingMetrics = computeBillingMetrics(billingRows)
 
-  let mrr = 0
-  for (const sub of subscriptions) {
-    const amountEur = (sub.amount ?? 0) / 100
-    const period = (sub.data?.billing_period as string) ?? 'monthly'
-    if (period === 'monthly') mrr += amountEur
-    else if (period === 'quarterly') mrr += amountEur / 3
-    else if (period === 'yearly') mrr += amountEur / 12
-  }
-
-  const { data: rawUnpaid } = await supabase
-    .from('billing_sync')
-    .select('amount')
-    .eq('entity_type', 'invoice')
-    .in('status', ['unpaid', 'pending'])
-  const unpaidInvoices = (rawUnpaid ?? []) as { amount: number | null }[]
-  const unpaidCount = unpaidInvoices.length
-  const unpaidAmount = unpaidInvoices.reduce((sum, inv) => sum + ((inv.amount ?? 0) / 100), 0)
-
-  const { data: rawQuotes } = await supabase
-    .from('billing_sync')
-    .select('id')
-    .eq('entity_type', 'quote')
-    .eq('status', 'pending')
-  const pendingQuotesCount = rawQuotes?.length ?? 0
+  const mrr = billingMetrics.mrr / 100
+  const unpaidAmount = billingMetrics.pendingAmount / 100
+  const unpaidCount = billingRows.filter(
+    (r) => r.entity_type === 'invoice' && isInvoiceAwaitingPayment(r.status)
+  ).length
+  const pendingQuotesCount = billingMetrics.pendingQuotesCount
 
   // Clients avec parcours en pause (abandoned)
   const { data: pausedParcours } = await supabase

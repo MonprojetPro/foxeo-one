@@ -12,6 +12,10 @@ import {
   resolveClientId,
   extractSubscriptionCustomerId,
   computeSubscriptionAmountCents,
+  extractListItems,
+  extractInvoiceCustomerId,
+  isCreditNotePayload,
+  mergeInvoiceData,
   type ClientLookupRow,
   type PennylaneSubscriptionApi,
 } from './sync-logic.ts'
@@ -58,7 +62,9 @@ interface ChangelogResponse {
 
 interface PennylaneInvoice {
   id: string
-  customer_id: string
+  /** Absent en V2 — le client est sous `customer.id` (lire via extractInvoiceCustomerId) */
+  customer_id?: string
+  customer?: { id?: string | number } | null
   invoice_number: string
   status: string
   amount: number
@@ -173,10 +179,11 @@ async function fetchChangelog(
     }
 
     for (const entry of rawList as ChangelogEntry[]) {
+      // V2 : l'id arrive en nombre, la colonne pennylane_id est un texte
       if (entry.operation === 'delete') {
-        deleteIds.push(entry.id)
+        deleteIds.push(String(entry.id))
       } else {
-        ids.push(entry.id)
+        ids.push(String(entry.id))
       }
     }
 
@@ -189,52 +196,50 @@ async function fetchChangelog(
 
 // ── Batch fetch d'entités par IDs ─────────────────────────────────────────────
 
-async function batchFetchInvoices(
-  ids: string[],
-  apiToken: string
-): Promise<PennylaneInvoice[]> {
-  const results: PennylaneInvoice[] = []
-
-  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-    const batch = ids.slice(i, i + BATCH_SIZE)
-    const filterJson = JSON.stringify([{ field: 'id', operator: 'in', value: batch }])
-    const params = new URLSearchParams({ filter: filterJson })
-
-    const result = await pennylaneGet<{ customer_invoices: PennylaneInvoice[] }>(
-      `/customer_invoices?${params.toString()}`,
-      apiToken
-    )
-
-    if (result.data?.customer_invoices) {
-      results.push(...result.data.customer_invoices)
-    }
-  }
-
-  return results
+// T-083 — renvoie aussi l'erreur : avant, une reponse vide ou en echec etait
+// avalee, et la synchro repondait « synced: 0 » comme si de rien n'etait.
+interface BatchFetchResult<T> {
+  items: T[]
+  errorDetail?: string
 }
 
-async function batchFetchCustomers(
+async function batchFetchByIds<T>(
+  resource: '/customer_invoices' | '/customers',
+  legacyKey: string,
   ids: string[],
   apiToken: string
-): Promise<PennylaneCustomer[]> {
-  const results: PennylaneCustomer[] = []
+): Promise<BatchFetchResult<T>> {
+  const items: T[] = []
+  // Une meme facture modifiee plusieurs fois apparait plusieurs fois au changelog
+  const uniqueIds = [...new Set(ids.map(String))]
 
-  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-    const batch = ids.slice(i, i + BATCH_SIZE)
+  for (let i = 0; i < uniqueIds.length; i += BATCH_SIZE) {
+    const batch = uniqueIds.slice(i, i + BATCH_SIZE)
     const filterJson = JSON.stringify([{ field: 'id', operator: 'in', value: batch }])
-    const params = new URLSearchParams({ filter: filterJson })
+    const params = new URLSearchParams({ filter: filterJson, limit: String(BATCH_SIZE) })
 
-    const result = await pennylaneGet<{ customers: PennylaneCustomer[] }>(
-      `/customers?${params.toString()}`,
+    const result = await pennylaneGet<Record<string, unknown>>(
+      `${resource}?${params.toString()}`,
       apiToken
     )
 
-    if (result.data?.customers) {
-      results.push(...result.data.customers)
+    if (result.retryAfter !== undefined) {
+      return { items, errorDetail: 'Rate limited by Pennylane API (429)' }
     }
+    if (result.error || !result.data) {
+      return { items, errorDetail: `${resource}: ${result.error ?? 'empty response'}`.slice(0, 500) }
+    }
+
+    items.push(...extractListItems<T>(result.data, legacyKey))
   }
 
-  return results
+  // Le changelog annonce des changements mais la liste revient vide : c'est
+  // exactement la panne silencieuse de T-083. On la remonte en erreur.
+  if (uniqueIds.length > 0 && items.length === 0) {
+    return { items, errorDetail: `${resource}: ${uniqueIds.length} id(s) annonces par le changelog, 0 recu` }
+  }
+
+  return { items }
 }
 
 // ── Résolution client_id (chantier 2026-07-06) ────────────────────────────────
@@ -324,6 +329,7 @@ interface ExistingInvoiceState {
   pennylane_id: string
   status: string
   data: Record<string, unknown>
+  client_id: string | null
 }
 
 interface OverdueHandlingResult {
@@ -338,25 +344,34 @@ async function upsertInvoices(
   invoices: PennylaneInvoice[],
   resolver: ClientResolver
 ): Promise<OverdueHandlingResult> {
+  // T-083 — les avoirs restent geres sous entity_type 'credit_note' (voir
+  // isCreditNotePayload) : on ne les reecrit pas en facture.
+  invoices = invoices.filter((inv) => !isCreditNotePayload(inv))
   if (invoices.length === 0) return { upserted: 0, newlyOverdue: [], paidFromOverdue: [], labInvoicesPaid: [] }
 
   const now = new Date()
   const today = now.toISOString().split('T')[0]
 
   // Résolution pennylane customer_id → clients.id (chantier 2026-07-06)
-  const clientIdMap = await resolver.resolveMany(invoices.map((i) => i.customer_id))
+  const clientIdMap = await resolver.resolveMany(invoices.map((i) => extractInvoiceCustomerId(i)))
 
   // 1. Pré-UPSERT: lire l'état actuel de ces factures dans billing_sync
+  // (l'id Pennylane arrive en nombre en V2, la colonne est un texte)
   const { data: existingRows } = await supabase
     .from('billing_sync')
-    .select('pennylane_id, status, data')
+    .select('pennylane_id, status, data, client_id')
     .eq('entity_type', 'invoice')
-    .in('pennylane_id', invoices.map((i) => i.id))
+    .in('pennylane_id', invoices.map((i) => String(i.id)))
 
   const existingMap = new Map<string, ExistingInvoiceState>(
     (existingRows ?? []).map((r) => [
       r.pennylane_id,
-      { pennylane_id: r.pennylane_id, status: r.status, data: r.data as Record<string, unknown> },
+      {
+        pennylane_id: r.pennylane_id,
+        status: r.status,
+        data: r.data as Record<string, unknown>,
+        client_id: r.client_id as string | null,
+      },
     ])
   )
 
@@ -366,7 +381,8 @@ async function upsertInvoices(
 
   // 2. Construire les lignes avec détection overdue
   const rows = invoices.map((inv) => {
-    const currentEntry = existingMap.get(inv.id)
+    const pennylaneId = String(inv.id)
+    const currentEntry = existingMap.get(pennylaneId)
     const currentData = currentEntry?.data ?? {}
     const currentStatus = currentEntry?.status
 
@@ -377,18 +393,18 @@ async function upsertInvoices(
       currentStatus === 'overdue' || currentStatus === 'unpaid'
 
     let finalStatus = inv.status
-    let mergedData: Record<string, unknown> = inv as unknown as Record<string, unknown>
+    let mergedData = mergeInvoiceData(currentData, inv as unknown as Record<string, unknown>)
 
     if (overdue) {
       const newCount = getConsecutiveUnpaidCount(currentData) + 1
       finalStatus = 'overdue'
-      mergedData = { ...inv as unknown as Record<string, unknown>, consecutive_unpaid_count: newCount }
+      mergedData = { ...mergedData, consecutive_unpaid_count: newCount }
       if (!wasAlreadyOverdue) {
         newlyOverdue.push({ inv, consecutiveCount: newCount })
       }
     } else if (isPaidNow && wasPreviouslyOverdueOrUnpaid) {
       // Transition vers payé depuis un état d'impayé — reset compteur
-      mergedData = { ...inv as unknown as Record<string, unknown>, consecutive_unpaid_count: 0 }
+      mergedData = { ...mergedData, consecutive_unpaid_count: 0 }
       paidFromOverdue.push({ inv })
     }
 
@@ -399,8 +415,10 @@ async function upsertInvoices(
 
     return {
       entity_type: 'invoice' as EntityType,
-      pennylane_id: inv.id,
-      client_id: resolveClientId(clientIdMap, inv.customer_id),
+      pennylane_id: pennylaneId,
+      // Client Pennylane non rattache a un client MonprojetPro : on garde le
+      // lien deja pose par le Hub plutot que de l'effacer.
+      client_id: resolveClientId(clientIdMap, extractInvoiceCustomerId(inv)) ?? currentEntry?.client_id ?? null,
       status: finalStatus,
       data: mergedData,
       amount: Math.round(inv.amount * 100),
@@ -874,15 +892,24 @@ async function syncEntityType(
     return { synced: 0, rateLimited: false, error: true, errorDetail }
   }
 
-  let entities: PennylaneInvoice[] | PennylaneCustomer[] = []
   let upserted = 0
 
+  // ⚠️ T-083 — en cas d'echec de lecture, on rend une ERREUR et on n'avance
+  // PAS last_sync_at : le passage suivant reprendra les memes changements.
   if (entityType === 'invoice') {
-    entities = await batchFetchInvoices(ids, apiToken)
+    const fetched = await batchFetchByIds<PennylaneInvoice>('/customer_invoices', 'customer_invoices', ids, apiToken)
+    if (fetched.errorDetail) return { synced: 0, rateLimited: false, error: true, errorDetail: fetched.errorDetail }
+    // V2 : le client est sous `customer.id`. On remplit `customer_id` une fois
+    // ici pour que toute la suite (notifications, activation Lab) le retrouve.
+    const entities = fetched.items.map((inv) => ({
+      ...inv,
+      id: String(inv.id),
+      customer_id: extractInvoiceCustomerId(inv) ?? undefined,
+    }))
     // Filtrer par client_id si targetClientId est fourni (AC #5)
     const filtered = targetClientId
-      ? (entities as PennylaneInvoice[]).filter((inv) => inv.customer_id === targetClientId)
-      : entities as PennylaneInvoice[]
+      ? entities.filter((inv) => inv.customer_id === targetClientId)
+      : entities
     // Story 11.4 — upsertInvoices retourne maintenant les listes overdue/paid
     const invoiceResult = await upsertInvoices(supabase, filtered, resolver)
     upserted = invoiceResult.upserted
@@ -892,11 +919,13 @@ async function syncEntityType(
     // Activer accès Lab si paiement Lab détecté (Story 11.6)
     await handleLabPaymentActivations(supabase, invoiceResult.labInvoicesPaid)
   } else if (entityType === 'customer') {
-    entities = await batchFetchCustomers(ids, apiToken)
+    const fetched = await batchFetchByIds<PennylaneCustomer>('/customers', 'customers', ids, apiToken)
+    if (fetched.errorDetail) return { synced: 0, rateLimited: false, error: true, errorDetail: fetched.errorDetail }
+    const entities = fetched.items.map((c) => ({ ...c, id: String(c.id) }))
     // Filtrer par customer ID si targetClientId est fourni (AC #5)
     const filtered = targetClientId
-      ? (entities as PennylaneCustomer[]).filter((c) => c.id === targetClientId)
-      : entities as PennylaneCustomer[]
+      ? entities.filter((c) => c.id === targetClientId)
+      : entities
     upserted = await upsertCustomers(supabase, filtered, resolver)
   }
 

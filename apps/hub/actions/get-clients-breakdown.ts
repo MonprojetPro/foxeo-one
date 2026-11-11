@@ -1,6 +1,7 @@
 'use server'
 
 import { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { isInvoiceAwaitingPayment } from '@monprojetpro/modules-facturation/server'
 
 export type ClientBreakdownItem = {
   id: string
@@ -80,21 +81,42 @@ export async function getClientsBreakdown(operatorId: string): Promise<ClientsBr
   const labSuspended = labClients.filter((c) => abandonedClientIds.has(c.id))
 
   type BillingSyncRow = {
+    entity_type: string
     pennylane_id: string
+    client_id: string | null
+    status: string
     amount: number | null
     data: Record<string, unknown> | null
   }
 
-  const { data: rawUnpaid } = await supabase
+  // T-083 — meme definition du « en attente » que le cockpit Comptabilite
+  // (isInvoiceAwaitingPayment). L'ancien filtre `unpaid`/`pending` ignorait
+  // `upcoming`, et le client etait lu dans `data.client_id` (jamais rempli)
+  // au lieu de la colonne `client_id` : « Client inconnu » a chaque ligne.
+  const { data: rawBilling } = await supabase
     .from('billing_sync')
-    .select('pennylane_id, amount, data')
-    .eq('entity_type', 'invoice')
-    .in('status', ['unpaid', 'pending'])
+    .select('entity_type, pennylane_id, client_id, status, amount, data')
+    .in('entity_type', ['invoice', 'credit_note'])
 
-  const unpaidRows = (rawUnpaid ?? []) as BillingSyncRow[]
+  const billingRows = (rawBilling ?? []) as BillingSyncRow[]
+
+  // Une facture annulee par un avoir n'est plus due.
+  const creditedInvoiceIds = new Set(
+    billingRows
+      .filter((r) => r.entity_type === 'credit_note')
+      .map((r) => r.data?.credited_invoice_pennylane_id)
+      .filter((id): id is string => typeof id === 'string')
+  )
+
+  const unpaidRows = billingRows.filter(
+    (r) =>
+      r.entity_type === 'invoice' &&
+      isInvoiceAwaitingPayment(r.status) &&
+      !creditedInvoiceIds.has(r.pennylane_id)
+  )
 
   const unpaidInvoices = unpaidRows.map((inv) => {
-    const clientId = (inv.data?.client_id as string | null) ?? ''
+    const clientId = inv.client_id ?? ''
     const client = clients.find((c) => c.id === clientId)
     const clientName = client
       ? (client.first_name ? `${client.first_name} ${client.name}` : client.name)

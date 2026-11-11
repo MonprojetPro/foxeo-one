@@ -37,6 +37,59 @@ export function resolveClientId(
   return map.get(key) ?? null
 }
 
+// ── Lecture des listes Pennylane V2 (T-083) ───────────────────────────────────
+//
+// 🔑 L'API V2 rend TOUTES ses listes sous `items` (doc officielle
+// getCustomerInvoices). La synchro lisait `customer_invoices` / `customers` :
+// la liste revenait toujours vide, la fonction repondait `synced: 0` sans
+// erreur, et le Hub a affiche pendant un mois des factures « a venir » qui
+// etaient payees. La cle historique reste lue en repli, rien de plus.
+
+export function extractListItems<T>(
+  payload: Record<string, unknown> | null | undefined,
+  legacyKey: string
+): T[] {
+  if (!payload) return []
+  const list = payload.items ?? payload[legacyKey]
+  return Array.isArray(list) ? (list as T[]) : []
+}
+
+export interface PennylaneInvoiceRef {
+  customer_id?: string | number | null
+  customer?: { id?: string | number } | null
+  status?: string | null
+  amount?: string | number | null
+}
+
+/** V2 : le client est sous `customer.id` ; `customer_id` n'existe plus. */
+export function extractInvoiceCustomerId(inv: PennylaneInvoiceRef): string | null {
+  return normalizeCustomerId(inv.customer_id ?? inv.customer?.id ?? null)
+}
+
+/**
+ * Un avoir arrive par la MEME liste que les factures. Il est deja suivi sous
+ * `entity_type = 'credit_note'` (cree par create-credit-note, avec le lien vers
+ * la facture annulee) : le reecrire en `invoice` creerait un doublon, compte
+ * deux fois dans « En attente ».
+ */
+export function isCreditNotePayload(inv: PennylaneInvoiceRef): boolean {
+  if (inv.status === 'credit_note') return true
+  const amount = Number(inv.amount)
+  return !Number.isNaN(amount) && amount < 0
+}
+
+/**
+ * La ligne locale porte des cles posees par le Hub (notes de restauration,
+ * geste commercial, compteur d'impayes) que Pennylane ne connait pas : on
+ * fusionne, Pennylane fait foi sur ses propres champs.
+ */
+export function mergeInvoiceData(
+  current: Record<string, unknown> | null | undefined,
+  incoming: Record<string, unknown>
+): Record<string, unknown> {
+  return { ...(current ?? {}), ...incoming }
+}
+
 // ── Subscriptions Pennylane ───────────────────────────────────────────────────
 
 export interface PennylaneSubscriptionApi {

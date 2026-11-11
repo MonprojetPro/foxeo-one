@@ -1,5 +1,20 @@
 import { describe, it, expect } from 'vitest'
-import { computeBillingMetrics, type MetricsRow } from './billing-metrics'
+import { computeBillingMetrics, isInvoiceAwaitingPayment, type MetricsRow } from './billing-metrics'
+
+// T-083 — definition unique du « en attente », partagee avec l'accueil du Hub
+describe('isInvoiceAwaitingPayment (T-083)', () => {
+  it('compte une facture emise non encaissee, quel que soit son libelle', () => {
+    for (const s of ['upcoming', 'late', 'unpaid', 'overdue', 'partially_paid']) {
+      expect(isInvoiceAwaitingPayment(s)).toBe(true)
+    }
+  })
+
+  it("exclut ce qui n'est pas du", () => {
+    for (const s of ['paid', 'draft', 'cancelled', 'archived', 'deleted']) {
+      expect(isInvoiceAwaitingPayment(s)).toBe(false)
+    }
+  })
+})
 
 // ============================================================
 // T-042 — le calcul des compteurs du cockpit Comptabilite.
@@ -46,6 +61,22 @@ function creditNote(
 }
 
 describe('computeBillingMetrics', () => {
+  // T-083 — cas reel du 11-11 apres reparation de la synchro : Pennylane marque
+  // `paid` la facture F-2026-101 soldee par son avoir F-2026-102, et deux
+  // factures restent dues (late). L'avoir etait deduit une seconde fois.
+  it("ne deduit pas du « en attente » l'avoir d'une facture deja soldee", () => {
+    const m = computeBillingMetrics(
+      [
+        invoice('paid', 47880, '2025-10-06', 'F-101'), //  soldee par l'avoir
+        creditNote(-47880, '2025-10-07', 'F-101'),
+        invoice('late', 47880, '2025-10-08', 'F-103'),
+        invoice('late', 240000, '2025-10-09', 'F-104'),
+      ],
+      JANVIER
+    )
+    expect(m.pendingAmount).toBe(287880)
+  })
+
   it('rend des compteurs a zero sans aucune piece', () => {
     const m = computeBillingMetrics([], JANVIER)
     expect(m).toEqual({ monthlyRevenue: 0, pendingAmount: 0, pendingQuotesCount: 0, mrr: 0 })

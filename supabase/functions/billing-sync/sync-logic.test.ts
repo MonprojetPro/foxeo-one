@@ -5,8 +5,73 @@ import {
   resolveClientId,
   extractSubscriptionCustomerId,
   computeSubscriptionAmountCents,
+  extractListItems,
+  extractInvoiceCustomerId,
+  isCreditNotePayload,
+  mergeInvoiceData,
   type PennylaneSubscriptionApi,
 } from './sync-logic'
+
+// T-083 — la synchro lisait `customer_invoices` alors que l'API V2 rend `items` :
+// liste toujours vide, `synced: 0` pendant un mois, factures payees affichees
+// « a venir » dans le Hub. Ces tests verrouillent la forme V2.
+describe('extractListItems (T-083)', () => {
+  it('lit la cle V2 `items`', () => {
+    expect(extractListItems({ items: [{ id: 1 }], has_more: false }, 'customer_invoices')).toEqual([{ id: 1 }])
+  })
+
+  it('retombe sur la cle historique si `items` est absent', () => {
+    expect(extractListItems({ customer_invoices: [{ id: 2 }] }, 'customer_invoices')).toEqual([{ id: 2 }])
+  })
+
+  it('rend une liste vide pour une forme inconnue ou nulle', () => {
+    expect(extractListItems({ data: 'x' }, 'customers')).toEqual([])
+    expect(extractListItems(null, 'customers')).toEqual([])
+  })
+})
+
+describe('extractInvoiceCustomerId (T-083)', () => {
+  it('lit `customer.id` (forme V2 reelle)', () => {
+    expect(extractInvoiceCustomerId({ customer: { id: 1558203228160 } })).toBe('1558203228160')
+  })
+
+  it('accepte encore `customer_id`', () => {
+    expect(extractInvoiceCustomerId({ customer_id: '42' })).toBe('42')
+  })
+
+  it('rend null sans client', () => {
+    expect(extractInvoiceCustomerId({ customer: null })).toBeNull()
+  })
+})
+
+describe('isCreditNotePayload (T-083)', () => {
+  it('reconnait un avoir par son statut', () => {
+    expect(isCreditNotePayload({ status: 'credit_note', amount: '478.8' })).toBe(true)
+  })
+
+  it('reconnait un avoir par son montant negatif', () => {
+    expect(isCreditNotePayload({ status: 'paid', amount: '-478.8' })).toBe(true)
+  })
+
+  it('laisse passer une facture normale', () => {
+    expect(isCreditNotePayload({ status: 'paid', amount: '2400.0' })).toBe(false)
+    expect(isCreditNotePayload({ status: 'upcoming', amount: null })).toBe(false)
+  })
+})
+
+describe('mergeInvoiceData (T-083)', () => {
+  it('garde les cles posees par le Hub et laisse Pennylane faire foi sur les siennes', () => {
+    const merged = mergeInvoiceData(
+      { restored_note: 'restauree', status: 'upcoming', paid: false },
+      { status: 'paid', paid: true }
+    )
+    expect(merged).toEqual({ restored_note: 'restauree', status: 'paid', paid: true })
+  })
+
+  it('accepte une ligne locale absente', () => {
+    expect(mergeInvoiceData(null, { status: 'paid' })).toEqual({ status: 'paid' })
+  })
+})
 
 describe('normalizeCustomerId', () => {
   it('normalise un number en string', () => {

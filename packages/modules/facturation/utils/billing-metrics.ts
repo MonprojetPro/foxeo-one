@@ -39,6 +39,22 @@ export type MetricsRow = {
   pennylane_id?: string
 }
 
+// T-083 — statuts d'une facture qui n'est PAS due : ni encaissee, ni a payer.
+// `deleted` est pose par la synchro quand Pennylane supprime la facture.
+const NOT_DUE_STATUSES = new Set(['paid', 'draft', 'cancelled', 'archived', 'deleted'])
+
+/**
+ * Une facture emise et pas encore encaissee — `upcoming`, `late`, `unpaid`,
+ * `overdue`, `partially_paid`...
+ *
+ * 🔑 T-083 — SEULE definition du « en attente » : l'accueil du Hub et la liste
+ * par client avaient chacun recopie la leur (`unpaid`/`pending`), qui ignorait
+ * `upcoming`. Trois ecrans, trois chiffres pour les memes factures.
+ */
+export function isInvoiceAwaitingPayment(status: string): boolean {
+  return !NOT_DUE_STATUSES.has(status)
+}
+
 function isCurrentMonth(data: Record<string, unknown> | null, now: Date): boolean {
   const dateStr = (data?.date ?? data?.updated_at) as string | undefined
   if (!dateStr) return false
@@ -69,15 +85,24 @@ export function computeBillingMetrics(rows: MetricsRow[], now: Date = new Date()
     if (row.entity_type === 'invoice') {
       if (row.status === 'paid') {
         if (isCurrentMonth(data, now)) monthlyRevenue += amount
-      } else if (row.status !== 'draft') {
+      } else if (isInvoiceAwaitingPayment(row.status)) {
         // Tout ce qui est emis et non encaisse — `upcoming`, `unpaid`, `late`.
-        // Un brouillon n'est pas du : il est exclu.
+        // Brouillon, facture annulee ou supprimee : rien n'est du.
         pendingAmount += amount
       }
     } else if (row.entity_type === 'credit_note') {
+      const creditedId = data.credited_invoice_pennylane_id as string | undefined
+      const annuleUneRecetteEncaissee = creditedId != null && paidInvoiceIds.has(creditedId)
+
       // Montant deja negatif : il se soustrait de lui-meme, ce qui annule
-      // naturellement la facture creditee, sans traitement particulier.
-      pendingAmount += amount
+      // la facture creditee encore due.
+      //
+      // 🔑 T-083 — SAUF si cette facture est deja soldee. Pennylane marque
+      // `paid` une facture annulee par un avoir (reste a payer 0) : elle ne
+      // compte deja plus dans « En attente ». Deduire l'avoir une seconde fois
+      // retirait 478,80 € de factures reellement dues (2 400 € affiches au
+      // lieu de 2 878,80 €).
+      if (!annuleUneRecetteEncaissee) pendingAmount += amount
 
       // 🔑 T-045 — UN AVOIR NE DIMINUE LE CA QUE S'IL ANNULE UNE RECETTE
       // REELLEMENT COMPTEE, donc une facture PAYEE.
@@ -95,8 +120,6 @@ export function computeBillingMetrics(rows: MetricsRow[], now: Date = new Date()
       // ⚠️ LIMITE ASSUMEE : un avoir dont la facture creditee n'est pas
       // identifiable (champ absent) n'est JAMAIS deduit du CA. On prefere ne
       // rien deviner — mais si cette facture etait payee, le CA reste trop haut.
-      const creditedId = data.credited_invoice_pennylane_id as string | undefined
-      const annuleUneRecetteEncaissee = creditedId != null && paidInvoiceIds.has(creditedId)
       if (annuleUneRecetteEncaissee && isCurrentMonth(data, now)) monthlyRevenue += amount
     } else if (row.entity_type === 'quote') {
       if (row.status === 'pending') pendingQuotesCount++

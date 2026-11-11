@@ -8,6 +8,11 @@
 
 export { verifyPennylaneHmac } from './utils/verify-pennylane-hmac'
 
+// T-083 — formule unique des indicateurs financiers, pour les Server
+// Components du Hub (accueil, repartition clients). Ne jamais la recopier.
+export { computeBillingMetrics, isInvoiceAwaitingPayment } from './utils/billing-metrics'
+export type { BillingMetrics, MetricsRow } from './utils/billing-metrics'
+
 // Note : createClientAuthUser / generateSecureTemporaryPassword ne vivent plus ici.
 // Ce n'est pas de la facturation mais de l'authentification Supabase — et les garder ici
 // obligeait les autres modules à importer le module facturation, ce que l'architecture
