@@ -7,6 +7,10 @@ export { createClient } from './client'
 export { createClient as createBrowserSupabaseClient } from './client'
 export { createServerSupabaseClient } from './server'
 export { createServiceRoleSupabaseClient } from './service-role'
+// T-082 — garde « opérateur » partagée : une Server Action doit se défendre
+// elle-même, l'écran qui l'affiche ne la protège pas.
+export { assertOperator } from './assert-operator'
+export type { AssertOperatorResult } from './assert-operator'
 export { createMiddlewareSupabaseClient } from './middleware'
 
 // Cookies de session — la session meurt avec le navigateur (Hub uniquement)

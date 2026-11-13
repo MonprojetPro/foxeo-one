@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video, ChefHat, Wrench, UserCog } from 'lucide-react'
+import { Home, Users, CheckCircle, Calendar, MessageSquare, FolderOpen, Calculator, Settings, Bot, Video, ChefHat, ShieldCheck, Wrench, UserCog } from 'lucide-react'
 import { Badge } from '@monprojetpro/ui'
 import { cn } from '@monprojetpro/utils'
 import { useValidationBadge, useValidationRealtime } from '@monprojetpro/modules-validation-hub'
@@ -29,6 +29,10 @@ const navItems = [
 // Section « Produits » — produits externes pilotés depuis le Hub (cockpits).
 const produitItems = [
   { icon: ChefHat, label: 'MenuFacile', href: '/modules/menu-facile', badgeKey: 'menu-facile' as const },
+  // T-082 — second cockpit de produit externe. Pas de badge : le support
+  // GuardVeto se compte cabinet par cabinet, et un badge global sur la barre
+  // serait un chiffre que personne ne peut recouper d'un coup d'œil.
+  { icon: ShieldCheck, label: 'GuardVeto', href: '/modules/guard-veto' },
 ]
 
 export function HubSidebarClient({ operatorId, userId }: { operatorId: string; userId: string }) {
