@@ -14,6 +14,7 @@ import {
   Repeat2,
   FolderArchive,
   Plus,
+  Wallet,
 } from 'lucide-react'
 
 import {
@@ -67,9 +68,14 @@ function formatCurrency(cents: number): string {
 function BillingMetricsSection() {
   const { data: metrics, isPending } = useBillingMetrics()
 
+  // T-085 — 5 tuiles : la grille du cockpit en pose 4 par ligne, la 5e se
+  // retrouverait seule sur une ligne.
+  const GRID_5 = 'lg:grid-cols-5'
+
   if (isPending) {
     return (
-      <HeroStatGrid>
+      <HeroStatGrid className={GRID_5}>
+        <HeroStatSkeleton />
         <HeroStatSkeleton />
         <HeroStatSkeleton />
         <HeroStatSkeleton />
@@ -80,7 +86,7 @@ function BillingMetricsSection() {
 
   return (
     <div data-testid="billing-metrics">
-      <HeroStatGrid>
+      <HeroStatGrid className={GRID_5}>
         {/* CA mensuel — ton cyan (neutre, chiffre clé) */}
         <div data-testid="metric-monthly-revenue">
           <HeroStat
@@ -88,7 +94,21 @@ function BillingMetricsSection() {
             label="CA mensuel"
             value={formatCurrency(metrics?.monthlyRevenue ?? 0)}
             tone="cyan"
-            sub="mois en cours"
+            // T-085 — le chiffre est date au jour de l'ENCAISSEMENT, plus au
+            // jour de la facture : le sous-titre doit dire ce que compte le
+            // chiffre, sinon il ment des qu'une facture est payee en retard.
+            sub="encaissé ce mois"
+          />
+        </div>
+
+        {/* Argent total — ton blue (cumul depuis toujours) */}
+        <div data-testid="metric-total-revenue">
+          <HeroStat
+            icon={Wallet}
+            label="Argent total"
+            value={formatCurrency(metrics?.totalRevenue ?? 0)}
+            tone="blue"
+            sub="encaissé depuis le début"
           />
         </div>
 

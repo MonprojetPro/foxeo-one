@@ -1,6 +1,8 @@
 export type BillingMetrics = {
-  /** CA encaisse sur le mois en cours, en centimes */
+  /** Argent REELLEMENT encaisse sur le mois en cours, en centimes */
   monthlyRevenue: number
+  /** Argent encaisse depuis toujours, avoirs deduits, en centimes (T-085) */
+  totalRevenue: number
   /** Emis et non encaisse, avoirs deduits, en centimes */
   pendingAmount: number
   /** Nombre de devis en attente de reponse */
@@ -55,8 +57,26 @@ export function isInvoiceAwaitingPayment(status: string): boolean {
   return !NOT_DUE_STATUSES.has(status)
 }
 
+/**
+ * Jour ou l'argent est entre, pour une facture payee.
+ *
+ * 🔑 T-085 — `paid_on` est pose par la synchro depuis la transaction bancaire
+ * rapprochee chez Pennylane. AVANT, le CA se datait au jour de la FACTURE :
+ * une facture d'octobre encaissee en novembre n'etait comptee ni en octobre
+ * (pas encore payee) ni en novembre (pas facturee ce mois-la). Elle
+ * disparaissait du chiffre d'affaires.
+ *
+ * ⚠️ REPLI ASSUME sur la date de facture quand `paid_on` manque (facture
+ * encaissee avant le 2026-11-13, ou rapprochement introuvable chez Pennylane) :
+ * mieux vaut un encaissement date approximativement que pas d'encaissement du
+ * tout — le total, lui, reste juste dans les deux cas.
+ */
+function encashmentDate(data: Record<string, unknown> | null): string | undefined {
+  return (data?.paid_on ?? data?.date ?? data?.updated_at) as string | undefined
+}
+
 function isCurrentMonth(data: Record<string, unknown> | null, now: Date): boolean {
-  const dateStr = (data?.date ?? data?.updated_at) as string | undefined
+  const dateStr = encashmentDate(data)
   if (!dateStr) return false
   const d = new Date(dateStr)
   if (Number.isNaN(d.getTime())) return false
@@ -65,6 +85,7 @@ function isCurrentMonth(data: Record<string, unknown> | null, now: Date): boolea
 
 export function computeBillingMetrics(rows: MetricsRow[], now: Date = new Date()): BillingMetrics {
   let monthlyRevenue = 0
+  let totalRevenue = 0
   let pendingAmount = 0
   let pendingQuotesCount = 0
   let mrr = 0
@@ -84,6 +105,9 @@ export function computeBillingMetrics(rows: MetricsRow[], now: Date = new Date()
 
     if (row.entity_type === 'invoice') {
       if (row.status === 'paid') {
+        // T-085 — l'argent total ne depend d'aucun mois : tout ce qui a ete
+        // encaisse y reste, meme une facture dont la date est introuvable.
+        totalRevenue += amount
         if (isCurrentMonth(data, now)) monthlyRevenue += amount
       } else if (isInvoiceAwaitingPayment(row.status)) {
         // Tout ce qui est emis et non encaisse — `upcoming`, `unpaid`, `late`.
@@ -120,7 +144,11 @@ export function computeBillingMetrics(rows: MetricsRow[], now: Date = new Date()
       // ⚠️ LIMITE ASSUMEE : un avoir dont la facture creditee n'est pas
       // identifiable (champ absent) n'est JAMAIS deduit du CA. On prefere ne
       // rien deviner — mais si cette facture etait payee, le CA reste trop haut.
-      if (annuleUneRecetteEncaissee && isCurrentMonth(data, now)) monthlyRevenue += amount
+      if (annuleUneRecetteEncaissee) {
+        // L'argent rembourse sort du total, quel que soit le mois.
+        totalRevenue += amount
+        if (isCurrentMonth(data, now)) monthlyRevenue += amount
+      }
     } else if (row.entity_type === 'quote') {
       if (row.status === 'pending') pendingQuotesCount++
     } else if (row.entity_type === 'subscription') {
@@ -135,6 +163,7 @@ export function computeBillingMetrics(rows: MetricsRow[], now: Date = new Date()
 
   return {
     monthlyRevenue,
+    totalRevenue,
     // Un avoir superieur aux factures en attente donnerait un « en attente »
     // negatif, qui ne veut rien dire a l'ecran : le client ne doit plus rien.
     // Le CA mensuel, lui, PEUT etre negatif (avoir sur un mois anterieur).

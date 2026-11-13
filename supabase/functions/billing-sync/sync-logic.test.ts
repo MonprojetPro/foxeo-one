@@ -9,8 +9,64 @@ import {
   extractInvoiceCustomerId,
   isCreditNotePayload,
   mergeInvoiceData,
+  extractPaidOnDate,
+  needsPaidOnLookup,
   type PennylaneSubscriptionApi,
 } from './sync-logic'
+
+// T-085 — Pennylane ne porte aucune date de paiement sur la facture ni dans son
+// bloc `payments` : la seule vraie date d'encaissement est celle de la
+// transaction bancaire rapprochee. Sans elle, le CA du mois datait l'argent au
+// jour de la FACTURE, et une facture d'octobre encaissee en novembre
+// n'apparaissait dans aucun mois.
+describe('extractPaidOnDate (T-085)', () => {
+  it('prend la date de la transaction bancaire rapprochee', () => {
+    expect(extractPaidOnDate([{ date: '2026-11-12' }], [])).toBe('2026-11-12')
+  })
+
+  it('prend la PLUS RECENTE quand le reglement est en plusieurs fois', () => {
+    expect(
+      extractPaidOnDate([{ date: '2026-10-20' }, { date: '2026-11-12' }, { date: '2026-11-03' }], [])
+    ).toBe('2026-11-12')
+  })
+
+  it('ignore une transaction archivee', () => {
+    expect(
+      extractPaidOnDate([{ date: '2026-11-30', archived_at: '2026-12-01T10:00:00Z' }, { date: '2026-11-12' }], [])
+    ).toBe('2026-11-12')
+  })
+
+  it('tronque un horodatage complet au jour', () => {
+    expect(extractPaidOnDate([], [{ created_at: '2026-11-12T14:51:59.047752Z' }])).toBe('2026-11-12')
+  })
+
+  it("se rabat sur le paiement Pennylane quand aucune transaction n'est rapprochee", () => {
+    expect(extractPaidOnDate([], [{ created_at: '2026-11-05T08:00:00Z' }])).toBe('2026-11-05')
+  })
+
+  it('rend null plutot que de deviner', () => {
+    expect(extractPaidOnDate([], [])).toBeNull()
+    expect(extractPaidOnDate(null, null)).toBeNull()
+    expect(extractPaidOnDate([{ date: 'pas-une-date' }], [])).toBeNull()
+  })
+})
+
+describe('needsPaidOnLookup (T-085)', () => {
+  it('cherche la date pour une facture payee qui ne l a pas encore', () => {
+    expect(needsPaidOnLookup('paid', {})).toBe(true)
+    expect(needsPaidOnLookup('paid', null)).toBe(true)
+  })
+
+  it('ne rappelle pas Pennylane si la date est deja connue', () => {
+    expect(needsPaidOnLookup('paid', { paid_on: '2026-11-12' })).toBe(false)
+  })
+
+  it("ne cherche rien pour une facture non payee", () => {
+    for (const s of ['late', 'upcoming', 'unpaid', 'draft']) {
+      expect(needsPaidOnLookup(s, {})).toBe(false)
+    }
+  })
+})
 
 // T-083 — la synchro lisait `customer_invoices` alors que l'API V2 rend `items` :
 // liste toujours vide, `synced: 0` pendant un mois, factures payees affichees

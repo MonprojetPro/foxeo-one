@@ -54,8 +54,19 @@ function wrapper({ children }: { children: React.ReactNode }) {
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>
 }
 
-function mockMetrics(metrics: { monthlyRevenue: number; pendingAmount: number; pendingQuotesCount: number; mrr: number }) {
-  ;(useBillingMetrics as Mock).mockReturnValue({ data: metrics, isPending: false, isError: false })
+function mockMetrics(metrics: {
+  monthlyRevenue: number
+  pendingAmount: number
+  pendingQuotesCount: number
+  mrr: number
+  /** T-085 — optionnel : les cas qui ne portent pas sur le total restent lisibles */
+  totalRevenue?: number
+}) {
+  ;(useBillingMetrics as Mock).mockReturnValue({
+    data: { totalRevenue: 0, ...metrics },
+    isPending: false,
+    isError: false,
+  })
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -89,6 +100,15 @@ describe('BillingDashboard — métriques Hub (AC #4)', () => {
     mockMetrics({ monthlyRevenue: 0, pendingAmount: 0, pendingQuotesCount: 7, mrr: 0 })
     render(<BillingDashboard />, { wrapper })
     expect(screen.getByTestId('metric-pending-quotes')).toHaveTextContent('7')
+  })
+
+  // T-085 — demande MiKL : un indicateur de l'argent encaisse depuis le debut,
+  // a cote du CA du mois.
+  it("affiche l'argent total formaté", () => {
+    mockMetrics({ monthlyRevenue: 0, totalRevenue: 287880, pendingAmount: 0, pendingQuotesCount: 0, mrr: 0 })
+    render(<BillingDashboard />, { wrapper })
+    expect(screen.getByTestId('metric-total-revenue')).toHaveTextContent('2')
+    expect(screen.getByTestId('metric-total-revenue')).toHaveTextContent('878')
   })
 
   it('affiche le MRR formaté', () => {

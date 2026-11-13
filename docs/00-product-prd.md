@@ -217,6 +217,7 @@ synchronisation automatique.
 | Renvoyer une facture ou un avoir déjà émis depuis le Hub | 🟢 Livré | 2026-10-08 `[T-044]` |
 | Compteur "En attente" corrigé (comptait mal les factures émises non réglées) | 🟢 Livré | 2026-10-08 `[T-042]` |
 | Synchronisation Pennylane réparée (ne ramenait plus rien depuis octobre) et mêmes chiffres partout : accueil, Comptabilité, liste par client | 🟢 Livré | 2026-11-11 `[T-083]` |
+| CA du mois compté au jour où l'argent entre réellement (et non au jour de la facture), plus un indicateur « Argent total » encaissé depuis le début — sur l'accueil comme en Comptabilité | 🟢 Livré | 2026-11-13 `[T-085]` |
 | Alertes de retard de paiement (MiKL et client) — muettes depuis le passage de Pennylane en V2 | ⚪ À faire | — décision MiKL (envoie des notifications aux clients) `[T-083a]` |
 | Le premier avoir réel échoue chez Pennylane (erreur 400) | ⚪ À faire | — sonde avant correctif `[T-041a]` |
 | L'avoir existe chez Pennylane mais n'est pas enregistré côté Hub (garde anti-doublon inopérante) | ⚪ À faire | — `[T-041b]` |

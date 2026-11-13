@@ -90,6 +90,77 @@ export function mergeInvoiceData(
   return { ...(current ?? {}), ...incoming }
 }
 
+// ── Date d'encaissement (T-085) ───────────────────────────────────────────────
+//
+// 🔑 Pennylane ne met AUCUNE date de paiement sur la facture elle-meme, et son
+// bloc `payments` n'en porte pas non plus (champs : id, label, currency,
+// currency_amount, status, created_at, updated_at — verifie dans la doc
+// officielle getCustomerInvoicePayments). La seule vraie date d'encaissement
+// est celle de la transaction bancaire rapprochee
+// (getCustomerInvoiceMatchedTransactions, champ `date`).
+//
+// Sans elle, le CA du mois datait l'encaissement au jour de la FACTURE : une
+// facture d'octobre encaissee en novembre n'etait comptee dans aucun mois.
+
+export interface MatchedTransactionRef {
+  /** Date de l'operation bancaire, au format YYYY-MM-DD */
+  date?: string | null
+  archived_at?: string | null
+}
+
+export interface PaymentRef {
+  created_at?: string | null
+  status?: string | null
+}
+
+/** Garde les 10 premiers caracteres d'une date ISO → YYYY-MM-DD. */
+function toIsoDay(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null
+  const day = value.slice(0, 10)
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null
+}
+
+/**
+ * Jour ou l'argent est reellement entre, `null` si on ne peut pas le savoir.
+ *
+ * On prend la transaction bancaire LA PLUS RECENTE : un reglement en plusieurs
+ * fois n'est solde qu'au dernier versement, et c'est ce jour-la que la facture
+ * passe `paid`. A defaut de transaction, la date de creation du paiement
+ * Pennylane. On ne devine jamais : pas de date exploitable → `null`.
+ */
+export function extractPaidOnDate(
+  matchedTransactions: MatchedTransactionRef[] | null | undefined,
+  payments: PaymentRef[] | null | undefined
+): string | null {
+  const txDays = (matchedTransactions ?? [])
+    .filter((t) => !t.archived_at)
+    .map((t) => toIsoDay(t.date))
+    .filter((d): d is string => d !== null)
+
+  if (txDays.length > 0) return txDays.sort()[txDays.length - 1]
+
+  const payDays = (payments ?? [])
+    .map((p) => toIsoDay(p.created_at))
+    .filter((d): d is string => d !== null)
+
+  if (payDays.length > 0) return payDays.sort()[payDays.length - 1]
+
+  return null
+}
+
+/**
+ * Faut-il aller chercher la date d'encaissement de cette facture chez
+ * Pennylane ? Seulement si elle est payee et qu'on ne la connait pas deja —
+ * sinon on rappellerait deux endpoints par facture a chaque cycle de 5 min.
+ */
+export function needsPaidOnLookup(
+  status: string,
+  currentData: Record<string, unknown> | null | undefined
+): boolean {
+  if (status !== 'paid') return false
+  return typeof currentData?.paid_on !== 'string'
+}
+
 // ── Subscriptions Pennylane ───────────────────────────────────────────────────
 
 export interface PennylaneSubscriptionApi {

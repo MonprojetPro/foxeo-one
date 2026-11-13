@@ -182,6 +182,9 @@ async function getHubStats(operatorId: string) {
 
   const mrr = billingMetrics.mrr / 100
   const unpaidAmount = billingMetrics.pendingAmount / 100
+  // T-085 — encaissements, dates au jour ou l'argent est entre
+  const monthlyRevenue = billingMetrics.monthlyRevenue / 100
+  const totalRevenue = billingMetrics.totalRevenue / 100
   const unpaidCount = billingRows.filter(
     (r) => r.entity_type === 'invoice' && isInvoiceAwaitingPayment(r.status)
   ).length
@@ -212,6 +215,8 @@ async function getHubStats(operatorId: string) {
     recentMessages,
     clientNameMap,
     mrr,
+    monthlyRevenue,
+    totalRevenue,
     unpaidAmount,
     unpaidCount,
     pendingQuotesCount,
@@ -336,7 +341,7 @@ export default async function HubHomePage() {
 
   const operatorId = (operator as { id: string } | null)?.id ?? ''
   const [
-    { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, clientNameMap, mrr, unpaidAmount, unpaidCount, pendingQuotesCount, pausedClients },
+    { totalClients, labCount, oneCount, meetings, unreadCount, recentMessages, clientNameMap, mrr, monthlyRevenue, totalRevenue, unpaidAmount, unpaidCount, pendingQuotesCount, pausedClients },
     breakdown,
     newProspects,
     tokenSummaryResult,
@@ -377,6 +382,8 @@ export default async function HubHomePage() {
 
   const mrrDisplay = mrr > 0 ? `${Math.round(mrr).toLocaleString('fr-FR')} €` : '—'
   const unpaidDisplay = unpaidAmount > 0 ? `${Math.round(unpaidAmount).toLocaleString('fr-FR')} €` : '—'
+  const monthlyRevenueDisplay = monthlyRevenue !== 0 ? `${Math.round(monthlyRevenue).toLocaleString('fr-FR')} €` : '—'
+  const totalRevenueDisplay = totalRevenue !== 0 ? `${Math.round(totalRevenue).toLocaleString('fr-FR')} €` : '—'
 
   return (
     <div className="space-y-6 p-6 md:p-8">
@@ -623,6 +630,10 @@ export default async function HubHomePage() {
                   { label: 'Clients One actifs', count: breakdown.one.active.length, items: breakdown.one.active, emptyText: 'Aucun client One', accentColor: 'green' },
                 ]}
               />
+              {/* T-085 — memes chiffres que le cockpit Comptabilite, meme
+                  formule (computeBillingMetrics) : date d'encaissement reelle */}
+              <MetricCard compact title="CA du mois" value={monthlyRevenueDisplay} subtitle="encaisse ce mois" accentColor={monthlyRevenue > 0 ? 'primary' : 'muted'} />
+              <MetricCard compact title="Argent total" value={totalRevenueDisplay} subtitle="encaisse depuis le debut" accentColor={totalRevenue > 0 ? 'primary' : 'muted'} />
               <MetricCard compact title="MRR" value={mrrDisplay} subtitle="Abonnements actifs" accentColor={mrr > 0 ? 'primary' : 'muted'} />
               <MetricCard compact title="Devis en cours" value={String(pendingQuotesCount)} subtitle="devis en attente" accentColor={pendingQuotesCount > 0 ? 'primary' : 'muted'} />
               <InteractiveMetricCard

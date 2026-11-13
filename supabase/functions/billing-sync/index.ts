@@ -16,6 +16,10 @@ import {
   extractInvoiceCustomerId,
   isCreditNotePayload,
   mergeInvoiceData,
+  extractPaidOnDate,
+  needsPaidOnLookup,
+  type MatchedTransactionRef,
+  type PaymentRef,
   type ClientLookupRow,
   type PennylaneSubscriptionApi,
 } from './sync-logic.ts'
@@ -242,6 +246,49 @@ async function batchFetchByIds<T>(
   return { items }
 }
 
+// ── Date d'encaissement d'une facture payee (T-085) ───────────────────────────
+//
+// Deux appels AU PLUS, et seulement pour une facture qui vient de passer
+// `paid` (voir `needsPaidOnLookup`) : la date ne bouge plus ensuite, la
+// rechercher a chaque cycle de 5 min serait du gaspillage d'API.
+//
+// Un echec ici n'est PAS une erreur de synchro : la facture est deja juste,
+// seule sa date d'encaissement manque. On laisse `paid_on` absent, le prochain
+// cycle retentera.
+
+async function fetchPaidOnDate(
+  invoiceId: string,
+  apiToken: string
+): Promise<string | null> {
+  const matchedRes = await pennylaneGet<Record<string, unknown>>(
+    `/customer_invoices/${invoiceId}/matched_transactions?limit=100`,
+    apiToken
+  )
+  // ⚠️ Un appel EN ECHEC n'est pas « aucune transaction rapprochee ». Se
+  // rabattre sur les paiements dans ce cas figerait une date moins fiable
+  // (celle de l'enregistrement chez Pennylane) sans jamais la corriger, puisque
+  // `paid_on` une fois pose n'est plus recherche. On preferre rendre null : le
+  // prochain cycle retentera.
+  if (matchedRes.error || matchedRes.retryAfter !== undefined || !matchedRes.data) {
+    console.warn('[BILLING:SYNC] matched_transactions indisponible', invoiceId, matchedRes.error)
+    return null
+  }
+  const matched = extractListItems<MatchedTransactionRef>(matchedRes.data, 'matched_transactions')
+
+  // Les paiements ne servent que de repli : ils ne portent pas la date de
+  // l'operation bancaire, seulement celle de leur creation dans Pennylane.
+  let payments: PaymentRef[] = []
+  if (matched.length === 0) {
+    const paymentsRes = await pennylaneGet<Record<string, unknown>>(
+      `/customer_invoices/${invoiceId}/payments?limit=100`,
+      apiToken
+    )
+    payments = extractListItems<PaymentRef>(paymentsRes.data, 'payments')
+  }
+
+  return extractPaidOnDate(matched, payments)
+}
+
 // ── Résolution client_id (chantier 2026-07-06) ────────────────────────────────
 // Toutes les rows billing_sync doivent porter client_id quand le customer
 // Pennylane correspond à un client MonprojetPro — sinon les rows sont invisibles
@@ -342,7 +389,8 @@ interface OverdueHandlingResult {
 async function upsertInvoices(
   supabase: SupabaseClient,
   invoices: PennylaneInvoice[],
-  resolver: ClientResolver
+  resolver: ClientResolver,
+  apiToken: string
 ): Promise<OverdueHandlingResult> {
   // T-083 — les avoirs restent geres sous entity_type 'credit_note' (voir
   // isCreditNotePayload) : on ne les reecrit pas en facture.
@@ -379,6 +427,17 @@ async function upsertInvoices(
   const paidFromOverdue: Array<{ inv: PennylaneInvoice }> = []
   const labInvoicesPaid: Array<{ inv: PennylaneInvoice }> = []
 
+  // 1bis. T-085 — date d'encaissement des factures qui viennent d'etre payees.
+  // Sequentiel a dessein : le volume est de quelques factures par cycle, et on
+  // ne veut pas declencher le 429 de Pennylane.
+  const paidOnById = new Map<string, string>()
+  for (const inv of invoices) {
+    const pennylaneId = String(inv.id)
+    if (!needsPaidOnLookup(inv.status, existingMap.get(pennylaneId)?.data)) continue
+    const paidOn = await fetchPaidOnDate(pennylaneId, apiToken)
+    if (paidOn) paidOnById.set(pennylaneId, paidOn)
+  }
+
   // 2. Construire les lignes avec détection overdue
   const rows = invoices.map((inv) => {
     const pennylaneId = String(inv.id)
@@ -394,6 +453,13 @@ async function upsertInvoices(
 
     let finalStatus = inv.status
     let mergedData = mergeInvoiceData(currentData, inv as unknown as Record<string, unknown>)
+
+    // T-085 — `paid_on` est a NOUS (Pennylane ne l'envoie pas) : il survit a la
+    // fusion. Une facture qui repasse impayee (avoir, annulation du
+    // rapprochement) perd sa date, sinon elle resterait au CA pour toujours.
+    const paidOn = paidOnById.get(pennylaneId)
+    if (paidOn) mergedData = { ...mergedData, paid_on: paidOn }
+    else if (inv.status !== 'paid') delete mergedData.paid_on
 
     if (overdue) {
       const newCount = getConsecutiveUnpaidCount(currentData) + 1
@@ -911,7 +977,7 @@ async function syncEntityType(
       ? entities.filter((inv) => inv.customer_id === targetClientId)
       : entities
     // Story 11.4 — upsertInvoices retourne maintenant les listes overdue/paid
-    const invoiceResult = await upsertInvoices(supabase, filtered, resolver)
+    const invoiceResult = await upsertInvoices(supabase, filtered, resolver, apiToken)
     upserted = invoiceResult.upserted
     // Traiter les notifications overdue et paiements reçus
     await handleOverdueNotifications(supabase, invoiceResult.newlyOverdue)

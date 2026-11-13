@@ -60,6 +60,80 @@ function creditNote(
   }
 }
 
+/** T-085 — facture payee portant sa vraie date d'encaissement. */
+function paidInvoice(
+  amountCents: number,
+  dateFacture: string,
+  paidOn: string | null,
+  pennylaneId = 'inv-1'
+): MetricsRow {
+  return {
+    entity_type: 'invoice',
+    status: 'paid',
+    amount: amountCents,
+    data: paidOn ? { date: dateFacture, paid_on: paidOn } : { date: dateFacture },
+    pennylane_id: pennylaneId,
+  }
+}
+
+// T-085 — demande MiKL du 13-11 : le CA doit compter l'argent REELLEMENT
+// encaisse dans le mois, et un indicateur donne le total depuis le debut.
+describe('computeBillingMetrics — encaissements (T-085)', () => {
+  it('compte une facture d octobre encaissee en janvier dans le CA de JANVIER', () => {
+    // Le cas reel : F-2026-104, facturee le 09-10, encaissee le 12-11. Avant,
+    // elle n'etait comptee dans aucun mois.
+    const m = computeBillingMetrics([paidInvoice(240000, '2025-10-09', '2026-01-12')], JANVIER)
+    expect(m.monthlyRevenue).toBe(240000)
+    expect(m.totalRevenue).toBe(240000)
+  })
+
+  it('ne compte PAS dans le mois un encaissement d un autre mois', () => {
+    const m = computeBillingMetrics([paidInvoice(240000, '2026-01-09', '2025-12-28')], JANVIER)
+    expect(m.monthlyRevenue).toBe(0)
+    // ... mais l'argent reste dans le total
+    expect(m.totalRevenue).toBe(240000)
+  })
+
+  it('se rabat sur la date de facture quand la date d encaissement est inconnue', () => {
+    const m = computeBillingMetrics([paidInvoice(47880, '2026-01-10', null)], JANVIER)
+    expect(m.monthlyRevenue).toBe(47880)
+    expect(m.totalRevenue).toBe(47880)
+  })
+
+  it('ne compte dans le total que ce qui est encaisse, jamais ce qui est du', () => {
+    const m = computeBillingMetrics(
+      [invoice('late', 240000), invoice('upcoming', 47880, '2026-01-11', 'F-2'), invoice('draft', 99999, '2026-01-11', 'F-3')],
+      JANVIER
+    )
+    expect(m.totalRevenue).toBe(0)
+    expect(m.pendingAmount).toBe(287880)
+  })
+
+  it('retire du total l argent rembourse par un avoir, meme un mois anterieur', () => {
+    const m = computeBillingMetrics(
+      [paidInvoice(47880, '2025-10-06', '2025-10-21', 'F-101'), creditNote(-47880, '2025-10-07', 'F-101')],
+      JANVIER
+    )
+    expect(m.totalRevenue).toBe(0)
+    expect(m.monthlyRevenue).toBe(0)
+  })
+
+  it('cas reel du 13-11 : 2 878,80 € encaisses, dont tout le mois en cours', () => {
+    const m = computeBillingMetrics(
+      [
+        paidInvoice(47880, '2025-10-06', '2025-10-21', 'F-101'), // soldee par son avoir
+        creditNote(-47880, '2025-10-07', 'F-101'),
+        paidInvoice(47880, '2025-10-08', '2026-01-12', 'F-103'),
+        paidInvoice(240000, '2025-10-09', '2026-01-12', 'F-104'),
+      ],
+      JANVIER
+    )
+    expect(m.totalRevenue).toBe(287880)
+    expect(m.monthlyRevenue).toBe(287880)
+    expect(m.pendingAmount).toBe(0)
+  })
+})
+
 describe('computeBillingMetrics', () => {
   // T-083 — cas reel du 11-11 apres reparation de la synchro : Pennylane marque
   // `paid` la facture F-2026-101 soldee par son avoir F-2026-102, et deux
@@ -79,7 +153,7 @@ describe('computeBillingMetrics', () => {
 
   it('rend des compteurs a zero sans aucune piece', () => {
     const m = computeBillingMetrics([], JANVIER)
-    expect(m).toEqual({ monthlyRevenue: 0, pendingAmount: 0, pendingQuotesCount: 0, mrr: 0 })
+    expect(m).toEqual({ monthlyRevenue: 0, totalRevenue: 0, pendingAmount: 0, pendingQuotesCount: 0, mrr: 0 })
   })
 
   // ── « En attente » ───────────────────────────────────────────────────────
