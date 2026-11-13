@@ -1,6 +1,7 @@
 'use server'
 
 import { assertOperator } from './assert-operator'
+import { markdownToHtml } from '@monprojetpro/utils'
 import { resolveBillingRecipients } from './resolve-billing-recipients'
 import { successResponse, errorResponse } from '@monprojetpro/types'
 import type { ActionResponse } from '@monprojetpro/types'
@@ -26,7 +27,13 @@ function buildReminderEmailHtml(params: {
   invoiceNumber: string
   clientName: string
 }): string {
-  const safeBody = escapeHtml(params.body)
+  // 🔑 T-089 — le corps etait pose avec `escapeHtml` dans un `white-space:
+  // pre-wrap` : AUCUNE conversion. Elio ecrit en Markdown, donc le client
+  // aurait recu « ## Email de relance », « --- » et « **120 €** » en clair.
+  // `markdownToHtml` convertit ET assainit (les balises HTML brutes sont
+  // echappees, les liens `javascript:` neutralises), donc il remplace
+  // l'echappement : le double emploi afficherait les balises generees.
+  const safeBody = markdownToHtml(params.body)
   const safeInvoiceNumber = escapeHtml(params.invoiceNumber)
   return `
 <!DOCTYPE html>
@@ -37,7 +44,7 @@ function buildReminderEmailHtml(params: {
     <div style="background: #020402; padding: 24px 32px;">
       <p style="color: #2dd4bf; font-size: 18px; font-weight: 700; margin: 0;">MonprojetPro</p>
     </div>
-    <div style="padding: 32px; color: #1a1a1a; line-height: 1.6; white-space: pre-wrap;">${safeBody}</div>
+    <div style="padding: 32px; color: #1a1a1a; line-height: 1.6;">${safeBody}</div>
     <div style="padding: 16px 32px; background: #f8f9fa; border-top: 1px solid #e9ecef;">
       <p style="margin: 0; font-size: 12px; color: #6b7280;">
         Référence : Facture ${safeInvoiceNumber}

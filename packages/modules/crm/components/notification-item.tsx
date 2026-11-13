@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@monprojetpro/ui'
+import { markdownToPlainText } from '@monprojetpro/utils'
 import { useMarkNotificationRead } from '../hooks/use-notifications'
 import type { Notification } from '../types/crm.types'
 
@@ -65,9 +66,12 @@ export function NotificationItem({
             )}
             <p className="text-sm font-medium text-white">{notification.title}</p>
           </div>
+          {/* T-089 — une ligne de cloche n'affiche que du texte : un corps
+              ecrit par Elio y montrait ses `**` et ses `##` en clair. On
+              nettoie la notation, on garde chaque mot. */}
           {notification.body && (
             <p className="text-xs text-gray-400">
-              {notification.body}
+              {markdownToPlainText(notification.body)}
             </p>
           )}
         </div>

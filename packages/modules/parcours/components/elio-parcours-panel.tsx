@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { ChatMarkdownRenderer } from './chat-markdown-renderer'
 import type { ParcoursStep, ConciergeWord } from '../types/parcours.types'
 
 interface ElioParcoursPanelProps {
@@ -117,7 +118,12 @@ export function ElioParcoursPanel({
 
           <div className={`${messageBox} border rounded-xl p-4 mt-3 text-sm text-[#e5e7eb] leading-relaxed`}>
             <p className="text-[15px] font-semibold text-[#f9fafb]">{greeting}</p>
-            <p className="mt-2">{message}</p>
+            {/* T-089 — le mot du Concierge est ecrit par Elio, donc en Markdown.
+                Il s'affichait en texte brut : le client lisait les `**` et les
+                `##`. Meme rendu que le chat, pour qu'Elio parle pareil partout. */}
+            <div className="mt-2">
+              <ChatMarkdownRenderer content={message} />
+            </div>
           </div>
 
           {parcoursCta && (

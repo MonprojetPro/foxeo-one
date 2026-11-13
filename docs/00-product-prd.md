@@ -219,6 +219,7 @@ synchronisation automatique.
 | Synchronisation Pennylane réparée (ne ramenait plus rien depuis octobre) et mêmes chiffres partout : accueil, Comptabilité, liste par client | 🟢 Livré | 2026-11-11 `[T-083]` |
 | CA du mois compté au jour où l'argent entre réellement (et non au jour de la facture), plus un indicateur « Argent total » encaissé depuis le début — sur l'accueil comme en Comptabilité | 🟢 Livré | 2026-11-13 `[T-085]` |
 | Alertes de retard de paiement : MiKL est prévenu, Élio prépare une relance qu'il relit et envoie (plus aucun e-mail automatique au client) | 🟢 Livré | 2026-11-13 `[T-083a]` |
+| Les textes écrits par Élio s'affichent proprement partout (Hub, Lab, One) : plus de `**` ni de `##` dans un e-mail, une notification ou le mot du Concierge | 🟢 Livré | 2026-11-13 `[T-089]` |
 | Le client revoit son bouton « Payer » et son montant dû quand sa facture passe en retard, et lit « En retard » au lieu de « late » | 🟢 Livré | 2026-11-13 `[T-083a]` |
 | Le premier avoir réel échoue chez Pennylane (erreur 400) | ⚪ À faire | — sonde avant correctif `[T-041a]` |
 | L'avoir existe chez Pennylane mais n'est pas enregistré côté Hub (garde anti-doublon inopérante) | ⚪ À faire | — `[T-041b]` |

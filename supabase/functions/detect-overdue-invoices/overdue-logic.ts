@@ -101,7 +101,14 @@ Contraintes :
 - Niveau 3 (J+30) : ferme mais respectueux
 - Signé "MiKL"
 - Maximum 5 phrases
-- Pas de formule juridique`
+- Pas de formule juridique
+
+FORMAT — impératif :
+- UNIQUEMENT le corps du message, de "Bonjour" à la signature
+- TEXTE BRUT : aucun Markdown (pas de **gras**, pas de ## titre, pas de --- )
+- Pas de titre, pas d'objet, pas de séparateur, pas d'encart de synthèse
+- Pas d'emoji
+- Réponds directement par le message, sans phrase d'introduction`
 
   const message = `Génère le corps de l'email de relance niveau ${params.level} pour ${safeName}.`
 

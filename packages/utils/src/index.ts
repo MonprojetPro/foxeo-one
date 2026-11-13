@@ -126,5 +126,10 @@ export {
   PAST_DUE_STATUS_LIST,
   SETTLED_STATUS_SQL_LIST,
 } from './invoice-status'
+// Texte ecrit par Elio (T-089) : le CONVERTIR pour un email, le NETTOYER pour
+// une surface qui n'affiche que du texte. Ne jamais l'envoyer brut : le lecteur
+// verrait les `**`, les `##` et les `---` en clair.
+export { markdownToHtml } from './markdown-to-html'
+export { markdownToPlainText } from './markdown-to-plain-text'
 export { compressImageIfPossible } from './compress-image'
 export { LAB_DEFAULT_MODULES, ONE_DEFAULT_MODULES } from './default-modules'
