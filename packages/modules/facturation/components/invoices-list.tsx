@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { Skeleton, showSuccess, showError } from '@monprojetpro/ui'
+import { isInvoiceAwaitingPayment } from '@monprojetpro/utils'
+import { BILLING_STATUS_LABELS } from '../utils/status-labels'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import { triggerClientBillingSync } from '../actions/trigger-client-billing-sync'
 import { sendInvoiceByEmail } from '../actions/send-invoice-by-email'
@@ -10,17 +12,10 @@ import type { BillingSyncRow, ClientWithPennylane } from '../types/billing.types
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Brouillon',
-  pending: 'En attente',
-  paid: 'Payée',
-  unpaid: 'Impayée',
-  // T-041d — sans ces deux entrees, le statut brut de Pennylane s'affichait
-  // tel quel a l'ecran : un badge « credit_note » et un badge « upcoming »,
-  // en anglais et en notation technique, au milieu d'une liste en francais.
-  credit_note: 'Avoir',
-  upcoming: 'À échoir',
-}
+// T-083a — table deplacee dans `utils/status-labels.ts` : elle etait recopiee
+// ici et dans `documents-list.tsx`, et il y manquait `late`. Le client lisait
+// donc « late » en anglais des que sa facture passait en retard.
+const STATUS_LABELS = BILLING_STATUS_LABELS
 
 const LAB_INVOICE_TAG = '[FOXEO_LAB]'
 
@@ -304,7 +299,11 @@ function InvoiceRow({
             </a>
           )}
 
-          {row.status === 'unpaid' && invoiceData.payment_url && (
+          {/* T-083a — le bouton ne s'affichait que pour `unpaid`. Pennylane V2
+              dit `late` : le client ne voyait plus son lien de paiement des que
+              sa facture passait en retard, c'est-a-dire au pire moment.
+              Regle juste : il reste de l'argent du ET un lien existe. */}
+          {isInvoiceAwaitingPayment(row.status) && invoiceData.payment_url && (
             <a
               href={invoiceData.payment_url}
               target="_blank"

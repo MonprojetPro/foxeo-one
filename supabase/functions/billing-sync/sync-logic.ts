@@ -161,6 +161,32 @@ export function needsPaidOnLookup(
   return typeof currentData?.paid_on !== 'string'
 }
 
+// ── Retard de paiement (T-083a) ───────────────────────────────────────────────
+//
+// 🔑 Pennylane V2 dit `late` pour une facture echue non payee. Cette fonction
+// ne connaissait que `unpaid`, un mot que l'API ne renvoie plus : la detection
+// ne s'est JAMAIS declenchee, donc aucune alerte de retard n'est partie.
+//
+// ⚠️ Copie Deno du vocabulaire de `@monprojetpro/utils/invoice-status` — une
+// Edge Function ne peut pas importer un package workspace. Les tests de ce
+// fichier verrouillent la copie ; si tu changes l'un, change l'autre.
+
+export function isInvoiceOverdue(
+  status: string,
+  deadline: string | null | undefined,
+  today: string
+): boolean {
+  // `late` : Pennylane a DEJA constate le retard, il n'y a rien a recalculer.
+  if (status === 'late') return true
+  // `unpaid` : ancien mot, qui ne disait pas si l'echeance etait passee.
+  return status === 'unpaid' && !!deadline && deadline < today
+}
+
+/** Statuts qui, en base, signifient « pas encore paye » — pour voir un passage au paiement. */
+export function wasUnsettled(previousStatus: string | undefined): boolean {
+  return previousStatus === 'overdue' || previousStatus === 'unpaid' || previousStatus === 'late'
+}
+
 // ── Subscriptions Pennylane ───────────────────────────────────────────────────
 
 export interface PennylaneSubscriptionApi {

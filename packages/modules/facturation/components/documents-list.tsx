@@ -2,20 +2,17 @@
 
 import { Skeleton } from '@monprojetpro/ui'
 import { useBillingSyncRows } from '../hooks/use-billing'
+import { BILLING_STATUS_LABELS } from '../utils/status-labels'
 import { PdfDownloadButton } from './pdf-download-button'
 import { EmptyAccounting } from './empty-accounting'
 import type { BillingSyncRow } from '../types/billing.types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Brouillon',
-  pending: 'En attente',
-  paid: 'Payée',
-  unpaid: 'Impayée',
-  accepted: 'Accepté',
-  denied: 'Refusé',
-}
+// T-083a — meme table que `invoices-list.tsx`, desormais partagee : la copie
+// locale ne connaissait pas `late` ni `upcoming`, et cette liste retombe sur le
+// statut brut quand le libelle manque.
+const STATUS_LABELS = BILLING_STATUS_LABELS
 
 const STATUS_CLASSES: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',

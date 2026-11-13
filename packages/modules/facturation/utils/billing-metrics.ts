@@ -41,10 +41,6 @@ export type MetricsRow = {
   pennylane_id?: string
 }
 
-// T-083 — statuts d'une facture qui n'est PAS due : ni encaissee, ni a payer.
-// `deleted` est pose par la synchro quand Pennylane supprime la facture.
-const NOT_DUE_STATUSES = new Set(['paid', 'draft', 'cancelled', 'archived', 'deleted'])
-
 /**
  * Une facture emise et pas encore encaissee — `upcoming`, `late`, `unpaid`,
  * `overdue`, `partially_paid`...
@@ -52,10 +48,13 @@ const NOT_DUE_STATUSES = new Set(['paid', 'draft', 'cancelled', 'archived', 'del
  * 🔑 T-083 — SEULE definition du « en attente » : l'accueil du Hub et la liste
  * par client avaient chacun recopie la leur (`unpaid`/`pending`), qui ignorait
  * `upcoming`. Trois ecrans, trois chiffres pour les memes factures.
+ *
+ * 🔑 T-083a — la definition a DEMENAGE dans `@monprojetpro/utils` : Elio et
+ * l'app client en ont besoin aussi, et un module ne peut pas en importer un
+ * autre. Re-exportee ici pour ne rien casser chez les appelants existants.
  */
-export function isInvoiceAwaitingPayment(status: string): boolean {
-  return !NOT_DUE_STATUSES.has(status)
-}
+export { isInvoiceAwaitingPayment, isInvoicePastDue } from '@monprojetpro/utils'
+import { isInvoiceAwaitingPayment } from '@monprojetpro/utils'
 
 /**
  * Jour ou l'argent est entre, pour une facture payee.

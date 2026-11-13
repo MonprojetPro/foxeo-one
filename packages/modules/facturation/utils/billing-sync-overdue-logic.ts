@@ -23,13 +23,20 @@ export type InvoiceClassification = {
 
 /**
  * Retourne true si une facture est en retard de paiement.
- * Une facture est overdue si : status='unpaid' ET deadline < today (YYYY-MM-DD).
+ *
+ * 🔑 T-083a — Pennylane V2 dit `late` quand l'echeance est passee. Cette
+ * fonction ne connaissait que `unpaid`, un mot que l'API ne renvoie plus :
+ * elle rendait toujours `false`, et aucune alerte de retard n'est jamais
+ * partie.
  */
 export function isInvoiceOverdue(
   invoiceStatus: string,
   deadline: string | null | undefined,
   today: string
 ): boolean {
+  // `late` : Pennylane a DEJA constate le retard, rien a recalculer.
+  if (invoiceStatus === 'late') return true
+  // `unpaid` : ancien mot, qui ne disait pas si l'echeance etait passee.
   return invoiceStatus === 'unpaid' && !!deadline && deadline < today
 }
 
@@ -73,9 +80,11 @@ export function isPaidTransition(
   previousStatus: string | undefined,
   pennylaneStatus: string
 ): boolean {
+  // T-083a — `late` compte aussi, sinon une facture passee en retard puis
+  // payee n'etait pas vue comme un paiement recu.
   return (
     pennylaneStatus === 'paid' &&
-    (previousStatus === 'overdue' || previousStatus === 'unpaid')
+    (previousStatus === 'overdue' || previousStatus === 'unpaid' || previousStatus === 'late')
   )
 }
 

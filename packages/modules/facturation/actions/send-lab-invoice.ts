@@ -8,6 +8,7 @@ import { resolveBillingRecipients } from './resolve-billing-recipients'
 import { composePublicNotes } from '../utils/billing-recipients'
 import { sendByEmailWithRetry } from '../utils/send-by-email-with-retry'
 import { LAB_INVOICE_TAG } from '../utils/billing-sync-logic'
+import { SETTLED_STATUS_SQL_LIST } from '@monprojetpro/utils'
 import type { ActionResponse } from '@monprojetpro/types'
 
 // ============================================================
@@ -45,11 +46,15 @@ export async function sendLabInvoice(clientId: string): Promise<ActionResponse<s
   }
 
   // Guard : vérifier qu'il n'y a pas déjà une facture Lab en attente
+  //
+  // T-083a — le filtre etait `['pending','unpaid']` : une facture Lab passee en
+  // `late` ou `upcoming` n'etait plus vue, et le garde-fou laissait refacturer
+  // le client une seconde fois.
   const { data: existingLabInvoices } = await supabase
     .from('billing_sync')
     .select('id')
     .eq('entity_type', 'invoice')
-    .in('status', ['pending', 'unpaid'])
+    .not('status', 'in', SETTLED_STATUS_SQL_LIST)
     .contains('data', { is_lab_invoice: true, client_id: clientId })
     .limit(1)
 

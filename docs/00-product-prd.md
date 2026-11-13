@@ -218,7 +218,8 @@ synchronisation automatique.
 | Compteur "En attente" corrigé (comptait mal les factures émises non réglées) | 🟢 Livré | 2026-10-08 `[T-042]` |
 | Synchronisation Pennylane réparée (ne ramenait plus rien depuis octobre) et mêmes chiffres partout : accueil, Comptabilité, liste par client | 🟢 Livré | 2026-11-11 `[T-083]` |
 | CA du mois compté au jour où l'argent entre réellement (et non au jour de la facture), plus un indicateur « Argent total » encaissé depuis le début — sur l'accueil comme en Comptabilité | 🟢 Livré | 2026-11-13 `[T-085]` |
-| Alertes de retard de paiement (MiKL et client) — muettes depuis le passage de Pennylane en V2 | ⚪ À faire | — décision MiKL (envoie des notifications aux clients) `[T-083a]` |
+| Alertes de retard de paiement : MiKL est prévenu, Élio prépare une relance qu'il relit et envoie (plus aucun e-mail automatique au client) | 🟡 Codé, pas encore en service | 2026-11-13 `[T-083a]` |
+| Le client revoit son bouton « Payer » et son montant dû quand sa facture passe en retard, et lit « En retard » au lieu de « late » | 🟡 Codé, pas encore en service | 2026-11-13 `[T-083a]` |
 | Le premier avoir réel échoue chez Pennylane (erreur 400) | ⚪ À faire | — sonde avant correctif `[T-041a]` |
 | L'avoir existe chez Pennylane mais n'est pas enregistré côté Hub (garde anti-doublon inopérante) | ⚪ À faire | — `[T-041b]` |
 | La facture et son avoir ne se compensent pas dans les totaux du Hub (écart de TVA) | ⚪ À faire | — `[T-041d]` |

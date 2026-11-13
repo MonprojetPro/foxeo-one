@@ -118,5 +118,13 @@ export {
   rejectFile,
   sanitizeFileName,
 } from './attachment-constraints'
+// Statuts de facture — vocabulaire unique, partage par la synchro, les ecrans
+// du Hub, l'app client et Elio (T-083a). Ne jamais recopier une liste ailleurs.
+export {
+  isInvoiceAwaitingPayment,
+  isInvoicePastDue,
+  PAST_DUE_STATUS_LIST,
+  SETTLED_STATUS_SQL_LIST,
+} from './invoice-status'
 export { compressImageIfPossible } from './compress-image'
 export { LAB_DEFAULT_MODULES, ONE_DEFAULT_MODULES } from './default-modules'

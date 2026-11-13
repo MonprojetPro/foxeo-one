@@ -1,6 +1,7 @@
 'use client'
 
 import { Skeleton } from '@monprojetpro/ui'
+import { isInvoiceAwaitingPayment } from '@monprojetpro/utils'
 import { useBillingSyncRows } from '../hooks/use-billing'
 import type { BillingSyncRow } from '../types/billing.types'
 
@@ -18,7 +19,9 @@ function computeSummary(rows: BillingSyncRow[]) {
   for (const row of rows) {
     if (row.status === 'paid') {
       totalPaid += row.amount ?? 0
-    } else if (row.status === 'unpaid' || row.status === 'pending') {
+      // T-083a — le client voyait « 0 € en attente » des que sa facture passait
+      // en retard : ce test ne connaissait pas `late`, le mot de Pennylane V2.
+    } else if (isInvoiceAwaitingPayment(row.status)) {
       totalPending += row.amount ?? 0
       // Prochain prélèvement = date d'échéance la plus proche
       const invoiceData = row.data as { deadline?: string }

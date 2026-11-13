@@ -18,6 +18,8 @@ import {
   mergeInvoiceData,
   extractPaidOnDate,
   needsPaidOnLookup,
+  isInvoiceOverdue,
+  wasUnsettled,
   type MatchedTransactionRef,
   type PaymentRef,
   type ClientLookupRow,
@@ -357,9 +359,9 @@ function shouldActivateLabAccess(inv: PennylaneInvoice): boolean {
 // Dupliqués ici depuis packages/modules/facturation/utils/billing-sync-overdue-logic.ts
 // (Deno ne peut pas importer les packages workspace)
 
-function isInvoiceOverdue(status: string, deadline: string | null | undefined, today: string): boolean {
-  return status === 'unpaid' && !!deadline && deadline < today
-}
+// T-083a — `isInvoiceOverdue` vit desormais dans `sync-logic.ts`, ou les tests
+// l'atteignent. Elle etait ici, hors de portee : c'est exactement la ou le
+// defaut « on cherche `unpaid`, Pennylane dit `late` » a pu dormir.
 
 function getConsecutiveUnpaidCount(data: Record<string, unknown>): number {
   const count = data.consecutive_unpaid_count
@@ -448,8 +450,9 @@ async function upsertInvoices(
     const overdue = isInvoiceOverdue(inv.status, inv.deadline, today)
     const wasAlreadyOverdue = currentStatus === 'overdue'
     const isPaidNow = inv.status === 'paid'
-    const wasPreviouslyOverdueOrUnpaid =
-      currentStatus === 'overdue' || currentStatus === 'unpaid'
+    // T-083a — `late` compte aussi : sans lui, une facture passee en retard
+    // puis payee n'etait pas vue comme un paiement recu.
+    const wasPreviouslyOverdueOrUnpaid = wasUnsettled(currentStatus)
 
     let finalStatus = inv.status
     let mergedData = mergeInvoiceData(currentData, inv as unknown as Record<string, unknown>)
@@ -522,10 +525,12 @@ async function handleOverdueNotifications(
   const operatorUserId = operators?.[0]?.auth_user_id ?? null
 
   // Batch-resolve clients from pennylane_customer_ids (avoid N+1)
+  // T-083a — seul le NOM sert encore ici : on ne notifie plus le client, donc
+  // ni son `auth_user_id` ni son email ne sont lus.
   const customerIds = [...new Set(newlyOverdue.map((o) => o.inv.customer_id))]
   const { data: clients } = await supabase
     .from('clients')
-    .select('auth_user_id, name, email, pennylane_customer_id')
+    .select('name, pennylane_customer_id')
     .in('pennylane_customer_id', customerIds)
 
   const clientMap = new Map(
@@ -553,22 +558,19 @@ async function handleOverdueNotifications(
       })
     }
 
-    // Notification client
-    if (client?.auth_user_id) {
-      await supabase.from('notifications').insert({
-        recipient_type: 'client',
-        recipient_id: client.auth_user_id,
-        type: 'billing_payment_failed',
-        title: 'Votre paiement est en attente',
-        body: `Votre paiement de ${amountFormatted} est en attente. Merci de régulariser votre situation.`,
-        link: '/modules/facturation',
-      })
-
-      // Pas d'appel direct a send-email ici : l'INSERT ci-dessus declenche deja
-      // trg_send_email_on_notification -> send-email, qui rend le template
-      // 'billing_payment_failed'. L'ancien appel direct passait un template
-      // inexistant ET sans `to` (rejete en 400) : le reparer creerait un doublon.
-    }
+    // ⚠️ T-083a — PLUS DE MESSAGE AUTOMATIQUE AU CLIENT ICI (decision MiKL,
+    // 13-11). Cet INSERT declenchait `trg_send_email_on_notification`, donc un
+    // VRAI email au client des le premier jour de retard, avec un texte fige
+    // dans le code et impossible a relire.
+    //
+    // Le client est relance par le circuit prevu pour ca : `detect-overdue-
+    // invoices` fait rediger un brouillon par Elio aux fenetres J+7 / J+14 /
+    // J+30, MiKL le relit, le modifie et l'envoie depuis le Hub
+    // (`reminder-modal.tsx` -> `sendReminder`).
+    //
+    // Garder les deux, c'etait ecrire deux fois au client pour un seul retard —
+    // et trois fois si les relances automatiques de Pennylane sont actives.
+    // MiKL, lui, reste prevenu : c'est la notification ci-dessus.
 
     // Activity log
     await supabase.from('activity_logs').insert({

@@ -11,8 +11,50 @@ import {
   mergeInvoiceData,
   extractPaidOnDate,
   needsPaidOnLookup,
+  isInvoiceOverdue,
+  wasUnsettled,
   type PennylaneSubscriptionApi,
 } from './sync-logic'
+
+// T-083a — cette fonction vivait dans `index.ts`, hors de portee des tests.
+// C'est precisement la qu'un defaut a dormi : elle cherchait `unpaid`, un mot
+// que Pennylane V2 ne renvoie plus (il dit `late`), donc elle rendait toujours
+// false et AUCUNE alerte de retard n'est jamais partie.
+describe('isInvoiceOverdue (T-083a)', () => {
+  const today = '2026-11-13'
+
+  it('reconnait `late`, le mot de Pennylane V2', () => {
+    expect(isInvoiceOverdue('late', '2026-11-07', today)).toBe(true)
+  })
+
+  it('fait confiance a Pennylane sur `late`, meme sans echeance lisible', () => {
+    expect(isInvoiceOverdue('late', null, today)).toBe(true)
+  })
+
+  it('garde l ancien mot `unpaid` avec son controle d echeance', () => {
+    expect(isInvoiceOverdue('unpaid', '2026-11-07', today)).toBe(true)
+    expect(isInvoiceOverdue('unpaid', '2026-12-01', today)).toBe(false)
+  })
+
+  it('ne declenche rien sur une facture emise non echue, payee ou brouillon', () => {
+    for (const s of ['upcoming', 'paid', 'draft']) {
+      expect(isInvoiceOverdue(s, '2026-11-07', today)).toBe(false)
+    }
+  })
+})
+
+describe('wasUnsettled (T-083a)', () => {
+  it('reconnait les trois mots du « pas encore paye »', () => {
+    for (const s of ['late', 'overdue', 'unpaid']) {
+      expect(wasUnsettled(s)).toBe(true)
+    }
+  })
+
+  it('ne se declenche pas sur une facture deja soldee ou inconnue', () => {
+    expect(wasUnsettled('paid')).toBe(false)
+    expect(wasUnsettled(undefined)).toBe(false)
+  })
+})
 
 // T-085 — Pennylane ne porte aucune date de paiement sur la facture ni dans son
 // bloc `payments` : la seule vraie date d'encaissement est celle de la

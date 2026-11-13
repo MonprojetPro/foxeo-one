@@ -60,7 +60,9 @@ export function buildElioSuggestions(
       icon: 'warning',
       iconColor: 'text-destructive',
       title: 'Factures impayées',
-      detail: `${input.unpaid.count} ${plural(input.unpaid.count, 'facture')} · ${Math.round(input.unpaid.amountEur).toLocaleString('fr-FR')} € en retard`,
+      // T-083a — « en retard » etait faux : ce compteur additionne TOUT ce qui
+      // est emis et non encaisse, echeance passee ou non.
+      detail: `${input.unpaid.count} ${plural(input.unpaid.count, 'facture')} · ${Math.round(input.unpaid.amountEur).toLocaleString('fr-FR')} € à encaisser`,
       href: '/modules/facturation',
     })
   }

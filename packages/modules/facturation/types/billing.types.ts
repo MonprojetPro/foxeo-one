@@ -32,11 +32,34 @@ export type PennylaneQuote = {
   updated_at: string
 }
 
+/**
+ * T-083a — statuts REELLEMENT renvoyes par Pennylane V2, releves dans la doc
+ * officielle et dans nos donnees. Le type n'en declarait que quatre, dont
+ * `unpaid` qui n'existe plus : il mentait, et le compilateur validait des
+ * comparaisons qui ne pouvaient jamais etre vraies.
+ * `overdue` est notre propre marqueur, pose par la synchro.
+ */
+export type InvoiceStatus =
+  | 'draft'
+  | 'upcoming'
+  | 'late'
+  | 'overdue'
+  | 'partially_paid'
+  | 'paid'
+  | 'cancelled'
+  | 'archived'
+  | 'credit_note'
+  | 'deleted'
+  /** @deprecated ancien mot d'avant la V2, conserve pour les lignes historiques */
+  | 'unpaid'
+  /** @deprecated jamais renvoye par Pennylane, present dans d'anciens filtres */
+  | 'pending'
+
 export type PennylaneCustomerInvoice = {
   id: string
   customer_id: string
   invoice_number: string
-  status: 'draft' | 'pending' | 'paid' | 'unpaid'
+  status: InvoiceStatus
   date: string
   deadline: string
   line_items: PennylaneLineItem[]
@@ -115,7 +138,7 @@ export type Invoice = {
   id: string
   clientId: string
   number: string
-  status: 'draft' | 'pending' | 'paid' | 'unpaid'
+  status: InvoiceStatus
   lineItems: LineItem[]
   totalHt: number
   totalTtc: number

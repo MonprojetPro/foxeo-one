@@ -13,6 +13,7 @@
  */
 
 import type { createServerSupabaseClient } from '@monprojetpro/supabase'
+import { SETTLED_STATUS_SQL_LIST } from '@monprojetpro/utils'
 import { searchClientInfo } from '../search-client-info'
 import { getMenuFacileMetrics } from '@monprojetpro/module-menu-facile'
 import { getMenuFacileTimeseries } from '@monprojetpro/module-menu-facile'
@@ -80,11 +81,13 @@ async function getHubOverview(supabase: Supa, operatorId: string): Promise<ReadT
     else if (period === 'yearly') mrrEur += amountEur / 12
   }
 
+  // T-083a — ce filtre etait `['unpaid','pending']` : Pennylane V2 dit `late`,
+  // donc Elio annoncait « aucun impaye » alors que des factures etaient dues.
   const { data: rawUnpaid } = await supabase
     .from('billing_sync')
     .select('amount')
     .eq('entity_type', 'invoice')
-    .in('status', ['unpaid', 'pending'])
+    .not('status', 'in', SETTLED_STATUS_SQL_LIST)
   const unpaid = (rawUnpaid ?? []) as { amount: number | null }[]
   const unpaidAmountEur = unpaid.reduce((sum, inv) => sum + (inv.amount ?? 0) / 100, 0)
 
@@ -275,7 +278,8 @@ async function listUnpaidInvoices(supabase: Supa): Promise<ReadToolResult> {
     .from('billing_sync')
     .select('pennylane_id, amount, status, client_id, last_synced_at, data')
     .eq('entity_type', 'invoice')
-    .in('status', ['unpaid', 'pending'])
+    // T-083a — meme defaut : `late` manquait, la liste revenait toujours vide.
+    .not('status', 'in', SETTLED_STATUS_SQL_LIST)
     .order('last_synced_at', { ascending: false })
     .limit(50)
 

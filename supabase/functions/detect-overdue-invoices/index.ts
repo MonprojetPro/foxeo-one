@@ -62,11 +62,21 @@ serve(async (_req) => {
   console.log(`[DETECT-OVERDUE] Démarrage — date: ${today}`)
 
   // 1. Fetch toutes les factures impayées
+  //
+  // 🔑 T-083a — ce filtre etait `.eq('status', 'unpaid')`. Pennylane V2 dit
+  // `late`, et notre synchro ecrit `overdue` quand elle detecte le retard :
+  // aucune ligne ne portait plus `unpaid`, donc cette fonction tournait a vide
+  // et AUCUNE relance n'a jamais ete creee.
+  //
+  // ⚠️ Liste alignee sur `PAST_DUE_STATUS_LIST` de `@monprojetpro/utils`
+  // (copie Deno : une Edge Function ne peut pas importer un package workspace).
+  const PAST_DUE_STATUSES = ['late', 'overdue', 'unpaid']
+
   const { data: invoices, error: invoicesError } = await supabase
     .from('billing_sync')
     .select('pennylane_id, client_id, status, data')
     .eq('entity_type', 'invoice')
-    .eq('status', 'unpaid')
+    .in('status', PAST_DUE_STATUSES)
 
   if (invoicesError) {
     console.error('[DETECT-OVERDUE] Erreur fetch billing_sync:', invoicesError.message)

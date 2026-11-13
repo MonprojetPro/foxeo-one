@@ -15,6 +15,22 @@ import {
 describe('isInvoiceOverdue', () => {
   const today = '2026-03-07'
 
+  // T-083a — le defaut qui a rendu TOUTES les alertes de retard muettes :
+  // Pennylane V2 dit `late`, cette fonction ne connaissait que `unpaid` et
+  // rendait donc toujours false.
+  it('reconnait `late`, le mot de Pennylane V2', () => {
+    expect(isInvoiceOverdue('late', '2026-03-01', today)).toBe(true)
+  })
+
+  it('reconnait `late` meme sans date d echeance exploitable', () => {
+    // Pennylane a deja constate le retard : on ne le recalcule pas.
+    expect(isInvoiceOverdue('late', null, today)).toBe(true)
+  })
+
+  it('ne confond pas `late` avec `upcoming` (emise, pas encore echue)', () => {
+    expect(isInvoiceOverdue('upcoming', '2026-04-01', today)).toBe(false)
+  })
+
   it('returns true when status=unpaid and deadline is before today', () => {
     expect(isInvoiceOverdue('unpaid', '2026-03-01', today)).toBe(true)
   })
@@ -79,6 +95,13 @@ describe('isPaidTransition', () => {
 
   it('returns true when previous=unpaid and pennylane=paid', () => {
     expect(isPaidTransition('unpaid', 'paid')).toBe(true)
+  })
+
+  // T-083a — sans `late`, une facture passee en retard puis reglee n'etait pas
+  // vue comme un paiement recu : ni remerciement au client, ni remise a zero
+  // du compteur d'impayes.
+  it('returns true when previous=late and pennylane=paid', () => {
+    expect(isPaidTransition('late', 'paid')).toBe(true)
   })
 
   it('returns false when pennylane is still unpaid', () => {
