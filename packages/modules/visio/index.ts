@@ -6,6 +6,12 @@ export { MeetingList } from './components/meeting-list'
 export { MeetingListSkeleton } from './components/meeting-list-skeleton'
 export { MeetingStatusBadge } from './components/meeting-status-badge'
 export { MeetingScheduleDialog } from './components/meeting-schedule-dialog'
+// T-087 — la ligne de visio complète (rejoindre, copier, renvoyer, déplacer,
+// annuler, démarrer, terminer, récupérer le compte rendu). Exportée pour que
+// la page Visio du Hub serve les mêmes actions que le dossier client, sans
+// recopier un second jeu de boutons.
+export { MeetingRow } from './components/meeting-row'
+export type { MeetingRowProps, MeetingActionFn, RescheduleMeetingFn, ResendMeetLinkFn, SyncMeetingResultsFn } from './components/meeting-row'
 export { CalcomBookingWidget } from './components/calcom-booking-widget'
 export { ClientVisioTab } from './components/client-visio-tab'
 export type {

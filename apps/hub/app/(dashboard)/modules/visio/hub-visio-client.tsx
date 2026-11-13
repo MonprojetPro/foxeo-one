@@ -1,8 +1,15 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { ExternalLink, Video, Clock, CheckCircle, Plus } from 'lucide-react'
-import { MeetingStatusBadge } from '@monprojetpro/module-visio'
+import { useState } from 'react'
+import { Video, Clock, CheckCircle, Plus } from 'lucide-react'
+import {
+  MeetingRow,
+  cancelMeeting,
+  rescheduleMeeting,
+  syncMeetingResults,
+  startMeeting,
+  type VisioRecipient,
+} from '@monprojetpro/module-visio'
 import {
   CockpitHeader,
   PillTabs,
@@ -11,7 +18,7 @@ import {
 } from '@monprojetpro/ui'
 import { NewVisioDialog } from './new-visio-dialog'
 import { endHubMeeting } from '../../../../actions/end-hub-meeting'
-import { startMeeting } from '@monprojetpro/module-visio'
+import { resendMeetLink } from '../../../../actions/resend-meet-link'
 import { useRouter } from 'next/navigation'
 import type { Meeting } from '@monprojetpro/module-visio'
 
@@ -24,17 +31,18 @@ const PILL_TABS: PillTab<Tab>[] = [
   { key: 'history',  label: 'Historique', icon: CheckCircle },
 ]
 
-function formatDate(iso: string | null): string {
-  if (!iso) return '—'
-  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso))
-}
-
-function formatDuration(seconds: number | null): string {
-  if (seconds === null) return '—'
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  if (h > 0) return `${h}h ${m}min`
-  return `${m}min`
+/**
+ * Destinataires proposés pour « Renvoyer le lien » — T-087.
+ *
+ * 🔑 Cette page liste les visios de TOUS les clients : elle n'a pas, comme le
+ * dossier client, un carnet d'adresses sous la main. Le seul destinataire que
+ * la visio connaît avec certitude est celui du dernier envoi. On le propose
+ * donc, et rien d'autre : inventer une adresse enverrait un lien de rendez-vous
+ * à côté, sans que personne ne s'en aperçoive.
+ */
+function recipientsFor(meeting: Meeting): VisioRecipient[] {
+  if (!meeting.inviteLastSentTo) return []
+  return [{ email: meeting.inviteLastSentTo, label: meeting.inviteLastSentTo }]
 }
 
 interface HubVisioClientProps {
@@ -46,7 +54,6 @@ interface HubVisioClientProps {
 export function HubVisioClient({ meetings }: HubVisioClientProps) {
   const [activeTab, setActiveTab] = useState<Tab>('upcoming')
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   const upcoming = meetings.filter((m) => m.status === 'scheduled')
@@ -61,20 +68,6 @@ export function HubVisioClient({ meetings }: HubVisioClientProps) {
     ...t,
     count: tabMeetings[t.key].length,
   }))
-
-  function handleEnd(meetingId: string) {
-    startTransition(async () => {
-      await endHubMeeting({ meetingId })
-      router.refresh()
-    })
-  }
-
-  function handleStart(meetingId: string) {
-    startTransition(async () => {
-      await startMeeting({ meetingId })
-      router.refresh()
-    })
-  }
 
   /* Indicateur de statut : meeting actif = live */
   const liveStatus = active.length > 0
@@ -124,118 +117,33 @@ export function HubVisioClient({ meetings }: HubVisioClientProps) {
           )}
         </div>
       ) : (
-        /* Table — mobile : cartes / desktop : table */
-        <>
-          {/* Cartes mobiles */}
-          <div className="flex flex-col gap-3 sm:hidden">
-            {displayed.map((meeting) => (
-              <div
+        /* T-087 — une seule brique de ligne de visio, partagée avec le dossier
+           client : rejoindre, copier, renvoyer, déplacer, annuler, démarrer,
+           terminer, récupérer le compte rendu. Deux tableaux de boutons pour
+           la même chose finissent toujours par diverger — et l'écran le moins
+           servi devient celui où MiKL ne peut plus rien faire. */
+        <div className="flex flex-col gap-3">
+          {displayed.map((meeting) => {
+            const destinataires = recipientsFor(meeting)
+            return (
+              <MeetingRow
                 key={meeting.id}
-                className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-2 hover:bg-white/[0.04] transition-colors"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-sm font-medium text-white truncate">{meeting.title}</span>
-                  <MeetingStatusBadge status={meeting.status} />
-                </div>
-                <p className="text-xs text-gray-500 tabular-nums">{formatDate(meeting.scheduledAt)}</p>
-                {meeting.durationSeconds !== null && (
-                  <p className="text-xs text-gray-500 tabular-nums">{formatDuration(meeting.durationSeconds)}</p>
-                )}
-                <div className="flex items-center gap-2 pt-1">
-                  {meeting.meetUri && meeting.status !== 'completed' && meeting.status !== 'cancelled' && (
-                    <a
-                      href={meeting.meetUri}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Rejoindre
-                    </a>
-                  )}
-                  {meeting.status === 'scheduled' && (
-                    <button
-                      onClick={() => handleStart(meeting.id)}
-                      disabled={isPending}
-                      className="inline-flex items-center gap-1 rounded-md border border-white/20 px-3 py-1 text-xs font-medium text-gray-300 hover:bg-white/10 disabled:opacity-50"
-                    >
-                      Démarrer
-                    </button>
-                  )}
-                  {meeting.status === 'in_progress' && (
-                    <button
-                      onClick={() => handleEnd(meeting.id)}
-                      disabled={isPending}
-                      className="inline-flex items-center gap-1 rounded-md border border-red-500/40 px-3 py-1 text-xs font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50"
-                    >
-                      Terminer
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Table desktop */}
-          <div className="hidden sm:block w-full overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/10 text-left">
-                  <th className="px-4 pb-3 pt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Titre</th>
-                  <th className="px-4 pb-3 pt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Date</th>
-                  <th className="px-4 pb-3 pt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Statut</th>
-                  <th className="px-4 pb-3 pt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Durée</th>
-                  <th className="px-4 pb-3 pt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayed.map((meeting) => (
-                  <tr key={meeting.id} className="border-b border-white/5 transition-colors hover:bg-white/[0.03]">
-                    <td className="px-4 py-3 font-medium text-white">{meeting.title}</td>
-                    <td className="px-4 py-3 text-gray-400 tabular-nums">{formatDate(meeting.scheduledAt)}</td>
-                    <td className="px-4 py-3">
-                      <MeetingStatusBadge status={meeting.status} />
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 tabular-nums">{formatDuration(meeting.durationSeconds)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {meeting.meetUri && meeting.status !== 'completed' && meeting.status !== 'cancelled' && (
-                          <a
-                            href={meeting.meetUri}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                            Rejoindre
-                          </a>
-                        )}
-                        {meeting.status === 'scheduled' && (
-                          <button
-                            onClick={() => handleStart(meeting.id)}
-                            disabled={isPending}
-                            className="inline-flex items-center gap-1 rounded-md border border-white/20 px-3 py-1 text-xs font-medium text-gray-300 hover:bg-white/10 disabled:opacity-50"
-                          >
-                            Démarrer
-                          </button>
-                        )}
-                        {meeting.status === 'in_progress' && (
-                          <button
-                            onClick={() => handleEnd(meeting.id)}
-                            disabled={isPending}
-                            className="inline-flex items-center gap-1 rounded-md border border-red-500/40 px-3 py-1 text-xs font-medium text-red-400 hover:bg-red-500/10 disabled:opacity-50"
-                          >
-                            Terminer
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+                meeting={meeting}
+                recipients={destinataires}
+                /* Sans destinataire connu, « Renvoyer » ouvrirait une liste
+                   déroulante vide et un bouton mort. On ne propose donc pas
+                   l'action plutôt que d'offrir une coquille. */
+                onResend={destinataires.length > 0 ? resendMeetLink : undefined}
+                onCancel={cancelMeeting}
+                onReschedule={rescheduleMeeting}
+                onSyncResults={syncMeetingResults}
+                onStart={startMeeting}
+                onEnd={endHubMeeting}
+                onChanged={() => router.refresh()}
+              />
+            )
+          })}
+        </div>
       )}
 
       {/* Dialog nouveau meeting — T-061 : même chemin de création que l'onglet

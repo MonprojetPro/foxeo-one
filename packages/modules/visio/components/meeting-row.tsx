@@ -8,8 +8,10 @@ import {
   Copy,
   ExternalLink,
   FileText,
+  Play,
   RefreshCw,
   Send,
+  Square,
   Video,
   XCircle,
 } from 'lucide-react'
@@ -72,6 +74,15 @@ export interface MeetingRowProps {
   onReschedule?: RescheduleMeetingFn
   /** « Récupérer maintenant » — relance la recherche du compte rendu chez Google. */
   onSyncResults?: SyncMeetingResultsFn
+  /**
+   * Ouvrir la session (T-087). La page Visio du Hub le proposait sans savoir
+   * annuler ni déplacer ; le dossier client savait tout sauf ouvrir et clore.
+   * Les deux manques sont réunis ici pour que les deux écrans soient servis
+   * par la MÊME brique — pas par deux tableaux de boutons qui divergeront.
+   */
+  onStart?: MeetingActionFn
+  /** Clore la session (T-087) — voir `onStart`. */
+  onEnd?: MeetingActionFn
   onChanged?: () => void
 }
 
@@ -100,6 +111,8 @@ export function MeetingRow({
   onCancel,
   onReschedule,
   onSyncResults,
+  onStart,
+  onEnd,
   onChanged,
 }: MeetingRowProps) {
   const duration = formatMeetingDuration(meeting.durationSeconds)
@@ -147,6 +160,37 @@ export function MeetingRow({
       }
       showSuccess(`Lien renvoyé à ${r.data?.recipientEmail ?? resendTarget}`)
       setResendOpen(false)
+      onChanged?.()
+    })
+  }
+
+  /**
+   * Ouvrir et clore la session (T-087). Le message d'erreur du serveur est
+   * montré tel quel : « rien ne se passe » après un clic est exactement ce qui
+   * fait douter MiKL de son propre produit.
+   */
+  function handleStart() {
+    if (!onStart) return
+    startAction(async () => {
+      const r = await onStart({ meetingId: meeting.id })
+      if (r.error) {
+        showError(r.error.message)
+        return
+      }
+      showSuccess('Visio démarrée')
+      onChanged?.()
+    })
+  }
+
+  function handleEnd() {
+    if (!onEnd) return
+    startAction(async () => {
+      const r = await onEnd({ meetingId: meeting.id })
+      if (r.error) {
+        showError(r.error.message)
+        return
+      }
+      showSuccess('Visio terminée')
       onChanged?.()
     })
   }
@@ -252,6 +296,30 @@ export function MeetingRow({
                 {copied ? 'Copié' : 'Copier'}
               </button>
             </>
+          )}
+
+          {meeting.status === 'scheduled' && onStart && (
+            <button
+              type="button"
+              onClick={handleStart}
+              disabled={isBusy}
+              className={ACTION_CLASS}
+            >
+              <Play className="h-3.5 w-3.5" />
+              Démarrer
+            </button>
+          )}
+
+          {meeting.status === 'in_progress' && onEnd && (
+            <button
+              type="button"
+              onClick={handleEnd}
+              disabled={isBusy}
+              className="inline-flex items-center gap-1 rounded-md border border-red-400/25 px-2.5 py-1.5 text-xs text-red-300 hover:bg-red-500/10 disabled:opacity-50"
+            >
+              <Square className="h-3.5 w-3.5" />
+              Terminer
+            </button>
           )}
 
           {actionable && onResend && meeting.meetUri && (
