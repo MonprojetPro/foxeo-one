@@ -1337,3 +1337,23 @@ jonction). Cause validée par MiKL, puis une seule correction : lecture `broadca
 1. Toute clé qui porte le même nom dans Vercel et dans Supabase se pose AUX DEUX endroits (déjà payé avec `PENNYLANE_API_TOKEN`). Après chaque rotation : un `curl` sur `elio-chat` qui doit répondre du texte.
 2. Un compteur qui n'enregistre que les succès ne peut pas signaler une panne : « zéro usage » doit faire vérifier, pas rassurer.
 3. Le banc d'essai Élio sert aussi de sonde de vie : le lancer avant tout chantier sur les agents.
+
+---
+
+## 2026-11-13 — Deux écrans pour la même chose, chacun amputé de ce que l'autre savait faire
+
+**Contexte** : T-087. Après la remise en service de Google Meet, MiKL crée un rendez-vous de test puis demande : *« je ne peux pas supprimer les visio ?! »*.
+
+**Ce qui se passait** : l'annulation existait bel et bien — `cancelMeeting`, codée et testée depuis T-056 — et la brique `MeetingRow` savait l'afficher, avec « Déplacer », « Renvoyer » et « Récupérer le compte rendu ». Mais une seule surface la branchait : le dossier client du CRM. La page Visio du Hub, elle, avait son propre tableau fait maison, qui ne savait que « Rejoindre », « Démarrer » et « Terminer » — deux actions que la brique partagée, à l'inverse, ne connaissait pas. Chacun des deux écrans était amputé de ce que l'autre savait faire.
+
+**Pourquoi personne ne l'a vu** : les deux écrans marchaient. Aucun test ne tombait, aucun contrôle ne pouvait tomber : rien n'est cassé dans un écran qui fait correctement les trois choses qu'il sait faire. Le manque n'existe qu'en comparant deux écrans, ce qu'aucune suite de tests ne fait spontanément. C'est la troisième occurrence de la même famille (fiche client à deux surfaces d'actions ; un verrou posé sans l'interface qui en parle).
+
+**Pourquoi la recopie aurait été le mauvais réflexe** : ajouter les boutons manquants dans le tableau du Hub aurait réglé la plainte du jour et garanti la prochaine divergence — deux jeux de boutons pour la même chose ne restent jamais longtemps d'accord, et c'est l'écran le moins servi qui devient celui où MiKL ne peut plus rien faire.
+
+**Leçons** :
+1. **Une action posée sur une seule surface est introuvable depuis l'autre.** Quand deux écrans montrent la même entité, la question n'est pas « est-ce que ça marche ? » mais « est-ce que les deux font la même chose ? ». À poser explicitement pendant l'inspection des consumers, qui recense les lecteurs mais pas encore les écarts d'actions entre eux.
+2. **La lacune se corrige DANS la brique partagée, jamais dans l'écran qui se plaint** (mandat « améliorer les briques »). Ici : `MeetingRow` gagne `onStart`/`onEnd`, et le tableau maison du Hub disparaît — 112 lignes en moins, une seule vérité.
+3. **Une action sans son inverse au même endroit est un demi-produit.** Créer une visio là où on ne peut pas l'annuler, c'est obliger MiKL à chercher ailleurs ce qui devrait être sous sa main.
+4. **Un test de verrouillage par action, qui vérifie aussi l'absence** : `meeting-row.test.tsx` exige que « Démarrer » n'apparaisse QUE si l'écran l'a branché. Sans la vérification de l'absence, un composant qui affiche tout partout passe le test.
+
+**Agents impliqués** : SCAN, FORGE, OTTO, ATLAS
