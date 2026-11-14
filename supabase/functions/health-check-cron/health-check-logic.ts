@@ -16,31 +16,35 @@ export interface HealthCheckResult {
   globalStatus: GlobalStatus
 }
 
-// Seuils par service (ms)
-export const THRESHOLDS: Record<string, { warn: number; error: number }> = {
-  // Recalibré : un aller-retour REST depuis l'Edge Function mesure ~130–400 ms
-  // (sauts réseau inclus). Les seuils 300/500 faisaient clignoter la DB en « degraded »
-  // sans vraie dégradation. Une vraie lenteur (>1,5 s) reste détectée.
-  supabase_db: { warn: 800, error: 1500 },
-  supabase_storage: { warn: 1000, error: 2000 },
-  supabase_auth: { warn: 500, error: 1000 },
-  // Recalibré : l'endpoint de check Realtime (/realtime/v1/channels) répond
-  // normalement en ~2 s. Les anciens seuils (500/1000) le faisaient passer en
-  // « error » en permanence alors que le Realtime fonctionne. Une vraie panne
-  // reste détectée via le timeout (5 s → error).
-  supabase_realtime: { warn: 3000, error: 5000 },
-  pennylane: { warn: 1500, error: 2000 },
-  cal_com: { warn: 2000, error: 5000 },
-  // Apps Vercel (Hub + client) : SSR + middleware + cold start possibles → seuils larges.
-  vercel_hub: { warn: 3000, error: 8000 },
-  vercel_client: { warn: 3000, error: 8000 },
-  // Recalibré 2026-09-20 : l'API Resend (GET /domains) répond normalement en
-  // ~1150 ms depuis l'Edge Function. Les anciens seuils (1500/3000) laissaient le
-  // service vivre à 77 % de son seuil d'alerte — le moindre pic le faisait basculer
-  // en « error », soit 17 fausses alertes en 30 jours (seul service concerné, mesuré
-  // dans activity_logs). Une vraie panne reste détectée via le timeout (8 s → error).
-  resend: { warn: 2500, error: 5000 },
+// Seuil de LENTEUR par service (ms) — au-dela, le service passe « degraded ».
+//
+// REGLE DU 2026-11-14 (T-091) : une lenteur ne met JAMAIS un service en « error ».
+// Seule une vraie panne le fait : pas de reponse, reponse 5xx, ou abandon au
+// timeout de la sonde (5 s, 8 s pour Resend). Et seul « error » declenche une
+// alerte (cloche + mail). Pourquoi : du 3 au 14 novembre, 24 alertes
+// « supabase_db » sont parties, y compris la nuit, alors que la base repondait
+// 200 a CHAQUE sonde — elle mettait 1,1 a 3 s, et l'ancien seuil « error »
+// (1,5 s) appelait ca une panne. Une base peu sollicitee la nuit a des reponses
+// lentes ; ce n'est pas une panne et ca ne merite pas un mail a 4 h du matin.
+// La lenteur reste visible dans l'onglet Maintenance & Systeme (orange).
+export const SLOW_THRESHOLDS_MS: Record<string, number> = {
+  // Aller-retour REST depuis l'Edge Function : ~130-400 ms nominal.
+  supabase_db: 800,
+  supabase_storage: 1000,
+  supabase_auth: 500,
+  // /realtime/v1/channels repond normalement en ~2 s.
+  supabase_realtime: 3000,
+  pennylane: 1500,
+  cal_com: 2000,
+  // Apps Vercel : SSR + middleware + cold start possibles.
+  vercel_hub: 3000,
+  vercel_client: 3000,
+  // GET /domains repond normalement en ~1150 ms.
+  resend: 2500,
 }
+
+/** Seuil de lenteur par defaut pour un service non repertorie. */
+export const DEFAULT_SLOW_THRESHOLD_MS = 2000
 
 // Durée minimale d'erreur CONTINUE avant d'alerter (2026-07-11 — anti-fantôme).
 // Un service doit être en `error` depuis au moins 15 min (≈ 3 cycles de 5 min)
@@ -49,18 +53,20 @@ export const THRESHOLDS: Record<string, { warn: number; error: number }> = {
 // l'urgence temps réel.
 export const SUSTAINED_ERROR_MS = 15 * 60 * 1000
 
-/** Détermine le statut d'un service en fonction de la latence et des seuils */
+/**
+ * Determine le statut d'un service.
+ * - `failed` (pas de reponse, 5xx, timeout) → `error` — la SEULE voie vers une alerte.
+ * - lent mais repond → `degraded` (visible au Hub, jamais d'alerte).
+ * - sinon → `ok`.
+ */
 export function evaluateServiceStatus(
   service: string,
   latencyMs: number,
   failed: boolean
 ): ServiceStatus {
   if (failed) return 'error'
-  const threshold = THRESHOLDS[service]
-  if (!threshold) return latencyMs > 2000 ? 'degraded' : 'ok'
-  if (latencyMs >= threshold.error) return 'error'
-  if (latencyMs >= threshold.warn) return 'degraded'
-  return 'ok'
+  const slowMs = SLOW_THRESHOLDS_MS[service] ?? DEFAULT_SLOW_THRESHOLD_MS
+  return latencyMs >= slowMs ? 'degraded' : 'ok'
 }
 
 /** Calcule le statut global depuis les statuts individuels */

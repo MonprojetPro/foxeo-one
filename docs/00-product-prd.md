@@ -255,6 +255,7 @@ clients One.
 | Monitoring santé système en direct, contrôlé toutes les 5 minutes | 🟢 Livré | 2026 |
 | Bouton "Rafraîchir" du monitoring réellement fonctionnel | 🟢 Livré | 2026-09-20 `[T-028]` |
 | Fausses alertes du monitoring sur Resend supprimées (seuils recalibrés) | 🟢 Livré | 2026-09-20 `[T-027]` |
+| Fin des fausses alertes nocturnes : une lenteur n'envoie plus ni mail ni alerte, seule une vraie panne le fait | 🟢 Livré | 2026-11-14 `[T-091]` |
 | Historique des latences du monitoring (impossible aujourd'hui de voir une dégradation venir) | 🔵 À qualifier | — `[T-029]` |
 | Import/compression des images de bannière MenuFacile réparé | 🟢 Livré | 2026-09-20 `[T-030, T-031, T-032]` |
 

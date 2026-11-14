@@ -12,61 +12,89 @@ import {
 } from './health-check-logic'
 
 describe('evaluateServiceStatus', () => {
-  it('retourne "ok" si latence sous le seuil warn', () => {
+  it('retourne "ok" si latence sous le seuil de lenteur', () => {
     expect(evaluateServiceStatus('supabase_db', 200, false)).toBe('ok')
   })
 
-  it('retourne "degraded" si latence entre warn et error', () => {
-    // supabase_db recalibré : warn 800 / error 1500
+  it('retourne "degraded" si le service repond mais lentement', () => {
     expect(evaluateServiceStatus('supabase_db', 1000, false)).toBe('degraded')
-  })
-
-  it('retourne "error" si latence >= seuil error', () => {
-    expect(evaluateServiceStatus('supabase_db', 1600, false)).toBe('error')
   })
 
   it('retourne "error" si failed=true indépendamment de la latence', () => {
     expect(evaluateServiceStatus('supabase_db', 50, true)).toBe('error')
   })
 
-  it('retourne "ok" pour Pennylane sous le seuil warn (1500ms)', () => {
-    expect(evaluateServiceStatus('pennylane', 1000, false)).toBe('ok')
-  })
-
-  it('retourne "degraded" pour Pennylane entre 1500ms et 2000ms', () => {
-    expect(evaluateServiceStatus('pennylane', 1800, false)).toBe('degraded')
-  })
-
-  it('retourne "error" pour Pennylane >= 2000ms', () => {
-    expect(evaluateServiceStatus('pennylane', 2500, false)).toBe('error')
-  })
-
-  it('retourne "degraded" pour service inconnu avec latence > 2000ms', () => {
+  it('retourne "degraded" pour service inconnu avec latence >= 2000ms', () => {
     expect(evaluateServiceStatus('unknown_service', 2500, false)).toBe('degraded')
+    expect(evaluateServiceStatus('unknown_service', 1500, false)).toBe('ok')
   })
 
-  // Recalibrage Resend du 2026-09-20 (seuils 1500/3000 -> 2500/5000).
-  // Verrouille la marge : la latence nominale mesurée en production ne doit plus
-  // vivre à 77 % du seuil d'alerte. C'est l'absence de ces tests qui a laissé
-  // 17 fausses alertes passer en 30 jours sans qu'aucune suite ne le signale.
   it('retourne "ok" pour Resend à sa latence nominale mesurée en prod (1153ms)', () => {
     expect(evaluateServiceStatus('resend', 1153, false)).toBe('ok')
   })
 
-  it('retourne "ok" pour Resend jusqu\'au seuil warn (2500ms)', () => {
-    expect(evaluateServiceStatus('resend', 2499, false)).toBe('ok')
+  it('retourne "ok" pour Realtime à sa latence nominale (~2,1 s)', () => {
+    expect(evaluateServiceStatus('supabase_realtime', 2100, false)).toBe('ok')
   })
 
-  it('retourne "degraded" pour Resend entre 2500ms et 5000ms', () => {
-    expect(evaluateServiceStatus('resend', 3000, false)).toBe('degraded')
+  // T-091 (2026-11-14) — LE verrou. Du 3 au 14 novembre, 24 alertes
+  // « supabase_db » sont parties (mail + cloche, y compris la nuit) alors que
+  // la base répondait 200 à chaque sonde, en 1,1 à 3 s. Une lenteur n'est PAS
+  // une panne : elle ne doit JAMAIS produire « error », seul statut qui alerte.
+  it.each([
+    ['supabase_db', 3000],
+    ['supabase_db', 4999],
+    ['supabase_storage', 4000],
+    ['supabase_auth', 4000],
+    ['supabase_realtime', 4999],
+    ['pennylane', 4000],
+    ['cal_com', 4999],
+    ['vercel_hub', 7999],
+    ['vercel_client', 7999],
+    ['resend', 7999],
+  ])('ne retourne JAMAIS "error" pour %s lent mais qui répond (%i ms)', (service, latency) => {
+    expect(evaluateServiceStatus(service, latency, false)).toBe('degraded')
   })
 
-  it('retourne "error" pour Resend >= 5000ms', () => {
-    expect(evaluateServiceStatus('resend', 5000, false)).toBe('error')
+  it("les mesures réelles de l'alerte du 14-11 (06:15-07:10) ne sont pas une panne", () => {
+    const mesuresReelles = [1401, 1743, 1431, 2991, 1725, 2608, 1791, 1546, 1546, 2747, 1902]
+    for (const ms of mesuresReelles) {
+      expect(evaluateServiceStatus('supabase_db', ms, false)).not.toBe('error')
+    }
+  })
+})
+
+describe("T-091 — une base lente ne déclenche jamais d'alerte, même longtemps", () => {
+  it('2 heures de sondes lentes (2,5 s) → zéro alerte', () => {
+    let incidents: IncidentMap = {}
+    let cooldowns: CooldownMap = {}
+    const t0 = Date.parse('2026-11-14T04:00:00Z')
+    let alerts = 0
+    for (let i = 0; i <= 24; i++) {
+      const services = {
+        supabase_db: { status: evaluateServiceStatus('supabase_db', 2500, false), latencyMs: 2500 },
+      }
+      const r = reconcileIncidents(services, incidents, t0 + i * 5 * 60 * 1000, cooldowns)
+      alerts += r.toAlert.length
+      incidents = r.nextIncidents
+      cooldowns = r.nextCooldowns
+    }
+    expect(alerts).toBe(0)
   })
 
-  it('retourne "error" pour Resend en cas d\'échec réseau, quelle que soit la latence', () => {
-    expect(evaluateServiceStatus('resend', 120, true)).toBe('error')
+  it('une vraie panne (pas de réponse) pendant 15 min → une alerte', () => {
+    let incidents: IncidentMap = {}
+    const t0 = Date.parse('2026-11-14T04:00:00Z')
+    let alerts = 0
+    for (let i = 0; i <= 3; i++) {
+      const services = {
+        supabase_db: { status: evaluateServiceStatus('supabase_db', 5000, true), latencyMs: 5000 },
+      }
+      const r = reconcileIncidents(services, incidents, t0 + i * 5 * 60 * 1000, {})
+      alerts += r.toAlert.length
+      incidents = r.nextIncidents
+    }
+    expect(alerts).toBe(1)
   })
 })
 

@@ -63,16 +63,30 @@ describe('SystemHealthAlert', () => {
     expect(link).toHaveAttribute('href', '/modules/admin/system')
   })
 
-  it('affiche une alerte "dégradé" (orange) quand seul un service est degraded', () => {
+  // T-091 (2026-11-14) : une lenteur n'est pas une panne — plus de bandeau sur l'accueil.
+  it("n'affiche rien quand un service est seulement lent (degraded)", () => {
     mockHealth({
-      checkedAt: '2026-07-02T10:00:00Z',
+      checkedAt: '2026-11-14T06:30:00Z',
       globalStatus: 'degraded',
       services: {
-        resend: { status: 'degraded', latencyMs: 2000 },
+        supabase_db: { status: 'degraded', latencyMs: 2991 },
+      },
+    })
+    const { container } = render(<SystemHealthAlert />)
+    expect(container.innerHTML).toBe('')
+  })
+
+  it("en cas de panne, ne liste que les services en panne, pas les lents", () => {
+    mockHealth({
+      checkedAt: '2026-11-14T06:30:00Z',
+      globalStatus: 'error',
+      services: {
+        supabase_db: { status: 'degraded', latencyMs: 2991 },
+        resend: { status: 'error', latencyMs: 8000 },
       },
     })
     render(<SystemHealthAlert />)
-    expect(screen.getByText(/service dégradé/i)).toBeTruthy()
     expect(screen.getByText('Resend (emails)')).toBeTruthy()
+    expect(screen.queryByText('Supabase DB')).toBeNull()
   })
 })
