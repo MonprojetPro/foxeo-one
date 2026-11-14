@@ -1357,3 +1357,13 @@ jonction). Cause validée par MiKL, puis une seule correction : lecture `broadca
 4. **Un test de verrouillage par action, qui vérifie aussi l'absence** : `meeting-row.test.tsx` exige que « Démarrer » n'apparaisse QUE si l'écran l'a branché. Sans la vérification de l'absence, un composant qui affiche tout partout passe le test.
 
 **Agents impliqués** : SCAN, FORGE, OTTO, ATLAS
+
+## 2026-11-14 — Une lenteur n'est pas une panne : le moniteur qui criait au loup chaque nuit
+
+**Symptome** : « Alerte systeme — supabase db » par mail et dans la cloche, plusieurs fois par jour, y compris a 4 h du matin. 24 alertes en 11 jours.
+
+**Fausses pistes deja payees** : recalibrer les seuils au cas par cas (Realtime le 07-02, Resend le 09-20), puis espacer les mails avec un cooldown de 3 h (06-11). Chaque fois, on a traite **la frequence** des alertes, jamais **leur definition**.
+
+**Cause prouvee** : les journaux de la passerelle (`edge_logs`, `x_envoy_upstream_service_time`) montrent que pendant l'alerte du 14-11, les 12 sondes ont TOUTES repondu `200`, en 1,1 a 3 s. Le moniteur classait « error » toute latence au-dessus d'un seuil (1,5 s pour la base). La nuit, la sonde est quasi seule (68 req/30 min) : une petite base peu sollicitee repond lentement, c'est tout.
+
+**Regle** : un statut qui declenche une alerte humaine (mail, cloche, bandeau) ne doit dependre que d'un **echec observable** — pas de reponse, 5xx, timeout. La latence est une information (orange au tableau de bord), jamais une alarme. Avant de toucher un seuil, regarder le **code de reponse** des sondes pendant l'alerte : s'il est 200, ce n'est pas une panne, quel que soit le chiffre.
